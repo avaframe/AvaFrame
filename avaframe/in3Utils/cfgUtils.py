@@ -433,7 +433,7 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
             else:
                 nameParts = simName.split('_')
                 infoParts = nameParts[1:]
-            simHash = infoParts[1]
+            simHash = infoParts[0]
             cfgObject = readCfgFile(avaDir, fileName=cFile)
             simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 

@@ -14,6 +14,7 @@ import pytest
 import shutil
 import pathlib
 import configparser
+import pandas as pd
 
 
 def test_makeADir(tmp_path):
@@ -115,7 +116,7 @@ def test_makeSimDF():
     cfg = {'varPar': 'test'}
     dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
 
-    assert dataDF['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
+    assert dataDF['names'][0] == 'releaseTest1_0.888_entres_dfa_ppr'
     assert dataDF['releaseArea'][0] == 'releaseTest1'
     assert dataDF['simType'][0] == 'entres'
     assert dataDF['resType'][0] == 'ppr'
@@ -124,7 +125,7 @@ def test_makeSimDF():
 
     inputDir = os.path.join(dirPath, 'data', 'testSim1')
     dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
-    assert dataDF['names'][0] == 'releaseTest1_test_AF_entres_dfa_0.888_ppr'
+    assert dataDF['names'][0] == 'releaseTest1_test_AF_0.888_entres_dfa_ppr'
     assert dataDF['releaseArea'][0] == 'releaseTest1_test'
     assert dataDF['simType'][0] == 'entres'
     assert dataDF['resType'][0] == 'ppr'
@@ -142,14 +143,14 @@ def test_makeSimFromResDF():
     print(resTypeList)
     print(dataDF.columns)
     print(dataDF.index)
-    assert dataDF['simName'][0] == 'releaseTest1_entres_dfa_0.888'
+    assert dataDF['simName'][0] == 'releaseTest1_0.888_entres_dfa'
     assert dataDF['releaseArea'][0] == 'releaseTest1'
     assert dataDF['simType'][0] == 'entres'
     assert dataDF['cellSize'][0] == 5.0
 
     inputDir = os.path.join(dirPath, 'data', 'testSim1')
     dataDF, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
-    assert dataDF['simName'][0] == 'releaseTest1_test_AF_entres_dfa_0.888'
+    assert dataDF['simName'][0] == 'releaseTest1_test_AF_0.888_entres_dfa'
     assert dataDF['releaseArea'][0] == 'releaseTest1_test'
     assert dataDF['simType'][0] == 'entres'
     assert dataDF['cellSize'][0] == 5.0
@@ -336,8 +337,8 @@ def test_fetchFlowFields():
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
-    assert flowFields[0].stem == 'release1HS_ent_dfa_d10bdc1e81_ppr'
-    assert flowFields[1].stem == 'release2HS_ent_dfa_e2145362b7_ppr'
+    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_ppr'
+    assert flowFields[1].stem == 'release2HS_e2145362b7_ent_dfa_ppr'
     assert len(flowFields) == 2
 
     # call function to be tested
@@ -345,5 +346,5 @@ def test_fetchFlowFields():
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
-    assert flowFields[0].stem == 'release1HS_ent_dfa_d10bdc1e81_pfd'
+    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_pfd'
     assert len(flowFields) == 6

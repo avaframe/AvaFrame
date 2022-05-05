@@ -95,8 +95,9 @@ def test_orderSimFiles():
     varParList = 'releaseScenario'
 
     simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
+    print(simFilesDF)
 
-    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_d10bdc1e81'
+    assert simFilesDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
 
 def test_createConfigurationInfo(tmp_path):
@@ -105,6 +106,7 @@ def test_createConfigurationInfo(tmp_path):
     avaTestDir = 'avaHockeyChannelPytest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    print(avaDir)
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
@@ -135,7 +137,7 @@ def test_appendCgf2DF(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
 
     simDF = ''
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_ent_dfa_d10bdc1e81.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_d10bdc1e81_ent_dfa.ini'
     simName = pathlib.Path(cFile).stem
     simHash = 'd10bdc1e81'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
@@ -144,7 +146,7 @@ def test_appendCgf2DF(tmp_path):
     assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
     assert simDF.loc['d10bdc1e81']['mu'] == '0.15500'
 
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_ent_dfa_e2145362b7.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_e2145362b7_ent_dfa.ini'
     simName = pathlib.Path(cFile).stem
     simHash = 'e2145362b7'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
@@ -189,8 +191,8 @@ def test_filterSims(tmp_path):
     simNames2 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
     simNames2 = sorted(simNames2)
     assert len(simNames2) == 2
-    assert simNames2[0] == 'release1HS_ent_dfa_d10bdc1e81'
-    assert simNames2[1] == 'release2HS_ent_dfa_e2145362b7'
+    assert simNames2[0] == 'release1HS_d10bdc1e81_ent_dfa'
+    assert simNames2[1] == 'release2HS_e2145362b7_ent_dfa'
 
     parametersDict = {'~relTh': 1.}
     simNames3 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
@@ -201,23 +203,23 @@ def test_filterSims(tmp_path):
     simNames4 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
 
     assert len(simNames4) == 1
-    assert simNames4[0] == 'release2HS_ent_dfa_e2145362b7'
+    assert simNames4[0] == 'release2HS_e2145362b7_ent_dfa'
 
     parametersDict = {'relTh': 1.}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
     simNames = sorted(simNames)
 
-    print('simNames', simNames)
-
     assert len(simNames) == 2
-    assert simNames == ['relGar_ent_dfa_b9b17dd019', 'relGar_null_dfa_6f35cbd808']
+    assert simNames == ['relGar_6f35cbd808_null_dfa', 'relGar_b9b17dd019_ent_dfa']
 
     parametersDict = {'relTh': [1., 1.5]}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
     simNames =sorted(simNames)
+    
+    print('simNames', simNames)
 
     assert len(simNames) == 4
-    assert simNames == ['relGar_ent_dfa_b9b17dd019', 'relGar_null_dfa_1022880a70',
-        'relGar_null_dfa_6f35cbd808', 'relGar_null_dfa_c4337e50ac']
+    assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_6f35cbd808_null_dfa', 
+                        'relGar_b9b17dd019_ent_dfa',  'relGar_c4337e50ac_null_dfa']
