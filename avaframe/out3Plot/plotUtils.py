@@ -538,7 +538,7 @@ def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='r
         xy=(0.99, 0.01)
 
     ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment=hAlignment,
-        verticalalignment='bottom', color=color, alpha=alphaF,
+        verticalalignment='top', color=color, alpha=alphaF,
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
 
 
@@ -675,7 +675,6 @@ def getColors4Scatter(values, nSamples, unitSC):
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
 
 
-
 def addHillShadeContours(ax, data, cellSize, extent):
     """ add hillshade and contours for given DEM data
 
@@ -690,27 +689,25 @@ def addHillShadeContours(ax, data, cellSize, extent):
         extent: list
             extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
     """
-
-
     # create lightSource
     ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
 
     # add hillshade to axes
-    im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1],
-        dy=data.shape[0]), cmap='gray', extent=extent, origin='lower', aspect='equal', zorder=1)
+    im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]), cmap='gray',
+                    extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
     X, Y = gT.setCoordinateGrid(extent[0], extent[2], cellSize, data)
 
     # add contour lines
-    CS =  ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
-        linewidths=0.5, zorder=2)
+    CS = ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
+                     linewidths=0.5, zorder=2)
 
     # add labels
     ax.clabel(CS, CS.levels, inline=True, fontsize=8, zorder=3)
 
     # add info box with indication of label meaning
     putInfoBox(ax, '- elevation [m]', location='upperLeft', color='gray',
-        hAlignment='left', alphaF=1.0)
+               hAlignment='left', alphaF=1.0)
 
     return ls, CS
