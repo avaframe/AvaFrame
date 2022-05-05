@@ -12,6 +12,7 @@ Computational Modules
 
    com1DFA
    com2AB
+   com3Hybrid
 
 Input/Transformation Modules
 ============================
@@ -36,10 +37,8 @@ Analysis/Output/Helper Modules
    ana1Tests
    ana3AIMEC
    ana4Stats
+   ana5Utils
    log2Report
    out1Peak
-   out3Plot.plotUtils
-   out3Plot.outQuickPlot
-   out3Plot.in1DataPlots
-   out3Plot.statsPlots
+   out3Plot
    tmp1Ex.tmp1Ex
