@@ -1394,20 +1394,15 @@ def test_prepareVarSimDict(caplog):
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
 
     simHash = cfgUtils.cfgHash(testCfg)
-    print('simHAhs', simHash)
-    simName1 = 'relTest_entres_dfa_' + simHash
+    simName1 = 'relTest_' + simHash + '_entres_dfa' 
     testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relTest',
-                                                  'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
-
-    print('simDict', simDict)
-    print('simName1', simName1)
+                           'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
     for key in testDict[simName1]:
         assert simDict[simName1][key] == testDict[simName1][key]
 
     for section in testCfg.sections():
         for key in testCfg[section]:
-            print('section', section, 'key', key)
             assert simDict[simName1]['cfgSim'][section][key] == testCfg[section][key]
 
     # call function to be tested
@@ -1432,12 +1427,10 @@ def test_prepareVarSimDict(caplog):
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     simHash2 = cfgUtils.cfgHash(testCfg2)
-    simName2 = 'relTest_extended_AF_entres_dfa_' + simHash2
+    simName2 = 'relTest_extended_AF_'+ simHash2 +'_entres_dfa' 
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
 
-    print('simDict', simDict2)
-    print('simName1', simName2)
 
     for key in testDict2[simName2]:
         assert simDict2[simName2][key] == testDict2[simName2][key]

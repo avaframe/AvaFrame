@@ -66,14 +66,14 @@ def test_mainDfa2Aimec(tmp_path):
     print('path', dirPath)
     # get path dictionary for test
     pathDTest = {}
-    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_ppr.asc',
-                        pathData / 'release2HS_ent_dfa_e2145362b7_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_pfd.asc',
-                        pathData / 'release2HS_ent_dfa_e2145362b7_pfd.asc']
-    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_pfv.asc',
-                        pathData / 'release2HS_ent_dfa_e2145362b7_pfv.asc']
-    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_d10bdc1e81.txt',
-                            testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_ent_dfa_e2145362b7.txt']
+    pathDTest['ppr'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_ppr.asc',
+                        pathData / 'release2HS_e2145362b7_ent_dfa_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_pfd.asc',
+                        pathData / 'release2HS_e2145362b7_ent_dfa_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_pfv.asc',
+                        pathData / 'release2HS_e2145362b7_ent_dfa_pfv.asc']
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_d10bdc1e81_ent_dfa.txt',
+                            testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_e2145362b7_ent_dfa.txt']
     print(inputDF['ppr'].to_list())
     print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
@@ -118,18 +118,18 @@ def test_dfaComp2Aimec(tmp_path):
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'comModules': 'com1DFAOrig|com1DFA'}
     cfg['FLAGS'] = {'flagMass': 'True'}
-    inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HS_ent', 'release1HS_ent')
+    inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HS', 'release1HS')
 
     # get path dictionary for test
     massNameRef = 'mass_release1HS_ent_dfa_0.15500.txt'
-    massNameSim = 'mass_release1HS_ent_dfa_d10bdc1e81.txt'
+    massNameSim = 'mass_release1HS_d10bdc1e81_ent_dfa.txt'
     pathDTest = {}
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
-                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_ppr.asc']
+                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_ppr.asc']
     pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
-                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_pfd.asc']
+                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
-                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_pfv.asc']
+                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / massNameRef,
                             testPath / 'Outputs' / 'com1DFA' / massNameSim]
     print(inputDF['ppr'].to_list())
@@ -190,17 +190,17 @@ def test_getMBInfo():
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
     print('pathDict', pathDict)
-    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(inputsDF['massBal'][0])
-    assert 'mass_release2HS_ent_dfa_e2145362b7' in str(inputsDF['massBal'][1])
+    assert 'mass_release1HS_d10bdc1e81_ent_dfa' in str(inputsDF['massBal'][0])
+    assert 'mass_release2HS_e2145362b7_ent_dfa' in str(inputsDF['massBal'][1])
 
     # call fucntion to be tested
-    simName = 'release1HS_ent_dfa_d10bdc1e81'
+    simName = 'release1HS_d10bdc1e81_ent_dfa'
     inputsDF = pd.DataFrame()
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
     print('pathDict2', inputsDF)
-    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(inputsDF['massBal'][0])
-    assert 'mass_release2HS_ent_dfa_e2145362b7' not in str(inputsDF['massBal'][0])
+    assert 'mass_release1HS_d10bdc1e81_ent_dfa' in str(inputsDF['massBal'][0])
+    assert 'mass_release2HS_e2145362b7_ent_dfa' not in str(inputsDF['massBal'][0])
 
 
 
@@ -215,17 +215,15 @@ def test_dfaBench2Aimec():
     avaTestName = 'avaHockeyChannelPytest'
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestName
     simNameRef = 'release1HS_ent_dfa_0.15500'
-    simNameComp = 'release1HS_ent_dfa_d10bdc1e81'
+    simNameComp = 'release1HS_d10bdc1e81_ent_dfa'
 
     # call function to be tested
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp)
 
-    print('inputsDF', inputsDF)
-
-    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(inputsDF['massBal'][1])
-    assert 'release1HS_ent_dfa_d10bdc1e81_pfd' in str(inputsDF['pfd'][1])
-    assert 'release1HS_ent_dfa_d10bdc1e81_ppr' in str(inputsDF['ppr'][1])
-    assert 'release1HS_ent_dfa_d10bdc1e81_pfv' in str(inputsDF['pfv'][1])
+    assert 'mass_release1HS_d10bdc1e81_ent_dfa' in str(inputsDF['massBal'][1])
+    assert 'release1HS_d10bdc1e81_ent_dfa_pfd' in str(inputsDF['pfd'][1])
+    assert 'release1HS_d10bdc1e81_ent_dfa_ppr' in str(inputsDF['ppr'][1])
+    assert 'release1HS_d10bdc1e81_ent_dfa_pfv' in str(inputsDF['pfv'][1])
     assert 'mass_release1HS_ent_dfa_0.15500' in str(inputsDF['massBal'][0])
     assert 'release1HS_ent_dfa_0.15500_pfd' in str(inputsDF['pfd'][0])
     assert 'release1HS_ent_dfa_0.15500_ppr' in str(inputsDF['ppr'][0])
