@@ -39,7 +39,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 # load all benchmark info as dictionaries from description files
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
-# filter benchmarks to extract only desiered ones
+# filter benchmarks to extract only desired ones
 type = 'TAGS'
 valuesList = ['standardTest', 'test']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
