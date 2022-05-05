@@ -182,6 +182,11 @@ def addDem2Plot(ax, dem, what='slope', extent=''):
         value = dem['Nz'] / DFAtls.norm(dem['Nx'], dem['Ny'], dem['Nz'])
     elif what == 'z':
         value = dem['rasterData']
+    elif what == 'hillshade':
+        ls = pU.LightSource(azdeg=pU.azimuthDegree, altdeg=pU.elevationDegree)
+        value = dem['rasterData']
+        value = ls.hillshade(value, vert_exag=pU.vertExag, dx=value.shape[1],
+                             dy=value.shape[0])
     else:
         value = dem['rasterData']
     if extent == '':
@@ -191,7 +196,15 @@ def addDem2Plot(ax, dem, what='slope', extent=''):
                             # extent=[2400, 2700, YY.min(), YY.max()],
                             extent=extent,
                             cmap=cmap, norm=None, zorder=0)
-    ax.contour(xArray, yArray, dem['rasterData'], levels=10, colors='k', zorder=1)
+    CS = ax.contour(xArray, yArray, dem['rasterData'], levels=pU.hillshadeContLevs, colors='k', linewidths=0.5,
+                    zorder=3)
+
+    # add labels
+    ax.clabel(CS, CS.levels, inline=True, fontsize=8, zorder=3)
+
+    # add info box with indication of label meaning
+    pU.putInfoBox(ax, '- elevation [m]', location='upperLeft', color='gray',
+                  hAlignment='left', alphaF=1.0)
     return ax
 
 
@@ -226,7 +239,7 @@ def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False
     ----------
     ax: matplotlib ax object
     header: dict
-        raster header dictionary 
+        raster header dictionary
     rasterData: 2D numpy array
         data to plot
     resType: str

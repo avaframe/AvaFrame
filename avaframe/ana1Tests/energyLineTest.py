@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 from matplotlib.ticker import FormatStrFormatter
+import matplotlib.patheffects as pe
 
 # Local imports
 # import config and init tools
@@ -78,13 +79,15 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     mu = energyLineTestCfg['GENERAL'].getfloat('mu')
     alphaRad = np.arctan(mu)
     alphaDeg = np.rad2deg(alphaRad)
+    csz = dem['header']['cellsize']
     # compute simulation run out angle
     runOutAngleRad, runOutAngleDeg = getRunOutAngle(avaProfileMass)
     # extend path profile and find intersection between the alpha line and the profile
-    slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass,
+                                                                                  mu, csz)
     # compute errors on runout and veloctity altitude
     zEne, u2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
-                                                                    runOutAngleDeg, alphaDeg)
+                                                                  runOutAngleDeg, alphaDeg)
     z0 = avaProfileMass['z'][0]
     # create figures and plots
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -93,21 +96,25 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     cmap.set_under(color='w')
     # make the bird view plot
     ax1 = plt.subplot2grid((2, 2), (1, 0))
-    ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pfv'], 'pfv')
-    cbar0.ax.set_ylabel('peak flow velocity')
-    ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='slope', extent=extent)
-    if energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart'):
-        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
-                                                                       comModule='com1DFA')
-        ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
-        cbar1.ax.set_ylabel('final particle flow thickness')
-    ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y.', zorder = 20, label='Center of mass path')
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['pfv'], 5, extentOption=True,
                                                                  constrainedData=False, buffer='')
-    ax1.set_ylim([rowsMin, rowsMax])
-    ax1.set_xlim([colsMin, colsMax])
+    ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pfv'], 'pfv')
+    cbar0.ax.set_ylabel('peak flow velocity')
+
+    # add DEM hillshade with contour lines
+    ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='hillshade', extent=extent)
+    # if energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart'):
+    #     particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
+    #                                                                    comModule='com1DFA')
+    #     ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
+    #     cbar1.ax.set_ylabel('final particle flow thickness')
+    ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y.', zorder=20, label='Center of mass path',
+             lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
+    ax1.axis('equal')
+    ax1.set_ylim([rowsMin, rowsMax])
+    ax1.set_xlim([colsMin, colsMax])
     l1 = ax1.legend(loc='upper right')
     l1.set_zorder(40)
     pU.putAvaNameOnPlot(ax1, avalancheDir)
@@ -115,7 +122,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     # make profile plot, zoomed out
     ax2 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
     # plot mass averaged center of mass
-    ax2.plot(avaProfileMass['s'], avaProfileMass['z'], '-k.', label='Center of mass altitude')
+    ax2.plot(avaProfileMass['s'], avaProfileMass['z'], '-y.', label='Center of mass altitude',
+             lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
     if plotScor:
         ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear regression on the last x points
@@ -152,7 +160,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     # make profile plot, zoomed in
     ax3 = plt.subplot2grid((2, 2), (1, 1))
     # plot mass averaged center of mass
-    ax3.plot(avaProfileMass['s'], avaProfileMass['z']-z0, '-k.', label='Center of mass altitude')
+    ax3.plot(avaProfileMass['s'], avaProfileMass['z']-z0, '-y.', label='Center of mass altitude',
+             lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
     if plotScor:
         ax3.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear gegression on the last x points
@@ -201,8 +210,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.tick_params(axis='y', which='major', rotation=45)
     ax3.set_xticks([avaProfileMass['s'][-1], sIntersection])
     ax3.set_yticks([avaProfileMass['z'][-1]-z0, zIntersection-z0])
-    ax3.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    ax3.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax3.xaxis.set_major_formatter(FormatStrFormatter(r'%.2f'))
+    ax3.yaxis.set_major_formatter(FormatStrFormatter(r'%.2f'))
     text = ('Runout s diff : %.2f m \nRunout z diff : %.2f m \nRunout angle diff : %.4f° \nvelocity height rmse : %.2f m \n(energy line - alpha line)' %
             (runOutSError, runOutZError, runOutAngleError, rmseVelocityElevation))
     text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5,
@@ -211,6 +220,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.add_artist(text_box)
     outFileName = '_'.join([simName, 'EnergyTest'])
     outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
+    plt.tight_layout()
     pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
     return errorEnergyTest
@@ -240,7 +250,7 @@ def getRunOutAngle(avaProfileMass):
     return runOutAngleRad, runOutAngleDeg
 
 
-def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu):
+def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     """Extend the  profile path and compute the intersection
     between the theoretical energy line and the path profile
 
@@ -255,6 +265,8 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu):
         particle mass average properties
     mu: float
         friction coefficient
+    csz: float
+        dem cell size
 
     Returns
     --------
@@ -272,13 +284,15 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu):
 
     extrapolationStepSize = energyLineTestCfg['ENERGYLINETEST'].getfloat('extrapolationStepSize')
     # get slope of the last profile points to extend the profile
-    nPointsExtra = energyLineTestCfg['ENERGYLINETEST'].getint('nPointsExtrapolation')
-    p1 = np.polyfit(avaProfileMass['s'][-nPointsExtra:], avaProfileMass['z'][-nPointsExtra:], 1)
+    nCellsExtrapolation = energyLineTestCfg['ENERGYLINETEST'].getint('nCellsExtrapolation')
+    idxExtra = np.nanmin(np.argwhere(avaProfileMass['s'][-1] - avaProfileMass['s'] < nCellsExtrapolation * csz))
+    p1 = np.polyfit(avaProfileMass['s'][idxExtra:], avaProfileMass['z'][idxExtra:], 1)
     slopeExt = p1[0]
     # extend profile (extend until the intersection is found)
     sIntersection = 0
     coefExt = 0
-    while sIntersection == 0 and coefExt<2:
+    # toDo: make this to a dichotomy method
+    while sIntersection == 0 and coefExt < 2:
         coefExt = coefExt + extrapolationStepSize
         sExt = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
         zExt = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*coefExt)
