@@ -71,8 +71,9 @@ def test_getIntersection(capfd):
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile), modInfo=True)
 
     mu = 1
+    csz = 1
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([5.1, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -84,7 +85,7 @@ def test_getIntersection(capfd):
     assert coefExt == pytest.approx(1, abs=atol)
 
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([2.6, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -96,7 +97,7 @@ def test_getIntersection(capfd):
     assert coefExt == pytest.approx(0.05, abs=atol)
 
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([2.45, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -135,13 +136,14 @@ def test_getEnergyInfo(capfd):
 
     g = 9.81
     alphaDeg = 30
+    csz = 5
     mu = np.tan(np.radians(alphaDeg))
 
     avaProfileMass = {'s': np.array([0, 2, 4, 6, 8, 10]), 'z': np.array([10, 4, 3, 2, 1, 0]),
     'u2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
 
     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
 
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection,
                                                                                  zIntersection, runOutAngleDeg, alphaDeg)
