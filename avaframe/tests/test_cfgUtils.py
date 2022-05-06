@@ -95,7 +95,6 @@ def test_orderSimFiles():
     varParList = 'releaseScenario'
 
     simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
-    print(simFilesDF)
 
     assert simFilesDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
@@ -106,7 +105,6 @@ def test_createConfigurationInfo(tmp_path):
     avaTestDir = 'avaHockeyChannelPytest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    print(avaDir)
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
@@ -123,8 +121,6 @@ def test_readAllConfigurationInfo():
     configDir = dirPath / 'data' / 'testCfgUtils'
 
     simDF, simDFName = cfgUtils.readAllConfigurationInfo(configDir, specDir=configDir)
-    print(simDF)
-    print(simDFName)
     for simHash, simDFrow in simDF.iterrows():
         assert simHash in ['88cfde04b5', '1adb9373f1']
 
@@ -216,10 +212,8 @@ def test_filterSims(tmp_path):
     parametersDict = {'relTh': [1., 1.5]}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
-    simNames =sorted(simNames)
-    
-    print('simNames', simNames)
+    simNames = sorted(simNames)
 
     assert len(simNames) == 4
-    assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_6f35cbd808_null_dfa', 
-                        'relGar_b9b17dd019_ent_dfa',  'relGar_c4337e50ac_null_dfa']
+    assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_6f35cbd808_null_dfa',
+                        'relGar_b9b17dd019_ent_dfa', 'relGar_c4337e50ac_null_dfa']

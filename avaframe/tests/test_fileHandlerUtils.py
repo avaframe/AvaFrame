@@ -14,7 +14,6 @@ import pytest
 import shutil
 import pathlib
 import configparser
-import pandas as pd
 
 
 def test_makeADir(tmp_path):
@@ -329,7 +328,7 @@ def test_fetchFlowFields():
     # get input data
     dirPath = pathlib.Path(__file__).parents[0]
     avaName = 'avaHockeyChannelPytest'
-    flowFieldsDir = dirPath / '..'/ '..' / 'benchmarks' / avaName / 'Outputs' / 'com1DFA' / 'peakFiles'
+    flowFieldsDir = dirPath / '..' / '..' / 'benchmarks' / avaName / 'Outputs' / 'com1DFA' / 'peakFiles'
     suffix = 'ppr'
 
     # call function to be tested

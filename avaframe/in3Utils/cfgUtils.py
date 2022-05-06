@@ -629,7 +629,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
-    
+
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
@@ -685,7 +685,7 @@ def removeSimsNotMatching(simDF, key, value):
             simDF = simDF[simDF[key].isin(value)]
     else:
         # if float comparison allow for tolerance
-        filterMask = np.isclose(simDF[key].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)
+        filterMask = np.isclose(simDF[key].values.reshape(-1, 1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)
         if notIn:
             simDF = simDF[~filterMask]
         else:
@@ -797,7 +797,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
         # check if filter criteria are met by thickness parameters for the sim in simDFrow
         for val in value:
             if (simDFrow[thNames].values == [val] * len(thIdList)).all():
-                simDF.loc[simHash,'toBeAdded'] = True
+                simDF.loc[simHash, 'toBeAdded'] = True
 
     # get a list with all thickness parameters included in search
     allThNames = list(set(allThNames))

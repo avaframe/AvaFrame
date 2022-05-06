@@ -203,7 +203,6 @@ def test_getMBInfo():
     assert 'mass_release2HS_e2145362b7_ent_dfa' not in str(inputsDF['massBal'][0])
 
 
-
 def test_dfaBench2Aimec():
     """ test export data used for aimec """
 
