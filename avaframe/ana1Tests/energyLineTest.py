@@ -135,7 +135,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
-    cbar2.ax.set_ylabel('Center of mass velocity altitude [m]')
+    cbar2.ax.set_title('[' + pU.cfgPlotUtils['unitFD'] + ']', pad=10)
+    cbar2.ax.set_ylabel('Center of mass velocity altitude')
 
     # add alpha line
     ax2.plot(sGeomL, zGeomL, 'b-', label=r'$\alpha$ line (%.2f°)' % alphaDeg)
@@ -175,7 +176,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude extrapolation')
     cbar3 = ax3.figure.colorbar(scat, ax=ax3, use_gridspec=True)
-    cbar3.ax.set_ylabel('Center of mass velocity altitude [m]')
+    cbar3.ax.set_title('[' + pU.cfgPlotUtils['unitFD'] + ']', pad=10)
+    cbar3.ax.set_ylabel('Center of mass velocity altitude')
 
     # add alpha line
     ax3.plot(sGeomL, zGeomL-z0, 'b-', label=r'$\alpha$ line (%.2f°)' % alphaDeg)
@@ -202,7 +204,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.hlines(y=zIntersection-z0, color='b', xmin=sMin, xmax=sIntersection, linestyle='--')
 
     ax3.set_xlabel('s [m]')
-    ax3.set_ylabel(r'$\Delta z$ [m]')
+    ax3.set_ylabel('$\Delta z$ [m]')
     ax3.yaxis.set_label_coords(0, 0.9)
     ax3.set_xlim([sMin, sMax])
     ax3.set_ylim([zMin, zMax])
@@ -210,8 +212,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.tick_params(axis='y', which='major', rotation=45)
     ax3.set_xticks([avaProfileMass['s'][-1], sIntersection])
     ax3.set_yticks([avaProfileMass['z'][-1]-z0, zIntersection-z0])
-    ax3.xaxis.set_major_formatter(FormatStrFormatter(r'%.2f'))
-    ax3.yaxis.set_major_formatter(FormatStrFormatter(r'%.2f'))
+    ax3.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax3.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     text = ('Runout s diff : %.2f m \nRunout z diff : %.2f m \nRunout angle diff : %.4f° \nvelocity height rmse : %.2f m \n(energy line - alpha line)' %
             (runOutSError, runOutZError, runOutAngleError, rmseVelocityElevation))
     text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5,

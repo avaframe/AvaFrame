@@ -82,6 +82,7 @@ matplotlib.rcParams['savefig.bbox'] = 'tight'
 matplotlib.rcParams['legend.edgecolor'] = 'None'
 matplotlib.rcParams['legend.fontsize'] = cfg['fontSize']
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
+matplotlib.rc('text.latex', preamble=r'\usepackage{cmbright}')
 
 matplotlib.rcParams['grid.color'] = 'whitesmoke'
 matplotlib.rcParams['grid.linestyle'] = ':'
@@ -472,7 +473,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
     if extend in ['both', 'max']:
         pad = 25
     else:
-        pad = 5
+        pad = 10
     cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
