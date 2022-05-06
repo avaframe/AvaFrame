@@ -206,13 +206,15 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
             # add cpu time info to the dataframe
             simDF = simDF.join(tCPUDF)
 
-            # append new simulations configuration to old ones (if they exist), return total dataFrame and write it to csv
+            # append new simulations configuration to old ones (if they exist),
+            # return total dataFrame and write it to csv
             simDFNew = pd.concat([simDF, simDFOld], axis=0)
             cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
             # write full configuration (.ini file) to file
             date = datetime.today()
-            fileName = 'sourceConfiguration_' + cfg['INPUT']['releaseScenario'] + '_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
+            fileName = 'sourceConfiguration_' + cfg['INPUT']['releaseScenario'] + '_' +\
+                       '{:%d_%m_%Y_%H_%M_%S}'.format(date)
             cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
             simsPerformed = True
 
@@ -479,8 +481,10 @@ def prepareInputData(inputSimFiles, cfg):
     if relThFile != '':
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
-        if demOri['header']['ncols'] != relThField['header']['ncols'] or demOri['header']['ncols'] != relThField['header']['ncols']:
-            message = ('Release thickness field read from %s does not match the number of rows and columns of the dem' % inputSimFiles['relThFile'])
+        if demOri['header']['ncols'] != relThField['header']['ncols'] or \
+           demOri['header']['nrows'] != relThField['header']['nrows']:
+            message = ('Release thickness field read from %s does not match the number of rows and columns of the dem'
+                       % inputSimFiles['relThFile'])
             log.error(message)
             raise AssertionError(message)
     else:
@@ -926,7 +930,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
-            log.warning('relThField!= 0, but relRaster set to relTh value (from ini) here so that uniform number of particles created')
+            log.warning('relThField!= 0, but relRaster set to relTh value (from ini)')
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
@@ -1268,7 +1272,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
     zPartArray0 = copy.deepcopy(particles['z'])
 
-    ######## create range time diagram #####################
+    # create range time diagram
     # check if range-time diagram should be performed, if yes - initialize
     if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
         demRT = dtAna.setDemOrigin(dem)
@@ -1276,8 +1280,6 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         # fetch initial time step too
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t,
             demRT['header'], fields, mtiInfo)
-    #########################################################
-
 
     # add initial time step to Tsave array
     Tsave = [0]
@@ -1311,12 +1313,11 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         # print progress to terminal
         print("time step t = %f s\r" % t, end="")
 
-        ######## create range time diagram #####################
+        # create range time diagram
         # determine avalanche front and flow characteristics in respective coodrinate system
         if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram') and t >= dtRangeTime[0]:
             mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demRT['header'],
                 fields, mtiInfo)
-        #########################################################
 
         # make sure the array is not empty
         if t >= dtSave[0]:
@@ -1385,7 +1386,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer,
                                       'Avalanche run time [s]': '%.2f' % avaTime}})
 
-    ######## create range time diagram #####################
+    # create range time diagram
     # export data for range-time diagram
     if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
         lastTimeStep = t - dt
@@ -1393,7 +1394,6 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, lastTimeStep, demRT['header'],
             fields, mtiInfo)
         dtAna.exportData(mtiInfo, cfgRangeTime, 'com1DFA')
-    #########################################################
 
     return Tsave, particlesList, fieldsList, infoDict
 
@@ -2111,7 +2111,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             IOf.writeResultToAsc(
                 demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
-                log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' %
+                log.debug('Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' %
                           (resType, Tsave[countTime]))
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
@@ -2214,7 +2214,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-        simName = (relNameSim + '_' + simHash  + '_' + row._asdict()['simTypeList'] + '_' +
+        simName = (relNameSim + '_' + simHash + '_' + row._asdict()['simTypeList'] + '_' +
                    cfgSim['GENERAL']['modelType'])
         # check if simulation exists. If yes do not append it
         if simName not in simNameOld:
