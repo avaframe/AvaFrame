@@ -75,14 +75,7 @@ for test in testList:
     avaDir = test['AVADIR']
 
     # Fetch benchmark test info
-    # ################################
-    # Fetch benchmark test info
-    # toDo: this needs to be changed. We want to read this from the json file
-    # once we updated the benchmarks, we can remove this and remove the fetchBenchParameters function
-    # benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
-    # should be replaced by
     benchDict = test
-    # #############################
     simNameRef = test['simNameRef']
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
     simType = benchDict['simType']
@@ -155,7 +148,7 @@ for test in testList:
     pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
     # perform analysis
-    rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfgAimec)
+    rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.AIMEC2Report(pathDict, inputsDF, cfgAimec)
 
     # add aimec results to report dictionary
     reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportD, benchDict, pathDict['refSimulation'])
@@ -196,6 +189,6 @@ for test in testList:
 # display cpuTime in log
 log.info('CPU performance comparison between benchmark results (version : %s) and curent branch (version : %s)' %
          (benchDict['Simulation Parameters']['Program version'], reportD['Simulation Parameters']['Program version']))
+log.info(('{:<30}'*3).format('Test Name', 'cpu time Benchmark [s]', 'cpu time curent version [s]'))
 for name, cpuBench, cpuSim in zip(cpuTimeName, cpuTimeBench, cpuTimeSim):
-    log.info(('{:<30}'*3).format('Test Name', 'cpu time Benchmark [s]', 'cpu time curent version [s]'))
     log.info(('{:<30s}'*3).format(name, cpuBench, cpuSim))
