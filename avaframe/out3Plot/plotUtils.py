@@ -81,7 +81,6 @@ matplotlib.rcParams['savefig.bbox'] = 'tight'
 
 matplotlib.rcParams['legend.edgecolor'] = 'None'
 matplotlib.rcParams['legend.fontsize'] = cfg['fontSize']
-matplotlib.rcParams['legend.fontsize'] = cfg['fontSize']
 matplotlib.rcParams['font.family'] = cfg['fontFamily']
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
 matplotlib.rc('text.latex', preamble=r'\usepackage{cmbright}')
