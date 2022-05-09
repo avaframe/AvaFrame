@@ -18,6 +18,7 @@ from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
 
@@ -103,7 +104,7 @@ for test in testList:
     # Fetch correct reportDict according to simType and release area scenario
     # read all simulation configuration files and return dataFrame and write to csv
     parametersDict = {'simTypeActual': simType, 'releaseScenario': rel}
-    simNameComp = cfgUtils.filterSims(avaDir, parametersDict)
+    simNameComp = cfgHandling.filterSims(avaDir, parametersDict)
     if len(simNameComp) > 1:
         log.error('more than one matching simulation found for criteria! ')
     else:

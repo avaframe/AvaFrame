@@ -11,6 +11,7 @@ import pathlib
 
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
@@ -166,7 +167,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     fU.makeADir(outDir)
 
     # fetch all result files and filter simulations according to parametersDict
-    simNameList = cfgUtils.filterSims(avaDir, parametersDict, specDir=inputDir)
+    simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir=inputDir)
 
     # initialize flag if analysis has been performed or e.g. no matching files found
     analysisPerformed = False
