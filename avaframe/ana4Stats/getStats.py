@@ -13,6 +13,7 @@ import pandas as pd
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 
 
 # create local logger
@@ -50,7 +51,7 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
         """
 
     # filter simulation results using parametersDict
-    simNameList = cfgUtils.filterSims(avaDir, parametersDict)
+    simNameList = cfgHandling.filterSims(avaDir, parametersDict)
     # load dataFrame of all simulation configurations
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='')
 

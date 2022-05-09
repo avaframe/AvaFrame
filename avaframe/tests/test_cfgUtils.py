@@ -1,6 +1,7 @@
 """Tests for module cfgUtils"""
 
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 from avaframe.tests import test_logUtils
 import pathlib
 import pytest
@@ -198,7 +199,7 @@ def test_filterSims(tmp_path):
 
     parametersDict = {'releaseScenario': 'release1HS'}
 
-    simNames = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+    simNames = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
 
     testRel = False
     testRel2 = False
@@ -212,26 +213,26 @@ def test_filterSims(tmp_path):
     assert len(simNames) == 1
 
     parametersDict = {'relTh': 1.}
-    simNames2 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+    simNames2 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
     simNames2 = sorted(simNames2)
     assert len(simNames2) == 2
     assert simNames2[0] == 'release1HS_d10bdc1e81_ent_dfa'
     assert simNames2[1] == 'release2HS_e2145362b7_ent_dfa'
 
     parametersDict = {'~relTh': 1.}
-    simNames3 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+    simNames3 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
 
     assert len(simNames3) == 0
 
     parametersDict = {'~releaseScenario': 'release1HS'}
-    simNames4 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+    simNames4 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
 
     assert len(simNames4) == 1
     assert simNames4[0] == 'release2HS_e2145362b7_ent_dfa'
 
     parametersDict = {'relTh': 1.}
 
-    simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
     simNames = sorted(simNames)
 
     assert len(simNames) == 2
@@ -239,7 +240,7 @@ def test_filterSims(tmp_path):
 
     parametersDict = {'relTh': [1., 1.5]}
 
-    simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
     simNames = sorted(simNames)
 
     assert len(simNames) == 4
