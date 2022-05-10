@@ -5,6 +5,7 @@
 '''
 
 import logging
+import numpy as np
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -12,6 +13,78 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 
 log = logging.getLogger(__name__)
 
+
+def insertIntoSimName(name , keys, values, index):
+    """ Add keys and values to name, in between parts of name split by index
+
+        Parameters
+        -----------
+        name: str
+            name to extend
+        keys: list
+            list with keys
+        values: list
+            list with values
+        index: str
+            used to split name
+            
+        
+        Returns
+        --------
+        newName: string
+            containing newName, with keys and values inserted after index
+    """
+   
+    # Split according to index 
+    splitName = name.split(index + '_')
+    newPart = '_'
+
+    # Loop through keys
+    for key, value in zip(keys, values):
+        newPart = newPart + str(key) + '_' + str(value) + '_'
+
+    # Put newname back together
+    try:
+        newName = splitName[0] + str(index) + newPart + splitName[1] 
+    except IndexError:
+        log.info(splitName)
+        log.error('Some part is missing. SOMENAME_simHash_XXX is expected')
+        raise
+
+    return(newName)
+
+
+def addInfoToSimName(avalancheDir,csvString=''):
+    """ Add parameterName and value to simNames of simulation dataframe
+
+        E.g used as helper routine for renaming layernames in qgis
+        
+        Parameters
+        -----------
+        avalancheDir: str
+            path to avalanche directory
+        csvString:
+            comma separated list with parameter names, as found in ini file
+            eg. 'mu,tau0,tEnd'
+        
+        Returns
+        --------
+        simDF: dataframe
+            containing index, the parameters and the old and new name
+    """
+    
+    # read the allConfiigurationInfo
+    simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
+    
+    vars = csvString.split(',')
+
+    for var in vars  :
+        simDF['newName'] = simDF.apply(lambda row : insertIntoSimName(row['simName'], vars, row[vars], row.name), axis = 1)
+
+    vars.append('simName')
+    vars.append('newName')
+
+    return(simDF[vars])
 
 def filterSims(avalancheDir, parametersDict, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
@@ -34,7 +107,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     """
 
     # load dataFrame for all configurations
-    simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
 
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
