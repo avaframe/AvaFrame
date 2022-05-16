@@ -37,9 +37,9 @@ ENHANCEMENTS
 - *com1DFA* update benchmark ini files 
 - *com1DFA* documentation for bottom friction and operator splitting
 - *com1DFA* option to redistribute particles after initialisation in order to reduce SPH force
-- *com1DFA* Implement Ata Viscosity and an SPH flow depth computation
+- *com1DFA* Implement Ata Viscosity and an SPH flow thickness computation
 - *com1DFA* new splitting/merging of particles
-- *com1DFA* enable to initialize particles with a non constant flow depth
+- *com1DFA* enable to initialize particles with a non constant flow thickness
 - *com1DFA* remove unmaintained leap frog time stepping scheme 
 - *ana4Prob* add example for performing a parameter variation run with prob analysis
 - *ana4Prob* use default com module setup or specified in local - add variation for prob run
@@ -111,7 +111,7 @@ ENHANCEMENTS
 
 - filtering functions for com1DFA simulations
 - flag to disable print at CFG reading
-- new colormaps for ppr, pfd, pfv
+- new colormaps for ppr, pft, pfv
 - *com1DFA* option to add friction explicitly using the method described in #273 .
 - *com1DFA* Resistance force is  added explicitly.
 - *com1DFA* New method to get the release area

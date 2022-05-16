@@ -22,7 +22,7 @@ a suitable colormap. As inputs, this function requires: ::
 
 By setting the continuous flag, there is the option to return a continuous or discrete colormap.
 Within this function, several default colormaps are available, as for example the ones used
-to visualize flow depth, flow velocity or pressure.
+to visualize flow thickness, flow velocity or pressure.
 These can be initialised by::
 
   from avaframe.out3Plot import plotUtils
@@ -64,7 +64,7 @@ generatePlot
 --------------
 
 :py:func:`out3Plot.outQuickPlot.generatePlot` creates two plots, one plot with four panels, first dataset, second dataset, the absolute difference of the two datasets
-and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
+and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pft: +-1m, pfv:+- 10ms-1).
 The difference plots also include an insert showing the histogram and the cumulative density function of the differences.
 The second plot shows a cross- and along profile cut of the two datasets.
 In addition to the plots, a dictionary is returned with information on the plot paths,
@@ -72,9 +72,9 @@ as well as the statistical measures of the difference plots, such as mean, max a
 Details on the required inputs for this function can be found in :py:func:`out3Plot.outQuickPlot.generatePlot`.
 
 
-.. figure:: _static/avaAlrNullTest__pfd.png
+.. figure:: _static/avaAlrNullTest__pft.png
 
-          Output plot from generatePlot on peak flow depth results
+          Output plot from generatePlot on peak flow thickness results
 
 
 quickPlotBench
@@ -114,9 +114,9 @@ The function returns a list with the file path of the generated plot.
 For further details have a look at :py:func:`out3Plot.outQuickPlot.generateOnePlot`.
 
 
-.. figure:: _static/Profiles_relAlr_null_dfa_7f85c44142_pfd.asc.png
+.. figure:: _static/Profiles_relAlr_null_dfa_7f85c44142_pft.asc.png
 
-          Output plot from generatePlotOne on peak flow depth results
+          Output plot from generatePlotOne on peak flow thickness results
 
 
 

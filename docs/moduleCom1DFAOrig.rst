@@ -102,7 +102,7 @@ Output
 ---------
 The simulation results are saved to: *Outputs/com1DFAOrig* and include:
 
-* raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFAOrig/peakFiles*)
+* raster files of the peak values for pressure, flow thickness and flow velocity (*Outputs/com1DFAOrig/peakFiles*)
 * reports of all simulations (*Outputs/com1DFAOrig/reports*)
 * log files of all simulations
 * experiment log that lists all simulations

@@ -11,7 +11,7 @@ These examples include:
 *  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`runScripts.runAna3AIMEC.runAna3AIMEC`
 *  using aimec to compare the results of two different computational modules (for one simulation at a time hence only one simulation result per
    computational module is passed at a time). :py:func:`runScripts.runAna3AIMECCompMods.runAna3AIMECCompMods`
-*  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations).
+*  using aimec to compare one result parameter (ppr, pft, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations).
    :py:mod:`runScripts.runAna3AIMECIndi`
 
 Here is an example workflow for the full Aimec analysis, as provided in :py:mod:`runScripts/runAna3AIMEC.py`:
@@ -60,9 +60,9 @@ The raster data, initially located on a regular and uniform grid (with coordinat
 (grid points are not uniformly spaced) that follows the avalanche path (with curvilinear coordinates (s,l)).
 This grid can then be "straightened" or "deskewed" in order to plot it in the (s,l) coordinates system.
 
-The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
+The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow thickness) are processed in a way
 that it is possible to compare characteristic values that are directly linked to the flow variables such as
-maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
+maximum peak flow thickness, maximum peak velocity or deduced quantities, for example maximum peak pressure,
 pressure based runout (including direct comparison to possible references, see :ref:`moduleAna3AIMEC:Area indicators`) for different simulations.
 The following figure illustrates the raster transformation process.
 
@@ -92,7 +92,7 @@ Here is the definition of the different indicators and outputs from the AIMEC po
 Mean and max values along path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-All two dimensional field results (for example peak velocities / pressure or flow depth) can be projected into the curvilinear system using
+All two dimensional field results (for example peak velocities / pressure or flow thickness) can be projected into the curvilinear system using
 the previously described method. The maximum and average values of those fields are computed in each cross-section (l direction).
 For example the maximum :math:`A_{cross}^{max}(s)` and average :math:`\bar{A}_{cross}(s)` of the two
 dimensional distribution :math:`A(s,l)` is:
@@ -194,7 +194,7 @@ The transformation information are stored in a ``rasterTransfo`` dictionary (see
 Assign data
 ~~~~~~~~~~~~~
 
-The simulation results (for example peak velocities / pressure or flow depth) are projected on the new grid using the
+The simulation results (for example peak velocities / pressure or flow thickness) are projected on the new grid using the
 transformation information by :py:func:`ana3AIMEC.aimecTools.assignData`. The projected results are stored in the ``newRasters`` dictionary.
 
 This results in the following plot:
@@ -211,15 +211,15 @@ Analyze results
 ~~~~~~~~~~~~~~~~~~~
 
 Calculates the different indicators described in the :ref:`moduleAna3AIMEC:Theory` section for a given threshold. The threshold
-can be based on pressure, flow depth, ... (this needs to be specified in the configuration file).
+can be based on pressure, flow thickness, ... (this needs to be specified in the configuration file).
 Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` for more details).
 
 .. :runout: (x,y) coordinates of the runout as well as the runout length based on P_cross_max and the pressure Threshold
 .. :runoutMean: (x,y) coordinates of the runout as well as the runout length based on P_cross_mean and the pressure Threshold
 .. :AMPP: average maximum peak pressure
 .. :MMPP: maximum maximum peak pressure
-.. :AMD: average maximum flow depth
-.. :MMD: maximum maximum flow depth
+.. :AMD: average maximum flow thickness
+.. :MMD: maximum maximum flow thickness
 .. :elevRel: z coordinate of the release area (first point with max Peak pressure over pressure Threshold)
 .. :deltaH: DeltaZ between the release point and runout point
 .. :relMass: release Mass
@@ -239,7 +239,7 @@ By default, Aimec saves five plots plus as many plots as numerical simulations t
 compare to the reference. The first five ones are :
 
   *  "DomainTransformation" shows the real domain on the left and new domain on the right (:numref:`fig-aimec-domain-transfo`)
-  *  "referenceFields" shows the peak pressure, flow depth and speed in the new domain
+  *  "referenceFields" shows the peak pressure, flow thickness and speed in the new domain
 
     .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
         :width: 90%

@@ -42,7 +42,7 @@ quantities are depth averaged, note that we dropped the overline from** :eq:`hme
 In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
 whereas  :math:`k` and :math:`l` indexes refer to particles.
 
-The quantities velocity, mass and flow depth are also defined on the fixed mesh. It is possible to navigate
+The quantities velocity, mass and flow thickness are also defined on the fixed mesh. It is possible to navigate
 from particle property to mesh property using the interpolation methods described in :ref:`DFAnumerics:Mesh and interpolation`.
 
 
@@ -130,7 +130,7 @@ Surface integration over the cell extent leads to the area of the cell:
 
 Interpolation
 ~~~~~~~~~~~~~~
-In the DFA kernel, mass, flow depth and flow velocity can be defined at particle
+In the DFA kernel, mass, flow thickness and flow velocity can be defined at particle
 location or on the mesh. We need a method to be able to go from particle properties
 to mesh (field) values and from mesh values to particle properties.
 
@@ -181,7 +181,7 @@ Particles to mesh
 """""""""""""""""""
 Going from particle property to mesh value is also based on bilinear interpolation and
 weights but requires a bit more care in order to conserve mass and momentum balance.
-Flow depth and velocity fields are determined on the mesh using, as intermediate step,
+Flow thickness and velocity fields are determined on the mesh using, as intermediate step,
 mass and momentum fields. First, mass and momentum mesh fields can be evaluated by
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
@@ -199,7 +199,7 @@ the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
 The contribution of each particle to the different mesh points is summed up to
 finally give the mesh value. This method ensures that the total mass and
 momentum of the particles is preserved (the mass and momentum on the mesh will
-sum up to the same total). Flow depth and velocity mesh fields can then be deduced
+sum up to the same total). Flow thickness and velocity mesh fields can then be deduced
 from the mass and momentum fields and the cell area (actual area of each grid cell,
 not the projected area).
 
@@ -207,10 +207,10 @@ not the projected area).
 Neighbor search
 ------------------
 
-The lateral pressure forces are computed via the SPH flow depth gradient.
+The lateral pressure forces are computed via the SPH flow thickness gradient.
 This method is based on particle interactions within a certain neighborhood, meaning that it
 is necessary to keep track of all the particles within the neighborhood of each particle.
-Computing the gradient of the flow depth at a particle location, requires to
+Computing the gradient of the flow thickness at a particle location, requires to
 find all the particles in its surrounding. Considering the number of particles and
 their density, computing the gradient ends up in computing a lot of
 interactions and represents the most computationally expensive part of the dense
@@ -260,7 +260,7 @@ on a 2D surface living in a 3D world.
 
 Method
 ~~~~~~~
-The SPH method is used to express a quantity (the flow depth in our case) and
+The SPH method is used to express a quantity (the flow thickness in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
 In the case of depth integrated equations (for example SWE), a scalar function
@@ -271,7 +271,7 @@ In the case of depth integrated equations (for example SWE), a scalar function
     \mathbf{\nabla}f_{k} &= -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
     :label: sph formulation
 
-Which gives for the flow depth:
+Which gives for the flow thickness:
 
 .. math::
     \overline{h}_{k} &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
@@ -594,7 +594,7 @@ Forces discretization
 Lateral force
 ~~~~~~~~~~~~~~
 
-The SPH method is introduced when expressing the flow depth gradient for each
+The SPH method is introduced when expressing the flow thickness gradient for each
 particle as a weighted sum of its neighbors
 (:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in :math:`p_k` is dropped
 (same applies for :math:`p_l`).
@@ -616,7 +616,7 @@ From equation :eq:`momentum-balance6`
     \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}+\frac{\Delta{s}}{2}}\right)
     = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{k}
 
-The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
+The product of the average flow thickness :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
 reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
 
 .. math::
@@ -647,7 +647,7 @@ reads:
 Added resistance force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
-is a function of the average flow depth :math:`\overline{h}_{k}`):
+is a function of the average flow thickness :math:`\overline{h}_{k}`):
 
 .. math::
     F_{k,i}^{\text{res}}
