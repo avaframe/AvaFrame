@@ -27,7 +27,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
 
         This function creates two plots, one plot with four panels with, first dataset, second dataset,
         the absolute difference of the two datasets and the absolute difference capped to a smaller range
-        of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
+        of differences (ppr: +- 100kPa, pft: +-1m, pfv:+- 10ms-1).
         The difference plots also include an insert showing the histogram and the cumulative density function
         of the differences. The second plot shows a cross- and along profile cut of the two datasets.
         The folder and simulation name of the datasets has to be passed to the function.
@@ -47,7 +47,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
                 cellSize: float
                     cell size
                 suffix: str
-                    optional information about the data type compared ('ppr', 'pfd', 'pfv', 'P', 'FV', 'FD', 'Vx'...)
+                    optional information about the data type compared ('ppr', 'pft', 'pfv', 'P', 'FV', 'FT', 'Vx'...)
         avaName : str
             name of avalanche
         outDir : pathlib path
@@ -196,7 +196,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
         axin4.patch.set_alpha(0.0)
 
-        centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin3)
+        centiles = sPlot.plotHistCDFTiff(dataDiffPlot, axin4, axin3)
         ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
                  (centiles[0], unit, centiles[1], unit),
                  horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)
@@ -398,7 +398,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
         locVal : float
             location of cross profile
         resType : str
-            result parameter type e.g. 'pfd' - optional
+            result parameter type e.g. 'pft' - optional
 
     """
 

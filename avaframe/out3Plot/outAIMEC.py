@@ -136,7 +136,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     rasterTransfo: dict
         domain transformation information
     resAnalysis: dict
-        results from Aimec analysis (for ppr, pfd and pfv):
+        results from Aimec analysis (for ppr, pft and pfv):
             PPRCrossMax: numpy array with max peak field along path for each file to analyse
             PPRCrossMean: numpy array with mean peak field along path for each file to analyse
     cfgSetup : configparser
@@ -161,10 +161,10 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     # prepare for plot
     title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
     unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
-    peakList = ['ppr', 'pfd', 'pfv']
+    peakList = ['ppr', 'pft', 'pfv']
 
     ############################################
-    # Figure: Pressure depth speed
+    # Figure: Pressure thickness speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
@@ -381,7 +381,7 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
 
 def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     """
-    Plot and save the Peak Pressure Peak Flow depth and Peak speed
+    Plot and save the Peak Pressure Peak Flow thickness and Peak speed
     fields after coord transfo
 
     Parameters
@@ -392,7 +392,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
         results from Aimec analysis:
             numpy array with the 'runout' for each simulation and the 'thresholdValue'
     newRasters: dict
-        dictionary with new (s, l) raster for ppr, pfd and pfd
+        dictionary with new (s, l) raster for ppr, pft and pft
     pathDict : dict
         dictionary with path to data to analyze
     """
@@ -407,7 +407,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     rasterdataPres = newRasters['newRefRasterPPR']
-    rasterdataDepth = newRasters['newRefRasterPFD']
+    rasterdataDepth = newRasters['newRefRasterPFT']
     rasterdataSpeed = newRasters['newRefRasterPFV']
     runout = resAnalysisDF.loc[refSimulationName, 'sRunout']
 
@@ -415,14 +415,14 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     # prepare for plot
     Cmap = [pU.cmapPres, pU.cmapDepth, pU.cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
-    Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
+    Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpft'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
     Data[1] = rasterdataDepth
     Data[2] = rasterdataSpeed
 
     ############################################
-    # Figure: Pressure depth speed
+    # Figure: Pressure thickness speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
@@ -590,7 +590,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
         # print contour lines only if the thre threshold is reached
         L, S = np.meshgrid(l, s[indStartOfRunout:])
-        colorsP = pU.colorMaps['pfd']['colors'][1:]
+        colorsP = pU.colorMaps['pft']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
             contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             # generate corresponding labels
@@ -626,7 +626,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             ax3 = plt.subplot2grid((3, 3), (2, 1))
             ax4 = plt.subplot2grid((3, 3), (2, 2))
             # there is data to compare in the run out area
-            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
+            centiles = sPlot.plotHistCDFTiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
                                              '%s diff CDF (95%% and 99%% centiles)' % name])
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
@@ -683,7 +683,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
         resAnalysisDF['FP'] = resAnalysisDF['FP'] / areaSum
         resAnalysisDF['TN'] = resAnalysisDF['TN'] / areaSum
     # do some statistics
-    forStats = ['xRunout', 'yRunout', 'sRunout', 'elevRel', 'deltaH', 'maxpprCrossMax', 'maxpfdCrossMax',
+    forStats = ['xRunout', 'yRunout', 'sRunout', 'elevRel', 'deltaH', 'maxpprCrossMax', 'maxpftCrossMax',
                 'maxpfvCrossMax', 'TP', 'FN', 'FP', 'TN']
     if flagMass:
         forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']

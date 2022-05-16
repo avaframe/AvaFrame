@@ -37,7 +37,7 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     # Run dense flow with coulomb friction
     # here is an example with com1DFA but another DFA computational module can be used
-    # as long as it produces some FV, FD and FM results
+    # as long as it produces some FV, FT and FM results
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
     dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=energyLineTestCfgFile)
 
@@ -135,7 +135,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
-    cbar2.ax.set_title('[' + pU.cfgPlotUtils['unitFD'] + ']', pad=10)
+    cbar2.ax.set_title('[' + pU.cfgPlotUtils['unitFT'] + ']', pad=10)
     cbar2.ax.set_ylabel('Center of mass velocity altitude')
 
     # add alpha line
@@ -176,7 +176,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude extrapolation')
     cbar3 = ax3.figure.colorbar(scat, ax=ax3, use_gridspec=True)
-    cbar3.ax.set_title('[' + pU.cfgPlotUtils['unitFD'] + ']', pad=10)
+    cbar3.ax.set_title('[' + pU.cfgPlotUtils['unitFT'] + ']', pad=10)
     cbar3.ax.set_ylabel('Center of mass velocity altitude')
 
     # add alpha line

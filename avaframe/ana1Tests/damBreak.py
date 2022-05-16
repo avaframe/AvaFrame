@@ -4,7 +4,7 @@ following the derivations in Faccanoni and Mangeney (2012), Test 2, Case 1.2.
 but scaled up in size.
 
 Here the instantanous release of fluid from rest is described using incompressible,
-depth-avaeraged mass and momentum conservation equations and a Coulomb-tpye friction law.
+thickness-avaeraged mass and momentum conservation equations and a Coulomb-tpye friction law.
 """
 
 import numpy as np
@@ -147,7 +147,7 @@ def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FT', 'FV', 'Vx', 'Vy', 'Vz'],
                                                                simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
         if cfgDam['DAMBREAK']['tSave'] == '':
@@ -245,7 +245,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
         hDamPlus = np.interp(xDamPlus, xAna, hAna[:, indTime])
         uDamPlus = np.interp(xDamPlus, xAna, uAna[:, indTime])
         # get numirical sol on good interval
-        hNumPlus = field['FD'][nRowMin:nRowMax, nColMid:nColMax]
+        hNumPlus = field['FT'][nRowMin:nRowMax, nColMid:nColMax]
         dataNumV = DFAtools.scalProd(field['Vx'], field['Vy'], field['Vz'], np.cos(phiRad), 0, -np.sin(phiRad))
         uNumPlus = dataNumV[nRowMin:nRowMax, nColMid:nColMax]
 

@@ -71,7 +71,7 @@ while isinstance(value, float):
 
     # fetch fields for desired time step
     timeStep = Tsave[ind_t]
-    fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD'], simName='',
+    fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FT'], simName='',
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStep)
 
     # get particle parameters

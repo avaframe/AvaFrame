@@ -390,7 +390,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
         cfg : dict
             configuration read from ini file that has been used for the com1DFAOrig simulation
         addTSteps : bool
-            if True: first and last time step of flow depth are exported
+            if True: first and last time step of flow thickness are exported
 
     """
 
@@ -426,8 +426,8 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     for k in range(sNo):
         pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
-                                '%s_pfd.asc' % logDict['simName'][k])
-        pathTo = outDirPF / ('%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+                                '%s_pft.asc' % logDict['simName'][k])
+        pathTo = outDirPF / ('%s_%.05f_pft.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
         if addTSteps is True:
             pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
@@ -529,7 +529,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         -------
         dataDF : dataFrame
             dataframe with full file path, file name, release area scenario, simulation type (null, entres, etc.),
-            model type (dfa, ref, etc.), simID, result type (ppr, pfd, etc.), simulation name,
+            model type (dfa, ref, etc.), simID, result type (ppr, pft, etc.), simulation name,
             cell size and optional name of avalanche, optional time step
     """
 
@@ -612,7 +612,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
         dataDF : dataFrame
             dataframe with for each simulation, the full file path, file name, release area scenario,
             simulation type (null, entres, etc.), model type (dfa, ref, etc.), simID,
-            path to result files (ppr, pfd, etc.), simulation name,
+            path to result files (ppr, pft, etc.), simulation name,
             cell size and optional name of avalanche, optional time step
         resTypeList: list
             list of res types available

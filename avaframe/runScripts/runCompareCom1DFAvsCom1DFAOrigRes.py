@@ -33,7 +33,7 @@ simType = 'res'
 values = simType
 parameter = 'simType'
 # Which result types for comparison plots
-outputVariable = ['ppr', 'pfd', 'pfv']
+outputVariable = ['ppr', 'pft', 'pfv']
 # aimec settings
 aimecResType = 'ppr'
 aimecThresholdValue = '1'

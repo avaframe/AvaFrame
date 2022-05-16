@@ -85,7 +85,7 @@ def test_checkIfFileExists():
     dirPath = pathlib.Path(__file__).parents[0]
     avaTestName = 'avaHockeyChannelPytest'
     testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
-    pathData = testPath / 'Outputs' / 'com1DFAOri' / 'peakFiles' / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc'
+    pathData = testPath / 'Outputs' / 'com1DFAOri' / 'peakFiles' / 'release1HS_ent_dfa_67dc2dc10a_pft.asc'
 
     # call function to be tested
     with pytest.raises(FileNotFoundError) as e:
@@ -168,7 +168,7 @@ def test_exportcom1DFAOrigOutput(tmp_path):
     os.makedirs(outDir)
 
     # copy inut data from benchmarks folder to tmp_path and rename correctly
-    resType = ['ppr', 'pfd', 'pfv']
+    resType = ['ppr', 'pft', 'pfv']
     for m in resType:
         if m == 'pfv':
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
@@ -345,5 +345,5 @@ def test_fetchFlowFields():
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
-    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_pfd'
+    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_pft'
     assert len(flowFields) == 6

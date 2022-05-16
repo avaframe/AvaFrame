@@ -865,9 +865,9 @@ def test_appendFieldsParticles():
         [0., 4., 0.]), 'm': np.asarray([0., 4., 0.])}]
     particles = {'x': np.asarray([0., 5., 0.]), 'y': np.asarray(
         [0., 5., 0.]), 'm': np.asarray([0., 4., 0.])}
-    fields = {'ppr': np.ones((3, 3)), 'pfd': np.ones(
-        (3, 3)), 'pfv': np.ones((3, 3)), 'FD': np.ones((3, 3))}
-    resTypes = ['ppr', 'pfv', 'pfd', 'particles']
+    fields = {'ppr': np.ones((3, 3)), 'pft': np.ones(
+        (3, 3)), 'pfv': np.ones((3, 3)), 'FT': np.ones((3, 3))}
+    resTypes = ['ppr', 'pfv', 'pft', 'particles']
 
     # call function to be tested
     fieldsList, particlesList = com1DFA.appendFieldsParticles(
@@ -876,14 +876,14 @@ def test_appendFieldsParticles():
 
     assert np.array_equal(fieldsList[1]['ppr'], np.ones((3, 3)))
     assert np.array_equal(fieldsList[1]['pfv'], np.ones((3, 3)))
-    assert np.array_equal(fieldsList[1]['pfd'], np.ones((3, 3)))
+    assert np.array_equal(fieldsList[1]['pft'], np.ones((3, 3)))
     assert resTypes[0:3] == list(fieldsList[1].keys())
     assert len(fieldsList) == 2
     assert np.array_equal(particlesList[1]['x'], particles['x'])
     assert np.array_equal(particlesList[1]['y'], particles['y'])
     assert np.array_equal(particlesList[1]['m'], particles['m'])
     assert ['x', 'y', 'm'] == list(particlesList[1].keys())
-    assert fieldsList[1].get('FD') is None
+    assert fieldsList[1].get('FT') is None
 
 
 def test_releaseSecRelArea():
@@ -931,9 +931,9 @@ def test_releaseSecRelArea():
     particlesIn['mTot'] = np.sum(particlesIn['m'])
     particlesIn['t'] = 1.0
     particlesIn['nPart'] = 2.
-    fieldsFD = np.zeros((demHeader['nrows'], demHeader['ncols']))
-    fieldsFD[7:9, 7:9] = 1.0
-    fields = {'FD': fieldsFD}
+    fieldsFT = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    fieldsFT[7:9, 7:9] = 1.0
+    fields = {'FT': fieldsFT}
     zPartArray0 = np.asarray([2., 3.])
 
     # call function to be tested
@@ -950,10 +950,10 @@ def test_releaseSecRelArea():
     particlesIn2['mTot'] = np.sum(particlesIn2['m'])
     particlesIn2['t'] = 1.0
     particlesIn2['nPart'] = 3
-    fieldsFD2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
-    fieldsFD2[7:9, 7:9] = 1.0
-    fieldsFD2[9, 9] = 0.4
-    fields2 = {'FD': fieldsFD2}
+    fieldsFT2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    fieldsFT2[7:9, 7:9] = 1.0
+    fieldsFT2[9, 9] = 0.4
+    fields2 = {'FT': fieldsFT2}
     zPartArray0 = np.asarray([1., 2., 3])
 
     particles2, zPartArray0New2 = com1DFA.releaseSecRelArea(
@@ -1242,8 +1242,8 @@ def test_exportFields(tmp_path):
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'resType': 'ppr|pfd|FD'}
-    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv'}
+    cfg['GENERAL'] = {'resType': 'ppr|pft|FT'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     Tsave = [0, 10, 15, 25, 40]
     demHeader = {}
     demHeader['cellsize'] = 1
@@ -1256,15 +1256,15 @@ def test_exportFields(tmp_path):
     outDir = pathlib.Path(tmp_path, 'testDir')
     outDir.mkdir()
     logName = 'simNameTest'
-    FD = np.zeros((5, 5))
-    pfd = np.zeros((5, 5))
+    FT = np.zeros((5, 5))
+    pft = np.zeros((5, 5))
     pfv = np.zeros((5, 5))
     ppr = np.zeros((5, 5))
-    fields1 = {'ppr': ppr+1, 'pfd': pfd+1, 'pfv': pfv+1, 'FD': FD+1}
-    fields2 = {'ppr': ppr+2, 'pfd': pfd+2, 'pfv': pfv+2, 'FD': FD+2}
-    fields3 = {'ppr': ppr+4, 'pfd': pfd+4, 'pfv': pfv+4, 'FD': FD+4}
-    fields4 = {'ppr': ppr+5, 'pfd': pfd+5, 'pfv': pfv+5, 'FD': FD+5}
-    fields5 = {'ppr': ppr+6, 'pfd': pfd+6, 'pfv': pfv+6, 'FD': FD+6}
+    fields1 = {'ppr': ppr+1, 'pft': pft+1, 'pfv': pfv+1, 'FT': FT+1}
+    fields2 = {'ppr': ppr+2, 'pft': pft+2, 'pfv': pfv+2, 'FT': FT+2}
+    fields3 = {'ppr': ppr+4, 'pft': pft+4, 'pfv': pfv+4, 'FT': FT+4}
+    fields4 = {'ppr': ppr+5, 'pft': pft+5, 'pfv': pfv+5, 'FT': FT+5}
+    fields5 = {'ppr': ppr+6, 'pft': pft+6, 'pfv': pfv+6, 'FT': FT+6}
     fieldsList = [fields1, fields2, fields3, fields4, fields5]
 
     # call function to be tested
@@ -1280,25 +1280,25 @@ def test_exportFields(tmp_path):
         fieldsListTest.append(f.name)
 
     field1 = fieldDir / 'simNameTest_ppr.asc'
-    field2 = fieldDirTSteps / 'simNameTest_pfd_t10.00.asc'
+    field2 = fieldDirTSteps / 'simNameTest_pft_t10.00.asc'
     fieldFinal = np.loadtxt(field1, skiprows=6)
     field10 = np.loadtxt(field2, skiprows=6)
     pprFinal = ppr+0.006
-    pfdt10 = pfd+2
+    pftt10 = pft+2
 
     print('field1', fieldFinal)
     print('pprFinal', pprFinal)
     print('fields', fieldsListTest)
 
     assert np.array_equal(fieldFinal, pprFinal)
-    assert np.array_equal(field10, pfdt10)
+    assert np.array_equal(field10, pftt10)
     assert len(fieldsListTest) == 17
 
     # call function to be tested
     outDir2 = pathlib.Path(tmp_path, 'testDir2')
     outDir2.mkdir()
     cfg['GENERAL']['resType'] = ''
-    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir2, logName)
 
     # read fields
@@ -1349,8 +1349,8 @@ def test_initializeFields():
     assert np.sum(fields['Vx']) == 0.0
     assert np.sum(fields['Vy']) == 0.0
     assert np.sum(fields['Vz']) == 0.0
-    assert np.sum(fields['pfd']) != 0.0
-    assert np.sum(fields['FD']) != 0.0
+    assert np.sum(fields['pft']) != 0.0
+    assert np.sum(fields['FT']) != 0.0
     assert np.sum(fields['FM']) != 0.0
 
 
@@ -1496,7 +1496,7 @@ def test_initializeSimulation():
     assert np.array_equal(particles['y'], np.asarray(
         [6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
     assert np.sum(fields['pfv']) == 0.0
-    assert np.sum(fields['pfd']) != 0.0
+    assert np.sum(fields['pft']) != 0.0
     assert dem['header']['xllcenter'] == 0.0
     assert dem['header']['yllcenter'] == 0.0
     assert dem['originalHeader']['xllcenter'] == 1.0
@@ -1531,10 +1531,10 @@ def test_initializeSimulation():
 
     print('secRel', particles2['secondaryReleaseInfo'])
     print('particles', particles2)
-    print('fields', fields2['pfd'])
+    print('fields', fields2['pft'])
 
     assert np.sum(fields2['pfv']) == 0.0
-    assert np.sum(fields2['pfd']) != np.sum(fields['pfd'])
+    assert np.sum(fields2['pft']) != np.sum(fields['pft'])
     assert dem2['header']['xllcenter'] == 0.0
     assert dem2['header']['yllcenter'] == 0.0
     assert dem2['originalHeader']['xllcenter'] == 1.0
@@ -1600,7 +1600,7 @@ def test_runCom1DFA(tmp_path, caplog):
 
     print(simDF['simName'])
     outDir = avaDir / 'Outputs' / 'com1DFA'
-    for ext in ['ppr', 'pfd', 'pfv']:
+    for ext in ['ppr', 'pft', 'pfv']:
         assert (outDir / 'peakFiles' / ('%s_%s.asc' % (simDF['simName'][0], ext))).is_file()
         assert (outDir / 'peakFiles' / ('%s_%s.asc' % (simDF['simName'][1], ext))).is_file()
 

@@ -428,7 +428,7 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
   hRes: float
       resistance height
   h : float
-      particle flow depth
+      particle flow thickness
   areaPart : float
       particle area
   rho : float
@@ -474,7 +474,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
   m : float
       mass of the particle
   h : float
-      flow depth of the particle
+      flow thickness of the particle
   dt : float
       time step
   rho : float
@@ -918,7 +918,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 @cython.wraparound(False)
 @cython.cdivision(True)
 def updateFieldsC(cfg, particles, dem, fields):
-  """ update fields and particles fow depth
+  """ update fields and particles flow thickness
 
   Cython implementation
 
@@ -961,13 +961,13 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:] travelAngleArray = particles['travelAngle']
   cdef double[:, :] PFV = fields['pfv']
   cdef double[:, :] PP = fields['ppr']
-  cdef double[:, :] PFD = fields['pfd']
+  cdef double[:, :] PFT = fields['pft']
   cdef double[:, :] PTA = fields['pta']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
-  cdef double[:, :] FDBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FTBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearX = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearY = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearZ = np.zeros((nrows, ncols))
@@ -1016,7 +1016,7 @@ def updateFieldsC(cfg, particles, dem, fields):
       if m > 0:
         # TODO: here we devide by the area of the vertex, would it not make
         # more sense to devide by the area of the cell in the previous loop?
-        FDBilinear[j, i] = m / (areaRaster[j, i] * rho)
+        FTBilinear[j, i] = m / (areaRaster[j, i] * rho)
         VXBilinear[j, i] = MomBilinearX[j, i]/m
         VYBilinear[j, i] = MomBilinearY[j, i]/m
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
@@ -1026,8 +1026,8 @@ def updateFieldsC(cfg, particles, dem, fields):
         PFV[j, i] = VBilinear[j, i]
       if PBilinear[j, i] > PP[j, i]:
         PP[j, i] = PBilinear[j, i]
-      if FDBilinear[j, i] > PFD[j, i]:
-        PFD[j, i] = FDBilinear[j, i]
+      if FTBilinear[j, i] > PFT[j, i]:
+        PFT[j, i] = FTBilinear[j, i]
       if travelAngleField[j, i] > PTA[j, i]:
         PTA[j, i] = travelAngleField[j, i]
 
@@ -1038,11 +1038,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['Vy'] = np.asarray(VYBilinear)
   fields['Vz'] = np.asarray(VZBilinear)
   fields['P'] = np.asarray(PBilinear)
-  fields['FD'] = np.asarray(FDBilinear)
+  fields['FT'] = np.asarray(FTBilinear)
   fields['TA'] = np.asarray(travelAngleField)
   fields['pfv'] = np.asarray(PFV)
   fields['ppr'] = np.asarray(PP)
-  fields['pfd'] = np.asarray(PFD)
+  fields['pft'] = np.asarray(PFT)
   fields['pta'] = np.asarray(PTA)
 
 
@@ -1050,7 +1050,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     x = xArray[j]
     y = yArray[j]
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-    hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FDBilinear)
+    hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FTBilinear)
     hBB[j] = hbb
 
   particles['h'] = np.asarray(hBB)

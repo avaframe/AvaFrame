@@ -24,17 +24,17 @@ def test_generatePlot(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
     outDir = tmp_path
 
-    data1File = avaDir / 'release1HS_entres_ref_0.15500_pfd.asc'
-    data2File = avaDir / 'release2HS_entres_ref_0.15500_pfd.asc'
+    data1File = avaDir / 'release1HS_entres_ref_0.15500_pft.asc'
+    data2File = avaDir / 'release2HS_entres_ref_0.15500_pft.asc'
     data1 = np.loadtxt(data1File, skiprows=6)
     data2 = np.loadtxt(data2File, skiprows=6)
     cellSize = 5.
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'showPlot': False}
 
-    dataDict = {'data1': data1, 'data2': data2, 'name1': 'release1HS_entres_ref_0.15500_pfd',
-                'name2': 'release2HS_entres_ref_0.15500_pfd.asc', 'compareType': 'compToRef',
-                'simName': 'release1HS_entres_ref_0.15500', 'suffix': 'pfd', 'cellSize': cellSize, 'unit': 'm'}
+    dataDict = {'data1': data1, 'data2': data2, 'name1': 'release1HS_entres_ref_0.15500_pft',
+                'name2': 'release2HS_entres_ref_0.15500_pft.asc', 'compareType': 'compToRef',
+                'simName': 'release1HS_entres_ref_0.15500', 'suffix': 'pft', 'cellSize': cellSize, 'unit': 'm'}
 
     # Initialise plotList
     rel = 'release1HS'
@@ -83,22 +83,22 @@ def test_quickPlotBench(tmp_path):
     simNameRef = 'release1HS_entres_ref_0.15500'
     simNameComp = 'release2HS_entres_ref_0.15500'
 
-    refFile = inputDir / (simNameRef + '_pfd.asc')
-    simFile = inputDir / (simNameComp + '_pfd.asc')
-    refFileTest = refDir / (simNameRef + '_pfd.asc')
-    simFileTest = compDir / (simNameComp + '_pfd.asc')
+    refFile = inputDir / (simNameRef + '_pft.asc')
+    simFile = inputDir / (simNameComp + '_pft.asc')
+    refFileTest = refDir / (simNameRef + '_pft.asc')
+    simFileTest = compDir / (simNameComp + '_pft.asc')
 
     shutil.copy(refFile, refFileTest)
     shutil.copy(simFile, simFileTest)
 
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'showPlot': 'False'}
-    suffix = 'pfd'
+    suffix = 'pft'
 
     # call function to be tested
     plotDict = oP.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix)
 
-    testPath = avaDir / 'Outputs' / 'out3Plot' / ('Diff_avaBench_%s_pfd.png' % simNameComp)
+    testPath = avaDir / 'Outputs' / 'out3Plot' / ('Diff_avaBench_%s_pft.png' % simNameComp)
 
     assert (plotDict['difference'][0] == 8.0)
     assert (plotDict['difference'][1] == 0.5)
@@ -117,19 +117,19 @@ def test_generateOnePlot(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
     outDir = pathlib.Path(tmp_path)
 
-    data1File = avaDir / 'release1HS_entres_ref_0.15500_pfd.asc'
+    data1File = avaDir / 'release1HS_entres_ref_0.15500_pft.asc'
     data1 = np.loadtxt(data1File, skiprows=6)
     cellSize = 5.
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'showPlot': False}
 
-    dataDict = {'data1': data1, 'name1': 'release1HS_entres_ref_0.15500_pfd', 'cellSize': cellSize}
+    dataDict = {'data1': data1, 'name1': 'release1HS_entres_ref_0.15500_pft', 'cellSize': cellSize}
 
     # Initialise plotList
-    plotDict = {'resType': 'pfd', 'axis': 'x', 'location': 25, 'plots': []}
+    plotDict = {'resType': 'pft', 'axis': 'x', 'location': 25, 'plots': []}
     plotDictNew = oP.generateOnePlot(dataDict, outDir, cfg, plotDict)
 
-    assert plotDictNew['plots'] == [outDir / 'Profiles_release1HS_entres_ref_0.15500_pfd.png']
+    assert plotDictNew['plots'] == [outDir / 'Profiles_release1HS_entres_ref_0.15500_pft.png']
 
 
 def test_quickPlotOne(tmp_path):
@@ -141,8 +141,8 @@ def test_quickPlotOne(tmp_path):
     dirPath = pathlib.Path(__file__).parents[0]
     testDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
     avaDir = pathlib.Path(tmp_path, 'avaPlot')
-    testFile = avaDir / 'release1HS_entres_ref_0.15500_pfd.asc'
-    data1File = testDir / 'release1HS_entres_ref_0.15500_pfd.asc'
+    testFile = avaDir / 'release1HS_entres_ref_0.15500_pft.asc'
+    data1File = testDir / 'release1HS_entres_ref_0.15500_pft.asc'
     fU.makeADir(avaDir)
     shutil.copy(data1File, testFile)
     cfg = configparser.ConfigParser()
@@ -153,4 +153,4 @@ def test_quickPlotOne(tmp_path):
     # to test
     plotDictNew = oP.quickPlotOne(avaDir, data1File, cfg, locVal, axis, resType='')
 
-    assert plotDictNew['plots'] == [avaDir / 'out3Plot' / 'Profiles_release1HS_entres_ref_0.15500_pfd.png']
+    assert plotDictNew['plots'] == [avaDir / 'out3Plot' / 'Profiles_release1HS_entres_ref_0.15500_pft.png']

@@ -39,7 +39,7 @@ damBreakCfg = pathlib.Path(avalancheDir, 'Inputs', 'damBreak_com1DFACfg.ini')
 cfg = cfgUtils.getModuleConfig(com1DFA, damBreakCfg)
 cfgGen = cfg['GENERAL']
 
-# Load flow depth from analytical solution
+# Load flow thickness from analytical solution
 solDam = damBreak.damBreakSol(avalancheDir, cfgMain, cfg, outDirTest)
 
 # create dataFrame of results

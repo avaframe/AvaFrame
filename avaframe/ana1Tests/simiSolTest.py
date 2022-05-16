@@ -398,7 +398,7 @@ def odeSolver(solver, dt, t_end, solSimi):
 
 
 def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
-    """ get flow depth from f and g solutions
+    """ get flow thickness from f and g solutions
         Parameters
         -----------
         solSimi: dictionary
@@ -524,7 +524,7 @@ def computeXC(solSimi, x1, y1, i, L_x, AminusC):
 
 
 def getSimiSolParameters(solSimi, header, indTime, cfgSimi, Hini, gravAcc):
-    """ get flow depth, flow velocity and center location of flow mass of similarity solution
+    """ get flow thickness, flow velocity and center location of flow mass of similarity solution
         for required time step
 
         Parameters
@@ -538,14 +538,14 @@ def getSimiSolParameters(solSimi, header, indTime, cfgSimi, Hini, gravAcc):
         cfg: dict
             configuration
         Hini: float
-            initial release depth
+            initial release thickness
         gravAcc: float
             gravity acceleration
 
         Returns
         --------
         simiDict: dict
-            dictionary of similiarty solution with flow depth, flow velocity,
+            dictionary of similiarty solution with flow thickness, flow velocity,
             and center location in x for required time step
         """
 
@@ -630,7 +630,7 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FT', 'FV', 'Vx', 'Vy', 'Vz'],
                                                                simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
         if cfgSimi['SIMISOL']['tSave'] == '':
@@ -694,9 +694,9 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         Returns
         --------
         hErrorL2Array: numpy array
-            L2 error on flow depth for saved time steps
+            L2 error on flow thickness for saved time steps
         hErrorLMaxArray: numpy array
-            LMax error on flow depth for saved time steps
+            LMax error on flow thickness for saved time steps
         vErrorL2Array: numpy array
             L2 error on flow velocity for saved time steps
         vErrorLMaxArray: numpy array
@@ -723,7 +723,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         cellSize = fieldHeader['cellsize']
         cosAngle = simiDict['cos']
         hSimi = simiDict['hSimi']
-        hNumerical = field['FD']
+        hNumerical = field['FT']
         vhSimi = {'fx': hSimi*simiDict['vxSimi'], 'fy': hSimi*simiDict['vySimi'], 'fz': hSimi*simiDict['vzSimi']}
         vhNumerical = {'fx': hNumerical*field['Vx'], 'fy': hNumerical*field['Vy'], 'fz': hNumerical*field['Vz']}
         hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
@@ -855,7 +855,7 @@ def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
         Returns
         --------
         com1DFASol: dict
-            dictionary with location of particles, flow depth, flow velocity,
+            dictionary with location of particles, flow thickness, flow velocity,
             fields, and index for x or y cut of domain at the required time step
 
     """

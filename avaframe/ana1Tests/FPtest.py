@@ -99,7 +99,7 @@ def postProcessFPcom1DFA(cfgGen, particles, fields, ind_t, relDict):
 
 
 def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
-    """ Plot flow depth and gradient for FlatPlane simulation results
+    """ Plot flow thickness and gradient for FlatPlane simulation results
 
         Parameters
         -----------
@@ -145,21 +145,21 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
-    ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][100,:], '--b', label='field flow depth')
-    ax1.plot(r, h, color='b', marker='.', linestyle='None', label='particle flow depth')
+    ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FT'][100,:], '--b', label='field flow thickness')
+    ax1.plot(r, h, color='b', marker='.', linestyle='None', label='particle flow thickness')
 
     # ax2.plot(r, grad, color='b', marker='.', linestyle='None')
     ax2.plot(r, gradNorm, color='k', marker='o', linestyle='None', label='SPH gradient used')
     # ax2.plot(r, v, color='b', marker='.', linestyle='None')
 
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), relTh[100, :], '--k')
-    ax1.plot(r, H0-mu*(r-deltaX), '-k', label='initial expected flow depth')
+    ax1.plot(r, H0-mu*(r-deltaX), '-k', label='initial expected flow thickness')
     ax1.set_xlabel('r in [m]')
-    ax1.set_title('flow depth, t=%.2f s' % (Tsave))
+    ax1.set_title('flow thickness, t=%.2f s' % (Tsave))
 
     ax2.plot(r, mu*np.ones(np.shape(r)), '-k', label='friction threashold')
     ax2.set_xlabel('r in [m]')
-    ax2.set_title('Gradient of the flow depth')
+    ax2.set_title('Gradient of the flow thickness')
     ax1.legend()
     ax2.legend()
 

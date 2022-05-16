@@ -124,14 +124,14 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     # delete mIni and areaIni key from dict
     del particles['mIni']
     del particles['areaIni']
-    # TODO: note particle flow depth is not updated- this is done in updateFieldsC in the next step as the flow
-    # depth is currently computed from the mass and an interpolation on the grid
+    # TODO: note particle flow thickness is not updated- this is done in updateFieldsC in the next step as the flow
+    # thickness is currently computed from the mass and an interpolation on the grid
 
     # for final configuration get neighbors and update fields
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
 
-    fields['pfd'] = fields['FD']
+    fields['pft'] = fields['FT']
     fields['ppr'] = fields['P']
     fields['pfv'] = fields['FV']
 
@@ -194,7 +194,7 @@ def resetMassPerParticle(cfg, particles, dem, relRaster, relThField):
 
         hParticles = np.empty(0)
         mParticles = np.empty(0)
-        # add option to get new mass of particles from bilinear interpolation of flow depth
+        # add option to get new mass of particles from bilinear interpolation of flow thickness
         hParticles = DFAfunC.projOnRaster(particles['x'], particles['y'], relRaster, dem['header']['cellsize'], ncols,
                      nrows, cfg['GENERAL'].getint('interpOption'))
         hParticles = np.asarray(hParticles)

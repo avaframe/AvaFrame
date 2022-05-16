@@ -97,9 +97,9 @@ for key in peakValues:
     print('peakValues:', key, peakValues[key])
 
 # ++++++++++++++ Plot max values +++++++++++++++++
-sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir,
+sPlot.plotValuesScatter(peakValues, 'pft', 'pfv', cfgStats['GENERAL'], avaDir,
                         statsMeasure='max', flagShow=flagShow)
-sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir,
+sPlot.plotValuesScatterHist(peakValues, 'pft', 'pfv', cfgStats['GENERAL'], avaDir,
                             statsMeasure='max', flagShow=flagShow, flagHue=True)
 
 log.info('Plots have been saved to: %s' % outDir)

@@ -122,7 +122,7 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig1, ax1 = plotPosition(
-        fig1, ax1, partEnd, demOri, fieldEnd['FD'], pU.cmapPres, 'm', plotPart=False)
+        fig1, ax1, partEnd, demOri, fieldEnd['FT'], pU.cmapPres, 'm', plotPart=False)
     fig2, ax2 = plotPosition(
         fig2, ax2, partEnd, demOri, fieldEnd['FV'], pU.cmapPres, 'm/s', plotPart=False)
     fig3, ax3 = plotPosition(

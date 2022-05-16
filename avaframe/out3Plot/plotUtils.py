@@ -140,7 +140,7 @@ levP = list(fU.splitIniValueToArraySteps(cfgPlotUtils['pressureColorLevels']))
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = copy.copy(cmapCrameri.hawaii.reversed())
 
-# multi sequential colormap for flow depth
+# multi sequential colormap for flow thickness
 levD = list(fU.splitIniValueToArraySteps(cfgPlotUtils['thicknessColorLevels']))
 # Lajolla color map
 colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
@@ -210,8 +210,8 @@ cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
-colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed, 'FM': cmapDepth,
-             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed, 'FD': cmapDepth, 'prob': cmapProb,
+colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed, 'FM': cmapDepth,
+             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed, 'FT': cmapDepth, 'prob': cmapProb,
              'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
 
 cmapDEM = cmapGreys

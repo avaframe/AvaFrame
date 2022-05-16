@@ -34,7 +34,7 @@ for test in testList:
     log = logUtils.initiateLogger(avaDir, logName)
 
     # Fetch benchmark test results
-    refFiles = tU.fetchBenchmarkResults(test['NAME'], resTypes=['ppr', 'pfd', 'pfv'])
+    refFiles = tU.fetchBenchmarkResults(test['NAME'], resTypes=['ppr', 'pft', 'pfv'])
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
     benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
     simNameRef = test['simNameRef']

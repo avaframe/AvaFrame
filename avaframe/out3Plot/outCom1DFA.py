@@ -70,7 +70,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
     ax4.plot(time, trackedPartProp['h'])
     ax4.set_xlabel('t [s]')
     ax4.set_ylabel('h [m]')
-    ax4.set_title('Flow depth')
+    ax4.set_title('Flow thickness')
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
@@ -243,7 +243,7 @@ def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False
     rasterData: 2D numpy array
         data to plot
     resType: str
-        what kinf of result is it? ppr, pfd...
+        what kinf of result is it? ppr, pft...
     colorbar: bool
         If true add the colorbar
     """

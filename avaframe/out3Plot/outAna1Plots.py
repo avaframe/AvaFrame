@@ -73,15 +73,15 @@ def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'compareProfileSimiSol%s_%.2f.' % (simHash, tSave), fig1)
 
 
-def makeContourSimiPlot(avalancheDir, simHash, fieldFD, limits, simiDict, fieldHeader, tSave, outDirTest):
+def makeContourSimiPlot(avalancheDir, simHash, fieldFT, limits, simiDict, fieldHeader, tSave, outDirTest):
     """
     """
     fig, ax1 = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
     # make flow momentum comparison plot
     ax1 = plt.subplot2grid((1, 1), (0, 0))
-    ax1 = addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits, nLevels=16)
+    ax1 = addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=16)
 
-    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' contours at t = %.2f s' % tSave)
+    ax1.set_title(pU.cfgPlotUtils['nameFT'] + ' contours at t = %.2f s' % tSave)
     pU.putAvaNameOnPlot(ax1, avalancheDir)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'compareContourSimiSol%s_%.2f.' % (simHash, tSave), fig)
 
@@ -127,20 +127,20 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
     # get limits
     widthX = limits['widthX']
     widthY = limits['widthY']
-    maxFD = limits['maxFD']
+    maxFT = limits['maxFT']
     minMz = limits['minMz']
     maxFM = limits['maxFM']
 
     if axis == 'xaxis':
         ax1.axvline(x=xCenter, linestyle=':', color='b')
-        FD = fields['FD'][indFinal, :]
+        FT = fields['FT'][indFinal, :]
         hSimi = hSimi[indFinal, :]
         # DFA simulation
-        l1 = ax1.plot(xArrayFields, FD, 'k', label='h')
-        l2 = ax2.plot(xArrayFields, FD*fields['FV'][indFinal, :], 'g', label=getLabel('', '', dir='', vert=True))
-        l3 = ax2.plot(xArrayFields, FD*fields['Vx'][indFinal, :], 'm', label=getLabel('', '', dir='x'))
-        l4 = ax2.plot(xArrayFields, FD*fields['Vy'][indFinal, :], 'b', label=getLabel('', '', dir='y'))
-        l5 = ax2.plot(xArrayFields, FD*fields['Vz'][indFinal, :], 'c', label=getLabel('', '', dir='z'))
+        l1 = ax1.plot(xArrayFields, FT, 'k', label='h')
+        l2 = ax2.plot(xArrayFields, FT*fields['FV'][indFinal, :], 'g', label=getLabel('', '', dir='', vert=True))
+        l3 = ax2.plot(xArrayFields, FT*fields['Vx'][indFinal, :], 'm', label=getLabel('', '', dir='x'))
+        l4 = ax2.plot(xArrayFields, FT*fields['Vy'][indFinal, :], 'b', label=getLabel('', '', dir='y'))
+        l5 = ax2.plot(xArrayFields, FT*fields['Vz'][indFinal, :], 'c', label=getLabel('', '', dir='z'))
         if particles:
             ax1.plot(x, h, '.k', linestyle='None', label='part flow thickness')
             ax2.plot(x, h*v, '.g', linestyle='None', label=getLabel('part', '', dir='', vert=True))
@@ -153,7 +153,7 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
         ax1.set_xlabel('x in [m]')
         ax1.text(xCenter+5, -0.05, "x = %.2f m" % (xCenter), color='b')
         ax1.set_xlim([xCenter-widthX, xCenter+widthX])
-        ax1.set_ylim([-0.05, maxFD])
+        ax1.set_ylim([-0.05, maxFT])
         ax2.set_ylim([minMz, maxFM])
         # mere legends of both axes
         lns = l1+l2+l3+l4+l5
@@ -161,14 +161,14 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
         ax1.legend(lns, labs, loc='upper right')
 
     elif axis == 'yaxis':
-        FD = fields['FD'][:, indFinal]
+        FT = fields['FT'][:, indFinal]
         hSimi = hSimi[:, indFinal]
         # DFA simulation
-        l1 = ax1.plot(yArrayFields, FD, 'k')
-        l2 = ax2.plot(yArrayFields, FD*fields['FV'][:, indFinal], 'g')
-        l3 = ax2.plot(yArrayFields, FD*fields['Vx'][:, indFinal], 'm')
-        l4 = ax2.plot(yArrayFields, FD*fields['Vy'][:, indFinal], 'b')
-        l5 = ax2.plot(yArrayFields, FD*fields['Vz'][:, indFinal], 'c')
+        l1 = ax1.plot(yArrayFields, FT, 'k')
+        l2 = ax2.plot(yArrayFields, FT*fields['FV'][:, indFinal], 'g')
+        l3 = ax2.plot(yArrayFields, FT*fields['Vx'][:, indFinal], 'm')
+        l4 = ax2.plot(yArrayFields, FT*fields['Vy'][:, indFinal], 'b')
+        l5 = ax2.plot(yArrayFields, FT*fields['Vz'][:, indFinal], 'c')
         if particles:
             ax1.plot(y, h, '.k', linestyle='None')
             ax2.plot(y, h*v, '.g', linestyle='None')
@@ -180,15 +180,15 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
         ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c')
         ax1.set_xlabel('y in [m]')
         ax1.set_xlim([-widthY, widthY])
-        ax1.set_ylim([-0.05, maxFD])
+        ax1.set_ylim([-0.05, maxFT])
         ax2.set_ylim([minMz, maxFM])
 
-    ax1.set_ylabel(pU.cfgPlotUtils['nameFD'] + ' [' + pU.cfgPlotUtils['unitFD'] + ']')
+    ax1.set_ylabel(pU.cfgPlotUtils['nameFT'] + ' [' + pU.cfgPlotUtils['unitFT'] + ']')
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     color = 'tab:green'
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
-    ax2.set_ylabel(getLabel('', '', dir='') + ' [' + pU.cfgPlotUtils['unitFDV'] + ']', color=color)
+    ax2.set_ylabel(getLabel('', '', dir='') + ' [' + pU.cfgPlotUtils['unitFTV'] + ']', color=color)
 
     props = dict(boxstyle='round', alpha=0)
     text = 'analytical solution (dashed line) \n numerical solution (full line)'
@@ -278,8 +278,8 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
 
     # make bird view plot
     ax3 = plt.subplot2grid((2, 6), (1, 0), colspan=2)
-    ax3 = addContour2Plot(ax3, fieldsList[indT]['FD'], simiDict, fieldHeader, limits)
-    ax3.set_title(pU.cfgPlotUtils['nameFD'] + ' contours')
+    ax3 = addContour2Plot(ax3, fieldsList[indT]['FT'], simiDict, fieldHeader, limits)
+    ax3.set_title(pU.cfgPlotUtils['nameFT'] + ' contours')
     pU.putAvaNameOnPlot(ax3, avalancheDir)
 
     # make error plot
@@ -324,7 +324,7 @@ def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
 
     # index of time steps
     dtInd = np.searchsorted(t, tSave)
-    name = pU.cfgPlotUtils['nameFD'] + '[' + pU.cfgPlotUtils['unitFD'] + ']'
+    name = pU.cfgPlotUtils['nameFT'] + '[' + pU.cfgPlotUtils['unitFT'] + ']'
     fig = _plotVariableDamBreak(h, x, xMiddle, dtInd, tSave, name)
     outputName = 'damBreakFlowDepth'
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
@@ -376,8 +376,8 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
     phi = cfg.getfloat('phi')
     phiRad = np.radians(phi)
     # Load data
-    dataIniFD = fields0['FD']
-    dataAnaFD = fieldsT['FD']
+    dataIniFT = fields0['FT']
+    dataAnaFT = fieldsT['FT']
     dataIniVx = fields0['Vx']
     dataIniVy = fields0['Vy']
     dataIniVz = fields0['Vz']
@@ -394,8 +394,8 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
 
     # Location of Profiles
     cellSize = header['cellsize']
-    ny = dataAnaFD.shape[0]
-    nx = dataAnaFD.shape[1]
+    ny = dataAnaFT.shape[0]
+    nx = dataAnaFT.shape[1]
     xllc = header['xllcenter']
     nx_loc = int(ny *0.5)
 
@@ -409,10 +409,10 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
     indTime = np.searchsorted(solDam['tAna'], tSave)
 
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
-    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFD, dataAnaFD, solDam['xAna'], solDam['xMidAna'],
-                                       solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'],
-                                       pU.cfgPlotUtils['unitFD'])
-    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
+    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFT, dataAnaFT, solDam['xAna'], solDam['xMidAna'],
+                                       solDam['hAna'], indTime, limits['maxFT'],  pU.cfgPlotUtils['nameFT'],
+                                       pU.cfgPlotUtils['unitFT'])
+    ax1.set_title(pU.cfgPlotUtils['nameFT'] + ' profile')
 
     y = np.zeros(len(x))
     ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
@@ -422,10 +422,10 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
     ax2.legend(loc='upper left')
 
     y = np.zeros(len(x))
-    ax3 = _plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+    ax3 = _plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFT*dataIniV, dataAnaFT*dataAnaV, solDam['xAna'],
                              solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
-                             pU.cfgPlotUtils['nameFDV'], pU.cfgPlotUtils['unitFDV'])
-    ax3.set_title(getLabel(pU.cfgPlotUtils['nameFDV'] + ' profile', '', dir='', vert=True))
+                             pU.cfgPlotUtils['nameFTV'], pU.cfgPlotUtils['unitFTV'])
+    ax3.set_title(getLabel(pU.cfgPlotUtils['nameFTV'] + ' profile', '', dir='', vert=True))
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simHash, tSave), fontsize=30)
     outputName = 'compareDamBreak%s_%.02f' % (simHash, tSave)
@@ -507,8 +507,8 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     # Load data
     fields0 = fieldsList[0]
     fieldsT = fieldsList[indT]
-    dataIniFD = fields0['FD']
-    dataFD = fieldsT['FD']
+    dataIniFT = fields0['FT']
+    dataFT = fieldsT['FT']
     dataIniVx = fields0['Vx']
     dataIniVy = fields0['Vy']
     dataIniVz = fields0['Vz']
@@ -525,8 +525,8 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
 
     # Location of Profiles
     cellSize = fieldHeader['cellsize']
-    ny = dataFD.shape[0]
-    nx = dataFD.shape[1]
+    ny = dataFT.shape[0]
+    nx = dataFT.shape[1]
     xllc = fieldHeader['xllcenter']
     yllc = fieldHeader['yllcenter']
     nx_loc = int(ny *0.5)
@@ -552,18 +552,18 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     fig.suptitle('DamBreak test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
     # make flow thickness comparison plot
     ax1 = plt.subplot2grid((2, 6), (0, 0), colspan=2)
-    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfgDam, dataIniFD, dataFD, solDam['xAna'], solDam['xMidAna'],
-                          solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'],
-                          pU.cfgPlotUtils['unitFD'])
-    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
+    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfgDam, dataIniFT, dataFT, solDam['xAna'], solDam['xMidAna'],
+                          solDam['hAna'], indTime, limits['maxFT'],  pU.cfgPlotUtils['nameFT'],
+                          pU.cfgPlotUtils['unitFT'])
+    ax1.set_title(pU.cfgPlotUtils['nameFT'] + ' profile')
 
     # make flow momentum comparison plot
     ax2 = plt.subplot2grid((2, 6), (0, 4), colspan=2)
     y = y * 0
-    ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfgDam, dataIniFD*dataIniV, dataFD*dataV, solDam['xAna'],
+    ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfgDam, dataIniFT*dataIniV, dataFT*dataV, solDam['xAna'],
                           solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
-                          pU.cfgPlotUtils['nameFDV'], pU.cfgPlotUtils['unitFDV'])
-    ax2.set_title(getLabel(pU.cfgPlotUtils['nameFDV'] + ' profile', '', dir='', vert=True))
+                          pU.cfgPlotUtils['nameFTV'], pU.cfgPlotUtils['unitFTV'])
+    ax2.set_title(getLabel(pU.cfgPlotUtils['nameFTV'] + ' profile', '', dir='', vert=True))
 
     # make flow velocity comparison plot
     ax3 = plt.subplot2grid((2, 6), (0, 2), colspan=2)
@@ -575,10 +575,10 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
 
     # make bird view plot
     ax6 = plt.subplot2grid((2, 6), (1, 0), colspan=2)
-    ax6, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax6, fieldHeader, dataFD, 'FD')
-    cbar0.ax.set_ylabel(pU.cfgPlotUtils['nameFD'])
+    ax6, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax6, fieldHeader, dataFT, 'FT')
+    cbar0.ax.set_ylabel(pU.cfgPlotUtils['nameFT'])
     ax6 = outCom1DFA.addDem2Plot(ax6, dem, what='slope', extent=extent)
-    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(dataFD, fieldHeader['cellsize'],
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(dataFT, fieldHeader['cellsize'],
                                                                  extentOption=True, constrainedData=False, buffer='')
     # draw rectangle corresponding to the error measurement domain
     # Create a Rectangle patch
@@ -593,7 +593,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax6.set_ylabel('y [m]')
     leg = ax6.legend(loc='upper right')
     leg.set(zorder=200)
-    # ax3.set_title(pU.cfgPlotUtils['nameFD'])
+    # ax3.set_title(pU.cfgPlotUtils['nameFT'])
     pU.putAvaNameOnPlot(ax6, avalancheDir)
 
     # make error plot
@@ -698,7 +698,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     return fig1
 
 
-def addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits, nLevels=9):
+def addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=9):
     """ Make a contour plot of flow thickness for analytical solution and simulation result """
     # get info on DEM extent
     ncols = fieldHeader['ncols']
@@ -715,16 +715,16 @@ def addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits, nLevels=9):
     # get limits
     widthX = limits['widthX']
     widthY = limits['widthY']
-    contourLevels = np.linspace(0, limits['maxFD'], nLevels)
+    contourLevels = np.linspace(0, limits['maxFT'], nLevels)
     contourLevels = contourLevels[:-1]
     # make plot
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(fieldFD),
-                                           np.nanmax(fieldFD), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(fieldFT),
+                                           np.nanmax(fieldFT), continuous=True)
     cmap.set_under(color='w')
-    cs1 = ax1.contour(X, Y, fieldFD, levels=contourLevels, origin='lower', cmap=cmap, linewidths=2)
+    cs1 = ax1.contour(X, Y, fieldFT, levels=contourLevels, origin='lower', cmap=cmap, linewidths=2)
     cs2 = ax1.contour(X, Y, simiDict['hSimi'], levels=contourLevels, origin='lower', cmap=cmap, linewidths=2,
                       linestyles='dashed')
-    CB = pU.addColorBar(cs1, ax1, ticks, pU.cfgPlotUtils['unitFD'], title=pU.cfgPlotUtils['nameFD'], extend='both',
+    CB = pU.addColorBar(cs1, ax1, ticks, pU.cfgPlotUtils['unitFT'], title=pU.cfgPlotUtils['nameFT'], extend='both',
                         pad=0.05, tickLabelsList='')
     # make colorbar lines thicker
     lines1 = CB.ax.get_children()
@@ -1061,25 +1061,25 @@ def getPlotLimits(cfgSimi, fieldsList, fieldHeader):
         field header dictionary
     """
     scaleCoef = cfgSimi.getfloat('scaleCoef')
-    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['FD'], fieldHeader['cellsize'],
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['FT'], fieldHeader['cellsize'],
                                                                  extentOption=True, constrainedData=False, buffer='')
     widthX = scaleCoef*round(colsMax - colsMin)/2
     widthY = scaleCoef*round(rowsMax - rowsMin)/2
 
-    maxFD = 0
+    maxFT = 0
     maxFV = 0
     minMz = 0
     maxFM = 0
     for fields in fieldsList:
-        maxFD = max(maxFD, np.nanmax(fields['FD']))
-        maxFV = max(maxFD, np.nanmax(fields['FV']))
-        minMz = min(minMz, np.nanmin(fields['Vz']*fields['FD']))
-        maxFM = max(maxFM, np.nanmax(fields['FV']*fields['FD']))
+        maxFT = max(maxFT, np.nanmax(fields['FT']))
+        maxFV = max(maxFT, np.nanmax(fields['FV']))
+        minMz = min(minMz, np.nanmin(fields['Vz']*fields['FT']))
+        maxFM = max(maxFM, np.nanmax(fields['FV']*fields['FT']))
 
-    maxFD = scaleCoef*maxFD
+    maxFT = scaleCoef*maxFT
     minMz = scaleCoef*minMz
     maxFM = scaleCoef*maxFM
-    limits = {'widthX': widthX, 'widthY': widthY, 'maxFD': maxFD, 'maxFV': maxFV, 'minMz': minMz, 'maxFM': maxFM}
+    limits = {'widthX': widthX, 'widthY': widthY, 'maxFT': maxFT, 'maxFV': maxFV, 'minMz': minMz, 'maxFM': maxFM}
 
     return limits
 

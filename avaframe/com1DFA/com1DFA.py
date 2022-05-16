@@ -863,7 +863,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     inputSimLines: dictionary
         info on input files; real releaseline info required for iniStep
     relThField: 2D numpy array
-        if the release depth is not uniform, give here the releaseRaster
+        if the release thickness is not uniform, give here the releaseRaster
 
     Returns
     -------
@@ -886,7 +886,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     nrows = header['nrows']
     csz = header['cellsize']
     # if the release is not constant but given by a varying function, we need both the mask giving the cells
-    # to be initialized and the raster giving the flow depth value
+    # to be initialized and the raster giving the flow thickness value
     relRasterMask = releaseLine['rasterData']
     if len(relThField) == 0:
         relRaster = releaseLine['rasterData']
@@ -953,7 +953,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
         # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
-        # partticles have the same area but may have different flow depth which means a different mass)
+        # partticles have the same area but may have different flow thickness which means a different mass)
         if massPerParticleDeterminationMethod == 'MPPKR':
             mPartArray = rho * aPartArray * hPartArray
         # create dictionnary to store particles properties
@@ -1059,7 +1059,7 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
 
 def initializeFields(cfg, dem, particles):
-    """Initialize fields and update particles flow depth
+    """Initialize fields and update particles flow thickness
 
     Parameters
     ----------
@@ -1073,7 +1073,7 @@ def initializeFields(cfg, dem, particles):
     Returns
     -------
     particles : dict
-        particles dictionary at initial time step updated with the flow depth
+        particles dictionary at initial time step updated with the flow thickness
     fields : dict
         fields dictionary at initial time step
     """
@@ -1083,17 +1083,17 @@ def initializeFields(cfg, dem, particles):
     nrows = header['nrows']
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
-    FD = np.zeros((nrows, ncols))
+    FT = np.zeros((nrows, ncols))
     TA = np.zeros((nrows, ncols))
     fields = {}
     fields['pfv'] = PFV
     fields['ppr'] = PP
-    fields['pfd'] = FD
+    fields['pft'] = FT
     fields['pta'] = TA
     fields['FV'] = PFV
     fields['P'] = PP
-    fields['FD'] = FD
-    fields['FM'] = FD
+    fields['FT'] = FT
+    fields['FM'] = FT
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
@@ -1866,7 +1866,7 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
     """
 
     secondaryReleaseInfo = particles['secondaryReleaseInfo']
-    flowDepthField = fields['FD']
+    flowDepthField = fields['FT']
     secRelRasterList = secondaryReleaseInfo['rasterData']
     secRelRasterNameList = secondaryReleaseInfo['Name']
     count = 0

@@ -22,7 +22,7 @@ from benchmarks import simParametersVar
 
 # +++++++++REQUIRED+++++++++++++
 # Which result types for comparison plots
-outputVariable = ['ppr', 'pfd', 'pfv']
+outputVariable = ['ppr', 'pft', 'pfv']
 # aimec settings
 aimecResType = 'ppr'
 aimecThresholdValue = '1'

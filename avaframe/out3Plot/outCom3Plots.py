@@ -64,7 +64,7 @@ def hybridPathPlot(avalancheDir, dem, resultsHybrid, fields, particles, muArray)
         ax.plot(xAB - xllcOri, yAB - yllcOri, 'X', color=col, markersize=8,
                 label=r'com2AB $\alpha$ point iteration %d' % i, zorder = 20)
         i = i+1
-    titleText = 'Avalanche path for each iteration with peak travel angle field \n and particles flow depth in final time step'
+    titleText = 'Avalanche path for each iteration with peak travel angle field \n and particles flow thickness in final time step'
     ax.set_title(titleText)
     ax.set_ylabel('x [m]')
     ax.set_ylabel('y [m]')
@@ -72,7 +72,7 @@ def hybridPathPlot(avalancheDir, dem, resultsHybrid, fields, particles, muArray)
     cb.ax.set_ylabel(pU.cfgPlotUtils['namepta'])
     ax = outCom1DFA.addDem2Plot(ax, dem, what='slope', extent=extent)
     ax, cb2 = outCom1DFA.addParticles2Plot(particles, ax, dem, whatS='h')
-    cb2.ax.set_ylabel('particle ' + pU.cfgPlotUtils['nameFD'])
+    cb2.ax.set_ylabel('particle ' + pU.cfgPlotUtils['nameFT'])
     ax.set_ylim(extent[2:])
     ax.set_xlim(extent[:2])
     title = ('com3HybRasterPlot')

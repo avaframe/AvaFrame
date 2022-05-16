@@ -255,7 +255,7 @@ def test_setupThalwegTimeDiagram():
 
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 40., 'avalancheDir': avaDir,
-        'rangeTimeResType': 'FD', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
+        'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
         'dsMin': 30}
 
     # call function to be tested
@@ -316,7 +316,7 @@ def test_fetchRangeTimeInfo():
     mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
 
     fieldTest = np.ones((dem['rasterData'].shape))
-    fields = {'FD': fieldTest}
+    fields = {'FT': fieldTest}
 
     # call function to be tested
     mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, 1., dem['header'], fields,
@@ -340,7 +340,7 @@ def test_extractFrontAndMeanValuesTT():
 
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 10., 'avalancheDir': avaDir,
-        'rangeTimeResType': 'FD', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
+        'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
         'dsMin': 30, 'thresholdResult': 0.001, 'simHash': 'simDI'}
     cfgRangeTime['PLOTS'] = {'debugPlot': False}
 
