@@ -13,7 +13,7 @@ on a 2D surface living in a 3D world.
 
 Method
 ------
-The SPH method is used to express a quantity (the flow depth in our case) and
+The SPH method is used to express a quantity (the flow thickness in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
 In the case a depth integrated equations (for example SWE), a scalar function
@@ -24,7 +24,7 @@ In the case a depth integrated equations (for example SWE), a scalar function
     \mathbf{\nabla}f_{i} &= -\sum\limits_{j}f_{j}A_{j}\,\mathbf{\nabla}W_{ij}
     :label: sph formulation
 
-Which gives for the flow depth:
+Which gives for the flow thickness:
 
 .. math::
     \overline{h}_{i} &= \frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,W_{ij}\\

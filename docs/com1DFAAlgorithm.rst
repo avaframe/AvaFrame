@@ -90,7 +90,7 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Initialize fields
 ~~~~~~~~~~~~~~~~~
 All fields (mesh values defined as a raster) are initialized. Flow velocity, pressure, peak flow velocity and peak pressures
-are set to zero. Flow depth and peak flow depth are set according to the initial particle distribution.
+are set to zero. Flow thickness and peak flow thickness are set according to the initial particle distribution.
 See :py:func:`com1DFA.com1DFA.initializeFields`
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
@@ -211,7 +211,7 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The lateral pressure forces (:math:`F_{SPH}`) are related to the gradient of the flow depth (:ref:`DFAnumerics:Forces discretization`). This gradient
+The lateral pressure forces (:math:`F_{SPH}`) are related to the gradient of the flow thickness (:ref:`DFAnumerics:Forces discretization`). This gradient
 is computed using a smoothed particle hydrodynamic method (:ref:`DFAnumerics:SPH gradient`).
 
 
@@ -272,9 +272,9 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Add secondary release area
 ----------------------------
-If a secondary release area is provided, the flow depth
+If a secondary release area is provided, the flow thickness
 field from the previous time step is used to release a potential secondary release area.
-To do so, the flow depth field is compared to the secondary release area rasters. If
+To do so, the flow thickness field is compared to the secondary release area rasters. If
 they overlap, the secondary release area is triggered and the secondary release particles
 are initialized and added to the flowing particles.
 
@@ -290,11 +290,11 @@ Update fields
 ~~~~~~~~~~~~~
 The mesh values are updated with the particles properties using
 :ref:`particles to mesh interpolation <DFAnumerics:Particles to mesh>` methods.
-This is used to compute flow depth, flow velocity and pressure fields from the particle properties.
+This is used to compute flow thickness, flow velocity and pressure fields from the particle properties.
 
-Update particles flow depth
+Update particles flow thickness
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The mesh flow depth is finally used to update the particle flow depth value
+The mesh flow thickness is finally used to update the particle flow thickness value
 using :ref:`mesh to particle interpolation <DFAnumerics:Mesh to particle>` methods.
 
 

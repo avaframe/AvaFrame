@@ -11,7 +11,7 @@ Plot all peak fields
 peak field in ``Outputs/modName/peakFiles``, constrained to existing data
 including a buffer specified in ``out3Plot/plotUtilsCfg.ini``. These peak fields
 represent the peak values of the simulation result parameters (*dynamic peak
-pressure*, *peak flow depth*, *peak velocity*), and modName corresponds to the
+pressure*, *peak flow thickness*, *peak velocity*), and modName corresponds to the
 name of the computational module that has been used to perform the simualtions.
 Details on this function, as for example required inputs, can be found in
 :py:func:`out1Peak.outPlotAllPeak.plotAllPeakFields`.

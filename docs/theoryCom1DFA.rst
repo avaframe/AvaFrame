@@ -416,7 +416,7 @@ With
    \begin{aligned}
    &\sigma^{(b)} \qquad &\text{normal component of the stress tensor}\\
    &\overline{u} \qquad &\text{average velocity}\\
-   &\overline{h} \qquad &\text{average flow depth}\\
+   &\overline{h} \qquad &\text{average flow thickness}\\
    &\rho_0 \qquad &\text{density}\\
    &t \qquad &\text{time}\\
    &\mathbf{x} \qquad &\text{position vector}\end{aligned}
@@ -499,7 +499,7 @@ With
 The minimum shear stress :math:`\tau_0` defines a lower limit below
 which no flow takes place with the condition
 :math:`\rho_0\,\overline{h}\,g\,\sin{\alpha} > \tau_0`. :math:`\alpha`
-being the slope. :math:`\tau_0` is independent of the flow depth, which
+being the slope. :math:`\tau_0` is independent of the flow thickness, which
 leeds to a strong avalanche deceleration, especially for avalanches with
 low flow heights. :math:`R_s` is expressed as
 :math:`R_s = \frac{\rho_0\,\overline{u}^2}{\sigma^{(b)}}`. Together

@@ -92,13 +92,13 @@ additionally an :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec` analysis is performed.
       python3 runScripts/runStatsExample.py
 
 
-.. figure:: _static/Scatter_pfd_vs_pfv_dist_test.png
+.. figure:: _static/Scatter_pft_vs_pfv_dist_test.png
     :width: 90%
 
     Scatter plot of the hockey example with color-coded release thickness values.
 
 
-.. figure:: _static/Scatterkde_pfd_vs_pfv_dist_test.png
+.. figure:: _static/Scatterkde_pft_vs_pfv_dist_test.png
     :width: 90%
 
     Scatter plot of the hockey example including a marginal kde plot and color coded with release

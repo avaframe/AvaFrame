@@ -123,8 +123,8 @@ Output
 ---------
 Using the default configuration, the simulation results are saved to: *Outputs/com1DFA* and include:
 
-* raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFA/peakFiles*)
-* raster files of the peak values for pressure, flow depth and flow velocity for the initial time step (*Outputs/com1DFA/peakFiles/timeSteps*)
+* raster files of the peak values for pressure, flow thickness and flow velocity (*Outputs/com1DFA/peakFiles*)
+* raster files of the peak values for pressure, flow thickness and flow velocity for the initial time step (*Outputs/com1DFA/peakFiles/timeSteps*)
 * markdown report including figures for all simulations (*Outputs/com1DFA/reports*)
 * mass log files of all simulations (*Outputs/com1DFA*)
 * configuration files for all simulations (*Outputs/com1DFA/configurationFiles*)

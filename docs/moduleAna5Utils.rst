@@ -21,7 +21,7 @@ of view. With this, simulation results can be directly compared to radar measure
 example moving-target-identification (MTI) images from :cite:`KoMeSo2018`) in terms
 of front position and inferred approach velocity. The colorcoding of the simulated
 **range-time** diagrams show the average values of the chosen flow parameter
-(e.g. flow depth (FD), flow velocity (FV)) at specified range gates. This colorcoding is not directly
+(e.g. flow thickness (FT), flow velocity (FV)) at specified range gates. This colorcoding is not directly
 comparable to the MTI intensity given in the range-time diagram from radar measurements.
 
 .. Note::
@@ -51,9 +51,9 @@ During run-time of :py:mod:`com1DFA`:
 
 As a postprocessing step:
 
-* first you need to run :py:mod:`com1DFA` to produce fields of the desired flow variable (e.g. FD, FV)
+* first you need to run :py:mod:`com1DFA` to produce fields of the desired flow variable (e.g. FT, FV)
   of sufficient temporal resolution (every second), for this in your local copy of `com1DFACfg.ini`
-  add e.g. FD to the `resType` and change the `tSteps` to `0:1`
+  add e.g. FT to the `resType` and change the `tSteps` to `0:1`
 
 * have a look at :py:mod:`runScripts.runThalwegTimeDiagram.py` and :py:mod:`runScripts.runRangeTimeDiagram.py`
 
@@ -63,7 +63,7 @@ As a postprocessing step:
 The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
 
 
-.. figure:: _static/thalwegTime_FD.png
+.. figure:: _static/thalwegTime_FT.png
     :width: 90%
 
     Thalweg-time diagram example: The y-axis contains the distance from the beta point along
