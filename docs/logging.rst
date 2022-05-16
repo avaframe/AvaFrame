@@ -5,7 +5,7 @@ In order to generate simulation logs and to control what is prompted to the
 terminal, we use the python module `logging
 <https://docs.python.org/3/library/logging.config.html>`_.
 
-Let's have a look at the simple example in runTmp1Ex.py and tmp1Ex.py on how
+Let's have a look at the simple example in :py:mod:`runScripts.runTmp1Ex` and :py:func:`tmp1Ex.tmp1Ex` on how
 this is used within AvaFrame.
 
 In your main script call::
