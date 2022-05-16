@@ -67,7 +67,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
     Parameters
     ----------
     hCell: float
-        snow depth in cell
+        snow thickness in cell
     aCell: float
         cell area
     indx: int
@@ -589,7 +589,7 @@ def getSplitPartPositionSimple(particles, rho, distSplitPart, ind):
     uyPart = particles['uy'][ind]
     uzPart = particles['uz'][ind]
     # get the area of the particle as well as the distance expected between the old and new particle
-    # note that if we did not update the particles FD, we use here the h from the previous time step
+    # note that if we did not update the particles FT, we use here the h from the previous time step
     aPart = mPart/(rho*hPart)
     rNew = distSplitPart * np.sqrt(aPart/math.pi)
     cos = rNew*np.array([-1, 1])

@@ -68,8 +68,8 @@ def test_mainDfa2Aimec(tmp_path):
     pathDTest = {}
     pathDTest['ppr'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_ppr.asc',
                         pathData / 'release2HS_e2145362b7_ent_dfa_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_pfd.asc',
-                        pathData / 'release2HS_e2145362b7_ent_dfa_pfd.asc']
+    pathDTest['pft'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_pft.asc',
+                        pathData / 'release2HS_e2145362b7_ent_dfa_pft.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_d10bdc1e81_ent_dfa_pfv.asc',
                         pathData / 'release2HS_e2145362b7_ent_dfa_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_d10bdc1e81_ent_dfa.txt',
@@ -78,7 +78,7 @@ def test_mainDfa2Aimec(tmp_path):
     print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
     assert not diff
-    diff = set(inputDF['pfd'].to_list()) ^ set(pathDTest['pfd'])
+    diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
     assert not diff
     diff = set(inputDF['pfv'].to_list()) ^ set(pathDTest['pfv'])
     assert not diff
@@ -90,8 +90,8 @@ def test_mainDfa2Aimec(tmp_path):
     pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
                         pathData / 'release2HS_ent_dfa_0.15500_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
-                        pathData / 'release2HS_ent_dfa_0.15500_pfd.asc']
+    pathDTest['pft'] = [pathData / 'release1HS_ent_dfa_0.15500_pft.asc',
+                        pathData / 'release2HS_ent_dfa_0.15500_pft.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
                         pathData / 'release2HS_ent_dfa_0.15500_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt',
@@ -99,7 +99,7 @@ def test_mainDfa2Aimec(tmp_path):
 
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
     assert not diff
-    diff = set(inputDF['pfd'].to_list()) ^ set(pathDTest['pfd'])
+    diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
     assert not diff
     diff = set(inputDF['pfv'].to_list()) ^ set(pathDTest['pfv'])
     assert not diff
@@ -126,8 +126,8 @@ def test_dfaComp2Aimec(tmp_path):
     pathDTest = {}
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
                         pathData2 / 'release1HS_d10bdc1e81_ent_dfa_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
-                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pfd.asc']
+    pathDTest['pft'] = [pathData / 'release1HS_ent_dfa_0.15500_pft.asc',
+                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pft.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
                         pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / massNameRef,
@@ -136,7 +136,7 @@ def test_dfaComp2Aimec(tmp_path):
     print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
     assert not diff
-    diff = set(inputDF['pfd'].to_list()) ^ set(pathDTest['pfd'])
+    diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
     assert not diff
     diff = set(inputDF['pfv'].to_list()) ^ set(pathDTest['pfv'])
     assert not diff
@@ -220,11 +220,11 @@ def test_dfaBench2Aimec():
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp)
 
     assert 'mass_release1HS_d10bdc1e81_ent_dfa' in str(inputsDF['massBal'][1])
-    assert 'release1HS_d10bdc1e81_ent_dfa_pfd' in str(inputsDF['pfd'][1])
+    assert 'release1HS_d10bdc1e81_ent_dfa_pft' in str(inputsDF['pft'][1])
     assert 'release1HS_d10bdc1e81_ent_dfa_ppr' in str(inputsDF['ppr'][1])
     assert 'release1HS_d10bdc1e81_ent_dfa_pfv' in str(inputsDF['pfv'][1])
     assert 'mass_release1HS_ent_dfa_0.15500' in str(inputsDF['massBal'][0])
-    assert 'release1HS_ent_dfa_0.15500_pfd' in str(inputsDF['pfd'][0])
+    assert 'release1HS_ent_dfa_0.15500_pft' in str(inputsDF['pft'][0])
     assert 'release1HS_ent_dfa_0.15500_ppr' in str(inputsDF['ppr'][0])
     assert 'release1HS_ent_dfa_0.15500_pfv' in str(inputsDF['pfv'][0])
 

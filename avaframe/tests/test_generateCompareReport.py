@@ -36,16 +36,16 @@ def test_copyQuickPlots(tmp_path):
     # setup required input
     outDir = pathlib.Path(tmp_path)
     dirPath = pathlib.Path(__file__).parents[0]
-    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pfd.png'
-    plotListRep = {'pfd': pathPlot}
+    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pft.png'
+    plotListRep = {'pft': pathPlot}
     avaName = 'avaTest'
     testName = 'avaTestName'
 
     # call function to be tested
     plotPaths = gR.copyQuickPlots(avaName, testName, outDir, plotListRep, rel='')
-    testFile = outDir / 'avaTestName__pfd.png'
+    testFile = outDir / 'avaTestName__pft.png'
 
-    assert str(plotPaths['pfd']) == str(testFile)
+    assert str(plotPaths['pft']) == str(testFile)
     assert len(plotPaths) == 1
 
 
@@ -55,14 +55,14 @@ def test_copyAimecPlots(tmp_path):
     # setup required path
     outDir = pathlib.Path(tmp_path)
     dirPath = pathlib.Path(__file__).parents[0]
-    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pfd.png'
+    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pft.png'
     plotFiles = [{'aimec plot 1': pathPlot}, {'aimec plot 2': pathPlot}]
     testName = 'avaTest'
     plotPaths = {}
 
     # call function to be tested
     plotPaths = gR.copyAimecPlots(plotFiles, testName, outDir, plotPaths)
-    testFile = outDir / 'avaTest__release1HX_ent_dfa_3f8d2d9327_pfd.png'
+    testFile = outDir / 'avaTest__release1HX_ent_dfa_3f8d2d9327_pft.png'
 
     assert str(plotPaths['aimec plot 1']) == str(testFile)
     assert len(plotPaths) == 2
@@ -88,12 +88,12 @@ def test_writeCompareReport(tmp_path):
                                'Aimec comparison of mean and max values along path': plot1},
         'Aimec analysis': {'type': 'list', 'runout [m]': 16.,
                            'max peak pressure [kPa]': 361.,
-                           'max peak flow depth [m]': 5.4,
+                           'max peak flow thickness [m]': 5.4,
                            'max peak flow velocity [ms-1]': 42.50},
         'Simulation Difference': {'ppr': [243., -2.2, -166.],
-                                  'pfd': [0.7, -0.01, -0.9],
+                                  'pft': [0.7, -0.01, -0.9],
                                   'pfv': [34., -0.2, -28.]},
-        'Simulation Stats': {'ppr': [364., 0.0], 'pfd': [5., 0.0], 'pfv': [42., 0.0]}}
+        'Simulation Stats': {'ppr': [364., 0.0], 'pft': [5., 0.0], 'pfv': [42., 0.0]}}
     benchD = {'avaName': {'type': 'avaName', 'name': 'data/avaKotST'},
         'simName': {'type': 'simName', 'name': 'relKot_null_dfa_0.15500'},
         'time': {'type': 'time', 'time': '02/09/2021 13:19:50'},
@@ -105,11 +105,11 @@ def test_writeCompareReport(tmp_path):
         'Release Area': {'type': 'columns', 'Release area scenario': 'relKot',
                          'Release features': ['KoT'],
                          'Release thickness [m]': [1.0]},
-        'Simulation Results': {'pfd': plot1,
+        'Simulation Results': {'pft': plot1,
                                'type': 'image'},
         'Aimec analysis': {'type': 'list', 'runout [m]': 16.,
                            'max peak pressure [kPa]': 358.,
-                           'max peak flow depth [m]': 5.49,
+                           'max peak flow thickness [m]': 5.49,
                            'max peak flow velocity [ms-1]': 42.},
         'Test Info': {'type': 'text',
                       'Test Info': 'Compare com1DFAOrig (Reference) to com1DFA (Simulation) results.'}}

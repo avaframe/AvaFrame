@@ -20,7 +20,7 @@ cfgFull = cfgUtils.getModuleConfig(com1DFA)
 ########################################################################
 # CHOOSE YOUR SETUP
 ##########################################################################
-# Choose the snow depth you want to use (h function)
+# Choose the snow thickness you want to use (h function)
 
 
 def Hfunction(x, y, z):
@@ -129,24 +129,24 @@ def defineGrid(Lx, Ly, csz):
     fields = {}
     fields['pfv'] = Dummy
     fields['ppr'] = Dummy
-    fields['pfd'] = Dummy
+    fields['pft'] = Dummy
     fields['V'] = Dummy
     fields['P'] = Dummy
-    fields['FD'] = Dummy
+    fields['FT'] = Dummy
     return dem, fields
 
 
-def plotFD(ax, x, xx, h, particles, ind, mark, count):
+def plotFT(ax, x, xx, h, particles, ind, mark, count):
     if count == 1:
-        ax.plot(xx, h, color='r', linestyle='-', label='real flow depth')
+        ax.plot(xx, h, color='r', linestyle='-', label='real flow thickness')
     ax.plot(particles[x][ind], particles['h2'][ind], color='b',
-             marker=mark, linestyle='None', label='corrected flow depth N = ' + str(nPartPerDList*nPartPerDList))
+             marker=mark, linestyle='None', label='corrected flow thickness N = ' + str(nPartPerDList*nPartPerDList))
     ax.plot(particles[x][ind], particles['h1'][ind], color='g',
-             marker=mark, linestyle='None', label='flow depth')
+             marker=mark, linestyle='None', label='flow thickness')
     # ax.plot(particles[x][ind], particles['h2'][ind], color='c',
-    #          marker=mark, linestyle='None', label='half corrected flow depth')
+    #          marker=mark, linestyle='None', label='half corrected flow thickness')
     ax.plot(particles[x][ind], particles['h'][ind], color='k',
-             marker=mark, linestyle='None', label='flow depth bilinear')
+             marker=mark, linestyle='None', label='flow thickness bilinear')
     return ax
 
 
@@ -258,8 +258,8 @@ for nPartPerD in nPartPerDList:
     indY = particles['indY'].astype('int')
 
     startTime = time.time()
-    # Compute sph FD
-    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    # Compute sph FT
+    H, C, W = DFAfunC.computeFTC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
     H = np.asarray(H)
     W = np.asarray(W)
     C = np.asarray(C)
@@ -269,7 +269,7 @@ for nPartPerD in nPartPerDList:
     particles['h2'] = H/W
     particles['h3'] = (H-C)/W
     tottime = time.time() - startTime
-    print('Time FD: ', tottime)
+    print('Time FT: ', tottime)
 
     startTime = time.time()
     GHX, GHY, GHZ = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=0)
@@ -325,7 +325,7 @@ for nPartPerD in nPartPerDList:
     yy = Ly/4*np.ones(100)
     zz = np.zeros(100)
     h, gx, gy, gz = Hfunction(xx, yy, zz)
-    ax1 = plotFD(ax1, 'x', xx, h, particles, ind, mark, count)
+    ax1 = plotFT(ax1, 'x', xx, h, particles, ind, mark, count)
     ax3 = plotGrad(ax3, 'x', xx, particles, ind, mark, count)
 
     ind = np.where(((x > Lx/4-0.5*dx) & (x < Lx/4+0.5*dx)))
@@ -333,7 +333,7 @@ for nPartPerD in nPartPerDList:
     xx = Lx/4*np.ones(100)
     zz = np.zeros(100)
     h, gx, gy, gz = Hfunction(xx, yy, zz)
-    ax2 = plotFD(ax2, 'y', yy, h, particles, ind, mark, count)
+    ax2 = plotFT(ax2, 'y', yy, h, particles, ind, mark, count)
     ax4 = plotGrad(ax4, 'y', yy, particles, ind, mark, count)
 
 fig1.legend()
@@ -342,8 +342,8 @@ fig3.legend()
 fig4.legend()
 # Save figure to file
 saveName = '_exact_semirand'
-fig1.savefig(('FD_x' + saveName))
-fig2.savefig(('FD_y' + saveName))
+fig1.savefig(('FT_x' + saveName))
+fig2.savefig(('FT_y' + saveName))
 fig3.savefig(('Grad_x' + saveName))
 fig4.savefig(('Grad_y' + saveName))
 plt.show()

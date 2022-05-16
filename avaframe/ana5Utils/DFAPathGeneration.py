@@ -30,7 +30,7 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
     avalancheDir: pathlib
         avalanche directory pathlib path
     pathFromPart: boolean
-        compute path from particles if True, from fields (FD, FM, FV) if False
+        compute path from particles if True, from fields (FT, FM, FV) if False
     simName: str
         simulation name
     dem: dict
@@ -61,7 +61,7 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
     else:
         particlesList = ''
         # read field
-        fieldName = ['FD', 'FM']
+        fieldName = ['FT', 'FM']
         if addVelocityInfo:
             fieldName.append['FV']
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, fieldName, simName=simName,
@@ -133,7 +133,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
     """ compute mass averaged path from fields
 
     Also returns the averaged velocity and kinetic energy associated
-    The dem and fieldsList (FD, FV and FM) need to have identical dimentions and cell size.
+    The dem and fieldsList (FT, FV and FM) need to have identical dimentions and cell size.
     If FV is not provided, information about velocity and kinetic energy is not computed
 
     Parameters
@@ -178,7 +178,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
     # loop on each field dictionary (ie each time step saved)
     for field in fieldsList:
         # find cells with snow
-        nonZeroIndex = np.where(field['FD'] > 0)
+        nonZeroIndex = np.where(field['FT'] > 0)
         xArray = X[nonZeroIndex]
         yArray = Y[nonZeroIndex]
         zArray, _ = gT.projectOnGrid(xArray, yArray, demRaster, csz=csz, xllc=xllc, yllc=yllc)
@@ -252,7 +252,7 @@ def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
         log.info('Using particles to generate avalanche path profile')
     else:
         # read field
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD'], simName=simName,
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FT'], simName=simName,
                                                                flagAvaDir=True, comModule='com1DFA', timeStep=0)
         # get fields header
         ncols = fieldHeader['ncols']
@@ -260,7 +260,7 @@ def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
         csz = fieldHeader['cellsize']
         # we want the origin to be in (0, 0) as it is in the avaProfile that comes in
         X, Y = gT.makeCoordinateGrid(0, 0, csz, ncols, nrows)
-        indNonZero = np.where(fieldsList[0]['FD'] > 0)
+        indNonZero = np.where(fieldsList[0]['FT'] > 0)
         # convert this data in a particles style (dict with x, y, z info)
         particlesIni = {'x': X[indNonZero], 'y': Y[indNonZero]}
         particlesIni, _ = gT.projectOnRaster(dem, particlesIni)

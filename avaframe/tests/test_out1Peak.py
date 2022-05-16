@@ -20,12 +20,12 @@ def test_plotAllPeakFields(tmp_path):
     avaTestDir2 = 'avaAlrNullTest2'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks'/ avaTestDir1
-    peakFile1 = avaDir / 'relAlr_null_ref_0.15500_pfd.asc'
+    peakFile1 = avaDir / 'relAlr_null_ref_0.15500_pft.asc'
     peakFile2 = avaDir / 'relAlr_null_ref_0.15500_pfv.asc'
     demFile = dirPath / '..' / 'data' / 'avaAlr' / 'Inputs' / 'avaAlr.asc'
     avaDirTmp1 = pathlib.Path(tmp_path, avaTestDir1)
     resultDir1 = avaDirTmp1 / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFileResult1 = resultDir1 / 'relAlr_null_ref_0.15500_pfd.asc'
+    peakFileResult1 = resultDir1 / 'relAlr_null_ref_0.15500_pft.asc'
     peakFileResult2 = resultDir1 / 'relAlr_null_ref_0.15500_pfv.asc'
     inputDir1 = avaDirTmp1 / 'Inputs'
     resultDir1.mkdir(parents=True)
@@ -37,7 +37,7 @@ def test_plotAllPeakFields(tmp_path):
 
     avaDirTmp2 = pathlib.Path(tmp_path, avaTestDir2)
     resultDir2 = avaDirTmp2 / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFileResult1 = resultDir2 / 'relAlr_null_ref_0.15500_pfd.asc'
+    peakFileResult1 = resultDir2 / 'relAlr_null_ref_0.15500_pft.asc'
     peakFileResult2 = resultDir2 / 'relAlr_null_ref_0.15500_pfv.asc'
     inputDir2 = avaDirTmp2 / 'Inputs'
     resultDir2.mkdir(parents=True)
@@ -60,17 +60,17 @@ def test_plotAllPeakFields(tmp_path):
 
     # call function to be tested
     plotDict = oP.plotAllPeakFields(avaDirTmp1, cfg['FLAGS'], modName, demData=demData)
-    plotPath = avaDirTmp1 / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pfd.png'
+    plotPath = avaDirTmp1 / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pft.png'
 
     assert 'relAlr_null_ref_0.15500' in plotDict
-    assert plotDict['relAlr_null_ref_0.15500']['pfd'] == plotPath
+    assert plotDict['relAlr_null_ref_0.15500']['pft'] == plotPath
 
     # call function to be tested
     plotDict2 = oP.plotAllPeakFields(avaDirTmp2, cfg['FLAGS'], modName, demData='')
-    plotPath = avaDirTmp2 / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pfd.png'
+    plotPath = avaDirTmp2 / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pft.png'
     print(plotDict2)
     assert 'relAlr_null_ref_0.15500' in plotDict2
-    assert plotDict2['relAlr_null_ref_0.15500']['pfd'] == plotPath
+    assert plotDict2['relAlr_null_ref_0.15500']['pft'] == plotPath
 
 
 def test_plotAllFields(tmp_path):

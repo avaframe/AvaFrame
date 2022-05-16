@@ -534,7 +534,7 @@ def transform(data, name, rasterTransfo, interpMethod):
     Returns
     -------
     newData: 2D numpy array
-        new_data = z, pressure or depth... corresponding to fname on
+        new_data = z, pressure or thickness... corresponding to fname on
         the new raster
     """
     # read tranformation info
@@ -574,7 +574,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
     Returns
     -------
     newData: 2D numpy array
-        new_data = z, pressure or depth... corresponding to fname on
+        new_data = z, pressure or thickness... corresponding to fname on
         the new raster
     """
 
@@ -778,7 +778,7 @@ def analyzeField(simName, rasterTransfo, transformedRaster, dataType, resAnalysi
     transformedRaster: 2D numpy array
         raster after transformation
     dataType: str
-        type of the data to analyze ('ppr', 'pfd', 'pfv', ...)
+        type of the data to analyze ('ppr', 'pft', 'pfv', ...)
     resAnalysisDF: dataFrame
         result dataFrame to be updated
 

@@ -23,7 +23,7 @@ def test_plotRangeTime(tmp_path):
         'rangeGates': np.arange(45) -25., 'plotTitle': 'testTitle', 'referencePointName': 'betaPoint',
         'type': 'tt', 'betaPointAngle': 9.987}
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'avalancheDir': avaDir, 'rangeTimeResType': 'FD', 'simHash': 'simDI',
+    cfgRangeTime['GENERAL'] = {'avalancheDir': avaDir, 'rangeTimeResType': 'FT', 'simHash': 'simDI',
         'minVelTimeStep': 2.}
 
     # call function to be tested

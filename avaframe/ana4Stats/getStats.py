@@ -35,7 +35,7 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
         varPar: str
             parameter that has been varied when performing simulations (for example relTh)
         restrictType: str
-            optional -result type of result parameters that should be used to mask result fields (eg. ppr, pfd, ..)
+            optional -result type of result parameters that should be used to mask result fields (eg. ppr, pft, ..)
         nameScenario: str
             optional -parameter that shall be used for color coding of simulation results
             in plots (for example releaseScenario)

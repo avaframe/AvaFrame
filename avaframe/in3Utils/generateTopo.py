@@ -255,7 +255,7 @@ def hockey(cfg):
         # Add surface elevation modification introduced by channel
         if cfg['TOPO'].getboolean('topoAdd'):
             zv = zv + cExtent*c0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2)))))*mask
-            # outside of the channel, add layer of channel depth
+            # outside of the channel, add layer of channel thickness
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= cExtent)] = 1
             zv = zv + cExtent*c0*mask
@@ -329,7 +329,7 @@ def parabola(cfg):
         mask[np.where(abs(y) < cExtent)] = 1
         if cfg['TOPO'].getboolean('topoAdd'):
             superChannel = superChannel + cExtent*c0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2)))))*mask
-            # outside of the channel, add layer of channel depth
+            # outside of the channel, add layer of channel thickness
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= cExtent)] = 1
             superChannel = superChannel + cExtent*c0*mask

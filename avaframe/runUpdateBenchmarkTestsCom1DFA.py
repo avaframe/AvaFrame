@@ -27,7 +27,7 @@ from benchmarks import simParametersDict
 
 # +++++++++REQUIRED+++++++++++++
 # Which result types do we want to save in the benchmarks
-outputVariable = ['ppr', 'pfd', 'pfv']
+outputVariable = ['ppr', 'pft', 'pfv']
 # ++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log

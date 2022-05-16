@@ -39,7 +39,7 @@ def test_analyzeArea(capfd):
     d = {}
     d['simName'] = ['refTestAimecTopo', 'simTestAimecTopo']
     d['ppr'] = [dataRef, dataSim]
-    d['pfd'] = [dataRef, dataSim]
+    d['pft'] = [dataRef, dataSim]
     d['pfv'] = [dataRef, dataSim]
     d['massBal'] = [dataMass, dataMass1]
     inputsDF = pd.DataFrame(data=d, index=['refTestAimecTopo', 'simTestAimecTopo'])
@@ -49,7 +49,7 @@ def test_analyzeArea(capfd):
     pathDict['refSimulation'] = 'refTestAimecTopo'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['contCmap'] = True
-    pathDict['resTypeList'] = ['ppr', 'pfd', 'pfv']
+    pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -139,7 +139,7 @@ def test_makeDomainTransfo(capfd):
     d['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                 pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                 pathData / 'testAimec_4.asc']
-    d['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    d['pft'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                 pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                 pathData / 'testAimec_4.asc']
     d['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
@@ -158,7 +158,7 @@ def test_makeDomainTransfo(capfd):
     pathDict['dirName'] = 'com1DFA'
     pathDict['refSimulation'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
-    pathDict['resTypeList'] = ['ppr', 'pfd', 'pfv']
+    pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -180,7 +180,7 @@ def test_makeDomainTransfo(capfd):
     assert rasterTransfo['gridy'][0, -1] == 20
     assert rasterTransfo['gridy'][-1, -1] == 258
 
-    # transform pressure_data, depth_data and speed_data in new raster
+    # transform pressure_data, thickness_data and speed_data in new raster
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']

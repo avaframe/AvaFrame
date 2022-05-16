@@ -18,13 +18,13 @@ def test_fetchReferenceSimNo(tmp_path):
     testPath = avaDir / 'Outputs' / 'comModule' / 'peakFiles'
     fU.makeADir(testPath)
     test1PPR = testPath / 'testSim_no1_ppr.asc'
-    test1PFD = testPath / 'testSim_no1_pfd.asc'
+    test1PFT = testPath / 'testSim_no1_pft.asc'
     test1PFV = testPath / 'testSim_no1_pfv.asc'
     test2PPR = testPath / 'testSim_no2_ppr.asc'
-    test2PFD = testPath / 'testSim_no2_pfd.asc'
+    test2PFT = testPath / 'testSim_no2_pft.asc'
     test2PFV = testPath / 'testSim_no2_pfv.asc'
     d = {'simName': ['testSim_no1', 'testSim_no2'], 'ppr': [test1PPR, test2PPR],
-         'pfd': [test1PFD, test2PFD], 'pfv': [test1PFV, test2PFV]}
+         'pft': [test1PFT, test2PFT], 'pfv': [test1PFV, test2PFV]}
     inputsDF = pd.DataFrame(data=d, index=['testSim_no1', 'testSim_no2'])
     cfgSetup = configparser.ConfigParser()
     cfgSetup['GENERAL'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2'}

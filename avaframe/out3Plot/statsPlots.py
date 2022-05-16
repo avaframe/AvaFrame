@@ -33,9 +33,9 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
         peakDictList: dict
             peakValues dictionary that contain max values of peak parameters and parameter variation info
         resType1: str
-            result parameter 1, 'ppr', 'pfd', 'pfv'
+            result parameter 1, 'ppr', 'pft', 'pfv'
         resType2: str
-            result parameter 1, 'ppr', 'pfd', 'pfv'
+            result parameter 1, 'ppr', 'pft', 'pfv'
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied
             to perfom a set of simulations
@@ -106,9 +106,9 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
         peakValues: dict
             peakValues dictionary that contain max values of peak parameters and parameter variation info
         resType1: str
-            result parameter 1, 'ppr', 'pfd', 'pfv'
+            result parameter 1, 'ppr', 'pft', 'pfv'
         resType2: str
-            result parameter 1, 'ppr', 'pfd', 'pfv'
+            result parameter 1, 'ppr', 'pft', 'pfv'
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied
             to perfom a set of simulations
@@ -171,7 +171,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
     plt.close()
 
 
-def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
+def plotHistCDFTiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
     """ Produce histogram and CDF plot of the raster difference of two simulations
 
     Parameters

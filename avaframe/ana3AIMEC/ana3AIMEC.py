@@ -20,7 +20,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     Reads the required files location for ana3AIMEC postpocessing
     given an avalanche directory
     Make the domain transformation corresponding to the input avalanche path
-    Transform 2D fields (pressure, flow depth ...)
+    Transform 2D fields (pressure, flow thickness ...)
     Analyze transformed rasters and mass
     Produce plots and report
 
@@ -138,7 +138,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     inputsDF : dataFrame
         dataframe with simulations to analyze and associated path to raster data
     newRasters: dict
-        dictionary containing pressure, velocity and flow depth rasters after
+        dictionary containing pressure, velocity and flow thickness rasters after
         transformation for the reference and the current simulation
     timeMass: 1D numpy array
         time array for mass analysis (if flagMass=True, otherwise None)
@@ -157,12 +157,12 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
                     max peak pressure in each cross section
             -pprCrossMean: 1D numpy array
                     mean peak pressure in each cross section
-            -maxpfdCrossMax: float
-                    max max peak flow depth
-            -pfdCrossMax: 1D numpy array
-                    max peak flow depth in each cross section
-            -pfdCrossMean: 1D numpy array
-                    mean peak flow depth in each cross section
+            -maxpftCrossMax: float
+                    max max peak flow thickness
+            -pftCrossMax: 1D numpy array
+                    max peak flow thickness in each cross section
+            -pftCrossMean: 1D numpy array
+                    mean peak flow thickness in each cross section
             -maxpfvCrossMax: float
                     max max peak flow velocity
             -pfvCrossMax: 1D numpy array
@@ -267,12 +267,12 @@ def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, refSimName):
     resAnalysisDFComp = resAnalysisDF[resAnalysisDF['simName'] != refSimName]
     reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'][0],
                                  'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'][0],
-                                 'max peak flow depth [m]': resAnalysisDFComp['maxpfdCrossMax'][0],
+                                 'max peak flow thickness [m]': resAnalysisDFComp['maxpftCrossMax'][0],
                                  'max peak flow velocity [ms-1]': resAnalysisDFComp['maxpfvCrossMax'][0]}
 
     benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFRef['sRunout'][0],
                                 'max peak pressure [kPa]': resAnalysisDFRef['maxpprCrossMax'][0],
-                                'max peak flow depth [m]': resAnalysisDFRef['maxpfdCrossMax'][0],
+                                'max peak flow thickness [m]': resAnalysisDFRef['maxpftCrossMax'][0],
                                 'max peak flow velocity [ms-1]': resAnalysisDFRef['maxpfvCrossMax'][0]}
     # add mass info
     if "relMass" in resAnalysisDF.columns:

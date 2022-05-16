@@ -177,7 +177,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
                 pfile.write(' \n')
-                if value == 'ppr' or value == 'pfd' or value == 'pfv':
+                if value == 'ppr' or value == 'pft' or value == 'pfv':
                     maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
                                   abs(float(reportD['Simulation Difference'][value][0])))
                     maxVal = float(reportD['Simulation Stats'][value][0])

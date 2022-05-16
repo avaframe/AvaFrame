@@ -17,11 +17,11 @@ def test_getVariationDict():
     avaDir = 'test/avaTest'
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
-    cfg['GENERAL'] = {'simTypeList' : 'null|ent', 'modelType' : 'dfa', 'resType' : 'ppr|pfd|pfv|particles|FD',
+    cfg['GENERAL'] = {'simTypeList' : 'null|ent', 'modelType' : 'dfa', 'resType' : 'ppr|pft|pfv|particles|FT',
                       'tSteps' : '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
                       'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                       'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
-    modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'], 'resType': ['ppr|pfd|pfv', 'ppr|pfd|pfv|particles|FD'],
+    modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'], 'resType': ['ppr|pft|pfv', 'ppr|pft|pfv|particles|FT'],
                 'tSteps': ['0:1', '1'], 'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']},
                 'TEST': {'test': ['test1', '']}}
 
@@ -68,7 +68,7 @@ def test_validateVarDict():
                      'secRelAreA': ['False', 'True'], 'rhoEnt': '200.'}
     standardCfg = configparser.ConfigParser()
     standardCfg.optionxform = str
-    standardCfg['GENERAL'] = {'simTypeList': 'available', 'modelType': 'dfa', 'resType': 'ppr|pfd|pfv',
+    standardCfg['GENERAL'] = {'simTypeList': 'available', 'modelType': 'dfa', 'resType': 'ppr|pft|pfv',
                   'tSteps': '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
                   'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                   'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
@@ -108,17 +108,17 @@ def test_checkResType():
 
     # setup required input
     fullCfg = configparser.ConfigParser()
-    fullCfg['GENERAL'] = {'resType': 'pfd|ppr|pfv|particles|test1|test2'}
+    fullCfg['GENERAL'] = {'resType': 'pft|ppr|pfv|particles|test1|test2'}
     section = 'GENERAL'
     key = 'resType'
-    value = 'pfd|ppr|pfv|particles|test1|test2'
+    value = 'pft|ppr|pfv|particles|test1|test2'
 
     # call function to be tested
     fullCfg = dP.checkResType(fullCfg, section, key, value)
 
     print('fullCfg', fullCfg)
 
-    assert fullCfg['GENERAL']['resType'] == 'pfd|ppr|pfv|particles'
+    assert fullCfg['GENERAL']['resType'] == 'pft|ppr|pfv|particles'
 
 
 def test_getThicknessValue():

@@ -5,7 +5,7 @@
     It is possible to generate a path from particles or from fields.
     From particles, you need to save the particles dictionaries at
     multiple time steps (first, some in the middle and last)
-    From fields, you need the FD, FM at multiple time steps
+    From fields, you need the FT, FM at multiple time steps
 """
 import pathlib
 # Local imports
@@ -58,7 +58,7 @@ else:
     dem['originalHeader'] = demOri['header'].copy()
     # load DFA results (use runCom1DFA to generate these results for example)
     # here is an example with com1DFA but another DFA computational module can be used
-    # as long as it produces some particles or FV, FD and FM results
+    # as long as it produces some particles or FV, FT and FM results
     # create dataFrame of results (read DFA data)
     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 

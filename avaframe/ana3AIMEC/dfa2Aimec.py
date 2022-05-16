@@ -224,7 +224,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
         Returns
         --------
         inputsDF: dataFrame
-            with a line for each simulation available and the corresponding simulation results: ppr, pfd, pfv
+            with a line for each simulation available and the corresponding simulation results: ppr, pft, pfv
     """
 
     inputsDF, resTypeList = fU.makeSimFromResDF(avaDir, comModule)
