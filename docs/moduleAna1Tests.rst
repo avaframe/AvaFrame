@@ -66,7 +66,7 @@ Dambreak test
 
 The Dambreak test compares the results of DFA simulations to the analytical solution of the "dam break" problem.
 In this test, a granular mass (Coulomb material) is suddenly released from rest on an inclined plane.
-In the case of a depth integrated model as derived by Savage and Hutter (e.g. in :cite:`HuSiSaNo1993`),
+In the case of a thickness integrated model as derived by Savage and Hutter (e.g. in :cite:`HuSiSaNo1993`),
 an analytical solution exists.
 This solution is described in :cite:`FaMa2012` and corresponds to a Riemann problem.
 
@@ -135,7 +135,7 @@ analytical solution. In order to run the test example:
 Similarity solution
 ====================
 
-The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the depth
+The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the thickness 
 integrated equations.
 It is a useful test case for validating simulation results coming from the dense flow avalanche computational module.
 This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape

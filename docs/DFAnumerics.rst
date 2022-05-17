@@ -9,7 +9,7 @@ com1DFA DFA-Kernel numerics
 
 The numerical method used in com1DFA mixes particle methods and
 mesh methods. Mass and momentum are tracked using particles but flow
-depth is tracked using the mesh. The mesh is also used to access topographic information
+thickness is tracked using the mesh. The mesh is also used to access topographic information
 (surface elevation, normal vector) as well as for displaying results.
 
 Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
@@ -36,9 +36,9 @@ Space discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The domain is discretized in particles. The following properties are assigned to each particle :math:`p_k`:
-a mass :math:`m_{p_k}`, a depth :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
+a mass :math:`m_{p_k}`, a thickness :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
 a velocity :math:`\mathbf{{u}}_{p_k}=({u}_{p_k,1}, {u}_{p_k,2})` (**those
-quantities are depth averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
+quantities are thickness averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
 In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
 whereas  :math:`k` and :math:`l` indexes refer to particles.
 
@@ -248,14 +248,14 @@ finding the adjacent cells is also easily done.
 
 SPH gradient
 --------------
-SPH method can be used to solve depth integrated equations where a 2D
+SPH method can be used to solve thickness integrated equations where a 2D
 (respectively 3D) equation is reduced to a 1D (respectively 2D) one.
 This is used in ocean engineering to solve shallow water equations (SWE)
 in open or closed channels for example. In all these applications,
 whether it is 1D or 2D SPH, the fluid is most of the time,
 assumed to move on a horizontal plane (bed elevation is set to a constant).
 In the case of avalanche flow, the "bed" is sloped and irregular.
-The aim is to adapt the SPH method to apply it to depth integrated equations
+The aim is to adapt the SPH method to apply it to thickness integrated equations
 on a 2D surface living in a 3D world.
 
 Method
@@ -263,7 +263,7 @@ Method
 The SPH method is used to express a quantity (the flow thickness in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
-In the case of depth integrated equations (for example SWE), a scalar function
+In the case of thickness integrated equations (for example SWE), a scalar function
 :math:`f` and its gradient can be expressed as following:
 
 .. math::
