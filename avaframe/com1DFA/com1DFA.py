@@ -1866,7 +1866,7 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
     """
 
     secondaryReleaseInfo = particles['secondaryReleaseInfo']
-    flowDepthField = fields['FT']
+    flowThicknessField = fields['FT']
     secRelRasterList = secondaryReleaseInfo['rasterData']
     secRelRasterNameList = secondaryReleaseInfo['Name']
     count = 0
@@ -1874,7 +1874,7 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
     for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
         # do the two arrays intersect (meaning a flowing particle entered the
         # secondary release area)
-        mask = (secRelRaster > 0) & (flowDepthField > 0)
+        mask = (secRelRaster > 0) & (flowThicknessField > 0)
         if mask.any():
             # create secondary release area particles
             log.info('Initializing secondary release area feature %s' % secRelRasterName)

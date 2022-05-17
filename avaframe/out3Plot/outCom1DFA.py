@@ -139,7 +139,7 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
 
     X = particles['x'] + xllc
     Y = particles['y'] + yllc
-    cmap = pU.cmapD
+    cmap = pU.cmapT
     variableC = particles[whatC]
     variableS = particles[whatS]
     minMax = np.nanmax(variableS)-np.nanmin(variableS)

@@ -226,7 +226,7 @@ def com1DFAOrigMain(cfg, avaDir):
         resistanceArea = ''
         if 'ent' in simTypeList:
             entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
-            if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
+            if cfg['ENTRAINMENT'].getboolean('setEntThickness'):
                 entrainmentTH = cfg['ENTRAINMENT']['entH']
                 log.info('Entrainment thickness is changed! set to %s' % entrainmentTH)
         if 'res' in simTypeList:

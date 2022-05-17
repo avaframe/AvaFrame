@@ -106,11 +106,11 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
             Z = np.append(Z, part['z'][0])
             U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
             fig, ax = plotPosition(
-                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
+                fig, ax, part, demOri, dem['Nz'], pU.cmapTEM2, '', plotPart=True)
             fig.savefig(pathlib.Path(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
 
         fig, ax = plotPosition(
-                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
+                fig, ax, part, demOri, dem['Nz'], pU.cmapTEM2, '', plotPart=True, last=True)
         fig.savefig(pathlib.Path(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
         value = input("[y] to repeat:\n")
         if value != 'y':
@@ -173,13 +173,13 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
         # ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
         variable = particles['h']
-        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(data), np.amax(variable), continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapThickness, np.nanmin(data), np.amax(variable), continuous=True)
         # set range and steps of colormap
         cc = variable
         sc = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
 
         if last:
-            pU.addColorBar(sc, ax, ticks, 'm', 'Flow Depth')
+            pU.addColorBar(sc, ax, ticks, 'm', 'Flow Thickness')
 
     plt.pause(0.1)
     return fig, ax
@@ -214,7 +214,7 @@ def plotContours(fig, ax, t, header, data, Cmap, unit, last=False):
     lev = CS.levels
 
     if last:
-        # pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
+        # pU.addColorBar(im, ax, ticks, unit, 'Flow Thickness')
         CB = fig.colorbar(CS)
         ax.clabel(CS, inline=1, fontsize=8)
     return fig, ax, cmap, lev
@@ -227,7 +227,7 @@ def plotPathExtTop(profile, particlesIni, xFirst, yFirst, zFirst, dz1):
     xHighest = particlesIni['x'][indHighest]
     yHighest = particlesIni['y'][indHighest]
     zHighest = particlesIni['z'][indHighest]
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(dz1), np.nanmax(dz1), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapThickness, np.nanmin(dz1), np.nanmax(dz1), continuous=True)
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     ax.set_title('Extend path towards the top')
     ax.tricontour(particlesIni['x'], particlesIni['y'], dz1, levels=14, linewidths=0.5, colors='k')

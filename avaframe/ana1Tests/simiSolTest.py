@@ -740,7 +740,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
             vhErrorL2Array[count] = vhErrorL2
             vhErrorLMaxArray[count] = vhErrorLmax
         title = outAna1Plots.getTitleError(cfgSimi['SIMISOL'].getboolean('relativError'))
-        log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
+        log.debug("L2 %s error on the Flow Thickness at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         # Make all individual time step comparison plot
         if cfgSimi['SIMISOL'].getboolean('plotSequence'):

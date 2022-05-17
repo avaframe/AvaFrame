@@ -159,8 +159,8 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
 
     ############################################
     # prepare for plot
-    title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
-    unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    title = ['Pressure ', 'Flow Thickness ', 'Flow Velocity ']
+    unit = ['$P(s)$ [kPa]', '$ft(s)$ [m]', '$v(s) [m.s^{-1}]$']
     peakList = ['ppr', 'pft', 'pfv']
 
     ############################################
@@ -407,18 +407,18 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     rasterdataPres = newRasters['newRefRasterPPR']
-    rasterdataDepth = newRasters['newRefRasterPFT']
+    rasterdataThickness = newRasters['newRefRasterPFT']
     rasterdataSpeed = newRasters['newRefRasterPFV']
     runout = resAnalysisDF.loc[refSimulationName, 'sRunout']
 
     ############################################
     # prepare for plot
-    Cmap = [pU.cmapPres, pU.cmapDepth, pU.cmapSpeed]
-    Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
+    Cmap = [pU.cmapPres, pU.cmapThickness, pU.cmapSpeed]
+    Title = ['Peak Pressure', 'Peak Flow Thickness', 'Peak Speed']
     Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpft'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
-    Data[1] = rasterdataDepth
+    Data[1] = rasterdataThickness
     Data[2] = rasterdataSpeed
 
     ############################################

@@ -141,10 +141,10 @@ colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = copy.copy(cmapCrameri.hawaii.reversed())
 
 # multi sequential colormap for flow thickness
-levD = list(fU.splitIniValueToArraySteps(cfgPlotUtils['thicknessColorLevels']))
+levT = list(fU.splitIniValueToArraySteps(cfgPlotUtils['thicknessColorLevels']))
 # Lajolla color map
-colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
-cmapD = copy.copy(cmapCrameri.lajolla)
+colorsT = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
+cmapT = copy.copy(cmapCrameri.lajolla)
 
 # multi sequential colormap for speed
 levS = list(fU.splitIniValueToArraySteps(cfgPlotUtils['speedColorLevels']))
@@ -179,7 +179,7 @@ cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
 # Set colormaps to use
 ###############################################
 # ploting with a descrete (contCmap = continuousCmap = False) or continuous colormap (contCmap = True)?
-# if continuous, only the cmap argument in the cmapDictionnary maters
+# if continuous, only the cmap argument in the cmapTictionnary maters
 # replace it with the wanted colormap
 contCmap = cfg.getboolean('contCmap')
 # for pressure
@@ -189,10 +189,10 @@ cmapPres['colors'] = colorsP
 cmapPres['levels'] = levP
 
 
-cmapDepth = {}
-cmapDepth['cmap'] = cmapD
-cmapDepth['colors'] = colorsD
-cmapDepth['levels'] = levD
+cmapThickness = {}
+cmapThickness['cmap'] = cmapT
+cmapThickness['colors'] = colorsT
+cmapThickness['levels'] = levT
 
 cmapSpeed = {}
 cmapSpeed['cmap'] = cmapS
@@ -210,16 +210,16 @@ cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
-colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed, 'FM': cmapDepth,
-             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed, 'FT': cmapDepth, 'prob': cmapProb,
+colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapThickness, 'P': cmapPres, 'FV': cmapSpeed, 'FM': cmapThickness,
+             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed, 'FT': cmapThickness, 'prob': cmapProb,
              'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
 
-cmapDEM = cmapGreys
+cmapTEM = cmapGreys
 
-cmapDEM2 = {}
-cmapDEM2['cmap'] = cmapGreys
-cmapDEM2['colors'] = colorsS
-cmapDEM2['levels'] = None
+cmapTEM2 = {}
+cmapTEM2['cmap'] = cmapGreys
+cmapTEM2['colors'] = colorsS
+cmapTEM2['levels'] = None
 
 cmapAimec = cmapAvaframe
 

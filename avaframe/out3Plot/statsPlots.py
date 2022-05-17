@@ -308,7 +308,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
 
         # add contourlines for levels
         if multLabel:
-            CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
+            CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1)
         else:
             CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1)
         for i in range(len(labels)):
@@ -349,7 +349,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
 
         # add contourlines for levels
         if multLabel:
-            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
+            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1)
         else:
             CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, colors=colorsP, linewidths=1)
         for i in range(len(labels)):
