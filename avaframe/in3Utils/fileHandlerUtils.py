@@ -426,14 +426,14 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     for k in range(sNo):
         pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
-                                '%s_pft.asc' % logDict['simName'][k])
+                                '%s_pfd.asc' % logDict['simName'][k])
         pathTo = outDirPF / ('%s_%.05f_pft.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
         if addTSteps is True:
             pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                     logDict['simName'][k], 'raster',
                                     '%s_fd.asc' % logDict['simName'][k])
-            pathTo = outDirPF / 'timeSteps' / ('%s_%.05f_tLast_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            pathTo = outDirPF / 'timeSteps' / ('%s_%.05f_tLast_ft.asc' % (logDict['simName'][k], logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
         pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',

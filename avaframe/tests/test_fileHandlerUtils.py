@@ -175,6 +175,11 @@ def test_exportcom1DFAOrigOutput(tmp_path):
                                'release1PF_entres_dfa_1.25000_pfv.asc')
             input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
                                 'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_pv.asc')
+        elif m == 'pft':
+            avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
+                               'release1PF_entres_dfa_1.25000_pft.asc')
+            input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
+                                'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_pfd.asc')
         else:
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                                 'release1PF_entres_dfa_1.25000_%s.asc' % m)

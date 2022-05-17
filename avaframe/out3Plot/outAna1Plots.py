@@ -326,7 +326,7 @@ def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     dtInd = np.searchsorted(t, tSave)
     name = pU.cfgPlotUtils['nameFT'] + '[' + pU.cfgPlotUtils['unitFT'] + ']'
     fig = _plotVariableDamBreak(h, x, xMiddle, dtInd, tSave, name)
-    outputName = 'damBreakFlowDepth'
+    outputName = 'damBreakFlowThickness'
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     name = pU.cfgPlotUtils['nameFV'] + '[' + pU.cfgPlotUtils['unitFV'] + ']'
@@ -718,7 +718,7 @@ def addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=9):
     contourLevels = np.linspace(0, limits['maxFT'], nLevels)
     contourLevels = contourLevels[:-1]
     # make plot
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(fieldFT),
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapThickness, np.nanmin(fieldFT),
                                            np.nanmax(fieldFT), continuous=True)
     cmap.set_under(color='w')
     cs1 = ax1.contour(X, Y, fieldFT, levels=contourLevels, origin='lower', cmap=cmap, linewidths=2)
