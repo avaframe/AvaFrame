@@ -26,7 +26,7 @@ to visualize flow thickness, flow velocity or pressure.
 These can be initialised by::
 
   from avaframe.out3Plot import plotUtils
-  plotUtils.cmapDepth
+  plotUtils.cmapThickness
 
 A colormap dictionary is loaded with information about the colormap,
 specific colors and levels corresponding to the default option of visualising pressure in com1DFA.

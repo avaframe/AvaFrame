@@ -118,12 +118,12 @@ leads to:
    \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
 ..   :label: NCS-consequence
 
-Depth averaged equations:
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Thickness averaged equations:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In this NCS and considering a prism-like Control volume, the volume
 content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
 of the basal area of the prism, :math:`A_b`, with the averaged value of
-the flow-depth,
+the flow thickness,
 
 .. math::
     \overline{h} = \frac{1}{A_b(t)}\int\limits_{A_b(t)} [s(\mathbf{x})-b(\mathbf{x})]\,\mathrm{d}A = \frac{1}{A_b(t)}\int\limits_{A_b(t)} h(\mathbf{x})\,\mathrm{d}A,\qquad
@@ -144,7 +144,7 @@ Entrainment:
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
 at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed as a function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
-snow depth :math:`h_{\text{ent}}`), the velocity of the avalanche at the
+snow thickness :math:`h_{\text{ent}}`), the velocity of the avalanche at the
 front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
 to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens on the front of
 the avalanche:
@@ -176,7 +176,7 @@ The force :math:`F_i^{\text{ent}}` required to break the entrained snow
 from the ground and to compress it is expressed as a function of the required
 breaking energy per fracture surface unit :math:`e_s`
 (:math:`J.m^{-2}`), the deformation energy per entrained mass element
-:math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow depth
+:math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow thickness
 (:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
 
 .. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)

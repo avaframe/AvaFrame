@@ -5,8 +5,9 @@ com1DFA: DFA-Kernel
 It is a python and cython implementation of the DFA C++ implementation samosAT
 (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz (see :ref:`moduleCom1DFAOrig:com1DFAOrig: Original DFA-Kernel`).
-Calculations are based on the depth integrated governing equations and
-solved numerically using the smoothed particle hydrodynamics (sph) method.
+Calculations are based on the thickness integrated governing equations and
+solved numerically using the smoothed particle hydrodynamics (sph) method. Please note 
+the use of *thickness averaged/integrated* instead of *depth averaged/integrated* for clarity and consistency. 
 
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
 entrainment and/or resistance areas, and is controlled via a configuration file.
