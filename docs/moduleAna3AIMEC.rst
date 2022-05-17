@@ -218,8 +218,8 @@ Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`an
 .. :runoutMean: (x,y) coordinates of the runout as well as the runout length based on P_cross_mean and the pressure Threshold
 .. :AMPP: average maximum peak pressure
 .. :MMPP: maximum maximum peak pressure
-.. :AMD: average maximum flow thickness
-.. :MMD: maximum maximum flow thickness
+.. :AMT: average maximum flow thickness
+.. :MMT: maximum maximum flow thickness
 .. :elevRel: z coordinate of the release area (first point with max Peak pressure over pressure Threshold)
 .. :deltaH: DeltaZ between the release point and runout point
 .. :relMass: release Mass
