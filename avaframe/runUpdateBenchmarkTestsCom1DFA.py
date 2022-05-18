@@ -132,7 +132,7 @@ for test in testList:
         destFile = refDir / 'particles'
         destFile.mkdir()
         simComponents = rep['simName']['name'].split('_')
-        destFile = destFile / (simComponents[0] + '_' + simComponents[1])
+        destFile = destFile / (simComponents[0] + '_' + simComponents[2])
         destFile.mkdir()
         destFile = destFile / (simFile.name)
         shutil.copy2(simFile, destFile)
