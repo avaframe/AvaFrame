@@ -106,11 +106,11 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
             Z = np.append(Z, part['z'][0])
             U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
             fig, ax = plotPosition(
-                fig, ax, part, demOri, dem['Nz'], pU.cmapTEM2, '', plotPart=True)
+                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
             fig.savefig(pathlib.Path(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
 
         fig, ax = plotPosition(
-                fig, ax, part, demOri, dem['Nz'], pU.cmapTEM2, '', plotPart=True, last=True)
+                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
         fig.savefig(pathlib.Path(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
         value = input("[y] to repeat:\n")
         if value != 'y':
@@ -260,7 +260,8 @@ def plotPathExtBot(profile, xInterest, yInterest, zInterest, xLast, yLast):
     ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
     ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
     ax.plot(xLast, yLast, '.b', markersize=10, label='bottom point of the mass averaged path')
-    ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
+    ax.plot(profile['x'][0], profile['y'][0], '.g',
+            label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
     ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
     plt.legend()
     plt.show()

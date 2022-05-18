@@ -98,7 +98,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
     plt.close(fig)
 
 
-def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, statsMeasure='max', flagShow=False, flagHue=False):
+def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir,
+                          statsMeasure='max', flagShow=False, flagHue=False):
     """ Produce scatter and marginal kde plot of max values, for one set of simulations or multiple
 
         Parameters
@@ -171,7 +172,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
     plt.close()
 
 
-def plotHistCDFTiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
+def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
     """ Produce histogram and CDF plot of the raster difference of two simulations
 
     Parameters
@@ -330,7 +331,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
         # constrain to where there is data
         rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataCutConstrained = pU.constrainPlotsToData(dataCut,
             cellSize, extentOption=True, constrainedData=True, buffer=cfg.getfloat('constrainBuffer'))
-        dataCutConstrained = np.ma.masked_where(dataCutConstrained==0.0, dataCutConstrained)
+        dataCutConstrained = np.ma.masked_where(dataCutConstrained == 0.0, dataCutConstrained)
 
         # set extent of zoom Plot
         x0 = xOrigin + colsMinPlot

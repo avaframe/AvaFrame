@@ -9290,11 +9290,11 @@ loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Projec
 loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000301.1000.TimeStep done.	(src/SW_Simulation.cpp:1860)
 txt html file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa.html!release1HS_entres_dfa 
 In export var: PeakFlowDepth 
-writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pft.asc	(src/SW_Workspace.cpp:2167)
-file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pft.asc written	(src/SW_Workspace.cpp:2204)
-writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pft.nxyz	(src/SW_Workspace.cpp:2135)
-file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pft.nxyz written	(src/SW_Workspace.cpp:2149)
-SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pft.nxyz
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pfd.asc	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pfd.asc written	(src/SW_Workspace.cpp:2204)
+writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz	(src/SW_Workspace.cpp:2135)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz written	(src/SW_Workspace.cpp:2149)
+SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz
 __0
 __0.5
 __1
@@ -9303,8 +9303,8 @@ __2
 __3
 __4
 __5
-Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pft.nxyz
-CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pft.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
+Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz
+CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
 In export var: FlowDepth 
 writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_fd.asc	(src/SW_Workspace.cpp:2167)
 file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_fd.asc written	(src/SW_Workspace.cpp:2204)
