@@ -210,16 +210,16 @@ cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
-colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapThickness, 'P': cmapPres, 'FV': cmapSpeed, 'FM': cmapThickness,
-             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed, 'FT': cmapThickness, 'prob': cmapProb,
-             'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
+colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapThickness, 'P': cmapPres, 'FV': cmapSpeed,
+             'FM': cmapThickness, 'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed,
+             'FT': cmapThickness, 'prob': cmapProb, 'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
 
-cmapTEM = cmapGreys
+cmapDEM = cmapGreys
 
-cmapTEM2 = {}
-cmapTEM2['cmap'] = cmapGreys
-cmapTEM2['colors'] = colorsS
-cmapTEM2['levels'] = None
+cmapDEM2 = {}
+cmapDEM2['cmap'] = cmapGreys
+cmapDEM2['colors'] = colorsS
+cmapDEM2['levels'] = None
 
 cmapAimec = cmapAvaframe
 
@@ -531,13 +531,13 @@ def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='r
         log.warning('Info text to be added to plot is not a string - ignored')
 
     if location == 'upperRight':
-        xy=(0.97, 0.99)
+        xy = (0.97, 0.99)
     elif location == 'upperLeft':
-        xy=(0.01, 0.97)
+        xy = (0.01, 0.97)
     elif location == 'lowerLeft':
-        xy=(0.01, 0.01)
+        xy = (0.01, 0.01)
     else:
-        xy=(0.99, 0.01)
+        xy = (0.99, 0.01)
 
     ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment=hAlignment,
         verticalalignment='top', color=color, alpha=alphaF,
@@ -703,7 +703,7 @@ def addHillShadeContours(ax, data, cellSize, extent):
 
     # add contour lines
     CS = ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
-                     linewidths=0.5, zorder=2)
+                    linewidths=0.5, zorder=2)
 
     # add labels
     ax.clabel(CS, CS.levels, inline=True, fontsize=8, zorder=3)

@@ -196,7 +196,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
         axin4.patch.set_alpha(0.0)
 
-        centiles = sPlot.plotHistCDFTiff(dataDiffPlot, axin4, axin3)
+        centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin3)
         ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
                  (centiles[0], unit, centiles[1], unit),
                  horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)

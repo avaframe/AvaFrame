@@ -540,7 +540,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'thresholdValue', str(
-                  thresholdValue).replace('.', 'p'),  'sim', str(simName), 'AreaComparisonToReference'])
+                  thresholdValue).replace('.', 'p'), 'sim', str(simName), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     ############################################
@@ -626,7 +626,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             ax3 = plt.subplot2grid((3, 3), (2, 1))
             ax4 = plt.subplot2grid((3, 3), (2, 2))
             # there is data to compare in the run out area
-            centiles = sPlot.plotHistCDFTiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
+            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
                                              '%s diff CDF (95%% and 99%% centiles)' % name])
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
@@ -645,7 +645,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
-                  '.', 'p'),  'sim', str(simName), 'ContourComparisonToReference'])
+                  '.', 'p'), 'sim', str(simName), 'ContourComparisonToReference'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
