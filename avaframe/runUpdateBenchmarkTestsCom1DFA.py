@@ -41,7 +41,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks to extract only desired ones
 type = 'TAGS'
-valuesList = ['standardTest', 'test']
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
