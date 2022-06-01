@@ -35,6 +35,7 @@ from avaframe.in1Data import getInput as gI
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
+from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
@@ -168,6 +169,9 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
                 # load configuration dictionary for cuSim
                 cfg = simDict[cuSim]['cfgSim']
+
+                # check configuraton for consistency
+                checkCfg.checkCfgConsistency(cfg)
 
                 # save configuration settings for each simulation
                 simHash = simDict[cuSim]['simHash']
