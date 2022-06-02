@@ -44,9 +44,11 @@ cfgMain = cfgUtils.getGeneralConfig()
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks for tag standardTest
-type = 'TAGS'
-valuesList = ['standardTest']
-testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
+#  filterType = 'TAGS'
+#  valuesList = ['resistance']
+filterType = 'NAME'
+valuesList = ['avaParabolaResTest']
+testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='and')
 
 # Set directory for full standard test report
 outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
@@ -70,6 +72,7 @@ cpuTimeName = []
 cpuTimeBench = []
 cpuTimeSim = []
 # run Standard Tests sequentially
+
 for test in testList:
 
     avaDir = test['AVADIR']

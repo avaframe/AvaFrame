@@ -855,6 +855,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
     nStart = indStartOfRunout
     # inputs for plot
     inputs = {}
+    #FSO: Problem here 
     inputs['runoutLength'] = resAnalysisDF.loc[refSimulationName, 'sRunout']
     inputs['refData'] = newRasters['newRefRaster' + resType.upper()]
     inputs['nStart'] = nStart
@@ -913,6 +914,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
     inputs['compRasterMask'] = compRasterMask
     inputs['simName'] = simName
 
+    #FSO: Problem here
     compPlotPath = None
     if simName != refSimulationName:
         # only plot comparisons of simulations to reference

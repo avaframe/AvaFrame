@@ -334,6 +334,7 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
     # read paths
     projectName = pathDict['projectName']
     # read data
+    #FSO Problem here
     entMassRef = resAnalysisDF.loc[refSimulationName, 'entMass']
     finalMassRef = resAnalysisDF.loc[refSimulationName, 'finalMass']
     entMass = resAnalysisDF.loc[simName, 'entMass']
@@ -348,6 +349,7 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, field, title, unit in zip(axes.flatten(), fieldList, Title, Unit):
+    #FSO Problem here
         refArray = resAnalysisDF.loc[refSimulationName, field]
         simArray = resAnalysisDF.loc[simName, field]
         ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimulationName)
@@ -409,6 +411,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     rasterdataPres = newRasters['newRefRasterPPR']
     rasterdataThickness = newRasters['newRefRasterPFT']
     rasterdataSpeed = newRasters['newRefRasterPFV']
+    #FSO Problem here
     runout = resAnalysisDF.loc[refSimulationName, 'sRunout']
 
     ############################################
