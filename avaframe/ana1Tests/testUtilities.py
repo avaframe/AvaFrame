@@ -118,14 +118,14 @@ def readAllBenchmarkDesDicts(info=False, inDir=''):
     return testDictList
 
 
-def filterBenchmarks(testDictList, type, valuesList, condition='or'):
+def filterBenchmarks(testDictList, filterType, valuesList, condition='or'):
     """ filter benchmarks according to characteristic
 
         Parameters
         -----------
         testDictList: list
             list of benchmark dictionaries
-        type: str
+        filterType: str
             key which is used for filtering (options: TAGS, TYPE)
         valuesList: list
             list of values used for filtering
@@ -149,18 +149,21 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
         valuesList = [valuesList]
 
     for testDict in testDictList:
-        if type == 'AVANAME':
+        if filterType == 'AVANAME':
             if testDict['AVANAME'] in valuesList:
                 testList.append(testDict)
+        elif filterType == 'NAME':
+            if testDict['NAME'] in valuesList:
+                testList.append(testDict)
         else:
-            # convert testDict[type] to list if not already list
-            if isinstance(testDict[type], list) is False:
-                testDict[type] = [testDict[type]]
+            # convert testDict[filterType] to list if not already list
+            if isinstance(testDict[filterType], list) is False:
+                testDict[filterType] = [testDict[filterType]]
             if condition == 'or':
-                if any(values in testDict[type] for values in valuesList):
+                if any(values in testDict[filterType] for values in valuesList):
                     testList.append(testDict)
             elif condition == 'and':
-                if all(values in testDict[type] for values in valuesList):
+                if all(values in testDict[filterType] for values in valuesList):
                     testList.append(testDict)
             else:
                 flag = True
