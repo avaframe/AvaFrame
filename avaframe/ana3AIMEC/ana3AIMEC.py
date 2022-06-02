@@ -13,6 +13,7 @@ import avaframe.out3Plot.outAIMEC as outAimec
 # create local logger
 log = logging.getLogger(__name__)
 
+import pandas as pd
 
 def mainAIMEC(pathDict, inputsDF, cfg):
     """ Main logic for AIMEC postprocessing
@@ -53,7 +54,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     demSource = pathDict['demSource']
     dem = IOf.readRaster(demSource)
     # read reference file and raster and config
-    refSimulationName = pathDict['refSimulation']
+    refSimulationName = pathDict['refSimulation'] 
     refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
     refRaster = IOf.readRaster(refResultSource)
     refHeader = refRaster['header']
@@ -79,34 +80,52 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    # ###########################################################
+
+    #FSO: up to here: this is fine
 
     # postprocess reference
-    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
+    # make sure only one simulation with refSimulationName exists -> duplicates can happen for
+    # the same setup, eg. benchmark comparisons...
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName]
+    inputsValueCount = inputsDF['simName'].value_counts()
+
+    if inputsValueCount[refSimulationName] > 1:
+        log.warning('Multiple rows with the same reference simulation name found! Taking the first as reference')
+        print('Felix: uho multiple ', )
+        inputsDFrow = inputsDFrow.iloc[0].squeeze()
+    else:
+        inputsDFrow = inputsDFrow.squeeze()
+
     timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
+    #FSO Problem here
     resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
                                                            timeMass, refSimulationName, resAnalysisDF)
-
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
+        if inputsValueCount[simName] > 1:
+            print('Felix: Uho double sim')
+    #FSO Problem here
         if simName != refSimulationName:
             resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
                                                                    newRasters, timeMass, simName, resAnalysisDF)
             pathDict['compSimulation'] = simName
+
     # -----------------------------------------------------------
     # result visualisation + report
     # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
+    #FSO Problem here
     outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
         plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
         plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
+    #FSO Problem here
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
     plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
     plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF['areasPlot'][1]}
@@ -223,8 +242,9 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     flagMass = cfgFlags.getboolean('flagMass')
     refSimulationName = pathDict['refSimulation']
     resTypeList = pathDict['resTypeList']
-    # apply domain transformation
+    print('Felix: refsims ',refSimulationName)
 
+    # apply domain transformation
     log.info('Analyzing data in path coordinate system')
 
     for resType in resTypeList:
