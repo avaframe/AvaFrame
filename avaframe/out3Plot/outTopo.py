@@ -113,7 +113,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     nrows, ncols = z.shape
     X, Y = geoTrans.makeCoordinateGrid(xl, yl, dx, ncols, nrows)
 
-    topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat',
+    topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat', 'TPF': 'triple parabola flat',
                  'HS': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
 
     ax = _generateDEMPlot(X, Y, z, topoNames[nameExt])

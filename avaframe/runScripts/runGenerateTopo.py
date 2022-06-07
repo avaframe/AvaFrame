@@ -2,7 +2,6 @@
 """
     Run script for generateTopo in module in3Utils
 """
-
 import logging
 
 # Local imports

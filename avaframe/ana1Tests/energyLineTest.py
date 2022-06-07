@@ -15,6 +15,7 @@ import matplotlib.patheffects as pe
 # Local imports
 # import config and init tools
 from avaframe.in3Utils import cfgUtils
+from avaframe.in1Data import getInput as gI
 
 # import computation modules
 from avaframe.com1DFA import com1DFA
@@ -26,6 +27,7 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 # create local logger
 log = logging.getLogger(__name__)
+runDFAModule = False
 
 
 def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
@@ -35,23 +37,35 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     and compares it to he analytic geometric/alpha line solution
     """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
-    # Run dense flow with coulomb friction
-    # here is an example with com1DFA but another DFA computational module can be used
-    # as long as it produces some FV, FT and FM results
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
-    dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=energyLineTestCfgFile)
+    if runDFAModule:
+        # Run dense flow with coulomb friction
+        # here is an example with com1DFA but another DFA computational module can be used
+        # as long as it produces some FV, FT and FM results
+        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=energyLineTestCfgFile)
+    else:
+        # read simulation dem
+        demOri = gI.readDEM(avalancheDir)
+        dem = com1DFA.setDEMoriginToZero(demOri)
+        dem['originalHeader'] = demOri['header'].copy()
+        # load DFA results (use runCom1DFA to generate these results for example)
+        # here is an example with com1DFA but another DFA computational module can be used
+        # as long as it produces some particles or FV, FT and FM results
+        # create dataFrame of results (read DFA data)
+        simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
     # generate mass averaged path profile
-    simName = simDF.index[0]
-    pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass, _ = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
+    for simName in simDF.index:
+        log.info('Analyzing simulation: %s' % simName)
+        pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
+        avaProfileMass = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
 
-    # read pfv for plot
-    fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
-                                                           comModule='com1DFA')
-    # make analysis and generate plots
-    errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
-                                                simName)
+        # read pfv for plot
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
+                                                               comModule='com1DFA')
+        # make analysis and generate plots
+        errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
+                                                    simName)
     return errorEnergyTest
 
 
@@ -209,10 +223,11 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.set_yticks([avaProfileMass['z'][-1]-z0, zIntersection-z0])
     ax3.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax3.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    text = ('Runout s diff : %.2f m \nRunout z diff : %.2f m \nRunout angle diff : %.4f° \nvelocity height rmse : %.2f m \n(energy line - alpha line)' %
+    text = ('Runout s diff : %.8f m \nRunout z diff : %.8f m \nRunout angle diff : %.8f° \nvelocity height rmse : %.8f m \n(energy line - alpha line)' %
             (runOutSError, runOutZError, runOutAngleError, rmseVelocityElevation))
     text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5,
                             prop=dict(fontsize=pU.fs))
+    log.info(text)
     plt.setp(text_box.patch, facecolor='white', alpha=0.5)
     ax3.add_artist(text_box)
     outFileName = '_'.join([simName, 'EnergyTest'])
