@@ -25,7 +25,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # ----------------
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # get path to com1DFA configuration file used for the energy line test
 energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
