@@ -269,6 +269,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
         # perform mass analysis
         fnameMass = inputsDFrow['massBal']
         resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simName, refSimulationName, resAnalysisDF, time=timeMass)
+
+    #FSO: Problem here
         if simName != refSimulationName:
             massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
             resAnalysisDF.loc[simName, 'massPlotName'] = massPlotName

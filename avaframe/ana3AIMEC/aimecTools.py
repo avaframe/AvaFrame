@@ -636,6 +636,7 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=None):
     # analyze mass
     releasedMass, entrainedMass, finalMass, grIndex, grGrad, entMassFlow, totalMass, time = readWrite(fnameMass, time)
 
+    #FSO: Problem here
     resAnalysisDF.loc[simName, 'relMass'] = releasedMass
     resAnalysisDF.loc[simName, 'finalMass'] = finalMass
     resAnalysisDF.loc[simName, 'entMass'] = entrainedMass
@@ -749,6 +750,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpperm = 0
         cLowerm = 0
+    #FSO: Problem here
     resAnalysisDF.loc[simName, 'sRunout'] = scoord[cLower]
     index = np.nanargmax(PResRasters[cLower, :])
     resAnalysisDF.loc[simName, 'lRunout'] = lcoord[index]
@@ -803,6 +805,7 @@ def analyzeField(simName, rasterTransfo, transformedRaster, dataType, resAnalysi
     maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(transformedRaster, rasterArea)
     log.debug('{: <10} {:<10.4f}'.format(*[simName, maxaCrossMax]))
 
+    #FSO: Problem here
     resAnalysisDF.loc[simName, 'max' + dataType + 'CrossMax'] = maxaCrossMax
     resAnalysisDF.at[simName, dataType + 'CrossMax'] = aCrossMax
     resAnalysisDF.at[simName, dataType + 'CrossMean'] = aCrossMean
@@ -903,6 +906,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
         log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
                     (simName, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
 
+    #FSO: Problem here
     resAnalysisDF.loc[simName, 'TP'] = tp
     resAnalysisDF.loc[simName, 'TN'] = tn
     resAnalysisDF.loc[simName, 'FP'] = fp
