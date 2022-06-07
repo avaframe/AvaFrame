@@ -50,6 +50,7 @@ def extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=''):
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+            #FSO: maybe Problem here?
             inputsDF.loc[simName, 'massBal'] = saveName
             log.debug('Mass file saved to %s ' % (saveName))
             log.info('Added to pathDict[massBal] %s ' % (saveName))
