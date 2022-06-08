@@ -13,7 +13,6 @@ import avaframe.out3Plot.outAIMEC as outAimec
 # create local logger
 log = logging.getLogger(__name__)
 
-import pandas as pd
 
 def mainAIMEC(pathDict, inputsDF, cfg):
     """ Main logic for AIMEC postprocessing
@@ -53,9 +52,10 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # Read input dem
     demSource = pathDict['demSource']
     dem = IOf.readRaster(demSource)
+    # get hash of the reference
+    refSimHash = pathDict['refSimulation']
     # read reference file and raster and config
-    refSimulationName = pathDict['refSimulation'] 
-    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
+    refResultSource = inputsDF.loc[refSimHash, cfgSetup['resType']]
     refRaster = IOf.readRaster(refResultSource)
     refHeader = refRaster['header']
 
@@ -81,36 +81,24 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
-    #FSO: up to here: this is fine
-
     # postprocess reference
     # make sure only one simulation with refSimulationName exists -> duplicates can happen for
     # the same setup, eg. benchmark comparisons...
-    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName]
+    inputsDFrow = inputsDF.loc[refSimHash]
+    refSimulationName = inputsDF.loc[refSimHash, 'simName']
     inputsValueCount = inputsDF['simName'].value_counts()
-
     if inputsValueCount[refSimulationName] > 1:
         log.warning('Multiple rows with the same reference simulation name found! Taking the first as reference')
-        print('Felix: uho multiple ', )
-        inputsDFrow = inputsDFrow.iloc[0].squeeze()
-    else:
-        inputsDFrow = inputsDFrow.squeeze()
 
     timeMass = None
-    resAnalysisDF = inputsDF[['simName']].copy()
-    #FSO Problem here
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
-                                                           timeMass, refSimulationName, resAnalysisDF)
+    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
+                                                           timeMass, refSimHash)
     # postprocess other simulations
-    for index, inputsDFrow in inputsDF.iterrows():
-        simName = inputsDFrow['simName']
-        if inputsValueCount[simName] > 1:
-            print('Felix: Uho double sim')
-    #FSO Problem here
-        if simName != refSimulationName:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
-                                                                   newRasters, timeMass, simName, resAnalysisDF)
-            pathDict['compSimulation'] = simName
+    for simHash, inputsDFrow in inputsDF.iterrows():
+        if simHash != refSimHash:
+            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF,
+                                                                   newRasters, timeMass, simHash)
+            pathDict['compSimHash'] = simHash
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -118,19 +106,17 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
-    #FSO Problem here
     outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
         plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
         plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
-    #FSO Problem here
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
     plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF['areasPlot'][1]}
+    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF.loc[pathDict['compSimHash'], 'areasPlot']}
     if cfgFlags.getboolean('flagMass'):
-        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF['massPlotName'][1]}
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['compSimHash'], 'massPlotName']}
 
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
@@ -138,7 +124,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     return rasterTransfo, resAnalysisDF, plotDict
 
 
-def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF):
+def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simHash):
     """ Apply domain transformation and analyse pressure, thickness and velocity data
 
     Apply the domain tranformation to peak results
@@ -154,22 +140,20 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
         transformation information
     pathDict : dict
         dictionary with paths to dem and lines for Aimec analysis
-    inputsDF : dataFrame
+    resAnalysisDF : dataFrame
         dataframe with simulations to analyze and associated path to raster data
     newRasters: dict
         dictionary containing pressure, velocity and flow thickness rasters after
         transformation for the reference and the current simulation
     timeMass: 1D numpy array
         time array for mass analysis (if flagMass=True, otherwise None)
-    simName: str
-        name of the curent simulation to analyze
-    resAnalysisDF: dataFrame
-        results from Aimec Analysis
+    simHash: str
+        hash of the curent simulation to analyze
 
     Returns
     -------
     resAnalysisDF: dataFrame
-        results from Aimec Analysis updated with results from curent simulation:
+        input DF with results from Aimec Analysis updated with results from curent simulation:
             -maxpprCrossMax: float
                     max max peak pressure
             -pprCrossMax: 1D numpy array
@@ -240,20 +224,19 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
     flagMass = cfgFlags.getboolean('flagMass')
-    refSimulationName = pathDict['refSimulation']
+    refSimHash = pathDict['refSimulation']
     resTypeList = pathDict['resTypeList']
-    print('Felix: refsims ',refSimulationName)
 
     # apply domain transformation
     log.info('Analyzing data in path coordinate system')
 
     for resType in resTypeList:
         log.debug("Assigning %s data to deskewed raster" % resType)
-        inputFiles = inputsDFrow[resType]
+        inputFiles = resAnalysisDF.loc[simHash, resType]
         rasterData = IOf.readRaster(inputFiles)
         newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
         newRasters['newRaster' + resType.upper()] = newRaster
-        if simName == refSimulationName:
+        if simHash == refSimHash:
             newRasters['newRefRaster' + resType.upper()] = newRaster
             resAnalysisDF[resType + 'CrossMax'] = np.nan
             resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
@@ -261,25 +244,24 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
             resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
 
         # analyze all fields
-        resAnalysisDF = aT.analyzeField(simName, rasterTransfo, newRaster, resType, resAnalysisDF)
+        resAnalysisDF = aT.analyzeField(simHash, rasterTransfo, newRaster, resType, resAnalysisDF)
 
     # compute runout based on resType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simName)
+    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simHash)
     if flagMass:
         # perform mass analysis
-        fnameMass = inputsDFrow['massBal']
-        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simName, refSimulationName, resAnalysisDF, time=timeMass)
+        fnameMass = resAnalysisDF.loc[simHash, 'massBal']
+        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=timeMass)
 
-    #FSO: Problem here
-        if simName != refSimulationName:
-            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
-            resAnalysisDF.loc[simName, 'massPlotName'] = massPlotName
+        if simHash != refSimHash:
+            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simHash, refSimHash, timeMass)
+            resAnalysisDF.loc[simHash, 'massPlotName'] = massPlotName
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict)
+    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pathDict)
 
-    resAnalysisDF.loc[simName, 'areasPlot'] = compPlotPath
+    resAnalysisDF.loc[simHash, 'areasPlot'] = compPlotPath
     return resAnalysisDF, newRasters, timeMass
 
 

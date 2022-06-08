@@ -132,18 +132,29 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     resTypeList = list(set(resTypeRefList).intersection(resTypeCompList))
     pathDict['resTypeList'] = resTypeList
     # check outputs
-    try:
-        simNameRef = refData['simName'][0]
-    except IndexError:
-        message = ('Did not find the reference simulation : %s'
-                   % simNameRef)
+    # one and only one simulation is allowed in the reference dataFrame, this will be the reference for aimec comparison
+    if len(refData.index) == 0:
+        message = ('Did not find the reference simulation in %s with name %s'
+                   % (inputDirRef, simNameRef))
         log.error(message)
         raise FileNotFoundError(message)
-    try:
-        simNameComp = compData['simName'][0]
-    except IndexError:
-        message = ('Did not find the comparison simulation : %s'
-                   % simNameComp)
+    elif len(refData.index) > 1:
+        message = ('Found more than one reference simulation in %s with name %s'
+                   % (inputDirRef, simNameRef))
+        log.error(message)
+        raise FileNotFoundError(message)
+    else:
+        pathDict['refSimulation'] = refData.index[0]
+    # at least one simulation is needed in the comparison dataFrame
+    if len(compData.index) == 0:
+        message = ('Did not find the comparison simulation in %s with name %s'
+                   % (inputDirRef, simNameRef))
+        log.error(message)
+        raise FileNotFoundError(message)
+    # all simulations should have a different name in the comparison dataframe
+    compDataCount = (compData['simName'].value_counts() > 1).to_list()
+    if True in compDataCount:
+        message = ('Multiple rows of the comparison dataFrame have the same simulation name. This is not allowed')
         log.error(message)
         raise FileNotFoundError(message)
     # build input dataFrame

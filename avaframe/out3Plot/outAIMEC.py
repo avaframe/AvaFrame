@@ -151,8 +151,8 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     thresholdValue = cfgSetup['thresholdValue']
     # read paths
     projectName = pathDict['projectName']
-    refSimName = pathDict['refSimulation']
-    simName = pathDict['compSimulation']
+    refSimHash = pathDict['refSimulation']
+    simHash = pathDict['compSimHash']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
@@ -170,10 +170,10 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, peak, titleVal, unitVal in zip(axes.flatten(), peakList, title, unit):
-        ax.plot(resAnalysisDF.loc[refSimName, peak + 'CrossMax'], s, '--k', label='Max Reference')
-        ax.plot(resAnalysisDF.loc[refSimName, peak + 'CrossMean'], s, '-k', label='Mean Reference')
-        ax.plot(resAnalysisDF.loc[simName, peak + 'CrossMax'], s, '--b', label='Max Simulation')
-        ax.plot(resAnalysisDF.loc[simName, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
+        ax.plot(resAnalysisDF.loc[refSimHash, peak + 'CrossMax'], s, '--k', label='Max Reference')
+        ax.plot(resAnalysisDF.loc[refSimHash, peak + 'CrossMean'], s, '-k', label='Mean Reference')
+        ax.plot(resAnalysisDF.loc[simHash, peak + 'CrossMax'], s, '--b', label='Max Simulation')
+        ax.plot(resAnalysisDF.loc[simHash, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
 
         ax.set_title(titleVal + 'distribution along path')
         ax.legend(loc='best')
@@ -313,7 +313,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     return outFilePath
 
 
-def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
+def visuMass(resAnalysisDF, pathDict, simHash, refSimHash, timeMass):
     """
     Plot and save the results from mass analysis
 
@@ -334,12 +334,12 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
     # read paths
     projectName = pathDict['projectName']
     # read data
-    #FSO Problem here
-    entMassRef = resAnalysisDF.loc[refSimulationName, 'entMass']
-    finalMassRef = resAnalysisDF.loc[refSimulationName, 'finalMass']
-    entMass = resAnalysisDF.loc[simName, 'entMass']
-    finalMass = resAnalysisDF.loc[simName, 'finalMass']
-
+    entMassRef = resAnalysisDF.loc[refSimHash, 'entMass']
+    finalMassRef = resAnalysisDF.loc[refSimHash, 'finalMass']
+    entMass = resAnalysisDF.loc[simHash, 'entMass']
+    finalMass = resAnalysisDF.loc[simHash, 'finalMass']
+    refSimulationName = resAnalysisDF.loc[refSimHash, 'simName']
+    simName = resAnalysisDF.loc[simHash, 'simName']
     ############################################
     # prepare for plot
     Title = ['Entrained Mass Flow', 'Total Mass']
@@ -349,9 +349,8 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, field, title, unit in zip(axes.flatten(), fieldList, Title, Unit):
-    #FSO Problem here
-        refArray = resAnalysisDF.loc[refSimulationName, field]
-        simArray = resAnalysisDF.loc[simName, field]
+        refArray = resAnalysisDF.loc[refSimHash, field]
+        simArray = resAnalysisDF.loc[simHash, field]
         ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimulationName)
         ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
 
@@ -402,7 +401,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     # Get input data
     # read paths
     projectName = pathDict['projectName']
-    refSimulationName = pathDict['refSimulation']
+    refSimHash = pathDict['refSimulation']
     # read data
     plim = cfgSetup['thresholdValue']
     s = rasterTransfo['s']
@@ -411,8 +410,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     rasterdataPres = newRasters['newRefRasterPPR']
     rasterdataThickness = newRasters['newRefRasterPFT']
     rasterdataSpeed = newRasters['newRefRasterPFV']
-    #FSO Problem here
-    runout = resAnalysisDF.loc[refSimulationName, 'sRunout']
+    runout = resAnalysisDF.loc[refSimHash, 'sRunout']
 
     ############################################
     # prepare for plot
@@ -664,7 +662,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     projectName = pathDict['projectName']
     pathResult = pathDict['pathResult']
     pathName = pathDict['pathName']
-    refSimName = pathDict['refSimulation']
+    refSimHash = pathDict['refSimulation']
     demName = os.path.basename(pathDict['demSource'])
     # dataName = [os.path.basename(name) for name in pathDict['ppr']]
     cfgSetup = cfg['AIMECSETUP']
@@ -677,7 +675,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     name = pU.cfgPlotUtils['name' + resType]
 
     startOfRunoutAreaAngle = rasterTransfo['startOfRunoutAreaAngle']
-    areaSum = resAnalysisDF.loc[refSimName, 'TP'] + resAnalysisDF.loc[refSimName, 'FN']
+    areaSum = resAnalysisDF.loc[refSimHash, 'TP'] + resAnalysisDF.loc[refSimHash, 'FN']
     if areaSum == 0:
         log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
     else:
@@ -734,8 +732,8 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     paraVar = cfgSetup['varParList'].split('|')[0]
     name = pU.cfgPlotUtils['name' + resType]
     nSim = len(resAnalysisDF.index)
-    refSimName = pathDict['refSimulation']
-    maxMaxDPPRRef = resAnalysisDF.loc[refSimName, 'max' + resType.lower() + 'CrossMax']
+    refSimHash = pathDict['refSimulation']
+    maxMaxDPPRRef = resAnalysisDF.loc[refSimHash, 'max' + resType.lower() + 'CrossMax']
     maxMaxDPPR = resAnalysisDF['max' + resType.lower() + 'CrossMax'].to_numpy()
 
     thresholdValue = cfgSetup['thresholdValue']
@@ -746,15 +744,15 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     sPath = rasterTransfo['s']
 
     runout = resAnalysisDF['sRunout'].to_numpy()
-    runoutRef = resAnalysisDF.loc[refSimName, 'sRunout']
-    areaSum = resAnalysisDF.loc[refSimName, 'TP'] + resAnalysisDF.loc[refSimName, 'FN']
+    runoutRef = resAnalysisDF.loc[refSimHash, 'sRunout']
+    areaSum = resAnalysisDF.loc[refSimHash, 'TP'] + resAnalysisDF.loc[refSimHash, 'FN']
     if areaSum == 0:
         log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = 1
     rTP = resAnalysisDF['TP'].to_numpy() / areaSum
     rFP = resAnalysisDF['FP'].to_numpy() / areaSum
-    rTPRef = resAnalysisDF.loc[refSimName, 'TP'] / areaSum
-    rFPRef = resAnalysisDF.loc[refSimName, 'FP'] / areaSum
+    rTPRef = resAnalysisDF.loc[refSimHash, 'TP'] / areaSum
+    rFPRef = resAnalysisDF.loc[refSimHash, 'FP'] / areaSum
 
     title = 'Visualizing max ' + name + ' data'
     tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
