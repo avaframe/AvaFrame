@@ -44,15 +44,12 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # write configuration to file
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
-    simTypeList = ['null']
+    simTypeList = ['res']
 
     for simType in simTypeList:
 
         # Setup input from com1DFA
         inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg, simType, simType)
-
-        # TODO: define referenceFile
-        pathDict['refSimulation'] = inputsDF.index[0]
 
         # Extract input file locations
         pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName='aimec_'+simType)

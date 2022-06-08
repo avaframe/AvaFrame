@@ -144,6 +144,8 @@ for test in testList:
     # Setup input from com1DFA and reference
     pathDict = []
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
+    # ToDo: define reference with the new row hashing
+    # ToDo: define the first one as reference (add a reference column with true or false)
     pathDict['refSimulation'] = inputsDF.index[0]
     log.info('reference file comes from: %s' % pathDict['refSimulation'])
 

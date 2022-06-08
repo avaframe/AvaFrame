@@ -1,10 +1,6 @@
 """
     Run ana3AIMEC
 """
-
-# Load modules
-import time
-
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
@@ -49,7 +45,6 @@ def runAna3AIMEC(avalancheDir=''):
 
     # Setup input from com1DFA
     inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
-
     # define reference simulation
     refSimulation, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
     pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod], 'colorParameter': colorParameter}
