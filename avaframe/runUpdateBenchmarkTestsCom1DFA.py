@@ -110,7 +110,6 @@ for test in testList:
     partDir = refDir / 'particles'
     if partDir.is_dir():
         shutil.rmtree(partDir)
-
     # set copy peak results
     resDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
     simName = rep['simName']['name']
@@ -123,6 +122,17 @@ for test in testList:
             # copy file to benchmark
             destFile = refDir / (simName + '_' + suf + '.asc')
             shutil.copy2(simFile, destFile)
+    # set copy mass result
+    resDir = pathlib.Path(avaDir, 'Outputs', modName)
+    simName = rep['simName']['name']
+    files = []
+    simFile = resDir / ('mass_' + simName + '.asc')
+    if simFile.is_file():
+        # add file name to dict
+        files.append(simFile.stem)
+        # copy file to benchmark
+        destFile = refDir / ('mass_' + simName + '.asc')
+        shutil.copy2(simFile, destFile)
     test['FILES'] = files
     # set copy particles
     resDir = pathlib.Path(avaDir, 'Outputs', modName, 'particles')

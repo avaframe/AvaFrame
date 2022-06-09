@@ -151,7 +151,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     thresholdValue = cfgSetup['thresholdValue']
     # read paths
     projectName = pathDict['projectName']
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     simHash = pathDict['compSimHash']
     # read data
     s = rasterTransfo['s']
@@ -259,7 +259,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         if pathDict['colorParameter'] is False:
             values = None
         else:
-            values = inputsDF[varParList[0]]
+            values = inputsDF[varParList[0]].to_list()
     else:
         values = None
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
@@ -338,7 +338,7 @@ def visuMass(resAnalysisDF, pathDict, simHash, refSimHash, timeMass):
     finalMassRef = resAnalysisDF.loc[refSimHash, 'finalMass']
     entMass = resAnalysisDF.loc[simHash, 'entMass']
     finalMass = resAnalysisDF.loc[simHash, 'finalMass']
-    refSimulationName = resAnalysisDF.loc[refSimHash, 'simName']
+    refSimName = resAnalysisDF.loc[refSimHash, 'simName']
     simName = resAnalysisDF.loc[simHash, 'simName']
     ############################################
     # prepare for plot
@@ -351,7 +351,7 @@ def visuMass(resAnalysisDF, pathDict, simHash, refSimHash, timeMass):
     for ax, field, title, unit in zip(axes.flatten(), fieldList, Title, Unit):
         refArray = resAnalysisDF.loc[refSimHash, field]
         simArray = resAnalysisDF.loc[simHash, field]
-        ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimulationName)
+        ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimName)
         ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
 
         ax.set_title(title + ' function of time')
@@ -401,7 +401,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     # Get input data
     # read paths
     projectName = pathDict['projectName']
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     # read data
     plim = cfgSetup['thresholdValue']
     s = rasterTransfo['s']
@@ -484,7 +484,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     refRasterMask = inputs['refRasterMask']
     compRasterMask = inputs['compRasterMask']
     simName = inputs['simName']
-    refSimulation = pathDict['refSimulation']
+    refSimName = pathDict['refSimName']
     resType = inputs['resType']
     unit = pU.cfgPlotUtils['unit' + resType]
     name = pU.cfgPlotUtils['name' + resType]
@@ -535,7 +535,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
     else:
-        namePrint = 'ref:' + str(refSimulation) + '_' + 'sim:' + str(simName)
+        namePrint = 'ref:' + str(refSimName) + '_' + 'sim:' + str(simName)
         pU.putAvaNameOnPlot(ax2, namePrint)
 
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
@@ -602,8 +602,8 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             legend2 = ax2.legend(title=name + '\ncontour lines\n[' + unit + ']', handles=handles, labels=labels)
             plt.setp(legend2.get_title(), multialignment='center')
         else:
-            log.warning('Reference %s did not reach the run out area!' % refSimulation)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %s did not reach the run out area!' % refSimulation,
+            log.warning('Reference %s did not reach the run out area!' % refSimName)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %s did not reach the run out area!' % refSimName,
                      fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
         if (np.where(compData > thresholdArray[-1], True, False)).any():
@@ -619,7 +619,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
             pU.putAvaNameOnPlot(ax2, namePrint)
         else:
-            namePrint = 'ref:' + str(refSimulation) + '_' + 'sim:' + str(simName)
+            namePrint = 'ref:' + str(refSimName) + '_' + 'sim:' + str(simName)
             pU.putAvaNameOnPlot(ax2, namePrint)
 
         if indDiff.any():
@@ -662,7 +662,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     projectName = pathDict['projectName']
     pathResult = pathDict['pathResult']
     pathName = pathDict['pathName']
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     demName = os.path.basename(pathDict['demSource'])
     # dataName = [os.path.basename(name) for name in pathDict['ppr']]
     cfgSetup = cfg['AIMECSETUP']
@@ -732,7 +732,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     paraVar = cfgSetup['varParList'].split('|')[0]
     name = pU.cfgPlotUtils['name' + resType]
     nSim = len(resAnalysisDF.index)
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     maxMaxDPPRRef = resAnalysisDF.loc[refSimHash, 'max' + resType.lower() + 'CrossMax']
     maxMaxDPPR = resAnalysisDF['max' + resType.lower() + 'CrossMax'].to_numpy()
 
@@ -773,7 +773,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
         if pathDict['colorParameter'] is False:
             values = None
         else:
-            values = inputsDF[varParList[0]]
+            values = inputsDF[varParList[0]].to_list()
     else:
         values = None
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)

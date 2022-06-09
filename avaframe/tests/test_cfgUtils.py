@@ -3,7 +3,7 @@
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 import pathlib
-import os
+import pytest
 import configparser
 
 
@@ -90,13 +90,20 @@ def test_orderSimFiles():
     avaTestDir = 'avaHockeyChannelPytest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
 
     varParList = 'releaseScenario'
 
-    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
+    simDF = cfgUtils.createConfigurationInfo(avaDir, specDir='')
 
-    assert simFilesDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
+    varParList, simDF = cfgUtils.orderSimulations(varParList, True, simDF)
+
+    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
+
+    varParList = 'releaseSenario'
+    message = ('Choose a valid parameters for sorting the simulations. \'releaseSenario\' is not valid.')
+    with pytest.raises(KeyError) as e:
+        assert cfgUtils.orderSimulations(varParList, True, simDF)
+    assert message in str(e.value)
 
 
 def test_createConfigurationInfo(tmp_path):

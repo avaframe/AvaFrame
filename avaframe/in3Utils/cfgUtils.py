@@ -694,7 +694,38 @@ def removeSimsNotMatching(simDF, key, value):
     return simDF
 
 
-def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
+def orderSimulations(varParList, ascendingOrder, simDF):
+    """ Order simulations datadframe using a list of parameters and a flag if in ascending or descending order
+
+        Parameters
+        -----------
+        varParList: str or list
+            simulation configuration parameters for ordering simulations
+        ascendingOrder: bool
+            True if simulations shall be ordered in ascending order regarding varPar
+        simDF: pandas dataFrame
+            dataFrame of simulation (fileName, ... and values for parameters in varParList)
+
+        Returns
+        --------
+        simDF: pandas dataFrame
+            sorted dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+    """
+    # make sure that parameters used for ordering are provided as list
+    if isinstance(varParList, str):
+        varParList = [varParList]
+    # sort according to varParList and ascendingOrder flag
+    # also check that key exists
+    try:
+        simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
+    except KeyError as e:
+        message = 'Choose a valid parameters for sorting the simulations. \'%s\' is not valid.' % e.args[0]
+        log.error(message)
+        raise KeyError(message)
+    return varParList, simDF
+
+
+def fetchAndOrderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
     """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
 
         Parameters
@@ -719,10 +750,6 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, specDir=specDir)
 
-    # make sure that parameters used for ordering are provided as list
-    if isinstance(varParList, str):
-        varParList = [varParList]
-
     if resFiles:
         # create dataframe for simulation results in inputDir
         dataDF = fU.makeSimDF(inputDir)
@@ -734,8 +761,7 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
     else:
         dataDFNew = simDF
 
-    # sort according to varParList and ascendingOrder flag
-    dataDFNew = dataDFNew.sort_values(by=varParList, ascending=ascendingOrder)
+    varParList, dataDFNew = orderSimulations(varParList, ascendingOrder, dataDFNew)
 
     return dataDFNew
 
