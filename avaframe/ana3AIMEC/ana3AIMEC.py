@@ -4,6 +4,7 @@
 
 import logging
 import numpy as np
+import pathlib
 
 # Local imports
 import avaframe.ana3AIMEC.aimecTools as aT
@@ -53,7 +54,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     demSource = pathDict['demSource']
     dem = IOf.readRaster(demSource)
     # get hash of the reference
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     # read reference file and raster and config
     refResultSource = inputsDF.loc[refSimHash, cfgSetup['resType']]
     refRaster = IOf.readRaster(refResultSource)
@@ -82,12 +83,12 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
     # postprocess reference
-    # make sure only one simulation with refSimulationName exists -> duplicates can happen for
+    # make sure only one simulation with refSimName exists -> duplicates can happen for
     # the same setup, eg. benchmark comparisons...
     inputsDFrow = inputsDF.loc[refSimHash]
-    refSimulationName = inputsDF.loc[refSimHash, 'simName']
+    refSimName = inputsDF.loc[refSimHash, 'simName']
     inputsValueCount = inputsDF['simName'].value_counts()
-    if inputsValueCount[refSimulationName] > 1:
+    if inputsValueCount[refSimName] > 1:
         log.warning('Multiple rows with the same reference simulation name found! Taking the first as reference')
 
     timeMass = None
@@ -106,7 +107,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
-    outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
+    # outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
         plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
@@ -224,7 +225,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
     flagMass = cfgFlags.getboolean('flagMass')
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     resTypeList = pathDict['resTypeList']
 
     # apply domain transformation
@@ -233,24 +234,26 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     for resType in resTypeList:
         log.debug("Assigning %s data to deskewed raster" % resType)
         inputFiles = resAnalysisDF.loc[simHash, resType]
-        rasterData = IOf.readRaster(inputFiles)
-        newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
-        newRasters['newRaster' + resType.upper()] = newRaster
-        if simHash == refSimHash:
-            newRasters['newRefRaster' + resType.upper()] = newRaster
-            resAnalysisDF[resType + 'CrossMax'] = np.nan
-            resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
-            resAnalysisDF[resType + 'CrossMean'] = np.nan
-            resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+        if isinstance(inputFiles, pathlib.PurePath):
+            rasterData = IOf.readRaster(inputFiles)
+            newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
+            newRasters['newRaster' + resType.upper()] = newRaster
+            if simHash == refSimHash:
+                newRasters['newRefRaster' + resType.upper()] = newRaster
+                resAnalysisDF[resType + 'CrossMax'] = np.nan
+                resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+                resAnalysisDF[resType + 'CrossMean'] = np.nan
+                resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
 
-        # analyze all fields
-        resAnalysisDF = aT.analyzeField(simHash, rasterTransfo, newRaster, resType, resAnalysisDF)
+            # analyze all fields
+            resAnalysisDF = aT.analyzeField(simHash, rasterTransfo, newRaster, resType, resAnalysisDF)
 
     # compute runout based on resType
     resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simHash)
     if flagMass:
         # perform mass analysis
         fnameMass = resAnalysisDF.loc[simHash, 'massBal']
+        print(fnameMass)
         resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=timeMass)
 
         if simHash != refSimHash:

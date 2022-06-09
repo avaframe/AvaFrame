@@ -658,7 +658,6 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
         if simName not in dataDF.simName.values:
             newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
             dataDF = dataDF.append(newLine)
-            #FSO: maybe problem here?
             dataDF.loc[simName, 'releaseArea'] = relNameSim
             dataDF.loc[simName, 'simType'] = infoParts[1]
             dataDF.loc[simName, 'modelType'] = infoParts[2]
@@ -671,5 +670,4 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             resTypeList.append(resType)
     hash = pd.util.hash_pandas_object(dataDF)
     dataDF = dataDF.set_index(hash)
-
     return dataDF, resTypeList

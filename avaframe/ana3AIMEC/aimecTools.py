@@ -109,7 +109,9 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 
         Returns
         --------
-        refSimulation: str
+        refSimHash: str
+            hash of the simulation used as reference
+        refSimName: str
             name of the simulation used as reference
         inputsDF:dataFrame
             dataFrame with simulations to analyze and path to result files
@@ -123,80 +125,145 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         message = 'Input directory %s does not exist - check anaMod' % inputDir
         log.error(message)
         raise FileNotFoundError(message)
+
+    referenceSimValue = cfgSetup['referenceSimValue']
+    referenceSimName = cfgSetup['referenceSimName']
+    colorVariation = False
     # if com1DFA append configuration to dataframe
     if comModule == 'com1DFA':
         # load dataFrame for all configurations
         configurationDF = cfgUtils.createConfigurationInfo(avaDir)
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
         inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
+
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
     if comModule == 'com1DFA' and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
         varParList = cfgSetup['varParList'].split('|')
-        # make sure that parameters used for ordering are provided as list
-        if isinstance(varParList, str):
-            varParList = [varParList]
-        # sort according to varParList and ascendingOrder flag
-        inputsDF = inputsDF.sort_values(by=varParList, ascending=cfgSetup.getboolean('ascendingOrder'))
+        # order simulations
+        varParList, inputsDF = cfgUtils.orderSimulations(varParList, cfgSetup.getboolean('ascendingOrder'), inputsDF)
         # now look for the reference
-        referenceSimValue = cfgSetup['referenceSimValue']
         if referenceSimValue != '':
             # if a referenceSimValue is provided, find the corresponding simulation
             # get the value of the first parameter used for ordering (this will be usefull for colorcoding in plots)
-            sortingParameter = inputsDF[varParList[0]].to_list()
-            # get the type ot this parameter
-            typeCP = type(sortingParameter[0])
-            try:
-                if typeCP == str:
-                    sortingValues = [x.lower() for x in sortingParameter]
-                    # look for matching string (case unsensitive)
-                    indexRef = sortingValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
-                    valRef = sortingParameter[indexRef]
-                elif typeCP in [float, int]:
-                    colorValues = np.asarray(sortingParameter)
-                    # look for closest value
-                    indexRef = (np.abs(colorValues - typeCP(referenceSimValue))).argmin()
-                    valRef = colorValues[indexRef]
-                else:
-                    indexRef = sortingParameter.index(typeCP(referenceSimValue))
-                    valRef = sortingParameter[indexRef]
-                log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
-                         (varParList[0], referenceSimValue, str(valRef)))
-                # there might be multiple simulations matching the referenceSimValue, we take the first one
-                print(indexRef, valRef)
-                refSimulation = inputsDF[inputsDF[varParList[0]] == valRef]['simName'].to_list()[0]
-            except ValueError:
-                log.warning('Can not define the reference based on %s = %s' %
-                            (varParList[0], referenceSimValue))
-                # there might be multiple simulations matching the referenceSimValue, we take the first one
-                print(varParList[0], referenceSimValue)
-                refSimulation = inputsDF.iloc[0]['simName']
+            refSimHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
+
+        elif cfgSetup['referenceSimName'] != '':
+            # else if a referenceSimName is provided, find the corresponding simulation - set
+            # simulation with referenceSimName in name as referene simulation
+            refSimHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
         else:
             # if no referenceSimValue is provided, we assume the first simulation after reordering is the reference
             # reference simulation
-            refSimulation = inputsDF.iloc[0]['simName']  # inputsDF.head(1)['simName'].values[0]
+            refSimHash = inputsDF.index[0]
+            refSimName = inputsDF.loc[refSimHash, 'simName']
+            log.info(('Reference simulation is the first simulation after reordering according to %s in ascending order = %s and corresponds to simulation %s')
+                     % (varParList, cfgSetup.getboolean('ascendingOrder'), refSimName))
         colorVariation = True
 
-    elif cfgSetup['referenceSimName'] != '':
-        colorVariation = False
-        # if no colorVariation info and refeenceSimValue available but referenceSimName is given - set
+    elif referenceSimName != '':
+        # else if a referenceSimName is provided, find the corresponding simulation - set
         # simulation with referenceSimName in name as referene simulation
-        simFound = False
-        for inputIndex, inputsDFrow in inputsDF.iterrows():
-            if cfgSetup['referenceSimName'] in str(inputsDFrow['simName']):
-                refSimulation = inputsDFrow['simName']
-                log.info('Reference Simulation is based on provided simName: %s' % cfgSetup['referenceSimName'])
-                simFound = True
-                break
-        if not simFound:
-            refSimulation = inputsDF.iloc[0]['simName']
-            log.info('Reference Simulation is based on first simulation in folder')
-    else:
-        colorVariation = False
-        refSimulation = inputsDF.iloc[0]['simName']
-        log.info('Reference Simulation is based on first simulation in folder')
+        refSimHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
 
-    return refSimulation, inputsDF, colorVariation
+    else:
+        # if no ordering is done, no referenceSimValue nor referenceSimName are given, take the first simulation
+        # as reference
+        refSimHash = inputsDF.index[0]
+        refSimName = inputsDF.loc[refSimHash, 'simName']
+        message = ('No information on how to define the reference was provided, taking simulation %s as reference.'
+                   % refSimName)
+        log.warning(message)
+
+    return refSimHash, refSimName, inputsDF, colorVariation
+
+
+def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
+    sortingParameter = inputsDF[varParList[0]].to_list()
+    # get the type ot this parameter
+    typeCP = type(sortingParameter[0])
+    try:
+        if typeCP == str:
+            sortingValues = [x.lower() for x in sortingParameter]
+            # look for matching string (case unsensitive)
+            indexRef = sortingValues.index(typeCP(referenceSimValue.lower()))
+            valRef = sortingParameter[indexRef]
+        elif typeCP in [float, int]:
+            colorValues = np.asarray(sortingParameter)
+            # look for closest value
+            indexRef = (np.abs(colorValues - typeCP(referenceSimValue))).argmin()
+            valRef = colorValues[indexRef]
+        else:
+            indexRef = sortingParameter.index(typeCP(referenceSimValue))
+            valRef = sortingParameter[indexRef]
+        # there might be multiple simulations matching the referenceSimValue, we take the first one
+        refSimHash = inputsDF[inputsDF[varParList[0]] == valRef].index
+        refSimHash, refSimName = checkMultipleSimFound(refSimHash, inputsDF)
+        log.info(('Reference simulation is based on %s = %s - closest value found is: %s and corresponds to simulation %s')
+                 % (varParList[0], referenceSimValue, str(valRef), refSimName))
+    except ValueError:
+        message = 'Did not find any simulation matching %s = %s.' % (varParList[0], referenceSimValue)
+        log.error(message)
+        raise ValueError(message)
+    return refSimHash, refSimName
+
+
+def defineRefOnSimName(referenceSimName, inputsDF):
+    try:
+        refSimHash = inputsDF.query('simName.str.contains(\'%s\')' % referenceSimName).index
+    except IndexError:
+        message = ('Found no simulation matching the provided referenceSimName = %s.'
+                   % referenceSimName)
+        log.error(message)
+        raise IndexError(message)
+    refSimHash, refSimName = checkMultipleSimFound(refSimHash, inputsDF)
+    log.info('Reference simulation is based on provided simName: %s and corresponds to simulation %s'
+             % (referenceSimName, refSimName))
+    return refSimHash, refSimName
+
+
+def checkMultipleSimFound(refSimHash, inputsDF):
+    if len(refSimHash) > 1:
+        message = 'Found multiple simulations matching the referenceSimName criterion, taking the first one as reference'
+        log.warning(message)
+    refSimHash = refSimHash[0]
+    refSimName = inputsDF.loc[refSimHash, 'simName']
+    return refSimHash, refSimName
+
+
+def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
+    """ Check inputs before running AIMEC postprocessing
+
+    Make sure that the available data satisfies what is required in the ini file
+
+    Parameters
+    ----------
+    cfgSetup : configParser
+        aimec configuration
+    inputsDF: dataFrame
+        simulation dataFrame
+    pathDict: dict
+
+    Returns
+    -------
+    pathDict : dict
+    """
+    # check that the resType used to compute the runout is available for all simulations
+    isThereANan = inputsDF[cfgSetup['resType']].isnull().values.any()
+    try:
+        assert ~isThereANan
+    except AssertionError:
+        message = '%s result type should be available for all simulations to analyse.' % cfgSetup['resType']
+        log.error(message)
+        raise FileNotFoundError(message)
+    # only analyze a resTypes that are available for the ref
+    refSimHash = pathDict['refSimHash']
+    resTypeList = []
+    for resType in pathDict['resTypeList']:
+        if isinstance(inputsDF.loc[refSimHash, resType], pathlib.PurePath):
+            resTypeList.append(resType)
+    pathDict['resTypeList'] = resTypeList
+    return pathDict
 
 
 def computeCellSizeSL(cfgSetup, refCellSize):
@@ -861,7 +928,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pat
                 ref = False sim2 = False
     """
     resType = cfgSetup['resType']
-    refSimHash = pathDict['refSimulation']
+    refSimHash = pathDict['refSimHash']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     thresholdValue = cfgSetup.getfloat('thresholdValue')

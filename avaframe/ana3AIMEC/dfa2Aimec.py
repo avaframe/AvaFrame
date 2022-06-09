@@ -5,68 +5,41 @@
 # Load modules
 import logging
 import pathlib
-import numpy as np
 
 # local modules
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
 
-def extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=''):
-    """ Extract the mass balance info from the log file """
-
-    if simNameInput != '':
-        simNames = [simNameInput]
-        nameDir = simNameInput
-    else:
-        # Get info from ExpLog
-        nameDir = 'com1DFAOrig'
-        logLoc = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
-        logName = logLoc / 'ExpLog.txt'
-        logDictExp = fU.readLogFile(logName)
-        names = logDictExp['fullName']
-        simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
-
-    # Read mass data from log and save to file for each simulation run
-    for simName in simNames:
-        log.debug('This is the simulation name %s for mod com1DFAOrig ' % (simName))
-
-        # Read log file and extract mass and time info
-        locFiles = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
-        fileName = locFiles / ('start%s.log' % (simName))
-        fU.checkIfFileExists(fileName, fileType='mass log info')
-        logDict = fU.extractLogInfo(fileName)
-        indRun = logDict['indRun']
-
-        # Write mass balance info files
-        for k in range(len(indRun)-1):
-            saveName = locFiles / ('mass_%s.txt' % (simName))
-            with open(saveName, 'w') as MBFile:
-                MBFile.write('time, current, entrained\n')
-                for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
-                    MBFile.write('%.02f,    %.06f,    %.06f\n' %
-                                 (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-            #FSO: maybe Problem here?
-            inputsDF.loc[simName, 'massBal'] = saveName
-            log.debug('Mass file saved to %s ' % (saveName))
-            log.info('Added to pathDict[massBal] %s ' % (saveName))
-
-    return inputsDF
-
-
 def getMBInfo(avaDir, inputsDF, comMod, simName=''):
-    """ Get mass balance info """
+    """ Get mass balance info for com1DFA module
 
-    # Get info from ExpLog
+    Parameters
+    -----------
+    avaDir: str
+        path to avalanche directory
+    inputsDF: dataFrame
+        simulation dataframe
+    comModule: str
+        computational module name that has been used to produce simulation results
+    simName: str
+        part or full name of the simulation name (if '', look at all sims)
+
+    Returns
+    --------
+    inputsDF: dataFrame
+        simulation dataframe with mass path information
+    """
+    # Get info from mass log file
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         fU.checkIfFileExists(mbFile, fileType='mass')
-        inputsDF.loc[simName, 'massBal'] = mbFile
-        log.info('Added to pathDict[massBal] %s' % (mbFile))
+        simHash = inputsDF[inputsDF['simName'] == simName].index[0]
+        inputsDF.loc[simHash, 'massBal'] = mbFile
+        log.debug('Added to inputsDF[massBal] %s' % (mbFile))
 
     else:
         dir = pathlib.Path(avaDir, 'Outputs', comMod)
@@ -81,24 +54,40 @@ def getMBInfo(avaDir, inputsDF, comMod, simName=''):
             name = mFile.stem
             nameParts = name.split('_')
             simName = ('_'.join(nameParts[1:]))
-            inputsDF.loc[simName, 'massBal'] = mFile
-            log.debug('Added to pathDict[massBal] %s' % (mFile))
+            simHash = inputsDF[inputsDF['simName'] == simName].index[0]
+            inputsDF.loc[simHash, 'massBal'] = mFile
+            log.debug('Added to inputsDF[massBal] %s' % (mFile))
     return inputsDF
 
 
-def getRefMB(testName, pathDict, simName):
-    """ Get mass balance info """
+def getRefMB(testName, inputsDF, simName):
+    """ Get mass balance info for benchmark simulation
 
-    # Get info from ExpLog
+    Parameters
+    -----------
+    testName: str
+        benchmark test name
+    inputsDF: dataFrame
+        simulation dataframe
+    simName: str
+        full name of the simulation
+
+    Returns
+    --------
+    inputsDF: dataFrame
+        simulation dataframe with mass path information
+    """
+    # Get info from mass log file
     mbFile = pathlib.Path('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
-    pathDict['massBal'].append(mbFile)
-    log.info('Added to pathDict[massBal] %s' % (mbFile))
+    simHash = inputsDF[inputsDF['simName'] == simName].index[0]
+    inputsDF.loc[simHash, 'massBal'] = mbFile
+    log.debug('Added to inputsDF[massBal] %s' % (mbFile))
 
-    return pathDict
+    return inputsDF
 
 
 def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
-    """ Exports the required data from com1DFA to be used by Aimec
+    """ Exports the required data from the computational modules to be used by Aimec
 
         Parameters
         -----------
@@ -113,13 +102,15 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
 
         Returns
         --------
+        inputsDF: dataFrame
+            simulation dataframe with optionally path to mass file
         pathDict: dict
             dictionary with paths to simulation results
 
     """
 
     cfgSetup = cfg['AIMECSETUP']
-    comModules = cfg['AIMECSETUP']['comModules'].split('|')
+    comModules = cfgSetup['comModules'].split('|')
     # get directories where simulation results can be found for both modules
     inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
 
@@ -144,7 +135,13 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         log.error(message)
         raise FileNotFoundError(message)
     else:
-        pathDict['refSimulation'] = refData.index[0]
+        refSimHash = refData.index[0]
+        refSimName = refData.loc[refSimHash, 'simName']
+        pathDict['refSimHash'] = refSimHash
+        pathDict['refSimName'] = refSimName
+        # if desired set path to mass log files
+        if cfg['FLAGS'].getboolean('flagMass'):
+            refData = getMassInfoInDF(avaDir, cfgSetup, refData, comModules[1], sim=refSimName)
     # at least one simulation is needed in the comparison dataFrame
     if len(compData.index) == 0:
         message = ('Did not find the comparison simulation in %s with name %s'
@@ -157,23 +154,50 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         message = ('Multiple rows of the comparison dataFrame have the same simulation name. This is not allowed')
         log.error(message)
         raise FileNotFoundError(message)
+    # if desired set path to mass log files
+    if cfg['FLAGS'].getboolean('flagMass'):
+        compData = getMassInfoInDF(avaDir, compData, comModules[2], sim='', testName=cfgSetup['testName'])
     # build input dataFrame
     inputsDF = refData.append(compData)
 
-    # if desired set path to mass log files
-    comModules = pathDict['compType']
-    sims = {comModules[1]: simNameRef, comModules[2]: simNameComp}
-
-    if cfg['FLAGS'].getboolean('flagMass'):
-        for comMod, sim in sims.items():
-            log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
-            if comMod == 'benchmarkReference':
-                inputsDF = getRefMB(cfg['AIMECSETUP']['testName'], inputsDF, sim)
-            elif comMod == 'com1DFAOrig':
-                inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=sim)
-            else:
-                inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
     return inputsDF, pathDict
+
+
+def getMassInfoInDF(avaDir, inputsDF, comMod, sim='', testName=''):
+    """ Fetch mass information depending on the computational module
+
+    Parameters
+    -----------
+    avaDir: str
+        path to avalanche directory
+    inputsDF: dataFrame
+        simulation dataframe
+    comMod: str
+        computational module name that has been used to produce simulation results
+    simName: str
+        part or full name of the simulation name (if '', look at all sims)
+    testName: str
+        if the mass is fetched from benchmarks, provide the name of the test
+
+    Returns
+    --------
+    inputsDF: dataFrame
+        simulation dataframe with path to mass file
+
+"""
+    if comMod == 'benchmarkReference':
+        inputsDF = getRefMB(testName, inputsDF, sim)
+    elif comMod == 'com1DFA':
+        inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
+    else:
+        try:
+            inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
+        except FileNotFoundError as e:
+            message = 'Make sure the mass files are available and that a method is implemented to analyze mass for module %s' % (comMod)
+            log.error(message)
+            message = str(e) + '. ' + message
+            raise FileNotFoundError(message)
+    return inputsDF
 
 
 def getCompDirs(avaDir, cfgSetup):
@@ -243,9 +267,5 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
 
     if cfg['FLAGS'].getboolean('flagMass'):
         # Extract mb info
-        if comModule == 'com1DFAOrig':
-            # path dictionary for Aimec
-            inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF)
-        else:
-            inputsDF = getMBInfo(avaDir, inputsDF, comModule)
+        inputsDF = getMassInfoInDF(avaDir, inputsDF, comModule, sim='', testName='')
     return inputsDF, resTypeList
