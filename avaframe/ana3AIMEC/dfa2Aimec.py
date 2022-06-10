@@ -141,7 +141,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         pathDict['refSimName'] = refSimName
         # if desired set path to mass log files
         if cfg['FLAGS'].getboolean('flagMass'):
-            refData = getMassInfoInDF(avaDir, cfgSetup, refData, comModules[1], sim=refSimName)
+            refData = getMassInfoInDF(avaDir, refData, comModules[0], sim=refSimName, testName=cfgSetup['testName'])
     # at least one simulation is needed in the comparison dataFrame
     if len(compData.index) == 0:
         message = ('Did not find the comparison simulation in %s with name %s'
@@ -156,7 +156,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         raise FileNotFoundError(message)
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
-        compData = getMassInfoInDF(avaDir, compData, comModules[2], sim='', testName=cfgSetup['testName'])
+        compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='')
     # build input dataFrame
     inputsDF = refData.append(compData)
 
