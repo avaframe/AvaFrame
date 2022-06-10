@@ -122,17 +122,19 @@ for test in testList:
             # copy file to benchmark
             destFile = refDir / (simName + '_' + suf + '.asc')
             shutil.copy2(simFile, destFile)
+        else:
+            log.warning('did not find the file %s' % simFile)
     # set copy mass result
     resDir = pathlib.Path(avaDir, 'Outputs', modName)
-    simName = rep['simName']['name']
-    files = []
-    simFile = resDir / ('mass_' + simName + '.asc')
+    simFile = resDir / ('mass_' + simName + '.txt')
     if simFile.is_file():
         # add file name to dict
         files.append(simFile.stem)
         # copy file to benchmark
-        destFile = refDir / ('mass_' + simName + '.asc')
+        destFile = refDir / ('mass_' + simName + '.txt')
         shutil.copy2(simFile, destFile)
+    else:
+        log.warning('did not find the file %s' % simFile)
     test['FILES'] = files
     # set copy particles
     resDir = pathlib.Path(avaDir, 'Outputs', modName, 'particles')
@@ -146,5 +148,7 @@ for test in testList:
         destFile.mkdir()
         destFile = destFile / (simFile.name)
         shutil.copy2(simFile, destFile)
+    else:
+        log.warning('did not find the file %s' % simFile)
     # write the benchmark dict as JSON
     tU.writeDesDicttoJson(test, test['NAME'], refDir)
