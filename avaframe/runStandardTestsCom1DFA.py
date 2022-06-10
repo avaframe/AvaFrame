@@ -46,8 +46,8 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 #  filterType = 'TAGS'
 #  valuesList = ['resistance']
-filterType = 'NAME'
-valuesList = ['avaParabolaResTest']
+filterType = 'TAGS'
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -144,10 +144,7 @@ for test in testList:
     # Setup input from com1DFA and reference
     pathDict = []
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
-    # ToDo: define reference with the new row hashing
-    # ToDo: define the first one as reference (add a reference column with true or false)
-    pathDict['refSimulation'] = inputsDF.index[0]
-    log.info('reference file comes from: %s' % pathDict['refSimulation'])
+    log.info('reference file comes from: %s' % pathDict['refSimName'])
 
     # Extract input file locations
     pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
@@ -156,7 +153,7 @@ for test in testList:
     rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfgAimec)
 
     # add aimec results to report dictionary
-    reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportD, benchDict, pathDict['refSimulation'])
+    reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportD, benchDict, pathDict)
     # +++++++++++Aimec analysis
 
     # Create plots for report
