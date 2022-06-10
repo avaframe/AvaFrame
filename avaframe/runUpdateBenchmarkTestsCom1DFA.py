@@ -88,7 +88,7 @@ for test in testList:
     # change the ini file to read particles from file
     updater = ConfigUpdater()
     updater.read(standardCfg)
-    updater['GENERAL']['initialiseParticlesFromFile'].value = 'True'
+    updater['GENERAL']['initialiseParticlesFromFile'].value = 'False'
     updater['GENERAL']['particleFile'].value = '../benchmarks/' + test['NAME']
     updater.update_file()
 
