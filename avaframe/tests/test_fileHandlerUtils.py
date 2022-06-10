@@ -142,17 +142,17 @@ def test_makeSimFromResDF():
     print(resTypeList)
     print(dataDF.columns)
     print(dataDF.index)
-    assert dataDF['simName'][0] == 'releaseTest1_0.888_entres_dfa'
-    assert dataDF['releaseArea'][0] == 'releaseTest1'
-    assert dataDF['simType'][0] == 'entres'
-    assert dataDF['cellSize'][0] == 5.0
+    assert dataDF['simName'].iloc[0] == 'releaseTest1_0.888_entres_dfa'
+    assert dataDF['releaseArea'].iloc[0] == 'releaseTest1'
+    assert dataDF['simType'].iloc[0] == 'entres'
+    assert dataDF['cellSize'].iloc[0] == 5.0
 
     inputDir = os.path.join(dirPath, 'data', 'testSim1')
     dataDF, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
-    assert dataDF['simName'][0] == 'releaseTest1_test_AF_0.888_entres_dfa'
-    assert dataDF['releaseArea'][0] == 'releaseTest1_test'
-    assert dataDF['simType'][0] == 'entres'
-    assert dataDF['cellSize'][0] == 5.0
+    assert dataDF['simName'].iloc[0] == 'releaseTest1_test_AF_0.888_entres_dfa'
+    assert dataDF['releaseArea'].iloc[0] == 'releaseTest1_test'
+    assert dataDF['simType'].iloc[0] == 'entres'
+    assert dataDF['cellSize'].iloc[0] == 5.0
 
 
 def test_exportcom1DFAOrigOutput(tmp_path):

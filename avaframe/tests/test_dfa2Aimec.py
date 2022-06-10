@@ -52,7 +52,7 @@ def test_dfaComp2Aimec(tmp_path):
     pathDataRef = testPath / 'Outputs' / 'com1DFARef' / 'peakFiles'
     pathDataComp = testPath / 'Outputs' / 'com1DFAComp' / 'peakFiles'
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp'}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
     inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HX', 'release1HX')
 
@@ -147,7 +147,7 @@ def test_dfaBench2Aimec():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp'}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
     dirPath = pathlib.Path(__file__).parents[0]
     avaTestName = 'avaHelixChannelPytest'
@@ -158,14 +158,14 @@ def test_dfaBench2Aimec():
     # call function to be tested
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp)
 
-    assert 'mass_release1HX_0a452280a5_ent_dfa_ppr' in str(inputsDF['massBal'][1])
-    assert 'release1HX_0a452280a5_ent_dfa_ppr_pft' in str(inputsDF['pft'][1])
-    assert 'release1HX_0a452280a5_ent_dfa_ppr_ppr' in str(inputsDF['ppr'][1])
-    assert 'release1HX_0a452280a5_ent_dfa_ppr_pfv' in str(inputsDF['pfv'][1])
-    assert 'mass_release1HX_25476e950f_ent_dfa' in str(inputsDF['massBal'][0])
-    assert 'release1HX_25476e950f_ent_dfa_pft' in str(inputsDF['pft'][0])
-    assert 'release1HX_25476e950f_ent_dfa_ppr' in str(inputsDF['ppr'][0])
-    assert 'release1HX_25476e950f_ent_dfa_pfv' in str(inputsDF['pfv'][0])
+    assert 'mass_release1HX_0a452280a5_ent_dfa' in str(inputsDF['massBal'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_pft' in str(inputsDF['pft'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_ppr' in str(inputsDF['ppr'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_pfv' in str(inputsDF['pfv'].iloc[1])
+    assert 'mass_release1HX_25476e950f_ent_dfa' in str(inputsDF['massBal'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_pft' in str(inputsDF['pft'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_ppr' in str(inputsDF['ppr'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_pfv' in str(inputsDF['pfv'].iloc[0])
 
 
 def test_getCompDirs():

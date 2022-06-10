@@ -156,7 +156,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         raise FileNotFoundError(message)
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
-        compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='')
+        compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='', testName=cfgSetup['testName'])
     # build input dataFrame
     inputsDF = refData.append(compData)
 
