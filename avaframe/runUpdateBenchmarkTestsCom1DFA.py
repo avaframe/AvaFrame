@@ -13,16 +13,10 @@ from configupdater import ConfigUpdater
 from avaframe.version import getVersion
 from avaframe.com1DFA import com1DFA
 from avaframe.ana1Tests import testUtilities as tU
-from avaframe.log2Report import generateReport as gR
-from avaframe.log2Report import generateCompareReport
-from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
-from avaframe.out3Plot import outQuickPlot
-from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParametersDict
 
 
 # +++++++++REQUIRED+++++++++++++
