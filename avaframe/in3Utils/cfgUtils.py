@@ -753,6 +753,8 @@ def fetchAndOrderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, sp
     if resFiles:
         # create dataframe for simulation results in inputDir
         dataDF = fU.makeSimDF(inputDir)
+        if isinstance(varParList, str):
+            varParList = [varParList]
         # append 'simName' for merging of dataframes according to simNames
         columnNames = ['simName'] + varParList
         # merge varParList parameters as columns to dataDF for matching simNames

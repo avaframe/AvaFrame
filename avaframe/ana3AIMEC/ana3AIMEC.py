@@ -82,15 +82,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
-    # postprocess reference
-    # make sure only one simulation with refSimName exists -> duplicates can happen for
-    # the same setup, eg. benchmark comparisons...
-    inputsDFrow = inputsDF.loc[refSimHash]
-    refSimName = inputsDF.loc[refSimHash, 'simName']
-    inputsValueCount = inputsDF['simName'].value_counts()
-    if inputsValueCount[refSimName] > 1:
-        log.warning('Multiple rows with the same reference simulation name found! Taking the first as reference')
-
+    # postprocess reference...
     timeMass = None
     resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
                                                            timeMass, refSimHash)

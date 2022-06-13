@@ -26,7 +26,7 @@ def test_getAimecInputs(capfd):
     assert pathDict['pathName'] == 'path_aimec'
 
 
-def test_analyzeArea(capfd):
+def test_analyzeArea(tmp_path):
     '''Simple test for module analyzeArea'''
     # get input data
     dirname = pathlib.Path(__file__).parents[0]
@@ -43,7 +43,7 @@ def test_analyzeArea(capfd):
     d['pfv'] = [dataRef, dataSim]
     d['massBal'] = [dataMass, dataMass1]
     inputsDF = pd.DataFrame(data=d, index=[0, 1])
-    pathResult = dirname / 'data'
+    pathResult = tmp_path / 'data'
     pathDict['pathResult'] = pathResult
     pathDict['dirName'] = 'testAIMEC'
     pathDict['refSimHash'] = 0
@@ -110,7 +110,7 @@ def test_analyzeArea(capfd):
             inputsDF['FP'][1] == 200) and (inputsDF['TN'][1] == 7350)
 
 
-def test_makeDomainTransfo(capfd):
+def test_makeDomainTransfo(tmp_path):
     '''Simple test for module makeDomainTransfo'''
     # Extract input file locations
     pathDict = {}
@@ -146,7 +146,7 @@ def test_makeDomainTransfo(capfd):
     inputsDF = pd.DataFrame(data=d, index=[0, 1, 2, 3, 4])
     pathDict['contCmap'] = True
 
-    pathResult = dirname / 'results'
+    pathResult = tmp_path / 'results'
     pathDict['pathResult'] = pathResult
 
     pathDict['projectName'] = 'testAna3Aimec'
@@ -206,12 +206,64 @@ def test_makeDomainTransfo(capfd):
         assert error < 0.4
         assert np.abs(resAnalysisDF['sRunout'][i] - (240 + 10*(i+1))) < 5
 
-    # resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
-    # for i in range(5):
-    #     rasterSource = pathDict['ppr'][i]
-    #     sourceData = IOf.readRaster(rasterSource)
-    #     rasterdata = sourceData['rasterData']
-    #     error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
-    #             np.nansum(rasterdata)*100)
-    #     assert error < 0.4
-    #     assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
+
+def test_mainAIMEC(tmp_path):
+    # Extract input file locations
+    pathDict = {}
+    dir = pathlib.Path(__file__).parents[0]
+    dirname = dir / 'data' / 'testAna3Aimec'
+    pathData = dirname / 'data'
+
+    refDir = dirname / 'LINES'
+    profileLayer = list(refDir.glob('*aimec*.shp'))
+    pathDict['profileLayer'] = profileLayer[0]
+
+    refDir = dirname / 'POINTS'
+    splitPointLayer = list(refDir.glob('*.shp'))
+    pathDict['splitPointSource'] = splitPointLayer[0]
+
+    demSource = list(dirname.glob('*.asc'))
+    pathDict['demSource'] = demSource[0]
+
+    d = {}
+    d['simName'] = ['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4']
+    d['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
+    d['pft'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
+    d['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
+    d['massBal'] = [dirname / '000001.txt']*5
+    inputsDF = pd.DataFrame(data=d, index=[0, 1, 2, 3, 4])
+    pathDict['contCmap'] = True
+
+    pathResult = tmp_path / 'results'
+    pathDict['pathResult'] = pathResult
+
+    pathDict['projectName'] = 'testAna3Aimec'
+    pathName = profileLayer[0].stem
+    pathDict['pathName'] = pathName
+    pathDict['dirName'] = 'com1DFA'
+    pathDict['refSimHash'] = 0
+    pathDict['refSimName'] = 'testAimec_0'
+    pathDict['compType'] = ['singleModule', 'com1DFA']
+    pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
+
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC)
+    cfgSetup = cfg['AIMECSETUP']
+    cfgSetup['startOfRunoutAreaAngle'] = '0'
+    cfgSetup['domainWidth'] = '160'
+    cfgSetup['resType'] = 'ppr'
+    cfgSetup['thresholdValue'] = '0.9'
+    cfgSetup['contourLevels'] = '0.1|0.5|1'
+
+    rasterTransfo, inputsDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+
+    assert rasterTransfo['gridx'][-1, 0] == 60
+    assert rasterTransfo['gridx'][-1, -1] == 220
+    assert rasterTransfo['gridy'][0, 0] == 180
+    assert rasterTransfo['gridy'][0, -1] == 20
+    assert rasterTransfo['gridy'][-1, -1] == 258

@@ -9,7 +9,6 @@
 import numpy as np
 import os
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in3Utils import initializeProject as initProj
 import pytest
 import shutil
 import pathlib

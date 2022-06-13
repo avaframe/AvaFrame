@@ -150,6 +150,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         raise FileNotFoundError(message)
     # all simulations should have a different name in the comparison dataframe
     compDataCount = (compData['simName'].value_counts() > 1).to_list()
+    # this should never actually happen
     if True in compDataCount:
         message = ('Multiple rows of the comparison dataFrame have the same simulation name. This is not allowed')
         log.error(message)
@@ -159,6 +160,12 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='', testName=cfgSetup['testName'])
     # build input dataFrame
     inputsDF = refData.append(compData)
+    # all simulations should have a different name in the comparison dataframe
+    inputsDFCount = (inputsDF['simName'].value_counts() > 1).to_list()
+    # this can happen, the difference between simualtion is based on the row hash so this is no problem
+    if True in inputsDFCount:
+        message = ('Multiple rows of the dataFrame have the same simulation name.')
+        log.warning(message)
 
     return inputsDF, pathDict
 
