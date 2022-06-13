@@ -38,7 +38,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     avalancheDir : str
         path to directory of avalanche to analyze
     pathDict: dict
-        dictionary with paths to simulation results that shall be analaysed
+        dictionary with info required e.g. reference sim name, comparison type, color variation info
     dirName: str
         name of results directory (e.g. comModule, simName, ...)
 

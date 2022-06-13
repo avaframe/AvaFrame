@@ -660,6 +660,9 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
         dataDF.loc[simName, resType] = pathlib.Path(file)
         if resType not in resTypeList:
             resTypeList.append(resType)
+
+    # add a hash for each line of the DF and use as index - required for identifcation
     hash = pd.util.hash_pandas_object(dataDF)
     dataDF = dataDF.set_index(hash)
+    
     return dataDF, resTypeList

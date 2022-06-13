@@ -253,7 +253,7 @@ def getCompDirs(avaDir, cfgSetup):
 
 
 def mainDfa2Aimec(avaDir, comModule, cfg):
-    """ Fetch available raster results path from com1DFA to be used by Aimec
+    """ Fetch available raster results path from comModule to be used by Aimec
 
         Parameters
         -----------
@@ -270,9 +270,12 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             with a line for each simulation available and the corresponding simulation results: ppr, pft, pfv
     """
 
+    # create data frame that lists all available simulations and path to their result type result files
     inputsDF, resTypeList = fU.makeSimFromResDF(avaDir, comModule)
 
+    # check if mass analysis shall be performed
     if cfg['FLAGS'].getboolean('flagMass'):
-        # Extract mb info
+        # Add path to mb info file to dataframe
         inputsDF = getMassInfoInDF(avaDir, inputsDF, comModule, sim='', testName='')
+
     return inputsDF, resTypeList

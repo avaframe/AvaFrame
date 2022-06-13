@@ -25,9 +25,12 @@ def runAna3AIMECCompMods(avalancheDir=''):
     logName = 'runAna3AIMECCompMods'
 
     # ---------------------------------------------
-    # Load avalanche directory from general configuration file
-    cfgMain = cfgUtils.getGeneralConfig()
-    avalancheDir = cfgMain['MAIN']['avalancheDir']
+    # Load avalanche directory from general configuration file or the one provided in inputs
+    if avalancheDir != '':
+        cfgMain = cfgUtils.getGeneralConfig()
+        cfgMain['MAIN']['avalancheDir'] = avalancheDir
+    else:
+        avalancheDir = cfgMain['MAIN']['avalancheDir']
 
     # Start logging
     log = logUtils.initiateLogger(avalancheDir, logName)
