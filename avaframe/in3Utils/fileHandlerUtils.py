@@ -649,7 +649,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
         # add line in the DF if the simulation does not exsist yet
         if simName not in dataDF.simName.values:
             newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
-            dataDF = dataDF.append(newLine)
+            dataDF = pd.concat([dataDF, newLine], ignore_index=False)
             dataDF.loc[simName, 'releaseArea'] = relNameSim
             dataDF.loc[simName, 'simType'] = infoParts[1]
             dataDF.loc[simName, 'modelType'] = infoParts[2]
