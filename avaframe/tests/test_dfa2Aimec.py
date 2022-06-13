@@ -10,48 +10,6 @@ import pandas as pd
 import avaframe.ana3AIMEC.dfa2Aimec as dfa2Aimec
 
 
-def test_extractCom1DFAMBInfo():
-    """ test extracting mass balance from log file """
-
-    # setup required input
-    dirPath = pathlib.Path(__file__).parents[0]
-    avaTestName = 'avaHockeyChannelPytest'
-    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestName
-    inputDF = pd.DataFrame()
-
-    # call function to be tested and check for correct error if file does not exist
-    with pytest.raises(FileNotFoundError) as e:
-        assert dfa2Aimec.extractCom1DFAMBInfo(avaDir, inputDF, simNameInput='testName')
-    assert 'starttestName.log' in str(e.value)
-
-    # call function to be tested
-    inputDF = dfa2Aimec.extractCom1DFAMBInfo(avaDir, inputDF, simNameInput='')
-
-    print('inputDF', inputDF)
-
-    # read created mass file
-    massFile = avaDir / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt'
-    massTime = np.loadtxt(massFile, delimiter=',', skiprows=1)
-    print('massTime', massTime[1:10, :])
-    print('ent mass', massTime[np.where(massTime[:, 0] == 30.2)], np.where(massTime[:, 0] == 30.2))
-
-    assert str(inputDF['massBal'][0]) == str(massFile)
-    assert np.where(massTime[:, 2] > 0.0)[0][0] == 301.0
-
-    # call function to be tested
-    simNameInput = 'release1HS_ent_dfa_0.15500'
-    inputDF = dfa2Aimec.extractCom1DFAMBInfo(avaDir, inputDF, simNameInput=simNameInput)
-
-    # read created mass file
-    massFile2 = avaDir / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt'
-    massTime2 = np.loadtxt(massFile2, delimiter=',', skiprows=1)
-    print('massTime', massTime2[1:10, :])
-    print('ent mass', massTime2[np.where(massTime2[:, 0] == 30.2)], np.where(massTime2[:, 0] == 30.2))
-
-    assert str(inputDF['massBal'][0]) == str(massFile2)
-    assert np.where(massTime2[:, 2] > 0.0)[0][0] == 301.0
-
-
 def test_mainDfa2Aimec(tmp_path):
 
     # Initialise inputs
@@ -85,53 +43,31 @@ def test_mainDfa2Aimec(tmp_path):
     diff = set(inputDF['massBal'].to_list()) ^ set(pathDTest['massBal'])
     assert not diff
 
-    inputDF, resTypeList = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFAOrig', cfg)
-
-    pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
-    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
-                        pathData / 'release2HS_ent_dfa_0.15500_ppr.asc']
-    pathDTest['pft'] = [pathData / 'release1HS_ent_dfa_0.15500_pft.asc',
-                        pathData / 'release2HS_ent_dfa_0.15500_pft.asc']
-    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
-                        pathData / 'release2HS_ent_dfa_0.15500_pfv.asc']
-    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt',
-                            testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release2HS_ent_dfa_0.15500.txt']
-
-    diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
-    assert not diff
-    diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
-    assert not diff
-    diff = set(inputDF['pfv'].to_list()) ^ set(pathDTest['pfv'])
-    assert not diff
-    diff = set(inputDF['massBal'].to_list()) ^ set(pathDTest['massBal'])
-    assert not diff
-
 
 def test_dfaComp2Aimec(tmp_path):
 
     # Initialise inputs
     dirPath = pathlib.Path(__file__).parents[0]
-    avaTestName = 'avaHockeyChannelPytest'
-    testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
-    pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
-    pathData2 = testPath / 'Outputs' / 'com1DFA' / 'peakFiles'
+    testPath = dirPath / '..' / '..' / 'benchmarks' / 'avaHelixChannelPytest'
+    pathDataRef = testPath / 'Outputs' / 'com1DFARef' / 'peakFiles'
+    pathDataComp = testPath / 'Outputs' / 'com1DFAComp' / 'peakFiles'
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFAOrig|com1DFA'}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
-    inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HS', 'release1HS')
+    inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HX', 'release1HX')
 
     # get path dictionary for test
-    massNameRef = 'mass_release1HS_ent_dfa_0.15500.txt'
-    massNameSim = 'mass_release1HS_d10bdc1e81_ent_dfa.txt'
+    massNameRef = 'mass_release1HX_25476e950f_ent_dfa.txt'
+    massNameComp = 'mass_release1HX_0a452280a5_ent_dfa.txt'
     pathDTest = {}
-    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
-                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_ppr.asc']
-    pathDTest['pft'] = [pathData / 'release1HS_ent_dfa_0.15500_pft.asc',
-                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pft.asc']
-    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
-                        pathData2 / 'release1HS_d10bdc1e81_ent_dfa_pfv.asc']
-    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / massNameRef,
-                            testPath / 'Outputs' / 'com1DFA' / massNameSim]
+    pathDTest['ppr'] = [pathDataRef / 'release1HX_25476e950f_ent_dfa_ppr.asc',
+                        pathDataComp / 'release1HX_0a452280a5_ent_dfa_ppr.asc']
+    pathDTest['pft'] = [pathDataRef / 'release1HX_25476e950f_ent_dfa_pft.asc',
+                        pathDataComp / 'release1HX_0a452280a5_ent_dfa_pft.asc']
+    pathDTest['pfv'] = [pathDataRef / 'release1HX_25476e950f_ent_dfa_pfv.asc',
+                        pathDataComp / 'release1HX_0a452280a5_ent_dfa_pfv.asc']
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFARef' / massNameRef,
+                            testPath / 'Outputs' / 'com1DFAComp' / massNameComp]
     print(inputDF['ppr'].to_list())
     print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
@@ -144,8 +80,8 @@ def test_dfaComp2Aimec(tmp_path):
     assert not diff
 
     with pytest.raises(FileNotFoundError) as e:
-        assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release3HS_ent', 'release3HS_ent')
-    assert 'Did not find the reference simulation : release3HS_ent' in str(e.value)
+        assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release2HX', 'release1HX')
+    assert ('Did not find the reference simulation in %s with name %s' % (pathDataRef, 'release2HX')) in str(e.value)
 
 
 def test_getRefMB():
@@ -153,15 +89,16 @@ def test_getRefMB():
 
     # setup required input
     avaTestName = 'avaHockeyChannelPytest'
-    pathDict = {'ppr': 'test', 'massBal': []}
     simName = 'release1HS_ent_dfa_67dc2dc10a'
+    d = {'simName': [simName]}
+    inputDF = pd.DataFrame(data=d, index=[0])
 
     # call function to be tested
-    pathDict = dfa2Aimec.getRefMB(avaTestName, pathDict, simName)
+    inputDF = dfa2Aimec.getRefMB(avaTestName, inputDF, simName)
 
-    print('pathDict', pathDict)
+    print('pathDict', inputDF)
 
-    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][0])
+    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(inputDF['massBal'].to_list()[0])
 
 
 def test_getMBInfo():
@@ -186,7 +123,8 @@ def test_getMBInfo():
     assert 'avaHockeyChannelPytest/Outputs/com1DFATest' in str(e.value)
 
     # call fucntion to be tested
-    inputsDF = pd.DataFrame()
+    inputsDF = pd.DataFrame(data={'simName': ['release1HS_d10bdc1e81_ent_dfa', 'release2HS_e2145362b7_ent_dfa']},
+                            index=[0, 1])
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
     print('pathDict', pathDict)
@@ -195,7 +133,8 @@ def test_getMBInfo():
 
     # call fucntion to be tested
     simName = 'release1HS_d10bdc1e81_ent_dfa'
-    inputsDF = pd.DataFrame()
+    inputsDF = pd.DataFrame(data={'simName': ['release1HS_d10bdc1e81_ent_dfa']},
+                            index=[0])
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
     print('pathDict2', inputsDF)
@@ -208,25 +147,25 @@ def test_dfaBench2Aimec():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFAOrig|com1DFA'}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
     dirPath = pathlib.Path(__file__).parents[0]
-    avaTestName = 'avaHockeyChannelPytest'
+    avaTestName = 'avaHelixChannelPytest'
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestName
-    simNameRef = 'release1HS_ent_dfa_0.15500'
-    simNameComp = 'release1HS_d10bdc1e81_ent_dfa'
+    simNameRef = 'release1HX_25476e950f_ent_dfa'
+    simNameComp = 'release1HX_0a452280a5_ent_dfa'
 
     # call function to be tested
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp)
 
-    assert 'mass_release1HS_d10bdc1e81_ent_dfa' in str(inputsDF['massBal'][1])
-    assert 'release1HS_d10bdc1e81_ent_dfa_pft' in str(inputsDF['pft'][1])
-    assert 'release1HS_d10bdc1e81_ent_dfa_ppr' in str(inputsDF['ppr'][1])
-    assert 'release1HS_d10bdc1e81_ent_dfa_pfv' in str(inputsDF['pfv'][1])
-    assert 'mass_release1HS_ent_dfa_0.15500' in str(inputsDF['massBal'][0])
-    assert 'release1HS_ent_dfa_0.15500_pft' in str(inputsDF['pft'][0])
-    assert 'release1HS_ent_dfa_0.15500_ppr' in str(inputsDF['ppr'][0])
-    assert 'release1HS_ent_dfa_0.15500_pfv' in str(inputsDF['pfv'][0])
+    assert 'mass_release1HX_0a452280a5_ent_dfa' in str(inputsDF['massBal'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_pft' in str(inputsDF['pft'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_ppr' in str(inputsDF['ppr'].iloc[1])
+    assert 'release1HX_0a452280a5_ent_dfa_pfv' in str(inputsDF['pfv'].iloc[1])
+    assert 'mass_release1HX_25476e950f_ent_dfa' in str(inputsDF['massBal'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_pft' in str(inputsDF['pft'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_ppr' in str(inputsDF['ppr'].iloc[0])
+    assert 'release1HX_25476e950f_ent_dfa_pfv' in str(inputsDF['pfv'].iloc[0])
 
 
 def test_getCompDirs():

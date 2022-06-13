@@ -13,7 +13,6 @@ import shutil
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-from avaframe.in3Utils import cfgUtils
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -121,13 +120,6 @@ def extractParameterInfo(avaDir, simName, reportD):
         reportD: dict
             upated report dictionary with info on simulation
         """
-
-    # Get info from ExpLog
-    logName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'ExpLog.txt')
-    logDictExp = readLogFile(logName)
-    names = logDictExp['fullName']
-    simNames = sorted(set(names), key=lambda s: s.split("_")[3])
-
     # Initialise parameter dictionary
     parameterDict = {}
 

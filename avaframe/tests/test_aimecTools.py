@@ -27,16 +27,16 @@ def test_fetchReferenceSimNo(tmp_path):
          'pft': [test1PFT, test2PFT], 'pfv': [test1PFV, test2PFV]}
     inputsDF = pd.DataFrame(data=d, index=['testSim_no1', 'testSim_no2'])
     cfgSetup = configparser.ConfigParser()
-    cfgSetup['GENERAL'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2'}
-    refSimulation, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule', cfgSetup['GENERAL'])
-    assert refSimulation == 'testSim_no2'
+    cfgSetup['GENERAL'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2', 'referenceSimValue': ''}
+    refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule', cfgSetup['GENERAL'])
+    assert refSimName == 'testSim_no2'
     assert colorParameter is False
 
     cfgSetup['GENERAL']['referenceSimName'] = ''
-    refSimulation, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule', cfgSetup['GENERAL'])
-    assert refSimulation == 'testSim_no1'
+    refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule', cfgSetup['GENERAL'])
+    assert refSimName == 'testSim_no1'
     assert colorParameter is False
-    assert inputsDF.loc[refSimulation, cfgSetup['GENERAL']['resType']] == test1PFV
+    assert inputsDF.loc[refSimHash, cfgSetup['GENERAL']['resType']] == test1PFV
 
 
 def test_computeCellSizeSL(tmp_path):

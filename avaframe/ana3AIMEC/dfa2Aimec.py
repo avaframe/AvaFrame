@@ -141,7 +141,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         pathDict['refSimName'] = refSimName
         # if desired set path to mass log files
         if cfg['FLAGS'].getboolean('flagMass'):
-            refData = getMassInfoInDF(avaDir, cfgSetup, refData, comModules[1], sim=refSimName)
+            refData = getMassInfoInDF(avaDir, refData, comModules[0], sim=refSimName, testName=cfgSetup['testName'])
     # at least one simulation is needed in the comparison dataFrame
     if len(compData.index) == 0:
         message = ('Did not find the comparison simulation in %s with name %s'
@@ -150,15 +150,22 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         raise FileNotFoundError(message)
     # all simulations should have a different name in the comparison dataframe
     compDataCount = (compData['simName'].value_counts() > 1).to_list()
+    # this should never actually happen
     if True in compDataCount:
         message = ('Multiple rows of the comparison dataFrame have the same simulation name. This is not allowed')
         log.error(message)
         raise FileNotFoundError(message)
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
-        compData = getMassInfoInDF(avaDir, compData, comModules[2], sim='', testName=cfgSetup['testName'])
+        compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='', testName=cfgSetup['testName'])
     # build input dataFrame
     inputsDF = refData.append(compData)
+    # all simulations should have a different name in the comparison dataframe
+    inputsDFCount = (inputsDF['simName'].value_counts() > 1).to_list()
+    # this can happen, the difference between simualtion is based on the row hash so this is no problem
+    if True in inputsDFCount:
+        message = ('Multiple rows of the dataFrame have the same simulation name.')
+        log.warning(message)
 
     return inputsDF, pathDict
 

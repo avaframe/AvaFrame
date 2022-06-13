@@ -82,15 +82,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
-    # postprocess reference
-    # make sure only one simulation with refSimName exists -> duplicates can happen for
-    # the same setup, eg. benchmark comparisons...
-    inputsDFrow = inputsDF.loc[refSimHash]
-    refSimName = inputsDF.loc[refSimHash, 'simName']
-    inputsValueCount = inputsDF['simName'].value_counts()
-    if inputsValueCount[refSimName] > 1:
-        log.warning('Multiple rows with the same reference simulation name found! Taking the first as reference')
-
+    # postprocess reference...
     timeMass = None
     resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
                                                            timeMass, refSimHash)
@@ -268,26 +260,27 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     return resAnalysisDF, newRasters, timeMass
 
 
-def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, refSimName):
+def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
     """ gather aimec results and append them to report dictionary """
-    resAnalysisDFRef = resAnalysisDF[resAnalysisDF['simName'] == refSimName]
-    resAnalysisDFComp = resAnalysisDF[resAnalysisDF['simName'] != refSimName]
-    reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'][0],
-                                 'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'][0],
-                                 'max peak flow thickness [m]': resAnalysisDFComp['maxpftCrossMax'][0],
-                                 'max peak flow velocity [ms-1]': resAnalysisDFComp['maxpfvCrossMax'][0]}
+    refSimHash = pathDict['refSimHash']
+    resAnalysisDFRef = resAnalysisDF.loc[refSimHash].squeeze().to_dict()
+    resAnalysisDFComp = resAnalysisDF.loc[resAnalysisDF.index != refSimHash].squeeze().to_dict()
+    reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'],
+                                 'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'],
+                                 'max peak flow thickness [m]': resAnalysisDFComp['maxpftCrossMax'],
+                                 'max peak flow velocity [ms-1]': resAnalysisDFComp['maxpfvCrossMax']}
 
-    benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFRef['sRunout'][0],
-                                'max peak pressure [kPa]': resAnalysisDFRef['maxpprCrossMax'][0],
-                                'max peak flow thickness [m]': resAnalysisDFRef['maxpftCrossMax'][0],
-                                'max peak flow velocity [ms-1]': resAnalysisDFRef['maxpfvCrossMax'][0]}
+    benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFRef['sRunout'],
+                                'max peak pressure [kPa]': resAnalysisDFRef['maxpprCrossMax'],
+                                'max peak flow thickness [m]': resAnalysisDFRef['maxpftCrossMax'],
+                                'max peak flow velocity [ms-1]': resAnalysisDFRef['maxpfvCrossMax']}
     # add mass info
     if "relMass" in resAnalysisDF.columns:
-        reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFComp['relMass'][0]})
-        reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFComp['finalMass'][0]})
-        reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFComp['entMass'][0]})
-        benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFRef['relMass'][0]})
-        benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFRef['finalMass'][0]})
-        benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFRef['entMass'][0]})
+        reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFComp['relMass']})
+        reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFComp['finalMass']})
+        reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFComp['entMass']})
+        benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFRef['relMass']})
+        benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFRef['finalMass']})
+        benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFRef['entMass']})
 
     return reportD, benchD

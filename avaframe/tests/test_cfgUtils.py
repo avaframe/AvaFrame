@@ -106,6 +106,27 @@ def test_orderSimFiles():
     assert message in str(e.value)
 
 
+def test_fetchAndOrderSimFiles():
+    """ test generating order of simulation results """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
+
+    varParList = 'releaseScenario'
+
+    simDF = cfgUtils.fetchAndOrderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
+
+    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
+
+    varParList = 'releaseSenario'
+    message = ('Choose a valid parameters for sorting the simulations. \'releaseSenario\' is not valid.')
+    with pytest.raises(KeyError) as e:
+        simDF = cfgUtils.fetchAndOrderSimFiles(avaDir, 'inputDir', varParList, True, specDir='', resFiles=False)
+    assert message in str(e.value)
+
+
 def test_createConfigurationInfo(tmp_path):
     """ test configuration info generation as DF """
 

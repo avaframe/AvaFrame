@@ -13,16 +13,10 @@ from configupdater import ConfigUpdater
 from avaframe.version import getVersion
 from avaframe.com1DFA import com1DFA
 from avaframe.ana1Tests import testUtilities as tU
-from avaframe.log2Report import generateReport as gR
-from avaframe.log2Report import generateCompareReport
-from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
-from avaframe.out3Plot import outQuickPlot
-from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParametersDict
 
 
 # +++++++++REQUIRED+++++++++++++
@@ -88,7 +82,7 @@ for test in testList:
     # change the ini file to read particles from file
     updater = ConfigUpdater()
     updater.read(standardCfg)
-    updater['GENERAL']['initialiseParticlesFromFile'].value = 'True'
+    updater['GENERAL']['initialiseParticlesFromFile'].value = 'False'
     updater['GENERAL']['particleFile'].value = '../benchmarks/' + test['NAME']
     updater.update_file()
 
@@ -122,17 +116,19 @@ for test in testList:
             # copy file to benchmark
             destFile = refDir / (simName + '_' + suf + '.asc')
             shutil.copy2(simFile, destFile)
+        else:
+            log.warning('did not find the file %s' % simFile)
     # set copy mass result
     resDir = pathlib.Path(avaDir, 'Outputs', modName)
-    simName = rep['simName']['name']
-    files = []
-    simFile = resDir / ('mass_' + simName + '.asc')
+    simFile = resDir / ('mass_' + simName + '.txt')
     if simFile.is_file():
         # add file name to dict
         files.append(simFile.stem)
         # copy file to benchmark
-        destFile = refDir / ('mass_' + simName + '.asc')
+        destFile = refDir / ('mass_' + simName + '.txt')
         shutil.copy2(simFile, destFile)
+    else:
+        log.warning('did not find the file %s' % simFile)
     test['FILES'] = files
     # set copy particles
     resDir = pathlib.Path(avaDir, 'Outputs', modName, 'particles')
@@ -146,5 +142,7 @@ for test in testList:
         destFile.mkdir()
         destFile = destFile / (simFile.name)
         shutil.copy2(simFile, destFile)
+    else:
+        log.warning('did not find the file %s' % simFile)
     # write the benchmark dict as JSON
     tU.writeDesDicttoJson(test, test['NAME'], refDir)

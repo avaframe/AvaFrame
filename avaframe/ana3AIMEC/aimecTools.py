@@ -179,6 +179,24 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 
 
 def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
+    """ Search for reference based on configuration parameter and value
+
+    Log error if no simulation found
+
+    Parameters
+    ----------
+    referenceSimName : str
+        string to look for in the simulations name
+    inputsDF: dataFrame
+        simulation dataFrame
+
+    Returns
+    -------
+    refSimHash : index
+        hash index of THE reference simulation
+    refSimName : str
+        name of THE reference simulation
+    """
     sortingParameter = inputsDF[varParList[0]].to_list()
     # get the type ot this parameter
     typeCP = type(sortingParameter[0])
@@ -209,6 +227,24 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
 
 
 def defineRefOnSimName(referenceSimName, inputsDF):
+    """ Search for reference based on simulation name
+
+    Log error if no simulation found
+
+    Parameters
+    ----------
+    referenceSimName : str
+        string to look for in the simulations name
+    inputsDF: dataFrame
+        simulation dataFrame
+
+    Returns
+    -------
+    refSimHash : index
+        hash index of THE reference simulation
+    refSimName : str
+        name of THE reference simulation
+    """
     try:
         refSimHash = inputsDF.query('simName.str.contains(\'%s\')' % referenceSimName).index
     except IndexError:
@@ -223,6 +259,24 @@ def defineRefOnSimName(referenceSimName, inputsDF):
 
 
 def checkMultipleSimFound(refSimHash, inputsDF):
+    """ Check if more than one file can be chosen as reference
+
+    Log warning if it is the case
+
+    Parameters
+    ----------
+    refSimHash : index
+        hash indexes of reference simulations
+    inputsDF: dataFrame
+        simulation dataFrame
+
+    Returns
+    -------
+    refSimHash : index
+        hash index of THE reference simulation
+    refSimName : str
+        name of THE reference simulation
+    """
     if len(refSimHash) > 1:
         message = 'Found multiple simulations matching the referenceSimName criterion, taking the first one as reference'
         log.warning(message)
