@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 def mainAIMEC(pathDict, inputsDF, cfg):
     """ Main logic for AIMEC postprocessing
 
-    Reads the required files location for ana3AIMEC postpocessing
+    Reads the required files location for ana3AIMEC postprocessing
     given an avalanche directory
     Make the domain transformation corresponding to the input avalanche path
     Transform 2D fields (pressure, flow thickness ...)
@@ -73,6 +73,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
     log.debug("Assigning dem data to deskewed raster")
+    # CHECK: why is this required again? is refRaster changed?
     raster = IOf.readRaster(refResultSource)
     newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
 

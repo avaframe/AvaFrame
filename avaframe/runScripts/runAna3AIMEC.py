@@ -18,9 +18,9 @@ def runAna3AIMEC(avalancheDir=''):
     logName = 'runAna3AIMEC'
 
     # ---------------------------------------------
-    # Load avalanche directory from general configuration file
-    cfgMain = cfgUtils.getGeneralConfig()
+    # Load avalanche directory from general configuration file or if available from inputs
     if avalancheDir != '':
+        cfgMain = cfgUtils.getGeneralConfig()
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
@@ -43,7 +43,7 @@ def runAna3AIMEC(avalancheDir=''):
     cfgSetup = cfg['AIMECSETUP']
     anaMod = cfgSetup['anaMod']
 
-    # Setup input from com1DFA
+    # Setup input from computational module
     inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
     # define reference simulation
     refSimHash, refSimName, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
