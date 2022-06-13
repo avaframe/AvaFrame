@@ -99,9 +99,11 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
-    # outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
+    if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
+        outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
-        plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
+        if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
+            plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
         plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
@@ -245,7 +247,6 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     if flagMass:
         # perform mass analysis
         fnameMass = resAnalysisDF.loc[simHash, 'massBal']
-        print(fnameMass)
         resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=timeMass)
 
         if simHash != refSimHash:
