@@ -870,6 +870,48 @@ def cartToSpherical(X, Y, Z):
     return r, phi, theta
 
 
+def rotateRaster(rasterDict, theta, center, deg=True):
+    """ rotate a vector provided as start and end point with theta angle
+        rotation counter-clockwise
+
+        Parameters
+        -----------
+        locationPoints: list
+            list of lists with x,y coordinate of start and end point of a line
+        theta: float
+            rotation angle of the vector from start point to end point - degree default
+        deg: bool
+            if true theta is converted to rad from degree
+
+        Returns
+        --------
+        rotatedLine: list
+            list of lists of x,y coordinates of start and end point of rotated vector
+    """
+
+    # convert to rad if provided as degree
+    if deg:
+        theta = np.radians(theta)
+
+    # create raster gird with origin 0,0
+    header = rasterDict['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    ncols = header['ncols']
+    nrows = header['nrows']
+    csz = header['cellsize']
+    X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
+
+    # rotate Grid
+    xTheta = np.cos(theta) * X - np.sin(theta) * Y
+    yTheta = np.sin(theta) * X + np.cos(theta) * Y
+
+    # project data on this new grid
+    rasterRotDict = projectOnGrid(xTheta, yTheta, rasterDict['rasterdata'], csz=csz, xllc=0, yllc=0, interp='bilinear')
+
+    return rotatedLine
+
+
 def rotate(locationPoints, theta, deg=True):
     """ rotate a vector provided as start and end point with theta angle
         rotation counter-clockwise
@@ -907,8 +949,8 @@ def rotate(locationPoints, theta, deg=True):
     vectorRot = np.dot(rotationMatrix, vector)
 
     # create rotated line as list of start and end point
-    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])], # x
-                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
+    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])],  # x
+                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])]  # y
                    ]
 
     return rotatedLine
