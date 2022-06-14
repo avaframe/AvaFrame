@@ -870,23 +870,23 @@ def cartToSpherical(X, Y, Z):
     return r, phi, theta
 
 
-def rotateRaster(rasterDict, theta, center, deg=True):
-    """ rotate a vector provided as start and end point with theta angle
-        rotation counter-clockwise
+def rotateRaster(rasterDict, theta, deg=True):
+    """ rotate counter-clockwise a raster arround (0, 0) with theta angle
 
         Parameters
         -----------
-        locationPoints: list
-            list of lists with x,y coordinate of start and end point of a line
+        rasterDict: dict
+            raster dictionary
         theta: float
             rotation angle of the vector from start point to end point - degree default
+
         deg: bool
             if true theta is converted to rad from degree
 
         Returns
         --------
-        rotatedLine: list
-            list of lists of x,y coordinates of start and end point of rotated vector
+        rotatedRaster: dict
+            rotated raster dictionary
     """
 
     # convert to rad if provided as degree
@@ -907,9 +907,10 @@ def rotateRaster(rasterDict, theta, center, deg=True):
     yTheta = np.sin(theta) * X + np.cos(theta) * Y
 
     # project data on this new grid
-    rasterRotDict = projectOnGrid(xTheta, yTheta, rasterDict['rasterdata'], csz=csz, xllc=0, yllc=0, interp='bilinear')
+    rotatedZ, _ = projectOnGrid(xTheta, yTheta, rasterDict['rasterData'], csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
 
-    return rotatedLine
+    rotatedRaster = {'header': header, 'rasterData': rotatedZ}
+    return rotatedRaster
 
 
 def rotate(locationPoints, theta, deg=True):
