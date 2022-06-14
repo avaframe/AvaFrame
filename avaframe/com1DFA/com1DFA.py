@@ -1085,6 +1085,7 @@ def initializeFields(cfg, dem, particles):
     fields['ppr'] = PP
     fields['pft'] = FT
     fields['pta'] = TA
+    fields['pfe'] = PFV
     fields['FV'] = PFV
     fields['P'] = PP
     fields['FT'] = FT
@@ -1095,7 +1096,7 @@ def initializeFields(cfg, dem, particles):
     fields['TA'] = TA
 
     particles = DFAfunC.getNeighborsC(particles, dem)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
 
     return particles, fields
 
@@ -1564,7 +1565,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     # update fields (compute grid values)
     startTime = time.time()
     log.debug('update Fields C')
-    particles = computeTravelAngle(cfg, dem, particles, zPartArray0)
+    # particles = computeTravelAngle(cfg, particles, zPartArray0)
+    particles = DFAfunC.computeTravelAngleC(cfg, particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
@@ -1572,15 +1574,13 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     return particles, fields, zPartArray0, tCPU
 
 
-def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
+def computeTravelAngle(cfgGen, particles, zPartArray0):
     """Compute the travel angle associated to the particles
 
     Parameters
     ----------
     cfgGen: configparser
         configuration for DFA simulation
-    dem : dict
-        dictionary with dem information
     particles : dict
         particles dictionary at t
     zPartArray0 : dict
