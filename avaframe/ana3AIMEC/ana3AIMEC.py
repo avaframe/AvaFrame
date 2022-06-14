@@ -54,9 +54,9 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     demSource = pathDict['demSource']
     dem = IOf.readRaster(demSource)
     # get hash of the reference
-    refSimHash = pathDict['refSimHash']
+    refSimRowHash = pathDict['refSimRowHash']
     # read reference file and raster and config
-    refResultSource = inputsDF.loc[refSimHash, cfgSetup['resType']]
+    refResultSource = inputsDF.loc[refSimRowHash, cfgSetup['runoutResType']]
     refRaster = IOf.readRaster(refResultSource)
     refHeader = refRaster['header']
 
@@ -86,13 +86,13 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # postprocess reference...
     timeMass = None
     resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
-                                                           timeMass, refSimHash)
+                                                           timeMass, refSimRowHash)
     # postprocess other simulations
-    for simHash, inputsDFrow in inputsDF.iterrows():
-        if simHash != refSimHash:
+    for simRowHash, inputsDFrow in inputsDF.iterrows():
+        if simRowHash != refSimRowHash:
             resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF,
-                                                                   newRasters, timeMass, simHash)
-            pathDict['compSimHash'] = simHash
+                                                                   newRasters, timeMass, simRowHash)
+            pathDict['simRowHash'] = simRowHash
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -110,9 +110,9 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
     plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF.loc[pathDict['compSimHash'], 'areasPlot']}
+    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF.loc[pathDict['simRowHash'], 'areasPlot']}
     if cfgFlags.getboolean('flagMass'):
-        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['compSimHash'], 'massPlotName']}
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['simRowHash'], 'massPlotName']}
 
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
@@ -120,12 +120,12 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     return rasterTransfo, resAnalysisDF, plotDict
 
 
-def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simHash):
+def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash):
     """ Apply domain transformation and analyse pressure, thickness and velocity data
 
     Apply the domain tranformation to peak results
-    Analyse pressure thickness and speed.
-    Calculate runout, Max Peak Pressure, Average PP...
+    Analyse them.
+    Calculate runout, Max Peak Values, Average Peak Values...
     Get mass and entrainement
 
     Parameters
@@ -143,49 +143,37 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         transformation for the reference and the current simulation
     timeMass: 1D numpy array
         time array for mass analysis (if flagMass=True, otherwise None)
-    simHash: str
+    simRowHash: str
         hash of the curent simulation to analyze
 
     Returns
     -------
     resAnalysisDF: dataFrame
         input DF with results from Aimec Analysis updated with results from curent simulation:
-            -maxpprCrossMax: float
-                    max max peak pressure
-            -pprCrossMax: 1D numpy array
-                    max peak pressure in each cross section
-            -pprCrossMean: 1D numpy array
-                    mean peak pressure in each cross section
-            -maxpftCrossMax: float
-                    max max peak flow thickness
-            -pftCrossMax: 1D numpy array
-                    max peak flow thickness in each cross section
-            -pftCrossMean: 1D numpy array
-                    mean peak flow thickness in each cross section
-            -maxpfvCrossMax: float
-                    max max peak flow velocity
-            -pfvCrossMax: 1D numpy array
-                    max peak flow velocity in each cross section
-            -pfvCrossMean: 1D numpy array
-                    mean peak flow velocity in each cross section
+            -maxACrossMax: float
+                    max max A (A depends on what is in resTypes)
+            -ACrossMax: 1D numpy array
+                    max A in each cross section (A depends on what is in resTypes)
+            -ACrossMean: 1D numpy array
+                    mean A in each cross section (A depends on what is in resTypes)
             -xRunout: float
                     x coord of the runout point calculated from the
-                    MAX peak result in each cross section (resType provided in the ini file)
+                    MAX peak result in each cross section (runoutResType provided in the ini file)
             -yRunout: float
                     y coord of the runout point calculated from the
-                    MAX peak result in each cross section (resType provided in the ini file)
+                    MAX peak result in each cross section (runoutResType provided in the ini file)
             -sRunout: float
                     projected runout distance calculated from the
-                    MAX peak result in each cross section (resType provided in the ini file)
+                    MAX peak result in each cross section (runoutResType provided in the ini file)
             -xMeanRunout: float
                     x coord of the runout point calculated from the
-                    MEAN peak result in each cross section (resType provided in the ini file)
+                    MEAN peak result in each cross section (runoutResType provided in the ini file)
             -yMeanRunout: float
                     y coord of the runout point calculated from the
-                    MEAN peak result in each cross section (resType provided in the ini file)
+                    MEAN peak result in each cross section (runoutResType provided in the ini file)
             -sMeanRunout: float
                     projected runout distance calculated from the
-                    MEAN peak result in each cross section (resType provided in the ini file)
+                    MEAN peak result in each cross section (runoutResType provided in the ini file)
             -elevRel: float
                     elevation of the release area (based on first point with
                     peak field > thresholdValue)
@@ -220,7 +208,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
     flagMass = cfgFlags.getboolean('flagMass')
-    refSimHash = pathDict['refSimHash']
+    refSimRowHash = pathDict['refSimRowHash']
     resTypeList = pathDict['resTypeList']
 
     # apply domain transformation
@@ -228,12 +216,12 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
 
     for resType in resTypeList:
         log.debug("Assigning %s data to deskewed raster" % resType)
-        inputFiles = resAnalysisDF.loc[simHash, resType]
+        inputFiles = resAnalysisDF.loc[simRowHash, resType]
         if isinstance(inputFiles, pathlib.PurePath):
             rasterData = IOf.readRaster(inputFiles)
             newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
             newRasters['newRaster' + resType.upper()] = newRaster
-            if simHash == refSimHash:
+            if simRowHash == refSimRowHash:
                 newRasters['newRefRaster' + resType.upper()] = newRaster
                 resAnalysisDF[resType + 'CrossMax'] = np.nan
                 resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
@@ -241,32 +229,32 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                 resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
 
             # analyze all fields
-            resAnalysisDF = aT.analyzeField(simHash, rasterTransfo, newRaster, resType, resAnalysisDF)
+            resAnalysisDF = aT.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
 
-    # compute runout based on resType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simHash)
+    # compute runout based on runoutResType
+    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)
     if flagMass:
         # perform mass analysis
-        fnameMass = resAnalysisDF.loc[simHash, 'massBal']
-        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=timeMass)
+        fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
+        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
 
-        if simHash != refSimHash:
-            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simHash, refSimHash, timeMass)
-            resAnalysisDF.loc[simHash, 'massPlotName'] = massPlotName
+        if simRowHash != refSimRowHash:
+            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
+            resAnalysisDF.loc[simRowHash, 'massPlotName'] = massPlotName
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pathDict)
+    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict)
 
-    resAnalysisDF.loc[simHash, 'areasPlot'] = compPlotPath
+    resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
     return resAnalysisDF, newRasters, timeMass
 
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
     """ gather aimec results and append them to report dictionary """
-    refSimHash = pathDict['refSimHash']
-    resAnalysisDFRef = resAnalysisDF.loc[refSimHash].squeeze().to_dict()
-    resAnalysisDFComp = resAnalysisDF.loc[resAnalysisDF.index != refSimHash].squeeze().to_dict()
+    refSimRowHash = pathDict['refSimRowHash']
+    resAnalysisDFRef = resAnalysisDF.loc[refSimRowHash].squeeze().to_dict()
+    resAnalysisDFComp = resAnalysisDF.loc[resAnalysisDF.index != refSimRowHash].squeeze().to_dict()
     reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'],
                                  'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'],
                                  'max peak flow thickness [m]': resAnalysisDFComp['maxpftCrossMax'],

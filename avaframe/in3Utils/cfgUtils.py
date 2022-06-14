@@ -384,7 +384,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
+def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir=''):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -408,7 +408,7 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
     if specDir != '':
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
-        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
+        inDir = pathlib.Path(avaDir, 'Outputs', comModule, 'configurationFiles')
     configFiles = inDir.glob('*.ini')
 
     if not inDir.is_dir():

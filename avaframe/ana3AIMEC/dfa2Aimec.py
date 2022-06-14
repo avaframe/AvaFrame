@@ -5,6 +5,7 @@
 # Load modules
 import logging
 import pathlib
+import pandas as pd
 
 # local modules
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -37,8 +38,8 @@ def getMBInfo(avaDir, inputsDF, comMod, simName=''):
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         fU.checkIfFileExists(mbFile, fileType='mass')
-        simHash = inputsDF[inputsDF['simName'] == simName].index[0]
-        inputsDF.loc[simHash, 'massBal'] = mbFile
+        simRowHash = inputsDF[inputsDF['simName'] == simName].index[0]
+        inputsDF.loc[simRowHash, 'massBal'] = mbFile
         log.debug('Added to inputsDF[massBal] %s' % (mbFile))
 
     else:
@@ -54,8 +55,8 @@ def getMBInfo(avaDir, inputsDF, comMod, simName=''):
             name = mFile.stem
             nameParts = name.split('_')
             simName = ('_'.join(nameParts[1:]))
-            simHash = inputsDF[inputsDF['simName'] == simName].index[0]
-            inputsDF.loc[simHash, 'massBal'] = mFile
+            simRowHash = inputsDF[inputsDF['simName'] == simName].index[0]
+            inputsDF.loc[simRowHash, 'massBal'] = mFile
             log.debug('Added to inputsDF[massBal] %s' % (mFile))
     return inputsDF
 
@@ -79,8 +80,8 @@ def getRefMB(testName, inputsDF, simName):
     """
     # Get info from mass log file
     mbFile = pathlib.Path('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
-    simHash = inputsDF[inputsDF['simName'] == simName].index[0]
-    inputsDF.loc[simHash, 'massBal'] = mbFile
+    simRowHash = inputsDF[inputsDF['simName'] == simName].index[0]
+    inputsDF.loc[simRowHash, 'massBal'] = mbFile
     log.debug('Added to inputsDF[massBal] %s' % (mbFile))
 
     return inputsDF
@@ -135,9 +136,9 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         log.error(message)
         raise FileNotFoundError(message)
     else:
-        refSimHash = refData.index[0]
-        refSimName = refData.loc[refSimHash, 'simName']
-        pathDict['refSimHash'] = refSimHash
+        refSimRowHash = refData.index[0]
+        refSimName = refData.loc[refSimRowHash, 'simName']
+        pathDict['refSimRowHash'] = refSimRowHash
         pathDict['refSimName'] = refSimName
         # if desired set path to mass log files
         if cfg['FLAGS'].getboolean('flagMass'):
@@ -159,7 +160,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     if cfg['FLAGS'].getboolean('flagMass'):
         compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='', testName=cfgSetup['testName'])
     # build input dataFrame
-    inputsDF = refData.append(compData)
+    inputsDF = pd.concat([refData, compData], ignore_index=False)
     # all simulations should have a different name in the comparison dataframe
     inputsDFCount = (inputsDF['simName'].value_counts() > 1).to_list()
     # this can happen, the difference between simualtion is based on the row hash so this is no problem
@@ -194,8 +195,6 @@ def getMassInfoInDF(avaDir, inputsDF, comMod, sim='', testName=''):
 """
     if comMod == 'benchmarkReference':
         inputsDF = getRefMB(testName, inputsDF, sim)
-    elif comMod == 'com1DFA':
-        inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
     else:
         try:
             inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)

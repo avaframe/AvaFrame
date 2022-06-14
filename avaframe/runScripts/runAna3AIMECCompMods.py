@@ -23,11 +23,12 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # -----------Required settings-----------------
     # log file name; leave empty to use default runLog.log
     logName = 'runAna3AIMECCompMods'
+    simTypeList = ['']
 
     # ---------------------------------------------
     # Load avalanche directory from general configuration file or the one provided in inputs
+    cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
-        cfgMain = cfgUtils.getGeneralConfig()
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
@@ -47,15 +48,15 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # write configuration to file
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
-    simTypeList = ['res']
-
     for simType in simTypeList:
 
         # Setup input from com1DFA
         inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg, simType, simType)
 
         # Extract input file locations
-        pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName='aimec_'+simType)
+        cfgSetup = cfg['AIMECSETUP']
+        comModules = cfgSetup['comModules'].split('|')
+        pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName= comModules[0]+'_'+comModules[1]+'_'+simType)
 
         startTime = time.time()
 
