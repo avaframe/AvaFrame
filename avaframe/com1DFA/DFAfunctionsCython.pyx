@@ -917,7 +917,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updateFieldsC(cfg, particles, dem, fields):
+def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
   """ update fields and particles flow thickness
 
   Cython implementation
@@ -932,6 +932,10 @@ def updateFieldsC(cfg, particles, dem, fields):
      dictionary with dem information
  fields : dict
      fields dictionary
+ computeTA : boolean
+     True if the Travel angle and peak travel angle should be computed
+ computeKE : boolean
+     True if the peak kinetic energy should be computed
 
  Returns
  -------
@@ -963,6 +967,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PP = fields['ppr']
   cdef double[:, :] PFT = fields['pft']
   cdef double[:, :] PTA = fields['pta']
+  cdef double[:, :] PFE = fields['pfe']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
@@ -974,6 +979,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VXBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VYBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] kineticEnergy = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
@@ -983,6 +989,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # variables for interpolation
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
+  cdef double mwi
 
   for j in range(nPart):
     x = xArray[j]
@@ -991,7 +998,6 @@ def updateFieldsC(cfg, particles, dem, fields):
     uy = uyArray[j]
     uz = uzArray[j]
     m = mass[j]
-    travelAngle = travelAngleArray[j]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -999,16 +1005,19 @@ def updateFieldsC(cfg, particles, dem, fields):
     # for the travel angle we simply do a nearest interpolation
     indx = <int>math.round(x / csz)
     indy = <int>math.round(y / csz)
-    travelAngleField[indy, indx] = max(travelAngleField[indy, indx], travelAngle)
+    if computeTA:
+      travelAngle = travelAngleArray[j]
+      travelAngleField[indy, indx] = max(travelAngleField[indy, indx], travelAngle)
     # add the component of the points value to the 4 neighbour grid points
     # TODO : check if giving the arrays [0 1 0 1].. is faster
     for i in range(4):
       indx = Lx0 + i%2 # + 0 1 0 1
       indy = Ly0 + i/2 # + 0 0 1 1
-      MassBilinear[indy, indx] = MassBilinear[indy, indx] + m * w[i]
-      MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + m * ux * w[i]
-      MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + m * uy * w[i]
-      MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + m * uz * w[i]
+      mwi = m * w[i]
+      MassBilinear[indy, indx] = MassBilinear[indy, indx] + mwi
+      MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + mwi * ux
+      MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + mwi * uy
+      MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + mwi * uz
 
   for i in range(ncols):
     for j in range(nrows):
@@ -1021,16 +1030,20 @@ def updateFieldsC(cfg, particles, dem, fields):
         VYBilinear[j, i] = MomBilinearY[j, i]/m
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
-        PBilinear[j, i] = VBilinear[j, i] * VBilinear[j, i] * rho
-      if VBilinear[j, i] > PFV[j, i]:
-        PFV[j, i] = VBilinear[j, i]
-      if PBilinear[j, i] > PP[j, i]:
-        PP[j, i] = PBilinear[j, i]
-      if FTBilinear[j, i] > PFT[j, i]:
-        PFT[j, i] = FTBilinear[j, i]
-      if travelAngleField[j, i] > PTA[j, i]:
-        PTA[j, i] = travelAngleField[j, i]
-
+        PBilinear[j, i] = computePressure(VBilinear[j, i], rho)
+        if VBilinear[j, i] > PFV[j, i]:
+          PFV[j, i] = VBilinear[j, i]
+        if PBilinear[j, i] > PP[j, i]:
+          PP[j, i] = PBilinear[j, i]
+        if FTBilinear[j, i] > PFT[j, i]:
+          PFT[j, i] = FTBilinear[j, i]
+        if computeTA:
+          if travelAngleField[j, i] > PTA[j, i]:
+            PTA[j, i] = travelAngleField[j, i]
+        if computeKE:
+          kineticEnergy[j, i] = 0.5 * m * VBilinear[j, i] * VBilinear[j, i]
+          if kineticEnergy[j, i] > PFE[j, i]:
+            PFE[j, i] = kineticEnergy[j, i]
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
@@ -1039,11 +1052,14 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['Vz'] = np.asarray(VZBilinear)
   fields['P'] = np.asarray(PBilinear)
   fields['FT'] = np.asarray(FTBilinear)
-  fields['TA'] = np.asarray(travelAngleField)
   fields['pfv'] = np.asarray(PFV)
   fields['ppr'] = np.asarray(PP)
   fields['pft'] = np.asarray(PFT)
-  fields['pta'] = np.asarray(PTA)
+  if computeTA:
+    fields['TA'] = np.asarray(travelAngleField)
+    fields['pta'] = np.asarray(PTA)
+  if computeKE:
+    fields['pfe'] = np.asarray(PFE)
 
 
   for j in range(nPart):
@@ -1056,6 +1072,59 @@ def updateFieldsC(cfg, particles, dem, fields):
   particles['h'] = np.asarray(hBB)
 
   return particles, fields
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cpdef double computePressure(double v, double rho):
+  """Compute pressure"""
+  return rho * v * v
+
+
+def computeTravelAngleC(cfgGen, particles, zPartArray0):
+  """Compute the travel angle associated to the particles
+  Parameters
+  ----------
+  cfgGen: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  zPartArray0 : dict
+      z coordinate of particles at t=0s
+
+  Returns
+  -------
+  particles : dict
+      particles dictionary updated with the travel angle
+  """
+  cdef int[:] parentIDArray = particles['parentID']
+  cdef int nPart = particles['nPart']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] sArray = particles['s']
+  cdef double[:] z0Array = zPartArray0
+  cdef double[:] gammaArray = np.zeros((nPart))
+  cdef int parentID
+  cdef double tanGamma, gamma, s, z, z0
+  # get particle location
+  # first compute travel angle for each particle
+  for j in range(nPart):
+    # get parent Id in order to  get the first z position
+    parentID = parentIDArray[j]
+    # get z0
+    z0 = z0Array[parentID]
+    # compute tan of the travel angle
+    z = zArray[j]
+    s = sArray[j]
+    if s > 0:
+      tanGamma = (z0 - z) / s
+    else:
+      tanGamma = 0
+    # get the travel angle
+    gamma = math.degrees(math.arctan(tanGamma))
+    gammaArray[j] = gamma
+  particles['travelAngle'] = np.asarray(gamma)
+  return particles
 
 
 @cython.boundscheck(False)
