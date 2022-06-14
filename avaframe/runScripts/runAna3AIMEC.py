@@ -19,8 +19,8 @@ def runAna3AIMEC(avalancheDir=''):
 
     # ---------------------------------------------
     # Load avalanche directory from general configuration file or if available from inputs
+    cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
-        cfgMain = cfgUtils.getGeneralConfig()
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
@@ -46,12 +46,11 @@ def runAna3AIMEC(avalancheDir=''):
     # Setup input from computational module
     inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
     # define reference simulation
-    refSimHash, refSimName, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
+    refSimRowHash, refSimName, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
                                                                                       cfgSetup)
-    pathDict = {'refSimHash': refSimHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
-                'colorParameter': colorParameter}
+    pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
+                'colorParameter': colorParameter, 'resTypeList': resTypeList}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    pathDict['resTypeList'] = resTypeList
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])

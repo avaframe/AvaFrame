@@ -40,7 +40,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     pathDict: dict
         dictionary with info required e.g. reference sim name, comparison type, color variation info
     dirName: str
-        name of results directory (e.g. comModule, simName, ...)
+        name of desired results directory (avalancheDir/Outputs/dirName)
 
     Returns
     -------
@@ -89,7 +89,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
 def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     """ Define reference simulation used for aimec analysis.
 
-        if com1DFA is used and a varParList is provided, the simulations
+        if the configuration files are available and a varParList is provided, the simulations
         are ordered and the referenceSimValue is used to define the reference.
 
         otherwise, if a referenceSimName is provided, the reference is based on this name
@@ -109,7 +109,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 
         Returns
         --------
-        refSimHash: str
+        refSimRowHash: str
             hash of the simulation used as reference
         refSimName: str
             name of the simulation used as reference
@@ -129,15 +129,22 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     referenceSimValue = cfgSetup['referenceSimValue']
     referenceSimName = cfgSetup['referenceSimName']
     colorVariation = False
-    # if com1DFA append configuration to dataframe
-    if comModule == 'com1DFA':
+    # look for a configuration
+    try:
         # load dataFrame for all configurations
-        configurationDF = cfgUtils.createConfigurationInfo(avaDir)
+        configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModule)
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
         inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
+        configFound = True
+    except NotADirectoryError:
+        if cfgSetup['varParList'] != '':
+            message = 'No configuration directory found. This is needed for sorting simulation according to %s' % cfgSetup['varParList']
+            raise NotADirectoryError(message)
+        else:
+            configFound = False
 
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
-    if comModule == 'com1DFA' and cfgSetup['varParList'] != '':
+    if configFound and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
         varParList = cfgSetup['varParList'].split('|')
         # order simulations
@@ -146,17 +153,17 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         if referenceSimValue != '':
             # if a referenceSimValue is provided, find the corresponding simulation
             # get the value of the first parameter used for ordering (this will be usefull for colorcoding in plots)
-            refSimHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
+            refSimRowHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
 
         elif cfgSetup['referenceSimName'] != '':
             # else if a referenceSimName is provided, find the corresponding simulation - set
             # simulation with referenceSimName in name as referene simulation
-            refSimHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
+            refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
         else:
             # if no referenceSimValue is provided, we assume the first simulation after reordering is the reference
             # reference simulation
-            refSimHash = inputsDF.index[0]
-            refSimName = inputsDF.loc[refSimHash, 'simName']
+            refSimRowHash = inputsDF.index[0]
+            refSimName = inputsDF.loc[refSimRowHash, 'simName']
             log.info(('Reference simulation is the first simulation after reordering according to %s in ascending order = %s and corresponds to simulation %s')
                      % (varParList, cfgSetup.getboolean('ascendingOrder'), refSimName))
         colorVariation = True
@@ -164,18 +171,18 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     elif referenceSimName != '':
         # else if a referenceSimName is provided, find the corresponding simulation - set
         # simulation with referenceSimName in name as referene simulation
-        refSimHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
+        refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
 
     else:
         # if no ordering is done, no referenceSimValue nor referenceSimName are given, take the first simulation
         # as reference
-        refSimHash = inputsDF.index[0]
-        refSimName = inputsDF.loc[refSimHash, 'simName']
+        refSimRowHash = inputsDF.index[0]
+        refSimName = inputsDF.loc[refSimRowHash, 'simName']
         message = ('No information on how to define the reference was provided, taking simulation %s as reference.'
                    % refSimName)
         log.warning(message)
 
-    return refSimHash, refSimName, inputsDF, colorVariation
+    return refSimRowHash, refSimName, inputsDF, colorVariation
 
 
 def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
@@ -192,7 +199,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
 
     Returns
     -------
-    refSimHash : index
+    refSimRowHash : index
         hash index of THE reference simulation
     refSimName : str
         name of THE reference simulation
@@ -215,15 +222,15 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
             indexRef = sortingParameter.index(typeCP(referenceSimValue))
             valRef = sortingParameter[indexRef]
         # there might be multiple simulations matching the referenceSimValue, we take the first one
-        refSimHash = inputsDF[inputsDF[varParList[0]] == valRef].index
-        refSimHash, refSimName = checkMultipleSimFound(refSimHash, inputsDF)
+        refSimRowHash = inputsDF[inputsDF[varParList[0]] == valRef].index
+        refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF)
         log.info(('Reference simulation is based on %s = %s - closest value found is: %s and corresponds to simulation %s')
                  % (varParList[0], referenceSimValue, str(valRef), refSimName))
     except ValueError:
         message = 'Did not find any simulation matching %s = %s.' % (varParList[0], referenceSimValue)
         log.error(message)
         raise ValueError(message)
-    return refSimHash, refSimName
+    return refSimRowHash, refSimName
 
 
 def defineRefOnSimName(referenceSimName, inputsDF):
@@ -240,49 +247,49 @@ def defineRefOnSimName(referenceSimName, inputsDF):
 
     Returns
     -------
-    refSimHash : index
+    refSimRowHash : index
         hash index of THE reference simulation
     refSimName : str
         name of THE reference simulation
     """
     try:
-        refSimHash = inputsDF.query('simName.str.contains(\'%s\')' % referenceSimName).index
+        refSimRowHash = inputsDF.query('simName.str.contains(\'%s\')' % referenceSimName).index
     except IndexError:
         message = ('Found no simulation matching the provided referenceSimName = %s.'
                    % referenceSimName)
         log.error(message)
         raise IndexError(message)
-    refSimHash, refSimName = checkMultipleSimFound(refSimHash, inputsDF)
+    refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF)
     log.info('Reference simulation is based on provided simName: %s and corresponds to simulation %s'
              % (referenceSimName, refSimName))
-    return refSimHash, refSimName
+    return refSimRowHash, refSimName
 
 
-def checkMultipleSimFound(refSimHash, inputsDF):
+def checkMultipleSimFound(refSimRowHash, inputsDF):
     """ Check if more than one file can be chosen as reference
 
     Log warning if it is the case
 
     Parameters
     ----------
-    refSimHash : index
+    refSimRowHash : index
         hash indexes of reference simulations
     inputsDF: dataFrame
         simulation dataFrame
 
     Returns
     -------
-    refSimHash : index
+    refSimRowHash : index
         hash index of THE reference simulation
     refSimName : str
         name of THE reference simulation
     """
-    if len(refSimHash) > 1:
+    if len(refSimRowHash) > 1:
         message = 'Found multiple simulations matching the referenceSimName criterion, taking the first one as reference'
         log.warning(message)
-    refSimHash = refSimHash[0]
-    refSimName = inputsDF.loc[refSimHash, 'simName']
-    return refSimHash, refSimName
+    refSimRowHash = refSimRowHash[0]
+    refSimName = inputsDF.loc[refSimRowHash, 'simName']
+    return refSimRowHash, refSimName
 
 
 def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
@@ -302,21 +309,30 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
     -------
     pathDict : dict
     """
-    # check that the resType used to compute the runout is available for all simulations
-    isThereANan = inputsDF[cfgSetup['resType']].isnull().values.any()
+    # check that the runoutResType used to compute the runout is available for all simulations
+    isThereANan = inputsDF[cfgSetup['runoutResType']].isnull().values.any()
     try:
         assert ~isThereANan
     except AssertionError:
-        message = '%s result type should be available for all simulations to analyse.' % cfgSetup['resType']
+        message = '%s result type should be available for all simulations to analyze.' % cfgSetup['runoutResType']
         log.error(message)
         raise FileNotFoundError(message)
-    # only analyze a resTypes that are available for the ref
-    refSimHash = pathDict['refSimHash']
-    resTypeList = []
-    for resType in pathDict['resTypeList']:
-        if isinstance(inputsDF.loc[refSimHash, resType], pathlib.PurePath):
-            resTypeList.append(resType)
-    pathDict['resTypeList'] = resTypeList
+    # check resTypes
+    if cfgSetup['resTypes'] != '':
+        # required res types
+        resTypes = cfgSetup['resTypes'].split('|')
+        resTypes.append(cfgSetup['runoutResType'])
+        resTypes = set(resTypes)
+        match = resTypes & set(pathDict['resTypeList'])
+        diff = list(resTypes.difference(match))
+        if diff != []:
+            message = '%s result type should be available for all simulations to analyze.' % diff
+            log.error(message)
+            raise FileNotFoundError(message)
+        else:
+            pathDict['resTypeList'] = resTypes
+    log.info('Analyzing %s results types. Runout based on %s result type' %
+             (pathDict['resTypeList'], cfgSetup['runoutResType']))
     return pathDict
 
 
@@ -371,7 +387,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
         regarding domain transformation (domain width w, and new cellsize,
-        startOfRunoutAreaAngle or interpolation method, resType and
+        startOfRunoutAreaAngle or interpolation method and
         referenceFile to get header info)
 
     Returns
@@ -729,16 +745,16 @@ def assignData(fnames, rasterTransfo, interpMethod):
     return avalData
 
 
-def analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=None):
-    """ Analyse Mass data
+def analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=None):
+    """ analyze Mass data
 
     Parameters
     ----------
     fnameMass: str
-        path to mass data to analyse
-    simHash: str
+        path to mass data to analyze
+    simRowHash: str
         simulation hash
-    refSimHash: str
+    refSimRowHash: str
         reference simulation hash
     resAnalysisDF: dataFrame
         results from Aimec Analysis to update with mass info
@@ -773,32 +789,32 @@ def analyzeMass(fnameMass, simHash, refSimHash, resAnalysisDF, time=None):
     log.debug('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
     # analyze mass
     releasedMass, entrainedMass, finalMass, grIndex, grGrad, entMassFlow, totalMass, time = readWrite(fnameMass, time)
-    resAnalysisDF.loc[simHash, 'relMass'] = releasedMass
-    resAnalysisDF.loc[simHash, 'finalMass'] = finalMass
-    resAnalysisDF.loc[simHash, 'entMass'] = entrainedMass
-    resAnalysisDF.loc[simHash, 'growthIndex'] = grIndex
-    resAnalysisDF.loc[simHash, 'growthGrad'] = grGrad
+    resAnalysisDF.loc[simRowHash, 'relMass'] = releasedMass
+    resAnalysisDF.loc[simRowHash, 'finalMass'] = finalMass
+    resAnalysisDF.loc[simRowHash, 'entMass'] = entrainedMass
+    resAnalysisDF.loc[simRowHash, 'growthIndex'] = grIndex
+    resAnalysisDF.loc[simRowHash, 'growthGrad'] = grGrad
 
-    releasedMassRef = resAnalysisDF.loc[refSimHash, 'relMass']
-    finalMassRef = resAnalysisDF.loc[refSimHash, 'finalMass']
+    releasedMassRef = resAnalysisDF.loc[refSimRowHash, 'relMass']
+    finalMassRef = resAnalysisDF.loc[refSimRowHash, 'finalMass']
     relativMassDiff = (finalMass-finalMassRef)/finalMassRef*100
     if not (releasedMass == releasedMassRef):
         log.warning('Release masses differ between simulations!')
-    log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[resAnalysisDF.loc[simHash, 'simName'], grIndex, grGrad]))
-    resAnalysisDF.loc[simHash, 'relativMassDiff'] = relativMassDiff
+    log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[resAnalysisDF.loc[simRowHash, 'simName'], grIndex, grGrad]))
+    resAnalysisDF.loc[simRowHash, 'relativMassDiff'] = relativMassDiff
 
-    if simHash == refSimHash:
+    if simRowHash == refSimRowHash:
         resAnalysisDF['entMassFlowArray'] = np.nan
         resAnalysisDF['entMassFlowArray'] = resAnalysisDF['entMassFlowArray'].astype(object)
         resAnalysisDF['totalMassArray'] = np.nan
         resAnalysisDF['totalMassArray'] = resAnalysisDF['totalMassArray'].astype(object)
 
-    resAnalysisDF.at[simHash, 'entMassFlowArray'] = entMassFlow
-    resAnalysisDF.at[simHash, 'totalMassArray'] = totalMass
+    resAnalysisDF.at[simRowHash, 'entMassFlowArray'] = entMassFlow
+    resAnalysisDF.at[simRowHash, 'totalMassArray'] = totalMass
     return resAnalysisDF, time
 
 
-def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, simHash):
+def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, simRowHash):
     """ Compute runout based on peak field results
 
     Parameters
@@ -815,7 +831,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
             mean of the peak result in each cross section
     transformedRasters: dict
         dict with transformed dem and peak results
-    simHash: str
+    simRowHash: str
         simulation ID
 
     Returns
@@ -861,12 +877,12 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     gridx = rasterTransfo['gridx']
     gridy = rasterTransfo['gridy']
 
-    resType = cfgSetup['resType']
+    runoutResType = cfgSetup['runoutResType']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
     transformedDEMRasters = transformedRasters['newRasterDEM']
-    PResRasters = transformedRasters['newRaster' + resType.upper()]
-    PResCrossMax = resAnalysisDF.loc[simHash, resType + 'CrossMax']
-    PResCrossMean = resAnalysisDF.loc[simHash, resType + 'CrossMean']
+    PResRasters = transformedRasters['newRaster' + runoutResType.upper()]
+    PResCrossMax = resAnalysisDF.loc[simRowHash, runoutResType + 'CrossMax']
+    PResCrossMean = resAnalysisDF.loc[simRowHash, runoutResType + 'CrossMean']
 
     log.debug('Computing runout')
     lindex = np.nonzero(PResCrossMax > thresholdValue)[0]
@@ -886,29 +902,29 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpperm = 0
         cLowerm = 0
-    resAnalysisDF.loc[simHash, 'sRunout'] = scoord[cLower]
+    resAnalysisDF.loc[simRowHash, 'sRunout'] = scoord[cLower]
     index = np.nanargmax(PResRasters[cLower, :])
-    resAnalysisDF.loc[simHash, 'lRunout'] = lcoord[index]
-    resAnalysisDF.loc[simHash, 'xRunout'] = gridx[cLower, index]
-    resAnalysisDF.loc[simHash, 'yRunout'] = gridy[cLower, index]
-    resAnalysisDF.loc[simHash, 'sMeanRunout'] = scoord[cLowerm]
-    resAnalysisDF.loc[simHash, 'xMeanRunout'] = x[cLowerm]
-    resAnalysisDF.loc[simHash, 'yMeanRunout'] = y[cLowerm]
-    resAnalysisDF.loc[simHash, 'elevRel'] = transformedDEMRasters[cUpper, n]
-    resAnalysisDF.loc[simHash, 'deltaH'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
+    resAnalysisDF.loc[simRowHash, 'lRunout'] = lcoord[index]
+    resAnalysisDF.loc[simRowHash, 'xRunout'] = gridx[cLower, index]
+    resAnalysisDF.loc[simRowHash, 'yRunout'] = gridy[cLower, index]
+    resAnalysisDF.loc[simRowHash, 'sMeanRunout'] = scoord[cLowerm]
+    resAnalysisDF.loc[simRowHash, 'xMeanRunout'] = x[cLowerm]
+    resAnalysisDF.loc[simRowHash, 'yMeanRunout'] = y[cLowerm]
+    resAnalysisDF.loc[simRowHash, 'elevRel'] = transformedDEMRasters[cUpper, n]
+    resAnalysisDF.loc[simRowHash, 'deltaH'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
 
     return resAnalysisDF
 
 
-def analyzeField(simHash, rasterTransfo, transformedRaster, dataType, resAnalysisDF):
-    """ Analyse transformed field
+def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnalysisDF):
+    """ analyze transformed field
 
-    Analyse transformed raster: compute the Max and Mean values in each cross section
+    analyze transformed raster: compute the Max and Mean values in each cross section
     as well as the overall maximum
 
     Parameters
     ----------
-    simHash: str
+    simRowHash: str
         simulation name
     rasterTransfo: dict
         transformation information
@@ -938,16 +954,16 @@ def analyzeField(simHash, rasterTransfo, transformedRaster, dataType, resAnalysi
 
     # Max Mean in each Cross-Section for each field
     maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(transformedRaster, rasterArea)
-    log.debug('{: <10} {:<10.4f}'.format(*[simHash, maxaCrossMax]))
+    log.debug('{: <10} {:<10.4f}'.format(*[simRowHash, maxaCrossMax]))
 
-    resAnalysisDF.loc[simHash, 'max' + dataType + 'CrossMax'] = maxaCrossMax
-    resAnalysisDF.at[simHash, dataType + 'CrossMax'] = aCrossMax
-    resAnalysisDF.at[simHash, dataType + 'CrossMean'] = aCrossMean
+    resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMax'] = maxaCrossMax
+    resAnalysisDF.at[simRowHash, dataType + 'CrossMax'] = aCrossMax
+    resAnalysisDF.at[simRowHash, dataType + 'CrossMean'] = aCrossMean
 
     return resAnalysisDF
 
 
-def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pathDict):
+def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -958,7 +974,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pat
         transformation information
     resAnalysisDF: dataFrame
         dataFrame containing Aimec results to update
-    simHash: str
+    simRowHash: str
         simulation Hash
     newRasters: dict
         dict with tranformed raster for reference and curent simulation
@@ -981,28 +997,28 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pat
             TN: float
                 ref = False sim2 = False
     """
-    resType = cfgSetup['resType']
-    refSimHash = pathDict['refSimHash']
+    runoutResType = cfgSetup['runoutResType']
+    refSimRowHash = pathDict['refSimRowHash']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
     contourLevels = fU.splitIniValueToArraySteps(cfgSetup['contourLevels'])
-    simName = resAnalysisDF.loc[simHash, 'simName']
+    simName = resAnalysisDF.loc[simRowHash, 'simName']
     # rasterinfo
     nStart = indStartOfRunout
     # inputs for plot
     inputs = {}
-    inputs['runoutLength'] = resAnalysisDF.loc[refSimHash, 'sRunout']
-    inputs['refData'] = newRasters['newRefRaster' + resType.upper()]
+    inputs['runoutLength'] = resAnalysisDF.loc[refSimRowHash, 'sRunout']
+    inputs['refData'] = newRasters['newRefRaster' + runoutResType.upper()]
     inputs['nStart'] = nStart
-    inputs['resType'] = resType
+    inputs['runoutResType'] = runoutResType
 
     thresholdArray = contourLevels
     thresholdArray = np.append(thresholdArray, thresholdValue)
     inputs['thresholdArray'] = thresholdArray
     inputs['diffLim'] = cfgSetup.getfloat('diffLim')
 
-    rasterdata = newRasters['newRaster' + resType.upper()]
+    rasterdata = newRasters['newRaster' + runoutResType.upper()]
 
     # take first simulation as reference
     refMask = copy.deepcopy(inputs['refData'])
@@ -1037,12 +1053,12 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pat
                   *[simName, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
     if tp + fp == 0:
         log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
-                    (simName, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
+                    (simName, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['runoutResType']]))
 
-    resAnalysisDF.loc[simHash, 'TP'] = tp
-    resAnalysisDF.loc[simHash, 'TN'] = tn
-    resAnalysisDF.loc[simHash, 'FP'] = fp
-    resAnalysisDF.loc[simHash, 'FN'] = fn
+    resAnalysisDF.loc[simRowHash, 'TP'] = tp
+    resAnalysisDF.loc[simRowHash, 'TN'] = tn
+    resAnalysisDF.loc[simRowHash, 'FP'] = fp
+    resAnalysisDF.loc[simRowHash, 'FN'] = fn
     # inputs for plot
     inputs['compData'] = rasterdata
     # masked data for the dataThreshold given in the ini file
@@ -1051,7 +1067,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simHash, newRasters, cfgSetup, pat
     inputs['simName'] = simName
 
     compPlotPath = None
-    if simHash != refSimHash:
+    if simRowHash != refSimRowHash:
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
 

@@ -46,7 +46,7 @@ def test_analyzeArea(tmp_path):
     pathResult = tmp_path / 'data'
     pathDict['pathResult'] = pathResult
     pathDict['dirName'] = 'testAIMEC'
-    pathDict['refSimHash'] = 0
+    pathDict['refSimRowHash'] = 0
     pathDict['refSimName'] = 'refTestAimecTopo'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['contCmap'] = True
@@ -90,7 +90,7 @@ def test_analyzeArea(tmp_path):
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
-        if index != pathDict['refSimHash']:
+        if index != pathDict['refSimRowHash']:
             inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
                                                                              newRasters, timeMass, index)
     print(inputsDF['sRunout'])
@@ -153,7 +153,7 @@ def test_makeDomainTransfo(tmp_path):
     pathName = profileLayer[0].stem
     pathDict['pathName'] = pathName
     pathDict['dirName'] = 'com1DFA'
-    pathDict['refSimHash'] = 0
+    pathDict['refSimRowHash'] = 0
     pathDict['refSimName'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
@@ -166,8 +166,8 @@ def test_makeDomainTransfo(tmp_path):
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
 
-    refSimHash = pathDict['refSimHash']
-    refResultSource = inputsDF.loc[refSimHash, cfgSetup['resType']]
+    refSimRowHash = pathDict['refSimRowHash']
+    refResultSource = inputsDF.loc[refSimRowHash, cfgSetup['resType']]
     refRaster = IOf.readRaster(refResultSource)
     refHeader = refRaster['header']
     rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
@@ -189,11 +189,11 @@ def test_makeDomainTransfo(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                     newRasters, timeMass, refSimHash)
+                                                                     newRasters, timeMass, refSimRowHash)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
-        if index != pathDict['refSimHash']:
+        if index != pathDict['refSimRowHash']:
             resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
                                                                              newRasters, timeMass, index)
 
@@ -247,7 +247,7 @@ def test_mainAIMEC(tmp_path):
     pathName = profileLayer[0].stem
     pathDict['pathName'] = pathName
     pathDict['dirName'] = 'com1DFA'
-    pathDict['refSimHash'] = 0
+    pathDict['refSimRowHash'] = 0
     pathDict['refSimName'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
