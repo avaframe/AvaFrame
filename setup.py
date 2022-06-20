@@ -81,8 +81,8 @@ extensions = [Extension("avaframe.com1DFA.DFAfunctionsCython",
 if use_cython:
     from Cython.Build import cythonize
     extensions = cythonize(extensions,
-                          compiler_directives={'linetrace': True},
-                          language_level=3)
+                           compiler_directives={'linetrace': True},
+                           language_level=3)
 
 setup(
     # Project info

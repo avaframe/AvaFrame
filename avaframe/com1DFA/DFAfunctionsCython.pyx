@@ -1,3 +1,5 @@
+#!python
+#cython: boundscheck=False, wraparound=False, cdivision=True
 """
     function related to SPH calculations in com1DFA
     to build: go to repository containing this file and run:
@@ -11,8 +13,6 @@ import math
 import numpy as np
 cimport numpy as np
 from libc cimport math as math
-# from libc.math cimport log as ln
-cimport cython
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -24,9 +24,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+
 def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, double csz=1, double xllc=0, double yllc=0):
     """ Interpolate from unstructured points to grid
 
@@ -103,9 +101,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 
     return Z1
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+
 def computeForceC(cfg, particles, fields, dem, int frictType):
   """ compute forces acting on the particles (without the SPH component)
 
@@ -366,9 +362,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   return particles, force, fields
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
                                               double areaPart, double uMag,
                                               double tau, double entEroEnergy,
@@ -416,9 +409,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
   return dm, areaEntrPart
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
                              double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
@@ -457,9 +447,6 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
   return cRecResPart
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cdef (double, double, double) addArtificialViscosity(double m, double h, double dt, double rho,
                                                      double ux, double uy, double uz, double subgridMixingFactor,
                                                      int Lx0, int Ly0, double w0, double w1, double w2, double w3,
@@ -536,9 +523,6 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
   return ux, uy, uz
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   """ update particle position using euler forward scheme
 
@@ -842,9 +826,6 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   return particles
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef (double, double, double, double) account4FrictionForce(double ux, double uy,
                                                             double uz, double m,
                                                             double dt, double forceFrict,
@@ -914,9 +895,6 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
   return uxNew, uyNew, uzNew, dtStop
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
   """ update fields and particles flow thickness
 
@@ -1074,12 +1052,11 @@ def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
   return particles, fields
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef double computePressure(double v, double rho):
   """Compute pressure"""
-  return rho * v * v
+  cdef double p
+  p = rho * v * v
+  return p
 
 
 def computeTravelAngleC(cfgGen, particles, zPartArray0):
@@ -1098,13 +1075,13 @@ def computeTravelAngleC(cfgGen, particles, zPartArray0):
   particles : dict
       particles dictionary updated with the travel angle
   """
-  cdef int[:] parentIDArray = particles['parentID']
+  cdef long[:] parentIDArray = particles['parentID']
   cdef int nPart = particles['nPart']
   cdef double[:] zArray = particles['z']
   cdef double[:] sArray = particles['s']
   cdef double[:] z0Array = zPartArray0
   cdef double[:] gammaArray = np.zeros((nPart))
-  cdef int parentID
+  cdef int parentID, j
   cdef double tanGamma, gamma, s, z, z0
   # get particle location
   # first compute travel angle for each particle
@@ -1121,15 +1098,12 @@ def computeTravelAngleC(cfgGen, particles, zPartArray0):
     else:
       tanGamma = 0
     # get the travel angle
-    gamma = math.degrees(math.arctan(tanGamma))
+    gamma = math.atan(tanGamma) * 180 / math.pi
     gammaArray[j] = gamma
   particles['travelAngle'] = np.asarray(gamma)
   return particles
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def getNeighborsC(particles, dem):
     """ Locate particles on DEM and neighbour search grid
 
@@ -1251,9 +1225,7 @@ def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
 
   return particles, force
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-@cython.cdivision(True)
+
 def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:, :] nxArray, double[:, :] nyArray,
                  double[:, :] nzArray, gradient, int SPHoption):
   """ compute lateral forces acting on the particles (SPH component)
@@ -1344,7 +1316,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   # artificial viscosity parameters
   cdef double dwdrr, area
   cdef double pikl, flux
-  cdef double hk, hl, ck, cl, lambdakl
+  cdef double mk, ml, hk, hl, ck, cl, lambdakl
 
   # loop on particles
   for k in range(N):
@@ -1567,7 +1539,6 @@ cpdef double norm2(double x, double y, double z):
   return x*x + y*y + z*z
 
 
-@cython.cdivision(True)
 cpdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
@@ -1603,7 +1574,6 @@ cpdef (double, double, double) normalize(double x, double y, double z):
   return x, y, z
 
 
-@cython.cdivision(True)
 cpdef (double, double, double) crossProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
@@ -1619,8 +1589,6 @@ cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, dou
   return ux*vx + uy*vy + uz*vz
 
 
-
-@cython.cdivision(True)
 cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   """ Locate point on grid.
 
@@ -1662,7 +1630,6 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   return iCell
 
 
-@cython.cdivision(True)
 cpdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
   """ Get weight for interpolation from grid to single point location
 
@@ -1725,9 +1692,7 @@ cpdef (double, double, double, double) getWeights(double x, double y, int iCell,
 
   return w[0], w[1], w[2], w[3]
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-@cython.cdivision(True)
+
 cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x, double y, int ncols, int nrows, double csz, int interpOption):
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
@@ -1738,8 +1703,6 @@ cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x
   return Lx0, Ly0, iCell, w[0], w[1], w[2], w[3]
 
 
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption,
@@ -1840,8 +1803,6 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
   return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
 
 
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef (double, double, int, int, int, double, double, double, double) samosProjectionIteratrive(
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption, int reprojectionIterations):
@@ -1942,8 +1903,6 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
 
 
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
   double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double xOld, double yOld, double zOld, double csz, int ncols, int nrows, int interpOption,
@@ -2062,9 +2021,6 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
   return xNew, yNew, zTemp, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int ncols,
                  int nrows, int interpOption):
   """ Interpolate vector field from grid to points
@@ -2086,7 +2042,6 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
   return v
 
 
-@cython.boundscheck(False)
 cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
   """ Interpolate vector field from grid to single point location
 
@@ -2120,7 +2075,6 @@ cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double
   return v
 
 
-@cython.boundscheck(False)
 cpdef (double, double, double) getVector(
   int Lx0, int Ly0, double w0, double w1, double w2, double w3,
   double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
@@ -2169,7 +2123,7 @@ cpdef (double, double, double) getVector(
                    Nz[Ly0+1, Lx0+1]*w3)
   return nx, ny, nz
 
-@cython.cdivision(True)
+
 cpdef double SamosATfric(double rho, double tau0, double Rs0, double mu, double kappa, double B, double R,
                          double v, double p, double h):
   cdef double Rs = rho * v * v / (p + 0.001)
@@ -2181,9 +2135,6 @@ cpdef double SamosATfric(double rho, double tau0, double Rs0, double mu, double 
   return tau
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def computeIniMovement(cfg, particles, dem, dT, fields):
   """ add artifical viscosity effect on velocity
 
