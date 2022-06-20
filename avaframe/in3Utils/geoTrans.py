@@ -871,7 +871,7 @@ def cartToSpherical(X, Y, Z):
 
 
 def rotateRaster(rasterDict, theta, deg=True):
-    """ rotate counter-clockwise a raster arround (0, 0) with theta angle
+    """ rotate clockwise a raster arround (0, 0) with theta angle
 
         Parameters
         -----------
@@ -903,8 +903,8 @@ def rotateRaster(rasterDict, theta, deg=True):
     X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
 
     # rotate Grid
-    xTheta = np.cos(theta) * X - np.sin(theta) * Y
-    yTheta = np.sin(theta) * X + np.cos(theta) * Y
+    xTheta = np.cos(theta) * X + np.sin(theta) * Y
+    yTheta = -np.sin(theta) * X + np.cos(theta) * Y
 
     # project data on this new grid
     rotatedZ, _ = projectOnGrid(xTheta, yTheta, rasterDict['rasterData'], csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')

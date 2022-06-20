@@ -18,6 +18,7 @@ from itertools import product
 from avaframe.version import getVersion
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.geoTrans as geoTrans
+from avaframe.in3Utils import initializeProject as iP
 import avaframe.com1DFA.timeDiscretizations as tD
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -2308,4 +2309,27 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
         else:
             log.info('Using the secondary release area file: %s' % inputSimFiles['secondaryReleaseFile'])
 
-    return standardCfg, simTypeList
+    return simTypeList
+
+
+def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=''):
+    if runDFAModule:
+        # Run dense flow with coulomb friction
+        iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
+        # here is an example with com1DFA but another DFA computational module can be used
+        # as long as it produces some FV, FT and FM results
+        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=cfgFile)
+    else:
+        # read simulation dem
+        demOri = gI.readDEM(avalancheDir)
+        dem = com1DFA.setDEMoriginToZero(demOri)
+        dem['originalHeader'] = demOri['header'].copy()
+        # load DFA results (use runCom1DFA to generate these results for example)
+        # here is an example with com1DFA but another DFA computational module can be used
+        # as long as it produces some particles or FV, FT and FM results
+        # create dataFrame of results (read DFA data)
+        simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
+
+    dataDF, resTypeList = fU.makeSimFromResDF(avalancheDir, 'com1DFA', inputDir='', simName='')
+    simDF = simDF.reset_index().merge(dataDF, on='simName').set_index('index')
+    return dem, simDF, resTypeList
