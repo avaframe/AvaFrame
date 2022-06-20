@@ -1096,6 +1096,8 @@ def initializeFields(cfg, dem, particles):
     fields['TA'] = TA
 
     particles = DFAfunC.getNeighborsC(particles, dem)
+    computeTA = True
+    computeKE = True
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
 
     return particles, fields
@@ -1543,7 +1545,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         # ToDo: we could skip the update field and directly do the split merge. This means we would use the old h
         startTime = time.time()
         log.debug('update Fields C')
-        particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+        computeTA = True
+        computeKE = True
+        particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
         tcpuField = time.time() - startTime
         tCPU['timeField'] = tCPU['timeField'] + tcpuField
         # Then split merge particles
@@ -1566,8 +1570,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
     log.debug('update Fields C')
     # particles = computeTravelAngle(cfg, particles, zPartArray0)
-    particles = DFAfunC.computeTravelAngleC(cfg, particles, zPartArray0)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    computeTA = True
+    computeKE = True
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
