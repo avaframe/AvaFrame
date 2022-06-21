@@ -798,8 +798,6 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     # create required parameters for searching
     thFlag = key + 'FromShp'
     thId = key + 'Id'
-    thThickness = key + 'Thickness'
-    thPercentVariation = key + 'PercentVariation'
 
     # append identifier if simulation matches thickness filter criteria
     simDF['toBeAdded'] = False
@@ -815,8 +813,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
             thNames = [(key + id) for id in thIdList]
             allThNames = allThNames + thNames
             log.warning('Filtering applied for %s - multiple features found as %s was read \
-                from shp file - only simulations where all features match %s will be added' %
-                (key, key, value))
+                from shp file - only simulations where all features match %s will be added' % (key, key, value))
         else:
             # if thickness read from ini add thickness parameter name
             thIdList = [0]
@@ -831,10 +828,10 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     allThNames = list(set(allThNames))
     if notIn:
         # return all sims that do not match filter criteria
-        simDF = simDF[simDF['toBeAdded'] == False]
+        simDF = simDF[simDF['toBeAdded']==False]
     else:
         # return all sims that do match filter criteria
-        simDF = simDF[simDF['toBeAdded'] == True]
+        simDF = simDF[simDF['toBeAdded']==True]
 
     log.info('simulations for %s found with values: %s' % (key, simDF[allThNames]))
 

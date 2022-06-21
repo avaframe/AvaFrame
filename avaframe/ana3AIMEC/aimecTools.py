@@ -110,7 +110,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         Returns
         --------
         refSimRowHash: str
-            hash of the simulation used as reference
+            dataframe hash (not simHash) of the simulation used as reference
         refSimName: str
             name of the simulation used as reference
         inputsDF:dataFrame
@@ -121,7 +121,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             True if a color variation should be applied in the plots
     """
     inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
-    if inputDir.is_dir() is False:
+    if not inputDir.is_dir():
         message = 'Input directory %s does not exist - check anaMod' % inputDir
         log.error(message)
         raise FileNotFoundError(message)
@@ -138,7 +138,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         configFound = True
     except NotADirectoryError:
         if cfgSetup['varParList'] != '':
-            message = 'No configuration directory found. This is needed for sorting simulation according to %s' % cfgSetup['varParList']
+            message = ('No configuration directory found. This is needed for sorting simulation according to '
+                       '%s' % cfgSetup['varParList'])
             raise NotADirectoryError(message)
         else:
             configFound = False
@@ -164,7 +165,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             # reference simulation
             refSimRowHash = inputsDF.index[0]
             refSimName = inputsDF.loc[refSimRowHash, 'simName']
-            log.info(('Reference simulation is the first simulation after reordering according to %s in ascending order = %s and corresponds to simulation %s')
+            log.info(('Reference simulation is the first simulation after reordering according to %s in ascending order'
+                      '= %s and corresponds to simulation %s')
                      % (varParList, cfgSetup.getboolean('ascendingOrder'), refSimName))
         colorVariation = True
 
@@ -188,19 +190,21 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
     """ Search for reference based on configuration parameter and value
 
-    Log error if no simulation found
+     Raise an error if no simulation is found
 
     Parameters
     ----------
-    referenceSimName : str
-        string to look for in the simulations name
+    referenceSimValue : str
+        reference value to use to define the reference
+    varParList: list
+        list of parameter used for ordering the simulations
     inputsDF: dataFrame
         simulation dataFrame
 
     Returns
     -------
     refSimRowHash : index
-        hash index of THE reference simulation
+        dataframe hash (not simHash) of the simulation used as reference
     refSimName : str
         name of THE reference simulation
     """
@@ -236,7 +240,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
 def defineRefOnSimName(referenceSimName, inputsDF):
     """ Search for reference based on simulation name
 
-    Log error if no simulation found
+    Raise an error if no simulation is found
 
     Parameters
     ----------
@@ -248,7 +252,7 @@ def defineRefOnSimName(referenceSimName, inputsDF):
     Returns
     -------
     refSimRowHash : index
-        hash index of THE reference simulation
+        dataframe hash (not simHash) of the simulation used as reference
     refSimName : str
         name of THE reference simulation
     """
@@ -273,19 +277,20 @@ def checkMultipleSimFound(refSimRowHash, inputsDF):
     Parameters
     ----------
     refSimRowHash : index
-        hash indexes of reference simulations
+        dataframe hash (not simHash) of the simulation used as reference
     inputsDF: dataFrame
         simulation dataFrame
 
     Returns
     -------
     refSimRowHash : index
-        hash index of THE reference simulation
+        dataframe hash (not simHash) of the simulation used as reference
     refSimName : str
         name of THE reference simulation
     """
     if len(refSimRowHash) > 1:
-        message = 'Found multiple simulations matching the referenceSimName criterion, taking the first one as reference'
+        message = ('Found multiple simulations matching the referenceSimName criterion,'
+                   'taking the first one as reference')
         log.warning(message)
     refSimRowHash = refSimRowHash[0]
     refSimName = inputsDF.loc[refSimRowHash, 'simName']
@@ -304,10 +309,12 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
     inputsDF: dataFrame
         simulation dataFrame
     pathDict: dict
+        aimec input dictionary
 
     Returns
     -------
     pathDict : dict
+        aimec input dictionary updated with the resTypeList (list of result file types to take into account)
     """
     # check that the runoutResType used to compute the runout is available for all simulations
     isThereANan = inputsDF[cfgSetup['runoutResType']].isnull().values.any()
@@ -317,7 +324,8 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
         message = '%s result type should be available for all simulations to analyze.' % cfgSetup['runoutResType']
         log.error(message)
         raise FileNotFoundError(message)
-    # check resTypes
+    # check that the resTypes asked for in the ini file are available for all simulations
+    # if not, raise an error
     if cfgSetup['resTypes'] != '':
         # required res types
         resTypes = cfgSetup['resTypes'].split('|')
@@ -704,7 +712,8 @@ def transform(data, name, rasterTransfo, interpMethod):
     iib = len(Points['x'])
     Points, ioob = geoTrans.projectOnRaster(data, Points, interp=interpMethod)
     newData = Points['z'].reshape(n, m)
-    log.debug('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name, iib-ioob, ioob))
+    log.debug('Data-file: %s - %d raster values transferred - %d out of original raster'
+              'bounds!' % (name, iib-ioob, ioob))
 
     return newData
 
@@ -753,9 +762,9 @@ def analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=None):
     fnameMass: str
         path to mass data to analyze
     simRowHash: str
-        simulation hash
+        simulation dataframe hash
     refSimRowHash: str
-        reference simulation hash
+        dataframe hash (not simHash) of the simulation used as reference
     resAnalysisDF: dataFrame
         results from Aimec Analysis to update with mass info
     time: None or 1D numpy array
@@ -832,7 +841,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     transformedRasters: dict
         dict with transformed dem and peak results
     simRowHash: str
-        simulation ID
+        simulation dataframe hash
 
     Returns
     -------
@@ -925,7 +934,7 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     Parameters
     ----------
     simRowHash: str
-        simulation name
+        simulation dataframe hash
     rasterTransfo: dict
         transformation information
     transformedRaster: 2D numpy array
@@ -964,7 +973,7 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
 
 
 def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict):
-    """Compare results to reference.
+    """Compare area results to reference.
 
     Compute True positive, False negative... areas.
 
@@ -975,7 +984,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
     resAnalysisDF: dataFrame
         dataFrame containing Aimec results to update
     simRowHash: str
-        simulation Hash
+        simulation dataframe hash
     newRasters: dict
         dict with tranformed raster for reference and curent simulation
     cfgSetup: confiParser

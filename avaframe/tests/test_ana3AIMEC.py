@@ -54,7 +54,6 @@ def test_analyzeArea(tmp_path):
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
@@ -85,14 +84,13 @@ def test_analyzeArea(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                     newRasters, timeMass, 0)
+                                                                newRasters, timeMass, 0)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
-        simName = inputsDFrow['simName']
         if index != pathDict['refSimRowHash']:
             inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                             newRasters, timeMass, index)
+                                                                        newRasters, timeMass, index)
     print(inputsDF['sRunout'])
     print(inputsDF['xRunout'])
     print(inputsDF['yRunout'])
@@ -189,7 +187,7 @@ def test_makeDomainTransfo(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                     newRasters, timeMass, refSimRowHash)
+                                                                newRasters, timeMass, refSimRowHash)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():

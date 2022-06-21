@@ -18,13 +18,16 @@ log = logging.getLogger(__name__)
 def getMBInfo(avaDir, inputsDF, comMod, simName=''):
     """ Get mass balance info for com1DFA module
 
+    The mass info should be located in the mass_XXX.txt file (XXX being the sumulation hash)
+    The file should contain 3 columns (time, current, entrained) and the coresponding values for each time step
+
     Parameters
     -----------
     avaDir: str
         path to avalanche directory
     inputsDF: dataFrame
         simulation dataframe
-    comModule: str
+    comMod: str
         computational module name that has been used to produce simulation results
     simName: str
         part or full name of the simulation name (if '', look at all sims)
@@ -173,6 +176,8 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
 
 def getMassInfoInDF(avaDir, inputsDF, comMod, sim='', testName=''):
     """ Fetch mass information depending on the computational module
+    So far, a com1DFA style mass file is expected, either located in the benchmark directory
+    or in the Outputs/comMod one
 
     Parameters
     -----------
@@ -199,7 +204,8 @@ def getMassInfoInDF(avaDir, inputsDF, comMod, sim='', testName=''):
         try:
             inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
         except FileNotFoundError as e:
-            message = 'Make sure the mass files are available and that a method is implemented to analyze mass for module %s' % (comMod)
+            message = ('Make sure the mass files are available and that a method is implemented to analyze mass'
+                       'for module %s' % (comMod))
             log.error(message)
             message = str(e) + '. ' + message
             raise FileNotFoundError(message)
