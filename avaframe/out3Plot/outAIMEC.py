@@ -249,7 +249,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
 
     # get colormap for raster plot
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
-        maskedArray[indYMin:, indXMin:indXMax]), np.nanmax(maskedArray[indYMin:, indXMin:indXMax]), continuous=pU.contCmap)
+        maskedArray[indYMin:, indXMin:indXMax]), np.nanmax(maskedArray[indYMin:, indXMin:indXMax]),
+        continuous=pU.contCmap)
     cmap.set_bad('w', 1.)
 
     # Get colors for scatter
@@ -262,7 +263,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             values = inputsDF[varParList[0]].to_list()
     else:
         values = None
-    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
+                                                                                                unitSC)
 
     ############################################
     # Figure: Analysis runout
@@ -627,8 +629,8 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             ax3 = plt.subplot2grid((3, 3), (2, 1))
             ax4 = plt.subplot2grid((3, 3), (2, 2))
             # there is data to compare in the run out area
-            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
-                                             '%s diff CDF (95%% and 99%% centiles)' % name])
+            _ = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
+                                      '%s diff CDF (95%% and 99%% centiles)' % name])
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
         pU.addColorBar(im3, ax2, None, unit, title=name, extend='both')
@@ -776,7 +778,8 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
             values = inputsDF[varParList[0]].to_list()
     else:
         values = None
-    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
+                                                                                                unitSC)
     #######################################
     # Final result diagram - z_profile+data
 

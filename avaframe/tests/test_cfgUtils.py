@@ -21,7 +21,7 @@ def test_getModuleConfig():
     assert cfg['GOODSECTION1']['goodKey1'] == '1'
     assert cfg['GOODSECTION1']['goodKey2'] == 'False'
     hasKey = cfg.has_option('GOODSECTION1', 'badKey1')
-    assert hasKey == False
+    assert hasKey is False
 
     # test reading a different file
     filename = avalancheDir / 'local_test_logUtilsCfg.ini'
@@ -208,7 +208,7 @@ def test_filterSims(tmp_path):
         testRel2 = True
 
     assert testRel
-    assert testRel2 == False
+    assert testRel2 is False
     assert len(simNames) == 1
 
     parametersDict = {'relTh': 1.}

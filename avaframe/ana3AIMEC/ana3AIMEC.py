@@ -58,6 +58,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # read reference file and raster and config
     refResultSource = inputsDF.loc[refSimRowHash, cfgSetup['runoutResType']]
     refRaster = IOf.readRaster(refResultSource)
+    refRasterData = refRaster['rasterData']
     refHeader = refRaster['header']
 
     log.debug('Data-file %s analysed and domain transformation done' % demSource)
@@ -73,14 +74,12 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
     log.debug("Assigning dem data to deskewed raster")
-    # CHECK: why is this required again? is refRaster changed?
-    raster = IOf.readRaster(refResultSource)
     newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
 
     inputData = {}
     inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = raster['rasterData']
-    inputData['xyHeader'] = raster['header']
+    inputData['xyRaster'] = refRasterData
+    inputData['xyHeader'] = refHeader
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
     # postprocess reference...
@@ -112,7 +111,8 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
     plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF.loc[pathDict['simRowHash'], 'areasPlot']}
     if cfgFlags.getboolean('flagMass'):
-        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['simRowHash'], 'massPlotName']}
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['simRowHash'],
+                                                                                 'massPlotName']}
 
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
@@ -144,7 +144,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     timeMass: 1D numpy array
         time array for mass analysis (if flagMass=True, otherwise None)
     simRowHash: str
-        hash of the curent simulation to analyze
+        dataframe hash of the current simulation to analyze
 
     Returns
     -------
@@ -244,14 +244,34 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict)
+    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
+                                                 pathDict)
 
     resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
     return resAnalysisDF, newRasters, timeMass
 
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
-    """ gather aimec results and append them to report dictionary """
+    """ Gather aimec results and append them to report the dictionary
+
+    Parameters
+    ----------
+    resAnalysisDF : dataFrame
+        dataframe with aimec analysis results
+    reportD: dict
+        report dictionary to be updated
+    benchD: dict
+        benchmark dictionary to be updated
+    pathDict : dict
+        dictionary with refSimRowHash
+
+    Returns
+    --------
+    reportD: dict
+        report dictionary updated with the 'Aimec analysis' section
+    benchD: dict
+        benchmark dictionary updated with the 'Aimec analysis' section
+    """
     refSimRowHash = pathDict['refSimRowHash']
     resAnalysisDFRef = resAnalysisDF.loc[refSimRowHash].squeeze().to_dict()
     resAnalysisDFComp = resAnalysisDF.loc[resAnalysisDF.index != refSimRowHash].squeeze().to_dict()

@@ -37,7 +37,6 @@ from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
-import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
 #######################################
 # Set flags here
@@ -74,7 +73,7 @@ def setRelThIni(avaDir, modName, cfgInitial, cfgFile=''):
 
     # check if thickness settings in ini file are valid
     for thType in ['entTh', 'relTh', 'secondaryRelTh']:
-        thicknessSettingsCorrect = dP.checkThicknessSettings(cfgInitial, thType)
+        _ = dP.checkThicknessSettings(cfgInitial, thType)
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
     inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial)
@@ -117,7 +116,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
     # Create output and work directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
-        cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
+                                               cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # create one cfg files for each releaseScenarios and fetch input data
     inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart, cfgFile=cfgFile)
@@ -183,8 +182,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
                 log.info('Run simulation: %s' % cuSim)
 
                 # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
-                dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg, avalancheDir,
-                        cuSim, inputSimFiles, outDir, simHash=simHash)
+                dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg,
+                    avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
                 simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
 
                 # TODO check if inputSimFiles not changed within sim
@@ -346,13 +345,8 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     badName : boolean
         changed release name
     """
-
-    # load info
-    entResInfo = inputSimLines['entResInfo']
-
     # Set release areas and release thickness
     relName = rel.stem
-    simName = relName
     badName = False
     if '_' in relName:
         badName = True
@@ -405,8 +399,6 @@ def setThickness(cfg, lineTh, typeTh):
 
     # create thickness flag name
     thFlag = typeTh + 'FromShp'
-    thVariation = typeTh + 'PercentVariation'
-
     # set thickness source info
     if cfg['GENERAL'].getboolean(thFlag):
         lineTh['thicknessSource'] = ['shp file'] * len(lineTh['thickness'])
@@ -415,7 +407,6 @@ def setThickness(cfg, lineTh, typeTh):
 
     # set thickness value info read from ini file that has been updated from shp or ini previously
     for count, id in enumerate(lineTh['id']):
-        sectionTh = 'GENERAL'
         if cfg['GENERAL'].getboolean(thFlag):
             thName = typeTh + id
             lineTh['thickness'][count] = cfg['GENERAL'].getfloat(thName)
@@ -748,13 +739,13 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
         releaseLineReal = inputSimLines['releaseLine']
         # check if release features overlap between features
         prepareArea(releaseLineReal, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
-        buffer1 = (cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') *
-                   cfg['GENERAL'].getfloat('bufferZoneFactor'))
+        buffer1 = (cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor')
+                   * cfg['GENERAL'].getfloat('bufferZoneFactor'))
         if len(relThField) == 0:
             # if no release thickness field or function - set release according to shapefile or ini file
             # this is a list of release rasters that we want to combine
             releaseLineReal = prepareArea(releaseLineReal, dem, buffer1, thList=releaseLineReal['thickness'],
-                combine=True, checkOverlap=False)
+                                          combine=True, checkOverlap=False)
         else:
             # if relTh provided - set release thickness with field or function
             releaseLineReal = prepareArea(releaseLineReal, dem, buffer1, combine=True, checkOverlap=False)
@@ -768,7 +759,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
         releaseLine = prepareArea(releaseLine, dem, np.sqrt(2), thList=releaseLine['thickness'],
-            combine=True, checkOverlap=False)
+                                  combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
@@ -789,7 +780,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     releaseLine['header'] = dem['originalHeader']
     inputSimLines['releaseLine']['header'] = dem['originalHeader']
     particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines,
-        logName=logName, relThField=relThField)
+                                    logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfgGen, dem, particles)
 
     # perform initialisation step for redistributing particles
@@ -798,7 +789,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
         log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' %
-            (np.sum(particles['m']), particles['nPart']))
+                 (np.sum(particles['m']), particles['nPart']))
         log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
@@ -836,7 +827,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     if secondaryReleaseInfo['flagSecondaryRelease'] == 'Yes':
         for secRelRaster in secondaryReleaseInfo['rasterList']:
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
-                crop=True)
+                                                   crop=True)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
@@ -1283,7 +1274,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash)
         # fetch initial time step too
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t,
-            demRT['header'], fields, mtiInfo)
+                                                        demRT['header'], fields, mtiInfo)
 
     # add initial time step to Tsave array
     Tsave = [0]
@@ -1321,7 +1312,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         # determine avalanche front and flow characteristics in respective coodrinate system
         if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram') and t >= dtRangeTime[0]:
             mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demRT['header'],
-                fields, mtiInfo)
+                                                            fields, mtiInfo)
 
         # make sure the array is not empty
         if t >= dtSave[0]:
@@ -1366,9 +1357,9 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     log.info(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
     log.info(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
-    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] +
-                                               tCPU['timePos'] + tCPU['timeNeigh'] +
-                                               tCPU['timeField']) / nIter)))
+    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH']
+                                               + tCPU['timePos'] + tCPU['timeNeigh']
+                                               + tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
 
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
@@ -1396,7 +1387,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         lastTimeStep = t - dt
         # first append final time step
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, lastTimeStep, demRT['header'],
-            fields, mtiInfo)
+                                                        fields, mtiInfo)
         dtAna.exportData(mtiInfo, cfgRangeTime, 'com1DFA')
 
     return Tsave, particlesList, fieldsList, infoDict
@@ -1806,7 +1797,7 @@ def checkParticlesInRelease(particles, line, radius):
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
         particles = particleTools.removePart(particles, Mask, nRemove,
-            'because they are not within the release polygon')
+                                             ' because they are not within the release polygon')
         log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
@@ -2192,8 +2183,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
                        'entThRangeVariation', 'secondaryRelThRangeVariation']
             if parameter in keyList:
                 # set thickness value according to percent variation info
-                cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim,
-                    cfgSim['GENERAL']['simTypeActual'], row)
+                cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim, cfgSim['GENERAL']['simTypeActual'], row)
             else:
                 cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
 
@@ -2218,8 +2208,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-        simName = (relNameSim + '_' + simHash + '_' + row._asdict()['simTypeList'] + '_' +
-                   cfgSim['GENERAL']['modelType'])
+        simName = (relNameSim + '_' + simHash + '_' + row._asdict()['simTypeList'] + '_'
+                   + cfgSim['GENERAL']['modelType'])
         # check if simulation exists. If yes do not append it
         if simName not in simNameOld:
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
