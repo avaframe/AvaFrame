@@ -134,7 +134,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         # load dataFrame for all configurations
         configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModule)
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
-        inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
+        inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
         configFound = True
     except NotADirectoryError:
         if cfgSetup['varParList'] != '':
@@ -209,6 +209,9 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         name of THE reference simulation
     """
     sortingParameter = inputsDF[varParList[0]].to_list()
+    # if a simulation has an empty field for varParList[0], we get a nan
+    # if the type of the varParList[0] is string but the first element is the nan,
+    # then we think that the type of varParList[0] is float...
     # get the type ot this parameter
     typeCP = type(sortingParameter[0])
     try:
@@ -220,7 +223,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         elif typeCP in [float, int]:
             colorValues = np.asarray(sortingParameter)
             # look for closest value
-            indexRef = (np.abs(colorValues - typeCP(referenceSimValue))).argmin()
+            indexRef = np.nanargmin(np.abs(colorValues - typeCP(referenceSimValue)))
             valRef = colorValues[indexRef]
         else:
             indexRef = sortingParameter.index(typeCP(referenceSimValue))
