@@ -122,42 +122,26 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef='', simNameComp=''):
 
     # Load all infos on reference simulations
     refData, resTypeRefList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
-    # get the reference simulation and configuration
-    try:
-        refSimRowHash, refSimName, refData, colorParameter = aimecTools.fetchReferenceSimNo(avaDir, refData, comModules[0],
-                                                                                            cfgSetup, True)
-    except NotADirectoryError:
-        # no configuration found
-        if len(refData.index) == 0:
-            message = ('Found multiple simulations matching the reference criterion,'
-                       'there should be only one reference')
-            log.error(message)
-            raise ValueError(message)
-        elif len(refData.index) > 1:
-            message = ('Found multiple simulations matching the reference criterion,'
-                       'there should be only one reference')
-            log.error(message)
-            raise ValueError(message)
-        else:
-            colorParameter = False
-            refSimRowHash = refData.index[0]
-            refSimName = refData.loc[refSimRowHash, 'simName']
+    if len(refData.index) == 0:
+        message = ('Found no simulation matching the reference criterion, '
+                   'there should be one')
+        log.error(message)
+        raise ValueError(message)
+    elif len(refData.index) > 1:
+        message = ('Found multiple simulations matching the reference criterion,'
+                   'there should be only one reference')
+        log.error(message)
+        raise ValueError(message)
+    else:
+        colorParameter = False
+        refSimRowHash = refData.index[0]
+        refSimName = refData.loc[refSimRowHash, 'simName']
     # all went fine through the fetchReferenceSimNo function meaning that we found the reference and it is unique
     # now we make sure we only keep this reference in the dataframe
     refData = refData.loc[refSimRowHash, :].to_frame().transpose()
 
     # Load all infos on comparison module simulations
     compData, resTypeCompList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
-    # get comparison simulation configuration if it exists
-    try:
-        # load dataFrame for all configurations
-        configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModules[1])
-        # Merge compData with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
-        compData = compData.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
-    except NotADirectoryError:
-        # no configuration found
-        if colorParameter:
-            colorParameter = False
 
     resTypeList = list(set(resTypeRefList).intersection(resTypeCompList))
     pathDict['resTypeList'] = resTypeList
@@ -172,14 +156,14 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef='', simNameComp=''):
         message = ('Did not find the comparison simulation in %s with name %s'
                    % (inputDirRef, simNameRef))
         log.error(message)
-        raise FileNotFoundError(message)
+        raise ValueError(message)
     # all simulations should have a different name in the comparison dataframe
     compDataCount = (compData['simName'].value_counts() > 1).to_list()
     # this should never actually happen
     if True in compDataCount:
         message = ('Multiple rows of the comparison dataFrame have the same simulation name. This is not allowed')
         log.error(message)
-        raise FileNotFoundError(message)
+        raise ValueError(message)
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
         compData = getMassInfoInDF(avaDir, compData, comModules[1], sim='', testName=cfgSetup['testName'])

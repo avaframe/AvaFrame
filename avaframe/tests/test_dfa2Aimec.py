@@ -52,7 +52,8 @@ def test_dfaComp2Aimec(tmp_path):
     pathDataRef = testPath / 'Outputs' / 'com1DFARef' / 'peakFiles'
     pathDataComp = testPath / 'Outputs' / 'com1DFAComp' / 'peakFiles'
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': '', 'referenceSimValue': '',
+                         'referenceSimName': '', 'varParList': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
     inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HX', 'release1HX')
 
@@ -79,9 +80,10 @@ def test_dfaComp2Aimec(tmp_path):
     diff = set(inputDF['massBal'].to_list()) ^ set(pathDTest['massBal'])
     assert not diff
 
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(ValueError) as e:
         assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release2HX', 'release1HX')
-    assert ('Did not find the reference simulation in %s with name %s' % (pathDataRef, 'release2HX')) in str(e.value)
+        print(e)
+    assert ('Found no simulation matching the reference criterion, there should be one') in str(e.value)
 
 
 def test_getRefMB():
@@ -147,7 +149,8 @@ def test_dfaBench2Aimec():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': ''}
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFARef|com1DFAComp', 'testName': '', 'referenceSimValue': '',
+                         'referenceSimName': '', 'varParList': ''}
     cfg['FLAGS'] = {'flagMass': 'True'}
     dirPath = pathlib.Path(__file__).parents[0]
     avaTestName = 'avaHelixChannelPytest'
