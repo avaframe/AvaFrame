@@ -8,6 +8,8 @@ import pathlib
 import pandas as pd
 
 # local modules
+from avaframe.in3Utils import cfgUtils
+from avaframe.ana3AIMEC import aimecTools
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -90,7 +92,7 @@ def getRefMB(testName, inputsDF, simName):
     return inputsDF
 
 
-def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
+def dfaBench2Aimec(avaDir, cfg, simNameRef='', simNameComp=''):
     """ Exports the required data from the computational modules to be used by Aimec
 
         Parameters
@@ -120,32 +122,51 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
 
     # Load all infos on reference simulations
     refData, resTypeRefList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
+    # get the reference simulation and configuration
+    try:
+        refSimRowHash, refSimName, refData, colorParameter = aimecTools.fetchReferenceSimNo(avaDir, refData, comModules[0],
+                                                                                            cfgSetup, True)
+    except NotADirectoryError:
+        # no configuration found
+        if len(refData.index) == 0:
+            message = ('Found multiple simulations matching the reference criterion,'
+                       'there should be only one reference')
+            log.error(message)
+            raise ValueError(message)
+        elif len(refData.index) > 1:
+            message = ('Found multiple simulations matching the reference criterion,'
+                       'there should be only one reference')
+            log.error(message)
+            raise ValueError(message)
+        else:
+            colorParameter = False
+            refSimRowHash = refData.index[0]
+            refSimName = refData.loc[refSimRowHash, 'simName']
+    # all went fine through the fetchReferenceSimNo function meaning that we found the reference and it is unique
+    # now we make sure we only keep this reference in the dataframe
+    refData = refData.loc[refSimRowHash, :].to_frame().transpose()
 
     # Load all infos on comparison module simulations
     compData, resTypeCompList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
+    # get comparison simulation configuration if it exists
+    try:
+        # load dataFrame for all configurations
+        configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModules[1])
+        # Merge compData with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
+        compData = compData.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
+    except NotADirectoryError:
+        # no configuration found
+        if colorParameter:
+            colorParameter = False
 
     resTypeList = list(set(resTypeRefList).intersection(resTypeCompList))
     pathDict['resTypeList'] = resTypeList
-    # check outputs
-    # one and only one simulation is allowed in the reference dataFrame, this will be the reference for aimec comparison
-    if len(refData.index) == 0:
-        message = ('Did not find the reference simulation in %s with name %s'
-                   % (inputDirRef, simNameRef))
-        log.error(message)
-        raise FileNotFoundError(message)
-    elif len(refData.index) > 1:
-        message = ('Found more than one reference simulation in %s with name %s'
-                   % (inputDirRef, simNameRef))
-        log.error(message)
-        raise FileNotFoundError(message)
-    else:
-        refSimRowHash = refData.index[0]
-        refSimName = refData.loc[refSimRowHash, 'simName']
-        pathDict['refSimRowHash'] = refSimRowHash
-        pathDict['refSimName'] = refSimName
-        # if desired set path to mass log files
-        if cfg['FLAGS'].getboolean('flagMass'):
-            refData = getMassInfoInDF(avaDir, refData, comModules[0], sim=refSimName, testName=cfgSetup['testName'])
+    pathDict['colorParameter'] = colorParameter
+    pathDict['refSimRowHash'] = refSimRowHash
+    pathDict['refSimName'] = refSimName
+    # if desired set path to mass log files
+    if cfg['FLAGS'].getboolean('flagMass'):
+        refData = getMassInfoInDF(avaDir, refData, comModules[0], sim=refSimName, testName=cfgSetup['testName'])
     # at least one simulation is needed in the comparison dataFrame
     if len(compData.index) == 0:
         message = ('Did not find the comparison simulation in %s with name %s'
