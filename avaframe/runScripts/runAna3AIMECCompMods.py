@@ -23,8 +23,6 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # -----------Required settings-----------------
     # log file name; leave empty to use default runLog.log
     logName = 'runAna3AIMECCompMods'
-    simTypeList = ['']
-
     # ---------------------------------------------
     # Load avalanche directory from general configuration file or the one provided in inputs
     cfgMain = cfgUtils.getGeneralConfig()
@@ -48,27 +46,24 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # write configuration to file
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
-    for simType in simTypeList:
+    # Setup input from com1DFA
+    inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg)
 
-        # Setup input from com1DFA
-        inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg, simType, simType)
+    # Extract input file locations
+    cfgSetup = cfg['AIMECSETUP']
+    comModules = cfgSetup['comModules'].split('|')
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]))
 
-        # Extract input file locations
-        cfgSetup = cfg['AIMECSETUP']
-        comModules = cfgSetup['comModules'].split('|')
-        pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]
-                                                                               + '_' + simType))
+    startTime = time.time()
 
-        startTime = time.time()
+    log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
+             pathDict['demSource'], pathDict['profileLayer'])
+    # Run AIMEC postprocessing
+    rasterTransfo, resAnalysisDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
 
-        log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
-                 pathDict['demSource'], pathDict['profileLayer'])
-        # Run AIMEC postprocessing
-        rasterTransfo, resAnalysisDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+    endTime = time.time()
 
-        endTime = time.time()
-
-        log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
+    log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
 
 if __name__ == '__main__':
