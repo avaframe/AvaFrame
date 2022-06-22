@@ -86,7 +86,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     return pathDict
 
 
-def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
+def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     """ Define reference simulation used for aimec analysis.
 
         if the configuration files are available and a varParList is provided, the simulations
@@ -106,8 +106,6 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
             computational module used to produce the results to analyze
         cfgSetup: configParser object
             configuration for aimec - referenceSimValue, varParList used here
-        error: bool
-            if True raise an error if multiple simulations where found, otherwise a simple warning
 
         Returns
         --------
@@ -138,14 +136,13 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
         inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
         configFound = True
-    except NotADirectoryError:
+    except (NotADirectoryError, FileNotFoundError) as e:
         if cfgSetup['varParList'] != '':
             message = ('No configuration directory found. This is needed for sorting simulation according to '
                        '%s' % cfgSetup['varParList'])
-            raise NotADirectoryError(message)
+            raise e(message)
         else:
             configFound = False
-
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
     if configFound and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
@@ -157,20 +154,15 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
         if referenceSimValue != '':
             # if a referenceSimValue is provided, find the corresponding simulation
             # get the value of the first parameter used for ordering (this will be usefull for colorcoding in plots)
-            refSimRowHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF, error)
+            refSimRowHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
 
         elif cfgSetup['referenceSimName'] != '':
             # else if a referenceSimName is provided, find the corresponding simulation - set
             # simulation with referenceSimName in name as referene simulation
-            refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF, error)
+            refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
         else:
             # if no referenceSimValue is provided, we assume the first simulation after reordering is the reference
             # reference simulation
-            if error and len(inputsDF.index) > 1:
-                message = ('Found multiple simulations matching the reference criterion,'
-                           'there should be only one reference')
-                log.error(message)
-                raise ValueError(message)
             refSimRowHash = inputsDF.index[0]
             refSimName = inputsDF.loc[refSimRowHash, 'simName']
             log.info(('Reference simulation is the first simulation after reordering according to %s in ascending order'
@@ -180,7 +172,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
     elif referenceSimName != '':
         # else if a referenceSimName is provided, find the corresponding simulation - set
         # simulation with referenceSimName in name as referene simulation
-        refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF, error)
+        refSimRowHash, refSimName = defineRefOnSimName(referenceSimName, inputsDF)
 
     else:
         # if no ordering is done, no referenceSimValue nor referenceSimName are given, take the first simulation
@@ -194,7 +186,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup, error):
     return refSimRowHash, refSimName, inputsDF, colorVariation
 
 
-def defineRefOnSimValue(referenceSimValue, varParList, inputsDF, error):
+def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
     """ Search for reference based on configuration parameter and value
 
      Raise an error if no simulation is found
@@ -207,8 +199,6 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF, error):
         list of parameter used for ordering the simulations
     inputsDF: dataFrame
         simulation dataFrame
-    error: bool
-        if True raise an error if multiple simulations where found, otherwise a simple warning
 
     Returns
     -------
@@ -239,7 +229,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF, error):
             valRef = sortingParameter[indexRef]
         # there might be multiple simulations matching the referenceSimValue, we take the first one
         refSimRowHash = inputsDF[inputsDF[varParList[0]] == valRef].index
-        refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF, error=error)
+        refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF)
         log.info(('Reference simulation is based on %s = %s - closest value found is: %s and corresponds to simulation %s')
                  % (varParList[0], referenceSimValue, str(valRef), refSimName))
     except ValueError:
@@ -249,7 +239,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF, error):
     return refSimRowHash, refSimName
 
 
-def defineRefOnSimName(referenceSimName, inputsDF, error):
+def defineRefOnSimName(referenceSimName, inputsDF):
     """ Search for reference based on simulation name
 
     Raise an error if no simulation is found
@@ -274,7 +264,7 @@ def defineRefOnSimName(referenceSimName, inputsDF, error):
                    % referenceSimName)
         log.error(message)
         raise IndexError(message)
-    refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF, error=error)
+    refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF)
     log.info('Reference simulation is based on provided simName: %s and corresponds to simulation %s'
              % (referenceSimName, refSimName))
     return refSimRowHash, refSimName

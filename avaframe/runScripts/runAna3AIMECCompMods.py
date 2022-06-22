@@ -47,8 +47,17 @@ def runAna3AIMECCompMods(avalancheDir=''):
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
     # Setup input from com1DFA
-    inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg)
+    cfgSetup = cfg['AIMECSETUP']
+    comModules = cfgSetup['comModules'].split('|')
+    referenceSimName = cfgSetup['referenceSimName']
+    inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg, simNameRef=referenceSimName)
 
+    if referenceSimName != '':
+        log.info('Reference simulation is based on provided simName: \'%s\' and corresponds to simulation %s'
+                 % (referenceSimName, pathDict['refSimName']))
+    else:
+        log.info(('Reference simulation is the only simulation in the \'%s\' module folder')
+                 % (comModules[0]))
     # Extract input file locations
     cfgSetup = cfg['AIMECSETUP']
     comModules = cfgSetup['comModules'].split('|')
