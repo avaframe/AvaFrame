@@ -121,13 +121,13 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef='', simNameComp=''):
     # Load all infos on reference simulations
     refData, resTypeRefList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
     if len(refData.index) == 0:
-        message = ('Found no simulation matching the reference criterion, '
-                   'there should be one')
+        message = ('Found no simulation matching the reference criterion %s, '
+                   'there should be one' % simNameRef)
         log.error(message)
         raise ValueError(message)
     elif len(refData.index) > 1:
-        message = ('Found multiple simulations matching the reference criterion,'
-                   'there should be only one reference')
+        message = ('Found multiple simulations matching the reference criterion %s,'
+                   'there should be only one reference' % simNameRef)
         log.error(message)
         raise ValueError(message)
     else:
