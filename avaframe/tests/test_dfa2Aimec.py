@@ -83,7 +83,7 @@ def test_dfaComp2Aimec(tmp_path):
     with pytest.raises(ValueError) as e:
         assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release2HX', 'release1HX')
         print(e)
-    assert ('Found no simulation matching the reference criterion, there should be one') in str(e.value)
+    assert ('Found no simulation matching the reference criterion release2HX, there should be one') in str(e.value)
 
 
 def test_getRefMB():
