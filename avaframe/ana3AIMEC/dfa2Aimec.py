@@ -8,8 +8,6 @@ import pathlib
 import pandas as pd
 
 # local modules
-from avaframe.in3Utils import cfgUtils
-from avaframe.ana3AIMEC import aimecTools
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -20,7 +18,7 @@ log = logging.getLogger(__name__)
 def getMBInfo(avaDir, inputsDF, comMod, simName=''):
     """ Get mass balance info for com1DFA module
 
-    The mass info should be located in the mass_XXX.txt file (XXX being the sumulation hash)
+    The mass info should be located in the mass_XXX.txt file (XXX being the simulation name)
     The file should contain 3 columns (time, current, entrained) and the coresponding values for each time step
 
     Parameters

@@ -100,7 +100,7 @@ def test_orderSimFiles():
     assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
     varParList = 'releaseSenario'
-    message = ('Choose a valid parameters for sorting the simulations. \'releaseSenario\' is not valid.')
+    message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
     with pytest.raises(KeyError) as e:
         assert cfgUtils.orderSimulations(varParList, True, simDF)
     assert message in str(e.value)
@@ -121,7 +121,7 @@ def test_fetchAndOrderSimFiles():
     assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
     varParList = 'releaseSenario'
-    message = ('Choose a valid parameters for sorting the simulations. \'releaseSenario\' is not valid.')
+    message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
     with pytest.raises(KeyError) as e:
         simDF = cfgUtils.fetchAndOrderSimFiles(avaDir, 'inputDir', varParList, True, specDir='', resFiles=False)
     assert message in str(e.value)

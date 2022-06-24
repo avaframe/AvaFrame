@@ -121,7 +121,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
 
 def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash):
-    """ Apply domain transformation and analyse pressure, thickness and velocity data
+    """ Apply domain transformation and analyse result data (for example pressure, thickness, velocity...)
 
     Apply the domain tranformation to peak results
     Analyse them.
