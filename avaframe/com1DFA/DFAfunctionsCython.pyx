@@ -895,7 +895,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
   return uxNew, uyNew, uzNew, dtStop
 
 
-def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
+def updateFieldsC(cfg, particles, dem, fields):
   """ update fields and particles flow thickness
 
   Cython implementation
@@ -910,10 +910,6 @@ def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
      dictionary with dem information
  fields : dict
      fields dictionary
- computeTA : boolean
-     True if the Travel angle and peak travel angle should be computed
- computeKE : boolean
-     True if the peak kinetic energy should be computed
 
  Returns
  -------
@@ -941,11 +937,14 @@ def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
   cdef double[:] travelAngleArray = particles['travelAngle']
+  cdef bint computeTA = fields['computeTA']
+  cdef bint computeKE = fields['computeKE']
+  cdef bint computeP = fields['computeP']
   cdef double[:, :] PFV = fields['pfv']
   cdef double[:, :] PP = fields['ppr']
   cdef double[:, :] PFT = fields['pft']
   cdef double[:, :] PTA = fields['pta']
-  cdef double[:, :] PFE = fields['pfe']
+  cdef double[:, :] PKE = fields['pke']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
@@ -1008,11 +1007,12 @@ def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
         VYBilinear[j, i] = MomBilinearY[j, i]/m
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
-        PBilinear[j, i] = computePressure(VBilinear[j, i], rho)
+        if computeP:
+          PBilinear[j, i] = computePressure(VBilinear[j, i], rho)
+          if PBilinear[j, i] > PP[j, i]:
+            PP[j, i] = PBilinear[j, i]
         if VBilinear[j, i] > PFV[j, i]:
           PFV[j, i] = VBilinear[j, i]
-        if PBilinear[j, i] > PP[j, i]:
-          PP[j, i] = PBilinear[j, i]
         if FTBilinear[j, i] > PFT[j, i]:
           PFT[j, i] = FTBilinear[j, i]
         if computeTA:
@@ -1020,24 +1020,25 @@ def updateFieldsC(cfg, particles, dem, fields, bint computeTA, bint computeKE):
             PTA[j, i] = travelAngleField[j, i]
         if computeKE:
           kineticEnergy[j, i] = 0.5 * m * VBilinear[j, i] * VBilinear[j, i]
-          if kineticEnergy[j, i] > PFE[j, i]:
-            PFE[j, i] = kineticEnergy[j, i]
+          if kineticEnergy[j, i] > PKE[j, i]:
+            PKE[j, i] = kineticEnergy[j, i]
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
   fields['Vx'] = np.asarray(VXBilinear)
   fields['Vy'] = np.asarray(VYBilinear)
   fields['Vz'] = np.asarray(VZBilinear)
-  fields['P'] = np.asarray(PBilinear)
   fields['FT'] = np.asarray(FTBilinear)
   fields['pfv'] = np.asarray(PFV)
-  fields['ppr'] = np.asarray(PP)
   fields['pft'] = np.asarray(PFT)
+  if computeP:
+    fields['ppr'] = np.asarray(PP)
+    fields['P'] = np.asarray(PBilinear)
   if computeTA:
     fields['TA'] = np.asarray(travelAngleField)
     fields['pta'] = np.asarray(PTA)
   if computeKE:
-    fields['pfe'] = np.asarray(PFE)
+    fields['pke'] = np.asarray(PKE)
 
 
   for j in range(nPart):
@@ -1100,7 +1101,7 @@ def computeTravelAngleC(cfgGen, particles, zPartArray0):
     # get the travel angle
     gamma = math.atan(tanGamma) * 180 / math.pi
     gammaArray[j] = gamma
-  particles['travelAngle'] = np.asarray(gamma)
+  particles['travelAngle'] = np.asarray(gammaArray)
   return particles
 
 

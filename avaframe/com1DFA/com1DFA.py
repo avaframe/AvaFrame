@@ -781,7 +781,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     inputSimLines['releaseLine']['header'] = dem['originalHeader']
     particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines,
                                     logName=logName, relThField=relThField)
-    particles, fields = initializeFields(cfgGen, dem, particles)
+    particles, fields = initializeFields(cfg, dem, particles)
 
     # perform initialisation step for redistributing particles
     if cfg['GENERAL'].getboolean('iniStep'):
@@ -1072,29 +1072,57 @@ def initializeFields(cfg, dem, particles):
     fields : dict
         fields dictionary at initial time step
     """
+    # read config
+    cfgGen = cfg['GENERAL']
+    resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
+    # make sure to save all desiered resuts for first and last time step for
+    # the report
+    resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
+    # always add particles to first and last time step
+    resTypesLast = list(set(resTypes + resTypesReport))
     # read dem header
     header = dem['header']
     ncols = header['ncols']
     nrows = header['nrows']
     fields = {}
     fields['pfv'] = np.zeros((nrows, ncols))
-    fields['ppr'] = np.zeros((nrows, ncols))
     fields['pft'] = np.zeros((nrows, ncols))
-    fields['pta'] = np.zeros((nrows, ncols))
-    fields['pfe'] = np.zeros((nrows, ncols))
     fields['FV'] = np.zeros((nrows, ncols))
-    fields['P'] = np.zeros((nrows, ncols))
     fields['FT'] = np.zeros((nrows, ncols))
     fields['FM'] = np.zeros((nrows, ncols))
     fields['Vx'] = np.zeros((nrows, ncols))
     fields['Vy'] = np.zeros((nrows, ncols))
     fields['Vz'] = np.zeros((nrows, ncols))
-    fields['TA'] = np.zeros((nrows, ncols))
+    # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
+    # even if it is empty to run properly
+    if ('TA' in resTypesLast) or ('pta' in resTypesLast):
+        fields['pta'] = np.zeros((nrows, ncols))
+        fields['TA'] = np.zeros((nrows, ncols))
+        fields['computeTA'] = True
+        log.info('Computing Travel Angle')
+    else:
+        fields['pta'] = np.zeros((1, 1))
+        fields['TA'] = np.zeros((1, 1))
+        fields['computeTA'] = False
+    if ('pke' in resTypesLast):
+        fields['pke'] = np.zeros((nrows, ncols))
+        fields['computeKE'] = True
+        log.info('Computing Kinetik energy')
+    else:
+        fields['pke'] = np.zeros((1, 1))
+        fields['computeKE'] = False
+    if ('P' in resTypesLast) or ('ppr' in resTypesLast):
+        fields['P'] = np.zeros((nrows, ncols))
+        fields['ppr'] = np.zeros((nrows, ncols))
+        fields['computeP'] = True
+        log.info('Computing Pressure')
+    else:
+        fields['P'] = np.zeros((1, 1))
+        fields['ppr'] = np.zeros((1, 1))
+        fields['computeP'] = False
 
     particles = DFAfunC.getNeighborsC(particles, dem)
-    computeTA = True
-    computeKE = True
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
+    particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
 
     return particles, fields
 
@@ -1541,9 +1569,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         # ToDo: we could skip the update field and directly do the split merge. This means we would use the old h
         startTime = time.time()
         log.debug('update Fields C')
-        computeTA = True
-        computeKE = True
-        particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
+        particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
         tcpuField = time.time() - startTime
         tCPU['timeField'] = tCPU['timeField'] + tcpuField
         # Then split merge particles
@@ -1565,10 +1591,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     # update fields (compute grid values)
     startTime = time.time()
     log.debug('update Fields C')
-    # particles = computeTravelAngle(cfg, particles, zPartArray0)
-    computeTA = True
-    computeKE = True
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields, computeTA, computeKE)
+    if fields['computeTA']:
+        particles = DFAfunC.computeTravelAngleC(cfg, particles, zPartArray0)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
