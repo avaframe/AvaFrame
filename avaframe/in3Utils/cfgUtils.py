@@ -704,7 +704,8 @@ def orderSimulations(varParList, ascendingOrder, simDF):
         ascendingOrder: bool
             True if simulations shall be ordered in ascending order regarding varPar
         simDF: pandas dataFrame
-            dataFrame of simulation (fileName, ... and values for parameters in varParList)
+            dataFrame of simulations (one line per simultaion with fileName, ... and values for parameters in
+            varParList)
 
         Returns
         --------
@@ -719,7 +720,7 @@ def orderSimulations(varParList, ascendingOrder, simDF):
     try:
         simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
     except KeyError as e:
-        message = 'Choose a valid parameters for sorting the simulations. \'%s\' is not valid.' % e.args[0]
+        message = 'Choose a valid parameter for sorting the simulations. \'%s\' is not valid.' % e.args[0]
         log.error(message)
         raise KeyError(message)
     return varParList, simDF

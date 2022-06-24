@@ -198,7 +198,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
     varParList: list
         list of parameter used for ordering the simulations
     inputsDF: dataFrame
-        simulation dataFrame
+        simulation dataFrame (with configuration parameters includeds)
 
     Returns
     -------
@@ -208,9 +208,8 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         name of THE reference simulation
     """
     sortingParameter = inputsDF[varParList[0]].to_list()
-    # if a simulation has an empty field for varParList[0], we get a nan
-    # if the type of the varParList[0] is string but the first element is the nan,
-    # then we think that the type of varParList[0] is float...
+    # if a simulation has an empty field for varParList[0], we get a nan or empty string
+    # but the type of this no data should be the same as the other fields in the column
     # get the type ot this parameter
     typeCP = type(sortingParameter[0])
     try:
@@ -293,12 +292,12 @@ def checkMultipleSimFound(refSimRowHash, inputsDF, error=False):
     """
     if len(refSimRowHash) > 1:
         if not error:
-            message = ('Found multiple simulations matching the reference criterion, '
-                       'taking the first one as reference')
+            message = ('Found multiple simulations (%s) matching the reference criterion, '
+                       'taking the first one as reference' % len(refSimRowHash))
             log.warning(message)
         else:
-            message = ('Found multiple simulations matching the reference criterion, '
-                       'there should be only one reference')
+            message = ('Found multiple simulations (%s) matching the reference criterion, '
+                       'there should be only one reference' % len(refSimRowHash))
             log.error(message)
             raise NameError(message)
     refSimRowHash = refSimRowHash[0]
@@ -318,36 +317,35 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
     inputsDF: dataFrame
         simulation dataFrame
     pathDict: dict
-        aimec input dictionary
+        aimec input dictionary (path to inputs and refSimName and hash)
 
     Returns
     -------
     pathDict : dict
         aimec input dictionary updated with the resTypeList (list of result file types to take into account)
     """
-    # check that the runoutResType used to compute the runout is available for all simulations
-    isThereANan = inputsDF[cfgSetup['runoutResType']].isnull().values.any()
-    try:
-        assert ~isThereANan
-    except AssertionError:
-        message = '%s result type should be available for all simulations to analyze.' % cfgSetup['runoutResType']
-        log.error(message)
-        raise FileNotFoundError(message)
-    # check that the resTypes asked for in the ini file are available for all simulations
+    # check that the resTypes and runoutResType asked for in the ini file are available for all simulations
     # if not, raise an error
+    # what we have for all simulations
+    resTypeList = pathDict['resTypeList']
+    # what we need for all simulations
     if cfgSetup['resTypes'] != '':
         # required res types
-        resTypes = cfgSetup['resTypes'].split('|')
-        resTypes.append(cfgSetup['runoutResType'])
-        resTypes = set(resTypes)
-        match = resTypes & set(pathDict['resTypeList'])
-        diff = list(resTypes.difference(match))
-        if diff != []:
-            message = '%s result type should be available for all simulations to analyze.' % diff
-            log.error(message)
-            raise FileNotFoundError(message)
-        else:
-            pathDict['resTypeList'] = resTypes
+        resTypesWanted = cfgSetup['resTypes'].split('|')
+    else:
+        resTypesWanted = copy.deepcopy(pathDict['resTypeList'])
+    # add the runout res type to what we need
+    resTypesWanted.append(cfgSetup['runoutResType'])
+    resTypesWanted = set(resTypesWanted)
+    # check for differences
+    match = resTypesWanted & set(resTypeList)  # what is in both
+    diff = list(resTypesWanted.difference(match))  # what is in resTypesWanted but not in both
+    if diff != []:
+        message = '%s result type should be available for all simulations to analyze.' % diff
+        log.error(message)
+        raise FileNotFoundError(message)
+    else:
+        pathDict['resTypeList'] = resTypesWanted
     log.info('Analyzing %s results types. Runout based on %s result type' %
              (pathDict['resTypeList'], cfgSetup['runoutResType']))
     return pathDict
