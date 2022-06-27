@@ -957,7 +957,6 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     return(X, Y)
 
 
-
 def setCoordinateGrid(xllc, yllc, csz, z):
     """get a Coordinate Grid for plotting"""
     nrows, ncols = z.shape

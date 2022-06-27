@@ -2117,6 +2117,8 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             resField = fieldsList[countTime][resType]
             if resType == 'ppr':
                 resField = resField * 0.001
+            if resType == 'pke':
+                resField = resField * 0.001
             dataName = (logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory
             outDirPeak = outDir / 'peakFiles' / 'timeSteps'

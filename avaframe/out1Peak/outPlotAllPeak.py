@@ -104,8 +104,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             # Figure  shows the result parameter data
             fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
             # choose colormap
-            cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
+            cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
             cmap.set_bad(alpha=0)
+            cmap.set_under(alpha=0)
             rowsMinPlot = rowsMin*cellSize
             rowsMaxPlot = (rowsMax+1)*cellSize
             colsMinPlot = colsMin*cellSize
@@ -126,9 +127,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             ax.set_ylabel('y [m]')
             pU.putAvaNameOnPlot(ax, avaDir)
 
-            fig.savefig(plotName)
             if cfgFLAGS.getboolean('showPlot'):
                 plt.show()
+            fig.savefig(plotName)
             plotPath = pathlib.Path.cwd() / plotName
             plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
             plt.close(fig)
