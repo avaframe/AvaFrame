@@ -1592,7 +1592,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
     log.debug('update Fields C')
     if fields['computeTA']:
-        particles = DFAfunC.computeTravelAngleC(cfg, particles, zPartArray0)
+        particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
@@ -1600,13 +1600,11 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     return particles, fields, zPartArray0, tCPU
 
 
-def computeTravelAngle(cfgGen, particles, zPartArray0):
+def computeTravelAngle(particles, zPartArray0):
     """Compute the travel angle associated to the particles
 
     Parameters
     ----------
-    cfgGen: configparser
-        configuration for DFA simulation
     particles : dict
         particles dictionary at t
     zPartArray0 : dict
