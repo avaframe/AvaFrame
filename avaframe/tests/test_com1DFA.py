@@ -8,7 +8,6 @@ import logging
 import pytest
 import configparser
 import pathlib
-import os
 import copy
 import pickle
 import pandas as pd
@@ -1023,7 +1022,9 @@ def test_initializeParticles():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
+    cfg['GENERAL'] = {'resType': 'ppr|pft|pfv', 'rho': '200.', 'gravAcc': '9.81',
+                      'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
                       'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
     demHeader = {}
@@ -1061,7 +1062,7 @@ def test_initializeParticles():
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1093,7 +1094,7 @@ def test_initializeParticles():
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDIR'
     cfg['GENERAL'].update({'massPerPart': '60.'})
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1129,7 +1130,7 @@ def test_initializeParticles():
     cfg['GENERAL'].update({'aPPK': '-1'})
     cfg['GENERAL'].update({'relTh': '1.'})
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1326,20 +1327,23 @@ def test_initializeFields():
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
                  'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.]), 'travelAngle': np.asarray([0., 0., 0.])}
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
+    cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2', 'resType': 'ppr|pft|pfv'}
 
     dem['originalHeader'] = dem['header']
     dem['header']['xllcenter'] = 0.0
     dem['header']['yllcenter'] = 0.0
 
     # call function to be tested
-    particles, fields = com1DFA.initializeFields(
-        cfg['GENERAL'], dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
 
     print('particles', particles)
     print('fields', fields)
 
-    assert len(fields) == 12
+    assert len(fields) == 16
+    assert ~fields['computeTA']
+    assert ~fields['computeKE']
+    assert fields['computeP']
     assert np.sum(fields['pfv']) == 0.0
     assert np.sum(fields['pta']) == 0.0
     assert np.sum(fields['ppr']) == 0.0
@@ -1352,6 +1356,15 @@ def test_initializeFields():
     assert np.sum(fields['pft']) != 0.0
     assert np.sum(fields['FT']) != 0.0
     assert np.sum(fields['FM']) != 0.0
+
+    cfg['REPORT'] = {'plotFields': 'pft|pfv'}
+    cfg['GENERAL'] = {'resType': 'pke|pta|pft|pfv', 'rho': '200.', 'interpOption': '2'}
+    # call function to be tested
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    assert len(fields) == 16
+    assert fields['computeTA']
+    assert fields['computeKE']
+    assert ~fields['computeP']
 
 
 def test_prepareVarSimDict(caplog):
@@ -1394,7 +1407,7 @@ def test_prepareVarSimDict(caplog):
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
 
     simHash = cfgUtils.cfgHash(testCfg)
-    simName1 = 'relTest_' + simHash + '_entres_dfa' 
+    simName1 = 'relTest_' + simHash + '_entres_dfa'
     testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relTest',
                            'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
@@ -1427,7 +1440,7 @@ def test_prepareVarSimDict(caplog):
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     simHash2 = cfgUtils.cfgHash(testCfg2)
-    simName2 = 'relTest_extended_AF_'+ simHash2 +'_entres_dfa' 
+    simName2 = 'relTest_extended_AF_'+ simHash2 +'_entres_dfa'
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
 
@@ -1452,8 +1465,9 @@ def test_initializeSimulation():
 
     # setup required input
     cfg = configparser.ConfigParser()
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     cfg['GENERAL'] = {'methodMeshNormal': '1', 'thresholdPointInPoly': '0.001', 'useRelThFromIni': 'False',
-                      'relTh': '1.0', 'useEntThFromIni': 'False',
+                      'resType': 'ppr|pft|pfv', 'relTh': '1.0', 'useEntThFromIni': 'False',
                       'sphKernelRadius': '1.', 'meshCellSizeThreshold': '0.0001',
                       'meshCellSize': '1.', 'simTypeActual': 'ent', 'rhoEnt': '100.', 'entTh': '0.3',
                       'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
@@ -1548,6 +1562,26 @@ def test_initializeSimulation():
     assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
 
 
+def test_computeTravelAngle():
+
+    # first compute travel angle for each particle
+    # get parent Id in order to  get the first z position
+    parentID = np.array([0, 1, 2, 0])
+    nPart = 5
+    # get z0
+    zPartArray0 = np.array([10, 9, 8])
+    s = np.array([10, 10, 0, 10])
+    z = np.array([0, 0, 0, 1])
+    particles = {'nPart': nPart, 'parentID': parentID, 's': s, 'z': z}
+    particles = com1DFA.computeTravelAngle(particles, zPartArray0)
+    print(particles['travelAngle'])
+    gamma = particles['travelAngle']
+    assert gamma[2] == 0
+    assert gamma[0] == 45
+    assert gamma[1] == pytest.approx(41.9872125, rel=1e-6)
+    assert gamma[3] == pytest.approx(41.9872125, rel=1e-6)
+
+
 def test_runCom1DFA(tmp_path, caplog):
     """ Check that runCom1DFA produces the good outputs
     """
@@ -1607,7 +1641,6 @@ def test_runCom1DFA(tmp_path, caplog):
     assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][0]))).is_file()
     assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][1]))).is_file()
     assert (outDir / 'configurationFiles' / ('allConfigurations.csv')).is_file()
-
 
     with caplog.at_level(logging.WARNING):
         dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(

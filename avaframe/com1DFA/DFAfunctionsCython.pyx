@@ -1060,12 +1060,10 @@ cpdef double computePressure(double v, double rho):
   return p
 
 
-def computeTravelAngleC(cfgGen, particles, zPartArray0):
+def computeTravelAngleC(particles, zPartArray0):
   """Compute the travel angle associated to the particles
   Parameters
   ----------
-  cfgGen: configparser
-      configuration for DFA simulation
   particles : dict
       particles dictionary at t
   zPartArray0 : dict
