@@ -157,7 +157,7 @@ cmapS = copy.copy(cmapCrameri.batlow.reversed())
 levTA = list(fU.splitIniValueToArraySteps(cfgPlotUtils['travelAngleColorLevels']))
 # Batflow color map
 colorsTA = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
-           '#201158']
+            '#201158']
 cmapTA = copy.copy(cmapCrameri.lapaz)
 
 # colormap used if no resType provided
@@ -168,6 +168,13 @@ cmapRangeTime = copy.copy(cmapCrameri.batlowW_r)
 
 # colormap used for radar field of view plot
 cmapRadarFOV = copy.copy(cmapCrameri.davos)
+
+# multi sequential colormap for speed
+levE = list(fU.splitIniValueToArraySteps(cfgPlotUtils['energyColorLevels']))
+# Batflow color map
+colorsE = ['#aed6a2', '#949e8c', '#8b6f7f', '#673762', '#1a0e34']
+# colormap used for peak kinetic energy
+cmapE = copy.copy(cmapCrameri.tokyo.reversed())
 
 # colormap for probabilities
 levProb = list(fU.splitIniValueToArraySteps(cfgPlotUtils['probaColorLevels']))
@@ -204,15 +211,20 @@ cmapTravelAngle['cmap'] = cmapTA
 cmapTravelAngle['colors'] = colorsTA
 cmapTravelAngle['levels'] = levTA
 
-
 cmapProb = {}
 cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
+cmapEnergy = {}
+cmapEnergy['cmap'] = cmapE
+cmapEnergy['colors'] = colorsE
+cmapEnergy['levels'] = levE
+
 colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pft': cmapThickness, 'P': cmapPres, 'FV': cmapSpeed,
              'FM': cmapThickness, 'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FTV': cmapSpeed,
-             'FT': cmapThickness, 'prob': cmapProb, 'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
+             'FT': cmapThickness, 'prob': cmapProb, 'pta': cmapTravelAngle, 'TA': cmapTravelAngle,
+             'pke': cmapEnergy}
 
 cmapDEM = cmapGreys
 
@@ -346,7 +358,6 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         if len(levelsNew) == 1:
             levelsNew = [0] + levelsNew
         norm = mplCol.BoundaryNorm(levelsNew, cmap.N)
-
     return cmap, colorsNew, levelsNew, norm
 
 
