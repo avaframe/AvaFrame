@@ -2084,8 +2084,10 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
         for resType in resTypes:
             resField = fieldsList[countTime][resType]
             if resType == 'ppr':
+                # convert from Pa to kPa
                 resField = resField * 0.001
             if resType == 'pke':
+                # convert from J to kJ
                 resField = resField * 0.001
             dataName = (logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory

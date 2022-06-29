@@ -963,6 +963,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, travelAngle
   cdef int j, i
   cdef int indx, indy
+  cdef int ind1[4]
+  cdef int ind2[4]
+  ind1[:] = [0, 1, 0, 1]
+  ind2[:] = [0, 0, 1, 1]
   # variables for interpolation
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
@@ -988,8 +992,8 @@ def updateFieldsC(cfg, particles, dem, fields):
     # add the component of the points value to the 4 neighbour grid points
     # TODO : check if giving the arrays [0 1 0 1].. is faster
     for i in range(4):
-      indx = Lx0 + i%2 # + 0 1 0 1
-      indy = Ly0 + i/2 # + 0 0 1 1
+      indx = Lx0 + ind1[i]
+      indy = Ly0 + ind2[i]
       mwi = m * w[i]
       MassBilinear[indy, indx] = MassBilinear[indy, indx] + mwi
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + mwi * ux
@@ -1007,14 +1011,14 @@ def updateFieldsC(cfg, particles, dem, fields):
         VYBilinear[j, i] = MomBilinearY[j, i]/m
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
-        if computeP:
-          PBilinear[j, i] = computePressure(VBilinear[j, i], rho)
-          if PBilinear[j, i] > PP[j, i]:
-            PP[j, i] = PBilinear[j, i]
         if VBilinear[j, i] > PFV[j, i]:
           PFV[j, i] = VBilinear[j, i]
         if FTBilinear[j, i] > PFT[j, i]:
           PFT[j, i] = FTBilinear[j, i]
+        if computeP:
+          PBilinear[j, i] = computePressure(VBilinear[j, i], rho)
+          if PBilinear[j, i] > PP[j, i]:
+            PP[j, i] = PBilinear[j, i]
         if computeTA:
           if travelAngleField[j, i] > PTA[j, i]:
             PTA[j, i] = travelAngleField[j, i]
@@ -1056,7 +1060,7 @@ def updateFieldsC(cfg, particles, dem, fields):
 
 cpdef double computePressure(double v, double rho):
   """Compute pressure using the super advanced p = rho*v² equation
-  
+
   Parameters
   ----------
   v : float
@@ -1076,6 +1080,7 @@ cpdef double computePressure(double v, double rho):
 
 def computeTravelAngleC(particles, zPartArray0):
   """Compute the travel angle associated to the particles
+  
   Parameters
   ----------
   particles : dict
