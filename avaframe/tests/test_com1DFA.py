@@ -1562,26 +1562,6 @@ def test_initializeSimulation():
     assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
 
 
-def test_computeTravelAngle():
-
-    # first compute travel angle for each particle
-    # get parent Id in order to  get the first z position
-    parentID = np.array([0, 1, 2, 0])
-    nPart = 5
-    # get z0
-    zPartArray0 = np.array([10, 9, 8])
-    s = np.array([10, 10, 0, 10])
-    z = np.array([0, 0, 0, 1])
-    particles = {'nPart': nPart, 'parentID': parentID, 's': s, 'z': z}
-    particles = com1DFA.computeTravelAngle(particles, zPartArray0)
-    print(particles['travelAngle'])
-    gamma = particles['travelAngle']
-    assert gamma[2] == 0
-    assert gamma[0] == 45
-    assert gamma[1] == pytest.approx(41.9872125, rel=1e-6)
-    assert gamma[3] == pytest.approx(41.9872125, rel=1e-6)
-
-
 def test_runCom1DFA(tmp_path, caplog):
     """ Check that runCom1DFA produces the good outputs
     """
