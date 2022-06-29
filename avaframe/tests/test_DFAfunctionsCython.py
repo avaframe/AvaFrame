@@ -658,9 +658,9 @@ def test_computeTravelAngle():
     parentID = np.array([0, 1, 2, 0])
     nPart = 5
     # get z0
-    zPartArray0 = np.array([10, 9, 8])
-    s = np.array([10, 10, 0, 10])
-    z = np.array([0, 0, 0, 1])
+    zPartArray0 = np.array([10.0, 9.0, 8.0])
+    s = np.array([10.0, 10.0, 0.0, 10.0])
+    z = np.array([0.0, 0.0, 0.0, 1.0])
     particles = {'nPart': nPart, 'parentID': parentID, 's': s, 'z': z}
     particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
     print(particles['travelAngle'])

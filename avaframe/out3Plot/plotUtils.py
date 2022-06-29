@@ -171,7 +171,7 @@ cmapRadarFOV = copy.copy(cmapCrameri.davos)
 
 # multi sequential colormap for speed
 levE = list(fU.splitIniValueToArraySteps(cfgPlotUtils['energyColorLevels']))
-# Batflow color map
+# Tokyo color map
 colorsE = ['#aed6a2', '#949e8c', '#8b6f7f', '#673762', '#1a0e34']
 # colormap used for peak kinetic energy
 cmapE = copy.copy(cmapCrameri.tokyo.reversed())

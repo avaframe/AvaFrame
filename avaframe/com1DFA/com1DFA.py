@@ -1074,16 +1074,15 @@ def initializeFields(cfg, dem, particles):
     """
     # read config
     cfgGen = cfg['GENERAL']
+    # what result types are desired as output (we need this to decide which fields we actually need to compute)
     resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
-    # make sure to save all desiered resuts for first and last time step for
-    # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
-    # always add particles to first and last time step
     resTypesLast = list(set(resTypes + resTypesReport))
     # read dem header
     header = dem['header']
     ncols = header['ncols']
     nrows = header['nrows']
+    # initialize fields
     fields = {}
     fields['pfv'] = np.zeros((nrows, ncols))
     fields['pft'] = np.zeros((nrows, ncols))
@@ -1107,7 +1106,7 @@ def initializeFields(cfg, dem, particles):
     if ('pke' in resTypesLast):
         fields['pke'] = np.zeros((nrows, ncols))
         fields['computeKE'] = True
-        log.info('Computing Kinetik energy')
+        log.info('Computing Kinetic energy')
     else:
         fields['pke'] = np.zeros((1, 1))
         fields['computeKE'] = False
@@ -1598,37 +1597,6 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
     return particles, fields, zPartArray0, tCPU
-
-
-def computeTravelAngle(particles, zPartArray0):
-    """Compute the travel angle associated to the particles
-
-    Parameters
-    ----------
-    particles : dict
-        particles dictionary at t
-    zPartArray0 : dict
-        z coordinate of particles at t=0s
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary updated with the travel angle
-    """
-    # first compute travel angle for each particle
-    # get parent Id in order to  get the first z position
-    parentID = particles['parentID']
-    nPart = particles['nPart']
-    # get z0
-    z0 = zPartArray0[parentID.astype(int)]
-    # compute tan of the travel angle
-    nonZeroSInd = np.nonzero(particles['s'])
-    tanGamma = np.zeros((nPart))
-    tanGamma[nonZeroSInd] = (z0 - particles['z'])[nonZeroSInd] / (particles['s'][nonZeroSInd])
-    # get the travel angle
-    gamma = np.degrees(np.arctan(tanGamma))
-    particles['travelAngle'] = gamma
-    return particles
 
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):

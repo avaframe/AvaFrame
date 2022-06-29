@@ -1055,7 +1055,20 @@ def updateFieldsC(cfg, particles, dem, fields):
 
 
 cpdef double computePressure(double v, double rho):
-  """Compute pressure"""
+  """Compute pressure using the super advanced p = rho*v² equation
+  
+  Parameters
+  ----------
+  v : float
+      velocity magnitude
+  rho : float
+      snow density
+
+  Returns
+  -------
+  p : float
+      pressure computed using p = rho*v²
+  """
   cdef double p
   p = rho * v * v
   return p
