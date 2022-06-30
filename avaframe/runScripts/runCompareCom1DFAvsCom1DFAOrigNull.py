@@ -98,7 +98,8 @@ for avaName in avaList:
     # Set directory for com1DFA report
     reportDirOrig = outDir / 'com1DFAOrig' / 'reports'
     # write report
-    gR.writeReport(reportDirOrig, reportDictListcom1DFAOrig, cfgMain['FLAGS'], plotDictcom1DFAOrig)
+    gR.writeReport(reportDirOrig, reportDictListcom1DFAOrig, cfgMain['FLAGS'].getboolean('reportOneFile'),
+                   plotDictcom1DFAOrig)
 
     #####################################################################
     # ######################### Run Com1DFA #############################
@@ -109,7 +110,7 @@ for avaName in avaList:
     # Set directory for com1DFA report
     reportDir = outDir / 'com1DFA' / 'reports'
     # write report
-    gR.writeReport(reportDir, reportDictListcom1DFA, cfgMain['FLAGS'], plotDictcom1DFA)
+    gR.writeReport(reportDir, reportDictListcom1DFA, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDictcom1DFA)
 
     #######################################################
     # ########### Analyze results ##########################

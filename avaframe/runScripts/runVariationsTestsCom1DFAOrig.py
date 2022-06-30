@@ -107,7 +107,7 @@ for test in testList:
     # Set directory for report
     reportDir = pathlib.Path(avaDir, 'Outputs', modName, 'reports')
     # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDict)
 
     # Fetch correct reportDict according to flagEntRes
     reportD = {}

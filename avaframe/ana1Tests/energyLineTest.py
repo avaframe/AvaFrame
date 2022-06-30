@@ -39,9 +39,9 @@ def mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem):
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
                                                            comModule='com1DFA')
     # make analysis and generate plots
-    errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
+    errorEnergyTest, savePath = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
                                                 simName)
-    return errorEnergyTest
+    return errorEnergyTest, savePath
 
 
 def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList, simName):
@@ -208,9 +208,9 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     outFileName = '_'.join([simName, 'EnergyTest'])
     outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
     plt.tight_layout()
-    pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
+    savePath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
-    return errorEnergyTest
+    return errorEnergyTest, savePath
 
 
 def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
