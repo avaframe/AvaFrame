@@ -80,7 +80,7 @@ def mainSimilaritySol(simiSolCfg):
     eps_y = H/L_y
 
     # Full scale end time
-    T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
+    T_end = cfgGen.getfloat('tEnd') + 1
 
     # Non dimensional time for similarity sim calculation
     t_1 = 0.1         # start time for ode solvers, end time for early time sol (we need t_1<<1)

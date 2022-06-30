@@ -146,7 +146,7 @@ def test_findAngleProfile(capfd):
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
         assert geoTrans.findAngleProfile(tmp, ds, dsMin)
-    assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
+    assert str(e.value) == "No point found. Check the angle and threshold distance."
 
     tmp = np.where((angle < 4.0) & (angle >= 0.0))
     tmp = np.asarray(tmp).flatten()
@@ -156,7 +156,7 @@ def test_findAngleProfile(capfd):
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
         assert geoTrans.findAngleProfile(tmp, ds, dsMin)
-    assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
+    assert str(e.value) == "No point found. Check the angle and threshold distance."
 
 
 def test_prepareAngleProfile(caplog):
@@ -390,7 +390,6 @@ def test_remeshDEM(tmp_path):
     with pytest.raises(FileExistsError) as e:
         assert geoTrans.remeshDEM(avaDEM1, cfg)
     assert str(e.value) == ("Name for saving remeshedDEM already used: %s" % avaDEM.name)
-
 
 
 def test_isCounterClockWise(capfd):

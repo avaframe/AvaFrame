@@ -1279,11 +1279,9 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
-    if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
-        # overwrite the dt value in the cfg
-        dt = tD.getcflTimeStep(particles, dem, cfgGen)
-    elif cfgGen.getboolean('sphKernelRadiusTimeStepping'):
-        dt = tD.getSphKernelRadiusTimeStep(dem, cfgGen)
+    if cfgGen.getboolean('sphKernelRadiusTimeStepping'):
+        dtSPHKR = tD.getSphKernelRadiusTimeStep(dem, cfgGen)
+        dt = dtSPHKR
     else:
         # get time step
         dt = cfgGen.getfloat('dt')
@@ -1330,11 +1328,8 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
             dtSave = updateSavingTimeStep(dtSave, cfg['GENERAL'], t)
 
         # derive time step
-        if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
-            # overwrite the dt value in the cfg
-            dt = tD.getcflTimeStep(particles, dem, cfgGen)
-        elif cfgGen.getboolean('sphKernelRadiusTimeStepping'):
-            dt = tD.getSphKernelRadiusTimeStep(dem, cfgGen)
+        if cfgGen.getboolean('sphKernelRadiusTimeStepping'):
+            dt = dtSPHKR
         else:
             # get time step
             dt = cfgGen.getfloat('dt')

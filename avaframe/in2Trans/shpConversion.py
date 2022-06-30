@@ -65,11 +65,7 @@ def SHP2Array(infile, defname=None):
     id = None
 
     # get coordinate system
-    prjfile = infile.with_suffix('.prj')
-    if prjfile.is_file():
-        prjf = open(prjfile, 'r')
-        sks = prjf.readline()
-        prjf.close()
+    sks = getSHPProjection(infile)
 
     # Start reading the shapefile
     records = sf.shapeRecords()
@@ -148,6 +144,32 @@ def SHP2Array(infile, defname=None):
     sf.close()
 
     return SHPdata
+
+
+def getSHPProjection(infile):
+    """ Fetch projection from shp file
+
+    Parameters
+    ----------
+    infile: str
+        path to shape file
+
+    Returns
+    -------
+    sks: str
+        projection string (if available, None if not)
+    """
+    # get coordinate system
+    prjfile = infile.with_suffix('.prj')
+    if prjfile.is_file():
+        prjf = open(prjfile, 'r')
+        sks = prjf.readline()
+        prjf.close()
+        return sks
+    else:
+        message = ('No projection layer for shp file %s' % infile)
+        log.warning(message)
+        return None
 
 
 def readThickness(infile, defname=None):
@@ -383,5 +405,30 @@ def writeLine2SHPfile(lineDict, lineName, fileName):
     w.field('name', 'C')
     w.line([line])
     w.record(lineName)
+    w.close()
+    return fileName
+
+
+def writePoint2SHPfile(pointDict, pointName, fileName):
+    """ write a point to shapefile
+
+    Parameters
+    ----------
+    pointDict: dict
+        point dict
+    pointName: str
+        point name
+    fileName: str or pathlib path
+        path where the point will be saved
+    Returns
+    -------
+    fileName : str
+        path where the point has been saved
+    """
+    fileName = str(fileName)
+    w = shapefile.Writer(fileName)
+    w.field('name', 'C')
+    w.point(pointDict['x'], pointDict['y'])
+    w.record(pointName)
     w.close()
     return fileName

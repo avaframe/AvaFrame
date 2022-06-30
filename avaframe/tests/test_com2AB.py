@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 import pathlib
 import shutil
+import logging
 
 # Local imports
 import avaframe.com2AB.com2AB as com2AB
@@ -58,7 +59,7 @@ def test_setEqParameters(capfd):
         assert eqParamRef[key] == eqParams[key]
 
 
-def test_calcABAngles(capfd):
+def test_calcABAngles(caplog):
     '''Simple test for function calcABAngles'''
 
     cfg = cfgUtils.getModuleConfig(com2AB)
@@ -107,6 +108,10 @@ def test_calcABAngles(capfd):
             alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
             alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (
             alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
+
+    with pytest.raises(IndexError) as e:
+        eqOut = com2AB.calcABAngles(eqIn, eqParams, 500)
+    assert str(e.value) == ("No Beta point found. Check your pathAB.shp and splitPoint.shp.")
 
 
 def test_writeABtoSHP(tmp_path):

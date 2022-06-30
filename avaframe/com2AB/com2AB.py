@@ -327,7 +327,11 @@ def calcABAngles(avaProfile, eqParameters, dsMin):
     angle, tmp, ds = geoTrans.prepareAngleProfile(betaValue, avaProfile)
     # find the beta point: first point under the beta angle
     # (make sure that the dsMin next meters are also under te beta angle)
-    indBetaPoint = geoTrans.findAngleProfile(tmp, ds, dsMin)
+    try:
+        indBetaPoint = geoTrans.findAngleProfile(tmp, ds, dsMin)
+    except IndexError:
+        noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
+        raise IndexError(noBetaFoundMessage)
     if debugPlot:
         debPlot.plotSlopeAngle(s, angle, indBetaPoint)
         debPlot.plotProfile(s, z, indBetaPoint)
