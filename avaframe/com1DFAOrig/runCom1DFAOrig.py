@@ -56,7 +56,7 @@ plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData
 # Set directory for report
 reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAOrig', 'reports')
 # write report
-gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDict)
 
 # write configuration to file
 cfgUtils.writeCfgFile(avalancheDir, com1DFAOrig, cfg)

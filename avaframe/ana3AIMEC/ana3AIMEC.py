@@ -106,13 +106,17 @@ def mainAIMEC(pathDict, inputsDF, cfg):
             plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
         plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
+    areaDict = {('area comparison plot ' + k): v for k, v in resAnalysisDF['areasPlot'].to_dict().items()}
+    plotDict['areasPlot'] = {'Aimec area analysis': areaDict}
+    if cfgFlags.getboolean('flagMass'):
+        massDict = {('mass comparison plot ' + k): v for k, v in resAnalysisDF['massPlotName'].to_dict().items()}
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': massDict}
 
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
-    plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF.loc[pathDict['simRowHash'], 'areasPlot']}
-    if cfgFlags.getboolean('flagMass'):
-        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF.loc[pathDict['simRowHash'],
-                                                                                 'massPlotName']}
+
+    plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': {'AIMEC '
+                                                                                     + cfgSetup['resType']
+                                                                                     + ' analysis': plotName}}
 
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)

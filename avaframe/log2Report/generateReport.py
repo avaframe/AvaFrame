@@ -4,14 +4,55 @@
 """
 
 # Load modules
-import os
 import logging
 import pathlib
 import shutil
+import pandas as pd
+from tabulate import tabulate
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def copyPlots(inDict, outDir):
+    """ copy the plots to report directory
+    The plots are in a dictionary in another dictionary
+    inDict = {'Plots from Whatever': {'plot1': PureṔath to plot1, 'plot2': PureṔath to plot2...},
+              'Plots from Whatever else': {'plot3': PureṔath to plot3, 'plot4': PureṔath to plot4...},
+              ...}
+    The plots are copied to outDir
+    And the path to the new plots in returned in outputs outDict which has a similar structure as inPlotsDict
+    outDict = {'Plots from Whatever': {'plot1': NEW PureṔath to plot1, 'plot2': NEW PureṔath to plot2...},
+              'Plots from Whatever else': {'plot3': NEW PureṔath to plot3, 'plot4': NEW PureṔath to plot4...},
+              ...}
+    Parameters
+    -----------
+    inDict: dict
+        dict of dict of the location of the plots to copy
+    outDir: pathlib path
+        path to directory where to copy the plots to
+    Parameters
+    -----------
+        outDict: dict
+            dict of dict of the  location of the copied plots
+    """
+
+    if not isinstance(outDir, pathlib.PurePath):
+        outDir = pathlib.Path(outDir)
+    outDict = {}
+    for key in inDict:
+        pDict = inDict[key]
+        outDict[key] = {}
+        for key2 in pDict:
+            if isinstance(pDict[key2], pathlib.PurePath):
+                name = pathlib.Path(pDict[key2]).name
+                plotName = outDir / ('%s' % (name))
+                shutil.copy2(pDict[key2], plotName)
+                log.info('Copied: %s to %s' % (pDict[key2], plotName))
+                outDict[key][key2] = plotName
+
+    return outDict
 
 
 def copyPlots2ReportDir(reportDir, plotDict):
@@ -68,78 +109,103 @@ def writeReportFile(reportD, pfile):
 
     # Loop through keys and perform action according to value found in type
     for key in reportD:
-        for subKey in reportD[key]:
-            # HEADER BLOCK
-            # Title
-            if reportD[key][subKey] == 'title':
-                addLineBlock('#', reportD[key], pfile, onlyFirstLine=True)
+        subKey = 'type'
+        # HEADER BLOCK
+        # Title
+        if reportD[key][subKey] == 'title':
+            addLineBlock('#', reportD[key], pfile, onlyFirstLine=True)
 
-            # Avalanche name
-            if reportD[key][subKey] == 'avaName':
-                addLineBlock('### Avalanche directory:', reportD[key], pfile, italicFont=True)
+        # Avalanche name
+        if reportD[key][subKey] == 'avaName':
+            addLineBlock('### Avalanche directory:', reportD[key], pfile, italicFont=True)
 
-            # Simulation name
-            if reportD[key][subKey] == 'simName':
-                addLineBlock('### Simulation name:', reportD[key], pfile, italicFont=True)
+        # Simulation name
+        if reportD[key][subKey] == 'simName':
+            addLineBlock('### Simulation name:', reportD[key], pfile, italicFont=True)
 
-            # Time info
-            if reportD[key][subKey] == 'time':
-                addLineBlock('### Date:', reportD[key], pfile, onlyFirstLine=True)
+        # Time info
+        if reportD[key][subKey] == 'time':
+            addLineBlock('### Date:', reportD[key], pfile, onlyFirstLine=True)
 
-            # PARAMETER BLOCK
-            # Table listing all the key : value pairs in rows
-            if reportD[key][subKey] == 'list':
-                pfile.write('### %s \n' % key)
-                pfile.write(' \n')
-                pfile.write('| Parameters | Values | \n')
-                pfile.write('| ---------- | ------ | \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('| %s | %s | \n' % (value, reportD[key][value]))
-                pfile.write(' \n')
-            # Table listing the key : value pairs in columns
-            if reportD[key][subKey] == 'columns':
-                pfile.write('### %s \n' % key)
-                pfile.write(' \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('| %s ' % value)
-                pfile.write('| \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('| ----------')
-                pfile.write('| \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('| %s ' % reportD[key][value])
-                pfile.write('| \n')
-                pfile.write(' \n')
+        # PARAMETER BLOCK
+        # Table listing all the key : value pairs in rows
+        if reportD[key][subKey] == 'list':
+            pfile.write('### %s \n' % key)
+            pfile.write(' \n')
+            pfile.write('| Parameters | Values | \n')
+            pfile.write('| ---------- | ------ | \n')
+            for value in reportD[key]:
+                if value != 'type':
+                    pfile.write('| %s | %s | \n' % (value, reportD[key][value]))
+            pfile.write(' \n')
+        # Table listing the key : value pairs in columns
+        if reportD[key][subKey] == 'columns':
+            pfile.write('### %s \n' % key)
+            pfile.write(' \n')
+            for value in reportD[key]:
+                if value != 'type':
+                    pfile.write('| %s ' % value)
+            pfile.write('| \n')
+            for value in reportD[key]:
+                if value != 'type':
+                    pfile.write('| ----------')
+            pfile.write('| \n')
+            for value in reportD[key]:
+                if value != 'type':
+                    pfile.write('| %s ' % reportD[key][value])
+            pfile.write('| \n')
+            pfile.write(' \n')
+        # Multiline, multicolumn table from pandas Dataframe
+        if reportD[key][subKey] == 'pandasDF':
+            pfile.write('### %s \n' % key)
+            pfile.write(' \n')
+            df = reportD[key]['dataDF']
+            # only keep necessary columns
+            colNames = list(reportD[key]['column names'].keys())
+            df = df[colNames]
+            # format floats
+            dataType = df.dtypes
+            for col in colNames:
+                if 'float' in str(dataType[col]):
+                    df[col] = df[col].map(lambda x: '{0:.4f}'.format(x))
+            # rename columns
+            df = df.rename(columns=reportD[key]['column names'])
+            df = df.transpose()
+            # df.columns = df.iloc[0]
+            nCols = len(reportD[key]['column names'])
+            df.to_markdown(buf=pfile, tablefmt="github", headers=["<!-- -->" ]*nCols)
+            # data = df.reset_index().values.tolist()
+            # table = tabulate(data, showindex=False, tablefmt="github", headers=[])
+            # pfile.write(table)
+            pfile.write(' \n')
+            pfile.write(' \n')
 
-            # IMAGE BLOCK
-            if reportD[key][subKey] == 'image':
-                pfile.write('### %s \n' % key)
-                pfile.write(' \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('##### Figure:   %s \n' % value)
-                        pfile.write(' \n')
-                        pfile.write('![%s](%s) \n' % (value, reportD[key][value].name))
-                        pfile.write(' \n')
-                        pfile.write(' \n')
+        # IMAGE BLOCK
+        if reportD[key][subKey] == 'image':
+            pfile.write('### %s \n' % key)
+            pfile.write(' \n')
+            for value in reportD[key]:
+                if value != 'type' and isinstance(reportD[key][value], pathlib.Path):
+                    pfile.write('##### Figure:   %s \n' % value)
+                    pfile.write(' \n')
+                    pfile.write('![%s](%s) \n' % (value, reportD[key][value].name))
+                    pfile.write(' \n')
+                    pfile.write(' \n')
 
-            # TEXT BLOCK
-            if reportD[key][subKey] == 'text':
-                pfile.write('### %s \n' % key)
-                pfile.write(' \n')
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('##### Topic:  %s \n' % value)
-                        pfile.write(' \n')
-                        pfile.write('%s \n' % (reportD[key][value]))
-                        pfile.write(' \n')
+        # TEXT BLOCK
+        if reportD[key][subKey] == 'text':
+            pfile.write('### %s \n' % key)
+            pfile.write(' \n')
+            for value in reportD[key]:
+                if value != 'type':
+                    pfile.write('##### Topic:  %s \n' % value)
+                    pfile.write(' \n')
+                    pfile.write('%s \n' % (reportD[key][value]))
+                    pfile.write(' \n')
 
 
-def writeReport(outDir, reportDictList, cfgFLAGS, plotDict='', standaloneReport=False):
+def writeReport(outDir, reportDictList, reportOneFile, plotDict='', standaloneReport=False,
+                reportName='fullSimulationReport.md'):
     """ Write a report in markdown format for simulations, saved to outDir
 
         Parameters
@@ -148,18 +214,20 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict='', standaloneReport=
             path to output directory
         reportDictList : list
             list of report dictionaries from simulations
-        cfgFLAGS : dict
-            configuration dictionary
+        reportOneFile : boolean
+            True to write all info in the same file
         plotDict : dict
             optional dictionary with info on plots that shall be included in report
         standaloneReport: bool
             if True copy plots to reportDir
+        reportName: str
+            report file name, fullSimulationReport.md is the default value
 
     """
 
-    if cfgFLAGS.getboolean('reportOneFile'):
+    if reportOneFile:
         # Start writing markdown style report
-        reportPath = pathlib.Path(outDir, 'fullSimulationReport.md')
+        reportPath = pathlib.Path(outDir, reportName)
         with open(reportPath, 'w') as pfile:
 
             # Loop through all simulations
@@ -170,12 +238,12 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict='', standaloneReport=
                     reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
                     reportD['Simulation Results'].update({'type': 'image'})
 
-                # copy plots to reportDir 
+                # copy plots to reportDir
                 if standaloneReport:
                     for key in reportD:
-                        for subKey in reportD[key]:
-                            if reportD[key][subKey] == 'image':
-                                copyPlots2ReportDir(outDir, reportD[key])
+                        subKey = 'type'
+                        if reportD[key][subKey] == 'image':
+                            copyPlots2ReportDir(outDir, reportD[key])
                 # Write report file
                 writeReportFile(reportD, pfile)
 

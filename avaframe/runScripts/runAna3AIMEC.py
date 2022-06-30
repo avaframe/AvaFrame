@@ -39,7 +39,7 @@ def runAna3AIMEC(avalancheDir, cfg):
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
     rasterTransfo, resAnalysisDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
-    return pathDict, rasterTransfo, resAnalysisDF
+    return pathDict, rasterTransfo, resAnalysisDF, plotDict
 
 
 if __name__ == '__main__':

@@ -103,7 +103,8 @@ def runOperational(avalancheDir=''):
     reportDir = avaDir / 'Outputs' / 'reports'
     fU.makeADir(reportDir)
     # write report and copy plots to report dir
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict=plotDict, standaloneReport=True)
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDict=plotDict,
+                   standaloneReport=True)
 
     # Print time needed
     endTime = time.time()

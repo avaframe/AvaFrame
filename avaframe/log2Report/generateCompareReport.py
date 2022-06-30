@@ -38,11 +38,14 @@ def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
         outDir = pathlib.Path(outDir)
     for pDict in plotFiles:
         for key in pDict:
-            name = pathlib.Path(pDict[key]).name
-            plotName = outDir / ('%s_%s_%s' % (testName, rel, name))
-            shutil.copy2(pDict[key], plotName)
-            log.debug('Copied: %s to %s' % (pDict[key], plotName))
-            plotPaths[key] = plotName
+            pDict2 = pDict[key]
+            for key2 in pDict2:
+                if isinstance(pDict2[key2], pathlib.PurePath):
+                    name = pathlib.Path(pDict2[key2]).name
+                    plotName = outDir / ('%s_%s_%s' % (testName, rel, name))
+                    shutil.copy2(pDict2[key2], plotName)
+                    log.info('Copied: %s to %s' % (pDict2[key2], plotName))
+                    plotPaths[key] = plotName
 
     return plotPaths
 
