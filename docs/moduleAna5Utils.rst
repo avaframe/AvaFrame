@@ -124,11 +124,13 @@ Automated path generation
 
 Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB`) or analysis modules like
 the Thalweg-time diagram (:ref:`moduleAna5Utils`) or Aimec (:ref:`moduleAna3AIMEC`) require
-an avalanche path as input. This avalanche path is usually created manually based on an expert opinion.
-The objective of this module is to automatically generate an avalanche path from a dense flow avalanche (DFA) simulation.
+an avalanche path and split point as input. This avalanche path and split point are usually
+created manually based on an expert opinion. The objective of this module is to automatically
+generate an avalanche path from a dense flow avalanche (DFA) simulation and placing a split point.
 The path is generated from the center of mass position of the dense material, so it is called the mass
 averaged path. It is extended towards the top of the release area and at the bottom. Therefore it covers
 the entire length of the avalanche with some buffer in the runout area.
+The split point is extracted from the parabola that is fitted on to the avalanche path profile.
 
 Input
 =====
@@ -221,3 +223,15 @@ It is also necessary to extend the profile in the runout area. This is done by f
 direction of the path given by the few last points in the path in (x,y) (all points at a distance
 ``nCellsMinExtend`` x cellSize < distance < ``nCellsMaxExtend`` x cellSize)) and extending in
 this direction for a given percentage (``factBottomExt``) of the total length of the path :math:`s`.
+
+
+Split point generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A parabolic curve is fitted to the avalanche path profile extracted from the DFA simulation (non-extended profile),
+where the first and last point of the parabolic profile match the avalanche path profile. To find the
+best fitting parabolic profile, an additional constraint is needed. Two options are available:
+the default one (``fitOption``= 0) minimises the distance between the parabolic profile and the avalanche path
+profile. The second option (``fitOption``= 1) matches the end slope of the parabola to the profile.
+This parabolic fit determines the split point location. It is the first point for which the slope is
+lower than the ``slopeSplitPoint`` angle. This point is then projected on the avalanche path profile.

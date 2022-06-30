@@ -256,3 +256,29 @@ def test_readPoints(capfd):
     with pytest.raises(ValueError) as e:
         assert shpConv.readPoints(shpFileName, dem)
     assert str(e.value) == 'The split point is not on the dem. Try with another split point'
+
+
+def test_writeLine2SHPfile(tmp_path):
+    '''Simple test for function writeLine2SHPfile'''
+    temp = pathlib.Path(tmp_path, 'testSaveLine')
+    linePath = temp / 'line2SHPfile.shp'
+    lineDict = {'x': np.array([0, 1]), 'y': np.array([0, 1])}
+    fileName = shpConv.writeLine2SHPfile(lineDict, 'myLine', linePath)
+    lines = list(temp.glob(('*.shp')))
+    print(lines)
+    print(fileName)
+    print(temp)
+    assert str(lines[0]) == str(linePath)
+
+
+def test_writePoint2SHPfile(tmp_path):
+    '''Simple test for function writePoint2SHPfile'''
+    temp = pathlib.Path(tmp_path, 'testSaveLine')
+    pointpath = temp / 'line2SHPfile.shp'
+    pointDict = {'x': np.array([0]), 'y': np.array([1])}
+    fileName = shpConv.writePoint2SHPfile(pointDict, 'myPoint', pointpath)
+    points = list(temp.glob(('*.shp')))
+    print(points)
+    print(fileName)
+    print(temp)
+    assert str(points[0]) == str(pointpath)

@@ -2,7 +2,7 @@ import numpy as np
 import pathlib
 import copy
 import matplotlib
-# matplotlib.use('agg')
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -274,6 +274,41 @@ def plotSlopeAngle(s, angle, idsBetaPoint):
     plt.plot(s[idsBetaPoint], angle[idsBetaPoint], 'or')
     plt.axhline(y=10, color='0.8',
                 linewidth=1, linestyle='-.', label='Beta angle line')
+    plt.show()
+    plt.close()
+
+
+def plotFindAngle(avaProfile, angleProf, parabolicProfile, anglePara, s0, sEnd, splitPoint, indSplitPoint):
+    """helper plot for the getSplitPoint, findAngleProfile and prepareAngleProfile functions
+    Plots the slope angle and elevation function of s"""
+    plt.figure(figsize=(10, 6))
+    plt.plot(parabolicProfile['s'], anglePara, '.k')
+    plt.plot(avaProfile['s'] - s0, angleProf, '.b')
+    # plt.plot(s[ids10Point], anglePara[indSplitPoint], 'or')
+    plt.axhline(y=10, color='0.8',
+                linewidth=1, linestyle='-.', label='10° line')
+    plt.axhline(y=20, color='0.8',
+                linewidth=1, linestyle='-.', label='10° line')
+    plt.axhline(y=15, color='0.8',
+                linewidth=1, linestyle='-.', label='10° line')
+    plt.axvline(x=0, color='0.8',
+                linewidth=1, linestyle='-.', label='Start')
+    plt.axvline(x=sEnd-s0, color='0.8',
+                linewidth=1, linestyle='-.', label='End')
+    if splitPoint != '':
+        plt.plot(parabolicProfile['s'][indSplitPoint], anglePara[indSplitPoint], '.r')
+        plt.plot(avaProfile['s'][indSplitPoint] - s0, angleProf[indSplitPoint], '.r')
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(parabolicProfile['s'], parabolicProfile['z'], '.k')
+    plt.plot(avaProfile['s'] - s0, avaProfile['z'], '.b')
+    plt.axvline(x=0, color='0.8',
+                linewidth=1, linestyle='-.', label='Start')
+    plt.axvline(x=sEnd-s0, color='0.8',
+                linewidth=1, linestyle='-.', label='End')
+    if splitPoint != '':
+        plt.plot(parabolicProfile['s'][indSplitPoint], parabolicProfile['z'][indSplitPoint], '.r')
+        plt.plot(avaProfile['s'][indSplitPoint] - s0, avaProfile['z'][indSplitPoint], '.r')
     plt.show()
     plt.close()
 

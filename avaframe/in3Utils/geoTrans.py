@@ -633,11 +633,11 @@ def findAngleProfile(tmp, ds, dsMin):
     idsAnglePoint: int
         index of beta point
     """
-    noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
+    noPointFoundMessage = 'No point found. Check the angle and threshold distance.'
     i = 0
     condition = True
     if np.size(tmp) == 0:
-        raise IndexError(noBetaFoundMessage)
+        raise IndexError(noPointFoundMessage)
     while (i <= np.size(tmp) and condition):
         ind = tmp[i]
         j = 0
@@ -647,7 +647,7 @@ def findAngleProfile(tmp, ds, dsMin):
                 condition = condition and (tmp[i+j+1] == ind+j+1)
                 dist = dist + ds[i + j]
             except IndexError:
-                raise IndexError(noBetaFoundMessage)
+                raise IndexError(noPointFoundMessage)
             if not condition:
                 i = i + j + 1
                 break
@@ -659,7 +659,7 @@ def findAngleProfile(tmp, ds, dsMin):
     return idsAnglePoint
 
 
-def prepareAngleProfile(beta, avaProfile):
+def prepareAngleProfile(beta, avaProfile, raiseWarning=True):
     """Prepare inputs for findAngleProfile function
     Read profile (s, z), compute the slope Angle
     look for points for which the slope is under the given Beta value and
@@ -671,6 +671,8 @@ def prepareAngleProfile(beta, avaProfile):
         beta angle in degrees
     avaProfile: dict
         profile dictionary, s, z and a split point(optional)
+    raiseWarning: bool
+        True to raise eventual warnings
     Returns
     -------
     angle: 1D numpy array
@@ -688,12 +690,13 @@ def prepareAngleProfile(beta, avaProfile):
         indSplit = avaProfile['indSplit']
         sSplit = s[indSplit]
     except KeyError:
-        log.warning('No split Point given!')
+        if raiseWarning:
+            log.warning('No split Point given!')
         sSplit = 0
     ds = np.abs(s - np.roll(s, 1))
     dz = np.roll(z, 1) - z
-    ds[0] = 0.0
-    dz[0] = 0.0
+    ds[0] = ds[1]
+    dz[0] = dz[1]
     angle = np.rad2deg(np.arctan2(dz, ds))
     # get all values where Angle < beta but >0
     # get index of first occurance and go one back to get previous value

@@ -6,30 +6,31 @@ import configparser
 import avaframe.com1DFA.timeDiscretizations as tD
 
 
-def test_getcflTimeStep(capfd):
+def test_getSphKernelRadiusTimeStep(capfd):
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'cMax': '0.5', 'maxdT': '0.5', 'constrainCFL': 'False', 'mindT': '0.01'}
+    cfg['GENERAL'] = {'cMax': '0.01'}
     dem = {'header': {'cellsize': 1}, 'headerNeighbourGrid': {'cellsize': 2}}
-    particles = {}
-    particles['ux'] = np.array([100.])
-    particles['uy'] = np.array([0.])
-    particles['uz'] = np.array([0.])
 
-    dtStable = tD.getcflTimeStep(particles, dem, cfg['GENERAL'])
-    print(dtStable)
-    assert dtStable == 0.005
-
-    cfg['GENERAL']['constrainCFL'] = 'True'
-    dtStable = tD.getcflTimeStep(particles, dem, cfg['GENERAL'])
+    dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
     print(dtStable)
     assert dtStable == 0.01
 
-    particles['ux'] = np.array([0.5])
-    dtStable = tD.getcflTimeStep(particles, dem, cfg['GENERAL'])
+    cfg['GENERAL']['constrainCFL'] = 'True'
+    dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
     print(dtStable)
-    assert dtStable == 0.5
+    assert dtStable == 0.01
 
-    particles['ux'] = np.array([5])
-    dtStable = tD.getcflTimeStep(particles, dem, cfg['GENERAL'])
+    dem['header']['cellsize'] = 2
+    dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
     print(dtStable)
-    assert dtStable == 0.1
+    assert dtStable == 0.02
+
+    dem['header']['cellsize'] = 3
+    dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
+    print(dtStable)
+    assert dtStable == 0.02
+
+    cfg['GENERAL']['cMax'] = '0.02'
+    dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
+    print(dtStable)
+    assert dtStable == 0.04

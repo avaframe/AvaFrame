@@ -17,7 +17,7 @@ import matplotlib.patheffects as pe
 from avaframe.in3Utils import cfgUtils
 
 # import computation modules
-from avaframe.com1DFA import com1DFA, particleTools
+from avaframe.com1DFA import com1DFA
 import avaframe.ana5Utils.DFAPathGeneration as DFAPath
 
 # import plotting tools
@@ -44,7 +44,7 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     # generate mass averaged path profile
     simName = simDF.index[0]
     pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
+    avaProfileMass, _ = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
@@ -103,11 +103,6 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
 
     # add DEM hillshade with contour lines
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='hillshade', extent=extent)
-    # if energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart'):
-    #     particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
-    #                                                                    comModule='com1DFA')
-    #     ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
-    #     cbar1.ax.set_ylabel('final particle flow thickness')
     ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y.', zorder=20, label='Center of mass path',
              lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
     ax1.set_xlabel('x [m]')
@@ -228,13 +223,18 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     return errorEnergyTest
 
 
-def getRunOutAngle(avaProfileMass):
+def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
     """Compute the center of mass runout angle
 
     Parameters
     -----------
     avaProfileMass: dict
         particle mass average properties
+    indStart: int
+        index of the start of the mass averaged path (to enable e.g. to discard the top extension).
+        0 by default - so full mass averaged path from top
+    indEnd: int
+        index of the start of the mass averaged pass (to discard the bottom extension). -1 by default
 
     Returns
     --------
@@ -244,8 +244,8 @@ def getRunOutAngle(avaProfileMass):
         Center of Mass runout angle in degrees
     """
     # compute horizontal and vertical traveled distance
-    deltaS = avaProfileMass['s'][-1] - avaProfileMass['s'][0]
-    deltaZ = avaProfileMass['z'][-1] - avaProfileMass['z'][0]
+    deltaS = avaProfileMass['s'][indEnd] - avaProfileMass['s'][indStart]
+    deltaZ = avaProfileMass['z'][indEnd] - avaProfileMass['z'][indStart]
     # extract simulation runout
     runOutAngleRad = np.arctan(np.abs(deltaZ/deltaS))
     runOutAngleDeg = np.rad2deg(runOutAngleRad)
