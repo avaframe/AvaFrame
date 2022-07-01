@@ -169,7 +169,7 @@ cmapRangeTime = copy.copy(cmapCrameri.batlowW_r)
 # colormap used for radar field of view plot
 cmapRadarFOV = copy.copy(cmapCrameri.davos)
 
-# multi sequential colormap for speed
+# multi sequential colormap for kinetic energy
 levE = list(fU.splitIniValueToArraySteps(cfgPlotUtils['energyColorLevels']))
 # Tokyo color map
 colorsE = ['#aed6a2', '#949e8c', '#8b6f7f', '#673762', '#1a0e34']
