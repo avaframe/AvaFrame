@@ -15,57 +15,27 @@ from tabulate import tabulate
 log = logging.getLogger(__name__)
 
 
-def copyPlots(inDict, outDir):
-    """ copy the plots to report directory
-    The plots are in a dictionary in another dictionary
-    inDict = {'Plots from Whatever': {'plot1': PureṔath to plot1, 'plot2': PureṔath to plot2...},
-              'Plots from Whatever else': {'plot3': PureṔath to plot3, 'plot4': PureṔath to plot4...},
-              ...}
-    The plots are copied to outDir
-    And the path to the new plots in returned in outputs outDict which has a similar structure as inPlotsDict
-    outDict = {'Plots from Whatever': {'plot1': NEW PureṔath to plot1, 'plot2': NEW PureṔath to plot2...},
-              'Plots from Whatever else': {'plot3': NEW PureṔath to plot3, 'plot4': NEW PureṔath to plot4...},
-              ...}
-    Parameters
-    -----------
-    inDict: dict
-        dict of dict of the location of the plots to copy
-    outDir: pathlib path
-        path to directory where to copy the plots to
-    Parameters
-    -----------
-        outDict: dict
-            dict of dict of the  location of the copied plots
-    """
-
-    if not isinstance(outDir, pathlib.PurePath):
-        outDir = pathlib.Path(outDir)
-    outDict = {}
-    for key in inDict:
-        pDict = inDict[key]
-        outDict[key] = {}
-        for key2 in pDict:
-            if isinstance(pDict[key2], pathlib.PurePath):
-                name = pathlib.Path(pDict[key2]).name
-                plotName = outDir / ('%s' % (name))
-                shutil.copy2(pDict[key2], plotName)
-                log.info('Copied: %s to %s' % (pDict[key2], plotName))
-                outDict[key][key2] = plotName
-
-    return outDict
-
-
 def copyPlots2ReportDir(reportDir, plotDict):
-    """ copy the plots to report directory """
+    """ copy the plots to report directory
+    The plots are in a dictionary:
+    plotDict = {'plot1': PureṔath to plot1, 'plot2': PureṔath to plot2...}
+    Parameters
+    -----------
+    reportDir: pathlib path
+        path to directory where to copy the plots to
+    plotDict: dict
+        dict of the location of the plots to copy
+    """
 
     if not isinstance(reportDir, pathlib.PurePath):
         reportDir = pathlib.Path(reportDir)
-    for resType in plotDict:
-        if resType != 'type':
-            plotPath = plotDict[resType]
-            plotName = reportDir / plotPath.name
-            shutil.copy2(plotPath, plotName)
-            log.debug('Copied: %s to %s' % (plotPath, plotName))
+    for key in plotDict:
+        if key != 'type':
+            if isinstance(plotDict[key], pathlib.PurePath):
+                plotPath = plotDict[key]
+                plotName = reportDir / plotPath.name
+                shutil.copy2(plotPath, plotName)
+                log.debug('Copied: %s to %s' % (plotPath, plotName))
 
 
 def addLineBlock(titleString, reportDKey, pfile, italicFont=False, onlyFirstLine=False):

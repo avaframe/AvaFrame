@@ -27,7 +27,7 @@ import avaframe.out3Plot.plotUtils as pU
 log = logging.getLogger(__name__)
 
 
-def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass):
+def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowHash):
     """This is the core function of the Rotation Test module
 
     This module runs the energy line test and rotates the simulation results for the aimec analysis
@@ -37,6 +37,10 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass):
     inDir = avalancheDir / 'Outputs' / 'com1DFA'
     outDir = avalancheDir / 'Outputs' / 'com1DFARotated'
     fU.makeADir(outDir)
+    # get reference angle
+    simName = simDF.loc[refSimRowHash, 'simName']
+    relName = (simName.split('_'))[0]
+    thetaRef = float(relName[3:])
     for simHash in simDF.index:
         # rotate results to be able to proceede to the aimec analysis
         simName = simDF.loc[simHash, 'simName']
@@ -46,24 +50,33 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass):
         relName = (simName.split('_'))[0]
         theta = float(relName[3:])
         simDF.loc[simHash, 'relAngle'] = theta
+        thetaRot = theta - thetaRef
         # copy mass file
         massFile = list(inDir.glob('mass_*' + simName + '*.txt'))
         shutil.copy(massFile[0], outDir)
         for resType in resTypeList:
             fName = simDF.loc[simHash, resType]
             rasterDict = IOf.readRaster(fName)
-            rotatedRaster = gT.rotateRaster(rasterDict, theta, deg=True)
+            rotatedRaster = gT.rotateRaster(rasterDict, thetaRot, deg=True)
             fU.makeADir(outDir / 'peakFiles')
             outFileName = outDir / 'peakFiles' / fName.name
             IOf.writeResultToAsc(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
         # make energy line analysis
-        errorEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
-        simDF.loc[simHash, 'runOutSError'] = errorEnergyTest['runOutSError']
-        simDF.loc[simHash, 'runOutZError'] = errorEnergyTest['runOutZError']
-        simDF.loc[simHash, 'runOutAngleError'] = errorEnergyTest['runOutAngleError']
-        simDF.loc[simHash, 'rmseVelocityElevation'] = errorEnergyTest['rmseVelocityElevation']
+        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
+        simDF.loc[simHash, 'zEnd'] = resultEnergyTest['zEnd']
+        simDF.loc[simHash, 'sEnd'] = resultEnergyTest['sEnd']
+        simDF.loc[simHash, 'runoutAngle'] = resultEnergyTest['runoutAngle']
+        # simDF.loc[simHash, 'runOutSError'] = resultEnergyTest['runOutSError']
+        # simDF.loc[simHash, 'runOutZError'] = resultEnergyTest['runOutZError']
+        # simDF.loc[simHash, 'runOutAngleError'] = resultEnergyTest['runOutAngleError']
+        # simDF.loc[simHash, 'rmseVelocityElevation'] = resultEnergyTest['rmseVelocityElevation']
         simDF.loc[simHash, 'energyLinePlotPath'] = savePath
+    # now compare energy line results to the reference
+    for simHash in simDF.index:
+        simDF.loc[simHash, 'zDiff'] = simDF.loc[simHash, 'zEnd'] - simDF.loc[refSimRowHash, 'zEnd']
+        simDF.loc[simHash, 'sDiff'] = simDF.loc[simHash, 'sEnd'] - simDF.loc[refSimRowHash, 'sEnd']
+        simDF.loc[simHash, 'runoutAngleDiff'] = simDF.loc[simHash, 'runoutAngle'] - simDF.loc[refSimRowHash, 'runoutAngle']
 
     return simDF, flagMass
 
@@ -83,7 +96,7 @@ def prepareInputsRotationTest(avalancheDir, simDF, simHash, resTypeList):
         IOf.writeResultToAsc(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
 
-def initializeRotationTestReport(avalancheDir, resTypeList, comModule):
+def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName):
     """Initialize report for rotation test
 
     """
@@ -94,19 +107,23 @@ def initializeRotationTestReport(avalancheDir, resTypeList, comModule):
                           'Simulation Parameters': {
                           'type': 'list',
                           'Program version': getVersion(),
-                          'DFA module': comModule},
+                          'DFA module': comModule,
+                          'Reference simulation': refSimName},
                           'Rotation test input simulations': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name',
                                                                'releaseScenario': 'Release name', 'relAngle': 'Angle °'}},
                           'Rotation test Energy line result table': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name', 'relAngle': 'Angle °',
-                                                               'runOutSError': 's Error [m]', 'runOutZError': 'z Error [m]',
-                                                               'runOutAngleError': 'angle Error [°]',
-                                                               'rmseVelocityElevation': 'velocity elevation rsme [m]'}},
+                                                               'zDiff': 's Diff [m]',
+                                                               'sDiff': 'z Diff [m]',
+                                                               'runoutAngleDiff': 'angle Diff [°]'}},
                           'Rotation test Energy line figures': {'type': 'image'},
                           'Rotation test AIMEC result table': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name', 'relAngle': 'Angle °',
-                                                               'sRunout': 'Runout [m]', 'TP': 'True positive area [-]',
+                                                               'sRunout': 'Runout [m]', 'relMass': 'release mass [kg]',
+                                                               'finalMass': 'final mass [kg]',
+                                                               'entMass': 'entrained mass [kg]',
+                                                               'TP': 'True positive area [-]',
                                                                'FP': 'False positive area [-]',
                                                                'FN': 'False negative area [-]'}},
                           'Rotation test AIMEC figures': {'type': 'image'}}
@@ -130,23 +147,20 @@ def buildRotationTestReport(avalancheDir, reportRotationTest, simDF, resAnalysis
     inPlotsDict.update(aimecPlotDict['areasPlot'])
     if flagMass:
         inPlotsDict.update(aimecPlotDict['massAnalysisPlot'])
-    outPlotDict = gR.copyPlots(inPlotsDict, outDir)
-    # add plot info to general report Dict
-    # reportRotationTest['Simulation Results'] = plotPaths
 
     simDF = simDF.sort_values(by=['relAngle'], ascending=True)
     resAnalysisDF = resAnalysisDF.sort_values(by=['relAngle'], ascending=True)
 
     reportRotationTest['Rotation test input simulations']['dataDF'] = simDF
     reportRotationTest['Rotation test Energy line result table']['dataDF'] = simDF
-    reportRotationTest['Rotation test Energy line figures'].update(outPlotDict['energyLinePlots'])
+    reportRotationTest['Rotation test Energy line figures'].update(inPlotsDict['energyLinePlots'])
     reportRotationTest['Rotation test AIMEC result table']['dataDF'] = resAnalysisDF
     reportRotationTest['Rotation test AIMEC figures'].update(
         inPlotsDict['Aimec comparison of mean and max values along path'])
-    reportRotationTest['Rotation test AIMEC figures'].update(outPlotDict['Aimec area analysis'])
+    reportRotationTest['Rotation test AIMEC figures'].update(inPlotsDict['Aimec area analysis'])
 
     if flagMass:
-        reportRotationTest['Rotation test AIMEC figures'].update(outPlotDict['Aimec mass analysis'])
+        reportRotationTest['Rotation test AIMEC figures'].update(inPlotsDict['Aimec mass analysis'])
     # add energy line and aimec results table to report
-    gR.writeReport(outDir, [reportRotationTest], True, plotDict='', standaloneReport=False,
+    gR.writeReport(outDir, [reportRotationTest], True, plotDict='', standaloneReport=True,
                    reportName='rotationTestReport.md')

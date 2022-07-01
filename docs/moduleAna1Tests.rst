@@ -135,7 +135,7 @@ analytical solution. In order to run the test example:
 Similarity solution
 ====================
 
-The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the thickness 
+The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the thickness
 integrated equations.
 It is a useful test case for validating simulation results coming from the dense flow avalanche computational module.
 This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape
@@ -375,6 +375,8 @@ Artificial viscosity can lead to viscous dissipation leading
 to shorter runouts then what the energy solution predicts.
 Finally, the effect of the pressure force can be studied, especially the
 effect of the computation options.
+The results of this test can also be reused for other purposes or in other
+test such as in the rotation test described bellow (:ref:`Rotation test`)
 
 Procedure
 ----------
@@ -394,9 +396,67 @@ and the runout angle and distance errors as well as the velocity altitude error 
 To run
 -------
 
-A workflow example is given in :py:mod:`runScripts.runAna1EnergyLineTest.py`.
+A workflow example is given in :py:mod:`runScripts.runEnergyLineTest.py`.
+
+Rotation test
+==============
+
+The rotation test aims at verifying that a DFA computation module produces similar results,
+if not identical, independently of the underlying mesh or grid orientation used for the computation.
+Indeed, numerical solvers using any sort of mesh based discretization or interpolation method
+tend to give different results for the same physical problem, boundary conditions and initial
+conditions if the mesh or grid orientation is different.
+In this test, the same physical problem is fed to the DFA module changing only the grid orientation.
+The energy line test is applied to each of the simulations and the runouts compared. An AIMEC
+analysis of the peak results (previously rotated so that they have the same flow direction) is also
+carried out to give a more detailed idea of the spatial difference between the simulations.
 
 
+Inputs
+-------
+
+This module requires an avalanche directory with inputs for the com1DFA and AIMEC module.
+
+com1DFA inputs
+~~~~~~~~~~~~~~
+
+- The DEM needs to have a center of symmetry located at the origin (0, 0).
+- There needs to be multiple release features also symmetric in regard of the origin.
+  These features need to be named relXXX.shp, where XXX is the rotation angle in the clockwise
+  direction compared to the :math:`[-\infty, 0]` x axis.
+- There can also be some entrainment or resistance features (also satisfying the symmetry criterion).
+
+ana3AIMEC inputs
+~~~~~~~~~~~~~~~~~
+
+- The line describing the avalanche path for the reference simulation
+- A split point.
+
+
+The most simple example is a bowl centered on (0, 0) with some circular release features all located
+at the same distance from the origin and a ring shaped entrainment feature
+(as shown on :numref:`fig-rotation-test-inputs`).
+
+.. _fig-rotation-test-inputs:
+
+.. figure:: _static/rotationTestOutputs1.png
+    :width: 90%
+
+    Example of input data used for the rotation test and peak flow thickness result produced by the com1DFA module.
+    In the background one sees the dem of a bowl, in dashed areas (small circles) the three release features
+    and in blue (big circle) the entrainment feature. One release feature is aligned with the x axis (rel0),
+    the other is rotated 120° clockwise (rel120) and the last on 225° clockwise (rel225). All three input
+    scenarios are identical.
+
+One then needs to specify the the com1DFA configuration (through the ``com1DFACfg.ini`` and its local version)
+as well as the AIMEC configuration (through the ``ana3AIMECCfg.ini`` and its local version) and
+the path generation configuration (through the ``pathGenerationCfg.ini`` and its local version).
+
+To run
+-------
+
+A workflow example is given in :py:mod:`runScripts.runRotationTest.py`.
+Some example input data is given in avaTripleBowl.
 
 .. Flat plane test
 .. ====================

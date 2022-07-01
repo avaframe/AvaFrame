@@ -33,15 +33,15 @@ def mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem):
     """
     log.info('Energy line test for simulation: %s' % simName)
     pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
+    avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
                                                            comModule='com1DFA')
     # make analysis and generate plots
-    errorEnergyTest, savePath = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
-                                                simName)
-    return errorEnergyTest, savePath
+    resultEnergyTest, savePath = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem,
+                                                           fieldsList, simName)
+    return resultEnergyTest, savePath
 
 
 def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList, simName):
@@ -75,8 +75,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass,
                                                                                   mu, csz)
     # compute errors on runout and veloctity altitude
-    zEne, u2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
-                                                                  runOutAngleDeg, alphaDeg)
+    zEne, u2Path, sGeomL, zGeomL, resultEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
+                                                                   runOutAngleDeg, alphaDeg)
     z0 = avaProfileMass['z'][0]
     # create figures and plots
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -168,10 +168,10 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
 
     # add horizontal line at the final mass averaged position
     # compute plot limits
-    runOutSError = errorEnergyTest['runOutSError']
-    runOutZError = errorEnergyTest['runOutZError']
-    runOutAngleError = errorEnergyTest['runOutAngleError']
-    rmseVelocityElevation = errorEnergyTest['rmseVelocityElevation']
+    runOutSError = resultEnergyTest['runOutSError']
+    runOutZError = resultEnergyTest['runOutZError']
+    runOutAngleError = resultEnergyTest['runOutAngleError']
+    rmseVelocityElevation = resultEnergyTest['rmseVelocityElevation']
     errorS = abs(runOutSError)
     sMin = min(avaProfileMass['s'][-1], sIntersection) - errorS
     sMax = max(avaProfileMass['s'][-1], sIntersection) + errorS
@@ -206,11 +206,11 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     plt.setp(text_box.patch, facecolor='white', alpha=0.5)
     ax3.add_artist(text_box)
     outFileName = '_'.join([simName, 'EnergyTest'])
-    outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
+    outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'energyLineTest')
     plt.tight_layout()
     savePath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
-    return errorEnergyTest, savePath
+    return resultEnergyTest, savePath
 
 
 def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
@@ -337,8 +337,8 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
         s coord (start and end) of the run out angle line
     zGeomL: 2 element list
         z coord (start and end) of the run out angle line
-    errorEnergyTest: dict
-        rmseVelocityElevation, runOutSError, runOutZError, runOutAngleError
+    resultEnergyTest: dict
+        zEnd, sEnd, runoutAngle as well as rmseVelocityElevation, runOutSError, runOutZError, runOutAngleError
         between theoretical solution and simulation result
     """
     # read mass average quantities
@@ -362,6 +362,7 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
     runOutZError = avaProfileMass['z'][-1] - zIntersection
     # error on angle runout
     runOutAngleError = runOutAngleDeg - alphaDeg
-    errorEnergyTest = {'rmseVelocityElevation': rmseVelocityElevation, 'runOutSError': runOutSError,
-                       'runOutZError': runOutZError, 'runOutAngleError': runOutAngleError}
-    return zEne, u2Path, sGeomL, zGeomL, errorEnergyTest
+    resultEnergyTest = {'zEnd': avaProfileMass['z'][-1], 'sEnd': avaProfileMass['s'][-1], 'runoutAngle': runOutAngleDeg,
+                        'rmseVelocityElevation': rmseVelocityElevation, 'runOutSError': runOutSError,
+                        'runOutZError': runOutZError, 'runOutAngleError': runOutAngleError}
+    return zEne, u2Path, sGeomL, zGeomL, resultEnergyTest
