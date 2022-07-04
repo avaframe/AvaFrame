@@ -59,21 +59,23 @@ def test_writeReport(tmp_path):
 
     # initialise cfg object and test directory
     cfg = configparser.ConfigParser()
-    cfg['FLAGS'] = {'reportOneFile': 'True'}
+    reportOneFile = True
     plot1 = pathlib.Path('testPath', 'pft.png')
     plotDict = {'thisIsMySimulation1': {'pft': plot1},
                 'simulationNumber2': {'pft': plot1}}
     # Call function to be tested
-    gR.writeReport(tmp_path, reportDictList, cfg['FLAGS'], plotDict)
+    gR.writeReport(tmp_path, reportDictList, reportOneFile, plotDict=plotDict, standaloneReport=False,
+                   reportName='fullSimulationReport.md')
 
     # Load simulation report
-    reportFile = open(os.path.join(tmp_path, 'fullSimulationReport.md'), 'r')
-    lines = reportFile.readlines()
-    lineVals = []
-    for line in lines:
-        lineVals.append(line)
+    reportFile1 = pathlib.Path(tmp_path, 'fullSimulationReport.md')
+    with open(reportFile1, 'r') as pfile:
+        lines = pfile.readlines()
+        lineVals = []
+        for line in lines:
+            lineVals.append(line)
 
-    reportFile.close()
+    print(lineVals)
 
     # Test
     assert lineVals[0] == '# This is my report title \n'
@@ -91,25 +93,25 @@ def test_writeReport(tmp_path):
     testDict2 = testDict
     testDict2['simName']['name'] = 'simulationNumber2'
     reportDictList = [testDict, testDict]
-    cfg['FLAGS'] = {'reportOneFile': 'False'}
-    gR.writeReport(tmp_path, reportDictList, cfg['FLAGS'], plotDict)
+    reportOneFile = False
+    gR.writeReport(tmp_path, reportDictList, reportOneFile, plotDict=plotDict, standaloneReport=False,
+                   reportName='simulationNumber2.md')
 
     # Load simulation report
-    reportFile2 = open(os.path.join(tmp_path, 'simulationNumber2.md'), 'r')
-    lines = reportFile2.readlines()
-    lineVals2 = []
-    for line in lines:
-        lineVals2.append(line)
+    reportFile2 = pathlib.Path(tmp_path, 'simulationNumber2.md')
+    with open(reportFile2, 'r') as pfile:
+        lines = pfile.readlines()
+        lineVals2 = []
+        for line in lines:
+            lineVals2.append(line)
+        print('lineVals2', lineVals2)
 
-    reportFile2.close()
-    print('lineVals2', lineVals2)
-
-    assert lineVals2[0] == '# This is my report title \n'
-    assert lineVals2[2] == '### Avalanche directory: *data/avaTest* \n'
-    assert lineVals2[4] == '### Date: 1/01/2021 12:46:56 \n'
-    assert lineVals2[11] == '| ---------- | ------ | \n'
-    assert lineVals2[12] == '| release area | release1HS2 | \n'
-    assert lineVals2[23] == '| Additional snow-covered area | \n'
-    assert lineVals2[24] == '| ----------| \n'
-    assert lineVals2[-3] == '![pft](pft.png) \n'
-    assert lineVals2[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pft.png) \n'
+        assert lineVals2[0] == '# This is my report title \n'
+        assert lineVals2[2] == '### Avalanche directory: *data/avaTest* \n'
+        assert lineVals2[4] == '### Date: 1/01/2021 12:46:56 \n'
+        assert lineVals2[11] == '| ---------- | ------ | \n'
+        assert lineVals2[12] == '| release area | release1HS2 | \n'
+        assert lineVals2[23] == '| Additional snow-covered area | \n'
+        assert lineVals2[24] == '| ----------| \n'
+        assert lineVals2[-3] == '![pft](pft.png) \n'
+        assert lineVals2[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pft.png) \n'

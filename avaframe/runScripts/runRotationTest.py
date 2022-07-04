@@ -73,6 +73,6 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfgAimec)
 pathDict, rasterTransfo, resAnalysisDF, aimecPlotDict = runAna3AIMEC.runAna3AIMEC(avalancheDir, cfgAimec)
 resAnalysisDF = resAnalysisDF.reset_index().merge(simDF[['simName', 'relAngle']], on=['simName']).set_index('index')
 
-# create rotation test report
+# finalyze rotation test report
 reportRotationTest = rotationTest.buildRotationTestReport(avalancheDir, reportRotationTest, simDF, resAnalysisDF,
                                                           aimecPlotDict, flagMass)

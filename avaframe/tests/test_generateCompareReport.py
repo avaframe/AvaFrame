@@ -56,14 +56,14 @@ def test_copyAimecPlots(tmp_path):
     outDir = pathlib.Path(tmp_path)
     dirPath = pathlib.Path(__file__).parents[0]
     pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pft.png'
-    plotFiles = [{'aimec plot 1': pathPlot}, {'aimec plot 2': pathPlot}]
+    plotFiles = [{'aimec plot 1': {'sim1': pathPlot}}, {'aimec plot 2': {'sim2': pathPlot}}]
     testName = 'avaTest'
     plotPaths = {}
 
     # call function to be tested
     plotPaths = gR.copyAimecPlots(plotFiles, testName, outDir, plotPaths)
     testFile = outDir / 'avaTest__release1HX_ent_dfa_3f8d2d9327_pft.png'
-
+    print(plotPaths)
     assert str(plotPaths['aimec plot 1']) == str(testFile)
     assert len(plotPaths) == 2
 

@@ -635,3 +635,17 @@ def test_rotate():
     lenVectorRot = np.sqrt(vectorRot[0]**2 + vectorRot[1]**2)
 
     assert np.isclose(lenVector, lenVectorRot)
+
+
+def test_rotateRaster():
+    rasterData = np.zeros((5, 5))
+    rasterData[2, 0:2] = 1
+    rasterData[2, 3:4] = -1
+    header = {'xllcenter': -2, 'yllcenter': -2, 'cellsize': 1, 'ncols': 5, 'nrows': 5}
+    rasterDict = {'header': header, 'rasterData': rasterData}
+    theta = 90
+    print(header)
+    print(rasterData)
+    rotatedRaster = geoTrans.rotateRaster(rasterDict, theta, deg=True)
+    print(rotatedRaster['rasterData'][0:-1, 2])
+    assert np.allclose(rotatedRaster['rasterData'][0:-1, 2], np.array([1, 1, 0, -1]), atol=1e-6)

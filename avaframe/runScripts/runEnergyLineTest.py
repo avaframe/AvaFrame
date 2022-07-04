@@ -41,9 +41,10 @@ iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
 energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
 # run the com1DFA module or load the results from com1DFA
-dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule, cfgFile=energyLineTestCfgFile)
+dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=runDFAModule,
+                                         cfgFile=energyLineTestCfgFile)
 
 # generate mass averaged path profile
 for simName in simDF.index:
     # make analysis and generate plots
-    errorEnergyTest = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
+    resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
