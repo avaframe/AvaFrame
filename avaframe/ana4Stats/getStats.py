@@ -106,7 +106,8 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
                 # chose value from first feature found!
                 varParVal = simDF[simDF['simName'] == simName][varParFirstName].iloc[0]
                 if len(varParIdList) > 1:
-                    log.warning('%s value - there are multiple features - %s value used from first feature only!' % (varPar, varPar))
+                    log.warning('%s value - there are multiple features - %s value used '
+                                'from first feature only!' % (varPar, varPar))
             # cadd varPar value to dictionary
             peakValues[simName].update({'varPar': varParVal})
             if nameScenario != '':

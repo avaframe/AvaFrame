@@ -1,5 +1,5 @@
 """
-    Run script for getting rename dataframe 
+    Run script for getting rename dataframe
 """
 
 # Load modules
@@ -27,5 +27,5 @@ log.info('Current avalanche: %s', avaDir)
 avaDir = pathlib.Path(avaDir)
 csvString = 'mu,tau0'
 
-renameDF = cfgHandling.addInfoToSimName(avaDir,csvString)
+renameDF = cfgHandling.addInfoToSimName(avaDir, csvString)
 print(renameDF)

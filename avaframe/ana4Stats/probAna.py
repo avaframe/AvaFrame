@@ -221,7 +221,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     # Create probability map ranging from 0-1
     probMap = probSum / count
     unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
-    log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
+    log.info('probability analysis performed for peak parameter: %s and a peak value '
+             'threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
     log.info('%s peak fields added to analysis' % count)
 
     # # Save to .asc file

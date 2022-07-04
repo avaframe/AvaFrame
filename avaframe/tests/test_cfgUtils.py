@@ -96,14 +96,14 @@ def test_orderSimFiles():
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, specDir='')
 
-    varParList, simDF = cfgUtils.orderSimulations(varParList, True, simDF)
+    varParList, simDF = cfgHandling.orderSimulations(varParList, True, simDF)
 
     assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
     varParList = 'releaseSenario'
     message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
     with pytest.raises(KeyError) as e:
-        assert cfgUtils.orderSimulations(varParList, True, simDF)
+        assert cfgHandling.orderSimulations(varParList, True, simDF)
     assert message in str(e.value)
 
 
@@ -117,14 +117,14 @@ def test_fetchAndOrderSimFiles():
 
     varParList = 'releaseScenario'
 
-    simDF = cfgUtils.fetchAndOrderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
+    simDF = cfgHandling.fetchAndOrderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
 
     assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
 
     varParList = 'releaseSenario'
     message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
     with pytest.raises(KeyError) as e:
-        simDF = cfgUtils.fetchAndOrderSimFiles(avaDir, 'inputDir', varParList, True, specDir='', resFiles=False)
+        simDF = cfgHandling.fetchAndOrderSimFiles(avaDir, 'inputDir', varParList, True, specDir='', resFiles=False)
     assert message in str(e.value)
 
 

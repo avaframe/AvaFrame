@@ -149,7 +149,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         # fetch parameters that shall be used for ordering
         varParList = cfgSetup['varParList'].split('|')
         # order simulations
-        varParList, inputsDF = cfgUtils.orderSimulations(varParList, cfgSetup.getboolean('ascendingOrder'), inputsDF)
+        varParList, inputsDF = cfgHandling.orderSimulations(varParList, cfgSetup.getboolean('ascendingOrder'), inputsDF)
         colorVariation = True
         # now look for the reference
         if referenceSimValue != '':
@@ -230,7 +230,8 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         # there might be multiple simulations matching the referenceSimValue, we take the first one
         refSimRowHash = inputsDF[inputsDF[varParList[0]] == valRef].index
         refSimRowHash, refSimName = checkMultipleSimFound(refSimRowHash, inputsDF)
-        log.info(('Reference simulation is based on %s = %s - closest value found is: %s and corresponds to simulation %s')
+        log.info(('Reference simulation is based on %s = %s - closest value '
+                  'found is: %s and corresponds to simulation %s')
                  % (varParList[0], referenceSimValue, str(valRef), refSimName))
     except ValueError:
         message = 'Did not find any simulation matching %s = %s.' % (varParList[0], referenceSimValue)
