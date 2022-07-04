@@ -14,7 +14,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def insertIntoSimName(name , keys, values, index):
+def insertIntoSimName(name, keys, values, index):
     """ Add keys and values to name, in between parts of name split by index
 
         Parameters
@@ -27,15 +27,14 @@ def insertIntoSimName(name , keys, values, index):
             list with values
         index: str
             used to split name
-            
-        
+
         Returns
         --------
         newName: string
             containing newName, with keys and values inserted after index
     """
-   
-    # Split according to index 
+
+    # Split according to index
     splitName = name.split(index + '_')
     newPart = '_'
 
@@ -45,7 +44,7 @@ def insertIntoSimName(name , keys, values, index):
 
     # Put newname back together
     try:
-        newName = splitName[0] + str(index) + newPart + splitName[1] 
+        newName = splitName[0] + str(index) + newPart + splitName[1]
     except IndexError:
         log.info(splitName)
         log.error('Some part is missing. SOMENAME_simHash_XXX is expected')
@@ -54,11 +53,11 @@ def insertIntoSimName(name , keys, values, index):
     return(newName)
 
 
-def addInfoToSimName(avalancheDir,csvString=''):
+def addInfoToSimName(avalancheDir, csvString=''):
     """ Add parameterName and value to simNames of simulation dataframe
 
         E.g used as helper routine for renaming layernames in qgis
-        
+
         Parameters
         -----------
         avalancheDir: str
@@ -66,25 +65,27 @@ def addInfoToSimName(avalancheDir,csvString=''):
         csvString:
             comma separated list with parameter names, as found in ini file
             eg. 'mu,tau0,tEnd'
-        
+ 
         Returns
         --------
         simDF: dataframe
             containing index, the parameters and the old and new name
     """
-    
+
     # read the allConfiigurationInfo
     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
-    
+
     vars = csvString.split(',')
 
-    for var in vars  :
-        simDF['newName'] = simDF.apply(lambda row : insertIntoSimName(row['simName'], vars, row[vars], row.name), axis = 1)
+    for var in vars:
+        simDF['newName'] = simDF.apply(lambda row: insertIntoSimName(row['simName'],
+                                                                      vars, row[vars], row.name), axis=1)
 
     vars.append('simName')
     vars.append('newName')
 
     return(simDF[vars])
+
 
 def filterSims(avalancheDir, parametersDict, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
@@ -171,6 +172,77 @@ def removeSimsNotMatching(simDF, key, value):
             simDF = simDF[filterMask]
 
     return simDF
+
+
+def orderSimulations(varParList, ascendingOrder, simDF):
+    """ Order simulations datadframe using a list of parameters and a flag if in ascending or descending order
+        Parameters
+        -----------
+        varParList: str or list
+            simulation configuration parameters for ordering simulations
+        ascendingOrder: bool
+            True if simulations shall be ordered in ascending order regarding varPar
+        simDF: pandas dataFrame
+            dataFrame of simulations (one line per simultaion with fileName, ... and values for parameters in
+            varParList)
+        Returns
+        --------
+        simDF: pandas dataFrame
+            sorted dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+    """
+    # make sure that parameters used for ordering are provided as list
+    if isinstance(varParList, str):
+        varParList = [varParList]
+    # sort according to varParList and ascendingOrder flag
+    # also check that key exists
+    try:
+        simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
+    except KeyError as e:
+        message = 'Choose a valid parameter for sorting the simulations. \'%s\' is not valid.' % e.args[0]
+        log.error(message)
+        raise KeyError(message)
+    return varParList, simDF
+
+
+def fetchAndOrderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
+    """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
+        Parameters
+        -----------
+        avalancheDir: str
+            path to avalanche directory
+        inputDir: str
+            path to simulation results
+        varParList: str or list
+            simulation configuration parameters for ordering simulations
+        ascendingOrder: bool
+            True if simulations shall be ordered in ascending order regarding varPar
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
+        Returns
+        --------
+        dataDF: pandas dataFrame
+            dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+    """
+
+    # load dataFrame for all configurations
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, specDir=specDir)
+
+    if resFiles:
+        # create dataframe for simulation results in inputDir
+        dataDF = fU.makeSimDF(inputDir)
+        if isinstance(varParList, str):
+            varParList = [varParList]
+        # append 'simName' for merging of dataframes according to simNames
+        columnNames = ['simName'] + varParList
+        # merge varParList parameters as columns to dataDF for matching simNames
+        dataDFNew = dataDF.merge(simDF[columnNames], left_on='simName',
+                                 right_on='simName')
+    else:
+        dataDFNew = simDF
+
+    varParList, dataDFNew = orderSimulations(varParList, ascendingOrder, dataDFNew)
+
+    return dataDFNew
 
 
 def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
