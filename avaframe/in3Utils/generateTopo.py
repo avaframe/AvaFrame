@@ -158,12 +158,12 @@ def addDrop(cfg, x, y, zv):
     nrows, ncols = np.shape(x)
     # get the z coordinate of the point at the beginning of the drop
     zIniDrop, _ = geoTrans.projectOnGrid(xStartDrop*np.ones((nrows)), y[:, 0],
-                                         np.vstack((zv[0,:], zv)), csz=dx,
+                                         np.vstack((zv[0, :], zv)), csz=dx,
                                          xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
     zIniDrop = np.tile(zIniDrop, (ncols, 1)).transpose()
     # get the z coordinate of the point at the end of the drop
     zEndDrop, _ = geoTrans.projectOnGrid(xEndDrop*np.ones((nrows)), y[:, 0],
-                                         np.vstack((zv[0,:], zv)), csz=dx,
+                                         np.vstack((zv[0, :], zv)), csz=dx,
                                          xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
     zEndDrop = np.tile(zEndDrop, (ncols, 1)).transpose()
     # Set surface elevation from slope and max. elevation
@@ -465,15 +465,15 @@ def bowl(cfg):
 
     # Set surface elevation
     zv = rBwol*np.ones((nRows, nCols))
-    if cfg['TOPO'].getboolean('curvedSlope') == True:
+    if cfg['TOPO'].getboolean('curvedSlope'):
         radius = np.sqrt(x**2)
     else:
         radius = np.sqrt(x**2 + y**2)
     mask = np.zeros(np.shape(x))
     mask[np.where(radius <= rBwol)] = 1
     zv = zv - (rBwol * np.sqrt(np.abs(1 - (radius / rBwol)**2)))*mask
-    if cfg['TOPO'].getboolean('curvedSlope') == True:
-        zv[x>=0] = 0.
+    if cfg['TOPO'].getboolean('curvedSlope'):
+        zv[x >= 0] = 0.
 
     # Log info here
     log.info('Bowl coordinates computed')
@@ -551,7 +551,6 @@ def helix(cfg):
         radius2 = rHelix - radius
         zv = zv - cExtent*c0*np.sqrt(np.abs(1. - (np.square(radius1) / np.square(cExtent))))*mask
 
-
     # set last row at Center to fall height
     indCols = int(0.5*nCols)
     zv[-1, 0:indCols] = C
@@ -575,35 +574,33 @@ def pyramid(cfg):
 
     # initialise pyramid corners and center point
     points = np.asarray([[-1., -1., 0], [-1., 1., 0], [1., 1., 0], [1., -1, 0.], [0., 0., 1.]])
-    dxPoints = abs(points[4,0] - points[1,0])
+    dxPoints = abs(points[4, 0] - points[1, 0])
 
     # compute elevation of the apex point for given angle of pyramid facets
     zAlpha = dxPoints * np.tan(np.deg2rad(meanAlpha))
-    points[4,2] = zAlpha
-    dcoors = points * z0 /zAlpha
+    points[4, 2] = zAlpha
+    dcoors = points * z0 / zAlpha
 
     # if desired rotate pyramid
-    if cfg['TOPO'].getboolean('flagRot') == True:
-        dcoorsRot = np.zeros((len(dcoors),3))
+    if cfg['TOPO'].getboolean('flagRot'):
+        dcoorsRot = np.zeros((len(dcoors), 3))
         for m in range(len(dcoorsRot)):
-            dcoorsRot[m,0] = np.cos(np.deg2rad(phi)) * dcoors[m,0] - np.sin(np.deg2rad(phi)) * dcoors[m,1]
-            dcoorsRot[m,1] = np.sin(np.deg2rad(phi)) * dcoors[m,0] + np.cos(np.deg2rad(phi)) * dcoors[m,1]
-            dcoorsRot[m,2] = dcoors[m,2]
+            dcoorsRot[m, 0] = np.cos(np.deg2rad(phi)) * dcoors[m, 0] - np.sin(np.deg2rad(phi)) * dcoors[m, 1]
+            dcoorsRot[m, 1] = np.sin(np.deg2rad(phi)) * dcoors[m, 0] + np.cos(np.deg2rad(phi)) * dcoors[m, 1]
+            dcoorsRot[m, 2] = dcoors[m, 2]
         dcoorsFin = dcoorsRot
     else:
         dcoorsFin = dcoors
 
     # split into horizontal and vertical coordinate points
-    xyPoints = np.zeros((len(points),2))
-    xyPoints[:,0] = dcoorsFin[:,0]
-    xyPoints[:,1] = dcoorsFin[:,1]
-    zPoints = dcoorsFin[:,2]
+    xyPoints = np.zeros((len(points), 2))
+    xyPoints[:, 0] = dcoorsFin[:, 0]
+    xyPoints[:, 1] = dcoorsFin[:, 1]
+    zPoints = dcoorsFin[:, 2]
 
     # make meshgrid for final DEM
-    xv = np.arange(-flatx+np.amin(dcoorsFin[:,0]), np.amax(dcoorsFin[:,0])+flatx, dx)
-    yv = np.arange(-flaty+np.amin(dcoorsFin[:,1]), np.amax(dcoorsFin[:,1])+flaty, dx)
-    nRows = len(yv)
-    nCols = len(xv)
+    xv = np.arange(-flatx+np.amin(dcoorsFin[:, 0]), np.amax(dcoorsFin[:, 0])+flatx, dx)
+    yv = np.arange(-flaty+np.amin(dcoorsFin[:, 1]), np.amax(dcoorsFin[:, 1])+flaty, dx)
     x, y = np.meshgrid(xv, yv)
 
     # interpolate appex point information to meshgrid
@@ -611,8 +608,8 @@ def pyramid(cfg):
     zNan = np.isnan(z)
     z[zNan] = 0.0
 
-    dX =  np.amax(dcoorsFin[:,0])+flatx - (-flatx+np.amin(dcoorsFin[:,0]))
-    dY =  np.amax(dcoorsFin[:,1])+flaty - (-flaty+np.amin(dcoorsFin[:,1]))
+    dX = np.amax(dcoorsFin[:, 0]) + flatx - (-flatx + np.amin(dcoorsFin[:, 0]))
+    dY = np.amax(dcoorsFin[:, 1]) + flaty - (-flaty + np.amin(dcoorsFin[:, 1]))
     log.info('domain extent pyramid- inx: %f, in y: %f' % (dX, dY))
 
     return x, y, z

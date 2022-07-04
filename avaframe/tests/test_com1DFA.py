@@ -1629,6 +1629,23 @@ def test_runCom1DFA(tmp_path, caplog):
 
     initProj.cleanModuleFiles(avaDir, com1DFA, deleteOutput=False)
     with caplog.at_level(logging.WARNING):
-        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
-        avaDir, cfgMain, cfgFile=cfgFile)
+        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=cfgFile)
     assert 'There is no simulation to be performed' in caplog.text
+
+
+def test_runOrLoadCom1DFA(tmp_path, caplog):
+    testDir = pathlib.Path(__file__).parents[0]
+    avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaKotPytest'
+    cfgMain = configparser.ConfigParser()
+    dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
+    print(simDF.index)
+    print(simDF.columns)
+    assert 'pft' in resTypeList
+    assert 'pfv' in resTypeList
+    assert 'ppr' in resTypeList
+    assert 'relKot_c9fff169d9_ent_dfa' in simDF['simName'].to_list()
+    assert 'relKot_728a70555e_null_dfa' in simDF['simName'].to_list()
+    with pytest.raises(AttributeError) as e:
+        dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='',
+                                                           deleteOutput=False)
+    assert str(e.value) == ("'str' object has no attribute 'reset_index'")

@@ -2312,10 +2312,34 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     return simTypeList
 
 
-def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=''):
+def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', deleteOutput=True):
+    """ Run or load DFA results depending on runDFAModule=True or False
+
+        Parameters
+        -----------
+        avalancheDir: pathlib path
+            avalanche directory path
+        cfgMain : configParser object
+            main avaframe configuration
+        runDFAModule: bool
+            True to run the DFA simulation Falso to load the results dataFrame and dem
+        cfgFile: str or pathlib path
+            path to cfgFile to read overall configuration - optional if not provided the local or default config is used
+        deleteOutput: Boolean
+            True to delete the com1DFA output dir before running com1DFA (used only if runDFAModule=True)
+
+        Returns
+        --------
+        dem: dict
+            dem dictionary
+        simDF: dataFrame
+            simulation results dataframe
+        resTypeList: list
+            list of output files resTypes available (ppr, pft...)
+    """
     if runDFAModule:
         # Run dense flow with coulomb friction
-        iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
+        iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=deleteOutput)
         # here is an example with com1DFA but another DFA computational module can be used
         # as long as it produces some FV, FT and FM results
         dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=cfgFile)

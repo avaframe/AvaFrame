@@ -52,7 +52,8 @@ req_packages = ['numpy',
                 'cython',
                 'pandas',
                 'shapely',
-                'configUpdater'
+                'configUpdater',
+                'tabulate'
                 ]
 
 
