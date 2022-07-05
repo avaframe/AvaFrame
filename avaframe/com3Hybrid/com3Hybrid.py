@@ -14,6 +14,7 @@ import copy
 # import config and init tools
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in1Data import getInput
 
 # import computation modules
@@ -41,8 +42,15 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
+
+    # setup outputs folder
+    oPath = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
+    fU.makeADir(oPath)
+
     # get comDFA configuration path for hybrid model
-    hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
+    hybridModelDFACfgObject = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+        onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'], addOverrides=cfgHybrid['com1DFA_override'])
+    hybridModelDFACfg = cfgUtils.writeCfgFile(avalancheDir, com1DFA, hybridModelDFACfgObject, fileName='com1DFA_settings', filePath=oPath)
 
     # get initial mu value
     muArray = np.array([cfgHybrid.getfloat('DFA', 'mu')])
@@ -78,8 +86,10 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
 
         # Run Alpha Beta
-        hybridModelABCfg = pathlib.Path('com3Hybrid', 'hybridModel_com2ABCfg.ini')
-        cfgAB = cfgUtils.getModuleConfig(com2AB, fileOverride=hybridModelABCfg)
+        # first create configuration object for com2AB
+        hybridModelABCfg= cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
+            onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'], addOverrides=cfgHybrid['com2AB_override'])
+        hybridModelABCfgFile = cfgUtils.writeCfgFile(avalancheDir, com2AB, hybridModelDFACfgObject, fileName='com2AB_settings', filePath=oPath)
         cfgAB['ABSETUP']['path2Line'] = str(pathAB) + '.shp'
         # take the path extracted from the DFA model as input
         pathDict, demAB, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
