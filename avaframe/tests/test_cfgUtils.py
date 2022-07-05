@@ -8,6 +8,17 @@ import pytest
 import configparser
 
 
+def test_addInfoToSimName():
+    '''Test for addInfoToSimname'''
+    avaTestDir = 'avaParabolaStatsTest'
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu')
+    assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_null_dfa'
+    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu,tEnd')
+    assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_tEnd_400_null_dfa'
+
+
 def test_getModuleConfig():
     '''Test for module getModuleConfig'''
 
