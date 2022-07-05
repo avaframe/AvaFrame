@@ -47,7 +47,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False):
+def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False, addOverrides=''):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -65,6 +65,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         true if dictionary with info on differences to standard config
     onlyDefault: bool
         if True, only use the default configuration
+    addOverrides: cfg
+        if not empty, override configuration parameters with override parameters
 
     Order is as follows:
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
@@ -106,11 +108,40 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
     # Finally read it
     cfg, modDict = compareConfig(iniFile, modName, compare, modInfo, toPrint)
 
+    # override parameters with override information
+    if addOverrides != '':
+        log.info('adding overrides now!')
+        cfg = getOverrideConfiguration(cfg, addOverrides)
+
     if modInfo:
         return cfg, modDict
 
     return cfg
 
+
+def getOverrideConfiguration(cfg, overrideParameters):
+    """ override configuration parameter values with the values provided in overrideParameters
+
+        Parameters
+        ----------
+        cfg: configparer object
+            configuration of module
+        overrideParameters: configparser object
+            section with override parameter information
+
+        Returns
+        --------
+        cfg: configparser object
+            updated configuration of module
+    """
+
+    for section in cfg.sections():
+        for key in cfg[section]:
+            for keyOverride in overrideParameters:
+                if key == keyOverride:
+                    cfg.set(section, key, overrideParameters[keyOverride])
+                    log.info('Override parameter: %s in section: %s with %s: %s' % (key, section, keyOverride, str(overrideParameters[keyOverride])))
+    return cfg
 
 def getDefaultModuleConfig(module, toPrint=True):
     ''' Returns the default configuration for a given module
@@ -138,6 +169,8 @@ def getDefaultModuleConfig(module, toPrint=True):
 
     # Finally read it
     cfg, _ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
+
+    cfg = addOverrides(cfg)
 
     return cfg
 
@@ -240,7 +273,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
     return cfg, modDict
 
 
-def writeCfgFile(avaDir, module, cfg, fileName=''):
+def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
     """ Save configuration used to text file in Outputs as moduleName_settings.ini
         or optional in Outputs/moduleName/configurationFiles/filenName.ini
 
@@ -254,6 +287,8 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
             configuration settings
         fileName: str
             name of saved configuration file - optional
+        filePath: str or pathlib path
+            path where file should be saved to except file name - optional
 
     """
 
@@ -264,17 +299,30 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
     # write to file
     if fileName != '':
         # set outputs
-        outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
-        fU.makeADir(outDir)
+        if filePath == '':
+            outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
+            fU.makeADir(outDir)
+        else:
+            if filePath.is_dir():
+                outDir = pathlib.Path(filePath)
+            else:
+                message = '%s is not a valid location for saving cfg file' % str(filePath)
+                log.error(message)
+                raise NotADirectoryError(message)
         cfg.optionxform = str
-        with open(pathlib.Path(outDir, '%s.ini' % (fileName)), 'w') as conf:
+        pathToFile = pathlib.Path(outDir, '%s.ini' % (fileName))
+        with open(pathToFile, 'w') as conf:
             cfg.write(conf)
     else:
         # set outputs
         outDir = pathlib.Path(avaDir, 'Outputs')
+        fU.makeADir(outDir)
         cfg.optionxform = str
-        with open(pathlib.Path(outDir, '%s_settings.ini' % (modName)), 'w') as conf:
+        pathToFile = pathlib.Path(outDir, '%s_settings.ini' % (modName))
+        with open(pathToFile, 'w') as conf:
             cfg.write(conf)
+
+    return pathToFile
 
 
 def readCfgFile(avaDir, module='', fileName=''):
