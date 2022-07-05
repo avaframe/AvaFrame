@@ -37,6 +37,7 @@ Setup AvaFrame
 
    run the following in OSGeo4W shell::
 
+     py3_env
      python3 -m pip install --user --upgrade numpy pandas
 
    and restart QGis.
