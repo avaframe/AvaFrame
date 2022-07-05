@@ -68,3 +68,8 @@ and repeat the compilation step from above::
   
   python setup.py build_ext --inplace
 
+If there are updates on the requirements inside ``setup.py``, it might be necessary to run::
+
+  pip install -e . 
+
+again to get the additional requirements installed. 
