@@ -10,7 +10,6 @@
 import copy
 import logging
 import math
-import cython
 import numpy as np
 cimport numpy as np
 from libc cimport math as math
@@ -674,7 +673,8 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     else:
       xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-      zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+      if iCellNew >= 0:
+        zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
     if iCellNew < 0:
       # if the particle is not on the DEM, memorize it and remove it at the next update
@@ -1879,7 +1879,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   iCell = getCells(xNew, yNew, ncols, nrows, csz)
   if iCell < 0:
     # if not on the DEM exit with iCell=-1
-    return xNew, yNew, iCell, 0, 0, 0, 0, 0, 0
+    return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
   w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
   Lx0 = iCell % ncols
   Ly0 = iCell / ncols
@@ -1906,7 +1906,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
     iCell = getCells(xNew, yNew, ncols, nrows, csz)
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
-      return xNew, yNew, iCell, 0, 0, 0, 0, 0, 0
+      return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
     w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
     Lx0 = iCell % ncols
     Ly0 = iCell / ncols
