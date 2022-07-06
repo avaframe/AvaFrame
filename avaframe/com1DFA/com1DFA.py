@@ -1561,6 +1561,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if cfg.getint('splitOption') == 0:
         # split particles with too much mass
         # this only splits particles that grew because of entrainment
+        log.debug('Split particles')
         particles = particleTools.splitPartMass(particles, cfg)
     elif cfg.getint('splitOption') == 1:
         # split merge operation
