@@ -47,7 +47,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False, addOverrides=''):
+def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False, overrideConfig=''):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -65,7 +65,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         true if dictionary with info on differences to standard config
     onlyDefault: bool
         if True, only use the default configuration
-    addOverrides: cfg
+    overrideConfig: cfg
         if not empty, override configuration parameters with override parameters
 
     Order is as follows:
@@ -109,9 +109,9 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
     cfg, modDict = compareConfig(iniFile, modName, compare, modInfo, toPrint)
 
     # override parameters with override information
-    if addOverrides != '':
+    if overrideConfig != '':
         log.info('adding overrides now!')
-        cfg = getOverrideConfiguration(cfg, addOverrides)
+        cfg = getOverrideConfiguration(cfg, overrideConfig['%s_override' % modName])
 
     if modInfo:
         return cfg, modDict
@@ -135,12 +135,17 @@ def getOverrideConfiguration(cfg, overrideParameters):
             updated configuration of module
     """
 
+    overrideKeys = [item for item in overrideParameters]
+    print('override KEys', overrideKeys)
+
     for section in cfg.sections():
         for key in cfg[section]:
-            for keyOverride in overrideParameters:
-                if key == keyOverride:
-                    cfg.set(section, key, overrideParameters[keyOverride])
-                    log.info('Override parameter: %s in section: %s with %s: %s' % (key, section, keyOverride, str(overrideParameters[keyOverride])))
+            if key in overrideKeys:
+                cfg.set(section, key, overrideParameters[key])
+                log.info('Override parameter: %s in section: %s with %s' % (key, section, str(overrideParameters[key])))
+            else:
+                overrideParameters[key] = cfg[section][key]
+                log.info('Added %s: %s to override parameters ' % (key, cfg[section][key]))
     return cfg
 
 def getDefaultModuleConfig(module, toPrint=True):
@@ -169,8 +174,6 @@ def getDefaultModuleConfig(module, toPrint=True):
 
     # Finally read it
     cfg, _ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
-
-    cfg = addOverrides(cfg)
 
     return cfg
 
