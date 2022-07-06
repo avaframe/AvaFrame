@@ -10,6 +10,7 @@
 import copy
 import logging
 import math
+import cython
 import numpy as np
 cimport numpy as np
 from libc cimport math as math
@@ -810,7 +811,6 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       log.error(message)
       raise AssertionError(message)
 
-
   if stop:
     particles['iterate'] = False
     if typeStop == 1:
@@ -820,8 +820,8 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
-      mask = np.array(np.asarray(keepParticle), dtype=bool)
-      particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain')
+    mask = np.array(np.asarray(keepParticle), dtype=bool)
+    particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain')
 
   return particles
 
@@ -1080,7 +1080,7 @@ cpdef double computePressure(double v, double rho):
 
 def computeTravelAngleC(particles, zPartArray0):
   """Compute the travel angle associated to the particles
-  
+
   Parameters
   ----------
   particles : dict
@@ -1879,7 +1879,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   iCell = getCells(xNew, yNew, ncols, nrows, csz)
   if iCell < 0:
     # if not on the DEM exit with iCell=-1
-    return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
+    return xNew, yNew, iCell, 0, 0, 0, 0, 0, 0
   w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
   Lx0 = iCell % ncols
   Ly0 = iCell / ncols
@@ -1906,7 +1906,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
     iCell = getCells(xNew, yNew, ncols, nrows, csz)
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
-      return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
+      return xNew, yNew, iCell, 0, 0, 0, 0, 0, 0
     w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
     Lx0 = iCell % ncols
     Ly0 = iCell / ncols
