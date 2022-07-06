@@ -1023,7 +1023,7 @@ def updateFieldsC(cfg, particles, dem, fields):
           if travelAngleField[j, i] > PTA[j, i]:
             PTA[j, i] = travelAngleField[j, i]
         if computeKE:
-          # in J/cell
+          # in J/cell (this is not normalized yet and depends on the cell size used for the computation)
           kineticEnergy[j, i] = 0.5*m*VBilinear[j, i]*VBilinear[j, i]
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
@@ -1059,7 +1059,7 @@ def updateFieldsC(cfg, particles, dem, fields):
 
 
 cpdef double computePressure(double v, double rho):
-  """Compute pressure using the super advanced p = rho*v² equation
+  """Compute pressure using the p = rho*v² equation
 
   Parameters
   ----------
