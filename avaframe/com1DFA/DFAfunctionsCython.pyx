@@ -1023,7 +1023,7 @@ def updateFieldsC(cfg, particles, dem, fields):
           if travelAngleField[j, i] > PTA[j, i]:
             PTA[j, i] = travelAngleField[j, i]
         if computeKE:
-          # in J
+          # in J/cell
           kineticEnergy[j, i] = 0.5*m*VBilinear[j, i]*VBilinear[j, i]
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
@@ -1080,7 +1080,7 @@ cpdef double computePressure(double v, double rho):
 
 def computeTravelAngleC(particles, zPartArray0):
   """Compute the travel angle associated to the particles
-  
+
   Parameters
   ----------
   particles : dict

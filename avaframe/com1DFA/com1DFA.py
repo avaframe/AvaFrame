@@ -314,7 +314,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
     # Result parameters to be exported
-    exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
+    exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
 
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfgGen, reportAreaInfo)
@@ -2047,7 +2047,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
     return fieldsList, fieldHeader, timeList
 
 
-def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
+def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 
@@ -2087,15 +2087,15 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 # convert from Pa to kPa
                 resField = resField * 0.001
             if resType == 'pke':
-                # convert from J to kJ
-                resField = resField * 0.001
+                # convert from J/cell to kJ/m²
+                resField = resField * 0.001 / dem['areaRaster']
             dataName = (logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory
             outDirPeak = outDir / 'peakFiles' / 'timeSteps'
             fU.makeADir(outDirPeak)
             outFile = outDirPeak / dataName
             IOf.writeResultToAsc(
-                demOri['header'], resField, outFile, flip=True)
+                dem['originalHeader'], resField, outFile, flip=True)
             if countTime == numberTimes:
                 log.debug('Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' %
                           (resType, Tsave[countTime]))
@@ -2104,7 +2104,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 outDirPeakAll = outDir / 'peakFiles'
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
-                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
+                IOf.writeResultToAsc(dem['originalHeader'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' %
                           (resType, Tsave[countTime]))

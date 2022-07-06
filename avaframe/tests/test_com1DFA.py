@@ -1244,7 +1244,7 @@ def test_exportFields(tmp_path):
     # setup required input
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'resType': 'ppr|pft|FT'}
-    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv|pke'}
     Tsave = [0, 10, 15, 25, 40]
     demHeader = {}
     demHeader['cellsize'] = 1
@@ -1253,19 +1253,21 @@ def test_exportFields(tmp_path):
     demHeader['xllcenter'] = 0
     demHeader['yllcenter'] = 0
     demHeader['noDataValue'] = -9999
-    dem = {'header': demHeader}
+    areaRaster = np.ones((5, 5))
+    dem = {'originalHeader': demHeader, 'areaRaster': areaRaster}
     outDir = pathlib.Path(tmp_path, 'testDir')
     outDir.mkdir()
     logName = 'simNameTest'
     FT = np.zeros((5, 5))
+    pke = np.zeros((5, 5))
     pft = np.zeros((5, 5))
     pfv = np.zeros((5, 5))
     ppr = np.zeros((5, 5))
-    fields1 = {'ppr': ppr+1, 'pft': pft+1, 'pfv': pfv+1, 'FT': FT+1}
-    fields2 = {'ppr': ppr+2, 'pft': pft+2, 'pfv': pfv+2, 'FT': FT+2}
-    fields3 = {'ppr': ppr+4, 'pft': pft+4, 'pfv': pfv+4, 'FT': FT+4}
-    fields4 = {'ppr': ppr+5, 'pft': pft+5, 'pfv': pfv+5, 'FT': FT+5}
-    fields5 = {'ppr': ppr+6, 'pft': pft+6, 'pfv': pfv+6, 'FT': FT+6}
+    fields1 = {'ppr': ppr+1, 'pft': pft+1, 'pfv': pfv+1, 'FT': FT+1, 'pke': pke+1}
+    fields2 = {'ppr': ppr+2, 'pft': pft+2, 'pfv': pfv+2, 'FT': FT+2, 'pke': pke+2}
+    fields3 = {'ppr': ppr+4, 'pft': pft+4, 'pfv': pfv+4, 'FT': FT+4, 'pke': pke+4}
+    fields4 = {'ppr': ppr+5, 'pft': pft+5, 'pfv': pfv+5, 'FT': FT+5, 'pke': pke+5}
+    fields5 = {'ppr': ppr+6, 'pft': pft+6, 'pfv': pfv+6, 'FT': FT+6, 'pke': pke+6}
     fieldsList = [fields1, fields2, fields3, fields4, fields5]
 
     # call function to be tested
@@ -1293,7 +1295,7 @@ def test_exportFields(tmp_path):
 
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pftt10)
-    assert len(fieldsListTest) == 17
+    assert len(fieldsListTest) == 19
 
     # call function to be tested
     outDir2 = pathlib.Path(tmp_path, 'testDir2')
