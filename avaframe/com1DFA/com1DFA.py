@@ -2089,6 +2089,7 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 resField = resField * 0.001
             if resType == 'pke':
                 # convert from J/cell to kJ/m²
+                # (by deviding the peak kinetik energy per cell by the real area of the cell)
                 resField = resField * 0.001 / dem['areaRaster']
             dataName = (logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory
