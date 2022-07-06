@@ -47,8 +47,9 @@ def insertIntoSimName(name, keys, values, index):
         newName = splitName[0] + str(index) + newPart + splitName[1]
     except IndexError:
         log.info(splitName)
-        log.error('Some part is missing. SOMENAME_simHash_XXX is expected')
-        raise
+        msg = 'Some part is missing. SOMENAME_simHash_XXX is expected'
+        log.error(msg)
+        raise IndexError(msg)
 
     return(newName)
 
@@ -63,7 +64,7 @@ def addInfoToSimName(avalancheDir, csvString=''):
         avalancheDir: str
             path to avalanche directory
         csvString:
-            comma separated list with parameter names, as found in ini file
+            comma separated list with parameter names, as found in com1DFA ini file
             eg. 'mu,tau0,tEnd'
  
         Returns
@@ -78,6 +79,7 @@ def addInfoToSimName(avalancheDir, csvString=''):
     vars = csvString.split(',')
 
     for var in vars:
+        # get the newName for every row by applying insertIntoSimName on each row
         simDF['newName'] = simDF.apply(lambda row: insertIntoSimName(row['simName'],
                                                                       vars, row[vars], row.name), axis=1)
 
