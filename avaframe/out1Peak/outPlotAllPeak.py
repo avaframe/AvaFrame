@@ -106,7 +106,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             # choose colormap
             cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
             cmap.set_bad(alpha=0)
-            cmap.set_under(alpha=0)
+            # uncomment this to set the under value for descrete cmap transparent
+            # cmap.set_under(alpha=0)
             rowsMinPlot = rowsMin*cellSize
             rowsMaxPlot = (rowsMax+1)*cellSize
             colsMinPlot = colsMin*cellSize
