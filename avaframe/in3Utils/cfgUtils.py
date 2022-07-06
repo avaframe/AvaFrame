@@ -135,9 +135,10 @@ def getOverrideConfiguration(cfg, overrideParameters):
             updated configuration of module
     """
 
+    # create list with parameters that become overridden
     overrideKeys = [item for item in overrideParameters]
-    print('override KEys', overrideKeys)
 
+    # loop through sections of the configuration of the module
     for section in cfg.sections():
         for key in cfg[section]:
             if key in overrideKeys:
@@ -145,8 +146,10 @@ def getOverrideConfiguration(cfg, overrideParameters):
                 log.info('Override parameter: %s in section: %s with %s' % (key, section, str(overrideParameters[key])))
             else:
                 overrideParameters[key] = cfg[section][key]
-                log.info('Added %s: %s to override parameters ' % (key, cfg[section][key]))
+                log.debug('Added %s: %s to override parameters ' % (key, cfg[section][key]))
+
     return cfg
+
 
 def getDefaultModuleConfig(module, toPrint=True):
     ''' Returns the default configuration for a given module

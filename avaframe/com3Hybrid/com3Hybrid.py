@@ -78,7 +78,6 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # fetch configuration for DFAPathGeneration
         hybridModelPathCfg= cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
             onlyDefault=cfgHybrid['DFAPathGeneration_override']['defaultConfig'], overrideConfig=cfgHybrid)
-        hybridModelPathCfgFile = cfgUtils.writeCfgFile(avalancheDir, DFAPath, hybridModelPathCfg, fileName='DFAPathGeneration_settings', filePath=oPath)
         # postprocess to extract path and energy line
         avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, addVelocityInfo=True)
         # make a copy because extendDFAPathKernel might modify avaProfileMass
@@ -95,7 +94,6 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # first create configuration object for com2AB
         hybridModelcom2ABCfg = cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
             onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'], overrideConfig=cfgHybrid)
-        hybridModelcom2ABCfgFile = cfgUtils.writeCfgFile(avalancheDir, com2AB, hybridModelcom2ABCfg, fileName='com2AB_settings', filePath=oPath)
         hybridModelcom2ABCfg['ABSETUP']['path2Line'] = str(pathAB) + '.shp'
         # take the path extracted from the DFA model as input
         pathDict, demAB, splitPoint, eqParams, resAB = com2AB.com2ABMain(hybridModelcom2ABCfg, avalancheDir)
