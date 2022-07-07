@@ -908,7 +908,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         cUpper = min(lindex)
         cLower = max(lindex)
     else:
-        log.error('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
+        log.warning('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpper = 0
         cLower = 0
     # search in mean values
@@ -917,7 +917,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         cUpperm = min(lindex)
         cLowerm = max(lindex)
     else:
-        log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
+        log.warning('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpperm = 0
         cLowerm = 0
     resAnalysisDF.loc[simRowHash, 'sRunout'] = scoord[cLower]

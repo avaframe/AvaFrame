@@ -1,5 +1,5 @@
 #!python
-#cython: boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 """
     function related to SPH calculations in com1DFA
     to build: go to repository containing this file and run:
