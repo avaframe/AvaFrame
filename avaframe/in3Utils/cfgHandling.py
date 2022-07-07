@@ -6,6 +6,7 @@
 
 import logging
 import numpy as np
+import pathlib
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -66,7 +67,7 @@ def addInfoToSimName(avalancheDir, csvString=''):
         csvString:
             comma separated list with parameter names, as found in com1DFA ini file
             eg. 'mu,tau0,tEnd'
- 
+
         Returns
         --------
         simDF: dataframe
@@ -364,3 +365,58 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     log.info('simulations for %s found with values: %s' % (key, simDF[allThNames]))
 
     return simDF
+
+
+def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModValues=True):
+    """ override configuration parameter values with the values provided in cfgWithOverrideParameters[modName_override]
+        also update the cfgWithOverrideParameters with the values for all parameters that are not
+        provided in the override parameters
+
+        Parameters
+        ----------
+        cfgToOverride: configparer object
+            configuration of module of interest
+        cfgWithOverrideParameters: configparser object
+            full configuration settings containing a section modName_override with parameter values
+            that should be overriden in the cfgToOverride
+        module
+            module of the cfgToOverride configuration
+
+        Returns
+        --------
+        cfgToOverride: configparser object
+            updated configuration of module
+        cfgWithOverrideParameters: configparser object
+            updated configuration of module
+    """
+
+    # get path of module
+    modPath = pathlib.Path(module.__file__).resolve().parent
+
+    # get filename of module
+    modName = str(pathlib.Path(module.__file__).stem)
+
+    # create list with parameters that become overridden
+    overrideParameters = cfgWithOverrideParameters['%s_override' % modName]
+    overrideKeys = [item for item in overrideParameters]
+
+    # loop through sections of the configuration of the module
+    foundKeys = []
+    for section in cfgToOverride.sections():
+        for key in cfgToOverride[section]:
+            if key in overrideKeys:
+                cfgToOverride.set(section, key, overrideParameters[key])
+                log.info('Override %s parameter: %s in section: %s with %s' % (modName, key, section, str(overrideParameters[key])))
+                foundKeys.append(key)
+            else:
+                # if no override value is provided add actual configuration parameter to override section
+                # useful for reproduction if onlyDefault = False and modName config was read from local
+                cfgWithOverrideParameters['%s_override' % modName][key] = cfgToOverride[section][key]
+                log.debug('Added %s: %s to override parameters ' % (key, cfgToOverride[section][key]))
+
+    # log warning if parameter in override was not found in modName configuration
+    notOverride = set(foundKeys).symmetric_difference(set(overrideKeys))
+    for item in notOverride:
+        log.warning('Additional Key [\'%s\'] in section %s_override is ignored.' % (item, modName))
+
+    return cfgToOverride, cfgWithOverrideParameters

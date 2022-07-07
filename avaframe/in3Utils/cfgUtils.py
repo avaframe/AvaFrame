@@ -47,7 +47,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False, overrideConfig=''):
+def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -65,8 +65,6 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         true if dictionary with info on differences to standard config
     onlyDefault: bool
         if True, only use the default configuration
-    overrideConfig: cfg
-        if not empty, override configuration parameters with override parameters
 
     Order is as follows:
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
@@ -108,45 +106,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
     # Finally read it
     cfg, modDict = compareConfig(iniFile, modName, compare, modInfo, toPrint)
 
-    # override parameters with override information
-    if overrideConfig != '':
-        log.info('adding overrides now!')
-        cfg = getOverrideConfiguration(cfg, overrideConfig['%s_override' % modName])
-
     if modInfo:
         return cfg, modDict
-
-    return cfg
-
-
-def getOverrideConfiguration(cfg, overrideParameters):
-    """ override configuration parameter values with the values provided in overrideParameters
-
-        Parameters
-        ----------
-        cfg: configparer object
-            configuration of module
-        overrideParameters: configparser object
-            section with override parameter information
-
-        Returns
-        --------
-        cfg: configparser object
-            updated configuration of module
-    """
-
-    # create list with parameters that become overridden
-    overrideKeys = [item for item in overrideParameters]
-
-    # loop through sections of the configuration of the module
-    for section in cfg.sections():
-        for key in cfg[section]:
-            if key in overrideKeys:
-                cfg.set(section, key, overrideParameters[key])
-                log.info('Override parameter: %s in section: %s with %s' % (key, section, str(overrideParameters[key])))
-            else:
-                overrideParameters[key] = cfg[section][key]
-                log.debug('Added %s: %s to override parameters ' % (key, cfg[section][key]))
 
     return cfg
 
