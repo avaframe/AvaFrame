@@ -212,6 +212,11 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
     stepsInterval = int(pU.cfg['steps2Centile2'])
     stepWidth = 2*sortedDiffPlot[ind]/stepsInterval    # stepsInterval bins in the [-2sigma,+2sigma] interval
     bins = int(width/stepWidth)
+
+    # reduce bins to a sensible size
+    if bins > 1000:
+        bins = 1000
+
     ax2.hist(dataDiffPlot, bins=bins, density=True, histtype="stepfilled")
     ax2.get_yaxis().set_ticks([])
     if insert:
