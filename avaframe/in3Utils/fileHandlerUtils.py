@@ -651,6 +651,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
             dataDF = pd.concat([dataDF, newLine], ignore_index=False)
             dataDF.loc[simName, 'releaseArea'] = relNameSim
+            dataDF.loc[simName, 'simHash'] = infoParts[0]
             dataDF.loc[simName, 'simType'] = infoParts[1]
             dataDF.loc[simName, 'modelType'] = infoParts[2]
             # add info about the cell size
@@ -664,6 +665,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
 
     # add a hash for each line of the DF and use as index - required for identifcation
     hash = pd.util.hash_pandas_object(dataDF)
+    # reset the index using the dataframe hash
     dataDF = dataDF.set_index(hash)
     # now find res types available for all simulations
     resTypeListAll = []

@@ -247,7 +247,7 @@ This results in the following plot:
 
 .. _fig-aimec-domain-transfo:
 
-.. figure:: _static/avaAlr0_DomainTransformation.png
+.. figure:: _static/ana3AIMEC/avaAlr_DomainTransformation.png
     :width: 90%
 
     Alr avalanche coordinate transformation and peak pressure field reprojetion.
@@ -267,14 +267,14 @@ Plot and save results
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots and saves the desired figures. Writes results in ``resAnalysisDF`` to a csv file.
-By default, Aimec saves five plots plus as many plots as numerical simulations to
-compare to the reference. The first five ones are :
+By default, Aimec saves five summary plots plus three plots per simulation comparing the
+numerical simulations to compare to the reference. The first five ones are :
 
   *  "DomainTransformation" shows the real domain on the left and new domain on the right
      (:numref:`fig-aimec-domain-transfo`)
   *  "referenceFields" shows the peak pressure, flow thickness and speed in the new domain
 
-    .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
+    .. figure:: _static/ana3AIMEC/avaAlr_referenceFields.png
         :width: 90%
 
         Reference peak fields
@@ -283,7 +283,7 @@ compare to the reference. The first five ones are :
   *  "slComparison" shows the difference between all simulations in terms of peak values along profile.
      If only two simulations are provided, a 3 panel plot like the following is produced:
 
-    .. figure:: _static/avaAlr1_ppr_thresholdValue_1_slComparison.png
+    .. figure:: _static/ana3AIMEC/avaAlr_slComparison.png
         :width: 90%
 
         Maximum peak fields comparison between two simulations
@@ -292,7 +292,7 @@ compare to the reference. The first five ones are :
     file is analyzed and the statistics in terms of peak value along profile are plotted
     (mean, max and quantiles):
 
-    .. figure:: _static/avaAlr0_ppr_thresholdValue_1_slComparisonStat.png
+    .. figure:: _static/ana3AIMEC/avaAlr_slComparisonStat.png
         :width: 90%
 
         Maximum peak pressure distribution along path
@@ -300,7 +300,7 @@ compare to the reference. The first five ones are :
 
   *  "ROC" shows the normalized area difference between reference and other simulations.
 
-    .. figure:: _static/avaAlr0_ppr_thresholdValue_1_ROC.png
+    .. figure:: _static/ana3AIMEC/avaAlr_ROC.png
         :width: 90%
 
         Area analysis plot
@@ -308,24 +308,32 @@ compare to the reference. The first five ones are :
   *  "relMaxPeakField" shows the relative difference in maximum peak value between reference
      and other simulation function of runout length
 
-    .. figure:: _static/avaAlr0_relMaxppr_thresholdValue1.png
+    .. figure:: _static/ana3AIMEC/avaAlr_relMaxppr_thresholdValue1.png
         :width: 90%
 
         Relative maximum peak pressure function of runout
 
-The last plots "_i_ContourComparisonToReference" and "_i_AreaComparisonToReference"  where "i"
-gives the number of the simulation plots the 2D difference with the reference
-and the statistics associated.
+  *  "massAnalysis" shows the evolution of the total and entrained mass during
+     the simulation and compares
 
-.. figure:: _static/avaAlr0_thresholdValue_1p0_sim_2_AreaComparisonToReference.png
+The last plots "_hashID_ContourComparisonToReference", "_hashID_AreaComparisonToReference" and
+"_hashID_massAnalysis" where "hashID" is the name of the simulation show the 2D difference to the reference,
+the statistics associated and the mass analysis figure.
+
+.. figure:: _static/ana3AIMEC/avaAlr_AreaComparisonToReference.png
     :width: 90%
 
     Area comparison
 
-.. figure:: _static/avaAlr0_plim_1p0_sim_2_ContourComparisonToReference.png
+.. figure:: _static/ana3AIMEC/avaAlr_ContourComparisonToReference.png
     :width: 90%
 
     Contour comparison
+
+.. figure:: _static/ana3AIMEC/avaAlr_massAnalysis.png
+    :width: 90%
+
+    Mass analysis
 
 Configuration parameters
 ----------------------------

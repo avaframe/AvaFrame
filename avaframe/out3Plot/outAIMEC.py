@@ -183,8 +183,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
         ax.set_xlabel(unitVal)
     pU.putAvaNameOnPlot(ax, projectName)
 
-    outFileName = '_'.join([projectName, runoutResType,
-                            'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
+    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'), 'slComparison'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
@@ -308,7 +307,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
 
-    outFileName = '_'.join([projectName, runoutResType, 'thresholdValue', str(thresholdValue).replace('.', 'p'),
+    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
                            'slComparisonStat'])
 
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -375,7 +374,7 @@ def visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass):
 
     ax2.set_ylabel('Entrained Mass Difference relative to total mass[%]', color='r')
 
-    outFileName = '_'.join([projectName, 'massAnalysis', str(simName)])
+    outFileName = '_'.join([projectName, str(simName), 'massAnalysis'])
     pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
@@ -405,7 +404,8 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     projectName = pathDict['projectName']
     refSimRowHash = pathDict['refSimRowHash']
     # read data
-    plim = cfgSetup['thresholdValue']
+    runoutResType = cfgSetup['runoutResType']
+    thresholdValue = cfgSetup['thresholdValue']
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
@@ -448,7 +448,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
         pU.addColorBar(im, ax, ticks, unit)
         pU.putAvaNameOnPlot(ax, pathDict['projectName'])
 
-    outFileName = '_'.join([projectName, 'plim', str((plim)).replace('.', 'p'), 'referenceFields'])
+    outFileName = '_'.join([projectName, runoutResType, str((thresholdValue)).replace('.', 'p'), 'referenceFields'])
 
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
@@ -542,8 +542,8 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
     ax2.set_title('Difference %s current - reference in runout area' % runoutResType + '\n' + 'Blue = FN, Red = FP')
 
-    outFileName = '_'.join([projectName, 'thresholdValue', str(
-                  thresholdValue).replace('.', 'p'), 'sim', str(simName), 'AreaComparisonToReference'])
+    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
+                           str(simName), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     ############################################
@@ -647,8 +647,8 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         ax2.set_title('%s difference and contour lines' % name + '\n' + 'ref = full, sim = dashed line')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
-                  '.', 'p'), 'sim', str(simName), 'ContourComparisonToReference'])
+    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
+                           str(simName), 'ContourComparisonToReference'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
@@ -856,8 +856,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     plt.ylim([-0.03, 1.03])
     plt.grid('on')
 
-    outFileName = '_'.join([pathDict['projectName'], runoutResType,
-                            'thresholdValue', str(thresholdValue).replace('.', 'p'), 'ROC'])
+    outFileName = '_'.join([pathDict['projectName'], runoutResType, str(thresholdValue).replace('.', 'p'), 'ROC'])
 
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
