@@ -278,16 +278,17 @@ def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
                 raise NotADirectoryError(message)
         cfg.optionxform = str
         pathToFile = pathlib.Path(outDir, '%s.ini' % (fileName))
-        with open(pathToFile, 'w') as conf:
-            cfg.write(conf)
+
     else:
         # set outputs
         outDir = pathlib.Path(avaDir, 'Outputs')
         fU.makeADir(outDir)
         cfg.optionxform = str
         pathToFile = pathlib.Path(outDir, '%s_settings.ini' % (modName))
-        with open(pathToFile, 'w') as conf:
-            cfg.write(conf)
+
+    # write file 
+    with open(pathToFile, 'w') as conf:
+        cfg.write(conf)
 
     return pathToFile
 
