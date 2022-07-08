@@ -55,18 +55,18 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     # get comDFA configuration and save to file
     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
         onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'])
-    com1DFACfg, cfgHybrid = cfgHandling.applyCfgOverride(com1DFACfg, cfgHybrid, com1DFA, addModValues=True)
+    com1DFACfg, cfgHybrid = cfgHandling.applyCfgOverride(com1DFACfg, cfgHybrid, com1DFA, addModValues=False)
     com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
 
     # fetch configuration for DFAPathGeneration
     DFAPathGenerationCfg= cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
         onlyDefault=cfgHybrid['DFAPathGeneration_override']['defaultConfig'])
-    DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath, addModValues=True)
+    DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath, addModValues=False)
 
     # first create configuration object for com2AB
     com2ABCfg = cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
         onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'])
-    com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=True)
+    com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=False)
 
     # get initial mu value
     muArray = np.array([cfgHybrid.getfloat('com1DFA_override', 'mu')])

@@ -409,10 +409,11 @@ def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModVal
                 log.info('Override %s parameter: %s in section: %s with %s' % (modName, key, section, str(overrideParameters[key])))
                 foundKeys.append(key)
             else:
-                # if no override value is provided add actual configuration parameter to override section
-                # useful for reproduction if onlyDefault = False and modName config was read from local
-                cfgWithOverrideParameters['%s_override' % modName][key] = cfgToOverride[section][key]
-                log.debug('Added %s: %s to override parameters ' % (key, cfgToOverride[section][key]))
+                if addModValues:
+                    # if no override value is provided add actual configuration parameter to override section
+                    # useful for reproduction if onlyDefault = False and modName config was read from local
+                    cfgWithOverrideParameters['%s_override' % modName][key] = cfgToOverride[section][key]
+                    log.debug('Added %s: %s to override parameters ' % (key, cfgToOverride[section][key]))
 
     # log warning if parameter in override was not found in modName configuration
     notOverride = set(foundKeys).symmetric_difference(set(overrideKeys))
