@@ -367,7 +367,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     return simDF
 
 
-def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModValues=True):
+def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModValues=False):
     """ override configuration parameter values with the values provided in cfgWithOverrideParameters[modName_override]
         also update the cfgWithOverrideParameters with the values for all parameters that are not
         provided in the override parameters

@@ -45,18 +45,31 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
 
-    # setup outputs folder
+    # setup outputs folder and work folder
+    workPath = pathlib.Path(avalancheDir, 'Work', 'com3Hybrid')
     oPath = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
+    fU.makeADir(workPath)
     fU.makeADir(oPath)
 
+    # ++++++++++ set configurations for all the used modules and override ++++++++++++
     # get comDFA configuration and save to file
     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
         onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'])
     com1DFACfg, cfgHybrid = cfgHandling.applyCfgOverride(com1DFACfg, cfgHybrid, com1DFA, addModValues=True)
-    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=oPath)
+    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+
+    # fetch configuration for DFAPathGeneration
+    DFAPathGenerationCfg= cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
+        onlyDefault=cfgHybrid['DFAPathGeneration_override']['defaultConfig'])
+    DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath, addModValues=True)
+
+    # first create configuration object for com2AB
+    com2ABCfg = cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
+        onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'])
+    com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=True)
 
     # get initial mu value
-    muArray = np.array([cfgHybrid.getfloat('DFA', 'mu')])
+    muArray = np.array([cfgHybrid.getfloat('com1DFA_override', 'mu')])
     alphaArray = np.array([np.degrees(np.arctan(muArray[0]))])
 
     # prepare for iterating
@@ -71,16 +84,15 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         updater['GENERAL']['mu'].value = ('%.4f' % muArray[-1])
         updater.update_file()
 
+        log.info('Mu is set to: %f' % muArray[-1])
+        # ++++++++++ RUN COM1DFA +++++++++++
         # Run dense flow with coulomb friction
         dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=com1DFACfgFile)
         simID = simDF.index[0]
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simID, flagAvaDir=True,
                                                                        comModule='com1DFA')
 
-        # fetch configuration for DFAPathGeneration
-        DFAPathGenerationCfg= cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
-            onlyDefault=cfgHybrid['DFAPathGeneration_override']['defaultConfig'])
-        DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath, addModValues=True)
+        # ++++++++++ GENERATE PATH +++++++++++
         # postprocess to extract path and energy line
         avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, addVelocityInfo=True)
         # make a copy because extendDFAPathKernel might modify avaProfileMass
@@ -93,11 +105,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         name = 'massAvaPath'
         shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
 
-        # Run Alpha Beta
-        # first create configuration object for com2AB
-        com2ABCfg = cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
-            onlyDefault=cfgHybrid['com1DFA_override']['defaultConfig'])
-        com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=True)
+        # ++++++++++ RUN COM2AB +++++++++++
         com2ABCfg['ABSETUP']['path2Line'] = str(pathAB) + '.shp'
         # take the path extracted from the DFA model as input
         pathDict, demAB, splitPoint, eqParams, resAB = com2AB.com2ABMain(com2ABCfg, avalancheDir)
@@ -131,7 +139,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     outCom3Plots.hybridProfilePlot(avalancheDir, resultsHybrid)
     outCom3Plots.hybridPathPlot(avalancheDir, dem, resultsHybrid, fields[0], particlesList[-1], muArray)
 
-    # write com3HYbrid configuration settings to file for reproduction use 
+    # write com3HYbrid configuration settings to file for reproduction use
     com3HybridCfgFile = cfgUtils.writeCfgFile(avalancheDir, com3Hybrid, cfgHybrid, fileName='com3Hybrid_settings', filePath=oPath)
 
     log.debug('Alpha array is %s' % alphaArray)
