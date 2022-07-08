@@ -1,22 +1,10 @@
 """Tests for module cfgUtils"""
 
 from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import cfgHandling
 from avaframe.tests import test_logUtils
 import pathlib
 import pytest
 import configparser
-
-
-def test_addInfoToSimName():
-    '''Test for addInfoToSimname'''
-    avaTestDir = 'avaParabolaStatsTest'
-    dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu')
-    assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_null_dfa'
-    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu,tEnd')
-    assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_tEnd_400_null_dfa'
 
 
 def test_getModuleConfig():
@@ -96,49 +84,6 @@ def test_convertDictToConfigParser():
     assert cfgDict['TEST1']['mu'] == cfg['TEST1'].getfloat('mu')
 
 
-def test_orderSimFiles():
-    """ test generating order of simulation results """
-
-    avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-
-    varParList = 'releaseScenario'
-
-    simDF = cfgUtils.createConfigurationInfo(avaDir, specDir='')
-
-    varParList, simDF = cfgHandling.orderSimulations(varParList, True, simDF)
-
-    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
-
-    varParList = 'releaseSenario'
-    message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
-    with pytest.raises(KeyError) as e:
-        assert cfgHandling.orderSimulations(varParList, True, simDF)
-    assert message in str(e.value)
-
-
-def test_fetchAndOrderSimFiles():
-    """ test generating order of simulation results """
-
-    avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
-
-    varParList = 'releaseScenario'
-
-    simDF = cfgHandling.fetchAndOrderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
-
-    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
-
-    varParList = 'releaseSenario'
-    message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
-    with pytest.raises(KeyError) as e:
-        simDF = cfgHandling.fetchAndOrderSimFiles(avaDir, 'inputDir', varParList, True, specDir='', resFiles=False)
-    assert message in str(e.value)
-
-
 def test_createConfigurationInfo(tmp_path):
     """ test configuration info generation as DF """
 
@@ -198,62 +143,3 @@ def test_appendCgf2DF(tmp_path):
     assert simDF.loc['d10bdc1e81']['mu'] == 0.155
     assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
     assert simDF.loc['e2145362b7']['relTh0'] == 1.
-
-
-def test_filterSims(tmp_path):
-    """ test filtering of simulations using configuration files """
-
-    avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    avaDir2 = dirPath / 'data' / 'avaFilterTest' / 'com1DFA'
-
-    parametersDict = {'releaseScenario': 'release1HS'}
-
-    simNames = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
-
-    testRel = False
-    testRel2 = False
-    if 'release1HS' in simNames[0]:
-        testRel = True
-    if 'release2HS' in simNames[0]:
-        testRel2 = True
-
-    assert testRel
-    assert testRel2 is False
-    assert len(simNames) == 1
-
-    parametersDict = {'relTh': 1.}
-    simNames2 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
-    simNames2 = sorted(simNames2)
-    assert len(simNames2) == 2
-    assert simNames2[0] == 'release1HS_d10bdc1e81_ent_dfa'
-    assert simNames2[1] == 'release2HS_e2145362b7_ent_dfa'
-
-    parametersDict = {'~relTh': 1.}
-    simNames3 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
-
-    assert len(simNames3) == 0
-
-    parametersDict = {'~releaseScenario': 'release1HS'}
-    simNames4 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
-
-    assert len(simNames4) == 1
-    assert simNames4[0] == 'release2HS_e2145362b7_ent_dfa'
-
-    parametersDict = {'relTh': 1.}
-
-    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
-    simNames = sorted(simNames)
-
-    assert len(simNames) == 2
-    assert simNames == ['relGar_6f35cbd808_null_dfa', 'relGar_b9b17dd019_ent_dfa']
-
-    parametersDict = {'relTh': [1., 1.5]}
-
-    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
-    simNames = sorted(simNames)
-
-    assert len(simNames) == 4
-    assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_6f35cbd808_null_dfa',
-                        'relGar_b9b17dd019_ent_dfa', 'relGar_c4337e50ac_null_dfa']
