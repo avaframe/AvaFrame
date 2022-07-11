@@ -1,12 +1,17 @@
 """Tests for module cfgHandling"""
 
+
+import pathlib
+import pytest
+import configparser
+import logging
+
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.tests import test_logUtils
 from avaframe.com1DFA import com1DFA
-import pathlib
-import pytest
-import configparser
+
+log = logging.getLogger(__name__)
 
 
 def test_addInfoToSimName():
@@ -122,7 +127,7 @@ def test_filterSims(tmp_path):
                         'relGar_b9b17dd019_ent_dfa', 'relGar_c4337e50ac_null_dfa']
 
 
-def test_applyCfgOverride():
+def test_applyCfgOverride(caplog):
     """ test overriding cfg parameters in a cfg object from another cfg with an override section """
 
     cfgWithOverrideParameters = configparser.ConfigParser()
@@ -154,14 +159,18 @@ def test_applyCfgOverride():
 
 
     cfgWithOverrideParameters = configparser.ConfigParser()
+    cfgWithOverrideParameters.optionxform = str
     cfgWithOverrideParameters['GENERAL'] = {'testp1': 1., 'testp2': 'testValue'}
     cfgWithOverrideParameters['com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7, 'tStep': 100., 'notParameter': 1.}
 
     cfgToOverride = configparser.ConfigParser()
+    cfgToOverride.optionxform = str
     cfgToOverride['GENERAL'] = {'mu': 1., 'tEnd': 400., 'relTh': 1.}
     cfgToOverride['DFA'] = {'tStep': 0.3, 'dt1': 6., 'flowF': 3.}
 
-    cfgToOverride, cfgWithOverrideParameters = cfgHandling.applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, com1DFA, addModValues=True)
+    with caplog.at_level(logging.WARNING):
+        cfgToOverride, cfgWithOverrideParameters = cfgHandling.applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, com1DFA, addModValues=True)
+    assert ('Additional Key [\'%s\'] in section %s_override is ignored.' % ('notParameter', 'com1DFA')) in caplog.text
 
     assert cfgToOverride['GENERAL']['mu'] == '0.7'
     assert cfgToOverride['GENERAL']['tEnd'] == '400.0'

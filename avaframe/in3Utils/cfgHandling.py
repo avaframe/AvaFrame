@@ -418,6 +418,7 @@ def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModVal
     # log warning if parameter in override was not found in modName configuration
     notOverride = set(foundKeys).symmetric_difference(set(overrideKeys))
     for item in notOverride:
-        log.warning('Additional Key [\'%s\'] in section %s_override is ignored.' % (item, modName))
+        if item != 'defaultConfig':
+            log.warning('Additional Key [\'%s\'] in section %s_override is ignored.' % (item, modName))
 
     return cfgToOverride, cfgWithOverrideParameters
