@@ -131,10 +131,12 @@ def test_applyCfgOverride(caplog):
     """ test overriding cfg parameters in a cfg object from another cfg with an override section """
 
     cfgWithOverrideParameters = configparser.ConfigParser()
+    cfgWithOverrideParameters.optionxform = str
     cfgWithOverrideParameters['GENERAL'] = {'testp1': 1., 'testp2': 'testValue'}
     cfgWithOverrideParameters['com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7, 'tStep': 100., 'notParameter': 1.}
 
     cfgToOverride = configparser.ConfigParser()
+    cfgToOverride.optionxform = str
     cfgToOverride['GENERAL'] = {'mu': 1., 'tEnd': 400., 'relTh': 1.}
     cfgToOverride['DFA'] = {'tStep': 0.3, 'dt1': 6., 'flowF': 3.}
 

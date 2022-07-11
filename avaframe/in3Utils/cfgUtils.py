@@ -241,8 +241,8 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
 
 
 def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
-    """ Save configuration used to text file in Outputs as moduleName_settings.ini
-        or optional in Outputs/moduleName/configurationFiles/filenName.ini
+    """ Save configuration used to text file in Outputs/moduleName/configurationFiles/modName.ini
+        or optional to filePath and with fileName
 
         Parameters
         -----------
@@ -263,28 +263,22 @@ def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
     name = pathlib.Path(module.__file__).name
     modName = name.split('.')[0]
 
-    # write to file
-    if fileName:
-        # set outputs
-        if filePath == '':
-            outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
-            fU.makeADir(outDir)
-        else:
-            if filePath.is_dir():
-                outDir = pathlib.Path(filePath)
-            else:
-                message = '%s is not a valid location for saving cfg file' % str(filePath)
-                log.error(message)
-                raise NotADirectoryError(message)
-        cfg.optionxform = str
-        pathToFile = pathlib.Path(outDir, '%s.ini' % (fileName))
-
-    else:
-        # set outputs
-        outDir = pathlib.Path(avaDir, 'Outputs')
+    # set outputs
+    if filePath == '':
+        outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
         fU.makeADir(outDir)
-        cfg.optionxform = str
-        pathToFile = pathlib.Path(outDir, '%s_settings.ini' % (modName))
+    else:
+        if filePath.is_dir():
+            outDir = pathlib.Path(filePath)
+        else:
+            message = '%s is not a valid location for saving cfg file' % str(filePath)
+            log.error(message)
+            raise NotADirectoryError(message)
+
+    # set path to file
+    if fileName == '':
+        fileName = modName
+    pathToFile = pathlib.Path(outDir, '%s.ini' % (fileName))
 
     # write file
     with open(pathToFile, 'w') as conf:

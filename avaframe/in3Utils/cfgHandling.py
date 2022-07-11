@@ -402,17 +402,20 @@ def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModVal
     # create list with parameters that become overridden
     overrideParameters = cfgWithOverrideParameters['%s_override' % modName]
     overrideKeys = [item for item in overrideParameters]
+    overrideKeys.remove('defaultConfig')
 
     # loop through sections of the configuration of the module
     foundKeys = []
     for section in cfgToOverride.sections():
-        for key in overrideParameters:
+        for key in overrideKeys:
             if cfgToOverride.has_option(section, key):
                 cfgToOverride.set(section, key, overrideParameters[key])
                 log.info('Override %s parameter: %s in section: %s with %s' % (modName, key, section, str(overrideParameters[key])))
                 foundKeys.append(key)
-            else:
-                if addModValues:
+    if addModValues:
+        for section in cfgToOverride.sections():
+            for key in cfgToOverride[section]:
+                if key not in overrideKeys:
                     # if no override value is provided add actual configuration parameter to override section
                     # useful for reproduction if onlyDefault = False and modName config was read from local
                     cfgWithOverrideParameters['%s_override' % modName][key] = cfgToOverride[section][key]

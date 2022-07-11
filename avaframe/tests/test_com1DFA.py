@@ -16,6 +16,7 @@ import shutil
 
 from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 
 
@@ -1624,6 +1625,7 @@ def test_runCom1DFA(tmp_path, caplog):
     assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][1]))).is_file()
     assert (outDir / 'configurationFiles' / ('allConfigurations.csv')).is_file()
 
+    initProj.cleanModuleFiles(avaDir, com1DFA, deleteOutput=False)
     with caplog.at_level(logging.WARNING):
         dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile)
