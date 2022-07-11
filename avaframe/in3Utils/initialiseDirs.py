@@ -41,7 +41,9 @@ def initialiseRunDirs(avaDir, modName, cleanDEMremeshed):
     workDir = pathlib.Path(avaDir, 'Work', modName)
     # If Work directory already exists - error
     if workDir.is_dir():
-        log.error('Work directory %s already exists - delete first!' % (workDir))
+        message = 'Work directory %s already exists - delete first!' % (workDir)
+        log.error(message)
+        raise AssertionError(message)
     else:
         workDir.mkdir(parents=True, exist_ok=False)
     log.debug('Directory: %s created' % workDir)
