@@ -264,7 +264,7 @@ def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
     modName = name.split('.')[0]
 
     # write to file
-    if fileName != '':
+    if fileName:
         # set outputs
         if filePath == '':
             outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
@@ -286,7 +286,7 @@ def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
         cfg.optionxform = str
         pathToFile = pathlib.Path(outDir, '%s_settings.ini' % (modName))
 
-    # write file 
+    # write file
     with open(pathToFile, 'w') as conf:
         cfg.write(conf)
 
