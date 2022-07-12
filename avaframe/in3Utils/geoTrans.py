@@ -181,59 +181,26 @@ def resizeData(raster, rasterRef):
         return raster['rasterData'], rasterRef['rasterData']
 
 
-def getMeshXY(rasterDict, cellSizeNew=None):
-    """ Get x and y vectors for mesh with given number of rows and columns, lowerleftcenter and cellSize
+def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='cubic', larger=True):
+    """ compute raster data on a new mesh with cellSize using the specified remeshOption.
 
-        Parameters
-        -----------
-        rasterDict: dict
-            'rasterData' : 2D numpy array of data
-            'header': class with info on ncols, nrows, csz, xllcenter, yllcenter, noDataValue
-
-        Returns
-        --------
-        x, y: 1D numpy arrays
-            vector of x and y values for mesh center coordinates
-        xExtent, yExtent: float
-            extent of mesh from first cell center to last cell center in x/y
-
-    """
-
-    header = rasterDict['header']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    ncols = header['ncols']
-    nrows = header['nrows']
-    xExtent = (ncols-1) * header['cellsize']
-    yExtent = (nrows-1) * header['cellsize']
-    x = np.linspace(0, xExtent, ncols) + xllc
-    y = np.linspace(0, yExtent, nrows) + yllc
-
-    if cellSizeNew != None:
-
-        nColsNew = int(xExtent/cellSizeNew+1)
-        nRowsNew = int(yExtent/cellSizeNew+1)
-        xNew = np.linspace(0, (nColsNew-1)*cellSizeNew, nColsNew) + xllc
-        yNew = np.linspace(0, (nRowsNew-1)*cellSizeNew, nRowsNew) + yllc
-        diffExtentX = xExtent - (nColsNew-1)*cellSizeNew
-        diffExtentY = yExtent - (nRowsNew-1)*cellSizeNew
-        return x, y, xNew, yNew, diffExtentX, diffExtentY
-
-    else:
-        return x, y, xExtent, yExtent
-
-
-def remeshData(rasterFile, cellSize):
-    """ compute raster data on a new mesh with cellSize using scipy RectBivariateSpline
-
-        the new mesh is as big or smaller as the original mesh
+        remeshOption are to choose between 'griddata', 'interp2d' or 'RectBivariateSpline'
+        Only the 'griddata' works properly if the input data contains noData points,
+        'interp2d' or 'RectBivariateSpline' are faster but fail if input data contains noData points.
+        The new mesh is as big or smaller as the original mesh
 
     Parameters
     ----------
-    rasterFile : str
-        path to raster file
+    rasterDict : dict
+        raster dictionary (with header and rasterData)
     cellSize : float
         mesh size of new mesh
+    remeshOption: str
+        method used to remesh ('griddata', 'interp2d' or 'RectBivariateSpline')
+        Check the scipy documentation for more details
+        default is 'griddata'
+    larger: Boolean
+        if true (default) output grid is at least as big as the input
 
     Returns
     -------
@@ -241,27 +208,54 @@ def remeshData(rasterFile, cellSize):
         remeshed data dict with data as numpy array and header info
 
     """
-
-    # load data
-    raster = IOf.readRaster(rasterFile, noDataToNan=True)
-    header = raster['header']
+    header = rasterDict['header']
 
     # fetch shape info and get new mesh info
-    x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(raster, cellSizeNew=cellSize)
-    data = raster['rasterData']
+    xGrid, yGrid, _, _ = makeCoordGridFromHeader(header)
+    xGridNew, yGridNew, ncolsNew, nrowsNew = makeCoordGridFromHeader(header, cellSizeNew=cellSizeNew, larger=larger)
+    z = rasterDict['rasterData']
+    log.info('Remeshed data extent difference x: %f and y %f' % (xGrid[-1, -1]-xGridNew[-1, -1],
+                                                                 yGrid[-1, -1]-yGridNew[-1, -1]))
 
-    log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
+    if remeshOption == 'griddata':
+        xGrid = xGrid.flatten()
+        yGrid = yGrid.flatten()
+        zCopy = np.copy(z).flatten()
+        # make sure to remove the nans (no data points) from the input
+        mask = np.where(~np.isnan(zCopy))
+        xGrid = xGrid[mask]
+        yGrid = yGrid[mask]
+        z = zCopy[mask]
+        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod,
+                                       fill_value=header['noDataValue'])
+    elif remeshOption == 'interp2d':
+        I2D = sp.interpolate.interp2d(xGrid[0, :], yGrid[:, 0], z, kind=interpMethod, fill_value=header['noDataValue'])
+        zNew = I2D(xGridNew[0, :], yGridNew[:, 0])
+    elif remeshOption == 'RectBivariateSpline':
+        if interpMethod == 'linear':
+            k = 1
+        elif interpMethod == 'cubic':
+            k = 3
+        elif interpMethod == 'quintic':
+            k = 5
+        else:
+            message = 'There is no %s interpolation methode available for RectBivariateSpline' % interpMethod
+            log.error(message)
+            raise NameError(message)
+        zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(yGridNew.flatten(),
+                                                                                           xGridNew.flatten())
+        zNew = zNew.reshape(np.shape(xGrid))
 
-    # use scipy interpolate to compute data on points of new mesh and save to raster dict
-    rasterNew = sp.interpolate.RectBivariateSpline(y, x, data)(yNew, xNew, grid=True)
-    raster['rasterData'] = rasterNew
-
+    # create header of remeshed DEM
+    headerRemeshed = copy.deepcopy(header)
     # set new header
-    header['ncols'] = len(xNew)
-    header['nrows'] = len(yNew)
-    header['cellsize'] = cellSize
+    headerRemeshed['cellsize'] = cellSizeNew
+    headerRemeshed['ncols'] = ncolsNew
+    headerRemeshed['nrows'] = nrowsNew
+    # create remeshed raster dictionary
+    remeshedRaster = {'rasterData': zNew, 'header': headerRemeshed}
 
-    return raster
+    return remeshedRaster
 
 
 def remeshDEM(demFile, cfgSim):
@@ -286,55 +280,23 @@ def remeshDEM(demFile, cfgSim):
         path of DEM with desired cell size relative to Inputs/
 
     """
-
     # first check if remeshed DEM is available
     pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
     if DEMFound:
         return pathDem
 
-    #-------- if no remeshed DEM found - remesh
-
+    # -------- if no remeshed DEM found - remesh
     # fetch info on dem file
     dem = IOf.readRaster(demFile)
     headerDEM = dem['header']
-
-    # fetch info on desired meshCellSize
-    meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
-    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
-
     # read dem header info
     cszDEM = headerDEM['cellsize']
+    # fetch info on desired meshCellSize
+    cszDEMNew = float(cfgSim['GENERAL']['meshCellSize'])
 
     # start remesh
-    log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, meshCellSize))
-    x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=meshCellSize)
-    xGrid, yGrid = np.meshgrid(x, y)
-    xGrid = xGrid.flatten()
-    yGrid = yGrid.flatten()
-    z = dem['rasterData']
-    zCopy = np.copy(z)
-    zCopy = zCopy.flatten()
-    mask = np.where(~np.isnan(zCopy))
-    xGrid = xGrid[mask]
-    yGrid = yGrid[mask]
-    z = zCopy[mask]
-
-    # create header of remeshed DEM
-    headerRemeshed = {}
-    headerRemeshed['cellsize'] = meshCellSize
-    headerRemeshed['ncols'] = len(xNew)
-    headerRemeshed['nrows'] = len(yNew)
-    headerRemeshed['xllcenter'] = headerDEM['xllcenter']
-    headerRemeshed['yllcenter'] = headerDEM['yllcenter']
-    headerRemeshed['noDataValue'] = headerDEM['noDataValue']
-
-    # write new DEM dictionary
-    remeshedDEM = {'header': headerRemeshed}
-    xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
-    zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
-                                   fill_value=headerDEM['noDataValue'])
-    log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
-    remeshedDEM['rasterData'] = zNew
+    log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszDEMNew))
+    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption='griddata', interpMethod='cubic', larger=True)
 
     # save remeshed DEM
     pathToDem = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
@@ -380,7 +342,7 @@ def searchRemeshedDEM(demName, cfgSim):
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
-    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
+    meshCellSizeThreshold = float(cfgSim['GENERAL']['meshCellSizeThreshold'])
 
     # check if DEM is available
     if pathToDems.is_dir():
@@ -396,13 +358,12 @@ def searchRemeshedDEM(demName, cfgSim):
                 continue
             else:
                 log.debug('Remeshed dem found %s with cellSize %.2f - not used' %
-                    (demF, headerDEM['cellsize']))
+                          (demF, headerDEM['cellsize']))
 
     else:
         log.debug('Directory %s does not exist' % pathToDems)
 
     return pathDem, DEMFound, allDEMNames
-
 
 
 def computeS(avaPath):
@@ -838,7 +799,7 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     toCheckRaster : 2D numpy array
         Raster to check
     refRaster : 2D numpy array
-        refference Raster
+        reference Raster
     nameToCheck: str
         name of raster that might overlap
     nameRef: str
@@ -888,9 +849,9 @@ def cartToSpherical(X, Y, Z):
             for elevation angle defined from Z-axis down [degrees]
     """
 
-    xy = X** 2 + Y**2
+    xy = X**2 + Y**2
     r = np.sqrt(xy + Z**2)
-     # for elevation angle defined from Z-axis down
+    # for elevation angle defined from Z-axis down
     theta = np.arctan2(np.sqrt(xy), Z)
     theta = np.degrees(theta)
     # azimuth: 0 degree is south
@@ -938,14 +899,71 @@ def rotate(locationPoints, theta, deg=True):
 
     # create rotated line as list of start and end point
     rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])], # x
-           [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
-          ]
+                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
+                   ]
 
     return rotatedLine
 
 
+def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True):
+    """ Get x and y (2D) grid description vectors for a mesh
+        with a given number of rows and columns, lower left center and cellSize.
+        If 'cellSizeNew' is not None use cellSizeNew instead of rasterHeader['cellsize']
+        Make sure the new grid is at least as big as the old one if larger=True
+        (can happen if 'cellSizeNew' is not None)
+
+        Parameters
+        -----------
+        rasterHeader: dict
+            ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, noDataValue
+        cellSizeNew: float
+            If not None, use cellSizeNew as cell size
+        Returns
+        --------
+        xGrid, yGrid: 2D numpy arrays
+            2D vector of x and y values for mesh center coordinates (produced using meshgrid)
+        ncols, nrows: int
+            number of columns and rows
+
+    """
+    ncols = rasterHeader['ncols']
+    nrows = rasterHeader['nrows']
+    xllc = rasterHeader['xllcenter']
+    yllc = rasterHeader['yllcenter']
+    csz = rasterHeader['cellsize']
+    # if a new cell size is provided, compute the new ncols and nrows
+    if cellSizeNew is not None:
+        xExtent = (ncols-1) * csz
+        yExtent = (nrows-1) * csz
+        ncolsNew = int(xExtent/cellSizeNew) + 1
+        nrowsNew = int(yExtent/cellSizeNew) + 1
+        if larger and ((ncolsNew-1) * cellSizeNew < xExtent):
+            ncols = ncolsNew + 1
+            nrows = nrowsNew + 1
+        else:
+            ncols = ncolsNew
+            nrows = nrowsNew
+        csz = cellSizeNew
+    # create the grid
+    xGrid, yGrid = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
+    return xGrid, yGrid, ncols, nrows
+
+
 def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
-    """get a Coordinate Grid for plotting"""
+    """Create grid
+    Parameters
+    -----------
+    xllc, yllc: float
+        x and y coordinate of the lower left center
+    csz: float
+        cell size
+    ncols, nrows: int
+        number of columns and rows
+    Returns
+    --------
+    xGrid, yGrid: 2D numpy arrays
+        2D vector of x and y values for mesh center coordinates (produced using meshgrid)
+    """
 
     xEnd = (ncols-1) * csz
     yEnd = (nrows-1) * csz
@@ -953,12 +971,5 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     xp = np.linspace(xllc, xllc + xEnd, ncols)
     yp = np.linspace(yllc, yllc + yEnd, nrows)
 
-    X, Y = np.meshgrid(xp, yp)
-    return(X, Y)
-
-
-def setCoordinateGrid(xllc, yllc, csz, z):
-    """get a Coordinate Grid for plotting"""
-    nrows, ncols = z.shape
-    X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
-    return(X, Y)
+    xGrid, yGrid = np.meshgrid(xp, yp)
+    return xGrid, yGrid

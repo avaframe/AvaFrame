@@ -184,7 +184,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     inputDir = pathlib.Path(avaDir, 'Inputs')
 
     # Set flag if there is an entrainment or resistance area
-    entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
+    entResInfo = {}
 
     # Initialise release areas, default is to look for shapefiles
     if cfg['INPUT']['releaseScenario'] != '':
@@ -210,14 +210,14 @@ def getInputDataCom1DFA(avaDir, cfg):
 
     # check for release thickness file if relThFromFile
     if cfg['GENERAL'].getboolean('relThFromFile'):
-        relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir,
-            'RELTH', 'release thickness data', fileExt='asc')
+        relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir, 'RELTH',
+                                                                              'release thickness data', fileExt='asc')
     else:
         relThFile = ''
 
     # Initialise secondary release areas
-    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir,
-        'SECREL', 'Secondary release', 'shp')
+    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL',
+                                                                                     'Secondary release', fileExt='shp')
 
     # Initialise resistance areas
     resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
