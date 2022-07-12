@@ -176,6 +176,8 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
             2D numpy array of values that shall be written to file
         outFileName : str
             path incl. name of file to be written
+        flip: boolean
+            if True, flip the rows of the resultArray when writing
         """
 
     # Open outfile

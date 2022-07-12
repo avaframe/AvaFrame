@@ -1648,7 +1648,7 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   return iCell
 
 
-cpdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
+cpdef (int, int, double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
   """ Get weight for interpolation from grid to single point location
 
   3 Options available : -0: nearest neighbour interpolation
@@ -1674,6 +1674,8 @@ cpdef (double, double, double, double) getWeights(double x, double y, int iCell,
 
   Returns
   -------
+      Lx0, Ly0: inzs
+          lower left cell (col and row index)
       w00, w10, w01, w11: floats
           corresponding weights
   """
@@ -1708,16 +1710,14 @@ cpdef (double, double, double, double) getWeights(double x, double y, int iCell,
   # and uper right
   w[3] = dx*dy
 
-  return w[0], w[1], w[2], w[3]
+  return Lx0, Ly0, w[0], w[1], w[2], w[3]
 
 
 cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x, double y, int ncols, int nrows, double csz, int interpOption):
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
   iCell = getCells(x, y, ncols, nrows, csz)
-  w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-  Lx0 = iCell % ncols
-  Ly0 = iCell / ncols
+  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
   return Lx0, Ly0, iCell, w[0], w[1], w[2], w[3]
 
 
@@ -1784,9 +1784,7 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
   if iCell < 0:
     # if not on the DEM exit with iCell=-1
     return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-  w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-  Lx0 = iCell % ncols
-  Ly0 = iCell / ncols
+  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
   dist = csz
   # iterate
   while reprojectionIterations > 0 and dist > threshold*csz:
@@ -1812,9 +1810,7 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
       return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-    w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
 
     dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
 
@@ -1880,9 +1876,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   if iCell < 0:
     # if not on the DEM exit with iCell=-1
     return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-  w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-  Lx0 = iCell % ncols
-  Ly0 = iCell / ncols
+  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
   # get the cell location of the point
   Lxi = Lx0
   Lyi = Ly0
@@ -1907,9 +1901,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
       return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-    w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
 
     Lxj = Lx0
     Lyj = Ly0
@@ -1995,9 +1987,7 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
   if iCell < 0:
     # if not on the DEM exit with iCell=-1
     return xNew, yNew, zNew, iCell, -1, -1, 0, 0, 0, 0
-  w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-  Lx0 = iCell % ncols
-  Ly0 = iCell / ncols
+  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
 
   zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
   # measure distance between the projected point and the previous time step position
@@ -2029,9 +2019,7 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
       return xNew, yNew, zNew, iCell, -1, -1, 0, 0, 0, 0
-    w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
     zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
     # measure distance between this new point and the previous time step position
     distn = norm(xNew-xPrev, yNew-yPrev, zTemp-zPrev)
@@ -2041,7 +2029,30 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
 
 cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int ncols,
                  int nrows, int interpOption):
-  """ Interpolate vector field from grid to points
+  """ Interpolate from raster data to points
+
+  Parameter
+  ---------
+    xArray: 1D float array
+      x coordinates of the new points location
+    yArray: 1D float array
+      y coordinates of the new points location
+    vArray: 2D float array
+      raster values
+    csz: float
+      raster cell size
+    ncols: int
+      raster number of columns
+    nrows: int
+      raster number of rows
+    interpOption: int
+      interpolation option
+      (0: nearest neighbour interpolation, 1: equal weights interpolation, 2: bilinear interpolation)
+
+  Returns
+  ---------
+    v: 1D float array
+      raster values interpolated at points (xArray, yArray) location
   """
   cdef int N = xArray.shape[0]
   cdef double x, y
@@ -2054,7 +2065,6 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
     y = yArray[j]
 
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-
     v[j] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
 
   return v

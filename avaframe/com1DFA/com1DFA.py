@@ -495,7 +495,7 @@ def prepareInputData(inputSimFiles, cfg):
         if entResInfo['flagSecondaryRelease'] == 'Yes':
             secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
             secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
-            secondaryReleaseLine['fileName'] = [secondaryReleaseFile]
+            secondaryReleaseLine['fileName'] = secondaryReleaseFile
             secondaryReleaseLine['type'] = 'Secondary release'
         else:
             message = 'No secondary release file found'
@@ -793,25 +793,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
         log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
-    if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
-        log.info('Initializing secondary release area')
-        secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
-        secondaryReleaseInfo['header'] = dem['originalHeader']
-
-        # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, dem, np.sqrt(2),
-                                           thList=secondaryReleaseInfo['thickness'], combine=False)
-        # remove overlap with main release areas
-        noOverlaprasterList = []
-        for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
-            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName,
-                                                             'Release', crop=True))
-
-        secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
-        secondaryReleaseInfo['rasterList'] = noOverlaprasterList
-    else:
-        secondaryReleaseInfo = {}
-        secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
+    secondaryReleaseInfo = initializeSecRelease(inputSimLines, dem, relRaster)
 
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
@@ -825,7 +807,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
     # check for overlap with the secondary release area
     if secondaryReleaseInfo['flagSecondaryRelease'] == 'Yes':
-        for secRelRaster in secondaryReleaseInfo['rasterList']:
+        for secRelRaster in secondaryReleaseInfo['rasterData']:
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
                                                    crop=True)
     # surfacic entrainment mass available (unit kg/m²)
@@ -1124,6 +1106,56 @@ def initializeFields(cfg, dem, particles):
     particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
 
     return particles, fields
+
+
+def initializeSecRelease(inputSimLines, dem, relRaster):
+    """ Initialize secondary release area
+
+    Parameters
+    ----------
+    inputSimLines : dict
+        dict with:
+            entResInfo : dict
+                with the flagSecondaryRelease
+            secondaryReleaseLine : dict
+                secondary release line dictionary
+    dem: dict
+        dem dictionary
+    relRaster: 2D numpy array
+        release Raster (to check overlap)
+
+    Returns
+    -------
+    secondaryReleaseInfo: dict
+        inputSimLines['secondaryReleaseLine'] dictionary completed with:
+            header: the dem original header
+            rasterData: list of secondary release rasters (without the overlapping part wit the release)
+            flagSecondaryRelease:
+            rasterList:
+    """
+    if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
+        secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
+        log.info('Initializing secondary release area: %s' % secondaryReleaseInfo['fileName'])
+        log.info('Secondary release area features: %s' % (secondaryReleaseInfo['Name']))
+        secondaryReleaseInfo['header'] = dem['originalHeader']
+
+        # fetch secondary release areas
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, dem, np.sqrt(2),
+                                           thList=secondaryReleaseInfo['thickness'], combine=False)
+        # remove overlap with main release areas
+        noOverlaprasterList = []
+        for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
+            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName,
+                                                             'Release', crop=True))
+
+        secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
+        # replace the rasterData with noOverlaprasterList (which is the list of rasterData without the overlapping
+        # part with the release)
+        secondaryReleaseInfo['rasterData'] = noOverlaprasterList
+    else:
+        secondaryReleaseInfo = {}
+        secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
+    return secondaryReleaseInfo
 
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
@@ -1784,8 +1816,7 @@ def checkParticlesInRelease(particles, line, radius):
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
-        particles = particleTools.removePart(particles, Mask, nRemove,
-                                             ' because they are not within the release polygon')
+        particles = particleTools.removePart(particles, Mask, nRemove, '')
         log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
@@ -2142,7 +2173,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     else:
         simTypeList = standardCfg['GENERAL']['simTypeList'].split('|')
     # get a list of simulation types that are desired AND available
-    simTypeList = getSimTypeList(simTypeList, inputSimFiles)
+    standardCfg, simTypeList = getSimTypeList(standardCfg, simTypeList, inputSimFiles)
 
     # set simTypeList (that has been checked if available) as parameter in variationDict
     variationDict['simTypeList'] = simTypeList
@@ -2220,13 +2251,15 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     return simDict
 
 
-def getSimTypeList(simTypeList, inputSimFiles):
+def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     """ Define available simulation types of requested types
 
         Parameters
         -----------
         standardCfg : configParser object
             default configuration or local configuration
+        simTypeList: List
+            list of simTypes to conpute (ent, null...)
         inputSimFiles: dict
             info dict on available input data
 
@@ -2265,5 +2298,10 @@ def getSimTypeList(simTypeList, inputSimFiles):
             message = 'No resistance file found'
             log.error(message)
             raise FileNotFoundError(message)
+    if standardCfg['GENERAL'].getboolean('secRelArea'):
+        if entResInfo['flagSecondaryRelease'] == 'No':
+            standardCfg['GENERAL']['secRelArea'] = 'False'
+        else:
+            log.info('Using the secondary release area file: %s' % inputSimFiles['secondaryReleaseFile'])
 
-    return simTypeList
+    return standardCfg, simTypeList
