@@ -224,12 +224,16 @@ def getInputDataCom1DFA(avaDir, cfg):
     # Initialise entrainment areas
     entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
 
+    # Initialise entrainment areas
+    damFile, entResInfo['flagDam'] = getAndCheckInputFiles(inputDir, 'DAM', 'Dam', fileExt='shp')
+
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
-                     'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo, 'relThFile': relThFile}
+                     'entFile': entFile, 'resFile': resFile, 'damFile': damFile, 'entResInfo': entResInfo,
+                     'relThFile': relThFile}
 
     return inputSimFiles
 

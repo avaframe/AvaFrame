@@ -77,6 +77,9 @@ ext = '.pyx' if use_cython else '.c'
 extensions = [Extension("avaframe.com1DFA.DFAfunctionsCython",
                         ["avaframe/com1DFA/DFAfunctionsCython"+ext],
                         include_dirs=[numpy.get_include()]
+                        ), Extension("avaframe.com1DFA.damCom1DFA",
+                        ["avaframe/com1DFA/damCom1DFA"+ext],
+                        include_dirs=[numpy.get_include()]
                         )]
 
 if use_cython:

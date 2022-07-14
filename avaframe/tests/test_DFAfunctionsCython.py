@@ -534,17 +534,24 @@ def test_updatePositionC():
              'forceX': np.asarray([50., 50., 50.]), 'forceY': np.asarray([50., 50., 50.]),
              'forceSPHX': np.asarray([50., 50., 50.]),
              'forceSPHY': np.asarray([50., 50., 50.]), 'forceSPHZ': np.asarray([0., 0., 0.])}
-
+    fields = {'FT': np.zeros((2, 2))}
+    # crete a dummy dict (needed so that cython runs)
+    wallLineDict = {'flagDam': 0, 'cellsCrossed': np.zeros((dem['header']['ncols']*dem['header']['nrows'])).astype(int)}
+    for key in ['x', 'y', 'z', 'xCrown', 'yCrown', 'zCrown', 'xTangent', 'yTangent', 'zTangent']:
+        wallLineDict[key] = np.ones((1))*1.0
+    for key in ['nPoints', 'height', 'slope', 'restitutionCoefficient']:
+        wallLineDict[key] = 0
+    dem['damLine'] = wallLineDict
     typeStop = 0
 
     # kinetic energy new
     kinEneNew = 0.0
     potEneNew = 0.0
     for k in range(3):
-        kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(5.5**2 +5.5**2 + 0**2)**2 * 0.5
+        kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(5.5**2 + 5.5**2 + 0**2)**2 * 0.5
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
     assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
@@ -568,7 +575,7 @@ def test_updatePositionC():
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
     assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
@@ -601,7 +608,7 @@ def test_updatePositionC():
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
     print('sph', particles['peakForceSPH'], sphForceNew)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
@@ -635,7 +642,7 @@ def test_updatePositionC():
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
     print('sph', particles['peakForceSPH'], sphForceNew)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))

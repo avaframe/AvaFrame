@@ -681,10 +681,10 @@ def findParticles2Track(particles, center, radius):
     track = True
     x = particles['x']
     y = particles['y']
-    z = particles['z']
+    # z = particles['z']
     xc = center['x']
     yc = center['y']
-    zc = center['z']
+    # zc = center['z']
     r = DFAtls.norm(x-xc, y-yc, 0)
     index = np.where(r <= radius)
     particles2Track = particles['parentID'][index]

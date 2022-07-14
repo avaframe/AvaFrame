@@ -16,6 +16,7 @@ from libc cimport math as math
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.in3Utils.geoTrans as geoTrans
 
@@ -545,7 +546,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
   return ux, uy, uz
 
 
-def updatePositionC(cfg, particles, dem, force, int typeStop=0):
+def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   """ update particle position using euler forward scheme
 
   Cython implementation
@@ -560,6 +561,8 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       dictionary with dem information
   force : dict
       force dictionary
+  fields : dict
+      fields dictionary with flow thickness (needed it there is a dam)
   typeStop: int
     0 if standard stopping criterion, if 1 stopping criterion based on SPHforce - used for iniStep
   Returns
@@ -606,6 +609,12 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double TotkinEne = particles['kineticEne']
+  cdef double TotpotEne = particles['potentialEne']
+  cdef double peakKinEne = particles['peakKinEne']
+  cdef double peakForceSPH = particles['peakForceSPH']
+  cdef double totKForceSPH = particles['forceSPHIni']
+  # read fields
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
   cdef double[:] forceZ = force['forceZ']
@@ -614,11 +623,23 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
   cdef double[:] dM = force['dM']
-  cdef double TotkinEne = particles['kineticEne']
-  cdef double TotpotEne = particles['potentialEne']
-  cdef double peakKinEne = particles['peakKinEne']
-  cdef double peakForceSPH = particles['peakForceSPH']
-  cdef double totKForceSPH = particles['forceSPHIni']
+  # read dam
+  dam = dem['damLine']
+  cdef int flagDam = dam['flagDam']
+  cdef int restitutionCoefficient = dam['restitutionCoefficient']
+  cdef int nDamPoints = dam['nPoints']
+  cdef long[:] cellsCrossed = dam['cellsCrossed']
+  cdef double[:] xFootArray = dam['x']
+  cdef double[:] yFootArray = dam['y']
+  cdef double[:] zFootArray = dam['z']
+  cdef double[:] xCrownArray = dam['xCrown']
+  cdef double[:] yCrownArray = dam['yCrown']
+  cdef double[:] zCrownArray = dam['zCrown']
+  cdef double[:] xTangentArray = dam['xTangent']
+  cdef double[:] yTangentArray = dam['yTangent']
+  cdef double[:] zTangentArray = dam['zTangent']
+  # read fields
+  cdef double[:, :] FD = fields['FT']
   # initialize outputs
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
@@ -636,10 +657,10 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
   cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew
-  cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall
+  cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
-  cdef double massEntrained = 0, massFlowing = 0
+  cdef double massEntrained = 0, massFlowing = 0, dEm = 0
   cdef int k
   cdef int nRemove = 0
   # variables for interpolation
@@ -720,11 +741,13 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       LyNew0 = 0
       wNew = [0, 0, 0, 0]
       nRemove = nRemove + 1
+      continue  # this particle will be removed, skipp to the next particle
     elif outOfDEM[iCellNew]:
       # if the particle is on the DEM but in a noData area,
       # memorize it and remove it at the next update
       keepParticle[k] = 0
       nRemove = nRemove + 1
+      continue  # this particle will be removed, skipp to the next particle
 
     # get cell and weights at old position
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
@@ -745,24 +768,116 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sCorNew = sCor + nz*dl
+
+    # reproject velocity
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
-    # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-    uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
+    uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
+    # uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
     # remove normal component of the velocity
     uxNew = uxNew - uN * nxNew
     uyNew = uyNew - uN * nyNew
     uzNew = uzNew - uN * nzNew
-
     # velocity magnitude new
     uMagNew = norm(uxNew, uyNew, uzNew)
-
     if uMag > 0.0:
       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
       uxNew = uxNew * uMag / (uMagNew + velMagMin)
       uyNew = uyNew * uMag / (uMagNew + velMagMin)
       uzNew = uzNew * uMag / (uMagNew + velMagMin)
+
+    # add Dam interaction
+    if flagDam and cellsCrossed[iCell] == 1:
+      # if there is an interaction with the dam, update position and velocity
+      xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(x, y, z,
+        xNew, yNew, zNew, uxNew, uyNew, uzNew, nDamPoints, xFootArray, yFootArray, zFootArray,
+        xCrownArray, yCrownArray, zCrownArray, xTangentArray, yTangentArray, zTangentArray,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, nxArray, nyArray, nzArray, ZDEM, FD)
+      # reproject position on surface
+      # make sure particle is on the mesh (normal reprojection!!)
+      # if distReproj:
+      #   xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
+      #     x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption,
+      #     reprojectionIterations, thresholdProjection)
+      # else:
+      #   xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
+      #     xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
+      #   if iCellNew >= 0:
+      #     zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+
+      # in the C++ code, a simple vertical reprojection is done...
+      LxNew0, LyNew0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
+      if iCellNew >= 0:
+        zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+
+      if iCellNew < 0:
+        # if the particle is not on the DEM, memorize it and remove it at the next update
+        keepParticle[j] = 0
+        LxNew0 = 0
+        LyNew0 = 0
+        wNew = [0, 0, 0, 0]
+        nRemove = nRemove + 1
+        continue  # this particle will be removed, skipp to the next particle
+      elif outOfDEM[iCellNew]:
+        # if the particle is on the DEM but in a noData area,
+        # memorize it and remove it at the next update
+        keepParticle[j] = 0
+        nRemove = nRemove + 1
+        continue  # this particle will be removed, skipp to the next particle
+
+      # reproject velocity
+      # get normal at the new particle location
+      nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+      # velocity magnitude
+      uMag = norm(uxNew, uyNew, uzNew)
+      # normal component of the velocity
+      uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
+      # uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
+      # remove normal component of the velocity
+      uxNew = uxNew - uN * nxNew
+      uyNew = uyNew - uN * nyNew
+      uzNew = uzNew - uN * nzNew
+      # velocity magnitude new
+      uMagNew = norm(uxNew, uyNew, uzNew)
+      if uMag > 0.0:
+        # ensure that velocitity magnitude stays the same also after reprojection onto terrain
+        uxNew = uxNew * uMag / (uMagNew + velMagMin)
+        uyNew = uyNew * uMag / (uMagNew + velMagMin)
+        uzNew = uzNew * uMag / (uMagNew + velMagMin)
+      # reduce velocity normal to footline for energy loss due to flowing over dam
+
+      # # ToDo: I dont understand what is happening
+      # # dEm>0 means ????
+      # # reduce velocity normal to footline for energy loss due to flowing over dam
+      # # First multiply dEM by the gravAcc magnitude (because this was not done in the dam function)
+      # dEm = gravAcc*dEm
+      # if dEm < 0.0:
+      #   log.info('oups')
+      #   fNx, fNy, fNz = crossProd(nxNew, nyNew, nzNew, txWall, tyWall, tzWall)
+      #   fNx, fNy, fNz = normalize(fNx, fNy, fNz)
+      #   dv = math.sqrt(-2.0 * dEm)
+      #   uN = -scalProd(uxNew, uyNew, uzNew, fNx, fNy, fNz)
+      #   if uN < dv:
+      #     dv = uN
+      #   if dv > 0.0:
+      #     uxNew = uxNew + dv * fNx
+      #     uyNew = uyNew + dv * fNy
+      #     uzNew = uzNew + dv * fNz
+      #     uMag = norm(uxNew, uyNew, uzNew)
+      #     # normal component of the velocity
+      #     uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
+      #     # remove normal component of the velocity
+      #     uxNew = uxNew - uN * nxNew
+      #     uyNew = uyNew - uN * nyNew
+      #     uzNew = uzNew - uN * nzNew
+      #     # velocity magnitude new
+      #     uMagNew = norm(uxNew, uyNew, uzNew)
+      #     if uMag > 0.0:
+      #       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
+      #       uxNew = uxNew * uMag / (uMagNew)
+      #       uyNew = uyNew * uMag / (uMagNew)
+      #       uzNew = uzNew * uMag / (uMagNew)
 
     # prepare for stopping criterion
     if uMag > uFlowingThreshold:
@@ -1303,7 +1418,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
       y component of the normal vector of the DEM
   nzArray : 2D numpy array
       z component of the normal vector of the DEM
-      row index of the location of the particles
   gradient : int
     Return the gradient (if 1) or the force associated (if 0, default)
 
@@ -1906,7 +2020,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   cdef double zTemp, zn, xNew, yNew, zNew
   cdef double nx, ny, nz
   cdef int Lxi, Lyi, Lxj, Lyj
-  cdef int Lx0, Ly0, iCell
+  cdef int iCell
   cdef double w[4]
   xNew = xOld
   yNew = yOld
@@ -1917,18 +2031,18 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
     return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
   Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
   # get the cell location of the point
-  Lxi = Lx0
-  Lyi = Ly0
+  Lxi = iCell % ncols
+  Lyi = iCell / ncols
   # iterate
   while reprojectionIterations > 0:
     reprojectionIterations = reprojectionIterations - 1
     # vertical projection of the point
-    zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
+    zTemp = getScalar(Lxi, Lyi, w[0], w[1], w[2], w[3], ZDEM)
     # normal vector at this vertical projection location
     # if we take the normal at the new particle position)
     # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
     # What Peter does: get the normal of the cell center (but still not exactly giving the same results)
-    nx, ny, nz = getVector(Lx0, Ly0, 0.25, 0.25, 0.25, 0.25, nxArray, nyArray, nzArray)
+    nx, ny, nz = getVector(Lxi, Lyi, 0.25, 0.25, 0.25, 0.25, nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
     zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
     # correct position with the normal part
@@ -1942,14 +2056,12 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
       return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
     Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
 
-    Lxj = Lx0
-    Lyj = Ly0
     # are we in the same cell?
     if Lxi==Lxj and Lyi==Lyj:
-      return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
-    Lxj = Lxi
-    Lyj = Lyi
-  return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
+      return xNew, yNew, iCell, Lxj, Lyj, w[0], w[1], w[2], w[3]
+    Lxi = Lxj
+    Lyi = Lyj
+  return xNew, yNew, iCell, Lxj, Lyj, w[0], w[1], w[2], w[3]
 
 
 cpdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
