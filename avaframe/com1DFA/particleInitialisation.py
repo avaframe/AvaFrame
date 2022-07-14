@@ -5,14 +5,12 @@
 import logging
 import pathlib
 import numpy as np
-import copy
 
 # Local imports
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.particleTools as particleTools
-import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger
 log = logging.getLogger(__name__)

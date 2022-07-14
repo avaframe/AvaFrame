@@ -8,6 +8,7 @@ import numpy as np
 import scipy as sp
 import scipy.interpolate
 import copy
+import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -18,7 +19,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def projectOnRaster(dem, Points, interp='bilinear'):
+def projectOnRaster(dem, Points, interp='bilinear', what='rasterData', where='z'):
     """Projects Points on raster
     using a bilinear or nearest interpolation and returns the z coord (no for loop)
 
@@ -30,6 +31,10 @@ def projectOnRaster(dem, Points, interp='bilinear'):
         Points dictionary (x,y)
     interp: str
         interpolation option, between nearest or bilinear
+    what: str
+        which key in the dem dict should be used for the interpolation?
+    where: str
+        which key in the Points dict should be updated with the interpolated data?
 
     Returns
     -------
@@ -39,7 +44,7 @@ def projectOnRaster(dem, Points, interp='bilinear'):
         number of out of bounds indexes
     """
     header = dem['header']
-    rasterdata = dem['rasterData']
+    rasterdata = dem[what]
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     cellsize = header['cellsize']
@@ -47,7 +52,7 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     ycoor = Points['y']
 
     zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc, yllc=yllc, interp=interp)
-    Points['z'] = zcoor
+    Points[where] = zcoor
     return Points, ioob
 
 
@@ -699,6 +704,80 @@ def isCounterClockWise(path):
     a = np.arctan2(v[1:, 1], v[1:, 0])
     isCounterClock = (a[1:] >= a[:-1]).astype(int).mean() >= 0.5
     return isCounterClock
+
+
+def getCellsAlongLine(header, lineDict, addBuffer=True):
+    """ Find all raster cells crossed by the line
+    line has to be entierly contained on the raster extend. If addBuffer is True, add neighbour cells to the result
+    based on https://stackoverflow.com/a/35808540/15887086
+    """
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    # normalize line coordinates
+    xArray = (lineDict['x'] - xllc)/csz
+    yArray = (lineDict['y'] - yllc)/csz
+    # loop on line points
+    cellsCrossed = np.zeros((ncols * nrows))
+    for i in range(np.size(xArray)-1):
+        xA = xArray[i]
+        xB = xArray[i+1]
+        yA = yArray[i]
+        yB = yArray[i+1]
+        dx = xB - xA
+        dy = yB - yA
+        sx = np.sign(dx)
+        sy = np.sign(dy)
+        # add starting point cell to cell list
+        indX = round(xA)
+        indY = round(yA)
+        indCell = indX + ncols * indY
+        cellsCrossed[indCell] = 1
+        if addBuffer:
+            cellsCrossed, _, _ = getNeighborCells(indX, indY, ncols, nrows, cellsCrossed)
+        # find next intersection with vertical and horizontal axis
+        tIx = dy * (indX + sx/2 - xA) if dx != 0 else float("+inf")
+        tIy = dx * (indY + sy/2 - yA) if dy != 0 else float("+inf")
+        indXB = round(xB)
+        indYB = round(yB)
+        while (indX, indY) != (indXB, indYB):
+            # NB if tIx == tIy we increment both x and y
+            (movx, movy) = (abs(tIx) <= abs(tIy), abs(tIy) <= abs(tIx))
+
+            if movx:
+                # intersection is at (indX + sx, yA + tIx / dx^2)
+                indX += sx
+                tIx = dy * (indX + sx/2 - xA)
+
+            if movy:
+                # intersection is at (xA + tIy / dy^2, indY + sy)
+                indY += sy
+                tIy = dx * (indY + sy/2 - yA)
+
+            indX = round(indX)
+            indY = round(indY)
+            indCell = indX + ncols * indY
+            cellsCrossed[indCell] = 1
+            if addBuffer:
+                cellsCrossed, _, _ = getNeighborCells(indX, indY, ncols, nrows, cellsCrossed)
+    lineDict['cellsCrossed'] = cellsCrossed.astype(int)
+    return lineDict
+
+
+def getNeighborCells(indX, indY, ncols, nrows, cellsArray):
+    indXList = []
+    indYList = []
+    for i in [-1, 0, 1]:
+        if (indX + i < ncols) & (indX + i >= 0):
+            for j in [-1, 0, 1]:
+                if (indY + j < nrows) & (indY + j >= 0):
+                    indCell = (indX + i) + ncols * (indY + j)
+                    cellsArray[indCell] = 1
+                    indXList.append(indX + i)
+                    indYList.append(indY + j)
+    return cellsArray, indXList, indYList
 
 
 def path2domain(xyPath, rasterTransfo):

@@ -25,6 +25,7 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
@@ -281,7 +282,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, outDir, demOri, inputSimLines, cuSimName)
 
     # ------------------------
     #  Start time step computation
@@ -527,8 +528,22 @@ def prepareInputData(inputSimFiles, cfg):
         resLine = None
         resistanceArea = ''
 
+    # get line from dam
+    if cfg['GENERAL'].getboolean('dam'):
+        if entResInfo['flagDam'] == 'Yes':
+            damFile = inputSimFiles['damFile']
+            damLine = shpConv.readLine(damFile, '', demOri)
+            damLine['fileName'] = [damFile]
+            damLine['type'] = 'Dam'
+        else:
+            message = 'No dam file found'
+            log.error(message)
+            raise FileNotFoundError(message)
+    else:
+        damLine = None
+
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
-                     'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
+                     'entLine': entLine, 'resLine': resLine, 'damLine': damLine, 'entrainmentArea': entrainmentArea,
                      'resistanceArea': resistanceArea, 'entResInfo': entResInfo,
                      'relThField': relThFieldData}
 
@@ -687,7 +702,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName):
+def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     """ create simulaton report dictionary
 
     Parameters
@@ -819,6 +834,11 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
 
+    # initialize Dam
+    damLine = inputSimLines['damLine']
+    damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
+    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
+    dem['damLine'] = damLine
     return particles, fields, dem, reportAreaInfo
 
 
@@ -1665,7 +1685,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug('Update position C')
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, typeStop=0)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, fields, typeStop=0)
     tCPUPos = time.time() - startTime
     tCPU['timePos'] = tCPU['timePos'] + tCPUPos
 
@@ -2068,8 +2088,8 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     centerList = centerList.split('|')
     centerTrackPartPoint = {'x': np.array([float(centerList[0])]),
                             'y': np.array([float(centerList[1])])}
-    centerTrackPartPoint, _ = geoTrans.projectOnRaster(
-        dem, centerTrackPartPoint, interp='bilinear')
+    # centerTrackPartPoint, _ = geoTrans.projectOnRaster(
+    #     dem, centerTrackPartPoint, interp='bilinear')
     centerTrackPartPoint['x'] = (centerTrackPartPoint['x']
                                  - dem['originalHeader']['xllcenter'])
     centerTrackPartPoint['y'] = (centerTrackPartPoint['y']

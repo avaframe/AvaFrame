@@ -395,7 +395,7 @@ def extractFeature(featureIn, nFeature2Extract):
     return featureOut
 
 
-def writeLine2SHPfile(lineDict, lineName, fileName):
+def writeLine2SHPfile(lineDict, lineName, fileName, header=''):
     """ write a line to shapefile
 
     Parameters
@@ -415,6 +415,9 @@ def writeLine2SHPfile(lineDict, lineName, fileName):
     line = np.zeros((np.size(lineDict['x']), 2))
     line[:, 0] = lineDict['x']
     line[:, 1] = lineDict['y']
+    if header:
+        line[:, 0] = line[:, 0] + header['xllcenter']
+        line[:, 1] = line[:, 1] + header['yllcenter']
     w = shapefile.Writer(fileName)
     w.field('name', 'C')
     w.line([line])
