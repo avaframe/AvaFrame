@@ -77,6 +77,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     rangeTimeVelocityLegend(timeListNew, rangeGates, ax, maxVel, width=width, height=height, lw=lw, textsize=textsize)
     # add max velocity location
     ax.plot(timeVel, rangeVel, 'r*', label='max velocity location')
+    cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
 
     # add info on avalanche front in legend
     plt.legend(facecolor='grey', framealpha=0.2, loc='lower right', fontsize=8)
