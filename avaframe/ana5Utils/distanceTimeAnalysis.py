@@ -736,8 +736,8 @@ def approachVelocity(mtiInfo, minVelTimeStep):
         for k in range(i+1, len(timeListSorted+1)):
             if abs(timeListSorted[i] - timeListSorted[k]) >= minVelTimeStep:
                 appVel = ((rangeListSorted[i] - rangeListSorted[k]) / (timeListSorted[i] - timeListSorted[k]))
-                if abs(appVel) > maxVel:
-                    maxVel = abs(appVel)
+                if appVel > maxVel:
+                    maxVel = appVel
                     locationIndex = int(i + 0.5*(k-i))
                     rangeVel = rangeListSorted[locationIndex] - abs(np.nanmin(np.asarray(rangeList)))
                     timeVel = timeListSorted[locationIndex]
