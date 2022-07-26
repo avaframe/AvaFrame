@@ -77,7 +77,7 @@ variable ``avalancheDir``.
 
 Then run ::
 
-  python runInitializeProject.py
+  python runScripts/runInitializeProject.py
 
 This will create a new directory with the input required by AvaFrame structured as described
 in :ref:`moduleIn3Utils:Initialize Project`.
