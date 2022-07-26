@@ -2338,20 +2338,16 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
             list of output files resTypes available (ppr, pft...)
     """
     if runDFAModule:
-        # Run dense flow with coulomb friction
+        # clean avalanche directory
         iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=deleteOutput)
-        # here is an example with com1DFA but another DFA computational module can be used
-        # as long as it produces some FV, FT and FM results
+        # Run the DFA simulation
         dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=cfgFile)
     else:
         # read simulation dem
         demOri = gI.readDEM(avalancheDir)
         dem = com1DFA.setDEMoriginToZero(demOri)
         dem['originalHeader'] = demOri['header'].copy()
-        # load DFA results (use runCom1DFA to generate these results for example)
-        # here is an example with com1DFA but another DFA computational module can be used
-        # as long as it produces some particles or FV, FT and FM results
-        # create dataFrame of results (read DFA data)
+        # load DFA results
         simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
     dataDF, resTypeList = fU.makeSimFromResDF(avalancheDir, 'com1DFA', inputDir='', simName='')

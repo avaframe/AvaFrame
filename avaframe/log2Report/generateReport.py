@@ -141,12 +141,8 @@ def writeReportFile(reportD, pfile):
             # rename columns
             df = df.rename(columns=reportD[key]['column names'])
             df = df.transpose()
-            # df.columns = df.iloc[0]
             nCols = len(reportD[key]['column names'])
-            df.to_markdown(buf=pfile, tablefmt="github", headers=["<!-- -->" ]*nCols)
-            # data = df.reset_index().values.tolist()
-            # table = tabulate(data, showindex=False, tablefmt="github", headers=[])
-            # pfile.write(table)
+            df.to_markdown(buf=pfile, tablefmt="github", headers=["<!-- -->"]*nCols)
             pfile.write(' \n')
             pfile.write(' \n')
 

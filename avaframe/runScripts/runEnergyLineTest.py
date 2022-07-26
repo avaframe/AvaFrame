@@ -19,7 +19,7 @@ from avaframe.ana1Tests import energyLineTest
 
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log
-logName = 'runenergyLineTest'
+logName = 'runEnergyLineTest'
 # do you want to run the DFA module (all results in the Outputs/com1DFA forlder will be deleted)
 runDFAModule = False
 # ++++++++++++++++++++++++++++++

@@ -20,7 +20,6 @@ logName = 'runAna3AIMEC'
 
 def runAna3AIMEC(avalancheDir, cfg):
     """ run script for AIMEC analysis
-    reads the avalancheDir from the configuration file or the one given in input
     proceeds to AIMEC analysis and produces plots and reports
     """
     cfgSetup = cfg['AIMECSETUP']
