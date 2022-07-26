@@ -15,6 +15,8 @@ import matplotlib.patheffects as pe
 # Local imports
 # import computation modules
 from avaframe.com1DFA import com1DFA
+
+# import analysis modules
 import avaframe.ana5Utils.DFAPathGeneration as DFAPath
 
 # import plotting tools
@@ -28,7 +30,7 @@ log = logging.getLogger(__name__)
 def mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem):
     """This is the core function of the energyLineTest module
 
-    This module runs a DFA simulation extracts the center of mass path
+    This module extracts the center of mass path from a DFA simulation
     and compares it to he analytic geometric/alpha line solution
     """
     log.info('Energy line test for simulation: %s' % simName)

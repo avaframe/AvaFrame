@@ -1,6 +1,6 @@
 """
 Run the rotation test
-Analyze the effect of the grid direction on DFA simulation results
+Analyze the effect of the grid orientation/alignment on DFA simulation results
 """
 import pathlib
 
@@ -26,12 +26,12 @@ comModule = 'com1DFA'
 rotationTestCfgFile = ''
 # if you want to specify a different file and disregard the local one
 # rotationTestCfgFile = pathlib.Path('ana1Tests', 'rotationTest_com1DFACfg.ini')
-# do you want to run the DFA module (all results in the Outputs/com1DFA forlder will be deleted)
-runDFAModule = False
+# do you want to run the DFA module (all results in the Outputs/com1DFA folder will be deleted)
+runDFAModule = True
 # for aimec analysis (overwrites the parameters in the config files, default and local)
 anaMod = 'com1DFARotated'
 referenceSimName = 'rel0'
-# start with this, will be changed to True is the simulations are have entrainment
+# start with this, will be changed to True if the simulations have entrainment
 flagMass = False
 # ++++++++++++++++++++++++++++++
 
@@ -52,13 +52,14 @@ iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 # run the com1DFA module or load the results from com1DFA
 dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=runDFAModule,
                                                    cfgFile=rotationTestCfgFile)
+# fetch reference simulation based in referenceSimName
 refSimRowHash, refSimName = aimecTools.defineRefOnSimName(referenceSimName, simDF)
 # initialize report
 reportRotationTest = rotationTest.initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName)
 # Rotate raster results for aimec analysis and run the energy line test
 simDF, flagMass = rotationTest.mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowHash)
 
-# proceede to aimec analysis on the rotated raster results
+# proceed to aimec analysis on the rotated raster results
 iP.cleanModuleFiles(avalancheDir, ana3AIMEC)
 # prepare the configuration
 cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
@@ -73,6 +74,6 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfgAimec)
 pathDict, rasterTransfo, resAnalysisDF, aimecPlotDict = runAna3AIMEC.runAna3AIMEC(avalancheDir, cfgAimec)
 resAnalysisDF = resAnalysisDF.reset_index().merge(simDF[['simName', 'relAngle']], on=['simName']).set_index('index')
 
-# finalyze rotation test report
+# finalize rotation test report
 reportRotationTest = rotationTest.buildRotationTestReport(avalancheDir, reportRotationTest, simDF, resAnalysisDF,
                                                           aimecPlotDict, flagMass)

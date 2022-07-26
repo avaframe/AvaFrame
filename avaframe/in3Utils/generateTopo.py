@@ -337,7 +337,6 @@ def parabola(cfg):
             superChannel = superChannel - cExtent*c0*np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2))))*mask
 
     if cfg['TOPO'].getboolean('dam'):
-        # damPos = float(cfg['DAMS']['damPos'])
         damPos = cfg['DAMS'].getfloat('damPos')
         damHeight = cfg['DAMS'].getfloat('damHeight')
         damWidth = cfg['DAMS'].getfloat('damWidth')
@@ -389,14 +388,7 @@ def parabolaRotation(cfg):
     # add parabola aligned with x (going from left to right)
     phi = math.pi
     # rotation of the polar coord system to be aligned with the parabola direction
-    gamma = theta - phi
-    gamma = np.where(gamma < 0, gamma+2*math.pi, gamma)
-    gamma = np.where(gamma >= 2*math.pi, gamma-2*math.pi, gamma)
-    # compute the s in the cartesian coord system aligned with the parabola
-    s = r * np.cos(gamma)
-    # shift this so that origin is at the top of the parabola
-    s = -s + fLen + fFlat
-    # apply the parabola to the corresponding part of the dem
+    zv, s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
 
     mask = np.ones(np.shape(s))
     mask[np.where(theta < 2*math.pi/3)] = 0
@@ -407,14 +399,7 @@ def parabolaRotation(cfg):
     # add parabola sloped 60° with x
     phi = math.pi/3
     # rotation of the polar coord system to be aligned with the parabola direction
-    gamma = theta - phi
-    gamma = np.where(gamma < 0, gamma+2*math.pi, gamma)
-    gamma = np.where(gamma >= 2*math.pi, gamma-2*math.pi, gamma)
-    # compute the s in the cartesian coord system aligned with the parabola
-    s = r * np.cos(gamma)
-    # shift this so that origin is at the top of the parabola
-    s = -s + fLen + fFlat
-    # apply the parabola to the corresponding part of the dem
+    zv, s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
 
     mask = np.ones(np.shape(s))
     mask[np.where(theta > 2*math.pi/3)] = 0
@@ -425,6 +410,24 @@ def parabolaRotation(cfg):
     # add parabola aligned with x (going from left to right)
     phi = -math.pi/4
     # rotation of the polar coord system to be aligned with the parabola direction
+    s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
+
+    # apply the parabola to the corresponding part of the dem
+    mask = np.ones(np.shape(s))
+    mask[np.where(theta > math.pi/24)] = 0
+    mask[np.where(theta < -5*math.pi/8)] = 0
+    mask[np.where(s > fLen)] = 0
+    zv = zv + (A * s**2 + B * s + C)*mask
+
+    # Log info here
+    log.info('Triple parabola with flat foreland coordinates computed')
+
+    return xv, yv, zv
+
+
+def addParabolaAxis(phi, theta, r, zv, fLen, fFlat):
+    """add a parabola along an axis sloped from theta - phi from x"""
+    # rotation of the polar coord system to be aligned with the parabola direction
     gamma = theta - phi
     gamma = np.where(gamma < 0, gamma+2*math.pi, gamma)
     gamma = np.where(gamma >= 2*math.pi, gamma-2*math.pi, gamma)
@@ -433,17 +436,7 @@ def parabolaRotation(cfg):
     # shift this so that origin is at the top of the parabola
     s = -s + fLen + fFlat
     # apply the parabola to the corresponding part of the dem
-
-    mask = np.ones(np.shape(s))
-    mask[np.where(theta > math.pi/24)] = 0
-    mask[np.where(theta < -5*math.pi/8)] = 0
-    mask[np.where(s > fLen)] = 0
-    zv = zv + (A * s**2 + B * s + C)*mask
-
-    # Log info here
-    log.info('Triple parabola with flat outrun coordinates computed')
-
-    return xv, yv, zv
+    return s
 
 
 def bowl(cfg):
