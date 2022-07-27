@@ -69,13 +69,16 @@ def test_getIntersection(capfd):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
 
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile), modInfo=True)
+    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
+                                                          modInfo=True)
 
     mu = 1
     csz = 1
     avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
                       'z': np.array([5.1, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
+                                                                                                 avaProfileMass, mu,
+                                                                                                 csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -88,7 +91,9 @@ def test_getIntersection(capfd):
 
     avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
                       'z': np.array([2.6, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
+                                                                                                 avaProfileMass, mu,
+                                                                                                 csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -101,7 +106,9 @@ def test_getIntersection(capfd):
 
     avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
                       'z': np.array([2.45, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
+                                                                                                 avaProfileMass, mu,
+                                                                                                 csz)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -135,7 +142,8 @@ def test_getEnergyInfo(capfd):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
 
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile), modInfo=True)
+    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
+                                                          modInfo=True)
 
     g = 9.81
     alphaDeg = 30
@@ -146,10 +154,13 @@ def test_getEnergyInfo(capfd):
                       'u2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
 
     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
+                                                                                                 avaProfileMass, mu,
+                                                                                                 csz)
 
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection,
-                                                                                 zIntersection, runOutAngleDeg, alphaDeg)
+                                                                                 zIntersection, runOutAngleDeg,
+                                                                                 alphaDeg)
     print(zEne)
     print(v2Path)
     print(sGeomL)

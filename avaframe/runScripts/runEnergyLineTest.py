@@ -8,7 +8,9 @@ import pathlib
 # import config and init tools
 from avaframe.in3Utils import initializeProject as iP
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 # import computation modules
 from avaframe.com1DFA import com1DFA
@@ -20,8 +22,6 @@ from avaframe.ana1Tests import energyLineTest
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'runEnergyLineTest'
-# do you want to run the DFA module (all results in the Outputs/com1DFA forlder will be deleted)
-runDFAModule = False
 # ++++++++++++++++++++++++++++++
 
 # Load avalanche directory from general configuration file
@@ -36,15 +36,24 @@ log.info('Current avalanche: %s', avalancheDir)
 # ----------------
 # Clean input directory(ies) of old work and output files
 iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+workPath = pathlib.Path(avalancheDir, 'Work', 'energyLineTest')
+fU.makeADir(workPath)
+energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest)
 
-# get path to com1DFA configuration file used for the energy line test
-energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
-energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
+# ++++++++++ set configurations for all the used modules and override ++++++++++++
+# get comDFA configuration and save to file
+com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                      onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
+com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
+com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+
 # run the com1DFA module or load the results from com1DFA
+runDFAModule = energyLineTestCfg['energyLineTest'].getboolean('runDFAModule')
 dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=runDFAModule,
-                                         cfgFile=energyLineTestCfgFile)
+                                         cfgFile=com1DFACfgFile)
 
 # generate mass averaged path profile
 for simName in simDF.index:
     # make analysis and generate plots
-    resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
+    resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName,
+                                                                   dem)

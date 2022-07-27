@@ -7,18 +7,14 @@ and compares the results
 import logging
 import shutil
 from datetime import datetime
-import pathlib
 
 # Local imports
 # import config and init tools
-from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import geoTrans as gT
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.version import getVersion
-# import computation modules
-from avaframe.com1DFA import com1DFA
 # import analysis modules
 from avaframe.ana1Tests import energyLineTest
 # import plotting module
@@ -27,7 +23,8 @@ import avaframe.out3Plot.plotUtils as pU
 log = logging.getLogger(__name__)
 
 
-def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowHash):
+def mainRotationTest(avalancheDir, energyLineTestCfg, com1DFACfg, dem, simDF, resTypeList, flagMass, refSimRowHash,
+                     comModule):
     """This is the core function of the Rotation Test module
 
     This module runs the energy line test and rotates the simulation results for the aimec analysis
@@ -36,6 +33,10 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowH
     ----------
     avalancheDir : pathlib path
         path to avalanche directory
+    energyLineTestCfg : configParser
+        energy line test configuration object
+    com1DFACfg : configParser
+        com1DFA configuration object
     dem : dict
         dem dictionary
     simDF : dataFrame
@@ -46,6 +47,8 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowH
         should the aimec mass analysis be done
     refSimRowHash : str
         row index of the reference simulation in the simDF
+    comModule : str
+        computation module used for the DFA simulation
 
     Returns
     -------
@@ -55,8 +58,6 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowH
         should the aimec mass analysis be done (switched to true if it is an entrainment simulation)
     """
     # read energy line config. ToDo should we only read the DFAPath config and remove the energy line one?
-    energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
     inDir = avalancheDir / 'Outputs' / 'com1DFA'
     outDir = avalancheDir / 'Outputs' / 'com1DFARotated'
     fU.makeADir(outDir)
@@ -64,35 +65,37 @@ def mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowH
     simName = simDF.loc[refSimRowHash, 'simName']
     relName = (simName.split('_'))[0]
     thetaRef = float(relName[3:])
-    for simHash in simDF.index:
+    for rowSimHash in simDF.index:
         # rotate results to be able to proceed to the aimec analysis
-        simName = simDF.loc[simHash, 'simName']
+        simName = simDF.loc[rowSimHash, 'simName']
         # activate mass analysis if it is an entrainment simulation
         # (note this can be forced to be true with the flagMass)
-        if 'ent' in simDF.loc[simHash, 'simType']:
+        if 'ent' in simDF.loc[rowSimHash, 'simType']:
             flagMass = True
-            # copy mass file
-            massFile = list(inDir.glob('mass_*' + simName + '*.txt'))
-            shutil.copy(massFile[0], outDir)
+        # copy mass file
+        massFile = list(inDir.glob('mass_*' + simName + '*.txt'))
+        shutil.copy(massFile[0], outDir)
         # rotate simulation results (will be the input for the AIMEC analysis)
-        rotateDFAResults(avalancheDir, simDF, simHash, resTypeList, thetaRef)
+        rotateDFAResults(avalancheDir, simDF, rowSimHash, resTypeList, thetaRef, comModule)
 
         # make energy line analysis
-        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
-        simDF.loc[simHash, 'zEnd'] = resultEnergyTest['zEnd']
-        simDF.loc[simHash, 'sEnd'] = resultEnergyTest['sEnd']
-        simDF.loc[simHash, 'runoutAngle'] = resultEnergyTest['runoutAngle']
-        simDF.loc[simHash, 'energyLinePlotPath'] = savePath
+        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg,
+                                                                       simName, dem)
+        simDF.loc[rowSimHash, 'zEnd'] = resultEnergyTest['zEnd']
+        simDF.loc[rowSimHash, 'sEnd'] = resultEnergyTest['sEnd']
+        simDF.loc[rowSimHash, 'runoutAngle'] = resultEnergyTest['runoutAngle']
+        simDF.loc[rowSimHash, 'energyLinePlotPath'] = savePath
     # now compare energy line results of rotated sims to the reference sim
-    for simHash in simDF.index:
-        simDF.loc[simHash, 'zDiff'] = simDF.loc[simHash, 'zEnd'] - simDF.loc[refSimRowHash, 'zEnd']
-        simDF.loc[simHash, 'sDiff'] = simDF.loc[simHash, 'sEnd'] - simDF.loc[refSimRowHash, 'sEnd']
-        simDF.loc[simHash, 'runoutAngleDiff'] = simDF.loc[simHash, 'runoutAngle'] - simDF.loc[refSimRowHash, 'runoutAngle']
+    for rowSimHash in simDF.index:
+        simDF.loc[rowSimHash, 'zDiff'] = simDF.loc[rowSimHash, 'zEnd'] - simDF.loc[refSimRowHash, 'zEnd']
+        simDF.loc[rowSimHash, 'sDiff'] = simDF.loc[rowSimHash, 'sEnd'] - simDF.loc[refSimRowHash, 'sEnd']
+        simDF.loc[rowSimHash, 'runoutAngleDiff'] = simDF.loc[rowSimHash, 'runoutAngle'] - simDF.loc[refSimRowHash,
+                                                                                                    'runoutAngle']
 
     return simDF, flagMass
 
 
-def rotateDFAResults(avalancheDir, simDF, simHash, resTypeList, thetaRef):
+def rotateDFAResults(avalancheDir, simDF, rowSimHash, resTypeList, thetaRef, comModule):
     """Rotate the DFA results
 
     Parameters
@@ -101,34 +104,37 @@ def rotateDFAResults(avalancheDir, simDF, simHash, resTypeList, thetaRef):
         path to avalanche directory
     simDF : dataFrame
         DFA simulation dataFrame
-    simHash : str
+    rowSimHash : str
         row index (in the simDF dataframe) of the simulation to analyze
     resTypeList : list
         list of result types available
     thetaRef : float
         angle of the path of the reference simulation
+    comModule : str
+        computation module used for the DFA simulation
 
     Returns
     -------
-    saves the rotated rasters to avalancheDir / 'Outputs' / 'com1DFARotated' / 'peakFiles'
+    saves the rotated rasters to avalancheDir / 'Outputs' / comModule + 'Rotated' / 'peakFiles'
     """
-    log.debug('Rotating simulation: %s' % simHash)
-    simName = simDF.loc[simHash, 'simName']
+    log.debug('Rotating simulation: %s' % rowSimHash)
+    simName = simDF.loc[rowSimHash, 'simName']
     relName = (simName.split('_'))[0]
     theta = float(relName[3:])
-    simDF.loc[simHash, 'relAngle'] = theta
+    simDF.loc[rowSimHash, 'relAngle'] = theta
     thetaRot = theta - thetaRef
     for resType in resTypeList:
-        fName = simDF.loc[simHash, resType]
+        fName = simDF.loc[rowSimHash, resType]
         rasterDict = IOf.readRaster(fName)
         rotatedRaster = gT.rotateRaster(rasterDict, thetaRot, deg=True)
-        outDir = avalancheDir / 'Outputs' / 'com1DFARotated' / 'peakFiles'
+        comRotated = comModule + 'Rotated'
+        outDir = avalancheDir / 'Outputs' / comRotated / 'peakFiles'
         fU.makeADir(outDir)
         outFileName = outDir / fName.name
         IOf.writeResultToAsc(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
 
-def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName):
+def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName, flagMass):
     """Initialize dictionary that is used for markdown report generation for rotation test
 
     Parameters
@@ -141,6 +147,8 @@ def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimNam
         computation module name
     refSimName : str
         name of the reference simulation in the simDF
+    flagMass : boolean
+        Was a mass analysis conducted?
 
     Returns
     -------
@@ -158,7 +166,8 @@ def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimNam
                           'Reference simulation': refSimName},
                           'Rotation test input simulations': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name',
-                                                               'releaseScenario': 'Release name', 'relAngle': 'Angle °'}},
+                                                               'releaseScenario': 'Release name',
+                                                               'relAngle': 'Angle °'}},
                           'Rotation test Energy line result table': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name', 'relAngle': 'Angle °',
                                                                'zDiff': 's Diff [m]',
@@ -167,13 +176,15 @@ def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimNam
                           'Rotation test Energy line figures': {'type': 'image'},
                           'Rotation test AIMEC result table': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name', 'relAngle': 'Angle °',
-                                                               'sRunout': 'Runout [m]', 'relMass': 'release mass [kg]',
-                                                               'finalMass': 'final mass [kg]',
-                                                               'entMass': 'entrained mass [kg]',
+                                                               'sRunout': 'Runout [m]',
                                                                'TP': 'True positive area [-]',
                                                                'FP': 'False positive area [-]',
                                                                'FN': 'False negative area [-]'}},
                           'Rotation test AIMEC figures': {'type': 'image'}}
+    if flagMass:
+        reportRotationTest['Rotation test AIMEC result table']['column names']['relMass'] = 'release mass [kg]'
+        reportRotationTest['Rotation test AIMEC result table']['column names']['finalMass'] = 'final mass [kg]'
+        reportRotationTest['Rotation test AIMEC result table']['column names']['entMass'] = 'entrained mass [kg]'
     resTypeList = list(set(resTypeList).intersection(['ppr', 'pfv', 'pft']))
     for resType in resTypeList:
         colName = 'max%sCrossMax' % resType

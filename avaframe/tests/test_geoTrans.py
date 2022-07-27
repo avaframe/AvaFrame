@@ -466,7 +466,7 @@ def test_checkOverlap(capfd):
     atol = 1e-10
     print(checkedRaster2)
     print(checkedRaster1)
-    assert np.allclose(checkedRaster2, checkedRaster1, atol = atol)
+    assert np.allclose(checkedRaster2, checkedRaster1, atol=atol)
 
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[2:, 2:] = 1
@@ -573,7 +573,6 @@ def test_cartToSpherical():
     assert r == np.sqrt(10.**2 + 10.**2 + Z**2)
     assert phi == 45.
     assert theta == 45.
-
 
     # setup required inputs
     X = np.sqrt(10.)

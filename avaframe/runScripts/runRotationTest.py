@@ -8,7 +8,9 @@ import pathlib
 # import config and init tools
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import initializeProject as iP
+from avaframe.in3Utils import fileHandlerUtils as fU
 # import computation modules
 from avaframe.com1DFA import com1DFA
 
@@ -16,23 +18,11 @@ from avaframe.com1DFA import com1DFA
 from avaframe.runScripts import runAna3AIMEC
 from avaframe.ana3AIMEC import ana3AIMEC, aimecTools
 from avaframe.ana1Tests import rotationTest
+from avaframe.ana1Tests import energyLineTest
 
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'runRotationTest'
-# for the report
-comModule = 'com1DFA'
-# get path to com1DFA configuration file used for the rotation test
-rotationTestCfgFile = ''
-# if you want to specify a different file and disregard the local one
-# rotationTestCfgFile = pathlib.Path('ana1Tests', 'rotationTest_com1DFACfg.ini')
-# do you want to run the DFA module (all results in the Outputs/com1DFA folder will be deleted)
-runDFAModule = True
-# for aimec analysis (overwrites the parameters in the config files, default and local)
-anaMod = 'com1DFARotated'
-referenceSimName = 'rel0'
-# start with this, will be changed to True if the simulations have entrainment
-flagMass = False
 # ++++++++++++++++++++++++++++++
 
 # Load avalanche directory from general configuration file
@@ -48,30 +38,48 @@ log.info('Current avalanche: %s', avalancheDir)
 # ----------------
 # Clean input directory(ies) of old work and output files
 iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+workPath = pathlib.Path(avalancheDir, 'Work', 'energyLineTest')
+fU.makeADir(workPath)
+rotationTestCfg = cfgUtils.getModuleConfig(rotationTest)
+
+# ++++++++++ set configurations for all the used modules and override ++++++++++++
+# get comDFA configuration and save to file
+com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                      onlyDefault=rotationTestCfg['com1DFA_override']['defaultConfig'])
+com1DFACfg, rotationTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, rotationTestCfg, com1DFA, addModValues=False)
+com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+# get energyLine configuration and save to file
+energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest, fileOverride='', modInfo=False, toPrint=False,
+                                             onlyDefault=rotationTestCfg['energyLineTest_override']['defaultConfig'])
+energyLineTestCfg, rotationTestCfg = cfgHandling.applyCfgOverride(energyLineTestCfg, rotationTestCfg, energyLineTest,
+                                                                  addModValues=False)
+# get ana3AIMEC configuration
+AIMECCfg = cfgUtils.getModuleConfig(ana3AIMEC, fileOverride='', modInfo=False, toPrint=False,
+                                    onlyDefault=rotationTestCfg['ana3AIMEC_override']['defaultConfig'])
+AIMECCfg, rotationTestCfg = cfgHandling.applyCfgOverride(AIMECCfg, rotationTestCfg, ana3AIMEC, addModValues=False)
+AIMECCfgFile = cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, AIMECCfg, fileName='ana3AIMEC_settings', filePath=workPath)
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # run the com1DFA module or load the results from com1DFA
+runDFAModule = rotationTestCfg['rotationTest'].getboolean('runDFAModule')
 dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=runDFAModule,
-                                                   cfgFile=rotationTestCfgFile)
+                                                   cfgFile=com1DFACfgFile)
+
 # fetch reference simulation based in referenceSimName
-refSimRowHash, refSimName = aimecTools.defineRefOnSimName(referenceSimName, simDF)
+refSimRowHash, refSimName = aimecTools.defineRefOnSimName(AIMECCfg['AIMECSETUP']['referenceSimName'], simDF)
 # initialize report
-reportRotationTest = rotationTest.initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName)
+comModule = rotationTestCfg['rotationTest']['comModule']
+flagMass = AIMECCfg['FLAGS'].getboolean('flagMass')
+reportRotationTest = rotationTest.initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName,
+                                                               flagMass)
 # Rotate raster results for aimec analysis and run the energy line test
-simDF, flagMass = rotationTest.mainRotationTest(avalancheDir, dem, simDF, resTypeList, flagMass, refSimRowHash)
+simDF, flagMass = rotationTest.mainRotationTest(avalancheDir, energyLineTestCfg, com1DFACfg, dem, simDF, resTypeList,
+                                                flagMass, refSimRowHash, comModule)
 
 # proceed to aimec analysis on the rotated raster results
 iP.cleanModuleFiles(avalancheDir, ana3AIMEC)
-# prepare the configuration
-cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
-cfgAimec['AIMECSETUP']['resTypeList'] = 'ppr|pfv|pft'
-cfgAimec['AIMECSETUP']['varParList'] = ''
-cfgAimec['AIMECSETUP']['referenceSimName'] = referenceSimName
-cfgAimec['AIMECSETUP']['anaMod'] = anaMod
-cfgAimec['FLAGS']['flagMass'] = str(flagMass)
-# write configuration to file
-cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfgAimec)
 
-pathDict, rasterTransfo, resAnalysisDF, aimecPlotDict = runAna3AIMEC.runAna3AIMEC(avalancheDir, cfgAimec)
+pathDict, rasterTransfo, resAnalysisDF, aimecPlotDict = runAna3AIMEC.runAna3AIMEC(avalancheDir, AIMECCfg)
 resAnalysisDF = resAnalysisDF.reset_index().merge(simDF[['simName', 'relAngle']], on=['simName']).set_index('index')
 
 # finalize rotation test report

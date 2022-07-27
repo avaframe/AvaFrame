@@ -2349,6 +2349,10 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
         dem['originalHeader'] = demOri['header'].copy()
         # load DFA results
         simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
+        if simDF is None:
+            message = 'Did not find any com1DFA simulations in %s/Outputs/com1DFA/' % avalancheDir
+            log.error(message)
+            raise FileExistsError(message)
 
     dataDF, resTypeList = fU.makeSimFromResDF(avalancheDir, 'com1DFA', inputDir='', simName='')
     simDF = simDF.reset_index().merge(dataDF, on='simName').set_index('index')

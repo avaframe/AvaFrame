@@ -127,7 +127,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'True', 'relThFromShp': 'False', 'secondaryRelThFromShp': 'True',
                       'relThFromFile': 'False',
-                      'relTh': '1.32', 'secondaryRelTh0': '1.789', 'secondaryRelThPercentVariation': '0.7', 'simTypeActual': 'null'}
+                      'relTh': '1.32', 'secondaryRelTh0': '1.789', 'secondaryRelThPercentVariation': '0.7',
+                      'simTypeActual': 'null'}
     cfg['INPUT'] = {'secondaryRelThThickness': '1.2523', 'secondaryRelThId': '0'}
 
     inputSimLines = {}
@@ -204,8 +205,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     relName2, inputSimLines2, badName2 = com1DFA.prepareReleaseEntrainment(
         cfg, rel, inputSimLines)
 
-
-    print('Test', cfg['GENERAL']['secondaryRelTh'], cfg['GENERAL']['secondaryRelThFromShp'],cfg['GENERAL']['secondaryRelTh0'],)
+    print('Test', cfg['GENERAL']['secondaryRelTh'], cfg['GENERAL']['secondaryRelThFromShp'],
+          cfg['GENERAL']['secondaryRelTh0'])
     print('inputSimLines', inputSimLines2)
     assert relName2 == 'release1PF_test'
     assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
@@ -341,7 +342,8 @@ def test_createReportDict():
     logName = 'testName'
     relName = 'relTest'
     inputSimLines = {'entrainmentArea': 'entTest', 'resistanceArea': 'resTest', 'releaseLine':
-                     {'Name': 'relTestFeature', 'thickness': ['1.45']}, 'entLine': {'Name': ['entTest'], 'thickness': ['1.1']}}
+                     {'Name': 'relTestFeature', 'thickness': ['1.45']}, 'entLine': {'Name': ['entTest'],
+                      'thickness': ['1.1']}}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}}
     cfg = configparser.ConfigParser()
@@ -626,7 +628,7 @@ def test_initializeResistance():
     dem['rasterData'] = np.ones((nrows, ncols))
 
     simTypeActual = 'entres'
-    resLine = {'fileName': 'resTest', 'Name': 'resFeature', 'Start': np.asarray([0]), 'Length': np.asarray([5]),
+    resLine = {'fileName': 'resTest', 'Start': np.asarray([0]), 'Length': np.asarray([5]),
                'Name': ['resTestFeat'], 'type': 'resistance',
                'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'No'}
@@ -915,9 +917,12 @@ def test_releaseSecRelArea():
     secRelRaster3[9, 9] = 0.5
     secRelRaster1 = np.zeros((demHeader['nrows'], demHeader['ncols']))
     secRelRaster1[1, 1] = 0.5
-    secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5, 9.5]),
-                            'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
-                            'z': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
+    secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5,
+                                             9.5]),
+                            'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5,
+                                             9.5]),
+                            'z': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5,
+                                             9.5]),
                             'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]),
                             'Name': ['secRel1', 'secRel2', 'secRel3'], 'thickness': [0.5, 1.0, 0.5],
                             'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
@@ -1330,7 +1335,8 @@ def test_initializeFields():
            'areaRaster': areaRaster}
     particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'nPart': 3,
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
-                 'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.]), 'travelAngle': np.asarray([0., 0., 0.])}
+                 'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.]),
+                 'travelAngle': np.asarray([0., 0., 0.])}
     cfg = configparser.ConfigParser()
     cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2', 'resType': 'ppr|pft|pfv'}
@@ -1445,10 +1451,9 @@ def test_prepareVarSimDict(caplog):
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     simHash2 = cfgUtils.cfgHash(testCfg2)
-    simName2 = 'relTest_extended_AF_'+ simHash2 +'_entres_dfa'
+    simName2 = 'relTest_extended_AF_' + simHash2 + '_entres_dfa'
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
-
 
     for key in testDict2[simName2]:
         assert simDict2[simName2][key] == testDict2[simName2][key]
@@ -1473,7 +1478,7 @@ def test_initializeSimulation():
     cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     cfg['GENERAL'] = {'methodMeshNormal': '1', 'thresholdPointInPoly': '0.001', 'useRelThFromIni': 'False',
                       'resType': 'ppr|pft|pfv', 'relTh': '1.0', 'useEntThFromIni': 'False',
-                      'sphKernelRadius': '1.', 'meshCellSizeThreshold': '0.0001',
+                      'meshCellSizeThreshold': '0.0001',
                       'meshCellSize': '1.', 'simTypeActual': 'ent', 'rhoEnt': '100.', 'entTh': '0.3',
                       'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
@@ -1497,7 +1502,7 @@ def test_initializeSimulation():
     entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'thickness': [0.3, 0.3],
                'thicknessSource': ['shp file', 'shp file'],
                'Length': np.asarray([5]), 'x': np.asarray([4, 5., 5.0, 4., 4.]), 'type': 'entrainment',
-               'y': np.asarray([4., 4., 5.0, 5., 4.0]), 'thickness': [0.3], 'thicknessSource': ['ini File']}
+               'y': np.asarray([4., 4., 5.0, 5., 4.0])}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
                      'resLine': '', 'relThField': ''}
     # set release thickness read from file or not
@@ -1635,20 +1640,11 @@ def test_runCom1DFA(tmp_path, caplog):
 
 def test_runOrLoadCom1DFA(tmp_path, caplog):
     testDir = pathlib.Path(__file__).parents[0]
-    avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaKotPytest'
+    avalancheDir = testDir / '..' / 'data' / 'avaKot'
     cfgMain = configparser.ConfigParser()
-    dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
-    print(simDF.index)
-    print(simDF.columns)
-    assert 'pft' in resTypeList
-    assert 'pfv' in resTypeList
-    assert 'ppr' in resTypeList
-    assert 'relKot_c9fff169d9_ent_dfa' in simDF['simName'].to_list()
-    assert 'relKot_728a70555e_null_dfa' in simDF['simName'].to_list()
-    with pytest.raises(AttributeError) as e:
-        dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='',
-                                                           deleteOutput=False)
-    assert str(e.value) == ("'str' object has no attribute 'reset_index'")
+    with pytest.raises(FileExistsError) as e:
+        dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
+    assert ("Did not find any com1DFA simulations in") in str(e.value)
 
     # testDir = pathlib.Path(__file__).parents[0]
     # avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaHockeyChannelPytest'
