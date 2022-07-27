@@ -77,7 +77,7 @@ else:
     configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
     if (configDir.is_dir() is False) or (len(list(configDir.glob('*.ini'))) == 0):
         fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
-            configDir))
+                                configDir))
 
     # fetch info on available simulations
     simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
@@ -101,16 +101,16 @@ else:
         mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
         mtiInfo['plotTitle'] = 'thalweg-time diagram %s' % index
         mtiInfo['textbox'] = 'beta point: %.2f, %.2f' % (mtiInfo['betaPoint'][0],
-            mtiInfo['betaPoint'][1])
+                                                         mtiInfo['betaPoint'][1])
 
         # fetch all flow parameter result fields
         flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
-        simNameSuffix = index + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
-        flowFields =  fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
+        simNameSuffix = simDFrow['simName'] + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
+        flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
 
         if len(flowFields) == 0:
             fU.fileNotFoundMessage(('No flow variable results found in %s - consider first running avalanche simulations' %
-                flowFieldsDir))
+                                    flowFieldsDir))
 
         for flowField in flowFields:
 

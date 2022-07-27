@@ -3,11 +3,9 @@
 """
 
 import logging
-import time
 import pathlib
 import numpy as np
 import copy
-import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
@@ -20,6 +18,7 @@ import avaframe.out3Plot.outDebugPlots as debPlot
 log = logging.getLogger(__name__)
 cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
+
 
 def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     """ Redistribute particles so that SPH force reduces with fixed particles as boundaries
