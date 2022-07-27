@@ -16,7 +16,6 @@ import math
 import logging
 
 # local imports
-from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -32,7 +31,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def mainSimilaritySol(simiSolCfg):
+def mainSimilaritySol(simiSolCfg, com1DFACfg):
     """ Compute similarity solution
     Parameters
     -----------
@@ -50,18 +49,14 @@ def mainSimilaritySol(simiSolCfg):
             f_p_sol: first derivativ of f array
 
     """
-
-    # Load configuration
-    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-    cfgGen = cfg['GENERAL']
-    cfgSimi = cfg['SIMISOL']
-    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
-    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
-    internalFrictionAngleDeg = cfgSimi.getfloat('internalFrictionAngle')
+    cfgGen = com1DFACfg['GENERAL']
+    bedFrictionAngleDeg = simiSolCfg.getfloat('bedFrictionAngle')
+    planeinclinationAngleDeg = simiSolCfg.getfloat('planeinclinationAngle')
+    internalFrictionAngleDeg = simiSolCfg.getfloat('internalFrictionAngle')
     # Dimensioning parameters L
-    L_x = cfgSimi.getfloat('L_x')
-    L_y = cfgSimi.getfloat('L_y')
-    H = cfgSimi.getfloat('relTh')
+    L_x = simiSolCfg.getfloat('L_x')
+    L_y = simiSolCfg.getfloat('L_y')
+    H = simiSolCfg.getfloat('relTh')
 
     # Set parameters
     Pi = math.pi
@@ -92,7 +87,7 @@ def mainSimilaritySol(simiSolCfg):
     x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
 
     # compute earth pressure coefficients
-    flagEarth = cfgSimi.getboolean('flagEarth')
+    flagEarth = simiSolCfg.getboolean('flagEarth')
     if flagEarth:
         earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
     else:
@@ -712,13 +707,20 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     vhErrorL2Array = np.zeros((len(fieldsList)))
     hErrorLMaxArray = np.zeros((len(fieldsList)))
     vhErrorLMaxArray = np.zeros((len(fieldsList)))
-    # get plots limits
-    limits = outAna1Plots.getPlotLimits(cfgSimi['SIMISOL'], fieldsList, fieldHeader)
     count = 0
+    tSave = cfgSimi['SIMISOL'].getfloat('tSave')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+    # get plots limits
+    if cfgSimi['SIMISOL'].getboolean('plotSequence'):
+        limits = outAna1Plots.getPlotLimits(cfgSimi['SIMISOL'], fieldsList, fieldHeader)
+    else:
+        limits = outAna1Plots.getPlotLimits(cfgSimi['SIMISOL'], [fieldsList[indT]], fieldHeader)
     # run the comparison routine for each saved time step
     for t, field in zip(timeList, fieldsList):
         # get similartiy solution h, u at required time step
         indTime = np.searchsorted(solSimi['time'], t)
+        log.debug('time simulation = %.2f, time simiSol = %.2f' % (t, solSimi['time'][indTime]))
         simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
         cellSize = fieldHeader['cellsize']
         cosAngle = simiDict['cos']
@@ -743,7 +745,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         log.debug("L2 %s error on the Flow Thickness at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         # Make all individual time step comparison plot
-        if cfgSimi['SIMISOL'].getboolean('plotSequence'):
+        if cfgSimi['SIMISOL'].getboolean('plotSequence') or t == tSave:
             outAna1Plots.saveSimiSolProfile(cfgMain, cfgSimi['SIMISOL'], field, limits, simiDict, t,
                                             fieldHeader, outDirTest, simHash)
             outAna1Plots.makeContourSimiPlot(avalancheDir, simHash, hNumerical, limits, simiDict, fieldHeader, t,
@@ -751,22 +753,20 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         count = count + 1
 
     # Create result plots
-    tSave = cfgSimi['SIMISOL'].getfloat('tSave')
-    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
-    tSave = timeList[indT]
     indTime = np.searchsorted(solSimi['time'], tSave)
+    log.debug('time simulation = %.2f, time simiSol = %.2f' % (tSave, solSimi['time'][indTime]))
     simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
     outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array,
                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash,
                                     cfgSimi['SIMISOL'])
-    if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
+    if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList) > 1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
                                    cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 
 
-def getReleaseThickness(avaDir, cfg, demFile):
+def getReleaseThickness(avaDir, cfgSimi, demFile, csz):
     """ Define release thickness for the similarity solution test
 
     Release area is defined as an elipse or main radius Lx and Ly.
@@ -777,10 +777,12 @@ def getReleaseThickness(avaDir, cfg, demFile):
     -----------
     avaDir: str
         path to avalanche directory
-    cfg: dict
-        confguration settings
+    cfgSimi: dict
+        similarity solution confguration settings
     demFile: str
         path to DEM file
+    csz: float
+        expected cell size
 
     Returns
     --------
@@ -791,17 +793,15 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     # Read dem
     demOri = IOf.readRaster(demFile)
-    csz = cfg.getfloat('GENERAL', 'meshCellSize')
-    _, _, ncols, nrows = geoTrans.makeCoordGridFromHeader(demOri['header'], cellSizeNew=csz, larger=True)
+    _, _, ncols, nrows = geoTrans.makeCoordGridFromHeader(demOri['header'], cellSizeNew=csz, larger=False)
 
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
 
     # define release thickness distribution
-    cfgSimi = cfg['SIMISOL']
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    Hini = cfg['SIMISOL'].getfloat('relTh')
+    Hini = cfgSimi.getfloat('relTh')
     planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
     x = np.linspace(0, ncols-1, ncols)*csz+xllc
     y = np.linspace(0, nrows-1, nrows)*csz+yllc

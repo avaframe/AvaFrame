@@ -230,12 +230,12 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     rasterdataPres = newRasters['newRefRaster' + runoutResType.upper()]
     runout = resAnalysisDF['sRunout'].to_numpy()
-    pprCrossMax = np.stack(resAnalysisDF[runoutResType.lower() + 'CrossMax'].to_numpy())
+    aCrossMax = np.stack(resAnalysisDF[runoutResType.lower() + 'CrossMax'].to_numpy())
     ############################################
     # prepare for plot
-    pMean = np.mean(pprCrossMax, axis=0)
-    pMedian = np.median(pprCrossMax, axis=0)
-    pPercentile = np.percentile(pprCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
+    pMean = np.mean(aCrossMax, axis=0)
+    pMedian = np.median(aCrossMax, axis=0)
+    pPercentile = np.percentile(aCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
     maskedArray = np.ma.masked_where(rasterdataPres <= float(thresholdValue), rasterdataPres)
 
     # get plots limits
@@ -306,7 +306,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ax2.set_ylabel('s [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
-    ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
+    ax2.set_xlabel('$%s_{max}(s)$ [%s]' % (name, unit))
 
     outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
                            'slComparisonStat'])

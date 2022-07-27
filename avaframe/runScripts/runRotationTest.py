@@ -23,6 +23,10 @@ from avaframe.ana1Tests import energyLineTest
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'runRotationTest'
+# if left empty, use the rotationTestCfg.ini and local_rotationTestCfg.ini configuration files
+# use 'ana1Tests/figPressure_rotationTestCfg.ini' or 'ana1Tests/figAnalytic_rotationTestCfg.ini' to produce
+# the rotation test plots from the Theory Paper (use 'avaTripleParabola' or 'avaTripleBowl' in the avaFrameCfg.ini)
+fileOverride = ''
 # ++++++++++++++++++++++++++++++
 
 # Load avalanche directory from general configuration file
@@ -37,10 +41,10 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # ----------------
 # Clean input directory(ies) of old work and output files
-iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
 workPath = pathlib.Path(avalancheDir, 'Work', 'energyLineTest')
 fU.makeADir(workPath)
-rotationTestCfg = cfgUtils.getModuleConfig(rotationTest)
+rotationTestCfg = cfgUtils.getModuleConfig(rotationTest, fileOverride=fileOverride)
 
 # ++++++++++ set configurations for all the used modules and override ++++++++++++
 # get comDFA configuration and save to file

@@ -1,64 +1,103 @@
 com1DFA DFA-Kernel numerics
 ============================
 
-
-.. warning::
-
-   This theory has not been fully reviewed yet.
-
-
-The numerical method used in com1DFA mixes particle methods and
-mesh methods. Mass and momentum are tracked using particles but flow
-thickness is tracked using the mesh. The mesh is also used to access topographic information
-(surface elevation, normal vector) as well as for displaying results.
-
-Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
-equations as well as basal normal stress :eq:`sigmab` are computed numerically using a SPH method
-(**S**\ moothed **P**\ article **H**\ ydrodynamics) (:cite:`Mo1992`) for the variables
-:math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
-:math:`\overline{h}` by discretization of the released avalanche volume
-in a large number of mass elements. SPH in general, is a mesh-less
-numerical method for solving partial differential equations. The SPH
-algorithm discretizes the numerical problem within a domain using
-particles (:cite:`Sa2007,SaGr2009`), which interact
-with each-other in a defined zone of influence. Some of the advantages
-of the SPH method are that free surface flows, material boundaries and
+In :ref:`theoryCom1DFA`, the mass and momentum equation were derived using a Lagrangian approach.
+In order to solve this set of equations numerically, we employ a mixed of particle and grid approach.
+We discretize the material into particles and solve the momentum equation for these particles
+(:cite:`Sa2007,SaGr2009`).
+The pressure gradients are computed using a SPH method
+(**S**\ moothed **P**\ article **H**\ ydrodynamics :cite:`Mo1992`). Some of the
+advantages of the SPH method are that free surface flows, material boundaries and
 moving boundary conditions are considered implicitly. In addition, large
 deformations can be modeled due to the fact that the method is not based
-on a mesh. From a numerical point of view, the SPH method itself is
-relatively robust.
+on a mesh.
+However, we use a grid to compute several parameters that are required for the computations as
+for example surface normal vectors and flow thickness.
 
 
-Discretization
-----------------
+Numerical discretization: a particle grid approach
+-----------------------------------------------------
 
-Space discretization
-~~~~~~~~~~~~~~~~~~~~~~
+Space discretization: The particular momentum equation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The domain is discretized in particles. The following properties are assigned to each particle :math:`p_k`:
-a mass :math:`m_{p_k}`, a thickness :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
-a velocity :math:`\mathbf{{u}}_{p_k}=({u}_{p_k,1}, {u}_{p_k,2})` (**those
-quantities are thickness averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
-In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
-whereas  :math:`k` and :math:`l` indexes refer to particles.
+Discretizing the material into particles (particle quantities are denoted by the subscript :math:`k`, e.g.
+:math:`m_k = \rho_0 V_k` is the mass of particle :math:`k`) leads to the following continuity equation:
 
-The quantities velocity, mass and flow thickness are also defined on the fixed mesh. It is possible to navigate
-from particle property to mesh property using the interpolation methods described in :ref:`DFAnumerics:Mesh and interpolation`.
+.. math::
+	\frac{\mathrm{d}}{\mathrm{d}t} m_k = A_k^\text{ent} q^{\text{ent}}
+  :label: eq-particle-continuity-balance
+
+By assuming that the Lagrangian control volume :math:`V` can be represented by a particle,
+we can derive from :eq:`momentum-balance6` to the particular momentum equation in the normal direction and in the tangent plane:
+
+.. math::
+  \left\{
+  \begin{aligned}
+    & p_k^b = \rho_0 \, h_k \, g_k^\text{eff}\\
+    &m_k \frac{\mathrm{d}\bar{\mathbf{u}}_k}{\mathrm{d}t} = A_k^b\boldsymbol{\tau^b}
+  	- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h	+ m_k \mathbf{g}_s	+ \mathbf{F}_k^{\text{ext}}
+    - \bar{\mathbf{u}}_k A_k^\text{ent} q_k^{\text{ent}}
+    - m_k \left( \bar{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t} \right)\mathbf{v}_{3,k}
+  \end{aligned}
+  \right.
+  :label: eq-momentum-particle
+
+In this equation (:eq:`eq-momentum-particle`), flow thickness gradient, basal friction and
+curvature acceleration terms need to be further developed and discretized.
+
+Time discretization
+~~~~~~~~~~~~~~~~~~~~~
+
+The momentum equation is solved numerically in time using an Euler time scheme.
+The time derivative of any quantity :math:`f` is approximated by:
+
+.. math::
+  \frac{\mathrm{d}f_k}{\mathrm{d}t} \approx
+  \frac{f_k^{n+1} - f_k^n}{\Delta t}
+
+where :math:`\Delta t` represents the time step and :math:`f^n = f(t^n)`, :math:`t^n = n \Delta t`.
+For the velocity this reads:
+
+.. math::
+  \frac{\mathrm{d}\bar{\mathbf{u}}_k}{\mathrm{d}t} \approx
+  \frac{\bar{\mathbf{u}}_k^{n+1} - \bar{\mathbf{u}}_k^n}{\Delta t}
+
+The position of the particles is then updated using a centered Euler scheme:
+
+.. math::
+  \mathbf{x}_{k}^{n+1} = \mathbf{x}_{k}^{n} + \frac{\Delta t}{2m}\left(\bar{\mathbf{u}}^{n+1}_{k} + \bar{\mathbf{u}}^{n}_{k}\right)
 
 
-Time step
-~~~~~~~~~~~~~~~~~~~~~~
+Taking the forces into account is done in two subsequent steps as forces acting on the particles can be
+sorted into driving forces and friction forces.
+Friction forces act against the particle motion only affecting the magnitude of the velocity.
+They can in no case become driving forces..
+This is why in a first step the velocity is updated with the driving forces before updating in a
+second step the velocity magnitude applying the friction force.
 
-A fixed time step can be used or an adaptive time step can be computed using a
-Courant-Friedrich-Lewy condition.
-
-
-Mesh and interpolation
+Grid and interpolation
 -----------------------
-Here is a description of the mesh and the interpolation method that is used to
-switch from particle to mesh values and the other way around.
 
-Mesh
+Topography information is usually provided in a raster format which corresponds to a regular rectilinear
+mesh, from hereon referred to as grid.
+In order to get information on the surface elevation and normal vectors, the topography information
+needs to be interpolated at the particle locations, and this needs to be repeated at each time step
+since the particles are moving.
+Similarly, the particle properties such as mass or momentum, which translate into flow thickness and
+velocity, also need to be interpolated onto the grid.
+Grid velocity is needed to compute the artificial viscosity term, ensuring numerical stability,
+see :ref:`SAMOS Artificial viscosity`.
+Grid flow thickness is used to compute the particle flow thickness which is required for computing
+the friction force.
+Due to the utilized regular rectilinear mesh a bilinear interpolation method is applied for its
+simplicity and suitability.
+It also ensures the conservation of mass or momentum when interpolating from particles to grid and back.
+
+Here is a description of the grid and the interpolation method that is used to
+switch from particle to grid values and the other way around.
+
+Grid
 ~~~~~~
 
 For practical reasons, a 2D rectilinear mesh (grid) is used. Indeed the topographic
@@ -66,13 +105,13 @@ input information is read from 2D raster files (with :math:`N_{y}` and :math:`N_
 rows and columns) which correspond exactly to a
 2D rectilinear mesh. Moreover, as we will see in the following sections,
 2D rectilinear meshes are very convenient for interpolations as well as for
-particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}` and
+particle tracking. The grid is composed of :math:`N_{y}` and
 :math:`N_{x}` rows and columns of square cells (of side length :math:`csz`)
 and :math:`N_{y}+1` and :math:`N_{x}+1` rows and columns of vertices
 as described in :numref:`rasterGrid`. Each cell has a center and four vertices.
 The data read from the raster file is assigned to the cell centers. Note that
-although this is a 2D mesh, as we use a terrain-following coordinate system to perform
-our computations, this 2D mesh is oriented in 3D space and hence the projected side length
+although this is a 2D grid, as we use a terrain-following coordinate system to perform
+our computations, this 2D grid is oriented in 3D space and hence the projected side length
 corresponds to :math:`csz`, whereas the actual side length and hence also the
 :ref:`DFAnumerics:cell area`, depend on the local slope,
 expressed by the :ref:`DFAnumerics:Cell normals`.
@@ -87,7 +126,7 @@ expressed by the :ref:`DFAnumerics:Cell normals`.
 Cell normals
 """"""""""""""
 There are many different methods available for computing normal vectors
-on a 2D rectilinear mesh. Several options are available in com1DFA.
+on a grid. Several options are available in com1DFA.
 
 The first one consists in computing the cross product of the diagonal vectors
 between four cell centers. This defines the normal vector at the vertices. It is
@@ -131,15 +170,15 @@ Surface integration over the cell extent leads to the area of the cell:
 Interpolation
 ~~~~~~~~~~~~~~
 In the DFA kernel, mass, flow thickness and flow velocity can be defined at particle
-location or on the mesh. We need a method to be able to go from particle properties
-to mesh (field) values and from mesh values to particle properties.
+location or on the grid. We need a method to be able to go from particle properties
+to grid (field) values and from grid values to particle properties.
 
-Mesh to particle
+Grid to particle
 """"""""""""""""""
 
-On a 2D rectilinear mesh, scalar and vector fields defined at cell centers
-can be evaluated anywhere within the mesh using a bilinear interpolation
-between mesh cell centers. Evaluating a vector field simply consists in evaluating
+On a grid, scalar and vector fields defined at cell centers
+can be evaluated anywhere within the grid using a bilinear interpolation
+between grid cell centers. Evaluating a vector field simply consists in evaluating
 the three components as scalar fields.
 
 The bilinear interpolation consists in successive linear interpolations
@@ -174,15 +213,15 @@ cell size.
 .. figure:: _static/BilinearInterp.png
         :width: 90%
 
-        Bilinear interpolation in a unit mesh (cell size is 1).
+        Bilinear interpolation in a unit grid (cell size is 1).
 
 
-Particles to mesh
+Particles to grid
 """""""""""""""""""
-Going from particle property to mesh value is also based on bilinear interpolation and
+Going from particle property to grid value is also based on bilinear interpolation and
 weights but requires a bit more care in order to conserve mass and momentum balance.
-Flow thickness and velocity fields are determined on the mesh using, as intermediate step,
-mass and momentum fields. First, mass and momentum mesh fields can be evaluated by
+Flow thickness and velocity fields are determined on the grid using, as intermediate step,
+mass and momentum fields. First, mass and momentum grid fields can be evaluated by
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
 the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
@@ -196,58 +235,17 @@ the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
     f_{11} = & w_{11}f_{uv}
     \end{aligned}
 
-The contribution of each particle to the different mesh points is summed up to
-finally give the mesh value. This method ensures that the total mass and
-momentum of the particles is preserved (the mass and momentum on the mesh will
-sum up to the same total). Flow thickness and velocity mesh fields can then be deduced
+The contribution of each particle to the different grid points is summed up to
+finally give the grid value. This method ensures that the total mass and
+momentum of the particles is preserved (the mass and momentum on the grid will
+sum up to the same total). Flow thickness and velocity grid fields can then be deduced
 from the mass and momentum fields and the cell area (actual area of each grid cell,
 not the projected area).
 
 
-Neighbor search
-------------------
+Flow thickness and its gradient
+----------------------------------
 
-The lateral pressure forces are computed via the SPH flow thickness gradient.
-This method is based on particle interactions within a certain neighborhood, meaning that it
-is necessary to keep track of all the particles within the neighborhood of each particle.
-Computing the gradient of the flow thickness at a particle location, requires to
-find all the particles in its surrounding. Considering the number of particles and
-their density, computing the gradient ends up in computing a lot of
-interactions and represents the most computationally expensive part of the dense
-flow avalanche simulation. It is therefore important that the neighbor search is fast and efficient.
-:cite:`IhOrSoKoTe2014` describe different rectilinear mesh neighbor search
-methods. In com1DFA, the simplest method is used. The idea is to locate each
-particle in a cell, this way, it is possible to keep track of the particles
-in each cell. To find the neighbors of a particle, one only needs to read the
-cell in which the particle is located (dark blue cell in :numref:`neighborSearch`)
-, find the direct adjacent cells in all directions (light blue cells) and
-simply read all particles within those cells. This is very easily achieved
-on rectilinear meshes because locating a particle in a cell is straightforward and
-finding the adjacent cells is also easily done.
-
-.. _neighborSearch:
-
-.. figure:: _static/neighborSearch.png
-        :width: 90%
-
-        Support mesh for neighbor search:
-        if the cell side is bigger than the kernel length :math:`r_{kernel}` (red circle in the picture),
-        the neighbors for any particle in any given cell (dark blue square)
-        can be found in the direct neighborhood of the cell itself (light blue squares)
-
-.. _partInCell:
-
-.. figure:: _static/partInCell.png
-        :width: 90%
-
-        The particles are located in the cells using
-        two arrays. indPartInCell of size number of cells + 1
-        which keeps track of the number of particles in each cell
-        and partInCell of size number of particles + 1 which lists
-        the particles contained in the cells.
-
-SPH gradient
---------------
 SPH method can be used to solve thickness integrated equations where a 2D
 (respectively 3D) equation is reduced to a 1D (respectively 2D) one.
 This is used in ocean engineering to solve shallow water equations (SWE)
@@ -258,29 +256,57 @@ In the case of avalanche flow, the "bed" is sloped and irregular.
 The aim is to adapt the SPH method to apply it to thickness integrated equations
 on a 2D surface living in a 3D world.
 
-Method
-~~~~~~~
-The SPH method is used to express a quantity (the flow thickness in our case) and
-its gradient at a certain particle location as a weighted sum of its neighbors
-properties. The principle of the method is well described in :cite:`LiLi2010`.
-In the case of thickness integrated equations (for example SWE), a scalar function
-:math:`f` and its gradient can be expressed as following:
+Flow thickness gradient computation using SPH
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to assess the flow thickness gradient, we employ a SPH method (Smoothed Particles Hydrodynamics Method
+:cite:`LiLi2010`), where the gradient is directly derived from the particles and does not require any mesh.
+In contrast, a mesh method or a MPM (Material Point Method) would directly use a mesh formulation to
+approximate the gradient or interpolate the particles properties on an underlying mesh and
+then approximate the gradient of the flow thickness using a mesh formulation.
+
+In theory, a SPH method does not require any mesh to compute the gradient.
+However, applying this method requires finding neighbor particles.
+This process can be sped up with the help of an underlying grid,  different neighbor search methods
+are presented in :cite:`IhOrSoKoTe2014`, a "uniform grid method" is used in this paper.
+
+The SPH method is used to express a quantity (the flow thickness in our case) and its gradient at
+a certain particle location as a weighted sum of its neighbors properties.
+The principle of the method is well described in :cite:`LiLi2010` and the basic formula reads:
 
 .. math::
-    f_{k} &= \sum\limits_{l}f_{l}A_{l}\,W_{kl}\\
-    \mathbf{\nabla}f_{k} &= -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
-    :label: sph formulation
+  \begin{aligned}
+  f_{k} \simeq \langle f_{k}\rangle &= \sum\limits_{l}f_{l}A_{l}\,W_{kl}\\
+  \boldsymbol{\nabla} f_{k} \simeq \langle \boldsymbol{\nabla} f_{k}\rangle &= -\sum\limits_{l}f_{l}A_{l}\,\boldsymbol{\nabla} W_{kl}
+	\end{aligned}
+  :label: eq-sph-formulation
 
-Which gives for the flow thickness:
+Where :math:`W` represents the SPH-Kernel function (we employ the spiky kernel, see
+:eq:`eq-kernel-function`) an the subscript :math:`l` denotes the neighbor particles to
+particle :math:`k`.
+This kernel function is designed to satisfy the unity condition, be an
+approximation of the Dirac function and have a compact support domain
+(:cite:`LiLi2010`).
+
+:eq:`eq-sph-formulation` gives for the flow thickness:
 
 .. math::
-    \overline{h}_{k} &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
-    \mathbf{\nabla}\overline{h}_{k} &= -\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\mathbf{\nabla}W_{kl}
-    :label: sph formulation for fd
+  h_{k}  \simeq \langle h_{k}\rangle &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
+  \boldsymbol{\nabla}h_{k} \simeq \langle \boldsymbol{\nabla} h_{k}\rangle &= -\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\boldsymbol{\nabla}W_{kl}
+  :label: sph formulation for fd
 
-Where :math:`W` represents the SPH-Kernel function.
-
-The computation of its gradient depends on the coordinate system used.
+This method is usually either used in a 3D space where particles move
+freely in this space and where the weighting factor for the summation is
+the volume of the particle or on a 2D horizontal plane where the weighting
+factor for the summation is the area of the particle and the gradient is
+2D.
+Here we want to compute the gradient of the flow thickness on a 2D surface
+(the topography) that lives in 3D. The method used is analog to the SPH
+gradient computation on the 2D horizontal plane but the gradient is 3D
+and tangent to the surface (colinear to the local tangent plane).
+The theoretical derivation in the following section shows that the SPH
+computation is equivalent in applying the 2D SPH method in the local
+tangent plane instead of in the horizontal plane.
 
 .. _standard-method:
 
@@ -289,11 +315,11 @@ Standard method
 
 Let us start with the computation of the gradient of a scalar function
 :math:`f \colon \mathbb{R}^2 \to \mathbb{R}` on a horizontal plane.
-Let :math:`P_k=\mathbf{x}_k=(x_{k,1},x_{k,2})` and :math:`Q_l=\mathbf{x}_l=(x_{l,1},x_{l,2})` be two points in :math:`\mathbb{R}^2` defined by
-their coordinates in the Cartesian coordinate system :math:`(P_k,\mathbf{e_1},\mathbf{e_2})`. :math:`\mathbf{r}_{kl}=\mathbf{x}_k-\mathbf{x}_l` is the vector going from
-:math:`Q_l` to :math:`P_k` and :math:`r_{kl} = \left\Vert \mathbf{r}_{kl}\right\Vert` the length of this vector.
-Now consider the kernel function :math:`W`:
-
+Let :math:`P_k=\mathbf{x}_k=(x_{k,1},x_{k,2})` and :math:`Q_l=\mathbf{x}_l=(x_{l,1},x_{l,2})` be
+two points in :math:`\mathbb{R}^2` defined by their coordinates in the Cartesian coordinate system
+:math:`(P_k,\mathbf{e_1},\mathbf{e_2})`. :math:`\mathbf{r}_{kl}=\mathbf{x}_k-\mathbf{x}_l` is the
+vector going from :math:`Q_l` to :math:`P_k` and :math:`r_{kl} = \left\Vert \mathbf{r}_{kl}\right\Vert`
+the length of this vector. Now consider the kernel function :math:`W`:
 
 .. math::
   \left.
@@ -315,7 +341,7 @@ In the case of the spiky kernel, :math:`W` reads (2D case):
    \end{aligned}
    \right.
    \end{aligned}
-   :label: kernel function
+   :label: eq-kernel-function
 
 
 :math:`\left\Vert \mathbf{r_{kl}}\right\Vert= \left\Vert \mathbf{x_{k}}-\mathbf{x_{l}}\right\Vert`
@@ -327,7 +353,7 @@ coordinate system :math:`(x_1,x_2)` leads to:
 
 
 .. math::
-   \mathbf{\nabla}W_{kl} = \frac{\partial W}{\partial r}.\mathbf{\nabla}r,
+   \boldsymbol{\nabla}W_{kl} = \frac{\partial W}{\partial r}.\boldsymbol{\nabla}r,
    \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{(x_{k,1}-x_{l,1})^2 + (x_{k,2}-x_{l,2})^2}
    :label: kernel function gradient 1
 
@@ -349,7 +375,7 @@ and
 which leads to the following expression for the gradient:
 
 .. math::
-   \mathbf{\nabla}W_{kl} = -3\frac{10}{\pi r_0^5}\left\{
+   \boldsymbol{\nabla}W_{kl} = -3\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
    & (r_0 - \left\Vert \mathbf{r_{kl}}\right\Vert)^2\frac{\mathbf{r_{kl}}}{r_{kl}}, \quad &0\leq \left\Vert \mathbf{r_{kl}}\right\Vert \leq  r_0\\
    & 0 , & r_0 <\left\Vert \mathbf{r_{kl}}\right\Vert
@@ -360,7 +386,7 @@ which leads to the following expression for the gradient:
 The gradient of :math:`f` is then simply:
 
 .. math::
-    \mathbf{\nabla}f_{k} = -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
+    \boldsymbol{\nabla}f_{k} = -\sum\limits_{l}f_{l}A_{l}\,\boldsymbol{\nabla}W_{kl}
     :label: sph gradient
 
 2.5D SPH method
@@ -410,19 +436,19 @@ is not independent of :math:`(x_1,x_2)`:
   \right.
 
 The target is the gradient of :math:`\tilde{f}` in terms of the :math:`\mathcal{TP}` variables
-:math:`(v_1,v_2)`. Let us call this gradient :math:`\mathbf{\nabla}_\mathcal{TP}`.
+:math:`(v_1,v_2)`. Let us call this gradient :math:`\boldsymbol{\nabla}_\mathcal{TP}`.
 It is then possible to apply the :ref:`standard-method` to compute this gradient:
 
 
 .. math::
-   \mathbf{\nabla}_\mathcal{TP}W_{kl} = \frac{\partial W}{\partial r}.\mathbf{\nabla}_\mathcal{TP}r,
+   \boldsymbol{\nabla}_\mathcal{TP}W_{kl} = \frac{\partial W}{\partial r}.\boldsymbol{\nabla}_\mathcal{TP}r,
    \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{v_{kl,1}^2 + v_{kl,2}^2}
    :label: kernel function gradient TP 1
 
 Which leads to:
 
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
+  \boldsymbol{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
   \begin{aligned}
   & v_{kl,1}\mathbf{V_1} + v_{kl,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{kl}'}\right\Vert \leq  r_0\\
   & 0 , & r_0 <\left\Vert \mathbf{r_{kl}'}\right\Vert
@@ -430,17 +456,15 @@ Which leads to:
   \right.
   :label: kernel function gradient TP 2
 
-
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}\tilde{f_{k}} = -\sum\limits_{l}\tilde{f_{l}}A_{l}\,\mathbf{\nabla}W_{kl}
+  \boldsymbol{\nabla}_\mathcal{TP}\tilde{f_{k}} = -\sum\limits_{l}\tilde{f_{l}}A_{l}\,\boldsymbol{\nabla}W_{kl}
   :label: sph gradient
 
 This gradient can now be expressed in the Cartesian coordinate system.
 It is clear that the change of coordinate system was not needed:
 
-
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
+  \boldsymbol{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
   \begin{aligned}
   & r_{kl,1}\mathbf{e_1} + r_{kl,2}\mathbf{e_2} + r_{kl,3}\mathbf{e_3}, \quad &0\leq \left\Vert \mathbf{r_{kl}'}\right\Vert \leq  r_0\\
   & 0 , & r_0 <\left\Vert \mathbf{r_{kl}'}\right\Vert
@@ -459,6 +483,550 @@ differently.
 
         Tangent plane and local coordinate system used to apply the SPH method
 
+
+Flow thickness computation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The particles flow thickness is computed with the help of the grid.
+The mass of the particles is interpolated onto the grid using a bilinear interpolation method
+(described in :ref:`Grid to particle`).
+Then, dividing the mass at the grid cells by the area of the grid cells, while taking the slope of the
+cell into account, returns the flow thickness field on the grid.
+This property is interpolated back to the particles which leads to the particle flow thickness property.
+
+We do not compute the flow thickness directly from the particles properties (mass and position) using a
+SPH method because it induced instabilities.
+Indeed, the cases where too few neighbors are found, lead to very small flow thickness which becomes an
+issue for flow thickness dependent
+friction laws. Note that using such a SPH method would lead to a fully particular method.
+But since the flow thickness is only used in some cases for the friction force computation, using a the
+previously describe grid method should not affect significantly the computation.
+
+Convergence
+------------
+.. \label{sec-convergence-criterion}
+
+We are looking for a criterion that relates the properties of the spatial and
+temporal discretization to ensure convergence of the numerical solution.
+Simply decreasing the time step and increasing the spatial resolution,
+by decreasing the grid cell size and kernel radius and increasing the number of
+particles, does not ensure convergence.
+The analysis from :cite:`MoVi2000` carried out on a very similar problem
+(hyperbolic non linear transport equation with a particle and SPH method)
+shows that the kernel radius size can not be varied
+independently from the time step and number of particles.
+Indeed, they show that the numerical solution converges towards the solution of
+the equation at the following condition:
+
+.. math::
+	\left\{
+	\begin{aligned}
+			r_{\text{part}} &\to 0\\
+			r_{\text{kernel}} &\to 0\\
+			\frac{r_{\text{part}}^m}{r_{\text{kernel}}^{m+1}} &\to 0\quad m=2
+	\end{aligned}
+			\right.
+			\quad\mbox{and} \quad dt \leq C r_{\text{kernel}}
+	:label: eq-ben-moussa
+
+Where :math:`r_{\text{part}}` represents the "size" of a particle
+, :math:`r_{\text{kernel}}` represents the SPH kernel radius, :math:`dt` is the time
+step and :math:`C` a constant.
+The conditions in Eq. :Eq:`eq-ben-moussa` mean that both :math:`r_{\text{part}}`
+(particle size) and :math:`r_{\text{kernel}}` (SPH kernel radius) need to go to zero
+but also that the particle size needs to go faster to zero than the SPH kernel radius.
+Finally, the time step needs to go to zero and this at the same rate as
+:math:`r_{\text{kernel}}`.
+The particle size can be expressed as a function of the SPH kernel radius:
+
+.. math::
+	r_{\text{part}} = \left(\frac{A^b}{\pi}\right)^{1/2} =
+	\left(\frac{A_{\text{kernel}}}{\pi n_{\text{ppk}}}\right)^{1/2}
+	=  \frac{r_{\text{kernel}}}{n_{\text{ppk}}^{1/2}},
+
+where the particles basal area was assumed to be a circle.
+
+Note that this does not affect the results except adding a different shape factor in
+front of this expression.
+:math:`n_{\text{ppk}}` is the number of particles per kernel radius and defines the
+density of the particles when initializing a simulation.
+Let :math:`n_{\text{ppk}}` be defined by a reference number of particles per kernel
+radius :math:`n_{\text{ppk}}^0>0`, a reference kernel radius
+:math:`r_{\text{kernel}}^0>0` and real exponent :math:`\alpha`:
+
+.. math::
+	n_{\text{ppk}} = n_{\text{ppk}}^0\left(\frac{r_{\text{kernel}}}{r_{\text{kernel}}^0}\right)^{\alpha}
+
+This leads to a :math:`r_{\text{part}}`:
+
+.. math::
+	r_{\text{part}} = \left(\frac{{r_{\text{kernel}}^0}^\alpha}{n_{\text{ppk}}^0}\right)^{1/2} r_{\text{kernel}}^{1-\alpha/2}
+
+Replacing :math:`r_{\text{part}}` by the previous equation in
+:eq:`eq-ben-moussa` leads to the following condition:
+
+.. math::
+	\frac{{r_{\text{kernel}}^0}^\alpha}{n_{\text{ppk}}^0} r_{\text{kernel}}^{-1-\alpha} \to 0
+	:label: eq-ben-moussa-new
+
+This brings us to the following choice:
+
+.. math::
+	\left\{
+	\begin{aligned}
+			dt &= C_{\text{time}} r_{\text{kernel}}\\
+		 n_{\text{ppk}} &= n_{\text{ppk}}^{0} \left(\frac{r_{\text{kernel}}}{r_{\text{kernel}}^0}\right)^{\alpha}
+	\end{aligned}
+			\right.
+  :label: eq-convergence-relation
+
+Which satisfies the convergence criterion if:
+
+.. math::
+ 	\alpha < -1
+	:label: eq-convergence-criterion
+
+Note that this criterion leaves some freedom on the choice of exponent :math:`\alpha` and that there are no constraints on the reference kernel radius :math:`r_{\text{kernel}}^0` and reference number of particles per kernel radius :math:`n_{\text{ppk}}^0`.
+Even though it seems logical to require a minimum number of particles per kernel radius so that enough neighbors are available
+to get a reasonable estimate of the gradient.
+These parameters should be adjusted according to the expected accuracy of the results and/or the computer power available.
+Determining the optimal parameter values for :math:`\alpha`, :math:`r_{\text{kernel}}^0` and :math:`n_{\text{ppk}}^0`,
+for example according to a user's needs in terms of accuracy and computational efficiency,
+requires a specific and detailed investigation of the considered case.
+
+
+Forces discretization
+----------------------
+
+Friction force discretization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. \label{sec-discretizing-friction}
+
+Expressing the friction force term in :Eq:`eq-momentum-particle` for a particle reads:
+
+.. math::
+    \mathbf{F}_k^\text{fric} = A_k^b \, \boldsymbol{\tau^b} =
+		- {\left\Vert\mathbf{F}_k^\text{fric}\right\Vert}_\text{max}  \mathbf{v}_1
+
+This relation stands if the particle is moving. The starting and stopping processes
+satisfy a different equation and are handled differently in the numerical
+implementation (using the same equation would lead to a non-physical behavior).
+This is described in more details in :ref:`Account for friction forces`}.
+
+
+Lateral force
+~~~~~~~~~~~~~~
+
+The SPH method is introduced when expressing the flow thickness gradient for each
+particle as a weighted sum of its neighbors (:cite:`LiLi2010,Sa2007`).
+Which leads to, using the relation :eq:`eq-sph-formulation`:
+
+.. math::
+    \mathbf{F}_{k}^{\text{lat}} =
+    - \rho_0 \, g^\text{eff} \, h A^b \boldsymbol{\nabla}_{\!s} h
+    = -m_{k}\,g^\text{eff}\,.\,\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\left.\boldsymbol{\nabla}_{\!s}W_{kl}\right\rvert_{l}
+    :label: lateral force
+
+
+Bottom friction force
+~~~~~~~~~~~~~~~~~~~~~~~
+The bottom friction forces on each particle depend on the chose friction model. Using the SamosAT friction model
+the formulation of the bottom friction force reads:
+
+.. math::
+    \mathbf{F}_{k}^{\text{bot}} = A_{k}\,\boldsymbol{\tau}_{k}^b
+    = -A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\boldsymbol{\sigma}_{k}^b\cdot\mathbf{n^b}
+     + \frac{\rho_0\,\mathbf{\bar{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right)\mathbf{v}_1
+    :label: bottom force
+
+
+Added resistance force
+~~~~~~~~~~~~~~~~~~~~~~~
+The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
+is a function of the average flow thickness :math:`h_{k}`):
+
+.. math::
+    \mathbf{F}_{k}^{\text{res}}
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\bar{\mathbf{u}}_{k}^2\,\mathbf{v}_1
+    :label: resistance force
+
+Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
+friction force that can be added. This maximal force is added if the particles are flowing. If not, the friction force
+equals the driving forces. See :cite:`MaVi2003` for more information.
+
+Entrainment force
+~~~~~~~~~~~~~~~~~~~~~~~
+The term :math:`- \bar{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}(A\,h)}{\mathrm{d}t}`
+related to the entrained mass in :eq:`momentum-balance3` now reads:
+
+.. math::
+    - \bar{\mathbf{u}}_k\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
+    = - \bar{\mathbf{u}}_k\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+
+
+The mass of entrained snow for each particle depends on the type of entrainment involved
+(plowing or erosion) and reads:
+
+.. math::
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
+    = \frac{\mathrm{d}\,m_{k}}{\mathrm{d}t}
+    = A_{k}^\text{ent}\,q_{k}^{\text{ent}}
+
+with
+
+.. math::
+    \begin{aligned}
+    A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,h_{k}}}\,h_{k}^{\text{ent}}
+    \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \bar{\mathbf{u}}_{k}\right\Vert
+    \quad &\mbox{for plowing}\\
+    A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,h_{k}}
+    \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \bar{\mathbf{u}}_{k}\right\Vert
+    \quad &\mbox{for erosion}\end{aligned}
+
+Finaly, the entrainment force reads:
+
+.. math::
+    \mathbf{F}_k^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)\mathbf{v}_1
+
+Adding forces
+--------------
+The different components are added following an operator splitting method.
+This means particle velocities are updated successively with the different forces.
+
+Numerical stability
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Because the lateral shear force term was removed when deriving the model equations
+(because of its relative smallness, :cite:`GrEd2014`), :eq:`eq-momentum-balance-approx`
+is hyperbolic.
+Hyperbolic systems have the characteristic of carrying discontinuities or shocks which
+will cause numerical instabilities.
+They would fail to converge if for example an Euler forward in time scheme is used
+(:cite:`Le1990`).
+Several methods exist to stabilize the numerical integration of an hyperbolic system
+of differential equations.
+All aim at adding some upwinding in the discretization scheme.
+Some methods tackle this problem by introducing some upwinding in the discretization
+of the derivatives (:cite:`HaLaLe1983, HaHy1983`).
+Others introduce some artificial viscosity (as in :cite:`Mo1992`).
+
+Two options are available to add viscosity to stabilize the numerics. The first option
+consists in adding artificial viscosity (``viscOption`` = 1). This is the default
+method and is used for operational applications. The second option attempts
+to adapt the Lax-Friedrich scheme (usually applied to grids) to the particle method
+(``viscOption`` = 2). This method Finally, ``viscOption`` = 0 deactivates any viscosity force.
+
+SAMOS Artificial viscosity
+""""""""""""""""""""""""""""""
+
+The artificial viscosity force acting on particle :math:`k` then reads:
+
+.. math::
+  \begin{aligned}
+  \mathbf{F_k^{visc}} = &- \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\bar{u}}_k\Vert^2
+  \frac{\mathbf{d\bar{u}}_k}{\Vert\mathbf{d\bar{u}}_k\Vert}\\
+  = & - \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\bar{u}}_k\Vert \mathbf{d\bar{u}}_k,
+  \end{aligned}
+
+where the velocity difference reads :math:`\mathbf{d\bar{u}}_k = \bar{\mathbf{u}}_k - \widehat{\bar{\mathbf{u}}}_k` (:math:`\widehat{\bar{\mathbf{u}}}_k` represents the averaged velocity of the neighbor particles and is practically the grid velocity interpolated at the particle position).
+:math:`C_{Lat}` is a coefficient that controls the viscous force.
+It would be the equivalent of :math:`C_{Drag}` in the case of the drag force.
+:math:`C_{Lat}` is a numerical parameter that depends on the grid size.
+
+In this expression, let :math:`\mathbf{\bar{u}}_k^{n}` be the velocity at the beginning of the time step and
+:math:`{\bar{\mathbf{u}}_k^{n+1}}^\blacktriangle` be the velocity
+after adding the numerical viscosity.
+In the norm term :math:`\Vert\mathbf{d\bar{u}}_k\Vert` the particle and grid velocity at the beginning of the time step are used.
+This ensures no implicit relation on the norm term or on the average velocity :math:`\widehat{\bar{\mathbf{u}}}_k`.
+On the contrary, an implicit formulation is used in :math:`\mathbf{d\bar{u}}_k` because the new value of the velocity is used there.
+The artificial viscosity force now reads:
+
+.. math::
+ 	\mathbf{F_k^{visc}} =  -\frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\bar{\mathbf{u}}_k^{n} - \widehat{\bar{\mathbf{u}}}_k^{n}\Vert
+ 	\left(\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle - \widehat{\bar{\mathbf{u}}}_k^{n}\right)
+
+Updating the velocity then gives:
+
+.. math::
+ 	\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \frac{\bar{\mathbf{u}}_k^{n} - C_{vis}\widehat{\bar{\mathbf{u}}}_k^{n}}{1 + C_{vis}}
+
+with
+
+.. math::
+	C_{vis} = \frac{1}{2}\rho_0 C_{Lat}A_k^{\text{Lat}} \Vert\bar{\mathbf{u}}_k^{n} - \widehat{\bar{\mathbf{u}}}_k^{n}\Vert\frac{\Delta t}{m}.
+
+This approach to stabilize the momentum equation (:eq:`eq-momentum-particle`) is not
+optimal for different reasons.
+Firstly, it introduces a new coefficient :math:`C_{vis}` which is not a physical
+quantity and will require to be calibrated.
+
+Secondly, it artificially adds a force that should be described physically.
+So it would be more interesting to take the physical force into account in the first
+place.
+
+Potential solutions could be  taking the physical shear force into account,
+using for example the :math:`\mu`-I rheology (:cite:`GrEd2014, BaBaGr2016`).
+Another option would be to replace the artificial viscosity with a purely
+numerical artifact aiming to stabilize the equations such as a SPH version of
+the Lax-Friedrich scheme as presented in :cite:`AtSo2005`.
+
+Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Shallow Water Equations are well known for being hyperbolic transport equations.
+They have the particularity of carrying discontinuities or shocks which will cause
+numerical instabilities.
+
+A decentering in time allows to better capture the discontinuities.
+This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
+which is formally the same as adding a viscous force. Implementing it for the SPH method,
+this viscous force applied on a given particle :math:`k` can be expressed as follows:
+
+.. math::
+  \mathbf{F}_k^\text{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \boldsymbol{\nabla}W_{kl}
+
+with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
+\frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
+:math:`\boldsymbol{\nabla}W_{kl}` is the gradient of the kernel function and
+is described in :ref:`DFAnumerics:SPH gradient`.
+
+:math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
+between particle k and l, :math:`\mathbf{r}_{kl} = \mathbf{x}_k - \mathbf{x}_l` is
+the vector going from particles :math:`l` to particle :math:`k` and
+:math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with :math:`c_k = \sqrt{gh_l}`
+the wave speed. The :math:`\lambda_{kl}` is obtained by turning expressions
+related to time and spatial discretization parameters into an expression
+on maximal speed between both particles in the Lax Friedrich scheme.
+
+Due to the expression of the viscosity force, it makes sense to
+compute it at the same place where the SPH pressure force are computed (for this reason, the
+``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
+in combination with the ``sphOption`` = 2).
+
+
+Adding artificial viscosity
+""""""""""""""""""""""""""""""
+If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
+in :ref:`DFAnumerics:SAMOS Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
+``viscOption`` is set to 2, artificial viscosity is added during SPH force computation
+(so in :ref:`DFAnumerics:Account for driving forces` according to the :math:`\mathbf{F}_k^\text{viscosity}`
+computed in :ref:`DFAnumerics:Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme`)
+
+
+Curvature acceleration term
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. \label{sec-curvature-acc-term-estimation}
+
+The last term of the particular momentum equation (:eq:`eq-momentum-particle`)
+as well as the effective gravity :math:`g^{\text{eff}}` are the final terms to be
+discretized before the numerical integration.
+In both of these terms, the remaining unknown is the curvature acceleration term
+:math:`\bar{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}`.
+Using the forward Euler time discretization for the temporal derivative of the
+normal vector :math:`\mathbf{v}_{3,k}` gives:
+
+.. math::
+	\left.\frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \approx
+	\frac{\mathbf{v}_{3,k}^{n+1} - \mathbf{v}_{3,k}^n}{\Delta t}
+
+:math:`\mathbf{v}_{3,k}^n` is a known quantity, the normal vector of the bottom surface at
+:math:`\mathbf{x}_k^n` wich is interpolated from the grid normal vector values at the
+position of the particle :math:`k` at time :math:`t^n`.
+:math:`\mathbf{v}_{3,k}^{n+1}` is unknown since :math:`\mathbf{x}_k^{n+1}` is not known yet,
+hence we estimate :math:`\mathbf{x}_k^{n+1}` based the position  :math:`\mathbf{x}_k^n` and
+the velocity at :math:`t^n`:
+
+.. math::
+	\mathbf{x}_k^{n+1} =\mathbf{x}_k^n + \Delta t \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+
+This position at :math:`t^{n+1}` is projected onto the topography and
+:math:`\mathbf{v}_{3,k}^{n+1}` can be interpolated from the grid normal vector values.
+
+Note that the curvature acceleration term is needed to compute the bottom pressure
+(:eq:`eq-pressure-distribution`),  which is used for the bottom friction
+computation and for the pressure gradient computation.
+The curvature acceleration term can lead to a negative value, which means detachment
+of the particles from the bottom surface.
+In **com1DFA**, surface detachment is not allowed and if pressure becomes
+negative, it is set back to zero forcing the material to remain in contact with the
+topography.
+
+
+
+Account for entrainment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Entrainment is taken into account by:
+
+* First adding the component representing the loss of momentum due to
+	acceleration of the entrained mass :math:`- \bar{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
+	The entrained mass by a particle :math:`k` during a time step :math:`\Delta t` reads:
+
+	.. math::
+	    \mathrm{d}m_k^{n}  = m_k^{n+1} - m_k^{n} = \Delta t \,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+
+	Which leads by the way to the new mass of particle :math:`m_k^{n+1}`:
+
+	.. math::
+	    m_k^{n+1} =  m_k^{n} + \mathrm{d}m_k^{n} = m_k^{n} + \Delta t \,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+
+	Implicitly updating the velocity leads to (if we call :math:`\bar{\mathbf{u}}_k^{n+1}`
+	the velocity before adding the momentum loss and
+	:math:`\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle` the velocity after):
+
+	.. math::
+		\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \bar{\mathbf{u}}_k^{n+1}
+		\frac{m_k^{n}}{m_k^{n} + \mathrm{d}m_k^n} = \bar{\mathbf{u}}_k^{n+1}
+		\frac{m_k^{n}}{m_k^{n+1}}
+
+* Second by adding the force due to the need to break and compact the
+	entrained mass (:math:`\mathbf{F}_k^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
+
+	.. warning::
+		ToDO
+
+	.. math::
+	    \mathbf{F}_k^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)\mathbf{v}_1
+
+Account for driving forces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Adding the driving forces -gravity force and lateral forces- is done after adding
+the artificial viscosity.
+The velocity is updated as follows
+(:math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar` is the velocity after taking the
+driving force into account):
+
+.. math::
+	\begin{aligned}
+  	{\bar{\mathbf{u}}_k^{n+1}}^\bigstar &= \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+		+ \frac{\Delta t}{m_k}\mathbf{F}_{k}^{\text{drive}}\\
+		&= \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+		+ \frac{\Delta t}{m_k} \left(- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h
+			+ m_k \mathbf{g}_s  - m_k \left( \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle \cdot \left . \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \right)\mathbf{v}_{3,k}^n\right)
+	\end{aligned}
+	:label: eq-adding-driving-force
+
+Account for friction forces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
+forces in com1DFA.
+
+An implicit method:
+""""""""""""""""""""
+
+If the velocity of the particle :math:`k` reads :math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar`
+after adding the driving forces, adding the friction force leads to:
+
+.. math::
+  \bar{\mathbf{u}}_k^{n+1} = \frac{{\bar{\mathbf{u}}_k^{n+1}}^\bigstar}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
+
+where :math:`\mathbf{F}_k^{\text{fric}} = -C_{k}^{\text{fric}}{\bar{\mathbf{u}}_k^{n+1}}^\bigstar = \mathbf{F}_k^{\text{res}} + \mathbf{F}_k^{\text{bot}}`
+(the two forces are described in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
+
+This implicit method has a few draw-backs. First the flow does not start properly if the
+friction angle :math:`\delta` is too close to the slope angle. Second, the flow never properly stops, even if the
+particles physically should, i.e. particles keep oscillating back and force around their end position.
+
+
+An explicit method:
+""""""""""""""""""""
+
+The method based on :cite:`MaVi2003` addresses these two issues.
+The idea is that the friction force acts against motion, hence it only affects the magnitude of the velocity
+and can not be a driving force (:cite:`MaVi2003`).
+Moreover, the friction force magnitude depends on the particle state, i.e. if it is
+flowing or at rest.
+If the velocity of the particle :math:`k` reads :math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar`
+after adding the driving forces, adding the friction force leads, depending on the
+sign of :math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} - \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_{max}`
+(where :math:`\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_{max}`
+depends on the chosen friction law introduced in :ref:`theorycom1DFA:Friction Model`), to:
+
+* :math:`\left\Vert\mathbf{F}^{\text{fric}}\right\Vert = \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}` and
+  :math:`\bar{\mathbf{u}}_k^{n+1} = {\bar{\mathbf{u}}_k^{n+1}}^\bigstar \left(1 - \frac{\Delta t}{m_k} \frac{\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}}{\left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}\right)`,
+  if :math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} >
+  \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}`
+
+* :math:`\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert \leq \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}` and the particle stops moving
+  :math:`\bar{\mathbf{u}}_k^{n+1} = 0` before the end of the time step, if
+	:math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} \leq \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}`
+
+This method prevents the friction force to become a driving force and nonphysically
+change the direction of the velocity.
+This  would lead to oscillations of the particles instead of stopping.
+Adding the friction force following this approach (:cite:`MaVi2003`) allows the
+particles to start and stop flowing properly.
+
+
+Reprojection
+--------------
+
+The last term in :eq:`eq-momentum-particle` (accounting for the curvature effects)
+adds a non tangential component allowing
+the new velocity to lie in a different plane than the one from the previous time step.
+This enables the particles to follow the topography.
+But because the curvature term was only based on an estimation
+(see :ref:`DFANumerics:Curvature acceleration term`),
+it can happen that the new particle position is not necessarily on the topography
+and the new velocity does not necessarily lie in the tangent plane at this new
+position.
+Furthermore, in case of a strong convex curvature and high velocities, the particles
+can theoretically be in a free fall state (detachment) as mentioned in
+:ref:`Pressure distribution, thickness integrated pressure and pressure gradient`.
+**com1DFA** does not allow detachment of the particles and the particles are
+forced to stay on the topography. This consists in a limitation
+of the model/method which will lead to nonphysical behaviors in special cases
+(material flowing over a cliff).
+In both of the previously mentioned cases, the particles positions are projected back
+onto the topography and the velocity direction is corrected to be tangential to the
+topography.
+The position reprojection is done using an iterative method that attempts to conserve
+the distance traveled by each particle between :math:`t^n` and :math:`t^{n+1}``.
+The velocity reprojection changes the direction of the velocity but its magnitude is
+conserved.
+
+Neighbor search
+------------------
+
+The lateral pressure forces are computed via the SPH flow thickness gradient.
+This method is based on particle interactions within a certain neighborhood, meaning that it
+is necessary to keep track of all the particles within the neighborhood of each particle.
+Computing the gradient of the flow thickness at a particle location, requires to
+find all the particles in its surrounding. Considering the number of particles and
+their density, computing the gradient ends up in computing a lot of
+interactions and represents the most computationally expensive part of the dense
+flow avalanche simulation. It is therefore important that the neighbor search is fast and efficient.
+:cite:`IhOrSoKoTe2014` describe different grid neighbor search
+methods. In com1DFA, the simplest method is used. The idea is to locate each
+particle in a cell, this way, it is possible to keep track of the particles
+in each cell. To find the neighbors of a particle, one only needs to read the
+cell in which the particle is located (dark blue cell in :numref:`neighborSearch`),
+find the direct adjacent cells in all directions (light blue cells) and
+simply read all particles within those cells. This is very easily achieved
+on grids because locating a particle in a cell is straightforward and
+finding the adjacent cells is also easily done.
+
+.. _neighborSearch:
+
+.. figure:: _static/neighborSearch.png
+        :width: 90%
+
+        Support grid for neighbor search:
+        if the cell side is bigger than the kernel length :math:`r_{kernel}` (red circle in the picture),
+        the neighbors for any particle in any given cell (dark blue square)
+        can be found in the direct neighborhood of the cell itself (light blue squares)
+
+.. _partInCell:
+
+.. figure:: _static/partInCell.png
+        :width: 90%
+
+        The particles are located in the cells using
+        two arrays. indPartInCell of size number of cells + 1
+        which keeps track of the number of particles in each cell
+        and partInCell of size number of particles + 1 which lists
+        the particles contained in the cells.
 
 Particle splitting and merging
 -------------------------------
@@ -496,271 +1064,3 @@ In this case particles are merged with their closest neighbor. The new position 
 averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
 introduced. A good balance needs to be found for the coefficients so that the particles are not constantly split or
 merged but also not too seldom. The split and merge steps happen only once per time step and per particle.
-
-Artificial viscosity
----------------------
-
-Two options are available to add viscosity to stabilize the numerics. The first option
-consists in adding artificial viscosity (``viscOption`` = 1). The second option attempts
-to adapt the Lax-Friedrich scheme (usually applied to meshes) to the particle method
-(``viscOption`` = 2). Finally, ``viscOption`` = 0 deactivates any viscosity force.
-
-SAMOS Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
-equations for the DFA were derived and all first order or smaller terms where neglected.
-Among those terms is the lateral shear stress. This term leads toward
-the homogenization of the velocity field. It means that two neighbor elements
-of fluid should have similar velocities. The aim behind adding artificial viscosity is to
-take this phenomena into account. The following viscosity force is added:
-
-.. math::
-    \begin{aligned}
-    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
-    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
-    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
-    \end{aligned}
-
-Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
-(:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
-:math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
-equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the mesh size. Its value is set to 100
-and should be discussed and further tested.
-
-Adding the viscous force
-""""""""""""""""""""""""
-
-The viscous force acting on particle :math:`k` reads:
-
-.. math::
-  \begin{aligned}
-  \mathbf{F_k^{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
-  \mathbf{du}_k^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}_k^{old}\| A_{Lat}
-  (\mathbf{u}_k^{new} - \mathbf{\bar{u}}_k^{old})
-  \end{aligned}
-
-Updating the velocity is done in two steps. First adding the explicit term related to the
-mean mesh velocity and then the implicit term which leads to:
-
-.. math::
-  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old} - C_{vis}\mathbf{\bar{u}}_k^{old}}{1 + C_{vis}}
-
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}\frac{dt}{m}`
-
-
-Ata Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-An upwind method based on Lax-Friedrichs scheme
-"""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-Shallow Water Equations are well known for being hyperbolic transport equations.
-They have the particularity of carrying discontinuities or shocks which will cause
-numerical instabilities.
-
-A decentering in time allows to better capture the discontinuities.
-This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
-which is formally the same as adding a viscous force. Implementing it for the SPH method,
-this viscous force applied on a given particle :math:`k` can be expressed as follows:
-
-.. math::
-  \mathbf{F_k^{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
-
-with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
-\frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
-:math:`\mathbf{\nabla}W_{kl}` is the gradient of the kernel function and
-is described in :ref:`DFAnumerics:SPH gradient`.
-
-:math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
-between particle k and l, :math:`\mathbf{r}_{kl} = \mathbf{x}_k - \mathbf{x}_l` is
-the vector going from particles :math:`l` to particle :math:`k` and
-:math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with :math:`c_k = \sqrt{gh_l}`
-the wave speed. The :math:`\lambda_{kl}` is obtained by turning expressions
-related to time and spatial discretization parameters into an expression
-on maximal speed between both particles in the Lax Friedrich scheme.
-
-Due to the expression of the viscosity force, it makes sense to
-compute it at the same place where the SPH pressure force are computed (for this reason, the
-``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
-in combination with the ``sphOption`` = 2).
-
-
-Forces discretization
-----------------------
-
-Lateral force
-~~~~~~~~~~~~~~
-
-The SPH method is introduced when expressing the flow thickness gradient for each
-particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in :math:`p_k` is dropped
-(same applies for :math:`p_l`).
-
-The lateral pressure forces on each particle are calculated from the compression
-forces on the boundary of the particle.
-The boundary is approximated as a square with the base side length
-:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to
-(subscript :math:`|_{.,i}` stands for the component in the :math:`i^{th}`
-direction, :math:`i = {1,2}`):
-
-.. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\oint\limits_{\partial{A_{k}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
-
-From equation :eq:`momentum-balance6`
-
-.. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}-
-    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}+\frac{\Delta{s}}{2}}\right)
-    = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{k}
-
-The product of the average flow thickness :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
-reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
-
-.. math::
-   \overline{h}\,\overline{\sigma}^{(b)} = \overline{h}^2\,\rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)
-   \approx \overline{h}^2\,\rho_0\,g_3
-
-Which leads to, using the relation :eq:`sph formulation`:
-
-.. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,A_{k}\,\overline{h}_{k}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{k}
-    = -K_{(i)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\left.\frac{d\,W_{kl}}{d\,x_i}\right\rvert_{l}
-    :label: lateral force
-
-
-Bottom friction force
-~~~~~~~~~~~~~~~~~~~~~~~
-The bottom friction forces on each particle depend on the chose friction model. Using the SamosAT friction model
-(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`) the formulation of the bottom friction forec
-reads:
-
-.. math::
-    F_{k,i}^{\text{bot}} = -\frac{\overline{u}_{k,i}}{\|\mathbf{u}_k\|}\,A_{k}\,\tau^{(b)}_{k}
-    = -\delta_{k1}\,A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{k}
-     + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
-    :label: bottom force
-
-
-Added resistance force
-~~~~~~~~~~~~~~~~~~~~~~~
-The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
-is a function of the average flow thickness :math:`\overline{h}_{k}`):
-
-.. math::
-    F_{k,i}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
-    :label: resistance force
-
-Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
-friction force that can be added. This maximal force is added if the particles are flowing. If not, the friction force
-equals the driving forces. See :cite:`MaVi2003` for more information.
-
-Entrainment force
-~~~~~~~~~~~~~~~~~~~~~~~
-The term :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
-related to the entrained mass in :eq:`momentum-balance3` now reads:
-
-.. math::
-    - \overline{u}_{k,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
-    = - \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
-
-
-The mass of entrained snow for each particle depends on the type of entrainment involved
-(plowing or erosion) and reads:
-
-.. math::
-    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
-    = \frac{\mathrm{d}\,m_{k}}{\mathrm{d}t}
-    = A_{k}^\text{ent}\,q_{k}^{\text{ent}}
-
-with
-
-.. math::
-    \begin{aligned}
-    A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,\overline{h}_{k}}}\,h_{k}^{\text{ent}}
-    \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
-    \quad &\mbox{for plowing}\\
-    A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,\overline{h}_{k}}
-    \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
-    \quad &\mbox{for erosion}\end{aligned}
-
-Finaly, the entrainment force reads:
-
-.. math::
-    F_{k,i}^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)
-
-Adding forces
---------------
-The different components are added following an operator splitting method.
-This means particle velocities are updated successively with the different forces.
-
-
-Adding artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
-in :ref:`DFAnumerics:Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
-``viscOption`` is set to 2, artificial viscosity is added during SPH force computation. (TODO add link to description)
-
-Adding entrainment
-~~~~~~~~~~~~~~~~~~~
-Entrainment is taken into account by first adding the component representing the loss of momentum due to
-acceleration of the entrained mass :math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
-Second by adding the force due to the need to break and compact the
-entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
-
-
-Adding driving forces
-~~~~~~~~~~~~~~~~~~~~~~~~
-The driving forces -gravity force and lateral forces- are taken into account next. The velocity is updated explicitly.
-
-
-Adding friction forces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
-forces in com1DFA.
-
-An implicit method:
-""""""""""""""""""""
-
-.. math::
-  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old}}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
-
-where :math:`F_{k,i}^{\text{fric}} = C_{k}^{\text{fric}} u_{k,i}^{new} = F_{k,i}^{\text{res}} + F_{k,i}^{\text{bot}}`
-(the two forces are described in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
-
-This implicit method has a few draw-backs. First the flow does not start properly if the
-friction angle :math:`\delta` is too close to the slope angle. Second, the flow never properly stops, even if the
-particles physically should, i.e. particles keep oscillating back and force around their end position.
-
-
-An explicit method:
-""""""""""""""""""""
-
-The method based on :cite:`MaVi2003` addresses these two issues.
-The idea is that the friction forces only modify the magnitude of velocity and not the direction. This means dissipation,
-so the friction force can not become a driving force. Moreover, the friction force magnitude depends on the particle state,
-i.e. if it is flowing or at rest.
-The friction force is expressed:
-
-.. math::
-  \mathbf{F}_k^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
-with:
-
-.. math::
-  \|\mathbf{F}_{k}^{\text{fric}}\| \leq \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
-
-If the velocity of the particle ``k`` reads :math:`\mathbf{u}_k^{old}` after adding the driving forces, adding the
-fiction force leads to :
-
-.. math::
-  \mathbf{u}_{k} = \mathbf{u}_k^{old} (1 - \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|}{\|\mathbf{u}^{old}_k\|}),
-  \quad \|\mathbf{F}_{k}^{\text{fric}}\| = \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
-
-
-at the condition that  :math:`1 \geq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`.
-If on the contrary :math:`1 \leq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`,
-the friction would change the velocity direction which is nonphysical. In this case, the particle will stop
-before the end of the time step. This allows the particles to start and stop flowing properly.
