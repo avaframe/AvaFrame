@@ -29,14 +29,14 @@ Inputs
    the helper function :py:func:`ana3AIMEC.dfa2Aimec.mainDfa2Aimec` in
    :py:mod:`ana3AIMEC.dfa2Aimec` fetches and prepares the input for Aimec)
 * a method to define the reference simulation. By default, an arbitrary simulation
-  is defined as reference (this can be changed in the ``ana3AIMEC/local_ana3AIMECCfg.ini``
-  as explained in :ref:`moduleAna3AIMEC:Defining the reference simulation`)
+  is defined as reference. This can be changed in the ``ana3AIMEC/local_ana3AIMECCfg.ini``
+  as explained in :ref:`moduleAna3AIMEC:Defining the reference simulation`.
 
 .. Note:: The spatial resolution of the DEM and its extend can differ from the result raster data.
           Spatial resolution can also differ between simulations. If this is the case, the spatial
           resolution of the reference simulation results rasters is used (default) or the resolution
           specified in the configuration file (``cellSizeSL``) is used if this one is provided.
-          This way, all simulations will be transformed and analyzed using on single resolution.
+          This way, all simulations will be transformed and analyzed using the same resolution.
 
 Outputs
 --------
@@ -122,7 +122,7 @@ in the original coordinate system, corresponds to the last point in flow directi
 chosen peak result :math:`A_{cross}^{max}(s)` is above the threshold value :math:`A_{lim}`.
 
 .. Note:: It is very important to note that the position of the runout point depends on the chosen
-          threshold value and peak result field. It would also be possible to use
+          threshold value and peak result field. It is also possible to use
           :math:`\bar{A}_{cross}(s)>A_{lim}` instead of :math:`A_{cross}^{max}(s)>A_{lim}`
           to define the runout point.
 
@@ -201,14 +201,14 @@ This section describes how the theory is implemented in the ``ana3AIMEC`` module
 
 Defining the reference simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In order to fully proceed to the Aimec analysis, a reference simulation needs to be defined.
-The analysis of the other simulations  will then be compared to the one of the reference simulation.
-The reference simulation can be defined by its name (or part of the name) or based on some
+To apply a complete Aimec analysis, a reference simulation needs to be defined.
+The analysis of the other simulations will be compared to the one of the reference simulation.
+The reference simulation can be determined by its name (or part of the name) or based on some
 configuration parameter and value if it comes from the :py:mod:`com1DFA` module
 (or any computational module that provides a configuration):
 
   * Based on the simulation name
-     one needs to provide a not empty string in the AIMEC configuration
+     one needs to provide a not-empty string in the AIMEC configuration
      file for the ``referenceSimName`` parameter. This string can be a part or the full name of the
      reference simulation. A warning is raised if several simulation match the criterion (can happen
      if part of the name is given) and the first simulation found is arbitrarily taken as reference.
