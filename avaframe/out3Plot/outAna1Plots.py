@@ -70,7 +70,7 @@ def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header
     ax2, ax22 = _plotVariable(ax2, cfgSimi, simiDict, comSol, limits, 'yaxis')
     ax2.set_title('Profile across flow direction (x = %.2f m)' % xCenter)
 
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'compareProfileSimiSol%s_%.2f.' % (simHash, tSave), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest }, 'compareProfileSimiSol%s_%.2f.' % (simHash, tSave), fig1)
 
 
 def makeContourSimiPlot(avalancheDir, simHash, fieldFT, limits, simiDict, fieldHeader, tSave, outDirTest):
@@ -83,7 +83,7 @@ def makeContourSimiPlot(avalancheDir, simHash, fieldFT, limits, simiDict, fieldH
 
     ax1.set_title(pU.cfgPlotUtils['nameFT'] + ' contours at t = %.2f s' % tSave)
     pU.putAvaNameOnPlot(ax1, avalancheDir)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'compareContourSimiSol%s_%.2f.' % (simHash, tSave), fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest }, 'compareContourSimiSol%s_%.2f.' % (simHash, tSave), fig)
 
     return fig
 
@@ -299,7 +299,7 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
     ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.fs)
 
     outFileName = '_'.join([simHash, 'SimiSolTest'])
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outFileName, fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, outFileName, fig)
 
 
 # Dam Break plots
@@ -307,8 +307,8 @@ def _plotVariableDamBreak(var, x, xMiddle, dtInd, dtStep, label):
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     plt.title('Dry-Bed')
-    plt.plot(x, var[:,0], 'k--', label='t = 0s')
-    plt.plot(x, var[:,dtInd], label='t = %.1fs' % dtStep)
+    plt.plot(x, var[:, 0], 'k--', label='t = 0s')
+    plt.plot(x, var[:, dtInd], label='t = %.1fs' % dtStep)
     plt.xlabel('x-coordinate [m]')
     plt.ylabel(label)
     plt.legend()
@@ -327,12 +327,12 @@ def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     name = pU.cfgPlotUtils['nameFT'] + '[' + pU.cfgPlotUtils['unitFT'] + ']'
     fig = _plotVariableDamBreak(h, x, xMiddle, dtInd, tSave, name)
     outputName = 'damBreakFlowThickness'
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, outputName, fig)
 
     name = pU.cfgPlotUtils['nameFV'] + '[' + pU.cfgPlotUtils['unitFV'] + ']'
     fig = _plotVariableDamBreak(u, x, xMiddle, dtInd, tSave, name)
     outputName = 'damBreakFlowVelocity'
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, outputName, fig)
 
 
 def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, limits, outDirTest):
@@ -429,7 +429,7 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simHash, tSave), fontsize=30)
     outputName = 'compareDamBreak%s_%.02f' % (simHash, tSave)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, outputName, fig)
 
     return ax1, ax2, ax3
 
@@ -440,11 +440,11 @@ def _plotDamProfile(ax, x, y, nx_loc, cfg, data1, data2, xAna, xMidAna, yAna, in
     ax.plot(x, y, 'grey', linestyle='--')
     ax.plot(x, data1[nx_loc, :], 'k--', label='initial')
     ax.plot(x, data2[nx_loc, :], 'b', label='numerical')
-    ax.plot(xAna, yAna[:,indT], 'r-', label='analytical')
+    ax.plot(xAna, yAna[:, indT], 'r-', label='analytical')
     ax.set_xlabel('x [m]')
     ax.set_ylabel('%s [%s]' % (label, unit))
     ax.set_xlim([cfg.getfloat('xStart'), cfg.getfloat('xEnd')])
-    ax.set_ylim([-0.05, max(yMax, scaleCoef*max(yAna[:,indT]))])
+    ax.set_ylim([-0.05, max(yMax, scaleCoef*max(yAna[:, indT]))])
     # ax.axvline(xMidAna[indT], color='grey', linestyle='--')
     ax.axvspan(xMidAna[indT], cfg.getfloat('xEnd'), color='grey', alpha=0.3, lw=0, label='error computation \n domain')
 
@@ -613,7 +613,8 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.fs)
 
     outFileName = '_'.join([simHash, 'DamBreakTest'])
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outFileName, fig)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, outFileName, fig)
+
 
 # Genaral plots
 def addErrorTime(ax1, time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, relativ, t):
@@ -687,13 +688,13 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
         output directory
     """
     title = (' between similarity solution and com1DFA \n(simulation %s)'
-                     % (outputName))
+             % (outputName))
     title = getTitleError(relativ, title)
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax1.set_title(title)
     ax1, ax2 = addErrorTime(ax1, time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
                             relativ, t)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_time_' + str(outputName), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, 'Error_time_' + str(outputName), fig1)
 
     return fig1
 
@@ -831,7 +832,7 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
     legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, 'ErrorLog%ds' % int(tSave), fig1)
     return fig1, ax1
 
 
@@ -920,7 +921,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
         legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
         ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
         ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-        pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorPresentation%d' % count, fig1)
+        pU.saveAndOrPlot({'pathResult': outDirTest}, 'ErrorPresentation%d' % count, fig1)
         if fit:
             p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
             p1H = p[0]
@@ -936,7 +937,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
             log.debug('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' %
                      (colorValue, p0H, p1H, rSquaredH))
 
-            pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorPresentation%dFit' % count, fig1)
+            pU.saveAndOrPlot({'pathResult': outDirTest}, 'ErrorPresentation%dFit' % count, fig1)
 
         count = count + 1
         simDFOld = copy.deepcopy(simDFNew)
@@ -1046,7 +1047,7 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logSc
     legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'timeCPU%ds' % int(tSave), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest}, 'timeCPU%ds' % int(tSave), fig1)
 
 
 def getPlotLimits(cfgSimi, fieldsList, fieldHeader):

@@ -32,7 +32,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def mainSimilaritySol(simiSolCfg):
+def mainSimilaritySol(simiSolCfg, com1DFACfg):
     """ Compute similarity solution
     Parameters
     -----------
@@ -50,18 +50,14 @@ def mainSimilaritySol(simiSolCfg):
             f_p_sol: first derivativ of f array
 
     """
-
-    # Load configuration
-    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-    cfgGen = cfg['GENERAL']
-    cfgSimi = cfg['SIMISOL']
-    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
-    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
-    internalFrictionAngleDeg = cfgSimi.getfloat('internalFrictionAngle')
+    cfgGen = com1DFACfg['GENERAL']
+    bedFrictionAngleDeg = simiSolCfg.getfloat('bedFrictionAngle')
+    planeinclinationAngleDeg = simiSolCfg.getfloat('planeinclinationAngle')
+    internalFrictionAngleDeg = simiSolCfg.getfloat('internalFrictionAngle')
     # Dimensioning parameters L
-    L_x = cfgSimi.getfloat('L_x')
-    L_y = cfgSimi.getfloat('L_y')
-    H = cfgSimi.getfloat('relTh')
+    L_x = simiSolCfg.getfloat('L_x')
+    L_y = simiSolCfg.getfloat('L_y')
+    H = simiSolCfg.getfloat('relTh')
 
     # Set parameters
     Pi = math.pi
@@ -92,7 +88,7 @@ def mainSimilaritySol(simiSolCfg):
     x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
 
     # compute earth pressure coefficients
-    flagEarth = cfgSimi.getboolean('flagEarth')
+    flagEarth = simiSolCfg.getboolean('flagEarth')
     if flagEarth:
         earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
     else:
@@ -766,7 +762,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 
 
-def getReleaseThickness(avaDir, cfg, demFile):
+def getReleaseThickness(avaDir, cfgSimi, demFile, csz):
     """ Define release thickness for the similarity solution test
 
     Release area is defined as an elipse or main radius Lx and Ly.
@@ -778,9 +774,11 @@ def getReleaseThickness(avaDir, cfg, demFile):
     avaDir: str
         path to avalanche directory
     cfg: dict
-        confguration settings
+        similarity solution confguration settings
     demFile: str
         path to DEM file
+    csz: float
+        expected cell size
 
     Returns
     --------
@@ -798,10 +796,9 @@ def getReleaseThickness(avaDir, cfg, demFile):
     yllc = demOri['header']['yllcenter']
 
     # define release thickness distribution
-    cfgSimi = cfg['SIMISOL']
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    Hini = cfg['SIMISOL'].getfloat('relTh')
+    Hini = cfgSimi.getfloat('relTh')
     planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
     x = np.linspace(0, ncols-1, ncols)*csz+xllc
     y = np.linspace(0, nrows-1, nrows)*csz+yllc
