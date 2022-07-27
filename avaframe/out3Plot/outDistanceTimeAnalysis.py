@@ -32,12 +32,12 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     """
 
     # fetch required input info
-    mti =  mtiInfo['mti']
+    mti = mtiInfo['mti']
     rangeGates = mtiInfo['rangeGates']
     timeList = mtiInfo['timeList']
     rangeList = mtiInfo['rangeList']
     rangeTimeResType = cfgRangeTime['GENERAL']['rangeTimeResType']
-    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime['GENERAL'].getfloat('minVelTimeStep'))
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
 
     # in case time steps are not ordered - the colormesh x and y need to be ordered
     timeIndex = np.argsort(np.array(timeList))
@@ -55,8 +55,8 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     ax = fig.add_subplot(1, 1, 1)
     plt.title(mtiInfo['plotTitle'])
     pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
-    plt.plot(timeList, rangeList , '.', color='black', markersize=4,
-        label='avalanche front')
+    plt.plot(timeList, rangeList, '.', color='black', markersize=4,
+             label='avalanche front')
     plt.xlabel('Time [s]')
     # add y label axis
     if mtiInfo['type'] == 'thalwegTime':
@@ -67,17 +67,20 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
-    if mtiInfo['type'] == 'thalwegTime' and cfgRangeTime['GENERAL']['maxOrMean'] == 'max':
+    if mtiInfo['type'] == 'thalwegTime' and cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
         avgType = 'max'
     else:
         avgType = 'avg.'
     cName = '%s ' % avgType + pU.cfgPlotUtils['name' + rangeTimeResType]
     pU.addColorBar(pc, ax, None, unit, title=cName)
     pU.putAvaNameOnPlot(ax, cfgRangeTime['GENERAL']['avalancheDir'])
-    rangeTimeVelocityLegend(timeListNew, rangeGates, ax, maxVel, width=width, height=height, lw=lw, textsize=textsize)
+    # add range time velocity legend
+    rangeTimeVelocityLegend(ax, maxVel, width, height, lw, textsize)
+
     # add max velocity location
     ax.plot(timeVel, rangeVel, 'r*', label='max velocity location')
-    cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
+    #FSO: is this needed?
+    # cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
 
     # add info on avalanche front in legend
     plt.legend(facecolor='grey', framealpha=0.2, loc='lower right', fontsize=8)
@@ -87,7 +90,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
         # invert y axis as ava flow starts from minus distance to beta point
         ax.invert_yaxis()
         ax.axhline(y=0.0, color='gray', linestyle='--', linewidth=1, alpha=0.5,
-            label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
+                   label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
 
     # set path for saving figure
     outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
@@ -304,83 +307,161 @@ def plotMaskForMTI(cfgRangeTime, bmaskRange, bmaskAvaRadar, bmaskAvaRadarRangesl
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def rangeTimeVelocityLegend(timeSteps, rangeGates, ax, maxVel, width=0.25, height=0.25, lw=0.5, textsize=7):
-    """ set legend in range time diagram for velocity in terms of steepness of front position
+def getMaxVelocityPoint(width, height, maxVel, diagVel):
+    """ get point of max approach velocity in axes coordinates
 
         Parameters
         -----------
-        timeSteps: list
-            time steps - needs to be ordered
-        rangeGates: list
-            list of range gates - needs to be ordered
-        ax: matplotlib axis object
-            axes where the legend shall be accomodated to
         width: float
-            width of legend in fraction of full plot width
+            fractional percentage of legend width
         height: float
-            height of legend in fraction of full plot height
-        lw: float
-            line width
-        textsize: float
-            size of text
+            fractional percentage of legend height
+        maxVel: float
+            maximum approach velocity value
+        diagVel: float
+            x/y ratio of axes
 
+        Returns
+        --------
+        point: tuple
+            x, y axes coordinates of maximum velocity
     """
 
-    # compute slope of max velocity line for transformed axes
-    xMax = timeSteps[-1]
-    yMax = np.amax(rangeGates)# - np.amin(rangeGates)
-    xinterval = xMax - timeSteps[0]
-    yinterval = np.amax(rangeGates) - np.amin(rangeGates)
-    kPlot = (yinterval /xinterval)
+    # along bottom line
+    if maxVel > diagVel:
+        point = [(1 - width) + width / maxVel * diagVel, 1 - height]
+    else:
+        # along re vert line
+        point = [1, 1 - height * maxVel / diagVel]
 
-    # fetch points for drawing velocity legend
-    point = getVelocityPoints(1, 1, width, height, 1, 1, maxVel, kPlot)
+    return point
+
+
+def rangeTimeVelocityLegend(ax, maxVel, width, height, lw, textsize):
+    """ set legend in range time diagram for velocity in terms of steepness of front position
+        connects to figure callback to react to zoom/pan events
+
+    Parameters
+    ----------
+    ax: matplotlib axes object
+        figure axes object
+    maxVel: float
+        maximum approach velocity value
+    width : float , *0.25
+        fractional percentage of legend width
+    height: float
+        fractional percentage of legend height
+    lw: float
+        linewidth for legend line
+    textsize: float
+        textsize for legend entries
+    """
+
+    # keep track of which text elements belong to this legend thing...
+    inititalNrOfTextElements = len(ax.texts)
+
+    # get legend points in axes coordinates
+    point = getVelocityPoints(1, 1, width, height, 1, 1)
 
     # add title and boundary box and diagonal lines using point
-    addTitleBox(ax, lw, point, maxVel=True)
+    lVmax = addTitleBox(ax, width, height, lw, point, textsize, maxVel=True)
 
-    # compute velocity values
-    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, kPlot)
-    # add velocity legend labels
-    addVelocityValues(ax, dataPoint, point, maxVel=maxVel)
+    # ---- internal functions ----
+    def zoomLvlChange(eventAx, first=False):
+        """
+        Function to annotate the diagonal lines with velocity values.
+        Flag first decides if the text elements are created (must be called once)
+        or if just the text is changed (figure callback)
+        """
+
+        # get current axes limits
+        xdMax = max(eventAx.get_xlim())  # timesteps[-1]
+        ydMax = max(eventAx.get_ylim())  # max(rangegates)
+        xdIntervall = max(eventAx.get_xlim()) - min(eventAx.get_xlim())
+        ydIntervall = max(eventAx.get_ylim()) - min(eventAx.get_ylim())  # y_max-rangegates[0] # from min to max
+        vDiag = ( ydIntervall / xdIntervall)
+
+        # calculate current velocities of diagonal lines
+        dataPoint = getVelocityPoints(xdMax, ydMax, width, height, xdIntervall, ydIntervall)
+        textElementNr = addVelocityValues(ax, dataPoint, point, first=first, inititalNrOfTextElements=inititalNrOfTextElements)
+
+        # make or update max velocity line and text
+        maxVelPoint = getMaxVelocityPoint(width, height, maxVel, vDiag)
+        if maxVel < vDiag:
+            xLoc = maxVelPoint[0] - 0.04
+            yLoc = maxVelPoint[1] - 0.004
+        else:
+            xLoc = maxVelPoint[0]
+            yLoc = maxVelPoint[1] + 0.004
+        if first:
+                eventAx.text(xLoc, yLoc, 'max %.1f' % maxVel, size=5, fontweight='bold',
+                              color='r', transform=ax.transAxes, gid=len(point)-2, va='center', ha='left',
+                              bbox=dict(facecolor='white', alpha=0.5))
+        else:
+                ax.texts[textElementNr+1].set_position((xLoc, yLoc))
+                lVmax.set_data([point[0][0], maxVelPoint[0]], [point[0][1], maxVelPoint[1]])
+    # ---- internal functions end ----
+
+    # make the text, e.g. the mandatory first=True call
+    zoomLvlChange(ax, first=True)
+
+    # connect callback
+    ax.callbacks.connect('xlim_changed', zoomLvlChange)
+    ax.callbacks.connect('ylim_changed', zoomLvlChange)
 
 
-def addTitleBox(ax, lw, point, maxVel=True):
+def addTitleBox(ax, width, height, lw, point, textsize, maxVel=True):
     """ add velocity legend title and boundary box and diagonal lines
-        if maxVel=True add max velocity line
+        if maxVel=True add max velocity line in red
 
         Parameters
         -----------
-        point: list
-            list of points coordinates for velocity legend
+        ax: matplotlib axes object
+            axes object for legend
+        width: float
+            fractional percentage of legend width
+        height: float
+            fractional percentage of legend height
         lw: float
             linewidth
-        ax: matplotlib axis object
+        point: list
+            list of points coordinates for velocity legend
+        textsize: float
+            size of legend entries
         maxVel: bool
             if True add max velocity line in red
     """
 
-    # add title
-    ax.text(point[1][0], point[1][1], 'Approach \n velocity [m/s]', size=6,
+    # add legend title
+    ax.text(point[1][0], point[1][1], 'Approach \n velocity [m/s]', size=textsize,
         transform=ax.transAxes, va='top', ha='right', fontweight='bold',
         bbox=dict(facecolor='white', alpha=0.5))
 
     # plot boundary of velocity box
-    ax.plot([point[0][0], point[1][0]], [point[0][1], point[1][1]], color='k', linewidth=lw, transform=ax.transAxes)
-    ax.plot([point[1][0], point[5][0]], [point[1][1], point[5][1]], color='k', linewidth=lw, transform=ax.transAxes)
-    ax.plot([point[5][0], point[10][0]], [point[5][1], point[10][1]], color='k', linewidth=lw, transform=ax.transAxes)
-    ax.plot([point[10][0], point[0][0]], [point[10][1], point[0][1]], color='k', linewidth=lw, transform=ax.transAxes)
+    ax.plot([point[0][0], point[1][0]], [point[0][1], point[1][1]], color='k', linewidth=lw, transform=ax.transAxes) # top hor
+    ax.plot([point[1][0], point[5][0]], [point[1][1], point[5][1]], color='k', linewidth=lw, transform=ax.transAxes) # re vert
+    ax.plot([point[5][0], point[9][0]], [point[5][1], point[9][1]], color='k', linewidth=lw, transform=ax.transAxes) # bottom hor
+    ax.plot([point[9][0], point[0][0]], [point[9][1], point[0][1]], color='k', linewidth=lw, transform=ax.transAxes) # le vert
 
     # these are the diagonal lines referring to velocity
     for j in range(2, len(point) - 1):
         x1 = [point[0][0], point[j][0]]
         y1 = [point[0][1], point[j][1]]
-        if j == 9 and maxVel: # max velocity make red
-            ax.plot(x1, y1, color='r', linewidth=1.0, transform=ax.transAxes)
-        else:
-            ax.plot(x1, y1, color='k', linewidth=0.5, transform=ax.transAxes)
+        ax.plot(x1, y1, color='k', linewidth=lw, transform=ax.transAxes)
 
-def addVelocityValues(ax, dataPoint, point, maxVel=''):
+    if maxVel:
+        # draw red line for max velocity
+        xdIntervall = max(ax.get_xlim()) - min(ax.get_xlim())
+        ydIntervall = max(ax.get_ylim()) - min(ax.get_ylim())
+        vDiag = (ydIntervall / xdIntervall)
+        pVmax = getMaxVelocityPoint(width, height, maxVel, vDiag)
+        lVmax = ax.plot([point[0][0], pVmax[0]], [point[0][1], pVmax[1]], color='r', linewidth=lw*1.5,
+                         transform=ax.transAxes)[0]  # return handle not list
+
+        return lVmax
+
+
+def addVelocityValues(ax, dataPoint, point, first=True, inititalNrOfTextElements=np.nan):
     """ add velocity values as labels
 
         Parameters
@@ -390,45 +471,50 @@ def addVelocityValues(ax, dataPoint, point, maxVel=''):
             list of points coordinates for velocity label locations
         point: list
             list of points coordinates for velocity lines
-        maxVel: float
-            max velocity
+        first: bool
+            if True text elements are created - initially required, if False then only changed
+        inititalNrOfTextElements:
+
     """
 
+    # compute velocity values
     velocity = []
     for i in range(2, len(dataPoint)-1):
         deltaS = dataPoint[0][1] - dataPoint[i][1]
         deltaT = dataPoint[i][0] - dataPoint[0][0]
         velocity.append(deltaS/deltaT)
 
+    textElementNr = inititalNrOfTextElements
     # add velocity labels
     for j in range(2, len(point)-1):
         x1 = [point[0][0], point[j][0]]
         y1 = [point[0][1], point[j][1]]
 
-        if j < 5: # text along vertical axes
-            ax.text(x1[1]+0.01, y1[1]+0.002, '%.1f' % velocity[j-2], size=5, fontweight='bold',
-                color='k', transform=ax.transAxes, gid=j, va='center',ha='left')
-        elif j == 9 and maxVel != '': # text for max velocity
-            if velocity[j-2] < velocity[3]:
-                xLoc = x1[1]-0.04
-                yLoc =  y1[1]-0.004
-            else:
-                xLoc = x1[1]
-                yLoc =  y1[1]+0.004
-            ax.text(xLoc, yLoc, 'max %.1f' % velocity[j-2], size=5, fontweight='bold',
-                color='r', transform=ax.transAxes, gid=j, va='center',ha='left',
-                bbox=dict(facecolor='white', alpha=0.5))
-            if abs(velocity[j-2] - maxVel) > 1.e7:
-                log.warning('velocity legend wrong')
+        textElementNr = textElementNr + 1
+        if first:
+            if j < 5: # text along vertical axes
+                ax.text(x1[1]+0.01, y1[1]+0.002, '%.1f' % velocity[j-2], size=5, fontweight='bold',
+                    color='k', transform=ax.transAxes, gid=j, va='center',ha='left')
+            else: # text along horizontal axes
+                ax.text(x1[1], y1[1]-0.01, '%.1f' % velocity[j-2], size=5, fontweight='bold',
+                    color='k', transform=ax.transAxes, gid=j, va='top', ha='center')
+        else:
+            ax.texts[textElementNr].set_text('%.1f' % velocity[j - 2])
 
-        else: # text along horizontal axes
-            ax.text(x1[1], y1[1]-0.01, '%.1f' % velocity[j-2], size=5, fontweight='bold',
-                color='k', transform=ax.transAxes, gid=j, va='top', ha='center')
+    return textElementNr
 
 
-
-def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, kPlot):
+def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval):
     """ get points for legend creation (box and sloping lines)
+
+        if xMax, yMax, xinterval, yinterval are all 1 -> points refer to
+        axes coordinates, that range from 0 to 1
+
+        if given true values, e.g. in seconds and meters, points are in
+        data coordinates and can be used for velocity calculus etc.
+
+        Note: used to be an internal function to rangeTimeVelocityLegend,
+              so use with care.
 
         Parameters
         -----------
@@ -436,6 +522,14 @@ def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, k
             max x extent of data (timeSteps)
         yMax: float
             max y extent of data (rangeGates)
+        width: float
+            fractional percentage of legend width
+        height: float
+            fractional percentage of legend height
+        xinterval: float
+            interval on x
+        yinterval: float
+            interval on y
 
         Returns
         --------
@@ -444,27 +538,19 @@ def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, k
     """
 
     points = []
-    points.append([xMax - width*xinterval, yMax])
-    points.append([xMax, yMax])
-    points.append([xMax, yMax - height/4.*yinterval])
-    points.append([xMax, yMax - height/2.*yinterval])
-    points.append([xMax, yMax - height/4.*3.*yinterval])
-    points.append([xMax, yMax - height*yinterval])
-    points.append([xMax - width/4*xinterval, yMax - height*yinterval])
-    points.append([xMax - width/2*xinterval, yMax - height*yinterval])
-    points.append([xMax - width/4*3*xinterval, yMax - height*yinterval])
 
-    if np.isnan(maxVel):
-        points.append([np.nan, np.nan])
-    elif maxVel > kPlot:
-        points.append([(xMax - width*xinterval) + width*xinterval/maxVel*kPlot, yMax-height*yinterval])
-    else:
-        points.append([xMax, yMax - height*yinterval*maxVel/kPlot])
-
-    points.append([xMax - width*xinterval, yMax - height*yinterval])
+    points.append([xMax - width*xinterval, yMax])  # p0 left, top
+    points.append([xMax, yMax])  # p1 right, top
+    points.append([xMax, yMax - height/4.*yinterval])  # p2 right, 0.75*top
+    points.append([xMax, yMax - height/2.*yinterval])  # p3 right, 0.5*top
+    points.append([xMax, yMax - height/4.*3.*yinterval])  # p4 right, 0.25*top
+    points.append([xMax, yMax - height*yinterval])  # p5 right, bottom
+    points.append([xMax - width/4*xinterval, yMax - height*yinterval])  # p6 0.75*right, bottom
+    points.append([xMax - width/2*xinterval, yMax - height*yinterval])  # p7 0.5*right, bottom
+    points.append([xMax - width/4*3*xinterval, yMax - height*yinterval])  # p8 0.25*right, bottom
+    points.append([xMax - width*xinterval, yMax - height*yinterval])  # p9 left, bottom
 
     return points
-
 
 
 def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeStep):
@@ -643,9 +729,6 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     timeList = mtiInfo['timeList']
     rangeList = mtiInfo['rangeList']
 
-    # compute approach velocity - required for approach velocity legend
-    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime['GENERAL'].getfloat('minVelTimeStep'))
-
     # in case time steps are not ordered - the colormesh x and y need to be ordered
     timeIndex = np.argsort(np.array(timeList))
     timeListNew = np.array(timeList)[timeIndex]
@@ -676,16 +759,16 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     kPlot = (yinterval / xinterval)
 
     # fetch points for drawing velocity legend
-    point = getVelocityPoints(1, 1, width, height, 1, 1, np.nan, kPlot)
+    point = getVelocityPoints(1, 1, width, height, 1, 1)
 
     # add title and boundary box and diagonal lines using point
-    addTitleBox(ax3, lw, point, maxVel=False)
+    lVmax = addTitleBox(ax3, width, height, lw, point, textsize, maxVel=False)
 
     # compute velocity values
-    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, np.nan, kPlot)
+    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval)
 
     # add velocity legend labels
-    addVelocityValues(ax3, dataPoint, point, maxVel='')
+    _ = addVelocityValues(ax3, dataPoint, point)
 
     # set limits for plot (depends on final time step)
     ax3.set_ylim([yMin, yMax])

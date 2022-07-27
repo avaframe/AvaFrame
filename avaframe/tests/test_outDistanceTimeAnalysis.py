@@ -25,6 +25,7 @@ def test_plotRangeTime(tmp_path):
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'avalancheDir': avaDir, 'rangeTimeResType': 'FT', 'simHash': 'simDI',
         'minVelTimeStep': 2.}
+        # 'minVelTimeStep': 2., 'maxOrMean': 'max'}
     cfgRangeTime['PLOTS'] = {'width': 0.25, 'height': 0.25, 'lw': 0.25, 'textsize': 7}
 
     # call function to be tested

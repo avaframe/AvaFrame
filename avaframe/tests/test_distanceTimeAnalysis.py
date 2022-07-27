@@ -1,15 +1,12 @@
 ''' Tests for module distanceTimeAnalysis  '''
 import numpy as np
-import numpy.ma as ma
-import pandas as pd
 import pathlib
+import pytest
 import configparser
-import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in2Trans.ascUtils as IOf
-from avaframe.in3Utils import cfgUtils
 
 
 def test_getRadarLocation():
@@ -24,7 +21,7 @@ def test_getRadarLocation():
 
     assert radarFov[0][0] == 10.
     assert radarFov[1][1] == 57.
-    assert np.array_equal(radarFov, np.asarray([[10., 25.],[40., 57.]]))
+    assert np.array_equal(radarFov, np.asarray([[10., 25.], [40., 57.]]))
 
 
 def test_setDEMOrigin():
@@ -32,9 +29,8 @@ def test_setDEMOrigin():
 
     # setup required inputs
     headerDEM = {'xllcenter': 0.0, 'yllcenter': 0.0, 'cellsize': 2., 'ncols': 8, 'nrows': 11}
-    demSims = {'header': headerDEM, 'originalHeader': {'xllcenter': 1.0, 'yllcenter': 5.,
-        'cellsize': 2., 'ncols': 8, 'nrows': 11},
-        'rasterData': np.zeros((11, 8))}
+    demSims = {'header': headerDEM, 'originalHeader': {'xllcenter': 1.0, 'yllcenter': 5., 'cellsize': 2.,
+               'ncols': 8, 'nrows': 11}, 'rasterData': np.zeros((11, 8))}
 
     # call function to be tested
     demOriginal = dtAna.setDemOrigin(demSims)
@@ -56,15 +52,13 @@ def test_radarMask(tmp_path):
     radarFov = [[1., 10.0], [5., 5.]]
     aperture = 40.5
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'avalancheDir': testAvaDir, 'simHash': 'test123',
-        'gateContours': 20}
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'avalancheDir': testAvaDir, 'simHash': 'test123', 'gateContours': 20}
 
     # call function to be tested
     radarRange, rangeGates = dtAna.radarMask(demOriginal, radarFov, aperture, cfgRangeTime)
 
     print('randarRange', radarRange)
     print('rangeGates', rangeGates)
-
 
     assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10.]))
 
@@ -77,8 +71,7 @@ def setupRangeTimeDiagram():
     demOriginal = {'header': headerDEM, 'rasterData': np.zeros((11, 11))}
 
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'simHash': 'test123',
-        'gateContours': 20, 'aperture': 40.5}
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'simHash': 'test123', 'gateContours': 20, 'aperture': 40.5}
 
     # call function to be tested
     mtiInfo = dtAna.setupRangeTimeDiagram(demOriginal, cfgRangeTime)
@@ -107,14 +100,26 @@ def test_appraoachVelocity():
 
     # setup required inputs
     mtiInfo = {'timeList': [0., 2., 3., 7., 8., 9., 10.],
-        'rangeList': [0., 2., 4., 6., 8., 10., 12]}
+               'rangeList': [0., 2., 4., 4., 7., 10., 12]}
     minVelTimeStep = 2.
 
     # call function to be tested
-    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, minVelTimeStep)
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
+    print(maxVel, rangeVel, timeVel)
+    assert maxVel == pytest.approx(1.0, rel=1e-8)
+    assert rangeVel == 0.
+    assert timeVel == 0.
 
-    assert maxVel == 2.
-    assert rangeVel == 8.
+    # setup required inputs
+    mtiInfo = {'timeList': [0., 2., 3., 7., 8., 9., 10.],
+               'rangeList': [0., np.nan, 4., 6., 7., 10., 12]}
+    minVelTimeStep = 2.
+
+    # call function to be tested
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
+    print(maxVel, rangeVel, timeVel)
+    assert maxVel == pytest.approx(3.0, rel=1e-8)
+    assert rangeVel == 7.
     assert timeVel == 8.
 
 
@@ -132,7 +137,7 @@ def test_fetchTimeStepFromName():
 
     # setup required inpu
     pathNames = [pathlib.Path('tests', 'testName_t0.5.asc'),
-        pathlib.Path('tests', 'testName_t0.15.asc')]
+                 pathlib.Path('tests', 'testName_t0.15.asc')]
 
     # call function to be tested
     timeSteps, indexTime = dtAna.fetchTimeStepFromName(pathNames)
@@ -203,13 +208,14 @@ def test_maskRangeFull():
                           [True, True, False, False],
                           [True, True, False, False]])
     maskAvaSol = np.asarray([[True, True, True, True],
-                          [True, False, False, False],
-                          [False, True, True, True],
-                          [False, False, False, False],
-                          [True, False, False, False]])
+                            [True, False, False, False],
+                            [False, True, True, True],
+                            [False, False, False, False],
+                            [True, False, False, False]])
 
     assert np.array_equal(maskSol, maskFull)
     assert np.array_equal(maskAvaSol, maskAva.mask)
+
 
 def test_extractFrontAndMeanValuesRadar():
     """ test extracting front and mean values """
@@ -223,12 +229,11 @@ def test_extractFrontAndMeanValuesRadar():
                         [7., 2., 0., 0.],
                         [6., 7., 8., 10.],
                         [2., 4., 5., 7.]])
-    threshold = 3.1
     range = np.arange(4)
     range = np.repeat([range], 5, axis=0)
     rangeMasked = np.ma.masked_where(range < 2., range)
     mtiInfo = {'rangeGates': np.arange(4), 'rangeMasked': rangeMasked, 'rArray': range,
-    'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
+               'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
 
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
@@ -248,7 +253,6 @@ def test_setupThalwegTimeDiagram():
     # setup required inputs
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / 'data/avaInclinedPlane'
-    modName = 'com1DFA'
     inputDir = dirPath / '..' / avaDir / 'Inputs'
     demPath = inputDir / 'DEM_IP_Topo.asc'
     dem = IOf.readRaster(demPath)
@@ -262,7 +266,7 @@ def test_setupThalwegTimeDiagram():
     mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
 
     print('mtiInfo', mtiInfo['betaPoint'], mtiInfo['betaPointAngle'],
-    mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
+          mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
 
     assert len(mtiInfo['rangeGates']) == len(mtiInfo['rasterTransfo']['s'])
     assert np.isclose(mtiInfo['betaPoint'][1], -4000.)
@@ -290,7 +294,7 @@ def test_initializeRangeTime():
     # call function to be tested
     mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
 
-    #print('mtiInfo', mtiInfo)
+    # print('mtiInfo', mtiInfo)
     print('dtRa', dtRangeTime, mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
 
     assert np.isclose(mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'], 9.95742856)
@@ -317,15 +321,15 @@ def test_fetchRangeTimeInfo():
     mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
 
     fieldTest = np.ones((dem['rasterData'].shape))
-    fields = {'FT': fieldTest}
+    fields = {'FV': fieldTest}
 
     # call function to be tested
     mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, 1., dem['header'], fields,
-        mtiInfo)
+                                                    mtiInfo)
 
     print('mtiInfo', type(dtRangeTime))
 
-    assert np.array_equal(dtRangeTime, np.arange(2,40,1))
+    assert np.array_equal(dtRangeTime, np.arange(2, 40, 1))
 
 
 def test_extractFrontAndMeanValuesTT():
@@ -354,7 +358,6 @@ def test_extractFrontAndMeanValuesTT():
 
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesTT(cfgRangeTime, flowF, dem['header'], mtiInfo)
-
 
     print('mtiInfo', mtiInfo['rangeList'], mtiInfo['mti'])
     print('raster', mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])

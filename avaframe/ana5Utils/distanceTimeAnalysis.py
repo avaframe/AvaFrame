@@ -6,21 +6,15 @@
 
 
 import numpy as np
-import matplotlib as mpl
-from matplotlib import pyplot as plt
 import logging
 import pickle
 import pathlib
-import configparser
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
-import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 import avaframe.ana3AIMEC.aimecTools as aT
-import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
 
@@ -238,7 +232,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     # mask range with radar field of view and treshold of flow variable result
     maskAva, bmaskAvaRadar, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
 
-    #++++++++Eextract front location with respect to radar ++++++++++++++
+    # ++++++++Extract front location with respect to radar ++++++++++++++
     # get line of sight distance to identify front, use threshold to mask flowF
     # line of sight min of masked array
     losDistance = rMaskedAvaRadar.min()
@@ -246,7 +240,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     # update lists of time step and front location
     mtiInfo['rangeList'].append(losDistance)
 
-    #+++++++Extract average values at range gates +++++++++
+    # +++++++Extract average values at range gates +++++++++
     # min and max radar range of masked radar range
     if not rMaskedAvaRadar.mask.all():
         #TODO why int?
@@ -438,7 +432,6 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     # TODO: average over cells – weighted with cell area (aimec function)
     rasterArea = rasterTransfo['rasterArea']
     maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
-
     # use the max or the mean of each cross section
     if cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
         aCross = aCrossMax
@@ -699,22 +692,29 @@ def fetchTimeStepFromName(pathNames):
     return timeSteps, indexTime
 
 
-def approachVelocity(mtiInfo, minVelTimeStep):
-    """ compute approach velocity based on front location and time step
-        performed for a min time difference of minVelTimeStep - max velocity location is at the
-        center index location
+def approachVelocity(mtiInfo):
+    """ compute maximal approach velocity based on front location (range) and time step
+
+        - cleans nan in range
+        - neglects anything behind maximal runout
+        - neglects non-unique range values, e.g. the front did not move
+        - cleans approach velocity: velocity in cell under test can not be higher
+            than the double of the mean from the surrounding cells
+
 
         Parameters
         -----------
         mtiInfo: dict
             info on distance to front and time steps
-        minVelTimeStep: float
-            min time step difference for computing approach velocity
 
         Returns
         --------
         maxVel: float
             max value of approach velocity
+        rangeVel: float
+            range of max value of approach velocity
+        timeVel: float
+            time of max value of approach velocity
     """
 
     # load lists
@@ -731,16 +731,42 @@ def approachVelocity(mtiInfo, minVelTimeStep):
     rangeVel = 0.0
     timeVel = 0.0
 
-    # use minimum time step for computing approach velocity
-    for i in range(len(timeListSorted)):
-        for k in range(i+1, len(timeListSorted+1)):
-            if abs(timeListSorted[i] - timeListSorted[k]) >= minVelTimeStep:
-                appVel = ((rangeListSorted[i] - rangeListSorted[k]) / (timeListSorted[i] - timeListSorted[k]))
-                if appVel > maxVel:
-                    maxVel = appVel
-                    locationIndex = int(i + 0.5*(k-i))
-                    rangeVel = rangeListSorted[locationIndex] - abs(np.nanmin(np.asarray(rangeList)))
-                    timeVel = timeListSorted[locationIndex]
-                break
+    # remove nans in range
+    nanIdx = np.argwhere(~np.isnan(rangeListSorted)).squeeze()
+    # remove anything behind runout
+    rmaxIdx = np.arange(0, np.nanargmax(rangeListSorted)+1)
+    idx = np.intersect1d(nanIdx, rmaxIdx)
+
+    rangeListSortedSmall = rangeListSorted[idx]
+    timeListSortedSmall = timeListSorted[idx]
+    # remove non-unique range values
+    rangeListSortedUnique, uniqueIdx = np.unique(rangeListSortedSmall.round(decimals=2), return_index=True)
+    timeListSortedUnique = timeListSortedSmall[uniqueIdx]
+
+    # calculate approach velocity
+    appVel = np.diff(rangeListSortedUnique)/np.diff(timeListSortedUnique)
+    rangeAppVel = rangeListSortedUnique[0:-1]
+    timeAppVel = timeListSortedUnique[0:-1]
+
+    # clean approach velocity: Idea is that the velocity in one cell can not be bigger
+    # than the double of the mean in the surrounding cells
+    idxAppVel = []
+    for i in range(len(appVel)-1):
+        if i == 0:  # first cell
+            vSurrounding = appVel[1]
+        elif i == len(appVel)-1:  # last cell
+            vSurrounding = appVel[i-1]
+        else:  # other cells, take mean
+            vSurrounding = (appVel[i-1] + appVel[i+1]) / 2
+        if appVel[i] <= 2*vSurrounding:
+            idxAppVel.append(i)
+    appVelClean = appVel[idxAppVel]
+    rangeAppVelClean = rangeAppVel[idxAppVel]
+    timeAppVelClean = timeAppVel[idxAppVel]
+
+    idxMaxVel = np.argmax(appVelClean)
+    maxVel = appVelClean[idxMaxVel]
+    rangeVel = rangeAppVelClean[idxMaxVel] - abs(np.nanmin(np.asarray(rangeList)))
+    timeVel = timeAppVelClean[idxMaxVel]
 
     return maxVel, rangeVel, timeVel
