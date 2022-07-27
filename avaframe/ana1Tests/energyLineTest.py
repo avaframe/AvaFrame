@@ -27,26 +27,27 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 log = logging.getLogger(__name__)
 
 
-def mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem):
+def mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem):
     """This is the core function of the energyLineTest module
 
     This module extracts the center of mass path from a DFA simulation
     and compares it to he analytic geometric/alpha line solution
     """
     log.info('Energy line test for simulation: %s' % simName)
-    pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
+    pathFromPart = energyLineTestCfg['energyLineTest'].getboolean('pathFromPart')
+    avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem,
+                                                               addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
                                                            comModule='com1DFA')
     # make analysis and generate plots
-    resultEnergyTest, savePath = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem,
-                                                           fieldsList, simName)
+    resultEnergyTest, savePath = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaProfileMass,
+                                                           dem, fieldsList, simName)
     return resultEnergyTest, savePath
 
 
-def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList, simName):
+def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaProfileMass, dem, fieldsList, simName):
     """ Make energy test analysis and plot results
 
     Parameters
@@ -54,7 +55,9 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     avalancheDir: pathlib
         avalanche directory pathlib path
     energyLineTestCfg: configParser
-        com1DFA energy test config
+        energy line test config
+    com1DFACfg: configParser
+        com1DFA  config
     avaProfileMass: dict
         particle mass averaged properties
     dem: dict
@@ -64,10 +67,10 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     simName: str
         simulation name
     """
-    plotScor = energyLineTestCfg['ENERGYLINETEST'].getboolean('plotScor')
+    plotScor = energyLineTestCfg['energyLineTest'].getboolean('plotScor')
     # read physical parameters from DFA configuration
-    g = energyLineTestCfg['GENERAL'].getfloat('gravAcc')
-    mu = energyLineTestCfg['GENERAL'].getfloat('mu')
+    g = com1DFACfg['GENERAL'].getfloat('gravAcc')
+    mu = com1DFACfg['GENERAL'].getfloat('mu')
     alphaRad = np.arctan(mu)
     alphaDeg = np.rad2deg(alphaRad)
     csz = dem['header']['cellsize']
@@ -114,7 +117,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
         ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear regression on the last x points
     ax2.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
-             slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k', label='Center of mass altitude extrapolation')
+             slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k',
+             label='Center of mass altitude extrapolation')
 
     # add center of mass velocity points and runout line
     ax2.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]], '-r', label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
@@ -200,7 +204,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.set_yticks([avaProfileMass['z'][-1]-z0, zIntersection-z0])
     ax3.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax3.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    text = ('Runout s diff : %.8f m \nRunout z diff : %.8f m \nRunout angle diff : %.8f° \nvelocity height rmse : %.8f m \n(energy line - alpha line)' %
+    text = ('Runout s diff : %.4e m \nRunout z diff : %.4e m \nRunout angle diff : %.4e° \nvelocity height rmse : %.4e m \n(energy line - alpha line)' %
             (runOutSError, runOutZError, runOutAngleError, rmseVelocityElevation))
     text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5,
                             prop=dict(fontsize=pU.fs))
@@ -275,35 +279,37 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     coefExt: float
         coefficient saying how long the path was extended to find the intersection
     """
-
-    extrapolationStepSize = energyLineTestCfg['ENERGYLINETEST'].getfloat('extrapolationStepSize')
     # get slope of the last profile points to extend the profile
-    nCellsExtrapolation = energyLineTestCfg['ENERGYLINETEST'].getint('nCellsExtrapolation')
+    nCellsExtrapolation = energyLineTestCfg['energyLineTest'].getint('nCellsExtrapolation')
     idxExtra = np.nanmin(np.argwhere(avaProfileMass['s'][-1] - avaProfileMass['s'] < nCellsExtrapolation * csz))
     p1 = np.polyfit(avaProfileMass['s'][idxExtra:], avaProfileMass['z'][idxExtra:], 1)
     slopeExt = p1[0]
-    # extend profile (extend until the intersection is found)
-    sIntersection = 0
-    coefExt = 0
-    # toDo: make this to a dichotomy method
-    while sIntersection == 0 and coefExt < 2:
-        coefExt = coefExt + extrapolationStepSize
-        sExt = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
-        zExt = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*coefExt)
+    # First check if the intersection is on the not extended profile
+    s = avaProfileMass['s']
+    z = avaProfileMass['z']
+    alphaLine = z[0] - s * mu
+    # find the intersection segment
+    idx = np.argwhere(np.diff(np.sign(z - alphaLine))).flatten()
+    idx = idx[-1]
+    # did not find the intersection, look further
+    if s[idx] == 0:
+        s = np.append(avaProfileMass['s'], 2*avaProfileMass['s'][-1])
+        z = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*2)
         # find intersection between alpha line and profile
-        alphaLine = zExt[0] - sExt * mu
+        alphaLine = z[0] - s * mu
         # find the intersection segment
-        idx = np.argwhere(np.diff(np.sign(zExt - alphaLine))).flatten()
+        idx = np.argwhere(np.diff(np.sign(z - alphaLine))).flatten()
         idx = idx[-1]
-        # find the exact intersection point
-        s0 = sExt[idx]
-        s1 = sExt[idx+1]
-        zP0 = zExt[idx]
-        zP1 = zExt[idx+1]
-        zA0 = alphaLine[idx]
-        zA1 = alphaLine[idx+1]
-        sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
-        zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
+    # find the exact intersection point
+    s0 = s[idx]
+    s1 = s[idx+1]
+    zP0 = z[idx]
+    zP1 = z[idx+1]
+    zA0 = alphaLine[idx]
+    zA1 = alphaLine[idx+1]
+    sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
+    zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
+    coefExt = np.max(s[-1]/avaProfileMass['s'][-1]-1, 0)
     return slopeExt, sIntersection, zIntersection, coefExt
 
 

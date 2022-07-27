@@ -826,7 +826,8 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = '%s area feature overlapping with %s area - removing the overlapping part' % (nameToCheck, nameRef)
+            message = '%s area feature overlapping with %s area - removing the overlapping part' % (nameToCheck,
+                                                                                                    nameRef)
             log.warning(message)
         else:
             message = '%s area features overlapping with %s area - this is not allowed' % (nameToCheck, nameRef)
@@ -893,7 +894,7 @@ def rotateRaster(rasterDict, theta, deg=True):
     if deg:
         theta = np.radians(theta)
 
-    # create raster gird with origin 0,0
+    # create raster grid with origin 0,0
     header = rasterDict['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
@@ -907,7 +908,8 @@ def rotateRaster(rasterDict, theta, deg=True):
     yTheta = -np.sin(theta) * X + np.cos(theta) * Y
 
     # project data on this new grid
-    rotatedZ, _ = projectOnGrid(xTheta, yTheta, rasterDict['rasterData'], csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    rotatedZ, _ = projectOnGrid(xTheta, yTheta, rasterDict['rasterData'], csz=csz, xllc=xllc, yllc=yllc,
+                                interp='bilinear')
 
     rotatedRaster = {'header': header, 'rasterData': rotatedZ}
     return rotatedRaster
