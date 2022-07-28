@@ -7,6 +7,8 @@ import pytest
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
+import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.in3Utils import cfgHandling
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.ana1Tests.energyLineTest as energyLineTest
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -67,15 +69,15 @@ def test_ErrorNorm(capfd):
 def test_getIntersection(capfd):
     '''test find intersection '''
     dirname = pathlib.Path(__file__).parents[0]
-    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTestCfg.ini'
 
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
                                                           modInfo=True)
 
     mu = 1
     csz = 1
-    avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
-                      'z': np.array([5.1, 0, -0.5, -1, -1.5, -2, -2.5])}
+    avaProfileMass = {'s': np.array([0, 1, 2, 3.1, 3.6, 4.1, 4.5]),
+                      'z': np.array([4, 1, 0.5, -0.05, -0.30, -0.55, -0.75])}  # slope 1/2
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
                                                                                                  avaProfileMass, mu,
                                                                                                  csz)
@@ -84,13 +86,13 @@ def test_getIntersection(capfd):
     print(slopeExt)
     print(coefExt)
     atol = 1e-10
-    assert sIntersection == pytest.approx(10.1, abs=atol)
-    assert zIntersection == pytest.approx(-5, abs=atol)
+    assert sIntersection == pytest.approx(5, abs=atol)
+    assert zIntersection == pytest.approx(-1, abs=atol)
     assert slopeExt == pytest.approx(-0.5, abs=atol)
-    assert coefExt == pytest.approx(1, abs=atol)
+    assert coefExt == pytest.approx(0.1111111111111, abs=atol)
 
-    avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
-                      'z': np.array([2.6, 0, -0.5, -1, -1.5, -2, -2.5])}
+    avaProfileMass = {'s': np.array([0, 1, 2, 3.1, 3.6, 4.1, 4.5]),
+                      'z': np.array([3, 1, 0.5, -0.05, -0.30, -0.55, -0.75])+1}  # slope 1/2
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
                                                                                                  avaProfileMass, mu,
                                                                                                  csz)
@@ -99,13 +101,13 @@ def test_getIntersection(capfd):
     print(slopeExt)
     print(coefExt)
     atol = 1e-10
-    assert sIntersection == pytest.approx(5.1, abs=atol)
-    assert zIntersection == pytest.approx(-2.5, abs=atol)
+    assert sIntersection == pytest.approx(3, abs=atol)
+    assert zIntersection == pytest.approx(1, abs=atol)
     assert slopeExt == pytest.approx(-0.5, abs=atol)
-    assert coefExt == pytest.approx(0.05, abs=atol)
+    assert coefExt == pytest.approx(0., abs=atol)
 
-    avaProfileMass = {'s': np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]),
-                      'z': np.array([2.45, 0, -0.5, -1, -1.5, -2, -2.5])}
+    avaProfileMass = {'s': np.array([0, 1, 2, 3.1, 3.6, 4.1, 4.5]),
+                      'z': np.array([4, 1, 0.5, -0.05, 0.1, -0.55, -0.75])}  # slope 1/2
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg,
                                                                                                  avaProfileMass, mu,
                                                                                                  csz)
@@ -114,10 +116,10 @@ def test_getIntersection(capfd):
     print(slopeExt)
     print(coefExt)
     atol = 1e-10
-    assert sIntersection == pytest.approx(4.8, abs=atol)
-    assert zIntersection == pytest.approx(-2.35, abs=atol)
-    assert slopeExt == pytest.approx(-0.5, abs=atol)
-    assert coefExt == pytest.approx(0.05, abs=atol)
+    assert sIntersection == pytest.approx(10.600000000000238, abs=atol)
+    assert zIntersection == pytest.approx(-6.600000000000238, abs=atol)
+    assert slopeExt == pytest.approx(-0.9590163934426245, abs=atol)
+    assert coefExt == pytest.approx(1.3555555555556085, abs=atol)
 
 
 def test_getRunOutAngle(capfd):
@@ -140,7 +142,7 @@ def test_getRunOutAngle(capfd):
 def test_getEnergyInfo(capfd):
     '''test find intersection '''
     dirname = pathlib.Path(__file__).parents[0]
-    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTestCfg.ini'
 
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
                                                           modInfo=True)
@@ -175,27 +177,31 @@ def test_getEnergyInfo(capfd):
 
 def test_mainEnegyLineTest(tmp_path):
     dirname = pathlib.Path(__file__).parents[0]
-    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTestCfg.ini'
     sourceDir = dirname / '..' / 'data' / 'avaParabola' / 'Inputs'
     targetDir = tmp_path / 'avaParabola' / 'Inputs'
     avalancheDir = tmp_path / 'avaParabola'
 
     shutil.copytree(sourceDir, targetDir)
 
-    # log file name; leave empty to use default runLog.log
-    logName = 'runenergyLineTest'
-
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
     cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
+    workPath = pathlib.Path(tmp_path, 'Work', 'energyLineTest')
+    fU.makeADir(workPath)
+    energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest, fileOverride=energyLineTestCfgFile)
     # ----------------
-
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
-    dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=energyLineTestCfgFile)
+    # ++++++++++ set configurations for all the used modules and override ++++++++++++
+    # get comDFA configuration and save to file
+    com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                          onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
+    com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
+    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+    dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=com1DFACfgFile)
     for simName in simDF.index:
-        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, simName, dem)
+        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem)
     print(resultEnergyTest)
-    assert abs(resultEnergyTest['runOutSError']) < 0.01
-    assert abs(resultEnergyTest['runOutZError']) < 0.01
-    assert abs(resultEnergyTest['rmseVelocityElevation']) < 0.01
-    assert abs(resultEnergyTest['runOutAngleError']) < 0.0001
+    assert abs(resultEnergyTest['runOutSError']) < 0.02
+    assert abs(resultEnergyTest['runOutZError']) < 0.02
+    assert abs(resultEnergyTest['rmseVelocityElevation']) < 0.02
+    assert abs(resultEnergyTest['runOutAngleError']) < 0.0003

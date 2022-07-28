@@ -291,15 +291,17 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     # find the intersection segment
     idx = np.argwhere(np.diff(np.sign(z - alphaLine))).flatten()
     idx = idx[-1]
+    coefExt = 0
     # did not find the intersection, look further
-    if s[idx] == 0:
-        s = np.append(avaProfileMass['s'], 2*avaProfileMass['s'][-1])
-        z = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*2)
+    while s[idx] == 0 and coefExt < 4:
+        s = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
+        z = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + coefExt*slopeExt*avaProfileMass['s'][-1])
         # find intersection between alpha line and profile
         alphaLine = z[0] - s * mu
         # find the intersection segment
         idx = np.argwhere(np.diff(np.sign(z - alphaLine))).flatten()
         idx = idx[-1]
+        coefExt = coefExt + 1
     # find the exact intersection point
     s0 = s[idx]
     s1 = s[idx+1]
@@ -309,6 +311,8 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     zA1 = alphaLine[idx+1]
     sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
     zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
+    s[-1] = sIntersection
+    z[-1] = zIntersection
     coefExt = np.max(s[-1]/avaProfileMass['s'][-1]-1, 0)
     return slopeExt, sIntersection, zIntersection, coefExt
 
