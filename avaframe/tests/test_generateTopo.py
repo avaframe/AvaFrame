@@ -214,6 +214,26 @@ def test_parabola():
     assert (testRes is True)
 
 
+def test_parabolaRotation():
+    """ Test parabola with rotations generation
+    only checks if it runs"""
+
+    # Initialise input in correct format
+    cfg = configparser.ConfigParser()
+    cfg['TOPO'] = {'demType': 'TPF', 'fFlat': 500, 'C': 2200, 'meanAlpha': 34, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
+                   'yEnd': 2000., 'channel': 'False', 'topoAdd': 'False', 'dam': 'False'}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100,
+                       'cMustart': 0.2, 'cMuend': 0.6, 'cInit': 250}
+
+    # Call function to be tested
+    x, y, z = gT.parabolaRotation(cfg)
+
+    # Load reference Solution
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaParabola',
+                                   'Inputs', 'DEM_PF_Topo.asc'), skiprows=6)
+
+
 def test_helix():
     """ Test helix generation """
 
