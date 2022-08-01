@@ -57,8 +57,7 @@ def test_writeReport(tmp_path):
     # make a list of input dictionaries
     reportDictList = [testDict]
 
-    # initialise cfg object and test directory
-    cfg = configparser.ConfigParser()
+    # initialise test directory
     reportOneFile = True
     plot1 = pathlib.Path('testPath', 'pft.png')
     plotDict = {'thisIsMySimulation1': {'pft': plot1},
@@ -115,3 +114,16 @@ def test_writeReport(tmp_path):
         assert lineVals2[24] == '| ----------| \n'
         assert lineVals2[-3] == '![pft](pft.png) \n'
         assert lineVals2[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pft.png) \n'
+
+
+def test_copyPlots2ReportDir(tmp_path):
+    """ Test generation markdown report file """
+
+    # Initialise input dictionary
+    dirPath = pathlib.Path(__file__).parents[0]
+    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pft.png'
+    plotDict = {'pft': pathPlot, 'notAPlot': 1}
+    outDir = pathlib.Path(tmp_path)
+    # Call function to be tested
+    gR.copyPlots2ReportDir(outDir, plotDict)
+    assert (outDir / 'release1HX_ent_dfa_3f8d2d9327_pft.png').is_file()

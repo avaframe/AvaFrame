@@ -388,7 +388,7 @@ def parabolaRotation(cfg):
     # add parabola aligned with x (going from left to right)
     phi = math.pi
     # rotation of the polar coord system to be aligned with the parabola direction
-    zv, s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
+    s = createParabolaAxis(phi, theta, r, zv, fLen, fFlat)
 
     mask = np.ones(np.shape(s))
     mask[np.where(theta < 2*math.pi/3)] = 0
@@ -399,7 +399,7 @@ def parabolaRotation(cfg):
     # add parabola sloped 60° with x
     phi = math.pi/3
     # rotation of the polar coord system to be aligned with the parabola direction
-    zv, s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
+    s = createParabolaAxis(phi, theta, r, zv, fLen, fFlat)
 
     mask = np.ones(np.shape(s))
     mask[np.where(theta > 2*math.pi/3)] = 0
@@ -410,7 +410,7 @@ def parabolaRotation(cfg):
     # add parabola aligned with x (going from left to right)
     phi = -math.pi/4
     # rotation of the polar coord system to be aligned with the parabola direction
-    s = addParabolaAxis(phi, theta, r, zv, fLen, fFlat)
+    s = createParabolaAxis(phi, theta, r, zv, fLen, fFlat)
 
     # apply the parabola to the corresponding part of the dem
     mask = np.ones(np.shape(s))
@@ -425,8 +425,8 @@ def parabolaRotation(cfg):
     return xv, yv, zv
 
 
-def addParabolaAxis(phi, theta, r, zv, fLen, fFlat):
-    """add a parabola along an axis sloped from theta - phi from x"""
+def createParabolaAxis(phi, theta, r, zv, fLen, fFlat):
+    """create the s coordinate for a lined sloped from theta - phi from x axis"""
     # rotation of the polar coord system to be aligned with the parabola direction
     gamma = theta - phi
     gamma = np.where(gamma < 0, gamma+2*math.pi, gamma)
