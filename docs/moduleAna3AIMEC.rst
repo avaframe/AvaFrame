@@ -5,7 +5,8 @@ ana3AIMEC: Aimec
 module to analyze and compare results from avalanche simulations.
 It enables the comparison of different simulations (with different input parameter sets for example,
 or from different models) of the same avalanche (going down the same avalanche path)
-in a standardized way.
+in a standardized way. To do so, the ratser results are transformed into the path following coordinate system
+to make data comparable.
 
 In ``AvaFrame/avaframe/runScripts``, two different run scripts are provided and show examples
 on how the post-processing module :py:mod:`ana3AIMEC` can be used:
@@ -13,7 +14,7 @@ on how the post-processing module :py:mod:`ana3AIMEC` can be used:
 *  full Aimec analysis for simulation results of one computational module (from 1 simulation to
    x simulations). :py:func:`runScripts.runAna3AIMEC.runAna3AIMEC`
 *  using Aimec to compare the results of two different computational modules (one reference
-   for the reference computation module and multiple simulations in the other computation module).
+   for the reference computational module and multiple simulations in the other computation module).
    :py:func:`runScripts.runAna3AIMECCompMods.runAna3AIMECCompMods`
 
 In all cases, one needs to provide a minimum amount of input data. Bellow is an example workflow
@@ -23,8 +24,8 @@ Inputs
 -------
 
 *  raster of the DEM (.asc file)
-*  avalanche path in LINES (as a shapefile named ``path_aimec.shp``)
-*  a splitPoint in POINTS (as a shapefile named ``splitPoint.shp``)
+*  avalanche path in LINES (as a shapefile named ``NameOfAvalanche/Inputs/LINES/path_aimec.shp``)
+*  a splitPoint in POINTS (as a shapefile named ``NameOfAvalanche/Inputs/POINTS/splitPoint.shp``)
 *  Results from avalanche simulation (when using results from com1DFA,
    the helper function :py:func:`ana3AIMEC.dfa2Aimec.mainDfa2Aimec` in
    :py:mod:`ana3AIMEC.dfa2Aimec` fetches and prepares the input for Aimec)
@@ -32,9 +33,9 @@ Inputs
   is defined as reference. This can be changed in the ``ana3AIMEC/local_ana3AIMECCfg.ini``
   as explained in :ref:`moduleAna3AIMEC:Defining the reference simulation`.
 
-.. Note:: The spatial resolution of the DEM and its extend can differ from the result raster data.
+.. Note:: The spatial resolution of the DEM and its extent can differ from the result raster data.
           Spatial resolution can also differ between simulations. If this is the case, the spatial
-          resolution of the reference simulation results rasters is used (default) or the resolution
+          resolution of the reference simulation results raster is used (default) or the resolution
           specified in the configuration file (``cellSizeSL``) is used if this one is provided.
           This way, all simulations will be transformed and analyzed using the same resolution.
 
@@ -49,7 +50,7 @@ To run
 -------
 
 *  first go to ``AvaFrame/avaframe``
-*  copy ``ana3AIMEC/ana3AIMECCfg.ini`` to ``ana3AIMEC/local_ana3AIMECCfg.ini`` (if not, the standard settings are used)
+*  in your local copy of ``ana3AIMEC/ana3AIMECCfg.ini`` you can adjust the default settings (if not, the standard settings are used)
 *  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
 *  run::
 
@@ -115,10 +116,10 @@ the two dimensional distribution :math:`A(s,l)` is:
 Runout point
 ~~~~~~~~~~~~~
 
-The runout point is always given in regards to a peak result field (:math:`A(s,l)` which could be
-peak pressure of flow thickness...) and a threshold value (:math:`A_{lim}>0`).
-The runout point (:math:`s=s_{runout}`) and the related :math:`(x_{runout},y_{runout})`
-in the original coordinate system, corresponds to the last point in flow direction where the
+The runout point is always given with respect to a peak result field (:math:`A(s,l)` which could be
+peak pressure or flow thickness, etc.) and a threshold value (:math:`A_{lim}>0`).
+The runout point (:math:`s=s_{runout}`) and the respective :math:`(x_{runout},y_{runout})`
+in the original coordinate system, correspond to the last point in flow direction where the
 chosen peak result :math:`A_{cross}^{max}(s)` is above the threshold value :math:`A_{lim}`.
 
 .. Note:: It is very important to note that the position of the runout point depends on the chosen
@@ -132,7 +133,7 @@ Runout length
 This length depends on what is considered to be the beginning of the avalanche :math:`s=s_{start}`.
 It can be related to the release area, to the transition point (first point where the slope
 angle is below :math:`30^{\circ}`), to the runout area point (first point where the slope
-angle is below :math:`10^{\circ}`) or in a similar way then :math:`s=s_{runout}` by
+angle is below :math:`10^{\circ}`) or in a similar way as :math:`s=s_{runout}` is defined
 saying that :math:`s=s_{start}` is the first point where :math:`A_{cross}^{max}(s)>A_{lim}`
 (this is the option implemented in :py:mod:`ana3AIMEC.ana3AIMEC.py`).
 The runout length is then defined as :math:`L=s_{runout}-s_{start}`.
@@ -175,7 +176,7 @@ the area of the different zones is normalized by the area of the reference simul
     *  :math:`\alpha_{FN} = A_{FN}/A_{ref}`, which is a positive value if the reference covers
        an area outside of sim2
     *  :math:`\alpha_{TN} = A_{TN}/A_{ref}` (this value may not be of great interest because it
-       depends on the width and length of the new domain)
+       depends on the width and length of the entire domain of the result rasters (s,l))
 
 Identical simulations (in the runout zone) lead to :math:`\alpha_{TP} = 1` , :math:`\alpha_{FP} = 0`
 and :math:`\alpha_{FN} = 0`
@@ -204,8 +205,8 @@ Defining the reference simulation
 To apply a complete Aimec analysis, a reference simulation needs to be defined.
 The analysis of the other simulations will be compared to the one of the reference simulation.
 The reference simulation can be determined by its name (or part of the name) or based on some
-configuration parameter and value if it comes from the :py:mod:`com1DFA` module
-(or any computational module that provides a configuration):
+configuration parameter and value (to adjust in the local copy of ``ana3AIMEC/ana3AIMECCfg.ini``)
+if it comes from the :py:mod:`com1DFA` module (or any computational module that provides a configuration).:
 
   * Based on the simulation name
      one needs to provide a not-empty string in the AIMEC configuration
@@ -229,10 +230,10 @@ Perform path-domain transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, the transformation from (x,y) coordinate system (where the original rasters lie in) to
-(s,l) coordinate system is applied given a new domain width. This is done by
+(s,l) coordinate system is applied given a new domain width (``domainWidth``). This is done by
 :py:func:`ana3AIMEC.aimecTools.makeDomainTransfo`. A new grid corresponding to the new domain
 (following the avalanche path) is built with a cell size defined by the reference simulation
-(default) or  ``cellSizeSL`` if provides. The transformation information are stored in
+(default) or  ``cellSizeSL`` if provided. The transformation information are stored in
 a ``rasterTransfo`` dictionary (see :py:func:`ana3AIMEC.aimecTools.makeDomainTransfo` for more details).
 
 Assign data
@@ -260,19 +261,19 @@ Calculates the different indicators described in the :ref:`moduleAna3AIMEC:Theor
 for a given threshold. The threshold can be based on pressure, flow thickness, ...
 (this needs to be specified in the configuration file). Returns a ``resAnalysisDF`` dataFrame
 with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` for more details).
-In this dataFrame there are multiple columns, one for each results from the analysis
-(one column for runout lenght, one for MMA, MAM...) and one row for each simulation analyzed.
+In this dataFrame there are multiple columns, one for each result from the analysis
+(one column for runout length, one for MMA, MAM...) and one row for each simulation analyzed.
 
 Plot and save results
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Plots and saves the desired figures. Writes results in ``resAnalysisDF`` to a csv file.
+Plots and saves the desired figuresand writes results in ``resAnalysisDF`` to a csv file.
 By default, Aimec saves five summary plots plus three plots per simulation comparing the
-numerical simulations to compare to the reference. The first five ones are :
+numerical simulations to the reference. The five summary plots are :
 
   *  "DomainTransformation" shows the real domain on the left and new domain on the right
      (:numref:`fig-aimec-domain-transfo`)
-  *  "referenceFields" shows the peak pressure, flow thickness and speed in the new domain
+  *  "referenceFields" shows the peak pressure, flow thickness and velocity in the new domain
 
     .. figure:: _static/ana3AIMEC/avaAlr_referenceFields.png
         :width: 90%
@@ -281,14 +282,14 @@ numerical simulations to compare to the reference. The first five ones are :
 
 
   *  "slComparison" shows the difference between all simulations in terms of peak values along profile.
-     If only two simulations are provided, a 3 panel plot like the following is produced:
+     If only two simulations are provided, a three panel plot like the following is produced:
 
     .. figure:: _static/ana3AIMEC/avaAlr_slComparison.png
         :width: 90%
 
         Maximum peak fields comparison between two simulations
 
-    if more then two simulations are provided only the peak field specified in the configuration
+    if more than two simulations are provided only the peak field specified in the configuration
     file is analyzed and the statistics in terms of peak value along profile are plotted
     (mean, max and quantiles):
 
@@ -313,32 +314,37 @@ numerical simulations to compare to the reference. The first five ones are :
 
         Relative maximum peak pressure function of runout
 
-  *  "massAnalysis" shows the evolution of the total and entrained mass during
-     the simulation and compares
-
 The last plots "_hashID_ContourComparisonToReference", "_hashID_AreaComparisonToReference" and
 "_hashID_massAnalysis" where "hashID" is the name of the simulation show the 2D difference to the reference,
-the statistics associated and the mass analysis figure.
+the statistics associated and the mass analysis figure (this means these figures are created for each simulation).
 
 .. figure:: _static/ana3AIMEC/avaAlr_AreaComparisonToReference.png
     :width: 90%
 
-    Area comparison
+    The area comparison plot shows the false negative (FN in blue, which is where the reference field exceeds the
+    threshold but not the simulation) and true positive (TP in red, which is where the simulation field exceeds the
+    threshold but not the reference) areas.
+    and reference
 
 .. figure:: _static/ana3AIMEC/avaAlr_ContourComparisonToReference.png
     :width: 90%
 
-    Contour comparison
+    The contour comparison plot shows the contour lines of the reference (full lines) and the simulation (dashed lines)
+    of the desired result fields in the runout area. It also shows the difference between the reference and simulation
+    and computes the repatriation of this difference (Probability Density Function and Cumulative Density Function
+    of the difference)
 
 .. figure:: _static/ana3AIMEC/avaAlr_massAnalysis.png
     :width: 90%
 
-    Mass analysis
+    The mass analysis plot shows the evolution of the total and entrained mass during
+    the simulation and compares it to the reference
 
 Configuration parameters
 ----------------------------
 
-All configuration parameters are explained in :
+All configuration parameters are explained in ``ana3AIMEC/ana3AIMECCfg.ini`` (and can be modified in a local copy
+``ana3AIMEC/local_ana3AIMECCfg.ini``):
 
 
 .. literalinclude:: _cfgFiles/ana3AIMECCfg.ini
