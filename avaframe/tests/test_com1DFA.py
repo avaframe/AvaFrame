@@ -801,11 +801,13 @@ def test_getSimTypeList():
     """ test create list of simTypes """
 
     # setup required input
+    standardCfg = configparser.ConfigParser()
+    standardCfg['GENERAL'] = {'secRelArea': 'False'}
     simTypeList = ['ent', 'res', 'null', 'available', 'entres']
-    inputSimFiles = {'entResInfo': {'flagEnt': 'Yes', 'flagRes': 'Yes'}}
+    inputSimFiles = {'entResInfo': {'flagEnt': 'Yes', 'flagRes': 'Yes', 'flagSecondaryRelease': 'No'}}
 
     # call function to be tested
-    simTypeList = com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+    standardCfg, simTypeList = com1DFA.getSimTypeList(standardCfg, simTypeList, inputSimFiles)
 
     # setup test result
     simTypeListTest = ['ent', 'null', 'res', 'entres']
@@ -816,7 +818,7 @@ def test_getSimTypeList():
     # call function to be tested
     simTypeList = ['ent', 'null', 'available']
     inputSimFiles['entResInfo']['flagRes'] = 'No'
-    simTypeList2 = com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+    standardCfg2, simTypeList2 = com1DFA.getSimTypeList(standardCfg, simTypeList, inputSimFiles)
 
     # setup test result
     simTypeListTest2 = ['ent', 'null']
@@ -830,7 +832,7 @@ def test_getSimTypeList():
     simTypeList = ['res', 'null', 'available']
     inputSimFiles['entResInfo']['flagEnt'] = 'No'
     inputSimFiles['entResInfo']['flagRes'] = 'Yes'
-    simTypeList3 = com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+    standardCfg3, simTypeList3 = com1DFA.getSimTypeList(standardCfg, simTypeList, inputSimFiles)
 
     # setup test result
     simTypeListTest3 = ['res', 'null']
@@ -845,14 +847,14 @@ def test_getSimTypeList():
     inputSimFiles['entResInfo']['flagEnt'] = 'Yes'
     inputSimFiles['entResInfo']['flagRes'] = 'No'
     with pytest.raises(FileNotFoundError) as e:
-        assert com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+        assert com1DFA.getSimTypeList(standardCfg, simTypeList, inputSimFiles)
     assert str(e.value) == "No resistance file found"
 
     # call function to be tested
     inputSimFiles['entResInfo']['flagEnt'] = 'No'
     inputSimFiles['entResInfo']['flagRes'] = 'Yes'
     with pytest.raises(FileNotFoundError) as e:
-        assert com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+        assert com1DFA.getSimTypeList(standardCfg, simTypeList, inputSimFiles)
     assert str(e.value) == "No entrainment file found"
 
 
@@ -1534,7 +1536,7 @@ def test_initializeSimulation():
     inputSimLines['secondaryReleaseLine'] = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5]),
                                              'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
                                              'Start': np.asarray([0]), 'Length': np.asarray([5]),
-                                             'type': 'Secondary release',
+                                             'type': 'Secondary release', 'fileName': 'path2File',
                                              'Name': ['secRel1'], 'thickness': [0.5], 'thicknessSource': ['ini File']}
 
     relThField = np.zeros((12, 12)) + 0.5

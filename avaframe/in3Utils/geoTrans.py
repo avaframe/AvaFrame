@@ -10,7 +10,6 @@ import scipy.interpolate
 import copy
 
 # Local imports
-import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 
@@ -187,7 +186,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         remeshOption are to choose between 'griddata', 'interp2d' or 'RectBivariateSpline'
         Only the 'griddata' works properly if the input data contains noData points,
         'interp2d' or 'RectBivariateSpline' are faster but fail if input data contains noData points.
-        The new mesh is as big or smaller as the original mesh
+        The new mesh is as big or smaller as the original mesh if larger is False and bigger if larger is True
 
     Parameters
     ----------
@@ -199,6 +198,8 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         method used to remesh ('griddata', 'interp2d' or 'RectBivariateSpline')
         Check the scipy documentation for more details
         default is 'griddata'
+    interpMethod: str
+        interpolation order to use for the interpolation ('linear', 'cubic' or 'quintic')
     larger: Boolean
         if true (default) output grid is at least as big as the input
 
@@ -242,9 +243,9 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
             message = 'There is no %s interpolation methode available for RectBivariateSpline' % interpMethod
             log.error(message)
             raise NameError(message)
-        zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(yGridNew.flatten(),
-                                                                                           xGridNew.flatten())
-        zNew = zNew.reshape(np.shape(xGrid))
+        zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(yGridNew[:, 0],
+                                                                                           xGridNew[0, :], grid=True)
+        # zNew = zNew.reshape(np.shape(xGrid))
 
     # create header of remeshed DEM
     headerRemeshed = copy.deepcopy(header)
@@ -295,8 +296,8 @@ def remeshDEM(demFile, cfgSim):
     cszDEMNew = float(cfgSim['GENERAL']['meshCellSize'])
 
     # start remesh
-    log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszDEMNew))
-    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption='griddata', interpMethod='cubic', larger=True)
+    log.info('Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m' % (cszDEM, cszDEMNew))
+    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption='griddata', interpMethod='cubic', larger=False)
 
     # save remeshed DEM
     pathToDem = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
@@ -905,7 +906,7 @@ def rotate(locationPoints, theta, deg=True):
     return rotatedLine
 
 
-def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True):
+def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
     """ Get x and y (2D) grid description vectors for a mesh
         with a given number of rows and columns, lower left center and cellSize.
         If 'cellSizeNew' is not None use cellSizeNew instead of rasterHeader['cellsize']
@@ -918,6 +919,9 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True):
             ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, noDataValue
         cellSizeNew: float
             If not None, use cellSizeNew as cell size
+        larger: boolean
+            If True, make sure the extend of the (xGrid, yGrid) is larger or equal than the
+            header one
         Returns
         --------
         xGrid, yGrid: 2D numpy arrays
@@ -937,6 +941,7 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True):
         yExtent = (nrows-1) * csz
         ncolsNew = int(xExtent/cellSizeNew) + 1
         nrowsNew = int(yExtent/cellSizeNew) + 1
+        # get rid of the case cellSizeNew = csz (which would lead to a too large grid)
         if larger and ((ncolsNew-1) * cellSizeNew < xExtent):
             ncols = ncolsNew + 1
             nrows = nrowsNew + 1

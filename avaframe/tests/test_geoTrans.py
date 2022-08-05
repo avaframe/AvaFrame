@@ -283,10 +283,11 @@ def test_remeshData(tmp_path):
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
-    outFile = os.path.join(tmp_path, 'test.asc')
-    IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
-
-    dataNew = geoTrans.remeshData(outFile, 2.)
+    rasterDict = {'header': headerInfo, 'rasterData': data}
+    # outFile = os.path.join(tmp_path, 'test.asc')
+    # IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
+    atol = 1.e-10
+    dataNew = geoTrans.remeshData(rasterDict, 2., larger=False)
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew['header']
@@ -297,12 +298,50 @@ def test_remeshData(tmp_path):
     dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
-    testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
+    testRes = np.allclose(dataRaster, dataSol, atol=atol)
 
     assert dataNew['rasterData'].shape[0] == 11
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
-    assert np.isclose(dataNew['rasterData'][0,0], 10.)
+    assert np.isclose(dataNew['rasterData'][0, 0], 10.)
+    assert testRes
+
+    dataNew = geoTrans.remeshData(rasterDict, 2., remeshOption='interp2d', interpMethod='cubic', larger=False)
+    dataRaster = dataNew['rasterData']
+    indNoData = np.where(dataRaster == -9999)
+    headerNew = dataNew['header']
+    xExtent = (headerNew['ncols']-1) * headerNew['cellsize']
+    yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
+
+    # compute solution
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
+
+    # compare solution to result from function
+    testRes = np.allclose(dataRaster, dataSol, atol=atol)
+
+    assert dataNew['rasterData'].shape[0] == 11
+    assert dataNew['rasterData'].shape[1] == 8
+    assert len(indNoData[0]) == 0
+    assert np.isclose(dataNew['rasterData'][0, 0], 10.)
+    assert testRes
+
+    dataNew = geoTrans.remeshData(rasterDict, 2., remeshOption='RectBivariateSpline', interpMethod='cubic', larger=False)
+    dataRaster = dataNew['rasterData']
+    indNoData = np.where(dataRaster == -9999)
+    headerNew = dataNew['header']
+    xExtent = (headerNew['ncols']-1) * headerNew['cellsize']
+    yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
+
+    # compute solution
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
+
+    # compare solution to result from function
+    testRes = np.allclose(dataRaster, dataSol, atol=atol)
+
+    assert dataNew['rasterData'].shape[0] == 11
+    assert dataNew['rasterData'].shape[1] == 8
+    assert len(indNoData[0]) == 0
+    assert np.isclose(dataNew['rasterData'][0, 0], 10.)
     assert testRes
 
 
@@ -331,7 +370,7 @@ def test_remeshDEM(tmp_path):
 
     # call function
     pathDem = geoTrans.remeshDEM(avaDEM, cfg)
-    fullP = avaDir / 'Inputs'/ pathDem
+    fullP = avaDir / 'Inputs' / pathDem
     dataNew = IOf.readRaster(fullP)
 
     dataRaster = dataNew['rasterData']
@@ -345,13 +384,15 @@ def test_remeshDEM(tmp_path):
     # dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
-    testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
+    testRes = np.allclose(dataRaster[:-1, :-1], dataSol[:-1, :-1], atol=1.e-6)
+    print(dataRaster)
+    print(dataSol)
 
     assert dataNew['rasterData'].shape[0] == 11
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
     assert testRes
-    assert np.isclose(dataRaster[0,0], 10.)
+    assert np.isclose(dataRaster[0, 0], 10.)
 
     # copy data
     avaName = 'avaParabola'
@@ -372,7 +413,7 @@ def test_remeshDEM(tmp_path):
 
     # call function
     pathDem2 = geoTrans.remeshDEM(avaDEM1, cfg)
-    fullP2 = avaDir1 / 'Inputs'  / pathDem2
+    fullP2 = avaDir1 / 'Inputs' / pathDem2
     dataNew2 = IOf.readRaster(fullP2)
     dataRaster2 = dataNew2['rasterData']
     dataSol = IOf.readRaster(inputDEM)
@@ -472,9 +513,12 @@ def test_makeCoordinateGrid(capfd):
     assert y[1, 1] == 1
     assert y[3, 1] == 5
 
-    x, y = geoTrans.setCoordinateGrid(xllc, yllc, csz, x)
+    rasterHeader = {'ncols': ncols, 'nrows': nrows, 'xllcenter': xllc, 'yllcenter': yllc, 'cellsize': csz}
+    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True)
     print(x)
     print(y)
+    print(ncols)
+    print(nrows)
 
     assert x[0, 0] == 1
     assert x[0, 1] == 3
@@ -482,6 +526,21 @@ def test_makeCoordinateGrid(capfd):
     assert y[0, 1] == -1
     assert y[1, 1] == 1
     assert y[3, 1] == 5
+
+    rasterHeader = {'ncols': ncols, 'nrows': nrows, 'xllcenter': xllc, 'yllcenter': yllc, 'cellsize': csz}
+    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(rasterHeader, cellSizeNew=1, larger=True)
+    print(x)
+    print(y)
+    print(ncols)
+    print(nrows)
+
+    assert x[0, 0] == 1
+    assert x[0, 1] == 2
+    assert x[0, 2] == 3
+    assert y[0, 1] == -1
+    assert y[1, 1] == 0
+    assert y[3, 1] == 2
+
 
 def getIPZ(z0, xEnd, yEnd, dx):
 

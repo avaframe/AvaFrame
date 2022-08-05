@@ -1093,12 +1093,12 @@ def computeTravelAngleC(particles, zPartArray0):
   particles : dict
       particles dictionary updated with the travel angle
   """
-  cdef long[:] parentIDArray = particles['parentID']
+  cdef int[:] parentIDArray = particles['parentID'].astype('intc')
   cdef int nPart = particles['nPart']
   cdef double[:] zArray = particles['z']
   cdef double[:] sArray = particles['s']
   cdef double[:] z0Array = zPartArray0
-  cdef double[:] gammaArray = np.zeros((nPart))
+  cdef double[:] gammaArray = np.zeros(nPart)
   cdef int parentID, j
   cdef double tanGamma, gamma, s, z, z0
   # get particle location
@@ -1674,7 +1674,7 @@ cpdef (int, int, double, double, double, double) getWeights(double x, double y, 
 
   Returns
   -------
-      Lx0, Ly0: inzs
+      Lx0, Ly0: ints
           lower left cell (col and row index)
       w00, w10, w01, w11: floats
           corresponding weights
