@@ -296,11 +296,11 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     cfgTrackPart = cfg['TRACKPARTICLES']
     # track particles
     if cfgTrackPart.getboolean('trackParticles'):
-        particlesList, trackedPartProp, track = trackParticles(cfgTrackPart, demOri, particlesList)
+        particlesList, trackedPartProp, track = trackParticles(cfgTrackPart, dem, particlesList)
         if track:
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
-            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, demOri)
+            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)

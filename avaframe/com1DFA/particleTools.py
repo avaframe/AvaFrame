@@ -685,7 +685,7 @@ def findParticles2Track(particles, center, radius):
     xc = center['x']
     yc = center['y']
     zc = center['z']
-    r = DFAtls.norm(x-xc, y-yc, z-zc)
+    r = DFAtls.norm(x-xc, y-yc, 0)
     index = np.where(r <= radius)
     particles2Track = particles['parentID'][index]
     log.info('Tracking %d particles' % len(index[0]))
