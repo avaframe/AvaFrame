@@ -792,10 +792,8 @@ def getReleaseThickness(avaDir, cfg, demFile):
     # Read dem
     demOri = IOf.readRaster(demFile)
     csz = cfg.getfloat('GENERAL', 'meshCellSize')
-    x, y, xNew, yNew, diffExtentX, diffExtentY = geoTrans.getMeshXY(demOri, cellSizeNew=csz)
+    _, _, ncols, nrows = geoTrans.makeCoordGridFromHeader(demOri['header'], cellSizeNew=csz, larger=True)
 
-    nrows = len(yNew)
-    ncols = len(xNew)
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
 

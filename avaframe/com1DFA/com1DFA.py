@@ -1129,9 +1129,9 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
     secondaryReleaseInfo: dict
         inputSimLines['secondaryReleaseLine'] dictionary completed with:
             header: the dem original header
-            rasterData: list of secondary release rasters (without the overlapping part wit the release)
+            rasterData: list of secondary release rasters (without the overlapping part with the release)
             flagSecondaryRelease:
-            rasterList:
+                'Yes' if a secondary release is there
     """
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
@@ -1142,7 +1142,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
         # fetch secondary release areas
         secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, dem, np.sqrt(2),
                                            thList=secondaryReleaseInfo['thickness'], combine=False)
-        # remove overlap with main release areas
+        # remove overlaping parts of the secondary release area with the main release areas
         noOverlaprasterList = []
         for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
             noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName,
@@ -1652,6 +1652,8 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     checkOverlap : Boolean
         if True check if features are overlaping and return an error if it is the case
         if False check if features are overlaping and average the value for overlaping areas
+        (Attention: if combine is set to False, you do not see the result of the averaging
+        since the list of raters was not affected by the averaging step)
 
     Returns
     -------
@@ -1662,7 +1664,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         or
         RasterList : list
             list of 2D numpy array rasters (returned if relRHlist is not empty AND
-            if combine is set to True)
+            if combine is set to False)
     """
     NameRel = line['Name']
     StartRel = line['Start']
@@ -2265,6 +2267,8 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
 
         Returns
         --------
+        standardCfg : configParser object
+            configuration with updated 'secRelArea' depending on if a secondary release file is available or not
         simTypeList: list
             list of requested simTypes where also the required input data is available
     """
