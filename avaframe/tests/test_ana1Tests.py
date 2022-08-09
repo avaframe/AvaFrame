@@ -178,7 +178,7 @@ def test_mainEnegyLineTest(tmp_path):
 
     errorEnergyTest = energyLineTest.mainEnergyLineTest(cfgMain, energyLineTestCfgFile)
     print(errorEnergyTest)
-    assert abs(errorEnergyTest['runOutSError']) < 0.01
+    assert abs(errorEnergyTest['runOutSError']) < 0.02
     assert abs(errorEnergyTest['runOutZError']) < 0.01
     assert abs(errorEnergyTest['rmseVelocityElevation']) < 0.01
-    assert abs(errorEnergyTest['runOutAngleError']) < 0.0001
+    assert abs(errorEnergyTest['runOutAngleError']) < 0.0002
