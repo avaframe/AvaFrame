@@ -197,7 +197,7 @@ def com1DFAOrigMain(cfg, avaDir):
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName, True)
 
     # Load input data
-    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen)
+    dem, rels, ent, res, wall, entResInfo = gI.getInputData(avaDir, cfgGen)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):
@@ -231,6 +231,8 @@ def com1DFAOrigMain(cfg, avaDir):
                 log.info('Entrainment thickness is changed! set to %s' % entrainmentTH)
         if 'res' in simTypeList:
             resistanceArea = os.path.splitext(os.path.basename(res))[0]
+        if entResInfo['flagWall'] == 'Yes':
+            wallLine = os.path.splitext(os.path.basename(wall))[0]
 
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
@@ -245,8 +247,10 @@ def com1DFAOrigMain(cfg, avaDir):
         copyReplace(workFile, workFile, '##RELFILE##', rel)
         copyReplace(workFile, workFile, '##ENTFILE##', ent)
         copyReplace(workFile, workFile, '##RESFILE##', res)
+        copyReplace(workFile, workFile, '##WALLFILE##', wall)
         # Setup Project
-        execCom1Exe(com1Exe, workFile, avaDir, fullOut)
+        logName = 'CreateProject'
+        execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
         # loop over simulations
         for simTypeActual in simTypeList:
@@ -269,7 +273,8 @@ def com1DFAOrigMain(cfg, avaDir):
             # Write required info to cint file
             copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
             copyReplace(workFile, workFile, '##BASESIMNAME##', relName)
-            execCom1Exe(com1Exe, workFile, avaDir, fullOut)
+            logName = simName + '_CreateSimulation'
+            execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
             # If parameter shall be varied
             if cfgPar.getboolean('parameterVar'):

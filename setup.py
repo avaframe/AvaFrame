@@ -80,6 +80,9 @@ extensions = [Extension("avaframe.com1DFA.DFAfunctionsCython",
                         ), Extension("avaframe.com1DFA.damCom1DFA",
                         ["avaframe/com1DFA/damCom1DFA"+ext],
                         include_dirs=[numpy.get_include()]
+                        ), Extension("avaframe.com1DFA.DFAToolsCython",
+                        ["avaframe/com1DFA/DFAToolsCython"+ext],
+                        include_dirs=[numpy.get_include()]
                         )]
 
 if use_cython:

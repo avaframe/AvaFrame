@@ -11,12 +11,14 @@ import copy
 import logging
 import math
 import numpy as np
+import cython
 cimport numpy as np
 from libc cimport math as math
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
-import avaframe.com1DFA.damCom1DFA as damCom1DFA
+cimport avaframe.com1DFA.DFAToolsCython as DFAtlsC
+cimport avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.in3Utils.geoTrans as geoTrans
 
@@ -24,83 +26,6 @@ import avaframe.in3Utils.geoTrans as geoTrans
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
-
-
-def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, double csz=1, double xllc=0, double yllc=0):
-    """ Interpolate from unstructured points to grid
-
-    Interpolate unstructured points on a structured grid using bilinear interpolation
-    The (x, y) points have to be on the extend of the DEM!!
-
-    Parameters
-      ----------
-      x: 1D numpy array
-          x coordinate of the points
-      y: 1D numpy array
-          y coordinate of the points
-      z: 1D numpy array
-          quantity to interpolate associated to (x, y) points
-      Z0: 2D numpy array
-          initial ratser for interpolated result
-      csz : float
-          cellsize
-      xllc : float
-          x coord of the lower left center
-      yllc : float
-          y coord of the lower left center
-
-      Returns
-      -------
-      Z1: 2D numpy array
-          interpolated results
-    """
-    n, m = np.shape(Z0)
-    cdef int nrow = int(n)
-    cdef int ncol = int(m)
-    cdef int Lx0, Ly0, Lx1, Ly1
-    cdef double Lx, Ly, x, y, z
-    cdef double[:] zRaster = Z0.flatten()
-    cdef int nPart = len(xArray)
-    cdef int k, ic
-
-    for k in range(nPart):
-      x = xArray[k]
-      y = yArray[k]
-      z = zArray[k]
-      # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-      Lx = (x - xllc) / csz
-      Ly = (y - yllc) / csz
-
-      # find coordinates of the 4 nearest cornes on the raster
-      Lx0 = <int>math.floor(Lx)
-      Ly0 = <int>math.floor(Ly)
-      Lx1 = Lx0 + 1
-      Ly1 = Ly0 + 1
-      # prepare for bilinear interpolation
-      dx = Lx - Lx0
-      dy = Ly - Ly0
-
-      # add the component of the points value to the 4 neighbour grid points
-      # start with the lower left
-      f11 = z*(1-dx)*(1-dy)
-      ic = Lx0 + ncol * Ly0
-      zRaster[ic] = zRaster[ic] + f11
-      # lower right
-      f21 = z*dx*(1-dy)
-      ic = Lx1 + ncol * Ly0
-      zRaster[ic] = zRaster[ic] + f21
-      # uper left
-      f12 = z*(1-dx)*dy
-      ic = Lx0 + ncol * Ly1
-      zRaster[ic] = zRaster[ic] + f12
-      # and uper right
-      f22 = z*dx*dy
-      ic = Lx1 + ncol * Ly1
-      zRaster[ic] = zRaster[ic] + f22
-
-    Z1 = np.reshape(np.asarray(zRaster), (np.shape(Z0)))
-
-    return Z1
 
 
 def computeForceC(cfg, particles, fields, dem, int frictType):
@@ -214,11 +139,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       areaPart = m / (h * rho)
 
       # get cell and weights
-      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
 
       # get normal at the particle location
-      nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-      nx, ny, nz = normalize(nx, ny, nz)
+      nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+      nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
 
       if viscOption == 1:
         # add artificial viscosity
@@ -232,17 +157,17 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # this point is not necessarily on the surface, project it on the surface
       if reprojMethod == 0:
         # Project vertically on the dem
-        iCellEnd = getCells(xEnd, yEnd, ncols, nrows, csz)
+        iCellEnd = DFAtlsC.getCells(xEnd, yEnd, ncols, nrows, csz)
         if iCellEnd >= 0:
-          LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = getWeights(xEnd, yEnd, iCellEnd, csz, ncols, interpOption)
+          LxEnd0, LyEnd0, iCellEnd, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = DFAtlsC.getCellAndWeights(xEnd, yEnd, ncols, nrows, csz, interpOption)
       elif reprojMethod == 1:
         # project trying to keep the travelled distance constant
-        xEnd, yEnd, zEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = distConservProjectionIteratrive(
+        xEnd, yEnd, zEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = DFAtlsC.distConservProjectionIteratrive(
           x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, ncols, nrows, interpOption,
           reprojectionIterations, thresholdProjection)
       elif reprojMethod == 2:
         # project using samos method
-        xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = samosProjectionIteratrive(
+        xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = DFAtlsC.samosProjectionIteratrive(
           xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
 
       if iCellEnd < 0:
@@ -252,13 +177,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         wEnd = w
 
       # get the normal at this location
-      nxEnd, nyEnd, nzEnd = getVector(LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3], nxArray, nyArray, nzArray)
-      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      nxEnd, nyEnd, nzEnd = DFAtlsC.getVector(LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3], nxArray, nyArray, nzArray)
+      nxEnd, nyEnd, nzEnd = DFAtlsC.normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
       nyAvg = ny + nyEnd
       nzAvg = nz + nzEnd
-      nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
+      nxAvg, nyAvg, nzAvg = DFAtlsC.normalize(nxAvg, nyAvg, nzAvg)
 
       # acceleration due to curvature
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
@@ -291,7 +216,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # Calculating bottom shear and normal stress
       # get new velocity magnitude (leave 0 if uMag is 0)
       # this is important because uMag is first used to compute tau
-      uMag = norm(ux, uy, uz)
+      uMag = DFAtlsC.norm(ux, uy, uz)
       if(effAccNorm > 0.0):
           # if fluid detatched
           # log.info('fluid detatched for particle %s' % j)
@@ -301,7 +226,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
-            tau = SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+            tau = DFAtlsC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
@@ -521,9 +446,9 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
     z component of the uptated with the viscous force
   """
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
-  vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w0, w1, w2, w3, VX, VY, VZ)
+  vMeanx, vMeany, vMeanz = DFAtlsC.getVector(Lx0, Ly0, w0, w1, w2, w3, VX, VY, VZ)
   # compute normal component of the velocity
-  vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
+  vMeanNorm = DFAtlsC.scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
   # remove normal component (make sure vMean is in the tangent plane)
   vMeanx = vMeanx - vMeanNorm * nx
   vMeany = vMeany - vMeanNorm * ny
@@ -532,7 +457,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
   dvX = vMeanx - ux
   dvY = vMeany - uy
   dvZ = vMeanz - uz
-  dvMag = norm(dvX, dvY, dvZ)
+  dvMag = DFAtlsC.norm(dvX, dvY, dvZ)
   Alat = 2.0 * math.sqrt((m * h) / rho)
   fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
 
@@ -562,7 +487,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   force : dict
       force dictionary
   fields : dict
-      fields dictionary with flow thickness (needed it there is a dam)
+      fields dictionary with flow thickness (needed if there is a dam)
   typeStop: int
     0 if standard stopping criterion, if 1 stopping criterion based on SPHforce - used for iniStep
   Returns
@@ -587,6 +512,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double centeredPosition = cfg.getfloat('centeredPosition')
+  cdef int dissDam = cfg.getint('dissDam')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -625,7 +551,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] dM = force['dM']
   # read dam
   dam = dem['damLine']
-  cdef int flagDam = dam['flagDam']
+  cdef int flagDam = dam['dam']
   cdef int restitutionCoefficient = dam['restitutionCoefficient']
   cdef int nDamPoints = dam['nPoints']
   cdef long[:] cellsCrossed = dam['cellsCrossed']
@@ -660,8 +586,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
-  cdef double massEntrained = 0, massFlowing = 0, dEm = 0
-  cdef int k
+  cdef double massEntrained = 0, massFlowing = 0, dissEm = 0
+  cdef int k, inter
   cdef int nRemove = 0
   # variables for interpolation
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
@@ -687,7 +613,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     ForceDriveZ = forceZ[k] + forceSPHZ[k]
 
     # velocity magnitude
-    uMag = norm(ux, uy, uz)
+    uMag = DFAtlsC.norm(ux, uy, uz)
 
     # procede to time integration
     # operator splitting
@@ -718,21 +644,22 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
     if reprojMethod == 0:
       # Project vertically on the dem
-      iCellNew = getCells(xNew, yNew, ncols, nrows, csz)
+      iCellNew = DFAtlsC.getCells(xNew, yNew, ncols, nrows, csz)
       if iCellNew >= 0:
-        Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3] = getWeights(xNew, yNew, iCellNew, csz, ncols, interpOption)
-        zNew = getScalar(Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+        Lx0, Ly0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
+        zNew = DFAtlsC.getScalar(Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
     elif reprojMethod == 1:
       # project trying to keep the travelled distance constant
-      xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
+      xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.distConservProjectionIteratrive(
         x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption,
         reprojectionIterations, thresholdProjection)
     elif reprojMethod == 2:
       # project using samos method
-      xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
+      xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-      zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+      if iCellNew >= 0:
+        zNew = DFAtlsC.getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
     if iCellNew < 0:
       # if the particle is not on the DEM, memorize it and remove it at the next update
@@ -741,7 +668,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       LyNew0 = 0
       wNew = [0, 0, 0, 0]
       nRemove = nRemove + 1
-      continue  # this particle will be removed, skipp to the next particle
+      continue  # this particle will be removed, skip the what is bellow and directly go to the next particle
     elif outOfDEM[iCellNew]:
       # if the particle is on the DEM but in a noData area,
       # memorize it and remove it at the next update
@@ -750,134 +677,76 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       continue  # this particle will be removed, skipp to the next particle
 
     # get cell and weights at old position
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     # get normal at the old particle location
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     # get normal at the new particle location
-    nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+    nxNew, nyNew, nzNew = DFAtlsC.getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     # get average normal between old and new position
-    nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
+    nx, ny, nz = DFAtlsC.normalize(nx+nxNew, ny+nyNew, nz+nzNew)
     # normalize new normal
-    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+    nxNew, nyNew, nzNew = DFAtlsC.normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
-    dl = norm((xNew-x), (yNew-y), (zNew-z))
+    dl = DFAtlsC.norm((xNew-x), (yNew-y), (zNew-z))
     lNew = l + dl
     # compute the horizontal distance traveled by the particle
-    ds = norm((xNew-x), (yNew-y), 0)
+    ds = DFAtlsC.norm((xNew-x), (yNew-y), 0)
     sNew = s + ds
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sCorNew = sCor + nz*dl
 
     # reproject velocity
-    # velocity magnitude
-    uMag = norm(uxNew, uyNew, uzNew)
-    # normal component of the velocity
-    uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-    # uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
-    # remove normal component of the velocity
-    uxNew = uxNew - uN * nxNew
-    uyNew = uyNew - uN * nyNew
-    uzNew = uzNew - uN * nzNew
-    # velocity magnitude new
-    uMagNew = norm(uxNew, uyNew, uzNew)
-    if uMag > 0.0:
-      # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      uxNew = uxNew * uMag / (uMagNew + velMagMin)
-      uyNew = uyNew * uMag / (uMagNew + velMagMin)
-      uzNew = uzNew * uMag / (uMagNew + velMagMin)
+    uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin)
 
-    # add Dam interaction
+    #  ############## Start add Dam interaction ##############################################
     if flagDam and cellsCrossed[iCell] == 1:
       # if there is an interaction with the dam, update position and velocity
-      xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(x, y, z,
+      inter, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dissEm = damCom1DFA.getWallInteraction(x, y, z,
         xNew, yNew, zNew, uxNew, uyNew, uzNew, nDamPoints, xFootArray, yFootArray, zFootArray,
         xCrownArray, yCrownArray, zCrownArray, xTangentArray, yTangentArray, zTangentArray,
         ncols, nrows, csz, interpOption, restitutionCoefficient, nxArray, nyArray, nzArray, ZDEM, FD)
-      # reproject position on surface
-      # make sure particle is on the mesh (normal reprojection!!)
-      # if distReproj:
-      #   xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
-      #     x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption,
-      #     reprojectionIterations, thresholdProjection)
-      # else:
-      #   xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
-      #     xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-      #   if iCellNew >= 0:
-      #     zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
-
-      # in the C++ code, a simple vertical reprojection is done...
-      LxNew0, LyNew0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
-      if iCellNew >= 0:
-        zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
-
-      if iCellNew < 0:
-        # if the particle is not on the DEM, memorize it and remove it at the next update
-        keepParticle[j] = 0
-        LxNew0 = 0
-        LyNew0 = 0
-        wNew = [0, 0, 0, 0]
-        nRemove = nRemove + 1
-        continue  # this particle will be removed, skipp to the next particle
-      elif outOfDEM[iCellNew]:
-        # if the particle is on the DEM but in a noData area,
-        # memorize it and remove it at the next update
-        keepParticle[j] = 0
-        nRemove = nRemove + 1
-        continue  # this particle will be removed, skipp to the next particle
-
-      # reproject velocity
-      # get normal at the new particle location
-      nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
-      # velocity magnitude
-      uMag = norm(uxNew, uyNew, uzNew)
-      # normal component of the velocity
-      uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-      # uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
-      # remove normal component of the velocity
-      uxNew = uxNew - uN * nxNew
-      uyNew = uyNew - uN * nyNew
-      uzNew = uzNew - uN * nzNew
-      # velocity magnitude new
-      uMagNew = norm(uxNew, uyNew, uzNew)
-      if uMag > 0.0:
-        # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-        uxNew = uxNew * uMag / (uMagNew + velMagMin)
-        uyNew = uyNew * uMag / (uMagNew + velMagMin)
-        uzNew = uzNew * uMag / (uMagNew + velMagMin)
-      # reduce velocity normal to footline for energy loss due to flowing over dam
-
-      # # ToDo: I dont understand what is happening
-      # # dEm>0 means ????
-      # # reduce velocity normal to footline for energy loss due to flowing over dam
-      # # First multiply dEM by the gravAcc magnitude (because this was not done in the dam function)
-      # dEm = gravAcc*dEm
-      # if dEm < 0.0:
-      #   log.info('oups')
-      #   fNx, fNy, fNz = crossProd(nxNew, nyNew, nzNew, txWall, tyWall, tzWall)
-      #   fNx, fNy, fNz = normalize(fNx, fNy, fNz)
-      #   dv = math.sqrt(-2.0 * dEm)
-      #   uN = -scalProd(uxNew, uyNew, uzNew, fNx, fNy, fNz)
-      #   if uN < dv:
-      #     dv = uN
-      #   if dv > 0.0:
-      #     uxNew = uxNew + dv * fNx
-      #     uyNew = uyNew + dv * fNy
-      #     uzNew = uzNew + dv * fNz
-      #     uMag = norm(uxNew, uyNew, uzNew)
-      #     # normal component of the velocity
-      #     uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-      #     # remove normal component of the velocity
-      #     uxNew = uxNew - uN * nxNew
-      #     uyNew = uyNew - uN * nyNew
-      #     uzNew = uzNew - uN * nzNew
-      #     # velocity magnitude new
-      #     uMagNew = norm(uxNew, uyNew, uzNew)
-      #     if uMag > 0.0:
-      #       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      #       uxNew = uxNew * uMag / (uMagNew)
-      #       uyNew = uyNew * uMag / (uMagNew)
-      #       uzNew = uzNew * uMag / (uMagNew)
+      # if there was an interaction with the dam, reproject and take dEM into account
+      if inter == 1:
+        # in the C++ code, a simple vertical reprojection is done...
+        LxNew0, LyNew0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
+        if iCellNew >= 0:
+          zNew = DFAtlsC.getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+        # do we need to remove the particle?
+        if iCellNew < 0:
+          # if the particle is not on the DEM, memorize it and remove it at the next update
+          keepParticle[k] = 0
+          LxNew0 = 0
+          LyNew0 = 0
+          wNew = [0, 0, 0, 0]
+          nRemove = nRemove + 1
+          continue  # this particle will be removed, skipp to the next particle
+        elif outOfDEM[iCellNew]:
+          # if the particle is on the DEM but in a noData area,
+          # memorize it and remove it at the next update
+          keepParticle[k] = 0
+          nRemove = nRemove + 1
+          continue  # this particle will be removed, skipp to the next particle
+        # reduce velocity normal to footline for energy loss due to flowing over dam
+        # dEm>0 means the snow thickness exceeds the dam height???
+        # reduce velocity normal to footline for energy loss due to flowing over dam
+        # (but there is maybe nothing flowing over...)
+        if dissDam == 1 and dissEm < 0.0:
+          # First multiply dissEm by the gravAcc magnitude (because this was not done in the dam function)
+          dissEm = gravAcc*dissEm
+          fNx, fNy, fNz = DFAtlsC.crossProd(nxNew, nyNew, nzNew, txWall, tyWall, tzWall)
+          fNx, fNy, fNz = DFAtlsC.normalize(fNx, fNy, fNz)
+          dv = math.sqrt(-2.0 * dissEm)
+          uN = -DFAtlsC.scalProd(uxNew, uyNew, uzNew, fNx, fNy, fNz)
+          if uN < dv:
+            dv = uN
+          if dv > 0.0:
+            uxNew = uxNew + dv * fNx
+            uyNew = uyNew + dv * fNy
+            uzNew = uzNew + dv * fNz
+            # reproject velocity
+            uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin)
+    #  ############## End add Dam interaction ##############################################
 
     # prepare for stopping criterion
     if uMag > uFlowingThreshold:
@@ -886,7 +755,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
-    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[k], forceSPHY[k], forceSPHZ[k])
+    totForceSPHNew = totForceSPHNew + mNew * DFAtlsC.norm(forceSPHX[k], forceSPHY[k], forceSPHZ[k])
 
     if idfixed == 1:
       # idfixed = 1 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
@@ -1018,7 +887,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 
   if explicitFriction == 1:
     # explicite method
-    uMagNew = norm(ux, uy, uz)
+    uMagNew = DFAtlsC.norm(ux, uy, uz)
     # will friction force stop the particle
     if uMagNew<dt*forceFrict/m:
       # stop the particle
@@ -1032,7 +901,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
         dtStop = m * uMagNew / (forceFrict)
     else:
       # add friction force in the opposite direction of the motion
-      xDir, yDir, zDir = normalize(ux, uy, uz)
+      xDir, yDir, zDir = DFAtlsC.normalize(ux, uy, uz)
       uxNew = ux - xDir * forceFrict * dt / m
       uyNew = uy - yDir * forceFrict * dt / m
       uzNew = uz - zDir * forceFrict * dt / m
@@ -1134,7 +1003,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     # for the travel angle we simply do a nearest interpolation
     indx = <int>math.round(x / csz)
     indy = <int>math.round(y / csz)
@@ -1162,7 +1031,7 @@ def updateFieldsC(cfg, particles, dem, fields):
         VXBilinear[j, i] = MomBilinearX[j, i]/m
         VYBilinear[j, i] = MomBilinearY[j, i]/m
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
-        VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
+        VBilinear[j, i] = DFAtlsC.norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
         if VBilinear[j, i] > PFV[j, i]:
           PFV[j, i] = VBilinear[j, i]
         if FTBilinear[j, i] > PFT[j, i]:
@@ -1201,8 +1070,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   for k in range(nPart):
     x = xArray[k]
     y = yArray[k]
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-    hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FTBilinear)
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+    hbb = DFAtlsC.getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FTBilinear)
     hBB[k] = hbb
 
   particles['h'] = np.asarray(hBB)
@@ -1266,9 +1135,9 @@ def computeTravelAngleC(particles, zPartArray0):
     if s > 0:
       tanGamma = (z0 - z) / s
     else:
-      tanGamma = 0
+      tanGamma = 0.0
     # get the travel angle
-    gamma = math.atan(tanGamma) * 180 / math.pi
+    gamma = math.atan(tanGamma) * 180.0 / math.pi
     gammaArray[k] = gamma
   particles['travelAngle'] = np.asarray(gammaArray)
   return particles
@@ -1514,26 +1383,26 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
 
     if SPHoption > 1:
         # get normal vector
-        Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
-        nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-        nx, ny, nz = normalize(nx, ny, nz)
+        Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
+        nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+        nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
         # projection of gravity on normal vector or use the effective gravity (gravity + curvature acceleration part)
         # This was done I computeForce and is passed over here
         gravAcc3 = gEff[k]
         if SPHoption > 2:
-            uMag = norm(ux, uy, uz)
+            uMag = DFAtlsC.norm(ux, uy, uz)
             if uMag < velMagMin:
                 ux = 1
                 uy = 0
                 uz = -(1*nx + 0*ny) / nz
-                ux, uy, uz = normalize(ux, uy, uz)
+                ux, uy, uz = DFAtlsC.normalize(ux, uy, uz)
                 K1 = 1
                 K2 = 1
             else:
-                ux, uy, uz = normalize(ux, uy, uz)
+                ux, uy, uz = DFAtlsC.normalize(ux, uy, uz)
 
-                uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
-                uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+                uxOrtho, uyOrtho, uzOrtho = DFAtlsC.crossProd(nx, ny, nz, ux, uy, uz)
+                uxOrtho, uyOrtho, uzOrtho = DFAtlsC.normalize(uxOrtho, uyOrtho, uzOrtho)
 
                 g1 = nx/(nz)
                 g2 = ny/(nz)
@@ -1566,7 +1435,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                 if SPHoption == 1:
                     dz = 0
                     # get norm of r = xj - xl
-                    r = norm(dx, dy, dz)
+                    r = DFAtlsC.norm(dx, dy, dz)
                     if r < minRKern * rKernel:
                         # impose a minimum distance between particles
                         r = minRKern * rKernel
@@ -1586,7 +1455,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                 elif SPHoption == 2:
                     # like option 1 but with dz!=0
                     # get norm of r = xk - xl
-                    r = norm(dx, dy, dz)
+                    r = DFAtlsC.norm(dx, dy, dz)
                     if r < minRKern * rKernel:
                         # impose a minimum distance between particles
                         dx = minRKern * rKernel * dx
@@ -1608,7 +1477,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                             ck = math.sqrt(gravAcc3*hk)
                             cl = math.sqrt(gravAcc3*hl)
                             lamdbakl = (ck+cl)/2
-                            pikl = - lamdbakl * scalProd(dux, duy, duz, dx, dy, dz) / r
+                            pikl = - lamdbakl * DFAtlsC.scalProd(dux, duy, duz, dx, dy, dz) / r
                         # SPH gradient computation - standard SPH formulation
                         gradhX = gradhX + (flux + pikl)*dwdrr*dx*area
                         gradhY = gradhY + (flux + pikl)*dwdrr*dy*area
@@ -1620,11 +1489,11 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                 # and this time reprojecion on the surface, dz != 0 and g3 are used
                 if SPHoption == 3:
                   # get coordinates in local coord system
-                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
-                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                  r1 = DFAtlsC.scalProd(dx, dy, dz, ux, uy, uz)
+                  r2 = DFAtlsC.scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
                   # impse r3=0 even if the particle is not exactly on the tengent plane
                   # get norm of r = xk - xl
-                  r = norm(r1, r2, 0)
+                  r = DFAtlsC.norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
                       r1 = minRKern * rKernel * r1
@@ -1665,655 +1534,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
 
 
   return GHX, GHY, GHZ
-
-
-cpdef double norm(double x, double y, double z):
-  """ Compute the Euclidean norm of the vector (x, y, z).
-
-  (x, y, z) can be numpy arrays.
-
-  Parameters
-  ----------
-      x: numpy array
-          x component of the vector
-      y: numpy array
-          y component of the vector
-      z: numpy array
-          z component of the vector
-
-  Returns
-  -------
-      norme: numpy array
-          norm of the vector
-  """
-  return math.sqrt(x*x + y*y + z*z)
-
-cpdef double norm2(double x, double y, double z):
-  """ Compute the Euclidean norm of the vector (x, y, z).
-
-  (x, y, z) can be numpy arrays.
-
-  Parameters
-  ----------
-      x: numpy array
-          x component of the vector
-      y: numpy array
-          y component of the vector
-      z: numpy array
-          z component of the vector
-
-  Returns
-  -------
-      norme: numpy array
-          norm of the vector
-  """
-  return x*x + y*y + z*z
-
-
-cpdef (double, double, double) normalize(double x, double y, double z):
-  """ Normalize vector (x, y, z) for the Euclidean norm.
-
-  (x, y, z) can be np arrays.
-
-  Parameters
-  ----------
-      x: numpy array
-          x component of the vector
-      y: numpy array
-          y component of the vector
-      z: numpy array
-          z component of the vector
-
-  Returns
-  -------
-      xn: numpy array
-          x component of the normalized vector
-      yn: numpy array
-          y component of the normalized vector
-      zn: numpy array
-          z component of the normalized vector
-  """
-  cdef double norme
-  norme = norm(x, y, z)
-  if norme>0:
-    x = x / norme
-    # xn = np.where(np.isnan(xn), 0, xn)
-    y = y / norme
-    # yn = np.where(np.isnan(yn), 0, yn)
-    z = z / norme
-    # zn = np.where(np.isnan(zn), 0, zn)
-  return x, y, z
-
-
-cpdef (double, double, double) crossProd(double ux, double uy, double uz, double vx, double vy, double vz):
-  """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
-  """
-  cdef double wx = uy * vz - uz * vy
-  cdef double wy = uz * vx - ux * vz
-  cdef double wz = ux * vy - uy * vx
-  return wx, wy, wz
-
-
-cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
-  """ Compute scalar product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
-  """
-  return ux*vx + uy*vy + uz*vz
-
-
-cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
-  """ Locate point on grid.
-
-  Parameters
-  ----------
-      x: float
-          location in the x location of desiered interpolation
-      y: float
-          location in the y location of desiered interpolation
-      ncols: int
-          number of columns
-      nrows: int
-          number of rows
-      csz: float
-          cellsize of the grid
-
-  Returns
-  -------
-      iCell: int
-          index of the nearest lower left cell
-  """
-  cdef double Lx, Ly
-  cdef int Lx0, Ly0
-  cdef double xllc = 0.
-  cdef double yllc = 0.
-  cdef int iCell
-
-  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-  Lx = (x - xllc) / csz
-  Ly = (y - yllc) / csz
-  # find coordinates of the lower left cell
-  Lx0 = <int>math.floor(Lx)
-  Ly0 = <int>math.floor(Ly)
-  iCell = Ly0*ncols + Lx0
-  if (Lx0<0) | (Ly0<0) | (Lx0+1>=ncols) | (Ly0+1>=nrows):
-    # check whether we are in the domain or not
-    return -1
-
-  return iCell
-
-
-cpdef (int, int, double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
-  """ Get weight for interpolation from grid to single point location
-
-  3 Options available : -0: nearest neighbour interpolation
-                        -1: equal weights interpolation
-                        -2: bilinear interpolation
-
-  Parameters
-  ----------
-    x: float
-        location in the x location of desiered interpolation
-    y: float
-        location in the y location of desiered interpolation
-    iCell: int
-        index of the nearest lower left cell
-    csz: float
-        cellsize of the grid
-    ncols: int
-      number of columns
-    interpOption: int
-        -0: nearest neighbour interpolation
-        -1: equal weights interpolation
-        -2: bilinear interpolation
-
-  Returns
-  -------
-      Lx0, Ly0: ints
-          lower left cell (col and row index)
-      w00, w10, w01, w11: floats
-          corresponding weights
-  """
-  cdef double w[4]
-  cdef double Lx, Ly, dx, dy
-  cdef int Lx0 = iCell % ncols
-  cdef int Ly0 = iCell / ncols
-  cdef double xllc = 0.
-  cdef double yllc = 0.
-
-  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-  Lx = (x - xllc) / csz
-  Ly = (y - yllc) / csz
-
-  # prepare for bilinear interpolation
-  dx = Lx - Lx0
-  dy = Ly - Ly0
-
-  if interpOption == 0:
-    dx = 1.*math.round(dx)
-    dy = 1.*math.round(dy)
-  elif interpOption == 1:
-    dx = 1./2.
-    dy = 1./2.
-
-  # lower left
-  w[0] = (1-dx)*(1-dy)
-  # lower right
-  w[1] = dx*(1-dy)
-  # uper left
-  w[2] = (1-dx)*dy
-  # and uper right
-  w[3] = dx*dy
-
-  return Lx0, Ly0, w[0], w[1], w[2], w[3]
-
-
-cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x, double y, int ncols, int nrows, double csz, int interpOption):
-  cdef int Lx0, Ly0, iCell
-  cdef double w[4]
-  iCell = getCells(x, y, ncols, nrows, csz)
-  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-  return Lx0, Ly0, iCell, w[0], w[1], w[2], w[3]
-
-
-cpdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
-  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
-  double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption,
-  int reprojectionIterations, double threshold):
-  """ Find the orthogonal projection of a point on a mesh
-
-  Iterative method to find the projection of a point on a surface defined by its mesh
-
-  Parameters
-  ----------
-      xOld: float
-          x coordinate of the point to project
-      yOld: float
-          y coordinate of the point to project
-      zOld: float
-          z coordinate of the point to project
-      ZDEM: 2D array
-          z component of the DEM field at the grid nodes
-      Nx: 2D array
-          x component of the normal vector field at the grid nodes
-      Ny: 2D array
-          y component of the normal vector field at the grid nodes
-      Nz: 2D array
-          z component of the normal vector field at the grid nodes
-      csz: float
-          cellsize of the grid
-      interpOption: int
-          -0: nearest neighbour interpolation
-          -1: equal weights interpolation
-          -2: bilinear interpolation
-      reprojectionIterations: int
-          maximum number or iterations
-      threshold: double
-          stop criterion for reprojection, stops when the distance between two iterations
-          is smaller than threshold * csz
-
-    Returns
-    -------
-    xNew: float
-        x coordinate of the projected point
-    yNew: float
-        y coordinate of the projected point
-    iCell: int
-        index of the nearest lower left cell
-    Lx0: int
-        colomn of the nearest lower left cell
-    Ly0: int
-        row of the nearest lower left cell
-    w: float[4]
-        corresponding weights
-    """
-  cdef double zTemp, zn, xNew, yNew, zNew, dist, xPrev, yPrev, zPrev
-  cdef double nx, ny, nz
-  cdef int Lxi, Lyi, Lxj, Lyj
-  cdef int Lx0, Ly0, iCell
-  cdef double w[4]
-  xNew = xOld
-  yNew = yOld
-  zNew = zOld
-  iCell = getCells(xNew, yNew, ncols, nrows, csz)
-  if iCell < 0:
-    # if not on the DEM exit with iCell=-1
-    return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-  dist = csz
-  # iterate
-  while reprojectionIterations > 0 and dist > threshold*csz:
-    reprojectionIterations = reprojectionIterations - 1
-    xPrev = xNew
-    yPrev = yNew
-    zPrev = zNew
-    # vertical projection of the point
-    zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
-    # normal vector at this vertical projection location
-    # if we take the normal at the new particle position)
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-    nx, ny, nz = normalize(nx, ny, nz)
-    # What I think is better for normal projection
-    # Normal component of the vector between the initial and projected point
-    zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zOld) * nz
-    # correct position with the normal part
-    xNew = xOld + zn * nx
-    yNew = yOld + zn * ny
-    zNew = zOld + zn * nz
-    # get cell
-    iCell = getCells(xNew, yNew, ncols, nrows, csz)
-    if iCell < 0:
-      # if not on the DEM exit with iCell=-1
-      return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-
-    dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
-
-  return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
-
-
-cpdef (double, double, int, int, int, double, double, double, double) samosProjectionIteratrive(
-  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
-  double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption, int reprojectionIterations):
-  """ Find the projection of a point on a mesh (comes from samos)
-
-  Iterative method to find the projection of a point on a surface defined by its mesh
-
-  Parameters
-  ----------
-      xOld: float
-          x coordinate of the point to project
-      yOld: float
-          y coordinate of the point to project
-      zOld: float
-          z coordinate of the point to project
-      ZDEM: 2D array
-          z component of the DEM field at the grid nodes
-      Nx: 2D array
-          x component of the normal vector field at the grid nodes
-      Ny: 2D array
-          y component of the normal vector field at the grid nodes
-      Nz: 2D array
-          z component of the normal vector field at the grid nodes
-      csz: float
-          cellsize of the grid
-      interpOption: int
-          -0: nearest neighbour interpolation
-          -1: equal weights interpolation
-          -2: bilinear interpolation
-      reprojectionIterations: int
-          maximum number or iterations
-
-    Returns
-    -------
-    xNew: float
-        x coordinate of the projected point
-    yNew: float
-        y coordinate of the projected point
-    iCell: int
-        index of the nearest lower left cell
-    Lx0: int
-        colomn of the nearest lower left cell
-    Ly0: int
-        row of the nearest lower left cell
-    w: float[4]
-        corresponding weights
-    """
-  cdef double zTemp, zn, xNew, yNew, zNew
-  cdef double nx, ny, nz
-  cdef int Lxi, Lyi, Lxj, Lyj
-  cdef int iCell
-  cdef double w[4]
-  xNew = xOld
-  yNew = yOld
-  zNew = zOld
-  iCell = getCells(xNew, yNew, ncols, nrows, csz)
-  if iCell < 0:
-    # if not on the DEM exit with iCell=-1
-    return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-  # get the cell location of the point
-  Lxi = iCell % ncols
-  Lyi = iCell / ncols
-  # iterate
-  while reprojectionIterations > 0:
-    reprojectionIterations = reprojectionIterations - 1
-    # vertical projection of the point
-    zTemp = getScalar(Lxi, Lyi, w[0], w[1], w[2], w[3], ZDEM)
-    # normal vector at this vertical projection location
-    # if we take the normal at the new particle position)
-    # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
-    # What Peter does: get the normal of the cell center (but still not exactly giving the same results)
-    nx, ny, nz = getVector(Lxi, Lyi, 0.25, 0.25, 0.25, 0.25, nxArray, nyArray, nzArray)
-    nx, ny, nz = normalize(nx, ny, nz)
-    zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
-    # correct position with the normal part
-    xNew = xNew + zn * nx
-    yNew = yNew + zn * ny
-    zNew = zNew + zn * nz
-    # get cell
-    iCell = getCells(xNew, yNew, ncols, nrows, csz)
-    if iCell < 0:
-      # if not on the DEM exit with iCell=-1
-      return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
-    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-
-    # are we in the same cell?
-    if Lxi==Lxj and Lyi==Lyj:
-      return xNew, yNew, iCell, Lxj, Lyj, w[0], w[1], w[2], w[3]
-    Lxi = Lxj
-    Lyi = Lyj
-  return xNew, yNew, iCell, Lxj, Lyj, w[0], w[1], w[2], w[3]
-
-
-cpdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
-  double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
-  double[:,:] nzArray, double xOld, double yOld, double zOld, double csz, int ncols, int nrows, int interpOption,
-  int reprojectionIterations, double threshold):
-  """ Find the projection of a point on a mesh conserving the distance
-  with the previous time step position
-
-  Iterative method to find the projection of a point on a surface defined by its mesh
-
-  Parameters
-  ----------
-      xPrev: float
-          x coordinate of the point at the previous time step
-      yPrev: float
-          y coordinate of the point at the previous time step
-      zPrev: float
-          z coordinate of the point at the previous time step
-      ZDEM: 2D array
-          z component of the DEM field at the grid nodes
-      Nx: 2D array
-          x component of the normal vector field at the grid nodes
-      Ny: 2D array
-          y component of the normal vector field at the grid nodes
-      Nz: 2D array
-          z component of the normal vector field at the grid nodes
-      xOld: float
-          x coordinate of the point to project
-      yOld: float
-          y coordinate of the point to project
-      zOld: float
-          z coordinate of the point to project
-      csz: float
-          cellsize of the grid
-      interpOption: int
-          -0: nearest neighbour interpolation
-          -1: equal weights interpolation
-          -2: bilinear interpolation
-      reprojectionIterations: int
-          maximum number or iterations
-      threshold: double
-          stop criterion for reprojection, stops when the error on the distance after projection
-          is smaller than threshold * (dist + csz)
-
-    Returns
-    -------
-    xNew: float
-        x coordinate of the projected point
-    yNew: float
-        y coordinate of the projected point
-    zNew: float
-        z coordinate of the projected point
-    iCell: int
-        index of the nearest lower left cell
-    Lx0: int
-        colomn of the nearest lower left cell
-    Ly0: int
-        row of the nearest lower left cell
-    w: float[4]
-        corresponding weights
-    """
-  cdef double zTemp, zn, dist, distn, xNew, yNew, zNew
-  cdef double nx, ny, nz
-  cdef int Lx0, Ly0, iCell
-  cdef double w[4]
-  xNew = xOld
-  yNew = yOld
-  zNew = zOld
-  # distance traveled by the point within the time step
-  dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
-  # vertical projection of the point on the DEM
-  iCell = getCells(xNew, yNew, ncols, nrows, csz)
-  if iCell < 0:
-    # if not on the DEM exit with iCell=-1
-    return xNew, yNew, zNew, iCell, -1, -1, 0, 0, 0, 0
-  Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-
-  zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
-  # measure distance between the projected point and the previous time step position
-  distn = norm(xNew-xPrev, yNew-yPrev, zTemp-zPrev)
-  # while iterate and error too big (aiming to conserve the distance dist during the reprojection)
-  while reprojectionIterations > 0 and abs(distn-dist) > threshold*(dist + csz):
-    reprojectionIterations = reprojectionIterations - 1
-    # first step: orthogonal reprojection
-    # get normal vector
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-    nx, ny, nz = normalize(nx, ny, nz)
-    zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
-    # correct position with the normal part
-    xNew = xNew + zn * nx
-    yNew = yNew + zn * ny
-    zNew = zNew + zn * nz
-
-    # second step: conserve the distance dist (correction ov the position)
-    # measure distance between this new point and the previous time step position
-    distn = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
-    # adjust position on the Xprev, Xnew line
-    xNew = xPrev + (xNew-xPrev) * dist / distn
-    yNew = yPrev + (yNew-yPrev) * dist / distn
-    zNew = zPrev + (zNew-zPrev) * dist / distn
-
-    # third step
-    # vertical projection of the point on the DEM
-    iCell = getCells(xNew, yNew, ncols, nrows, csz)
-    if iCell < 0:
-      # if not on the DEM exit with iCell=-1
-      return xNew, yNew, zNew, iCell, -1, -1, 0, 0, 0, 0
-    Lx0, Ly0, w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
-    zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
-    # measure distance between this new point and the previous time step position
-    distn = norm(xNew-xPrev, yNew-yPrev, zTemp-zPrev)
-
-  return xNew, yNew, zTemp, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
-
-
-cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int ncols,
-                 int nrows, int interpOption):
-  """ Interpolate from raster data to points
-
-  Parameter
-  ---------
-    xArray: 1D float array
-      x coordinates of the new points location
-    yArray: 1D float array
-      y coordinates of the new points location
-    vArray: 2D float array
-      raster values
-    csz: float
-      raster cell size
-    ncols: int
-      raster number of columns
-    nrows: int
-      raster number of rows
-    interpOption: int
-      interpolation option
-      (0: nearest neighbour interpolation, 1: equal weights interpolation, 2: bilinear interpolation)
-
-  Returns
-  ---------
-    v: 1D float array
-      raster values interpolated at points (xArray, yArray) location
-  """
-  cdef int N = xArray.shape[0]
-  cdef double x, y
-  cdef int Lx0, Ly0, iCell
-  cdef double w[4]
-  cdef int k
-  cdef double[:] v = np.zeros(N)
-  for k in range(N):
-    x = xArray[k]
-    y = yArray[k]
-
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-
-    v[k] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
-
-  return v
-
-
-cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
-  """ Interpolate vector field from grid to single point location
-
-  Originaly created to get the normal vector at location (x,y) given the
-  normal vector field on the grid. Grid has its origin in (0,0).
-  Can be used to interpolate any vector field.
-  Interpolation using a bilinear interpolation
-
-  Parameters
-  ----------
-    Lx0: int
-        colomn of the nearest lower left cell
-    Ly0: int
-        row of the nearest lower left cell
-    w: float[4]
-        corresponding weights
-    V: 2D numpy array
-        scalar field at the grid nodes
-
-  Returns
-  -------
-      v: float
-          interpolated scalar at position (x, y)
-  """
-  cdef double v = (V[Ly0, Lx0]*w0 +
-                   V[Ly0, Lx0+1]*w1 +
-                   V[Ly0+1, Lx0]*w2 +
-                   V[Ly0+1, Lx0+1]*w3)
-
-
-  return v
-
-
-cpdef (double, double, double) getVector(
-  int Lx0, int Ly0, double w0, double w1, double w2, double w3,
-  double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
-  """ Interpolate vector field from grid to single point location
-
-  Originaly created to get the normal vector at location (x,y) given the
-  normal vector field on the grid. Grid has its origin in (0,0).
-  Can be used to interpolate any vector field.
-
-  Parameters
-  ----------
-      Lx0: int
-          colomn of the nearest lower left cell
-      Ly0: int
-          row of the nearest lower left cell
-      w: float[4]
-          corresponding weights
-          location in the y location of desiered interpolation
-      Nx: 2D numpy array
-          x component of the vector field at the grid nodes
-      Ny: 2D numpy array
-          y component of the vector field at the grid nodes
-      Nz: 2D numpy array
-          z component of the vector field at the grid nodes
-
-  Returns
-  -------
-      nx: float
-          x component of the interpolated vector field at position (x, y)
-      ny: float
-          y component of the interpolated vector field at position (x, y)
-      nz: float
-          z component of the interpolated vector field at position (x, y)
-  """
-  cdef double nx = (Nx[Ly0, Lx0]*w0 +
-                   Nx[Ly0, Lx0+1]*w1 +
-                   Nx[Ly0+1, Lx0]*w2 +
-                   Nx[Ly0+1, Lx0+1]*w3)
-  cdef double ny = (Ny[Ly0, Lx0]*w0 +
-                   Ny[Ly0, Lx0+1]*w1 +
-                   Ny[Ly0+1, Lx0]*w2 +
-                   Ny[Ly0+1, Lx0+1]*w3)
-  cdef double nz = (Nz[Ly0, Lx0]*w0 +
-                   Nz[Ly0, Lx0+1]*w1 +
-                   Nz[Ly0+1, Lx0]*w2 +
-                   Nz[Ly0+1, Lx0+1]*w3)
-  return nx, ny, nz
-
-
-cpdef double SamosATfric(double rho, double tau0, double Rs0, double mu, double kappa, double B, double R,
-                         double v, double p, double h):
-  cdef double Rs = rho * v * v / (p + 0.001)
-  cdef double div = h / R
-  if div < 1.0:
-    div = 1.0
-  div = math.log(div) / kappa + B
-  cdef double tau = tau0 + p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
-  return tau
-
 
 def computeIniMovement(cfg, particles, dem, dT, fields):
   """ add artifical viscosity effect on velocity
@@ -2402,11 +1622,11 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
       # deduce area
       areaPart = m / (h * rho)
       # get cell and weights
-      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
 
       # get normal at the particle location
-      nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-      nx, ny, nz = normalize(nx, ny, nz)
+      nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+      nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
 
       # add artificial viscosity
       ux, uy, uz = addArtificialViscosity(m, h, dt, rho, ux, uy, uz, subgridMixingFactor, Lx0, Ly0,

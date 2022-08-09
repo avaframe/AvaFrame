@@ -1,0 +1,134 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode damToolSideView.tex
+% to convert it to png use:
+% convert -density 300 -transparent white damToolSideView.pdf damToolSideView.png
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   name plot/.style={every path/.style={name path global=#1}}
+}
+
+\pgfmathdeclarefunction{poly2}{0}{%
+      \pgfmathparse{7-0.005*x}%
+    }
+
+% Extract coordinates for point X
+\makeatletter
+\newcommand{\gettikzxy}[3]{%
+  \tikz@scan@one@point\pgfutil@firstofone#1\relax
+  \edef#2{\the\pgf@x}%
+  \edef#3{\the\pgf@y}%
+}
+\makeatother
+
+
+
+\begin{tikzpicture}[scale=1.75,axis/.style={->},thick]
+
+
+% define our plane
+\pgfmathsetmacro\slope{20}
+\pgfmathsetmacro\slopeDam{40}
+\pgfmathsetmacro\slopeDamF{30}
+\pgfmathsetmacro\tanSlope{tan(\slope)}
+\pgfmathsetmacro\cosSlope{cos(\slope)}
+\pgfmathsetmacro\sinSlope{sin(\slope)}
+\pgfmathsetmacro\lIP{6}
+\pgfmathsetmacro\lHP{5}
+\pgfmathsetmacro\tanSlopeDam{tan(\slopeDam)}
+\pgfmathsetmacro\cosSlopeDam{cos(\slopeDam)}
+\pgfmathsetmacro\sinSlopeDam{sin(\slopeDam)}
+\pgfmathsetmacro\tanSlopeDamF{tan(\slopeDamF)}
+\pgfmathsetmacro\cosSlopeDamF{cos(\slopeDamF)}
+\pgfmathsetmacro\sinSlopeDamF{sin(\slopeDamF)}
+\pgfmathsetmacro\magNorm{2}
+\pgfmathsetmacro\extX{2}
+\pgfmathsetmacro\extY{2}
+\pgfmathsetmacro\extZ{\tanSlope*\extX}
+\pgfmathsetmacro\hDam{3}
+\pgfmathsetmacro\snowHight{1.5}
+
+
+\coordinate  (O) at (0,0){};
+\coordinate  (O1) at (0.5,-1){};
+\coordinate  (ex) at (\magNorm, 0){};
+\coordinate  (HP1) at (-\lHP, 0){};
+\coordinate  (HP2) at (\lHP, 0){};
+\coordinate  (ez) at (0, \magNorm){};
+\coordinate  (IP1) at (-\lIP*\cosSlope, \lIP*\sinSlope){};
+\coordinate  (IP2) at (\lIP*\cosSlope, -\lIP*\sinSlope){};
+\coordinate  (S1) at (-\lIP*\cosSlope, \lIP*\sinSlope+\snowHight){};
+\coordinate  (S2) at (\lIP*\cosSlope, -\lIP*\sinSlope+\snowHight){};
+\coordinate  (nS) at (\magNorm*\sinSlope, \magNorm*\cosSlope){};
+\coordinate  (nW) at (-\magNorm*\sinSlopeDam, \magNorm*\cosSlopeDam){};
+\coordinate  (nWf) at (-\magNorm*\sinSlopeDamF, \magNorm*\cosSlopeDamF){};
+\coordinate  (nWPath) at (-3*\magNorm*\sinSlopeDam, 3*\magNorm*\cosSlopeDam){};
+\coordinate  (tW) at (-\magNorm*\cosSlopeDam, -\magNorm*\sinSlopeDam){};
+\coordinate  (xC) at (0, \hDam){};
+\coordinate  (d) at (-\magNorm, 0){};
+\coordinate  (d2) at (-\magNorm, -\magNorm*\tanSlopeDam){};
+\coordinate  (xfh) at (-\hDam/\tanSlopeDam, 0){};
+
+% Draw inclined plane
+\draw[AFMiddle, name path=inclined Plane] (IP1) -- (IP2) node [right]{$\mathcal{IP}$};
+% Draw horizontal plane
+\draw[dashed] (HP1) -- (HP2);
+% Draw vertical line
+\draw[dashed] (O) -- (xC);
+
+% Draw dam
+\path[name path=dam wall] (xfh) -- (xC);
+\path [name intersections={of=inclined Plane and dam wall,by=xf1}];
+\draw[AFDark, dashed] (xfh) -- (xf1);
+\draw[AFDark, very thick] (xf1) -- (xC) node [right] {$\mathbf{x_\text{crown}}$};
+
+% Draw axis and normal vectors
+\draw[axis, dashed] (O) node [above right] {$\mathbf{x_\text{center}}$} -- (ez) node [right] {$\mathbf{e_z}$};
+\draw[axis, AFMiddle] (O) -- (nS) node [above] {$\mathbf{n_S}$};
+\draw[axis, AFDark] (O) -- (nW) node [above] {$\mathbf{n_w}$};
+\path[axis, AFDark, name path=normal Wall] (O) -- (nWPath);
+\path [name intersections={of=normal Wall and dam wall,by=xNw}];
+\draw[axis, AFDark] (xNw) -- ++(nW) node [above] {$\mathbf{n_w}$};
+%\RightAngle{(xf1)}{(xNw)}{(xC)}{AFDark};
+
+\draw[axis, AFDark] (O) -- (d) node [above left] {$\mathbf{d}$};
+\draw[dotted, AFDark] (d) -- (d2) node [midway, left] {$\tan{\beta}$};
+\draw[dotted, AFDark] (O) -- (d2);
+\draw[axis, AFDark] (O) -- (tW) node [left] {$\mathbf{t_w}$};
+
+% draw angles
+\pic[draw,AFMiddle,angle radius=1cm,"$\theta$" ]{angle=nS--O--ez};
+\pic[draw,AFDark,angle radius=0.9cm,"$\beta$" ]{angle=ez--O--nW};
+\pic[draw,AFDark,angle radius=0.9cm,"$\beta$" ]{angle=HP1--O--tW};
+\pic[draw,AFDark,angle radius=0.9cm,"$\beta$" ]{angle=O--xfh--xC};
+
+%
+\unitIn[3pt]{O1}{black};
+\path[] {(O1)} node [above right]{$\mathbf{t_f}$};
+\draw[] {(xf1)} node [below]{$\mathbf{x_\text{foot}}$};
+
+% draw snow
+\draw[AFOppo, name path=snow] (S1) -- (S2);
+\draw[AFOppo, dotted] (xf1) -- ++(0,\snowHight);
+\draw[AFOppo, dotted] (xf1) -- ++(\snowHight*\cosSlope*\sinSlope,\snowHight*\cosSlope*\cosSlope);
+
+
+\draw[AFOppo, dotted, <->] (-4*\cosSlope, 4*\sinSlope) -- ++(0,\snowHight) node [midway, left] {$h_v$};
+\draw[AFOppo, dotted, <->] (-4*\cosSlope, 4*\sinSlope) -- ++(\snowHight*\cosSlope*\sinSlope,\snowHight*\cosSlope*\cosSlope) node [midway, right] {$h$};
+
+\draw[AFLight] (xf1) ++(0,\snowHight/2) node[left] {$\mathbf{x_\text{foot}^\text{filled}}$} -- (xC);
+
+\coordinate (xf2) at ($(xf1) + (0,\snowHight/2)$);
+\coordinate (xWf) at ($(xC)!0.5!(xf2)$);
+\draw[axis, AFLight] (xWf) -- ++(nWf) node [above] {$\mathbf{n_w^\text{filled}}$};
+
+\end{tikzpicture}
+
+\end{document}

@@ -1474,9 +1474,10 @@ def test_prepareVarSimDict(caplog):
     assert simName2 not in simDict2
 
 
-def test_initializeSimulation():
+def test_initializeSimulation(tmp_path):
     """ test initializing a simulation """
 
+    outDir = pathlib.Path(tmp_path, 'Outputs')
     # setup required input
     cfg = configparser.ConfigParser()
     cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
@@ -1508,13 +1509,13 @@ def test_initializeSimulation():
                'Length': np.asarray([5]), 'x': np.asarray([4, 5., 5.0, 4., 4.]), 'type': 'entrainment',
                'y': np.asarray([4., 4., 5.0, 5., 4.0])}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
-                     'resLine': '', 'relThField': ''}
+                     'resLine': '', 'relThField': '', 'damLine': None}
     # set release thickness read from file or not
     logName = 'simLog'
 
     # call function to be tested
     particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(
-        cfg, demOri, inputSimLines, logName)
+        cfg,  outDir, demOri, inputSimLines, logName)
 
     print('particles', particles)
     print('fields', fields)
@@ -1555,7 +1556,7 @@ def test_initializeSimulation():
     inputSimLines['relThField'] = relThField
 
     particles2, fields2, dem2, reportAreaInfo2 = com1DFA.initializeSimulation(
-        cfg, demOri, inputSimLines, logName)
+        cfg, outDir, demOri, inputSimLines, logName)
 
     print('secRel', particles2['secondaryReleaseInfo'])
     print('particles', particles2)

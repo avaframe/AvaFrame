@@ -710,6 +710,20 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
     """ Find all raster cells crossed by the line
     line has to be entierly contained on the raster extend. If addBuffer is True, add neighbour cells to the result
     based on https://stackoverflow.com/a/35808540/15887086
+
+    Parameters
+    ----------
+    header: dict
+        raster header
+    lineDict: dict
+        line dictionary
+    addBuffer: boolean
+        True to add a 1 cell buffer around the line
+    Returns
+    -------
+    lineDict: dict
+        line dictionary updated with the "cellsCrossed" 1D array (boolean array of 0 and 1 if the cell is crossed by the
+        line or in its neigborhood)
     """
     ncols = header['ncols']
     nrows = header['nrows']
@@ -767,6 +781,25 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
 
 
 def getNeighborCells(indX, indY, ncols, nrows, cellsArray):
+    """ Find the neighbour cells to a given cell
+
+    Parameters
+    ----------
+    indX: int
+        x index of the cell for which you want to find the direct neighbors
+    indY: int
+        y index of the cell for which you want to find the direct neighbors
+    ncols: int
+        number of cols in the raster
+    nrows: int
+        number of rows in the raster
+    cellsArray: 1D int array
+        boolean array of 0 and 1 if the cell is crossed by the line or in its neigborhood
+    Returns
+    -------
+    cellsArray: 1D int array
+        updated boolean array of 0 and 1 if the cell is crossed by the line or in its neigborhood
+    """
     indXList = []
     indYList = []
     for i in [-1, 0, 1]:
