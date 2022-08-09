@@ -19,6 +19,7 @@ from avaframe.com1DFA import particleInitialisation as pI
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com1DFA.damCom1DFA as damCom1DFA
 
 
 def test_resetMassPerParticle():
@@ -130,6 +131,9 @@ def test_getIniPosition(tmp_path):
 
     # get mesh
     dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, 1)
+    damFootLinePath = testD / 'dam' / 'damFootLine.shp'
+    damLine = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, None, damFootLinePath)
+    dem['damLine'] = damLine
 
     # initialize particles
     particles = com1DFA.initializeParticles(cfg['GENERAL'], inputSimLines['releaseLineBuffer'], dem, inputSimLines=inputSimLines,

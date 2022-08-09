@@ -25,6 +25,7 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAToolsCython as DFAtllsC
 import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -530,15 +531,15 @@ def prepareInputData(inputSimFiles, cfg):
 
     # get line from dam
     if cfg['GENERAL'].getboolean('dam'):
-        if entResInfo['flagDam'] == 'Yes':
+        if entResInfo['dam'] == 'Yes':
             damFile = inputSimFiles['damFile']
             damLine = shpConv.readLine(damFile, '', demOri)
             damLine['fileName'] = [damFile]
             damLine['type'] = 'Dam'
         else:
-            message = 'No dam file found'
-            log.error(message)
-            raise FileNotFoundError(message)
+            message = 'Take dam is set, but no dam file found, skipping it'
+            log.warning(message)
+            damLine = None
     else:
         damLine = None
 
@@ -709,6 +710,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     ----------
     cfg : str
         simulation scenario name
+    outDir : pathlib path
+        path to output directory (to save the dam foot line if a dam is used)
     demOri : dict
         dictionary with original dem
     inputSimLines : dict
@@ -797,6 +800,12 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
                                     logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfg, dem, particles)
 
+    # initialize Dam
+    damLine = inputSimLines['damLine']
+    damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
+    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
+    dem['damLine'] = damLine
+
     # perform initialisation step for redistributing particles
     if cfg['GENERAL'].getboolean('iniStep'):
         startTimeIni = time.time()
@@ -833,12 +842,6 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, dem, simTypeActual, inputSimLines['resLine'],
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
-
-    # initialize Dam
-    damLine = inputSimLines['damLine']
-    damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
-    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
-    dem['damLine'] = damLine
     return particles, fields, dem, reportAreaInfo
 
 
@@ -946,7 +949,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             else:
                 idFixed = np.append(idFixed, np.ones(n))
 
-        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
+        hPartArray = DFAtllsC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
         # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
         # partticles have the same area but may have different flow thickness which means a different mass)
@@ -2088,8 +2091,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     centerList = centerList.split('|')
     centerTrackPartPoint = {'x': np.array([float(centerList[0])]),
                             'y': np.array([float(centerList[1])])}
-    # centerTrackPartPoint, _ = geoTrans.projectOnRaster(
-    #     dem, centerTrackPartPoint, interp='bilinear')
     centerTrackPartPoint['x'] = (centerTrackPartPoint['x']
                                  - dem['originalHeader']['xllcenter'])
     centerTrackPartPoint['y'] = (centerTrackPartPoint['y']

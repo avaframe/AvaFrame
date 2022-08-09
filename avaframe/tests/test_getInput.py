@@ -105,10 +105,10 @@ def test_getInputData(tmp_path):
     cfg['INPUT'] = {'releaseScenario': ''}
 
     # call function to be tested
-    dem, rels, ent, res, entResInfo = getInput.getInputData(avaDir, cfg['INPUT'])
+    dem, rels, ent, res, wall, entResInfo = getInput.getInputData(avaDir, cfg['INPUT'])
     # second option
     cfg['INPUT']['releaseScenario'] = 'release1HS'
-    dem2, rels2, ent2, res2, entResInfo2 = getInput.getInputData(avaDir, cfg['INPUT'])
+    dem2, rels2, ent2, res2, wall, entResInfo2 = getInput.getInputData(avaDir, cfg['INPUT'])
     # Test
     assert str(dem) == str(pathlib.Path(avaDir, 'Inputs', 'DEM_HS_Topo.asc'))
     assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
@@ -117,13 +117,17 @@ def test_getInputData(tmp_path):
     assert str(ent) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
     assert entResInfo['flagEnt'] == "Yes"
     assert entResInfo['flagRes'] == "No"
+    assert entResInfo['flagWall'] == "No"
+    assert wall is None
 
     # third option
     cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
-    dem3, rels3, ent3, res3, entResInfo3 = getInput.getInputData(avaDir, cfg['INPUT'])
+    dem3, rels3, ent3, res3, wall, entResInfo3 = getInput.getInputData(avaDir, cfg['INPUT'])
     assert str(ent3) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
     assert entResInfo3['flagEnt'] == "Yes"
     assert entResInfo3['flagRes'] == "No"
+    assert entResInfo['flagWall'] == "No"
+    assert wall is None
     assert rels3 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
 
 
@@ -141,9 +145,12 @@ def test_getInputData(tmp_path):
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
-    dem6, rels6, ent6, res6, entResInfo6 = getInput.getInputData(avaDir, cfg['INPUT'])
+    dem6, rels6, ent6, res6, wall, entResInfo6 = getInput.getInputData(avaDir, cfg['INPUT'])
+    print(wall)
     assert ent6 == ''
     assert res6 == ''
+    assert str(wall) == os.path.join(avaDir, 'Inputs', 'DAM', 'dam.shp')
+    assert entResInfo6['flagWall'] == "Yes"
     assert entResInfo6['flagEnt'] == "No"
     assert entResInfo6['flagRes'] == "No"
 

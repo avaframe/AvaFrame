@@ -63,7 +63,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
             cfg['GENERAL'].getint('sphOptionIni'), gradient=0)
 
         # update position as a result of SPH force and artifical viscosity
-        particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=1)
+        particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=1)
 
         particlesList.append(particles.copy())
 

@@ -8,6 +8,7 @@
 \usepackage[helvet]{sfmath}
 \everymath={\sf}
 \usepackage{pagecolor}
+\tikzset{>=latex, cross/.style={cross out, draw=black, minimum size=2*(#1), inner sep=0pt, outer sep=0pt},}
 \usetikzlibrary{calc,arrows,intersections,angles,quotes,patterns, backgrounds, shapes.misc}
 \usetikzlibrary{plotmarks,decorations.pathreplacing, positioning}
 
@@ -15,3 +16,14 @@
 \definecolor{AFMiddle}{HTML}{51ADE5}
 \definecolor{AFDark}{HTML}{0E4160}
 \definecolor{AFOppo}{HTML}{FFB150}
+
+
+\newcommand{\unitIn}[3][2pt]{
+        \draw[color=#3, very thick] (#2) node[cross=#1]{};
+        \draw[color=#3, very thick] (#2) circle (#1);
+        }
+\newcommand{\RightAngle}[5][3pt]{%
+        \draw[#5, very thick] ($#3!#1!#2$)
+        --($ #3!2!($($#3!#1!#2$)!.5!($#3!#1!#4$)$) $)
+        --($#3!#1!#4$) ;
+        }

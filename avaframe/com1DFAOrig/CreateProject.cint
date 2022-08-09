@@ -1,3 +1,5 @@
+// This file enables to take a dam into account
+// replace the CreateProject.cint file with this one and specify the correct slope and dam height line 125 and 128
 int MAXSTRLEN = 512;
 // testing
 // the
@@ -5,7 +7,8 @@ int MAXSTRLEN = 512;
 void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
                    char DhmName[], char RelFile[][512],
                    char EntFile[][512],
-                   char ResFile[][512]) {
+                   char ResFile[][512],
+                   char WallFile[][512]) {
   int i;
   char name[512];
   char Dhm[512];
@@ -13,12 +16,17 @@ void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
   char Release[512];
   char Entrainment[512];
   char Resistance[512];
+  char Wall[512];
   char BaseSimName[512];
 
   char Areas[1000*MAXSTRLEN];
   int nAreas;
+  char Lines[1000*MAXSTRLEN];
+  int nLines;
   char CuName[512];
   char CuArea[512];
+  char CuLine[512];
+  char CuLineOrig[512];
 
   strcpy(BaseSimName,"Exp");
 
@@ -79,9 +87,52 @@ void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
     set(CuArea, "ProjectOnto", name);
   }
 
+
+  // WallLines
+  // import_polylines  -> to polylines, not walllines
+  set("Project/Polylines", "import_polylines", WallFile);
+  get("Project/Polylines", "GetComponentList", Lines);
+
+  set("Project/WallLines", "AddWallLine", "Dam");
+
+  sprintf(name,"../../DHMs/%s_simulation",DhmName);
+
+  nLines = list_size(Lines);
+  for(i = 0; i < nLines; i++){
+
+    get_list_element(Lines, i, CuName);
+
+    sprintf(CuLine, "Project/WallLines/%s", "Dam");
+    sprintf(CuLineOrig, "../../Polylines/%s", CuName);
+
+    // CopyCoordsOf -> copy the coordinate of the previously imported polyline
+    set(CuLine, "CopyCoordsOf", CuLineOrig);
+    set(CuLine, "ProjectOnto", name);
+
+    // set-ID Heights -> set the heights
+    // dam for parabola sloped (~10m)
+    // set(CuLine, "Heights", "129.00%AK_SEP%54.00");
+    // dam for parabola curved (~10m)
+    // set(CuLine, "Heights", "185%AK_SEP%178%AK_SEP%154%AK_SEP%122%AK_SEP%91");
+    // dam for slide curved (~10m)
+    // set(CuLine, "Heights", "1107%AK_SEP%1097%AK_SEP%1087%AK_SEP%1071%AK_SEP%1047");
+    // dam for bowl curved (~10m)
+    set(CuLine, "Heights", "175%AK_SEP%142%AK_SEP%116%AK_SEP%103%AK_SEP%106");
+    // dam for avaKot1 (~10m)
+    // set(CuLine, "Heights", "1184%AK_SEP%1140%AK_SEP%1120%AK_SEP%1112%AK_SEP%1105%AK_SEP%1079");
+
+    // set-ID Heights -> set the heights
+    //set(CuLine, "Heights", "185%AK_SEP%178%AK_SEP%154%AK_SEP%122%AK_SEP%91");
+
+    // set-ID Slopes -> set the slopes
+    set(CuLine, "Slopes", "60");
+  }
+
   set("Project/ReleaseAreas", "VariableValues", "");
   set("Project/ResistanceAreas", "VariableValues", "");
   set("Project/EntrainmentAreas", "VariableValues", "");
+  set("Project/Polylines", "VariableValues", "");
+  set("Project/WallLines", "VariableValues", "");
 
   set("", "SaveProject", "");
   set("", "Close", "");
@@ -100,6 +151,7 @@ int main()
   char RelFiles[512];
   char EntFiles[512];
   char ResFiles[512];
+  char WallFiles[512];
   char val[256], argv[256*10];
   int argc, i;
 
@@ -111,10 +163,11 @@ int main()
   strcpy(RelFiles,"##RELFILE##");
   strcpy(EntFiles,"##ENTFILE##");
   strcpy(ResFiles,"##RESFILE##");
+  strcpy(WallFiles,"##WALLFILE##");
 
   // --- Calls
   CreateProject(Com1DFAProjectDir, DhmFile,
-                DhmName, RelFiles, EntFiles,  ResFiles);
+                DhmName, RelFiles, EntFiles,  ResFiles, WallFiles);
 
   printf("[BatchCom1DFA] Project %s created!\n", Com1DFAProjectDir);
   return 0;

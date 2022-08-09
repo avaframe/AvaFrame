@@ -35,6 +35,8 @@ void CreateSimulations(char Com1DFAProjectDir[],
 
   sprintf(Sim,"Project/Simulations/%s/ReleaseAreas/",CuSimName);
   set(Sim, "AppendAllObjectsOfType", "");
+  sprintf(Sim,"Project/Simulations/%s/WallLines/",CuSimName);
+  set(Sim, "AppendAllObjectsOfType", "");
   fprintf(SimLog, "%s;%s\n",CuSimName,"null");
 
   fclose(SimLog);

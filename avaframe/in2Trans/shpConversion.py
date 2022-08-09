@@ -61,6 +61,7 @@ def SHP2Array(infile, defname=None):
     # set defaults for variables
     layername = None
     thickness = None
+    slope = None
     rho = None
     sks = None
     iso = None
@@ -89,7 +90,12 @@ def SHP2Array(infile, defname=None):
 
     for n, item in enumerate(shps):
         pts = item.points
-        zs = [0.0] * len(pts)
+        # is there a z coordinate?
+        try:
+            # for dams
+            zs = item.z
+        except AttributeError:
+            zs = [0.0] * len(pts)
 
         # check if records are available and extract
         if records:
@@ -103,6 +109,9 @@ def SHP2Array(infile, defname=None):
                     thickness = value
                 if (name == 'ci95'):
                     ci95 = value
+                if (name == 'slope'):
+                    # for dams
+                    slope = value
                 if (name == 'rho'):
                     rho = value
                 if (name == 'sks'):
@@ -141,6 +150,7 @@ def SHP2Array(infile, defname=None):
 
     SHPdata['Name'] = Name
     SHPdata['thickness'] = thicknessList
+    SHPdata['slope'] = slope
     SHPdata['Start'] = Start
     SHPdata['Length'] = Length
     SHPdata['x'] = Coordx
@@ -406,6 +416,10 @@ def writeLine2SHPfile(lineDict, lineName, fileName, header=''):
         line name
     fileName: str or pathlib path
         path where the line will be saved
+        line name
+    header: dict
+        optional argument ('' by default). If provided, header dictionary with 'xllcenter' and 'yllcenter' to add to the
+        line
     Returns
     -------
     fileName : str

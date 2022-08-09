@@ -103,6 +103,8 @@ def getInputData(avaDir, cfg):
         full path to entrainment area .shp file
     resFile : str
         full path to resistance area .shp file
+    wallFile: str
+        full path to wall line .shp file
     entResInfo : flag dict
         flag if Yes entrainment and/or resistance areas found and used for simulation
     """
@@ -136,16 +138,18 @@ def getInputData(avaDir, cfg):
 
     # Initialise resistance areas
     resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
-    if resFile == None:
+    if resFile is None:
         resFile = ''
     # Initialise entrainment areas
     entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
-    if entFile == None:
+    if entFile is None:
         entFile = ''
+    # Initialise dam line
+    wallFile, entResInfo['flagWall'] = getAndCheckInputFiles(inputDir, 'DAM', 'Dam', fileExt='shp')
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
-    return demFile, relFiles, entFile, resFile, entResInfo
+    return demFile, relFiles, entFile, resFile, wallFile, entResInfo
 
 
 def getInputDataCom1DFA(avaDir, cfg):
@@ -224,8 +228,8 @@ def getInputDataCom1DFA(avaDir, cfg):
     # Initialise entrainment areas
     entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
 
-    # Initialise entrainment areas
-    damFile, entResInfo['flagDam'] = getAndCheckInputFiles(inputDir, 'DAM', 'Dam', fileExt='shp')
+    # Initialise dam line
+    damFile, entResInfo['dam'] = getAndCheckInputFiles(inputDir, 'DAM', 'Dam', fileExt='shp')
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)

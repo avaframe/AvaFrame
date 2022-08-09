@@ -93,12 +93,12 @@ def test_getIntersection(capfd):
     (xCrown, yCrown, zCrown) = (np.array([-3., -1., 1., 3.]), np.array([3., 1., -1., -3.]), np.array([1., 2., 3., 4.]))
     (xTangent, yTangent, zTangent) = (np.array([1, 1, 1, 1])/math.sqrt(2), -np.array([1, 1, 1, 1])/math.sqrt(2), np.array([0., 0., 0., 0.]))
     nDamPoints = 4
-    intersection, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
+    intersection, section, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
                                                                                   xFoot, yFoot, zFoot,
                                                                                   xCrown, yCrown, zCrown,
                                                                                   xTangent, yTangent, zTangent,
                                                                                   nDamPoints)
-
+    print(xT, yT, zT)
     assert intersection == 1
     assert xF == 0
     assert yF == 0
@@ -107,8 +107,8 @@ def test_getIntersection(capfd):
     assert yC == 0
     assert zC == 2.5
     atol = 1e-10
-    assert xT == pytest.approx(1/math.sqrt(2), rel=atol)
-    assert yT == pytest.approx(-1/math.sqrt(2), rel=atol)
+    assert xT == pytest.approx(1/math.sqrt(2), abs=atol)
+    assert yT == pytest.approx(-1/math.sqrt(2), abs=atol)
     assert zT == 0
 
     (xOld, yOld) = (-1, 0)
@@ -117,7 +117,7 @@ def test_getIntersection(capfd):
     (xCrown, yCrown, zCrown) = (np.array([-1., 1., 3.]), np.array([1., -1., -3.]), np.array([2., 3., 4.]))
     (xTangent, yTangent, zTangent) = (np.array([1, 1, 1])/math.sqrt(2), -np.array([1, 1, 1])/math.sqrt(2), np.array([0., 0., 0.]))
     nDamPoints = 3
-    intersection, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
+    intersection, section, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
                                                                                   xFoot, yFoot, zFoot,
                                                                                   xCrown, yCrown, zCrown,
                                                                                   xTangent, yTangent, zTangent,
@@ -131,8 +131,8 @@ def test_getIntersection(capfd):
     assert yC == 0
     assert zC == 2.5
     atol = 1e-10
-    assert xT == pytest.approx(1/math.sqrt(2), rel=atol)
-    assert yT == pytest.approx(-1/math.sqrt(2), rel=atol)
+    assert xT == pytest.approx(1/math.sqrt(2), abs=atol)
+    assert yT == pytest.approx(-1/math.sqrt(2), abs=atol)
     assert zT == 0
 
     (xOld, yOld) = (-1, 0)
@@ -141,7 +141,7 @@ def test_getIntersection(capfd):
     (xCrown, yCrown, zCrown) = (np.array([-3., -1., 1.]), np.array([3., 1., -1.]), np.array([1., 2., 3.]))
     (xTangent, yTangent, zTangent) = (np.array([1, 1, 1])/math.sqrt(2), -np.array([1, 1, 1])/math.sqrt(2), np.array([0., 0., 0.]))
     nDamPoints = 3
-    intersection, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
+    intersection, section, xF, yF, zF, xC, yC, zC, xT, yT, zT = damCom1DFA.getIntersection(xOld, yOld, xNew, yNew,
                                                                                   xFoot, yFoot, zFoot,
                                                                                   xCrown, yCrown, zCrown,
                                                                                   xTangent, yTangent, zTangent,
@@ -155,8 +155,8 @@ def test_getIntersection(capfd):
     assert yC == 0
     assert zC == 2.5
     atol = 1e-10
-    assert xT == pytest.approx(1/math.sqrt(2), rel=atol)
-    assert yT == pytest.approx(-1/math.sqrt(2), rel=atol)
+    assert xT == pytest.approx(1/math.sqrt(2), abs=atol)
+    assert yT == pytest.approx(-1/math.sqrt(2), abs=atol)
     assert zT == 0
 
 
@@ -164,7 +164,7 @@ def test_initializeWallLines(capfd):
     '''
     '''
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'dam': 'True', 'damHeight': '10', 'damSlope': '45'}
+    cfg['GENERAL'] = {'dam': 'True', 'damSlope': '45'}
     originalHeader = {}
     originalHeader['xllcenter'] = -5
     originalHeader['yllcenter'] = -5
@@ -181,11 +181,16 @@ def test_initializeWallLines(capfd):
     demHeader['ncols'] = 20
     dem = {'header': demHeader, 'originalHeader': originalHeader, 'rasterData': np.zeros((20, 20)),
            'Nx': np.zeros((20, 20)), 'Ny': np.zeros((20, 20)), 'Nz': np.ones((20, 20))}
-    wallLineDict = {'x': np.array([0., 0., 0., 1., 2.]), 'y': np.array([2., 1., 0., 0., 0.])}
+    wallLineDict = {'x': np.array([0., 0., 0., 1., 2.]), 'y': np.array([2., 1., 0., 0., 0.]),
+                    'z': np.array([10., 10., 10., 10., 10.]), 'fileName': 'test.shp', 'Name': 'dam', 'slope': 45}
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, wallLineDict)
     print(wallLineDict)
     print(wallLineDict['cellsCrossed'])
-    assert wallLineDict['flagDam'] == 1
+    print(wallLineDict['xTangent'])
+    print(wallLineDict['yTangent'])
+    print(wallLineDict['zTangent'])
+
+    assert wallLineDict['dam'] == 1
     assert wallLineDict['nPoints'] == 5
     assert wallLineDict['height'][0] == 10
     assert np.size(wallLineDict['height']) == 5
@@ -194,22 +199,22 @@ def test_initializeWallLines(capfd):
     assert np.allclose(wallLineDict['x'], np.array([15, 15, 12.07106781, 6, 7]), atol=1.e-8)
     assert np.allclose(wallLineDict['y'], np.array([7, 6, 12.07106781, 15, 15]), atol=1.e-8)
     assert np.allclose(wallLineDict['z'], np.zeros((5)), atol=1.e-10)
-    assert np.allclose(wallLineDict['xTangent'], np.array([0, 0, 1/math.sqrt(2), 1, 1]), atol=1.e-10)
-    assert np.allclose(wallLineDict['yTangent'], np.array([-1, -1, -1/math.sqrt(2), 0, 0]), atol=1.e-10)
-    assert np.allclose(wallLineDict['zTangent'], np.zeros((5)), atol=1.e-10)
+    assert np.allclose(wallLineDict['xTangent'], np.array([0, 0, 1, 1]), atol=1.e-10)
+    assert np.allclose(wallLineDict['yTangent'], np.array([-1, -1, 0, 0]), atol=1.e-10)
+    assert np.allclose(wallLineDict['zTangent'], np.zeros((4)), atol=1.e-10)
     assert np.allclose(wallLineDict['xCrown'], np.array([5, 5, 5, 6, 7]), atol=1.e-8)
     assert np.allclose(wallLineDict['yCrown'], np.array([7, 6, 5, 5, 5]), atol=1.e-8)
     assert np.allclose(wallLineDict['zCrown'], 10*np.ones((5)), atol=1.e-10)
 
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, None)
-    assert wallLineDict['flagDam'] == 0
+    assert wallLineDict['dam'] == 0
 
 
 def test_getWallInteraction(capfd):
     '''
     '''
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'dam': 'True', 'damHeight': '10', 'damSlope': '90'}
+    cfg['GENERAL'] = {'restitutionCoefficient': '1'}
     (nrows, ncols, csz) = (31, 31, 1)
     originalHeader = {}
     originalHeader['xllcenter'] = -15
@@ -227,14 +232,15 @@ def test_getWallInteraction(capfd):
     demHeader['ncols'] = ncols
     dem = {'header': demHeader, 'originalHeader': originalHeader, 'rasterData': np.zeros((nrows, ncols)),
            'Nx': np.zeros((nrows, ncols)), 'Ny': np.zeros((nrows, ncols)), 'Nz': np.ones((nrows, ncols))}
-    wallLineDict = {'x': np.array([0., 0.]), 'y': np.array([-10, 10.])}
+    wallLineDict = {'x': np.array([0., 0.]), 'y': np.array([-10, 10.]),
+                    'z': np.array([10., 10.]), 'fileName': 'test.shp', 'Name': 'dam', 'slope': 90}
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, wallLineDict)
     interpOption = 2
     restitutionCoefficient = 1
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
     (uxNew, uyNew, uzNew) = (10, 0, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew, uxNew, uyNew, uzNew, wallLineDict['nPoints'],
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
@@ -242,18 +248,41 @@ def test_getWallInteraction(capfd):
         ncols, nrows, csz, interpOption, restitutionCoefficient,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
-    assert xNew+originalHeader['xllcenter'] == -5
+    atol = 1e-6
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == -2
     assert yNew+originalHeader['yllcenter'] == 0
     assert zNew == 0
-    assert uxNew == -10
+    assert uxNew == pytest.approx(-10, abs=atol)
     assert uyNew == 0
     assert uzNew == 0
 
-    restitutionCoefficient = 0
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    restitutionCoefficient = 0.5
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
     (uxNew, uyNew, uzNew) = (10, 0, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+        xOld, yOld, zOld, xNew, yNew, zNew, uxNew, uyNew, uzNew, wallLineDict['nPoints'],
+        wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
+        wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
+        wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
+        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
+    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+    atol = 1e-6
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == -1
+    assert yNew+originalHeader['yllcenter'] == 0
+    assert zNew == 0
+    assert uxNew == pytest.approx(-5, abs=atol)
+    assert uyNew == 0
+    assert uzNew == 0
+
+    restitutionCoefficient = 0
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (uxNew, uyNew, uzNew) = (10, 0, 0)
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew,
         uxNew, uyNew, uzNew,
         wallLineDict['nPoints'],
@@ -263,6 +292,7 @@ def test_getWallInteraction(capfd):
         ncols, nrows, csz, interpOption, restitutionCoefficient,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+    assert fI == 1
     assert xNew+originalHeader['xllcenter'] == 0
     assert yNew+originalHeader['yllcenter'] == 0
     assert zNew == 0
@@ -271,10 +301,10 @@ def test_getWallInteraction(capfd):
     assert uzNew == 0
 
     restitutionCoefficient = 1
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
-    (uxNew, uyNew, uzNew) = (10, 5, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
+    (uxNew, uyNew, uzNew) = (10, 3, 0)
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew,
         uxNew, uyNew, uzNew,
         wallLineDict['nPoints'],
@@ -284,18 +314,20 @@ def test_getWallInteraction(capfd):
         ncols, nrows, csz, interpOption, restitutionCoefficient,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
-    assert xNew+originalHeader['xllcenter'] == -5
-    assert yNew+originalHeader['yllcenter'] == 5
+    atol = 1e-6
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == pytest.approx(-2, abs=atol)
+    assert yNew+originalHeader['yllcenter'] == pytest.approx(5, abs=atol)
     assert zNew == 0
-    assert uxNew == -10
-    assert uyNew == 5
+    assert uxNew == pytest.approx(-10, abs=atol)
+    assert uyNew == pytest.approx(3, abs=atol)
     assert uzNew == 0
 
     restitutionCoefficient = 0
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
-    (uxNew, uyNew, uzNew) = (10, 5, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
+    (uxNew, uyNew, uzNew) = (10, 3, 0)
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew,
         uxNew, uyNew, uzNew,
         wallLineDict['nPoints'],
@@ -305,15 +337,16 @@ def test_getWallInteraction(capfd):
         ncols, nrows, csz, interpOption, restitutionCoefficient,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
-    assert xNew+originalHeader['xllcenter'] == 0
-    assert yNew+originalHeader['yllcenter'] == 5
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)
+    assert yNew+originalHeader['yllcenter'] == pytest.approx(-5/3, abs=atol)
     assert zNew == 0
     assert uxNew == 0
-    assert uyNew == 5
+    assert uyNew == 0
     assert uzNew == 0
 
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'dam': 'True', 'damHeight': '1', 'damSlope': '45'}
+    cfg['GENERAL'] = {'restitutionCoefficient': '1'}
     (nrows, ncols, csz) = (31, 31, 1)
     originalHeader = {}
     originalHeader['xllcenter'] = -15
@@ -331,13 +364,14 @@ def test_getWallInteraction(capfd):
     demHeader['ncols'] = ncols
     dem = {'header': demHeader, 'originalHeader': originalHeader, 'rasterData': np.zeros((nrows, ncols)),
            'Nx': np.zeros((nrows, ncols)), 'Ny': np.zeros((nrows, ncols)), 'Nz': np.ones((nrows, ncols))}
-    wallLineDict = {'x': np.array([1., 1.]), 'y': np.array([-10, 10.])}
+    wallLineDict = {'x': np.array([1., 1.]), 'y': np.array([-10, 10.]),
+                    'z': np.array([1., 1.]), 'fileName': 'test.shp', 'Name': 'dam', 'slope': 45}
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, wallLineDict)
     restitutionCoefficient = 1
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
-    (uxNew, uyNew, uzNew) = (10, 5, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 0-originalHeader['yllcenter'], 0)
+    (uxNew, uyNew, uzNew) = (10, 0, 0)
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew,
         uxNew, uyNew, uzNew,
         wallLineDict['nPoints'],
@@ -347,16 +381,17 @@ def test_getWallInteraction(capfd):
         ncols, nrows, csz, interpOption, restitutionCoefficient,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
-    atol = 1e-10
-    assert xNew+originalHeader['xllcenter'] == 0
-    assert yNew+originalHeader['yllcenter'] == 5
-    assert zNew == pytest.approx(5, rel=atol)
-    assert uxNew == pytest.approx(0, rel=atol)
-    assert uyNew == pytest.approx(5, rel=atol)
-    assert uzNew == pytest.approx(10, rel=atol)
+    atol = 1e-6
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)
+    assert yNew+originalHeader['yllcenter'] == pytest.approx(0, abs=atol)
+    assert zNew == pytest.approx(0, abs=atol)  # because of the reprojection...
+    assert uxNew == pytest.approx(0, abs=atol)
+    assert uyNew == pytest.approx(0, abs=atol)
+    assert uzNew == pytest.approx(0, abs=atol)  # because of the reprojection...
 
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'dam': 'True', 'damHeight': '1', 'damSlope': '30'}
+    cfg['GENERAL'] = {'restitutionCoefficient': '1'}
     (nrows, ncols, csz) = (31, 31, 1)
     originalHeader = {}
     originalHeader['xllcenter'] = -15
@@ -374,13 +409,14 @@ def test_getWallInteraction(capfd):
     demHeader['ncols'] = ncols
     dem = {'header': demHeader, 'originalHeader': originalHeader, 'rasterData': np.zeros((nrows, ncols)),
            'Nx': np.zeros((nrows, ncols)), 'Ny': np.zeros((nrows, ncols)), 'Nz': np.ones((nrows, ncols))}
-    wallLineDict = {'x': np.array([1., 1.]), 'y': np.array([-10, 10.])}
+    wallLineDict = {'x': np.array([1., 1.]), 'y': np.array([-10, 10.]),
+                    'z': np.array([1., 1.]), 'fileName': 'test.shp', 'Name': 'dam', 'slope': 45}
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, wallLineDict)
     restitutionCoefficient = 1
-    (xOld, yOld, zOld) = (-10-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
-    (xNew, yNew, zNew) = (5-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
-    (uxNew, uyNew, uzNew) = (10, 5, 0)
-    xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
+    (xOld, yOld, zOld) = (-1-originalHeader['xllcenter'], -5-originalHeader['yllcenter'], 0)
+    (xNew, yNew, zNew) = (2-originalHeader['xllcenter'], 5-originalHeader['yllcenter'], 0)
+    (uxNew, uyNew, uzNew) = (10, 3, 0)
+    fI, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dEm = damCom1DFA.getWallInteraction(
         xOld, yOld, zOld, xNew, yNew, zNew,
         uxNew, uyNew, uzNew,
         wallLineDict['nPoints'],
@@ -391,9 +427,10 @@ def test_getWallInteraction(capfd):
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-10
-    assert xNew+originalHeader['xllcenter'] > 0
-    assert yNew+originalHeader['yllcenter'] == 5
-    assert zNew > 0
-    assert uxNew > 0
-    assert uyNew == pytest.approx(5, rel=atol)
-    assert uzNew > 0
+    assert fI == 1
+    assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)
+    assert yNew+originalHeader['yllcenter'] == pytest.approx(5, abs=atol)
+    assert zNew == pytest.approx(0, abs=atol)  # because of the reprojection...
+    assert uxNew == pytest.approx(0, abs=atol)
+    assert uyNew == pytest.approx(3, abs=atol)
+    assert uzNew == pytest.approx(0, abs=atol)
