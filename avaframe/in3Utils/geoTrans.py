@@ -230,9 +230,17 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod,
                                        fill_value=header['noDataValue'])
     elif remeshOption == 'interp2d':
+        if np.isnan(z).any():
+            message = 'Data to remesh contains NaNs. Can not interpole with "interp2d".'
+            log.error(message)
+            raise ValueError(message)
         I2D = sp.interpolate.interp2d(xGrid[0, :], yGrid[:, 0], z, kind=interpMethod, fill_value=header['noDataValue'])
         zNew = I2D(xGridNew[0, :], yGridNew[:, 0])
     elif remeshOption == 'RectBivariateSpline':
+        if np.isnan(z).any():
+            message = 'Data to remesh contains NaNs. Can not interpole with "RectBivariateSpline".'
+            log.error(message)
+            raise ValueError(message)
         if interpMethod == 'linear':
             k = 1
         elif interpMethod == 'cubic':
@@ -240,7 +248,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         elif interpMethod == 'quintic':
             k = 5
         else:
-            message = 'There is no %s interpolation methode available for RectBivariateSpline' % interpMethod
+            message = 'There is no %s interpolation method available for RectBivariateSpline' % interpMethod
             log.error(message)
             raise NameError(message)
         zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(yGridNew[:, 0],
