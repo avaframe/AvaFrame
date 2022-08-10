@@ -61,6 +61,9 @@ for varPar in cfgFiles:
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
     cfgFile=cfgFiles[varPar]['cfgFile'])
 
+    # Clean input directory(ies) of old work files but keep outputs
+    initProj.cleanSingleAvaDir(avaDir, keep=logName, deleteOutput=False)
+
 # perform pobability analysis
 for probConf in probabilityConfigurations:
 
