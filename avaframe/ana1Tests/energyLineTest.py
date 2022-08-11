@@ -179,9 +179,10 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
     runOutAngleError = resultEnergyTest['runOutAngleError']
     rmseVelocityElevation = resultEnergyTest['rmseVelocityElevation']
     errorS = abs(runOutSError)
-    sMin = min(avaProfileMass['s'][-1], sIntersection) - errorS
-    sMax = max(avaProfileMass['s'][-1], sIntersection) + errorS
-    zMin = avaProfileMass['z'][-1] + slopeExt*(sMax - avaProfileMass['s'][-1])-z0
+    errorZ = abs(runOutZError)
+    sMin = min(avaProfileMass['s'][-1], sIntersection) - max(errorS, 0)
+    sMax = max(avaProfileMass['s'][-1], sIntersection) + max(errorS, 0)
+    zMin = avaProfileMass['z'][-1] + min(slopeExt*(sMax - avaProfileMass['s'][-1]), 0 - 2*errorZ)-z0
     zMax = avaProfileMass['z'][0] - sMin*np.tan(min(runOutAngleRad, alphaRad))-z0
     if avaProfileMass['z'][-1] == zIntersection:
         zMin = zMin - (zMax-zMin)*0.1
@@ -311,8 +312,9 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     zA1 = alphaLine[idx+1]
     sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
     zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
-    s[-1] = sIntersection
-    z[-1] = zIntersection
+    if coefExt > 0:
+        s[-1] = sIntersection
+        z[-1] = zIntersection
     coefExt = np.max(s[-1]/avaProfileMass['s'][-1]-1, 0)
     return slopeExt, sIntersection, zIntersection, coefExt
 
