@@ -170,8 +170,8 @@ def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimNam
                                                                'relAngle': 'Angle °'}},
                           'Rotation test Energy line result table': {
                           'type': 'pandasDF', 'column names': {'simName': 'Simulation name', 'relAngle': 'Angle °',
-                                                               'zDiff': 's Diff [m]',
-                                                               'sDiff': 'z Diff [m]',
+                                                               'sDiff': 's Diff [m]',
+                                                               'zDiff': 'z Diff [m]',
                                                                'runoutAngleDiff': 'angle Diff [°]'}},
                           'Rotation test Energy line figures': {'type': 'image'},
                           'Rotation test AIMEC result table': {
