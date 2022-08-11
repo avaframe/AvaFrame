@@ -3,6 +3,36 @@ Notes to Developers
 
 Here you can find notes on design principles and how to contribute to AvaFrame.
 
+First a few general remarks. We are aware there's no right or wrong here, we
+decided to stick to a few principles. If you contribute code, please try to observe
+these:
+
+AF-DESIGN-1: Use SI units
+  Units in APIs should be SI units: seconds, meters, etc.
+
+AF-STYLE-1: Line length 
+  If you want a guide for line length --- we think line breaking at 120
+  characters makes more sense than line breaking at 80.
+
+AF-STYLE-2: Naming
+  Use short, but descriptive enough names for variables. Use longer descriptive names for
+  things with bigger scopes (functions, modules). Main theme: as short as possible, but as long 
+  as necessary. 
+  
+  Please use lowerCamelCase (e.g.: myFancyVariable) for naming, avoid underscores.  
+  
+AF-STYLE-3: Commenting
+  Exposed API functions need documentation comments, most importantly a docstring, 
+  other code only needs to be commented as necessary. Write your code clearly and use sensible
+  names to reduce the need for comments.
+
+AF-STYLE-4: No dead code
+  Unused code, commented out code, functions that are never called, etc,
+  should be removed from the project to reduce the cognitive load of
+  reading the source code. Old code is available in the source history if
+  it is needed.
+
+
 
 Our suggested git workflow
 --------------------------
