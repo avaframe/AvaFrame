@@ -431,12 +431,19 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     rasterArea = rasterTransfo['rasterArea']
     maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
 
-    # add mean values for each cross-section for actual time step to mean values array
-    # reshape is required as rows- mean values for each crossprofile and cols: time steps
-    if mtiInfo['timeList'] == []:
-        mtiInfo['mti'] = aCrossMean.reshape(-1, 1)
+    # use the max or the mean of each cross section
+    if cfgRangeTime['GENERAL']['maxOrMean'] == 'max':
+        aCross = aCrossMax
     else:
-        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCrossMean.reshape(-1, 1)))
+        aCross = aCrossMea
+
+    # add max or mean values for each cross-section for actual time step to mti values array
+    # reshape is required as rows- max/mean values for each crossprofile and cols: time steps
+    if mtiInfo['timeList'] == []:
+        mtiInfo['mti'] = aCross.reshape(-1, 1)
+
+    else:
+        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCross.reshape(-1, 1)))
 
     # extract avalanche front distance to reference point in path following coordinate system
     indStartOfRunout = rasterTransfo['indStartOfRunout']
@@ -446,7 +453,13 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
         cLower = max(lindex)
         rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
         mtiInfo['rangeList'].append(rangeValue)
+        # if animation plot shall be created add transformation info to mtiInfo dict for plots
+        if cfgRangeTime['PLOTS'].getboolean('animate'):
+            mtiInfo['slRaster'] = slRaster
+            mtiInfo['rasterTransfo'] = rasterTransfo
+            mtiInfo['cLower'] = cLower
     else:
+        cLower = np.nan
         mtiInfo['rangeList'].append(np.nan)
 
     # plot avalanche front and transformed raster field
@@ -546,6 +559,7 @@ def fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demHeader, fields, mti
     # extract front and average values of result parameter
     if cfg['VISUALISATION'].getboolean('TTdiagram'):
         mtiInfo = extractFrontAndMeanValuesTT(cfgRangeTime, fields[rangeTimeResType], demHeader, mtiInfo)
+
     else:
         # extract front in simulation result for each time step and average values along range gates
         # for colorcoding range time plot
@@ -695,6 +709,7 @@ def approachVelocity(mtiInfo, minVelTimeStep):
     rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
     maxVel = 0.0
     rangeVel = 0.0
+    timeVel = 0.0
 
     # use minimum time step for computing approach velocity
     for i in range(len(timeListSorted)):

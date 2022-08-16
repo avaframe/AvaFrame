@@ -74,7 +74,7 @@ if preProcessedData:
             dtAnaPlots.radarFieldOfViewPlot(mtiInfo['radarFov'], mtiInfo['rangeMasked'], cfgRangeTime,
                 mtiInfo['rangeGates'], mtiInfo['dem'])
             # create plot
-            dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+            dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
 
 else:
     # fetch dem data
@@ -133,4 +133,4 @@ else:
             mtiInfo['timeList'].append(timeStep[0])
 
         # create plot
-        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)

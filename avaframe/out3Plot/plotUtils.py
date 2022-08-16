@@ -475,11 +475,13 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
             return rowsMin, rowsMax, colsMin, colsMax
 
 
-def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, tickLabelsList=''):
+def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, tickLabelsList='', location='right'):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
+
+
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9, location=location)
     cbar.outline.set_visible(False)
     # make sure the cbar title does not overlap with the cbar itself
     if extend in ['both', 'max']:
@@ -688,7 +690,7 @@ def getColors4Scatter(values, nSamples, unitSC):
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
 
 
-def addHillShadeContours(ax, data, cellSize, extent):
+def addHillShadeContours(ax, data, cellSize, extent, colors=['gray']):
     """ add hillshade and contours for given DEM data
 
         Parameters
@@ -701,6 +703,8 @@ def addHillShadeContours(ax, data, cellSize, extent):
             cell size of data
         extent: list
             extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
+        colors: list
+            optional, colors for elevation contour lines 
     """
     # create lightSource
     ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
@@ -714,7 +718,7 @@ def addHillShadeContours(ax, data, cellSize, extent):
     X, Y = gT.makeCoordinateGrid(extent[0], extent[2], cellSize, ncols, nrows)
 
     # add contour lines
-    CS = ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
+    CS = ax.contour(X, Y, data, colors=colors, levels=hillshadeContLevs, alpha=1.,
                     linewidths=0.5, zorder=2)
 
     # add labels

@@ -67,7 +67,7 @@ if preProcessedData:
             log.warning('Found %s - but type is thalweg-time cannot produce simulated thalweg-time diagram' % mtiInfo['name'].stem)
         else:
             # create plot
-            dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+            dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
 
 else:
     # fetch dem data
@@ -124,4 +124,4 @@ else:
             mtiInfo['timeList'].append(timeStep[0])
 
         # create plot
-        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)

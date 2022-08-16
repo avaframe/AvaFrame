@@ -38,6 +38,7 @@ from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
+import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
 #######################################
 # Set flags here
@@ -1367,6 +1368,11 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram') and t >= dtRangeTime[0]:
             mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demRT['header'],
                                                             fields, mtiInfo)
+
+            # create plots for tt diagram animation
+            if cfgRangeTime['PLOTS'].getboolean('animate') and cfg['VISUALISATION'].getboolean('TTdiagram'):
+                TTResType = cfgRangeTime['GENERAL']['rangeTimeResType']
+                dtAnaPlots.animationPlot(demRT, fields[TTResType], demRT['header']['cellsize'], TTResType, cfgRangeTime, mtiInfo, t)
 
         # make sure the array is not empty
         if t >= dtSave[0]:

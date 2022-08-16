@@ -27,7 +27,7 @@ def test_plotRangeTime(tmp_path):
         'minVelTimeStep': 2.}
 
     # call function to be tested
-    oAna.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+    oAna.plotRangeTime(mtiInfo, cfgRangeTime)
 
 
 def test_radarFieldOfViewPlot(tmp_path):
