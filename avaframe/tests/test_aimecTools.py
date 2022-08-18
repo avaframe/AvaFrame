@@ -1,5 +1,6 @@
 ''' Tests for module ana3AIMEC aimecTools '''
 import pandas as pd
+import numpy as np
 import pathlib
 import configparser
 import pytest
@@ -69,3 +70,14 @@ def test_computeCellSizeSL(tmp_path):
     with pytest.raises(ValueError) as e:
         assert aT.computeCellSizeSL(cfgSetup, demHeader['cellsize'])
     assert str(e.value) == message
+
+
+def test_addSurfaceParalleCoord(tmp_path):
+    """ test addSurfaceParalleCoord"""
+    rasterTransfo = {'s': np.array([0, 3, 6, 9, 12]), 'z': np.array([100, 96, 96, 92, 88])}
+    rasterTransfo = aT.addSurfaceParalleCoord(rasterTransfo)
+    tol = 1e-8
+    sParaSol = np.array([0, 5, 8, 13, 18])
+    testRes = np.allclose(rasterTransfo['sParallel'], sParaSol, atol=tol)
+    print(rasterTransfo['sParallel'])
+    assert (testRes)

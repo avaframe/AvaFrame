@@ -454,6 +454,12 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     # put back the scale due to the desired cellsize and get x,y of resample avapath
     rasterTransfo = scalePathWithCellSize(rasterTransfo, cellSizeSL)
 
+    # get z coordinate of the center line
+    rasterTransfo, _ = geoTrans.projectOnRaster(dem, rasterTransfo)
+
+    # add surface parallel coordinate (sParallel)
+    rasterTransfo = addSurfaceParalleCoord(rasterTransfo)
+
     # add info on start of runout area
     rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
 
@@ -1257,6 +1263,28 @@ def scalePathWithCellSize(rasterTransfo, cellSizeSL):
     rasterTransfo['x'] = rasterTransfo['gridx'][:, indCenter]
     rasterTransfo['y'] = rasterTransfo['gridy'][:, indCenter]
 
+    return rasterTransfo
+
+
+def addSurfaceParalleCoord(rasterTransfo):
+    """ Add the surface parallel coordinate
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation info
+
+    Returns
+    --------
+    rasterTransfo: dict
+        updated dictionary with the surface parallel coordinate 'sParallel'
+    """
+    dz = np.diff(rasterTransfo['z'], prepend=rasterTransfo['z'][0])
+    ds = np.diff(rasterTransfo['s'], prepend=rasterTransfo['s'][0])
+    dsParallel2 = (ds*ds + dz*dz)
+    dsParallel = np.sqrt(dsParallel2)
+    sParallel = np.cumsum(dsParallel)-dsParallel[0]
+    rasterTransfo['sParallel'] = sParallel
     return rasterTransfo
 
 
