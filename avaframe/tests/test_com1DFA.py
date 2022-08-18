@@ -1640,20 +1640,20 @@ def test_runCom1DFA(tmp_path, caplog):
 
 def test_runOrLoadCom1DFA(tmp_path, caplog):
     testDir = pathlib.Path(__file__).parents[0]
-    avalancheDir = testDir / '..' / 'data' / 'avaKot'
+    avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaNoAva'
     cfgMain = configparser.ConfigParser()
     with pytest.raises(FileExistsError) as e:
         dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
     assert ("Did not find any com1DFA simulations in") in str(e.value)
 
-    # testDir = pathlib.Path(__file__).parents[0]
-    # avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaHockeyChannelPytest'
-    # cfgMain = configparser.ConfigParser()
-    # dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
-    # print(simDF.index)
-    # print(simDF.columns)
-    # assert 'pft' in resTypeList
-    # assert 'pfv' in resTypeList
-    # assert 'ppr' in resTypeList
-    # assert 'relKot_c9fff169d9_ent_dfa' in simDF['simName'].to_list()
-    # assert 'relKot_728a70555e_null_dfa' in simDF['simName'].to_list()
+    testDir = pathlib.Path(__file__).parents[0]
+    avalancheDir = testDir / '..' / '..' / 'benchmarks' / 'avaHockeyChannelPytest'
+    cfgMain = configparser.ConfigParser()
+    dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile='')
+    print(simDF.index)
+    print(simDF.columns)
+    assert 'pft' in resTypeList
+    assert 'pfv' in resTypeList
+    assert 'ppr' in resTypeList
+    assert 'release1HS_0dcd58fc86_ent_dfa' in simDF['simName'].to_list()
+    assert 'release2HS_3d519adab0_ent_dfa' in simDF['simName'].to_list()

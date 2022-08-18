@@ -2309,7 +2309,7 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
         else:
             log.info('Using the secondary release area file: %s' % inputSimFiles['secondaryReleaseFile'])
 
-    return simTypeList
+    return standardCfg, simTypeList
 
 
 def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', deleteOutput=True):
