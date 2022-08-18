@@ -93,10 +93,10 @@ def test_createConfigurationInfo(tmp_path):
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
-    assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['d10bdc1e81']['mu'] == 0.155
-    assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
-    assert simDF.loc['e2145362b7']['relTh0'] == 1.
+    assert simDF.loc['0dcd58fc86']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['0dcd58fc86']['mu'] == 0.155
+    assert simDF.loc['3d519adab0']['releaseScenario'] == 'release2HS'
+    assert simDF.loc['3d519adab0']['relTh0'] == 1.
 
 
 def test_readAllConfigurationInfo():
@@ -118,23 +118,23 @@ def test_appendCgf2DF(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
 
     simDF = ''
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_d10bdc1e81_ent_dfa.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_0dcd58fc86_ent_dfa.ini'
     simName = pathlib.Path(cFile).stem
     simHash = 'd10bdc1e81'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
     simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
 
     assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['d10bdc1e81']['mu'] == '0.15500'
+    assert simDF.loc['d10bdc1e81']['mu'] == '0.155'
 
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_e2145362b7_ent_dfa.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_3d519adab0_ent_dfa.ini'
     simName = pathlib.Path(cFile).stem
     simHash = 'e2145362b7'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
     simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
 
     assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['d10bdc1e81']['mu'] == '0.15500'
+    assert simDF.loc['d10bdc1e81']['mu'] == '0.155'
     assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
     assert simDF.loc['e2145362b7']['relTh0'] == '1.0'
     simDF = cfgUtils.convertDF2numerics(simDF)

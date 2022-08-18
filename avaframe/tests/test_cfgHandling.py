@@ -38,7 +38,7 @@ def test_orderSimFiles():
 
     varParList, simDF = cfgHandling.orderSimulations(varParList, True, simDF)
 
-    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
+    assert simDF['simName'][0] == 'release1HS_0dcd58fc86_ent_dfa'
 
     varParList = 'releaseSenario'
     message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
@@ -59,7 +59,7 @@ def test_fetchAndOrderSimFiles():
 
     simDF = cfgHandling.fetchAndOrderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
 
-    assert simDF['simName'][0] == 'release1HS_d10bdc1e81_ent_dfa'
+    assert simDF['simName'][0] == 'release1HS_0dcd58fc86_ent_dfa'
 
     varParList = 'releaseSenario'
     message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')
@@ -95,8 +95,8 @@ def test_filterSims(tmp_path):
     simNames2 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
     simNames2 = sorted(simNames2)
     assert len(simNames2) == 2
-    assert simNames2[0] == 'release1HS_d10bdc1e81_ent_dfa'
-    assert simNames2[1] == 'release2HS_e2145362b7_ent_dfa'
+    assert simNames2[0] == 'release1HS_0dcd58fc86_ent_dfa'
+    assert simNames2[1] == 'release2HS_3d519adab0_ent_dfa'
 
     parametersDict = {'~relTh': 1.}
     simNames3 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
@@ -107,7 +107,7 @@ def test_filterSims(tmp_path):
     simNames4 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
 
     assert len(simNames4) == 1
-    assert simNames4[0] == 'release2HS_e2145362b7_ent_dfa'
+    assert simNames4[0] == 'release2HS_3d519adab0_ent_dfa'
 
     parametersDict = {'relTh': 1.}
 

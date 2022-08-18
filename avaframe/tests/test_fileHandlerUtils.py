@@ -340,8 +340,8 @@ def test_fetchFlowFields():
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
-    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_ppr'
-    assert flowFields[1].stem == 'release2HS_e2145362b7_ent_dfa_ppr'
+    assert flowFields[0].stem == 'release1HS_0dcd58fc86_ent_dfa_ppr'
+    assert flowFields[1].stem == 'release2HS_3d519adab0_ent_dfa_ppr'
     assert len(flowFields) == 2
 
     # call function to be tested
@@ -349,5 +349,5 @@ def test_fetchFlowFields():
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
-    assert flowFields[0].stem == 'release1HS_d10bdc1e81_ent_dfa_pft'
+    assert flowFields[0].stem == 'release1HS_0dcd58fc86_ent_dfa_pft'
     assert len(flowFields) == 6
