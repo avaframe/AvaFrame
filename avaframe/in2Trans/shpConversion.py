@@ -63,6 +63,7 @@ def SHP2Array(infile, defname=None):
     sks = None
     iso = None
     id = None
+    ci95 = None
 
     # get coordinate system
     sks = getSHPProjection(infile)
@@ -76,6 +77,7 @@ def SHP2Array(infile, defname=None):
     Name = []
     thicknessList = []
     idList = []
+    ci95List = []
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -97,6 +99,8 @@ def SHP2Array(infile, defname=None):
                     layername = str(value)
                 if (name == 'thickness') or (name == 'd0'):
                     thickness = value
+                if (name == 'ci95'):
+                    ci95 = value
                 if (name == 'rho'):
                     rho = value
                 if (name == 'sks'):
@@ -116,6 +120,7 @@ def SHP2Array(infile, defname=None):
         Name.append(layername)
         log.debug('SHPConv: Found layer %s', layername)
         thicknessList.append(str(thickness))
+        ci95List.append(str(ci95))
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -140,6 +145,7 @@ def SHP2Array(infile, defname=None):
     SHPdata['y'] = Coordy
     SHPdata['z'] = Coordz
     SHPdata['id'] = idList
+    SHPdata['ci95'] = ci95List
 
     sf.close()
 
@@ -188,7 +194,8 @@ def readThickness(infile, defname=None):
         list of strings with the (release or entrainment) thickness of each feature (as many values as features)
     id : list
         list of strings for oid of each feature in shp file
-
+    ci95: list
+        list of all ci95 values if provided
 
     """
     #  Input shapefile
@@ -197,6 +204,7 @@ def readThickness(infile, defname=None):
 
     thickness = None
     id = None
+    ci95 = None
 
     # Start reading the shapefile
     records = sf.shapeRecords()
@@ -204,6 +212,7 @@ def readThickness(infile, defname=None):
 
     thicknessList = []
     idList = []
+    ci95List = []
 
     for n, item in enumerate(shps):
         pts = item.points
@@ -217,8 +226,11 @@ def readThickness(infile, defname=None):
                 name = name.lower()
                 if (name == 'thickness') or (name == 'd0'):
                     thickness = value
+                if (name == 'ci95'):
+                    ci95 = value
 
         thicknessList.append(str(thickness))
+        ci95List.append(str(ci95))
 
     # get unique ID of features in shapefile
     for rec in sf.records():
@@ -227,7 +239,7 @@ def readThickness(infile, defname=None):
 
     sf.close()
 
-    return thicknessList, idList
+    return thicknessList, idList, ci95List
 
 
 def readLine(fname, defname, dem):

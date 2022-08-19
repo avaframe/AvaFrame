@@ -71,11 +71,12 @@ def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
     plt.close(fig)
 
 
-def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
+def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow, x=''):
     """ make a comparison plot of desired CDF and empirical CDF of sample """
 
     halfLine = np.zeros(len(CDF)) + 0.5
-    x = np.linspace(float(cfg['a']), float(cfg['c']), len(CDF))
+    if len(x) == 0:
+        x = np.linspace(float(cfg['a']), float(cfg['c']), len(CDF))
     fig = plt.figure()
     plt.title('Desired CDF vs. retrieved sample´s CDF- %s' % methodAbbr)
     plt.plot(x, halfLine, 'k--')
@@ -90,10 +91,11 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
     plt.close(fig)
 
 
-def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow):
+def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow, x=''):
     """ make a comparison plot of desired CDF and empirical CDF of sample """
 
-    x = np.linspace(float(cfg['a']), float(cfg['c']), len(PDF))
+    if len(x) == 0:
+        x = np.linspace(float(cfg['a']), float(cfg['c']), len(PDF))
     fig = plt.figure()
     plt.title('Desired PDF vs. sample histogram')
     bins = int(int(cfg['sampleSize'])*0.25)

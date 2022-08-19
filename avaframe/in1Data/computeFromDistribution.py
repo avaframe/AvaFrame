@@ -7,6 +7,8 @@ import numpy as np
 import scipy.special as sc
 from scipy.interpolate import interp1d
 import logging
+from scipy.stats import norm
+import matplotlib.pyplot as plt
 
 
 # create local logger
@@ -21,6 +23,7 @@ def computeParameters(a, b, c):
         message = 'a:%.2f must be smaller than b: %.2f must be smaller than c: %.2f' % (a, b, c)
         log.error(message)
         raise ValueError(message)
+
     mu = (a + 4*b + c) / 6.0
     alpha = (4*b + c - 5*a) / (c - a)
     beta = (5*c - a - 4*b) / (c - a)
@@ -51,10 +54,10 @@ def extractFromCDF(CDF, CDFint, x, cfg):
     # extract number of samples using function generated using scipy.interpolate
     # more robust regarding septs vs CDFinterval
     if cfg.getboolean('flagMinMax'):
-        ySampling = np.linspace(0.0, 1.0, int(cfg['sampleSize']))
+        ySampling = np.linspace(0.0, 1.0, cfg.getint('sampleSize'))
         sampleVect = CDFint(ySampling)
     else:
-        ySampling = np.linspace(0.0, 1.0, int(cfg['sampleSize'])+2)
+        ySampling = np.linspace(0.0, 1.0, cfg.getint('sampleSize')+2)
         sampleVect = CDFint(ySampling)
         sampleVect = sampleVect[1:-1]
 
@@ -65,7 +68,7 @@ def extractUniform(a, c, x, cfg):
     """ Extract sample of a uniform distriution """
 
     # load parameters
-    sampleSize = int(cfg['sampleSize'])
+    sampleSize = cfg.getint('sampleSize')
 
     if cfg.getboolean('flagMinMax'):
         sampleSize = sampleSize
@@ -87,7 +90,7 @@ def extractUniform(a, c, x, cfg):
     else:
         sampleVect = sampleVect[1:-1]
 
-    CDF = np.linspace(0, 1, int(cfg['support']))
+    CDF = np.linspace(0, 1, cfg.getint('support'))
     CDFInt = interp1d(CDF, x)
 
     return CDF, CDFInt, sampleVect
@@ -120,3 +123,67 @@ def getEmpiricalCDFNEW(sample):
         ECDF[m] = cumsum / sampleSize
 
     return ECDF, sampleSorted
+
+
+def extractGaussian(cfg):
+    """ create a normal distribution from given parameters and draw a sample
+
+        Parameters
+        ------------
+        cfg: configparser object or dict
+            configuration settings for computing distributions, std or ci95, minMaxInterval, flagMinMax
+
+        Returns
+        --------
+        CDFint: function object
+            interpolated CDF function
+        sampleVect: numpy array
+            sample values
+        pdf: numpy array
+            pdf values computed for normal distribution and support x
+        x: numpy array
+            support x
+    """
+
+    # load parameters from config
+    sampleSize = int(cfg['sampleSize'])
+    mean = float(cfg['mean'])
+    minMaxInterval = float(cfg['minMaxInterval'])
+
+    # first check if std or ci95 is provided throw error if both
+    if cfg['buildType'] == 'ci95':
+        std = float(cfg['buildValue']) / 1.96
+    elif cfg['buildType'] == 'std':
+        std = float(cfg['buildValue'])
+    log.info('Compute normal distribution with mean: %.4f and std: %.4f' % (mean, std))
+
+    # compute min and max values of range derived from 99% confidence interval
+    # Note: final sample includes these min and max values
+    min = norm.interval(alpha=(minMaxInterval/100.), loc=mean, scale=std)[0]
+    max = norm.interval(alpha=(minMaxInterval/100.), loc=mean, scale=std)[1]
+
+    # derive normal distribution (pdf and cdf) for range from min to max values
+    x = np.linspace(min, max, int(cfg['support']))
+    cdf = norm.cdf(x, loc=mean, scale=std)
+    pdf = norm.pdf(x, loc=mean, scale=std)
+
+    # create interpolated function of cdf to draw samples from
+    CDFint = interp1d(cdf, x)
+    # draw sampleSize samples from distribution
+    # also consider if min and max value shall be part of the final sample
+    # TODO: do we need this flagMinMax?
+    # if cfg['flagMinMax'] == 'False':
+    #     sampleSize = sampleSize + 2
+    xSample = np.linspace(np.min(cdf), np.max(cdf), sampleSize)
+    sampleVect = CDFint(xSample)
+    # if cfg['flagMinMax'] == 'False':
+    #     sampleVect = sampleVect[1:-1]
+
+    # Debug plot
+    # plt.title('Samples drawn from dist')
+    # plt.plot(sampleVect, 'k*')
+    # plt.xlabel('number of sample')
+    # plt.ylabel('relTh [m]')
+    # plt.show()
+
+    return CDFint, sampleVect, pdf, x

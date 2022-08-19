@@ -320,14 +320,15 @@ def getThickness(inputSimFiles, avaDir, modName, cfgInitial):
     # fetch thickness attribute of entrainment area and secondary release
     for thType in ['entFile', 'secondaryReleaseFile']:
         if inputSimFiles[thType] != None:
-            thicknessList, idList = shpConv.readThickness(inputSimFiles[thType])
-            inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList}
+            thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
+            inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList,
+                'ci95': ci95List}
 
     # fetch thickness attribute of release areas and create cfg file for each release scenario
     for releaseA in inputSimFiles['relFiles']:
         # fetch thickness and id info from input data
-        thicknessList, idList = shpConv.readThickness(releaseA)
-        inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList}
+        thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
+        inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList, 'ci95': ci95List}
 
         # add input data info
         cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem, 'releaseScenario': releaseA.stem}
