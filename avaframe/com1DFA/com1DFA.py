@@ -2204,7 +2204,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             # update parameter value - now only single value for each parameter
             keyList = ['relThPercentVariation', 'entThPercentVariation',
                        'secondaryRelThPercentVariation', 'relThRangeVariation',
-                       'entThRangeVariation', 'secondaryRelThRangeVariation']
+                       'entThRangeVariation', 'secondaryRelThRangeVariation',
+                       'relThDistVariation', 'entThDistVariation',
+                                  'secondaryRelThDistVariation']
             if parameter in keyList:
                 # set thickness value according to percent variation info
                 cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim, cfgSim['GENERAL']['simTypeActual'], row)

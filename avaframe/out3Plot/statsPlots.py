@@ -232,7 +232,7 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
     return ticks
 
 
-def plotProbMap(avaDir, inDir, cfgFull):
+def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
     """ plot probability maps including contour lines
 
         Parameters
@@ -244,11 +244,18 @@ def plotProbMap(avaDir, inDir, cfgFull):
         cfgFull: configParser object
             configuration settings for probAna
             keys used: name, cmapType, levels, unit
+        demPlot: bool
+            if True plot dem in background with contourlines for elevation that is found in avaDir/Inputs
 
     """
 
     # configuration settings
     cfg = cfgFull['PLOT']
+
+    if demPlot:
+        demFile = gI.getDEMPath(avaDir)
+        demData = IOf.readRaster(demFile, noDataToNan=True)
+        demField = demData['rasterData']
 
     # fetch probabiltiy map datasets in inDir
     dataFiles = list(inDir.glob('*.asc'))
@@ -294,29 +301,49 @@ def plotProbMap(avaDir, inDir, cfgFull):
 
         # constrain plot to where there is data
         rowsMin, rowsMax, colsMin, colsMax, dataConstrained = pU.constrainPlotsToData(dataPlot, cellSize,
-            extentOption=True, constrainedData=True)
+            extentOption=False, constrainedData=True)
         dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
 
         # create figure
         fig = plt.figure(figsize=(pU.figW*2, pU.figH))
         suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
         ax1 = fig.add_subplot(121)
+
+        # set extent in meters using cellSize
+        rowsMinPlot = rowsMin*cellSize
+        rowsMaxPlot = (rowsMax+1)*cellSize
+        colsMinPlot = colsMin*cellSize
+        colsMaxPlot = (colsMax+1)*cellSize
+        extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
+
         # for now continuous color map is desired
-        cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot), continuous=True)
-        cmap.set_bad(colorBackGround)
-        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax],
-                         origin='lower', aspect=nx/ny, norm=norm)
+        cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot),
+            continuous=True)
+
+        if demPlot and demData['header']['cellsize'] == cellSize:
+            # also constrain DEM to data constrained
+            demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
+            # add DEM hillshade with contour lines
+            ls, CS = pU.addHillShadeContours(ax1, demConstrained, cellSize, extent)
+            dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+            cmap.set_bad(alpha=0)
+        else:
+            cmap.set_bad(colorBackGround)
+
+        # add data plot
+        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=extent, origin='lower', aspect=nx/ny, norm=norm,
+            zorder=3)
 
         # create meshgrid for contour plot also constrained to where there is data
-        xx = np.arange(colsMin, colsMax, cellSize)
-        yy = np.arange(rowsMin, rowsMax, cellSize)
+        xx = np.arange(colsMinPlot, colsMaxPlot, cellSize)
+        yy = np.arange(rowsMinPlot, rowsMaxPlot, cellSize)
         X, Y = np.meshgrid(xx, yy)
 
         # add contourlines for levels
         if multLabel:
-            CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1)
+            CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1, zorder=4)
         else:
-            CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1)
+            CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1, zorder=4)
         for i in range(len(labels)):
             CS.collections[i].set_label(labels[i])
 

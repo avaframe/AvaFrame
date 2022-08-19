@@ -14,6 +14,9 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in1Data.computeFromDistribution as cP
+import avaframe.com1DFA.deriveParameterSet as dP
+
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -87,6 +90,8 @@ def updateCfgRange(cfg, cfgProb, varName):
     # set reference values of parameters - override values in com module configurations
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
     # also for the other parameters that are varied subsequently
+    # first check if no parameter variation in provided for these parameters in the com module ini
+    # if so - errror
     for varPar in varParList:
         if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
             message = ('Only one reference value is allowed for %s: but %s is given' %
@@ -96,7 +101,8 @@ def updateCfgRange(cfg, cfgProb, varName):
         elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
             thPercentVariation = varPar + 'PercentVariation'
             thRangeVariation = varPar + 'RangeVariation'
-            if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '':
+            thDistVariation = varPar + 'DistVariation'
+            if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '' or cfg['GENERAL'][thDistVariation] != '':
                 message = ('Only one reference value is allowed for %s: but %s %s or %s %s is given' %
                     (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation],
                      thRangeVariation, cfg['GENERAL'][thRangeVariation]))
@@ -110,23 +116,54 @@ def updateCfgRange(cfg, cfgProb, varName):
 
     # set variation in configuration
     if varName in ['relTh', 'entTh', 'secondaryRelTh']:
-        if cfgProb['PROBRUN'].getboolean('percentVariation'):
+        # if variation using normal distribution
+        if cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+            parName = varName + 'DistVariation'
+            if valVariation == '':
+                valVariation = '-'
+            parValue = (cfgProb['PROBRUN']['variationType'] + '$'
+                + valSteps + '$'  + valVariation + '$'
+                + cfgProb['computeFromDistribution_override']['minMaxInterval'] + '$'
+                + cfgProb['computeFromDistribution_override']['buildType'] + '$'
+                + cfgProb['computeFromDistribution_override']['support'])
+        # if variation using percent
+        elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
             parName = varName + 'PercentVariation'
-            cfg['GENERAL'][parName] = valVariation + '$' + valSteps
-        else:
+            parValue = valVariation + '$' + valSteps
+        # if variation using absolute range
+        elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
             parName = varPar + 'RangeVariation'
-            cfg['GENERAL'][parName] = valVariation + '$' + valSteps
+            parValue = valVariation + '$' + valSteps
+        else:
+            message = ('Variation Type: %s - not a valid option, options are: percent, range, normaldistribution' % cfgProb['PROBRUN']['variationType'])
+            log.error(message)
+            raise AssertionError(message)
+        # write parameter variation for varName in config file
+        cfg['GENERAL'][parName] = parValue
         cfg['GENERAL']['addStandardConfig'] = cfgProb['PROBRUN']['addStandardConfig']
     else:
         # set variation
-        if cfgProb['PROBRUN'].getboolean('percentVariation'):
+        if  cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+            cfgDist = {'sampleSize': valSteps, 'mean': valVal,
+                'buildType': cfgProb['computeFromDistribution_override']['buildType'],
+                'buildValue': valVariation,
+                'minMaxInterval':  cfgProb['computeFromDistribution_override']['minMaxInterval'],
+                'support': cfgProb['computeFromDistribution_override']['support']}
+            _, valValues, _, _ = cP.extractGaussian(cfgDist)
+            cfg['GENERAL'][varName] = dP.writeToCfgLine(valValues)
+        elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
             cfg['GENERAL'][varName] = '%s$%s$%s' % (valVal, valVariation, valSteps)
             valValues = fU.splitIniValueToArraySteps(cfg['GENERAL'][varName])
-        else:
+
+        elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
             valStart = str(float(valVal) - float(valVariation))
             valStop = str(float(valVal) + float(valVariation))
             cfg['GENERAL'][varName] = '%s:%s:%s' % (valStart, valStop, valSteps)
             valValues = np.linspace(float(valStart), float(valStop), int(valSteps))
+        else:
+            message = ('Variation Type: %s - not a valid option, options are: percent, range, normaldistribution' % cfgProb['PROBRUN']['variationType'])
+            log.error(message)
+            raise AssertionError(message)
 
         # if reference value is not in variation - add reference values
         if cfgProb['PROBRUN'].getboolean('addStandardConfig'):

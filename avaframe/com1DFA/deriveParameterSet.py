@@ -11,6 +11,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import geoTrans
+import avaframe.in1Data.computeFromDistribution as cP
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +49,9 @@ def getVariationDict(avaDir, fullCfg, modDict):
             # the parameter variation dict
             keyList = ['relThPercentVariation', 'entThPercentVariation',
                 'secondaryRelThPercentVariation', 'relThRangeVariation',
-                'entThRangeVariation', 'secondaryRelThRangeVariation']
+                'entThRangeVariation', 'secondaryRelThRangeVariation',
+                'relThDistVariation', 'entThDistVariation',
+                           'secondaryRelThDistVariation']
             if key in keyList and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
@@ -208,9 +211,11 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     # fetch thickness values from shapefile
     thicknessList = inputSimFiles[fName]['thickness']
     idList = inputSimFiles[fName]['id']
+    ci95List = inputSimFiles[fName]['ci95']
 
     # create key name for flag
     thFlag = thType + 'FromShp'
+    thDistVariation = thType + 'DistVariation'
 
     # if thickness should be read from shape file
     if cfg['GENERAL'].getboolean(thFlag):
@@ -219,17 +224,24 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
+        elif cfg['GENERAL'][thDistVariation] != '' and ('None' in ci95List):
+            message = 'Not all features in shape file have a ci95 value - check shape file attributes: %s' % fName
+            log.error(message)
+            raise AssertionError(message)
         else:
             # set thickness value in ini file from info of shape file
             thId = idList[0]
             thThickness = thicknessList[0]
+            thCi95 = ci95List[0]
             for count, id in enumerate(idList[1:]):
                 thId = thId + '|' + id
                 thThickness = thThickness + '|' + thicknessList[count+1]
+                thCi95 = thCi95 + '|' + ci95List[count+1]
 
             # add in INPUT section
             cfg['INPUT'][thType + 'Id'] = thId
             cfg['INPUT'][thType + 'Thickness'] = thThickness
+            cfg['INPUT'][thType + 'Ci95'] = thCi95
 
     else:
         # if thickness should be read from ini file - check if format is correct
@@ -346,6 +358,25 @@ def splitVariationToArraySteps(value, key, fullCfg):
             itemsArray = np.linspace(0.0, float(itemsL[0]), int(itemsL[1]))
         else:
             itemsArray = np.linspace(-1.*float(itemsL[0]), float(itemsL[0]), int(itemsL[1]))
+    # if variaiton following normal distribution
+    elif 'Dist' in key:
+        itemsArray = []
+        # if not already appended the step of the distribution values that shall be taken as value
+        # add to string so it is clear which value shall be taken from distribution
+        # first check format of string
+        if len(itemsL) == 6:
+            if 'distribution' in itemsL[0]:
+                for i in range(int(itemsL[1])):
+                    itemsArray.append('%d$' % i + value)
+            else:
+                print('value', value, itemsL)
+                message = ('Format of %s is not correct - required format: \
+                    step$typeOfDistribution$numberOfSteps$ci95value$ci95$support, \
+                    where the first item step is optional' % value)
+                log.error(message)
+                raise AssertionError
+        elif len(itemsL) == 7:
+            itemsArray = [value]
 
     if fullCfg['GENERAL'].getboolean('addStandardConfig'):
         if 'Percent' in key and (1 not in itemsArray):
@@ -383,8 +414,10 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     # fetch info if variation is performed based on a given range or percentage
     if 'Range' in key:
         varType = 'Range'
-    else:
+    elif 'Percent' in key:
         varType = 'Percent'
+    elif 'Dist' in key:
+        varType = 'Dist'
 
     # only add entries to cfg if appropriate for chosen simType (e.g. entTh if ent or entres run)
     entCondition = (key == ('entTh%sVariation' % varType) and 'ent' in simType)
@@ -392,7 +425,12 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     relCondition = (key == ('relTh%sVariation' % varType))
 
     # fetch variation factor
-    variationFactor = float(row._asdict()[key])
+    if varType == 'Dist':
+        # if dist - this is still a string as distribution is only build once mean value is known -
+        # if read from shp file - not available yet
+        variationFactor = row._asdict()[key]
+    else:
+        variationFactor = float(row._asdict()[key])
 
     # update thickness values according to variation
     if entCondition or secRelCondition or relCondition:
@@ -409,6 +447,13 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) + variationFactor)
             elif varType == 'Percent':
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
+            elif varType == 'Dist':
+                distInfo = variationFactor.split('$')
+                cfgDist = {'sampleSize': distInfo[2], 'mean': float(cfg['GENERAL'][thType]),
+                    'buildValue': distInfo[3], 'minMaxInterval': distInfo[4], 'support': '10000',
+                    'buildType': distInfo[5]}
+                _, distValues, _, _ = cP.extractGaussian(cfgDist)
+                cfg['GENERAL'][thType] = distValues[int(distInfo[0])]
             # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
             cfg['GENERAL'][key] = ''
 
@@ -444,6 +489,19 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
     idList = cfg['INPUT'][thType + 'Id'].split('|')
     # fetch thickness list
     thicknessList = cfg['INPUT'][thType + 'Thickness'].split('|')
+    # fetch ci95 list
+    ci95List = cfg['INPUT'][thType + 'Ci95'].split('|')
+
+    # do some preprocessing if varTypu is dist
+    if varType == 'Dist':
+        distInfo = variationFactor.split('$')
+        if len(distInfo) != 7:
+            message = 'Format of distVariation string is false'
+            log.error(message)
+            raise AssertionError
+        else:
+            cfgDist = {'sampleSize': distInfo[2], 'minMaxInterval': distInfo[4], 'support': distInfo[6],
+                'buildType': distInfo[5]}
 
     # loop over all features
     for count, id in enumerate(idList):
@@ -459,6 +517,13 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
             # set thickness value in in file for the feature with id Id
             cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
             variationIni = setRangeVariation(cfg, variationFactor, thNameId)
+        elif varType == 'Dist':
+            cfgDist['mean'] = str(float(thicknessList[count]))
+            cfgDist['buildValue'] = str(float(ci95List[count]))
+            _, distValues, _, _ = cP.extractGaussian(cfgDist)
+            cfg['GENERAL'][thNameId] = distValues[int(distInfo[0])]
+            distInfo[3] = cfgDist['buildValue']
+            variationIni = '$'.join(distInfo)
 
     # update variation parameter value in config file
     cfg['GENERAL'][key] = variationIni
@@ -564,7 +629,8 @@ def appendShpThickness(cfg):
         thFlag = thType + 'FromShp'
         thPV = thType + 'PercentVariation'
         thRV = thType + 'RangeVariation'
-        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '' and cfg['GENERAL'][thRV] == '':
+        thDV = thType + 'DistVariation'
+        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '' and cfg['GENERAL'][thRV] == '' and cfg['GENERAL'][thDV] == '':
             thThickness = thType + 'Thickness'
             thId = thType + 'Id'
             thicknessList = cfg['INPUT'][thThickness].split('|')
@@ -610,3 +676,23 @@ def checkDEM(cfgSim, demFile):
     log.info('path to DEM is: %s' % pathToDem)
 
     return pathToDem
+
+def writeToCfgLine(values):
+    """ write an array of values to a string of values separated by | for configuration
+
+        Parameters
+        -----------
+        values: numpy array
+            array of values
+
+        Returns
+        --------
+        valString: str
+            string of array values separated by |
+    """
+
+    valString = '%.12f' % values[0]
+    for val in values[1:]:
+        valString = valString + '|%.12f' % val
+
+    return valString
