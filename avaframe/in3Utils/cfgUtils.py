@@ -104,7 +104,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg, modDict = compareConfig(iniFile, modName, compare, modInfo, toPrint)
+    cfg, modDict = compareConfig(iniFile, modName, compare, toPrint)
 
     if modInfo:
         return cfg, modDict
@@ -142,20 +142,30 @@ def getDefaultModuleConfig(module, toPrint=True):
     return cfg
 
 
-def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
+def compareConfig(iniFile, modName, compare, toPrint=True):
     ''' Compare configuration files (if a local and default are both provided)
-    and inform user of the eventuel differences. Take the default as reference.
+    and inform user of the eventual differences. Take the default as reference.
 
-    Inputs:
-            -iniFile: path to config file. Only one path if compare=False
-            -compare: True if two paths are provided and a comparison is needed
-            -modInfo: True if dictionary with modifications shall be returned
-            -toPrint: True print configuration to terminal
+    Parameters
+    ----------
+    iniFile: path to config file
+        Only one path if compare=False
+    compare: boolean
+        True if two paths are provided and a comparison is needed
+    toPrint: boolean
+        True (default) to print configuration to terminal. Differences to default 
+        will ALWAYS be printed
 
+    Returns
+    -------
     Output: ConfigParser object
+        contains combined config
+    modDict: dict
+        dictionary containing only differences from default
     '''
 
     modDict = {}
+    printOutInfo = list()
     if compare:
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
@@ -174,7 +184,9 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
         for section in defCfg.sections():
             modDict[section] = {}
             cfg.add_section(section)
-            log.info('\t%s', section)
+            printOutInfo.append('\t' + section)
+
+            # Take section and loop through keys
             for key in defCfg.items(section):
                 defValue = key[1]
                 # check if key is also in the localCfg
@@ -183,21 +195,22 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
                     if locValue != defValue:
                         # if yes and if this value is different add this key to
                         # the cfg that will be returned
-                        locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
-                        log.info('\t\t%s : %s \t(default value was : %s)',
-                                 key[0], locValue, defValue)
+                        printOutInfo.append('\t\t%s : %s \t(default value was : %s)' 
+                                % (key[0], locValue, defValue))
                         modString = [locValue, defValue]
                         modDict[section][key[0]] = modString
                     else:
                         cfg.set(section, key[0], defValue)
-                        log.info('\t\t%s : %s', key[0], defValue)
+                        printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
 
                     # remove the key from the localCfg
                     locCfg.remove_option(section, key[0])
+
+                # if key is not in the localCfg, just take default
                 else:
                     cfg.set(section, key[0], defValue)
-                    log.info('\t\t%s : %s', key[0], defValue)
+                    printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
 
         # Now check if there are some sections/ keys left in the local cfg and
         # that are not used
@@ -226,6 +239,17 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
                              (key[0], section))
                     cfg.set(section, key[0], key[1])
                     log.info('\t\t%s : %s', key[0], key[1])
+
+        # Check if cfg should be printed. If not, give a hint and 
+        # ALWAYS print the keys and values that are different from default
+        if toPrint:
+            for element in printOutInfo:
+                log.info(element)
+        else:
+            log.info('Print is turned off, giving difference summary')
+            for element in printOutInfo:
+                if 'default value was' in element:
+                    log.info(element)
 
     else:
         log.info('Reading config from: %s', iniFile)
