@@ -43,6 +43,8 @@ def test_probAna(tmp_path):
     # provide optional filter criteria for simulations
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
+    print('PARAMETERSDIC', parametersDict)
+
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir='')
     probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap1.0.asc'), skiprows=6)
@@ -80,7 +82,7 @@ def test_createComModConfig(tmp_path):
     cfgFile = dirPath / 'data' / 'testCom1DFA' / 'probA_com1DFACfg.ini'
 
     cfgProb = configparser.ConfigParser()
-    cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True',
+    cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent',
                           'muVariation': '60', 'muSteps': '2', 'addStandardConfig': 'True',
                           'relThVariation': '50', 'relThSteps': '3', 'defaultSetup': 'True'}
 
@@ -136,7 +138,7 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True','addStandardConfig': 'True',
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent','addStandardConfig': 'True',
                       'muVariation': '60', 'muSteps': '2', 'relThVariation': '50',
                       'relThSteps': '2', 'defaultSetup': 'True'}
 

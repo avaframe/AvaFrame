@@ -1389,8 +1389,9 @@ def test_prepareVarSimDict(caplog):
                               'relThFromShp': 'False', 'entThFromShp': 'True',
                               'entThPercentVariation': '', 'relThPercentVariation': '',
                               'entThRangeVariation': '', 'relThRangeVariation': '',
+                              'entThDistVariation': '', 'relThDistVariation': '',
                               'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
-    standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+    standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
 
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / '..' / 'data' / 'avaAlr'
@@ -1412,10 +1413,12 @@ def test_prepareVarSimDict(caplog):
                           'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
                           'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
+                          'entThDistVariation': '', 'relThDistVariation': '',
                           'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
 
-    testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+    testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
+
 
     simHash = cfgUtils.cfgHash(testCfg)
     simName1 = 'relTest_' + simHash + '_entres_dfa'
@@ -1446,9 +1449,10 @@ def test_prepareVarSimDict(caplog):
                            'relThFromShp': 'False', 'entThFromShp': 'True',
                            'entThPercentVariation': '', 'relThPercentVariation': '',
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
-                           'relThRangeVariation': '', 'meshCellSize': '5.',
+                           'relThRangeVariation': '',
+                           'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
                            'meshCellSizeThreshold': '0.001'}
-    testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+    testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = 'relTest_extended_AF_' + simHash2 + '_entres_dfa'
