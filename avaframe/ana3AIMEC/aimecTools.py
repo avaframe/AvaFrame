@@ -1267,7 +1267,7 @@ def scalePathWithCellSize(rasterTransfo, cellSizeSL):
 
 
 def addSurfaceParalleCoord(rasterTransfo):
-    """ Add the surface parallel coordinate
+    """ Add the surface parallel coordinate (along flow path taking elevation into account)
 
     Parameters
     ----------
