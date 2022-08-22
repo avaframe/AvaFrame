@@ -1,3 +1,4 @@
+cfgUtils - WARNING -  Additional Key ['badKey1'] in section ['GOODSECTION1'] is ignored.
 cfgUtils - INFO -  	GENERAL
 cfgUtils - INFO -  		inputDir : path/to/avalanche
 cfgUtils - INFO -  		fullLog : True
@@ -10,7 +11,6 @@ cfgUtils - INFO -  		goodKey2 : False 	(default value was : True)
 cfgUtils - INFO -  	GOODSECTION2
 cfgUtils - INFO -  		goodKey3 : 0
 cfgUtils - INFO -  		goodKey4 : False
-cfgUtils - WARNING -  Additional Key ['badKey1'] in section ['GOODSECTION1'] is ignored.
 cfgUtils - INFO -  Additional section ['BADSECTION1'] is added to the configuration.
 cfgUtils - INFO -  Additional Key ['badKey2'] in section ['BADSECTION1'] is added to the configuration.
 cfgUtils - INFO -  		badKey2 : 10
