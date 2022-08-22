@@ -369,7 +369,6 @@ def splitVariationToArraySteps(value, key, fullCfg):
                 for i in range(int(itemsL[1])):
                     itemsArray.append('%d$' % i + value)
             else:
-                print('value', value, itemsL)
                 message = ('Format of %s is not correct - required format: \
                     step$typeOfDistribution$numberOfSteps$ci95value$ci95$support, \
                     where the first item step is optional' % value)
