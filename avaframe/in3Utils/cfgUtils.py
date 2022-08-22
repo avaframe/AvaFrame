@@ -153,7 +153,7 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
     compare: boolean
         True if two paths are provided and a comparison is needed
     toPrint: boolean
-        True (default) to print configuration to terminal. Differences to default 
+        True (default) to print configuration to terminal. Differences to default
         will ALWAYS be printed
 
     Returns
@@ -199,7 +199,7 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
                         # if yes and if this value is different add this key to
                         # the cfg that will be returned
                         cfg.set(section, key[0], locValue)
-                        printOutInfo.append('\t\t%s : %s \t(default value was : %s)' 
+                        printOutInfo.append('\t\t%s : %s \t(default value was : %s)'
                                 % (key[0], locValue, defValue))
                         modString = [locValue, defValue]
                         modDict[section][key[0]] = modString
@@ -228,7 +228,7 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
                     if any(s in key[0] for s in searchItems) or key[0] in validItems:
                         locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
-                        log.debug('\t\t%s : %s added to %s' % (key[0], locValue, section))
+                        printOutInfo.append('\t\t%s : %s added to %s' % (key[0], locValue, section))
                         if '$' in locValue:
                             modString = [locValue, locValue.split('$')[0]]
                             modDict[section][key[0]] = modString
@@ -236,14 +236,14 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
                         log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
             else:
                 cfg.add_section(section)
-                log.info('Additional section [\'%s\'] is added to the configuration.' % (section))
+                printOutInfo.append('Additional section [\'%s\'] is added to the configuration.' % (section))
                 for key in locCfg.items(section):
-                    log.info('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
+                    printOutInfo.append('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
                              (key[0], section))
                     cfg.set(section, key[0], key[1])
-                    log.info('\t\t%s : %s', key[0], key[1])
+                    printOutInfo.append('\t\t%s : %s' % (key[0], key[1]))
 
-        # Check if cfg should be printed. If not, give a hint and 
+        # Check if cfg should be printed. If not, give a hint and
         # ALWAYS print the keys and values that are different from default
         if toPrint:
             for element in printOutInfo:
