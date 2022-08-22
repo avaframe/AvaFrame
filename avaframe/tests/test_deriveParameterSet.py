@@ -126,11 +126,12 @@ def test_getThicknessValue():
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', '1.4']}}
     inputSimFiles['release1HS']['id'] = ['0', '1']
+    inputSimFiles['release1HS']['ci95'] = ['None', 'None']
 
     thType = 'relTh'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'relThFromFile': 'False', 'relTh': '', 'relThFromShp': 'True',
-        'relThPercentVariation': '40$3'}
+        'relThPercentVariation': '40$3', 'relThDistVariation': ''}
     cfg['INPUT'] = {'releaseScenario': 'release1HS'}
 
     cfg = dP.getThicknessValue(cfg, inputSimFiles, 'release1HS', thType)
@@ -141,11 +142,12 @@ def test_getThicknessValue():
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', 'None']}}
     inputSimFiles['release1HS']['id'] = ['0', '1']
+    inputSimFiles['release1HS']['ci95'] = ['None', 'None']
 
     thType = 'relTh'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'relThFromFile': 'False', 'relTh': '', 'relThFromShp': 'True',
-        'relThPercentVariation': '40$3'}
+        'relThPercentVariation': '40$3', 'relThDistVariation': ''}
     cfg['INPUT'] = {'releaseScenario': 'release1HS'}
 
     with pytest.raises(AssertionError) as e:
@@ -154,11 +156,12 @@ def test_getThicknessValue():
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', 'None']}}
     inputSimFiles['release1HS']['id'] = ['0', '1']
+    inputSimFiles['release1HS']['ci95'] = ['None', 'None']
 
     thType = 'relTh'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'relThFromFile': 'False', 'relTh': '40$2', 'relThFromShp': 'False',
-        'relThPercentVariation': ''}
+        'relThPercentVariation': '', 'relThDistVariation': ''}
     cfg['INPUT'] = {'releaseScenario': 'release1HS'}
 
     with pytest.raises(AssertionError) as e:
@@ -167,11 +170,12 @@ def test_getThicknessValue():
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', 'None']}}
     inputSimFiles['release1HS']['id'] = ['0', '1']
+    inputSimFiles['release1HS']['ci95'] = ['None', 'None']
 
     thType = 'relTh'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'relThFromFile': 'False', 'relTh': '1.0', 'relThFromShp': 'False',
-        'relThPercentVariation': ''}
+        'relThPercentVariation': '', 'relThDistVariation': ''}
     cfg['INPUT'] = {'releaseScenario': 'release1HS'}
 
     cfg = dP.getThicknessValue(cfg, inputSimFiles, 'release1HS', thType)
@@ -235,7 +239,8 @@ def test_appendShpThickness():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'relThFromShp': 'True', 'relTh': '',
-        'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': ''}
+        'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': '',
+        'relThDistVariation': ''}
     cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
 
 
@@ -248,7 +253,8 @@ def test_appendShpThickness():
     # call function to be tested with different inputs again
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'relThFromShp': 'True', 'relTh': '',
-        'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThRangeVariation': ''}
+        'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThRangeVariation': '',
+        'relThDistVariation': ''}
     cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
     cfg = dP.appendShpThickness(cfg)
 
@@ -263,8 +269,9 @@ def test_setThicknessValueFromVariation():
     key = 'relThPercentVariation'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'relThFromShp': 'True', 'relTh': '',
-        'relThFromFile': 'False', 'relThPercentVariation': '40$3'}
-    cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
+        'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThDistVariation': ''}
+    cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS',
+        'relThCi95': 'None|None'}
 
     data = {'relThPercentVariation': [0.6, 1.0, 1.4], 'relTh': ['', '', ''], 'ind': [0, 1, 2]}
     simDF = pd.DataFrame.from_dict(data)
@@ -292,7 +299,7 @@ def test_setThicknessValueFromVariation():
 
 
     cfg['GENERAL'] = {'secRelArea': 'False', 'relThFromShp': 'False', 'relTh': '1.',
-        'relThFromFile': 'False', 'relThPercentVariation': '40$3'}
+        'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThDistVariation': ''}
     cfg['INPUT'] = {'releaseScenario': 'release1HS'}
 
     data = {'relThPercentVariation': [0.6, 1.0, 1.4], 'relTh': ['1.', '1.', '1.'], 'ind': [0, 1, 2]}

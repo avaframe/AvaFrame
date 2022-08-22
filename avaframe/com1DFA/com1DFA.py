@@ -2218,10 +2218,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSim['INPUT'].pop('entrainmentScenario', None)
             cfgSim['INPUT'].pop('entThId', None)
             cfgSim['INPUT'].pop('entThThickness', None)
+            cfgSim['INPUT'].pop('entThCi95', None)
         if cfgSim['GENERAL']['secRelArea'] == 'False':
             cfgSim['INPUT'].pop('secondaryReleaseScenario', None)
             cfgSim['INPUT'].pop('secondaryRelThId', None)
             cfgSim['INPUT'].pop('secondaryRelThThickness', None)
+            cfgSim['INPUT'].pop('secondaryRelThCi95', None)
 
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkDEM(cfgSim, inputSimFiles['demFile'])
