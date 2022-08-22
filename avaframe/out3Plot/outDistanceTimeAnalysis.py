@@ -582,7 +582,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     if np.isnan(cLower):
         log.debug('No avalanche front found for this time step')
     else:
-        ax2.axhline(y=s[cLower], color='y', linestyle='--',
+        ax2.axhline(y=s[cLower], color='k', linestyle='--',
                 label='avalanche front')
 
     # add result field masked with threshold
