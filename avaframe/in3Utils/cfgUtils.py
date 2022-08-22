@@ -42,7 +42,7 @@ def getGeneralConfig():
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg, _ = compareConfig(iniFile, 'General', compare)
+    cfg, _ = readCompareConfig(iniFile, 'General', compare)
 
     return cfg
 
@@ -104,7 +104,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg, modDict = compareConfig(iniFile, modName, compare, toPrint)
+    cfg, modDict = readCompareConfig(iniFile, modName, compare, toPrint)
 
     if modInfo:
         return cfg, modDict
@@ -137,13 +137,13 @@ def getDefaultModuleConfig(module, toPrint=True):
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
-    cfg, _ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
+    cfg, _ = readCompareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
 
     return cfg
 
 
-def compareConfig(iniFile, modName, compare, toPrint=True):
-    ''' Compare configuration files (if a local and default are both provided)
+def readCompareConfig(iniFile, modName, compare, toPrint=True):
+    ''' Read and optionally compare configuration files (if a local and default are both provided)
     and inform user of the eventual differences. Take the default as reference.
 
     Parameters
@@ -166,11 +166,13 @@ def compareConfig(iniFile, modName, compare, toPrint=True):
 
     modDict = {}
     printOutInfo = list()
+
+    # initialize our final configparser object
+    cfg = configparser.ConfigParser()
+    cfg.optionxform = str
+
     if compare:
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
-        # initialize our final configparser object
-        cfg = configparser.ConfigParser()
-        cfg.optionxform = str
         # initialize configparser object to read
         defCfg = configparser.ConfigParser()
         defCfg.optionxform = str
@@ -179,6 +181,7 @@ def compareConfig(iniFile, modName, compare, toPrint=True):
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
+
         # loop through all sections of the defCfg
         log.debug('Writing cfg for: %s', modName)
         for section in defCfg.sections():
@@ -253,8 +256,6 @@ def compareConfig(iniFile, modName, compare, toPrint=True):
 
     else:
         log.info('Reading config from: %s', iniFile)
-        cfg = configparser.ConfigParser()
-        cfg.optionxform = str
         # Finally read it
         cfg.read(iniFile)
         # Write config to log file
