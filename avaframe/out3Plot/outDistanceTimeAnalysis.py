@@ -564,8 +564,15 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     # fetch s. l coordinates
     l = rasterTransfo['l']
-    s = rasterTransfo['s']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
+
+    #TODO: implement use of s_parallel
+    if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
+        s = rasterTransfo['sParallel']
+        sLabel = 's_parallel'
+    elif cfgRangeTime['GENERAL']['sType'].lower() == 'projected':
+        s = rasterTransfo['s']
+        sLabel = 's_projected'
 
     # create figure
     # create colormap for range field, divmorn used to have diverging colors at zero
@@ -591,7 +598,8 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     # plot masked result type, add norm res to scale to colorbar
     cmapRes.set_bad(alpha=0.0)
-    ref2, im3 = pU.NonUnifIm(ax2, l, s, maskResType, 'l [m]', 's [m]',
+    yLabel = '%s [m]' % sLabel
+    ref2, im3 = pU.NonUnifIm(ax2, l, s, maskResType, 'l [m]', yLabel,
                             extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRes, norm=normRes)
 
     # add legend and colorbar
@@ -624,7 +632,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax3.plot(timeList, rangeList , '.', color='black', markersize=4,
         label='avalanche front')
     ax3.set_xlabel('Time [s]')
-    ax3.set_ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
+    ax3.set_ylabel('%s distance to %s [m]' % (cfgRangeTime['GENERAL']['sType'], mtiInfo['referencePointName']))
 
     # add colorbar and infobox
     cName = '%s [%s]' % (cfgRangeTime['GENERAL']['maxOrMean'] + ' ' + pU.cfgPlotUtils['name' + resType],
