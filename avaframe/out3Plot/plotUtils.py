@@ -488,7 +488,8 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
         pad = 25
     else:
         pad = 10
-    cbar.ax.set_title('[' + myUnit + ']', pad=pad)
+    if myUnit != None:
+        cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
     if len(tickLabelsList) > 0:
@@ -496,7 +497,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
     return cbar
 
 
-def putAvaNameOnPlot(ax, avaDir):
+def putAvaNameOnPlot(ax, avaDir, date=True):
     '''
     Puts the date and avalanche name (or a list of ava names) in the lower left corner of the given
     matplotlib axes
@@ -505,9 +506,15 @@ def putAvaNameOnPlot(ax, avaDir):
     # if avaDir is just a single avaDir or a list of avaDirs
     if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
-        infoText = datetime.datetime.now().strftime("%d.%m.%y") + '; ' + str(avaName)
+        if date:
+            infoText = datetime.datetime.now().strftime("%d.%m.%y") + '; ' + str(avaName)
+        else:
+            infoText = str(avaName)
     else:
-        infoText = datetime.datetime.now().strftime("%d.%m.%y")
+        if date:
+            infoText = datetime.datetime.now().strftime("%d.%m.%y")
+        else:
+            infoText = ''
         for ava in avaDir:
             avaName = pathlib.PurePath(ava).name
             infoText = infoText + ';' + str(avaName)
@@ -704,7 +711,7 @@ def addHillShadeContours(ax, data, cellSize, extent, colors=['gray']):
         extent: list
             extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
         colors: list
-            optional, colors for elevation contour lines 
+            optional, colors for elevation contour lines
     """
     # create lightSource
     ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)

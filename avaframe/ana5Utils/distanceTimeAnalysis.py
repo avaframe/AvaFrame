@@ -435,7 +435,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     if cfgRangeTime['GENERAL']['maxOrMean'] == 'max':
         aCross = aCrossMax
     else:
-        aCross = aCrossMea
+        aCross = aCrossMean
 
     # add max or mean values for each cross-section for actual time step to mti values array
     # reshape is required as rows- max/mean values for each crossprofile and cols: time steps

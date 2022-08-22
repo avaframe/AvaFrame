@@ -519,7 +519,8 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     # add peak field data
     im1 = ax1.imshow(data, cmap=cmapRes, norm=normRes, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='equal', zorder=4)
-    pU.addColorBar(im1, ax1, ticksRes, unit, location='top')
+    cName1 = '%s [%s]' % (pU.cfgPlotUtils['name' + resType], pU.cfgPlotUtils['unit' + resType])
+    pU.addColorBar(im1, ax1, ticksRes, None, title=cName1, location='right')
 
     # add domain transformation info
     # read avaPath with scale
@@ -533,13 +534,23 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     DBYl = rasterTransfo['DBYl']*cellSizeSL
     DBYr = rasterTransfo['DBYr']*cellSizeSL
 
-    ax1.plot(xPath, yPath, 'k--')
+    ax1.plot(xPath, yPath, 'k--', zorder=5, label='thalweg')
     ax1.plot(DBXl, DBYl, 'k-', label='s,l domain')
     ax1.plot(DBXr, DBYr, 'k-')
     ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
     ax1.legend()
-    ax1.set_xlabel('x [m]')
-    ax1.set_ylabel('y [m]')
+    if cfgRangeTime['ANIMATE'].getboolean('xyEastNorth'):
+            ax1.set_xlabel('East x [m]')
+            ax1.set_ylabel('North y [m]')
+    else:
+        ax1.set_xlabel('x [m]')
+        ax1.set_ylabel('y [m]')
+    # optional add title to panel
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax1.set_title('simulation x,y extent at t=%.2fs' % timeStep)
+
+    # add avaName
+    pU.putAvaNameOnPlot(ax1, cfgRangeTime['GENERAL']['avalancheDir'], date=False)
 
     #+++++++++++++++PANEL 2#############
     # result field bigger than threshild  in s,l with ava front and ruout area start
@@ -566,7 +577,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
                             extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRange, norm=divnorm)
     # add horizontal line indicating location of start of runout area and avalanche front
     ax2.axhline(y=s[indStartOfRunout], color='w', linestyle='--',
-                label='run-out area')
+                label='beta point (%.1f°)' % mtiInfo['betaPointAngle'])
     # only plot front if a front found - e.g. if FV is zero in first time step no front found
     if np.isnan(cLower):
         log.debug('No avalanche front found for this time step')
@@ -585,6 +596,10 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     # add legend and colorbar
     ax2.legend(loc='best', facecolor='white', framealpha=0.2)
+
+    # optionally add title
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax2.set_title('s,l domain extent')
 
     #+++++++++++++++PANEL 3++++++++++++++++++
     # tt-diagram of result field bigger than threshold
@@ -612,8 +627,9 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax3.set_ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
 
     # add colorbar and infobox
-    cName = '%s ' % cfgRangeTime['GENERAL']['maxOrMean'] + pU.cfgPlotUtils['name' + resType]
-    pU.addColorBar(pc, ax3, None, unit, title=cName)
+    cName = '%s [%s]' % (cfgRangeTime['GENERAL']['maxOrMean'] + ' ' + pU.cfgPlotUtils['name' + resType],
+        pU.cfgPlotUtils['unit' + resType])
+    pU.addColorBar(pc, ax3, None, None, title=cName)
     width = cfgRangeTime['PLOTS'].getfloat('width')
     height = cfgRangeTime['PLOTS'].getfloat('height')
     lw = cfgRangeTime['PLOTS'].getfloat('lw')
@@ -650,6 +666,10 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax3.invert_yaxis()
     ax3.axhline(y=0.0, color='gray', linestyle='--', linewidth=1, alpha=0.5,
         label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
+
+    # optional - add title to panel
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax3.set_title('tt-diagram along 1D path')
 
     # # set path for saving figure
     outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
