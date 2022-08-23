@@ -697,7 +697,7 @@ def getColors4Scatter(values, nSamples, unitSC):
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
 
 
-def addHillShadeContours(ax, data, cellSize, extent, colors=['gray']):
+def addHillShadeContours(ax, data, cellSize, extent, colors=['gray'], onlyContours=False):
     """ add hillshade and contours for given DEM data
 
         Parameters
@@ -712,13 +712,19 @@ def addHillShadeContours(ax, data, cellSize, extent, colors=['gray']):
             extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
         colors: list
             optional, colors for elevation contour lines
+        onlyContours: bool
+            if True add only contour lines but no hillshade
     """
-    # create lightSource
-    ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
 
-    # add hillshade to axes
-    im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]), cmap='gray',
-                    extent=extent, origin='lower', aspect='equal', zorder=1)
+    if onlyContours:
+        ls = None
+    else:
+        # create lightSource
+        ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
+
+        # add hillshade to axes
+        im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]), cmap='gray',
+                        extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
     nrows, ncols = data.shape

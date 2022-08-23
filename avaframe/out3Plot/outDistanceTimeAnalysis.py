@@ -533,12 +533,19 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     DBXr = rasterTransfo['DBXr']*cellSizeSL
     DBYl = rasterTransfo['DBYl']*cellSizeSL
     DBYr = rasterTransfo['DBYr']*cellSizeSL
+    # add indication for run out area based on beta point but fetch for x, y coordinates
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    betaPointX = rasterTransfo['gridx'][indStartOfRunout]
+    betaPointY = rasterTransfo['gridy'][indStartOfRunout]
 
+    # add lines to plot about path following domain
     ax1.plot(xPath, yPath, 'k--', zorder=5, label='thalweg')
     ax1.plot(DBXl, DBYl, 'k-', label='s,l domain')
     ax1.plot(DBXr, DBYr, 'k-')
     ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
+    ax1.plot(betaPointX, betaPointY, 'b--', label='beta Point')
     ax1.legend()
+    # label x, y axes
     if cfgRangeTime['ANIMATE'].getboolean('xyEastNorth'):
             ax1.set_xlabel('East x [m]')
             ax1.set_ylabel('North y [m]')
@@ -568,22 +575,15 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     #TODO: implement use of s_parallel
     if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
-        s = rasterTransfo['sParallel']
-        sLabel = 's_parallel'
+        s = rasterTransfo['sParallel'] - rasterTransfo['sParallel'][indStartOfRunout]
+        sLabel = 'Parallel distance to beta point [m]'
     elif cfgRangeTime['GENERAL']['sType'].lower() == 'projected':
-        s = rasterTransfo['s']
-        sLabel = 's_projected'
+        s = rasterTransfo['s'] - rasterTransfo['s'][indStartOfRunout]
+        sLabel = 'Projected distance to beta point [m]'
 
     # create figure
-    # create colormap for range field, divmorn used to have diverging colors at zero
-    divnorm=colors.TwoSlopeNorm(vmin=np.nanmin(rangeRaster), vcenter=0., vmax=np.nanmax(rangeRaster))
-    cmapRange, _, ticksRange, normRange = pU.makeColorMap(cm.broc, np.nanmin(
-        rangeRaster), np.nanmax(rangeRaster), continuous=pU.contCmap)
-    # add imshow plot of range
-    ref0, im2 = pU.NonUnifIm(ax2, l, s, rangeRaster, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRange, norm=divnorm)
-    # add horizontal line indicating location of start of runout area and avalanche front
-    ax2.axhline(y=s[indStartOfRunout], color='w', linestyle='--',
+    # add line indicating location of start of runout area and avalanche front
+    ax2.axhline(y=s[indStartOfRunout], color='b', linestyle='--',
                 label='beta point (%.1f°)' % mtiInfo['betaPointAngle'])
     # only plot front if a front found - e.g. if FV is zero in first time step no front found
     if np.isnan(cLower):
@@ -598,12 +598,21 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
 
     # plot masked result type, add norm res to scale to colorbar
     cmapRes.set_bad(alpha=0.0)
-    yLabel = '%s [m]' % sLabel
-    ref2, im3 = pU.NonUnifIm(ax2, l, s, maskResType, 'l [m]', yLabel,
-                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRes, norm=normRes)
+    ref2, im3 = pU.NonUnifIm(ax2, l, s, maskResType, 'l [m]', sLabel,
+                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRes, norm=normRes,
+                            origin='lower')
+
+    # add elevation contours, first get z coordinates of s,l points
+    zPoints = {'x': rasterTransfo['gridx'], 'y': rasterTransfo['gridy']}
+    zPoints, _ = gT.projectOnRaster(demData, zPoints)
+    ls, CS = pU.addHillShadeContours(ax2, zPoints['z'], rasterTransfo['cellSizeSL'],
+        [l.min(), l.max(), s.min(), s.max()], colors=['gray'], onlyContours=True)
+
+    # invert y axis 
+    ax2.invert_yaxis()
 
     # add legend and colorbar
-    ax2.legend(loc='best', facecolor='white', framealpha=0.2)
+    ax2.legend(loc='lower right', facecolor='white', framealpha=0.2)
 
     # optionally add title
     if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
@@ -632,7 +641,8 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax3.plot(timeList, rangeList , '.', color='black', markersize=4,
         label='avalanche front')
     ax3.set_xlabel('Time [s]')
-    ax3.set_ylabel('%s distance to %s [m]' % (cfgRangeTime['GENERAL']['sType'], mtiInfo['referencePointName']))
+    sTypeCapital = cfgRangeTime['GENERAL']['sType'][0].upper() +  cfgRangeTime['GENERAL']['sType'][1:]
+    ax3.set_ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
 
     # add colorbar and infobox
     cName = '%s [%s]' % (cfgRangeTime['GENERAL']['maxOrMean'] + ' ' + pU.cfgPlotUtils['name' + resType],
@@ -672,7 +682,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # if tt-diagram add beta point info
     # invert y axis as ava flow starts from minus distance to beta point
     ax3.invert_yaxis()
-    ax3.axhline(y=0.0, color='gray', linestyle='--', linewidth=1, alpha=0.5,
+    ax3.axhline(y=0.0, color='b', linestyle='--', linewidth=1, alpha=1.0,
         label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
 
     # optional - add title to panel
