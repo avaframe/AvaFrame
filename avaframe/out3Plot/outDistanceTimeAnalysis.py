@@ -532,7 +532,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     rasterTransfo = mtiInfo['rasterTransfo']
     xPath = rasterTransfo['x']
     yPath = rasterTransfo['y']
-    # read domain boundarries with scale
+    # read domain boundaries with scale
     cellSizeSL = rasterTransfo['cellSizeSL']
     DBXl = rasterTransfo['DBXl']*cellSizeSL
     DBXr = rasterTransfo['DBXr']*cellSizeSL
@@ -542,6 +542,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     betaPointX = rasterTransfo['gridx'][indStartOfRunout]
     betaPointY = rasterTransfo['gridy'][indStartOfRunout]
+    # add indication for avalanche front based on s,l but fetch for x, y coordinates
     cLower = mtiInfo['cLower']
     if np.isnan(cLower):
         log.debug('No avalanche front found for this time step')
@@ -573,7 +574,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     pU.putAvaNameOnPlot(ax1, cfgRangeTime['GENERAL']['avalancheDir'], date=False)
 
     #+++++++++++++++PANEL 2#############
-    # result field bigger than threshild  in s,l with ava front and ruout area start
+    # result field bigger than threshold  in s,l with ava front and runout area start
     ax2 = fig.add_subplot(132)
 
     # fetch avalanche front info
@@ -586,7 +587,6 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # fetch s. l coordinates
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-
     # determine if sParallel or sProjected has been used
     if sType.lower() == 'parallel':
         s = rasterTransfo['sParallel'] - rasterTransfo['sParallel'][indStartOfRunout]
@@ -696,7 +696,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # if tt-diagram add beta point info
     # invert y axis as ava flow starts from minus distance to beta point
     ax3.invert_yaxis()
-    ax3.axhline(y=0.0, color='b', linestyle='--',  #alpha=1.0,  #,linewidth=1,
+    ax3.axhline(y=0.0, color='b', linestyle='--',
         label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
 
     # optional - add title to panel
