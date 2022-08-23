@@ -1594,7 +1594,7 @@ def test_runCom1DFA(tmp_path, caplog):
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate',
-                'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni']
+                'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni', 'gEff', 'curvAcc']
 
     # read one particles dictionary
     inDir = avaDir / 'Outputs' / 'com1DFA' / 'particles'

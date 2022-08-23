@@ -504,8 +504,8 @@ def test_updatePositionC():
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'stopCrit': '0.01', 'stopCritIni': '0.1', 'stopCritIniSmall': '1.001', 'stopCritType': 'kinEnergy',
                       'uFlowingThreshold': '0.1', 'gravAcc': '9.81', 'velMagMin': '1.e-6',  'rho': '100.',
-                      'interpOption': '2',   'explicitFriction': '0',  'distReproj': '0', 'reprojectionIterations': '5',
-                      'thresholdProjection': '0.001' }
+                      'interpOption': '2',   'explicitFriction': '0', 'centeredPosition': '1',
+                      'reprojMethodPosition': '2', 'reprojectionIterations': '5', 'thresholdProjection': '0.001' }
 
     particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
                   'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
