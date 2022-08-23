@@ -543,7 +543,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax1.plot(DBXl, DBYl, 'k-', label='s,l domain')
     ax1.plot(DBXr, DBYr, 'k-')
     ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
-    ax1.plot(betaPointX, betaPointY, 'b--', label='beta Point')
+    ax1.plot(betaPointX, betaPointY, 'b--', zorder=5, label='beta Point')
     ax1.legend()
     # label x, y axes
     if cfgRangeTime['ANIMATE'].getboolean('xyEastNorth'):
@@ -589,8 +589,8 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     if np.isnan(cLower):
         log.debug('No avalanche front found for this time step')
     else:
-        ax2.axhline(y=s[cLower], color='k', linestyle='--',
-                label='avalanche front')
+        ax2.axhline(y=s[cLower], color='k', linewidth=2.5, linestyle = (0,(0.1,2)),
+            dash_capstyle = 'round', label='avalanche front')
 
     # add result field masked with threshold
     bmaskRes = slRaster < cfgRangeTime['GENERAL'].getfloat('thresholdResult')
@@ -608,7 +608,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ls, CS = pU.addHillShadeContours(ax2, zPoints['z'], rasterTransfo['cellSizeSL'],
         [l.min(), l.max(), s.min(), s.max()], colors=['gray'], onlyContours=True)
 
-    # invert y axis 
+    # invert y axis
     ax2.invert_yaxis()
 
     # add legend and colorbar
@@ -682,12 +682,12 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # if tt-diagram add beta point info
     # invert y axis as ava flow starts from minus distance to beta point
     ax3.invert_yaxis()
-    ax3.axhline(y=0.0, color='b', linestyle='--', linewidth=1, alpha=1.0,
+    ax3.axhline(y=0.0, color='b', linestyle='--',  #alpha=1.0,  #,linewidth=1,
         label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
 
     # optional - add title to panel
     if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
-        ax3.set_title('tt-diagram along 1D path')
+        ax3.set_title('tt-diagram')
 
     # # set path for saving figure
     outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
