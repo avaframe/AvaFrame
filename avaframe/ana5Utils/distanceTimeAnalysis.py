@@ -370,7 +370,10 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     # create range raster with respect to runout area start point
     # minus in upstream direction of runout area start point
-    rangeGates = rasterTransfo['s'][:] - rasterTransfo['s'][indStartOfRunout]
+    if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
+        rangeGates = rasterTransfo['sParallel'][:] - rasterTransfo['sParallel'][indStartOfRunout]
+    else:
+        rangeGates = rasterTransfo['s'][:] - rasterTransfo['s'][indStartOfRunout]
     rangeRaster = np.repeat([rangeGates], newRasterDEM.shape[1], axis=0).T
 
     # create dictionary with info on front distance, mean values, range distance array
@@ -385,6 +388,7 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     mtiInfo['z'] = rasterTransfo['z']
     mtiInfo['s'] = rasterTransfo['s']
     mtiInfo['referencePointName'] = 'beta point'
+    mtiInfo['sType'] = cfgRangeTime['GENERAL']['sType']
 
     return mtiInfo
 
@@ -451,7 +455,10 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     if lindex.any():
         cUpper = min(lindex)
         cLower = max(lindex)
-        rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
+        if mtiInfo['sType'].lower() == 'parallel':
+            rangeValue = rasterTransfo['sParallel'][cLower] - rasterTransfo['sParallel'][indStartOfRunout]
+        else:
+            rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
         mtiInfo['rangeList'].append(rangeValue)
         # if animation plot shall be created add transformation info to mtiInfo dict for plots
         if cfgRangeTime['PLOTS'].getboolean('animate'):

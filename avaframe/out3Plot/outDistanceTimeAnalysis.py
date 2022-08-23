@@ -58,7 +58,12 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     plt.plot(timeList, rangeList , '.', color='black', markersize=4,
         label='avalanche front')
     plt.xlabel('Time [s]')
-    plt.ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
+    # add y label axis
+    if mtiInfo['type'] == 'thalwegTime':
+        sTypeCapital = mtiInfo['sType'][0].upper() +  mtiInfo['sType'][1:]
+        plt.ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
+    else:
+        plt.ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
@@ -576,16 +581,17 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     slRaster = mtiInfo['slRaster']
     rasterTransfo = mtiInfo['rasterTransfo']
     rangeRaster = mtiInfo['rangeRaster']
+    sType = mtiInfo['sType']
 
     # fetch s. l coordinates
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
 
-    #TODO: implement use of s_parallel
-    if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
+    # determine if sParallel or sProjected has been used
+    if sType.lower() == 'parallel':
         s = rasterTransfo['sParallel'] - rasterTransfo['sParallel'][indStartOfRunout]
         sLabel = 'Parallel distance to beta point [m]'
-    elif cfgRangeTime['GENERAL']['sType'].lower() == 'projected':
+    elif sType.lower() == 'projected':
         s = rasterTransfo['s'] - rasterTransfo['s'][indStartOfRunout]
         sLabel = 'Projected distance to beta point [m]'
 
@@ -649,7 +655,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax3.plot(timeList, rangeList , '.', color='black', markersize=4,
         label='avalanche front')
     ax3.set_xlabel('Time [s]')
-    sTypeCapital = cfgRangeTime['GENERAL']['sType'][0].upper() +  cfgRangeTime['GENERAL']['sType'][1:]
+    sTypeCapital = sType[0].upper() +  sType[1:]
     ax3.set_ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
 
     # add colorbar and infobox
