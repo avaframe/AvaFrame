@@ -386,7 +386,6 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     mtiInfo['rasterTransfo'] = rasterTransfo
     mtiInfo['type'] = 'thalwegTime'
     mtiInfo['z'] = rasterTransfo['z']
-    mtiInfo['s'] = rasterTransfo['s']
     mtiInfo['referencePointName'] = 'beta point'
     mtiInfo['sType'] = cfgRangeTime['GENERAL']['sType']
 
