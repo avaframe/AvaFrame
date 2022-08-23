@@ -149,7 +149,7 @@ def updateCfgRange(cfg, cfgProb, varName):
                 'buildValue': valVariation,
                 'minMaxInterval':  cfgProb['computeFromDistribution_override']['minMaxInterval'],
                 'support': cfgProb['computeFromDistribution_override']['support']}
-            _, valValues, _, _ = cP.extractGaussian(cfgDist)
+            _, valValues, _, _ = cP.extractNormalDist(cfgDist)
             cfg['GENERAL'][varName] = dP.writeToCfgLine(valValues)
         elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
             cfg['GENERAL'][varName] = '%s$%s$%s' % (valVal, valVariation, valSteps)
