@@ -537,6 +537,14 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     betaPointX = rasterTransfo['gridx'][indStartOfRunout]
     betaPointY = rasterTransfo['gridy'][indStartOfRunout]
+    cLower = mtiInfo['cLower']
+    if np.isnan(cLower):
+        log.debug('No avalanche front found for this time step')
+    else:
+
+        frontLineX = rasterTransfo['gridx'][cLower]
+        frontLineY = rasterTransfo['gridy'][cLower]
+        ax1.plot(frontLineX, frontLineY, 'k:', linewidth=2, zorder=5, label='avalanche front')
 
     # add lines to plot about path following domain
     ax1.plot(xPath, yPath, 'k--', zorder=5, label='thalweg')
@@ -544,7 +552,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     ax1.plot(DBXr, DBYr, 'k-')
     ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
     ax1.plot(betaPointX, betaPointY, 'b--', zorder=5, label='beta Point')
-    ax1.legend()
+    ax1.legend(loc='upper right')
     # label x, y axes
     if cfgRangeTime['ANIMATE'].getboolean('xyEastNorth'):
             ax1.set_xlabel('East x [m]')
