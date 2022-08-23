@@ -60,12 +60,12 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
     cdef double Lx, Ly, x, y, z
     cdef double[:] zRaster = Z0.flatten()
     cdef int nPart = len(xArray)
-    cdef int j, ic
+    cdef int k, ic
 
-    for j in range(nPart):
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
+    for k in range(nPart):
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
       # find coordinates in normalized ref (origin (0,0) and cellsize 1)
       Lx = (x - xllc) / csz
       Ly = (y - yllc) / csz
@@ -139,11 +139,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsi = cfg.getfloat('xsi')
-  cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
+  cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
+  cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
+  cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int distReproj = cfg.getint('distReproj')
+  cdef int reprojMethod = cfg.getint('reprojMethodForce')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
@@ -176,12 +178,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
-  cdef double[:] Fnormal = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceX = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceY = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
@@ -192,20 +195,20 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
   cdef double wEnd[4]
-  cdef int j
+  cdef int k
   force = {}
   # loop on particles
-  for j in range(nPart):
-      m = mass[j]
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
-      h = hArray[j]
-      ux = uxArray[j]
-      uy = uyArray[j]
-      uz = uzArray[j]
-      indCellX = indXDEM[j]
-      indCellY = indYDEM[j]
+  for k in range(nPart):
+      m = mass[k]
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
+      h = hArray[k]
+      ux = uxArray[k]
+      uy = uyArray[k]
+      uz = uzArray[k]
+      indCellX = indXDEM[k]
+      indCellY = indYDEM[k]
       # deduce area
       areaPart = m / (h * rho)
 
@@ -226,20 +229,26 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       yEnd = y + dt * uy
       zEnd = z + dt * uz
       # this point is not necessarily on the surface, project it on the surface
-      if distReproj:
-        # using a distance concervation method
+      if reprojMethod == 0:
+        # Project vertically on the dem
+        iCellEnd = getCells(xEnd, yEnd, ncols, nrows, csz)
+        if iCellEnd >= 0:
+          LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = getWeights(xEnd, yEnd, iCellEnd, csz, ncols, interpOption)
+      elif reprojMethod == 1:
+        # project trying to keep the travelled distance constant
         xEnd, yEnd, zEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = distConservProjectionIteratrive(
           x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, ncols, nrows, interpOption,
           reprojectionIterations, thresholdProjection)
-      else:
-        # using a normal projection method
+      elif reprojMethod == 2:
+        # project using samos method
         xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = samosProjectionIteratrive(
           xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-        if iCellEnd < 0:
-          # if not on the DEM take x, y as end point
-          LxEnd0 = Lx0
-          LyEnd0 = Ly0
-          wEnd = w
+
+      if iCellEnd < 0:
+        # if not on the DEM take x, y as end point
+        LxEnd0 = Lx0
+        LyEnd0 = Ly0
+        wEnd = w
 
       # get the normal at this location
       nxEnd, nyEnd, nzEnd = getVector(LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3], nxArray, nyArray, nzArray)
@@ -253,20 +262,30 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # acceleration due to curvature
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
       # normal component of the acceleration of gravity
-      gravAccNorm = - gravAcc * nzAvg
-      # turn off curvature with the  curvAcceleration coefficient
-      effAccNorm = gravAccNorm + curvAcceleration * accNormCurv
-      if(effAccNorm < 0.0):
-          Fnormal[j] = m * effAccNorm
+      gravAccNorm = - gravAcc * nzAvg  # use nzAvg because we want the average gNorm on the time step
+      # turn off curvature with the  curvAccInFriction coefficient
+      effAccNorm = gravAccNorm + curvAccInFriction * accNormCurv
+      # save the normal component of the gravity (plus the curvature term if desiered)
+      # this is needed to compute the pressure gradient
+      # save the norm of the gEff, because we know in which direction it goes (minus the normal vector)
+      if curvAccInGradient == 1:
+        # use gravity plus curvature (if the effAccNorm > 0, material is detatched, then gEff = 0)
+        if(effAccNorm <= 0.0):
+          gEff[k] = -effAccNorm
+        else:
+          gEff[k] = 0
+      else:
+        # only use gravity
+        gEff[k] = -gravAccNorm
 
-      # body forces (tangential component of acceleration of gravity)
-      gravAccTangX = - gravAccNorm * nxAvg
-      gravAccTangY = - gravAccNorm * nyAvg
-      gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
+      # body forces (tangential component of acceleration of gravity with the term due to curvature)
+      gravAccTangX = - (gravAccNorm + curvAccInTangent * accNormCurv) * nxAvg
+      gravAccTangY = - (gravAccNorm + curvAccInTangent * accNormCurv) * nyAvg
+      gravAccTangZ = - gravAcc - (gravAccNorm + curvAccInTangent * accNormCurv) * nzAvg
       # adding gravity force contribution
-      forceX[j] = forceX[j] + gravAccTangX * m
-      forceY[j] = forceY[j] + gravAccTangY * m
-      forceZ[j] = forceZ[j] + gravAccTangZ * m
+      forceX[k] = forceX[k] + gravAccTangX * m
+      forceY[k] = forceY[k] + gravAccTangY * m
+      forceZ[k] = forceZ[k] + gravAccTangZ * m
 
       # Calculating bottom shear and normal stress
       # get new velocity magnitude (leave 0 if uMag is 0)
@@ -292,15 +311,16 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
             tau = 0.0
 
       # adding bottom shear resistance contribution
-      # make sure uMag is not 0
-      if uMag<velMagMin:
-        uMag = velMagMin
+      # norm of the friction force >=0 (if 0 -> detatchment)
       forceBotTang = - areaPart * tau
       if explicitFriction == 1:
         # explicit formulation
-        forceFrict[j] = forceFrict[j] - forceBotTang
+        forceFrict[k] = forceFrict[k] - forceBotTang
       elif explicitFriction == 0:
-        forceFrict[j] = forceFrict[j] - forceBotTang/uMag
+        # make sure uMag is not 0
+        if uMag<velMagMin:
+          uMag = velMagMin
+        forceFrict[k] = forceFrict[k] - forceBotTang/uMag
 
       # compute entrained mass
       entrMassCell = entrMassRaster[indCellY, indCellX]
@@ -311,8 +331,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       uz = uz * m / (m + dm)
       # update mass
       m = m + dm
-      mass[j] = m
-      dM[j] = dm
+      mass[k] = m
+      dM[k] = dm
 
       # speed loss due to energy loss due to entrained mass
       dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
@@ -327,11 +347,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-      forceFrict[j] = forceFrict[j] - cResPart
+      forceFrict[k] = forceFrict[k] - cResPart
 
-      uxArray[j] = ux
-      uyArray[j] = uy
-      uzArray[j] = uz
+      uxArray[k] = ux
+      uyArray[k] = uy
+      uzArray[k] = uz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -339,6 +359,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
   force['forceFrict'] = np.asarray(forceFrict)
+  particles['gEff'] = np.asarray(gEff)
+  particles['curvAcc'] = np.asarray(curvAcc)
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
@@ -346,12 +368,12 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
-  for j in range(nPart):
-    indCellX = indXDEM[j]
-    indCellY = indYDEM[j]
+  for k in range(nPart):
+    indCellX = indXDEM[k]
+    indCellY = indYDEM[k]
     entrMassCell = entrMassRaster[indCellY, indCellX]
     areaCell = areaRatser[indCellY, indCellX]
-    dm = dM[j]
+    dm = dM[k]
     # update surface entrainment mass available
     entrMassCell = entrMassCell - dm/areaCell
     if entrMassCell < 0:
@@ -558,9 +580,10 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int distReproj = cfg.getint('distReproj')
+  cdef int reprojMethod = cfg.getint('reprojMethodPosition')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
+  cdef double centeredPosition = cfg.getfloat('centeredPosition')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -617,30 +640,30 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
-  cdef int j
+  cdef int k
   cdef int nRemove = 0
   # variables for interpolation
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
   cdef double w[4]
   cdef double wNew[4]
   # loop on particles
-  for j in range(nPart):
-    m = mass[j]
-    x = xArray[j]
-    y = yArray[j]
-    z = zArray[j]
-    ux = uxArray[j]
-    uy = uyArray[j]
-    uz = uzArray[j]
-    s = sArray[j]
-    sCor = sCorArray[j]
-    l = lArray[j]
-    idfixed = idFixed[j]
+  for k in range(nPart):
+    m = mass[k]
+    x = xArray[k]
+    y = yArray[k]
+    z = zArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    s = sArray[k]
+    sCor = sCorArray[k]
+    l = lArray[k]
+    idfixed = idFixed[k]
 
     # Force magnitude (without friction)
-    ForceDriveX = forceX[j] + forceSPHX[j]
-    ForceDriveY = forceY[j] + forceSPHY[j]
-    ForceDriveZ = forceZ[j] + forceSPHZ[j]
+    ForceDriveX = forceX[k] + forceSPHX[k]
+    ForceDriveY = forceY[k] + forceSPHY[k]
+    ForceDriveZ = forceZ[k] + forceSPHZ[k]
 
     # velocity magnitude
     uMag = norm(ux, uy, uz)
@@ -654,31 +677,45 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 
     # take friction force into account
     if typeStop != 1:
-      uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[j], uMag, explicitFriction)
+      uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[k], uMag, explicitFriction)
     else:
       dtStop = dt
 
     # update mass (already done un computeForceC)
     mNew = m
-    massEntrained = massEntrained + dM[j]
+    massEntrained = massEntrained + dM[k]
     # update position
-    xNew = x + dtStop * 0.5 * (ux + uxNew)
-    yNew = y + dtStop * 0.5 * (uy + uyNew)
-    zNew = z + dtStop * 0.5 * (uz + uzNew)
+    if centeredPosition:
+      xNew = x + dtStop * 0.5 * (ux + uxNew)
+      yNew = y + dtStop * 0.5 * (uy + uyNew)
+      zNew = z + dtStop * 0.5 * (uz + uzNew)
+    else:
+      xNew = x + dtStop * uxNew
+      yNew = y + dtStop * uyNew
+      zNew = z + dtStop * uzNew
     # make sure particle is on the mesh (normal reprojection!!)
 
-    if distReproj:
+    if reprojMethod == 0:
+      # Project vertically on the dem
+      iCellNew = getCells(xNew, yNew, ncols, nrows, csz)
+      if iCellNew >= 0:
+        Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3] = getWeights(xNew, yNew, iCellNew, csz, ncols, interpOption)
+        zNew = getScalar(Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+
+    elif reprojMethod == 1:
+      # project trying to keep the travelled distance constant
       xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
-        x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption, reprojectionIterations, thresholdProjection)
-    else:
+        x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption,
+        reprojectionIterations, thresholdProjection)
+    elif reprojMethod == 2:
+      # project using samos method
       xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-      if iCellNew >= 0:
-        zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+      zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
     if iCellNew < 0:
       # if the particle is not on the DEM, memorize it and remove it at the next update
-      keepParticle[j] = 0
+      keepParticle[k] = 0
       LxNew0 = 0
       LyNew0 = 0
       wNew = [0, 0, 0, 0]
@@ -686,7 +723,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     elif outOfDEM[iCellNew]:
       # if the particle is on the DEM but in a noData area,
       # memorize it and remove it at the next update
-      keepParticle[j] = 0
+      keepParticle[k] = 0
       nRemove = nRemove + 1
 
     # get cell and weights at old position
@@ -734,30 +771,30 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
-    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
+    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[k], forceSPHY[k], forceSPHZ[k])
 
     if idfixed == 1:
       # idfixed = 1 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
-      xNewArray[j] = x
-      yNewArray[j] = y
-      zNewArray[j] = z
-      uxArrayNew[j] = ux
-      uyArrayNew[j] = uy
-      uzArrayNew[j] = uz
-      sNewArray[j] = s
-      sCorNewArray[j] = s
-      mNewArray[j] = m
+      xNewArray[k] = x
+      yNewArray[k] = y
+      zNewArray[k] = z
+      uxArrayNew[k] = ux
+      uyArrayNew[k] = uy
+      uzArrayNew[k] = uz
+      sNewArray[k] = s
+      sCorNewArray[k] = s
+      mNewArray[k] = m
     else:
       # idfixed = 0 particles belong to the actual releae area
-      xNewArray[j] = xNew
-      yNewArray[j] = yNew
-      zNewArray[j] = zNew
-      uxArrayNew[j] = uxNew
-      uyArrayNew[j] = uyNew
-      uzArrayNew[j] = uzNew
-      sNewArray[j] = sNew
-      sCorNewArray[j] = sCorNew
-      mNewArray[j] = mNew
+      xNewArray[k] = xNew
+      yNewArray[k] = yNew
+      zNewArray[k] = zNew
+      uxArrayNew[k] = uxNew
+      uyArrayNew[k] = uyNew
+      uzArrayNew[k] = uzNew
+      sNewArray[k] = sNew
+      sCorNewArray[k] = sCorNew
+      mNewArray[k] = mNew
 
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
@@ -961,7 +998,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, travelAngle
-  cdef int j, i
+  cdef int k, i
   cdef int indx, indy
   cdef int ind1[4]
   cdef int ind2[4]
@@ -972,13 +1009,13 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double w[4]
   cdef double mwi
 
-  for j in range(nPart):
-    x = xArray[j]
-    y = yArray[j]
-    ux = uxArray[j]
-    uy = uyArray[j]
-    uz = uzArray[j]
-    m = mass[j]
+  for k in range(nPart):
+    x = xArray[k]
+    y = yArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    m = mass[k]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -987,7 +1024,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     indx = <int>math.round(x / csz)
     indy = <int>math.round(y / csz)
     if computeTA:
-      travelAngle = travelAngleArray[j]
+      travelAngle = travelAngleArray[k]
       travelAngleField[indy, indx] = max(travelAngleField[indy, indx], travelAngle)
     # add the component of the points value to the 4 neighbour grid points
     # TODO : check if giving the arrays [0 1 0 1].. is faster
@@ -1046,12 +1083,12 @@ def updateFieldsC(cfg, particles, dem, fields):
     fields['pke'] = np.asarray(PKE)
 
 
-  for j in range(nPart):
-    x = xArray[j]
-    y = yArray[j]
+  for k in range(nPart):
+    x = xArray[k]
+    y = yArray[k]
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FTBilinear)
-    hBB[j] = hbb
+    hBB[k] = hbb
 
   particles['h'] = np.asarray(hBB)
 
@@ -1103,21 +1140,21 @@ def computeTravelAngleC(particles, zPartArray0):
   cdef double tanGamma, gamma, s, z, z0
   # get particle location
   # first compute travel angle for each particle
-  for j in range(nPart):
+  for k in range(nPart):
     # get parent Id in order to  get the first z position
-    parentID = parentIDArray[j]
+    parentID = parentIDArray[k]
     # get z0
     z0 = z0Array[parentID]
     # compute tan of the travel angle
-    z = zArray[j]
-    s = sArray[j]
+    z = zArray[k]
+    s = sArray[k]
     if s > 0:
       tanGamma = (z0 - z) / s
     else:
       tanGamma = 0
     # get the travel angle
     gamma = math.atan(tanGamma) * 180 / math.pi
-    gammaArray[j] = gamma
+    gammaArray[k] = gamma
   particles['travelAngle'] = np.asarray(gammaArray)
   return particles
 
@@ -1155,7 +1192,7 @@ def getNeighborsC(particles, dem):
     cdef float cszNeighbourGrid = headerNeighbourGrid['cellsize']
     # get particle location
     cdef int nPart = particles['nPart']
-    cdef int j
+    cdef int k
     cdef double[:] xArray = particles['x']
     cdef double[:] yArray = particles['y']
 
@@ -1169,27 +1206,27 @@ def getNeighborsC(particles, dem):
     cdef int[:] inCellDEM = np.zeros(nPart).astype('intc')
     # Count number of particles in each SPH grid cell
     cdef int indx, indy, ic
-    for j in range(nPart):
-      indx = <int>math.round(xArray[j] / cszNeighbourGrid)
-      indy = <int>math.round(yArray[j] / cszNeighbourGrid)
+    for k in range(nPart):
+      indx = <int>math.round(xArray[k] / cszNeighbourGrid)
+      indy = <int>math.round(yArray[k] / cszNeighbourGrid)
       # get index of cell containing the particle
       ic = indx + nColsNeighbourGrid * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
-    for j in range(nCellsNeighbourGrid):
-      indPartInCell[j+1] = indPartInCell[j] + indPartInCell[j+1]
-      indPartInCell2[j+1] = indPartInCell[j+1]
+    for ic in range(nCellsNeighbourGrid):
+      indPartInCell[ic+1] = indPartInCell[ic] + indPartInCell[ic+1]
+      indPartInCell2[ic+1] = indPartInCell[ic+1]
 
     # make the list of which particles are in which cell
-    for j in range(nPart):
-        indx = <int>math.round(xArray[j] / cszNeighbourGrid)
-        indy = <int>math.round(yArray[j] / cszNeighbourGrid)
+    for k in range(nPart):
+        indx = <int>math.round(xArray[k] / cszNeighbourGrid)
+        indy = <int>math.round(yArray[k] / cszNeighbourGrid)
         ic = indx + nColsNeighbourGrid * indy
-        partInCell[indPartInCell2[ic+1]-1] = j
+        partInCell[indPartInCell2[ic+1]-1] = k
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
-        indXDEM[j] = <int>math.round(xArray[j] / cszDEM)
-        indYDEM[j] = <int>math.round(yArray[j] / cszDEM)
+        indXDEM[k] = <int>math.round(xArray[k] / cszDEM)
+        indYDEM[k] = <int>math.round(yArray[k] / cszDEM)
         # get index of cell containing the particle
-        inCellDEM[j] = indXDEM[j] + nColsDEM * indYDEM[j]
+        inCellDEM[k] = indXDEM[k] + nColsDEM * indYDEM[k]
 
     particles['inCellDEM'] = np.asarray(inCellDEM)
     particles['indXDEM'] = np.asarray(indXDEM)
@@ -1304,6 +1341,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
   # particle information
+  cdef double[:] gEff = particles['gEff']
   cdef double[:] mass = particles['m']
   cdef double[:] hArray = particles['h']
   cdef double[:] xArray = particles['x']
@@ -1365,8 +1403,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
         nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
         nx, ny, nz = normalize(nx, ny, nz)
-        # projection of gravity on normal vector
-        gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
+        # projection of gravity on normal vector or use the effective gravity (gravity + curvature acceleration part)
+        # This was done I computeForce and is passed over here
+        gravAcc3 = gEff[k]
         if SPHoption > 2:
             uMag = norm(ux, uy, uz)
             if uMag < velMagMin:
@@ -2058,14 +2097,19 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
   cdef double x, y
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
-  cdef int j
+  cdef int k
   cdef double[:] v = np.zeros(N)
-  for j in range(N):
-    x = xArray[j]
-    y = yArray[j]
+  for k in range(N):
+    x = xArray[k]
+    y = yArray[k]
 
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+<<<<<<< HEAD
     v[j] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
+=======
+
+    v[k] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
+>>>>>>> add com1DFA options:
 
   return v
 
@@ -2191,6 +2235,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef int interpOption = cfg.getint('interpOption')
   cdef double rho = cfg.getfloat('rho')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactorIni')
+  cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double dt = dT
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
@@ -2219,6 +2264,8 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
 
   cdef int indCellX, indCellY
   cdef double areaPart, uMag, m, h
@@ -2229,20 +2276,20 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
   cdef double wEnd[4]
-  cdef int j
+  cdef int k
   force = {}
 
-  for j in range(nPart):
-      m = mass[j]
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
-      h = hArray[j]
-      ux = uxArray[j]
-      uy = uyArray[j]
-      uz = uzArray[j]
-      indCellX = indXDEM[j]
-      indCellY = indYDEM[j]
+  for k in range(nPart):
+      m = mass[k]
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
+      h = hArray[k]
+      ux = uxArray[k]
+      uy = uyArray[k]
+      uz = uzArray[k]
+      indCellX = indXDEM[k]
+      indCellY = indYDEM[k]
 
       # deduce area
       areaPart = m / (h * rho)
@@ -2259,9 +2306,10 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
 
 
       # update velocity
-      uxArray[j] = ux
-      uyArray[j] = uy
-      uzArray[j] = uz
+      uxArray[k] = ux
+      uyArray[k] = uy
+      uzArray[k] = uz
+      gEff[k] = gravAcc * nz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -2269,6 +2317,8 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
   force['forceFrict'] = np.asarray(forceFrict)
+  particles['gEff'] = np.asarray(gEff)
+  particles['curvAcc'] = np.asarray(curvAcc)
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
