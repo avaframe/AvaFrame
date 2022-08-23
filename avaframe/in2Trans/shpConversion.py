@@ -50,6 +50,8 @@ def SHP2Array(infile, defname=None):
             np array with the (release or entrainment) thickness of each feature (as many values as features)
         id : list
             list of oid as string for each feature
+        ci95: list
+            list of 95% confidence interval of thickness value
 
 
     """

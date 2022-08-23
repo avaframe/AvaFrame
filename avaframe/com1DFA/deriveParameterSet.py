@@ -451,7 +451,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 cfgDist = {'sampleSize': distInfo[2], 'mean': float(cfg['GENERAL'][thType]),
                     'buildValue': distInfo[3], 'minMaxInterval': distInfo[4], 'support': '10000',
                     'buildType': distInfo[5]}
-                _, distValues, _, _ = cP.extractGaussian(cfgDist)
+                _, distValues, _, _ = cP.extractNormalDist(cfgDist)
                 cfg['GENERAL'][thType] = distValues[int(distInfo[0])]
             # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
             cfg['GENERAL'][key] = ''
@@ -495,7 +495,7 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
     if varType == 'Dist':
         distInfo = variationFactor.split('$')
         if len(distInfo) != 7:
-            message = 'Format of distVariation string is false'
+            message = 'Format of distVariation string is wrong'
             log.error(message)
             raise AssertionError
         else:
@@ -519,7 +519,7 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
         elif varType == 'Dist':
             cfgDist['mean'] = str(float(thicknessList[count]))
             cfgDist['buildValue'] = str(float(ci95List[count]))
-            _, distValues, _, _ = cP.extractGaussian(cfgDist)
+            _, distValues, _, _ = cP.extractNormalDist(cfgDist)
             cfg['GENERAL'][thNameId] = distValues[int(distInfo[0])]
             distInfo[3] = cfgDist['buildValue']
             variationIni = '$'.join(distInfo)

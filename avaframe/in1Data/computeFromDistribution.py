@@ -125,7 +125,7 @@ def getEmpiricalCDFNEW(sample):
     return ECDF, sampleSorted
 
 
-def extractGaussian(cfg):
+def extractNormalDist(cfg):
     """ create a normal distribution from given parameters and draw a sample
 
         Parameters
@@ -155,6 +155,10 @@ def extractGaussian(cfg):
         std = float(cfg['buildValue']) / 1.96
     elif cfg['buildType'] == 'std':
         std = float(cfg['buildValue'])
+    else:
+        message = 'buildType: %s not a valid option' % cfg['buildType']
+        log.error(message)
+        raise AssertionError
     log.info('Compute normal distribution with mean: %.4f and std: %.4f' % (mean, std))
 
     # compute min and max values of range derived from 99% confidence interval
