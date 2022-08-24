@@ -159,8 +159,12 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             valValues = fU.splitIniValueToArraySteps(cfg['GENERAL'][varName])
 
         elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
-            valStart = str(float(valVal) - float(valVariation))
-            valStop = str(float(valVal) + float(valVariation))
+            if '-' in valVariation or '+' in valVariation:
+                valStart = str(float(valVal) + float(valVariation))
+                valStop = float(valVal)
+            else:
+                valStart = str(float(valVal) - float(valVariation))
+                valStop = str(float(valVal) + float(valVariation))
             cfg['GENERAL'][varName] = '%s:%s:%s' % (valStart, valStop, valSteps)
             valValues = np.linspace(float(valStart), float(valStop), int(valSteps))
         else:

@@ -305,7 +305,11 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
         else:
             itemsP = cfgValues.split('$')
         itemsPRange = (float(itemsP[1]) / 100.) * float(itemsP[0])
-        items = np.linspace(float(itemsP[0])-itemsPRange, float(itemsP[0])+itemsPRange, int(itemsP[2]))
+        # check if pos or neg or full var
+        if '-' in itemsP[1] or '+' in itemsP[1]:
+            items = np.linspace(float(itemsP[0]), float(itemsP[0])+itemsPRange, int(itemsP[2]))
+        else:
+            items = np.linspace(float(itemsP[0])-itemsPRange, float(itemsP[0])+itemsPRange, int(itemsP[2]))
         if '&' in cfgValues:
             items = np.append(items, float(itemsPBig[1]))
     else:

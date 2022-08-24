@@ -83,8 +83,9 @@ def test_createComModConfig(tmp_path):
 
     cfgProb = configparser.ConfigParser()
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent',
-                          'muVariation': '60', 'muSteps': '2', 'addStandardConfig': 'True',
-                          'relThVariation': '50', 'relThSteps': '3', 'defaultSetup': 'True'}
+                          'variationValue': '60|50', 'numberOfSteps': '2|3',
+                          'addStandardConfig': 'True',
+                          'defaultSetup': 'True'}
 
     # call function to be tested
     cfgFiles = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
@@ -139,14 +140,15 @@ def test_updateCfgRange():
     # setup inputs
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent','addStandardConfig': 'True',
-                      'muVariation': '60', 'muSteps': '2', 'relThVariation': '50',
-                      'relThSteps': '2', 'defaultSetup': 'True'}
+                      'variationValue': '60|50', 'numberOfSteps': '2|2',
+                      'defaultSetup': 'True'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
 
+    varDict = pA.makeDictFromVars(cfg['PROBRUN'])
     # call function
-    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
     assert cfgNew['GENERAL']['mu'] == '0.155$60$2&0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
@@ -158,7 +160,7 @@ def test_updateCfgRange():
     varName = 'relTh'
 
     # call function
-    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
     assert cfgNew['GENERAL']['mu'] == '0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
@@ -171,9 +173,11 @@ def test_updateCfgRange():
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
+    varDict = {}
+    varDict = pA.makeDictFromVars(cfg['PROBRUN'])
 
     # call function
-    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
     assert cfgNew['GENERAL']['mu'] == '0.155$60$2'
     assert cfgNew['GENERAL']['relTh'] == ''
@@ -185,7 +189,7 @@ def test_updateCfgRange():
     varName = 'relTh'
 
     # call function
-    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
     assert cfgNew['GENERAL']['mu'] == '0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
