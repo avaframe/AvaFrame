@@ -49,9 +49,9 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
     fU.makeADir(outDir)
 
     # loop over all parameters for performing parameter variation
-    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    variationsDict = makeDictFromVars(cfgProb['PROBRUN'])
     cfgFiles = {}
-    for varName in varParList:
+    for varName in variationsDict:
         # define configuration files
         # get filename of module
         modNameString = str(pathlib.Path(modName.__file__).stem)
@@ -59,7 +59,7 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
 
         # use cfgFile, local com module settings or default settings if local not available
         modCfg = cfgUtils.getModuleConfig(modName, fileOverride=cfgFileMod)
-        modCfg = updateCfgRange(modCfg, cfgProb, varName)
+        modCfg = updateCfgRange(modCfg, cfgProb, varName, variationsDict[varName])
         with open(cfgFile, 'w') as configfile:
             modCfg.write(configfile)
         # append cfgFiles to list
@@ -68,7 +68,7 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
     return cfgFiles
 
 
-def updateCfgRange(cfg, cfgProb, varName):
+def updateCfgRange(cfg, cfgProb, varName, varDict):
     """ update cfg with a range for parameters in cfgProb
 
         Parameters
@@ -79,6 +79,8 @@ def updateCfgRange(cfg, cfgProb, varName):
             configparser object with info on update
         varName: str
             name of parameter used for variation
+        varDict: dict
+            dictionary with variationValue and numberOfSteps for varName
 
         Returns
         --------
@@ -109,9 +111,10 @@ def updateCfgRange(cfg, cfgProb, varName):
                 log.error(message)
                 raise AssertionError(message)
 
+    # this is now done for parameter VARNAME from inputs
     # get range, steps and reference value of parameter to perform variations
-    valVariation = cfgProb['PROBRUN']['%sVariation' % varName]
-    valSteps = cfgProb['PROBRUN']['%sSteps' % varName]
+    valVariation = varDict['variationValue']
+    valSteps = varDict['numberOfSteps']
     valVal = cfg['GENERAL'][varName]
 
     # set variation in configuration
@@ -273,3 +276,36 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     analysisPerformed = True
 
     return analysisPerformed
+
+
+def makeDictFromVars(cfg):
+    """ create a dictionary with info on parameter variation for all parameter in
+        varParList
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings, here varParList, variationValue, numberOfSteps
+
+        Returns
+        --------
+        variationsDict: dict
+            dictionary with for each varName, varVariation, varSteps
+
+    """
+
+    varParList = cfg['varParList'].split('|')
+    varValues = cfg['variationValue'].split('|')
+    varSteps = cfg['numberOfSteps'].split('|')
+
+    # check if value is provided for each parameter
+    if (len(varParList) == len(varValues) == len(varSteps)) is False:
+        message = 'For every parameter in varParList a variationValue and numberOfSteps needs to be provided'
+        log.error(message)
+        raise AssertionError
+
+    variationsDict = {}
+    for idx, val in enumerate(varParList):
+        variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx]}
+
+    return variationsDict
