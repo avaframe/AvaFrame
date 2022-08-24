@@ -16,6 +16,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.in3Utils import cfgUtils
 
 
 def test_readDEM():
@@ -246,9 +247,12 @@ def test_getThickness(tmp_path):
     outDir = avaTestDir / 'Outputs' / 'com1DFA'
     fU.makeADir(outDir)
 
-    cfgFile = ''
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'relThFromFile': 'False', 'simTypeList': 'null|ent', 'secRelAra': 'False'}
+    cfg = cfgUtils.getModuleConfig(com1DFA, toPrint=False)
+
+    cfg['GENERAL']['relThFromFile'] = 'False'
+    cfg['GENERAL']['simTypeList'] = 'null|ent'
+    cfg['GENERAL']['secRelAra'] = 'False'
     cfg['INPUT'] = {'releaseScenario': ''}
 
     demFile = avaTestDirInputs / 'DEM_HS_Topo.asc'
@@ -259,7 +263,7 @@ def test_getThickness(tmp_path):
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
         'flagSecondaryRelease': 'No'}}
 
-    inputSimFiles, cfgFilesRels = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfgFile, cfg)
+    inputSimFiles, cfgFilesRels = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfg)
 
     print('inputSimFiles', inputSimFiles)
     print('cfgFilesRels', sorted(cfgFilesRels))

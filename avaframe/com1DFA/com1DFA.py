@@ -48,7 +48,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def setRelThIni(avaDir, modName, cfgInitial, cfgFile=''):
+def setRelThIni(avaDir, modName, cfgInitial):
     """ Add thickness values in configuration file according to thickness flags, ini settings or shapefile attributes
         and create one cfgFile for each releaseScenario
 
@@ -60,8 +60,6 @@ def setRelThIni(avaDir, modName, cfgInitial, cfgFile=''):
             computational module
         cfgInitial: configparser object
             full configuration settings of com Module
-        cfgFile: str or pathlib path
-            path to cfgFile to read overall configuration - optional if not provided the local or default config is used
 
         Returns
         --------
@@ -80,7 +78,7 @@ def setRelThIni(avaDir, modName, cfgInitial, cfgFile=''):
     inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial)
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgFile, cfgInitial)
+    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgInitial)
 
     return inputSimFilesAll, cfgFilesRels
 
@@ -118,9 +116,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
     # Create output and work directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
                                                cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
-
     # create one cfg files for each releaseScenarios and fetch input data
-    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart, cfgFile=cfgFile)
+    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart)
 
     # initialise reportDictList and flag indicating whether simulations have been performed
     reportDictList = []
