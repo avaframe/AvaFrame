@@ -275,7 +275,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
     return OutputFile, available
 
 
-def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
+def getThickness(inputSimFiles, avaDir, modName, cfgInitial):
     """ add thickness of shapefiles to dictionary, create one ini file per releaseScenario and
         set thickness values in ini files
 
@@ -287,8 +287,8 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
             path to avalanche directory
         modName : computational module
             computational module
-        cfgFile: str
-            path to cfgFile for reading overall config of comModule - if empty read local or default ini file
+        cfg: configParser object
+            configParser object with the current (and possibly overridden) configuration
 
         Returns
         --------
@@ -311,11 +311,11 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
     cfgFilesRels = []
 
     # check if thickness info is required from entrainment and secondary release according to simType
-    simTypeList = cfg['GENERAL']['simTypeList'].split('|')
+    simTypeList = cfgInitial['GENERAL']['simTypeList'].split('|')
     thTypeList = []
     if any(simType in ['ent', 'entres', 'available'] for simType in simTypeList):
         thTypeList.append('entFile')
-    if cfg['GENERAL'].getboolean('secRelArea'):
+    if cfgInitial['GENERAL'].getboolean('secRelArea'):
         thTypeList.append('secondaryReleaseFile')
 
     # fetch thickness attribute of entrainment area and secondary release
@@ -330,8 +330,6 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
         thicknessList, idList = shpConv.readThickness(releaseA)
         inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList}
 
-        # load configuration
-        cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
         # add input data info
         cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem, 'releaseScenario': releaseA.stem}
         # update configuration with thickness value to be used for simulations
