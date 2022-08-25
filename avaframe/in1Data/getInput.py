@@ -15,7 +15,6 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.com1DFA.deriveParameterSet as dP
 
 
-
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
@@ -137,11 +136,11 @@ def getInputData(avaDir, cfg):
 
     # Initialise resistance areas
     resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
-    if resFile==None:
+    if resFile == None:
         resFile = ''
     # Initialise entrainment areas
     entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
-    if entFile==None:
+    if entFile == None:
         entFile = ''
     # Initialise DEM
     demFile = getDEMPath(avaDir)

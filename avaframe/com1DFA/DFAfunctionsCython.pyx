@@ -194,7 +194,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double wEnd[4]
   cdef int j
   force = {}
-  log.info('Cython debug: before loop')
   # loop on particles
   for j in range(nPart):
       m = mass[j]
@@ -334,7 +333,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       uyArray[j] = uy
       uzArray[j] = uz
 
-  log.info('Cython debug: right before save')
   # save results
   force['dM'] = np.asarray(dM)
   force['forceX'] = np.asarray(forceX)
@@ -346,7 +344,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
 
-  log.info('Cython debug: before entrainment mass')
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
   for j in range(nPart):
