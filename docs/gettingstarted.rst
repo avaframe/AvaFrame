@@ -1,5 +1,5 @@
-Getting Started
-===============
+Basic usage
+===========
 
 .. Note::
 
