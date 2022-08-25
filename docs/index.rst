@@ -16,6 +16,7 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`operational`
+    * :doc:`operationalGerman`
     * :doc:`developinstall`
     * :doc:`gettingstarted`
     * :doc:`testing`
@@ -33,6 +34,7 @@ General
    introduction.rst
    installation.rst
    operational.rst
+   operationalGerman.rst
    developinstall.rst
    gettingstarted.rst
    testing.rst

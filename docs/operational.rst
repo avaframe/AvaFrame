@@ -17,25 +17,45 @@ Setup AvaFrame
 
 #. Open the **OSGeo4W Shell** from your start menu (included in any Windows QGis installation)
 
-#. Activate the python 3 environment:
+   * If you have multiple QGis versions on your system you have to choose the OSGeo4W Shell that matches your QGis version. 
+     I.e. if you are using QGis 3.22, make sure you using the corresponding shell!
+
+
+    .. figure:: _static/OSGeo4WShell.png
+            :align: center
+            :width: 50%
+
+#. Activate the python 3 environment by putting the following command into the shell. **On newer versions of QGis (>3.18) this is not needed anymore, just skip it**:
 
     .. code-block:: bash
 
       py3_env
 
-#. Install AvaFrame
+#. Install AvaFrame by putting the following command into the shell:
 
     .. code-block::
 
       python3 -m pip install --user avaframe
 
+Setup QGis and run
+^^^^^^^^^^^^^^^^^^
+
+#. Open QGis from your start menu and go to Plugins -> Manage and Install Plugins
+
+#. Search for `AvaFrameConnector` and install it
+
+#. Access the QGis - Avaframe connector via Toolbox ->  AvaFrame -> AvaFrameConnector
+
+#. Add the described data and run. Results will be loaded after a while
+   (depending on the size of your DEM).
+
 .. Note::
-   If you encounter an error similar to this::
+   If you encounter an error similar to this (lowest/last line of the error message; the numbers might differ)::
 
       ValueError: numpy.ndarray size changed, may indicate binary
       incompatibility. Expected 88 from C header, got 80 from PyObject
 
-   run the following in OSGeo4W shell::
+   run the following in OSGeo4W shell (the *py3_env* command is not needed on newer versions of QGis, skip it)::
 
      py3_env
      python3 -m pip install --user --upgrade numpy pandas
@@ -43,37 +63,31 @@ Setup AvaFrame
    and restart QGis.
 
 
-
-Setup QGis and run
-^^^^^^^^^^^^^^^^^^
-
-#. Open QGis from your start menu and go to Plugins -> Manage and Install Plugins
-
-#. Search for `AvaFrameConnector` and install it (you might have to enable experimental plugins)
-
-#. Access the QGis - Avaframe connector via Toolbox ->  AvaFrame -> AvaFrameConnector
-
-#. Add the described data and run. Results will be loaded after a while
-   (depending on the size of your DEM).
-
 Update Avaframe to a new release
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Open the **OSGeo4W Shell** from your start menu
+#. Open the **OSGeo4W Shell** from your start menu (included in any Windows QGis installation)
 
-#. Activate the python 3 environment:
+   * If you have multiple QGis versions on your system you have to choose the OSGeo4W Shell that matches your QGis version. 
+     I.e. if you are using QGis 3.22, make sure you using the corresponding shell! (see point 1 of the *Setup AvaFrame* above)
+
+#. Activate the python 3 environment by putting the following command into the shell. **On newer versions of QGis (>3.18) this is not needed anymore, just skip it**:
 
     .. code-block:: bash
 
       py3_env
 
-#. Update AvaFrame
+#. Update AvaFrame by putting the following command into the shell:
 
     .. code-block::
 
       python3 -m pip install -U --user avaframe
 
-   Note: sometimes it is necessary to run this command twice.
+   Note: sometimes it is necessary to run this command twice. **If you run into a *classFactory ....* error, please also consider
+   the note further above!**
 
+#. Restart/Open QGis from your start menu and go to Plugins -> Manage and Install Plugins
+
+#. Search for `AvaFrameConnector` and check whether it also needs updating
 
 
