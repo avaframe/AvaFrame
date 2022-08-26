@@ -183,11 +183,4 @@ def extractNormalDist(cfg):
     # if cfg['flagMinMax'] == 'False':
     #     sampleVect = sampleVect[1:-1]
 
-    # Debug plot
-    # plt.title('Samples drawn from dist')
-    # plt.plot(sampleVect, 'k*')
-    # plt.xlabel('number of sample')
-    # plt.ylabel('relTh [m]')
-    # plt.show()
-
     return CDFint, sampleVect, pdf, x
