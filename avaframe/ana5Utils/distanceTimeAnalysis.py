@@ -372,8 +372,13 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     # minus in upstream direction of runout area start point
     if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
         rangeGates = rasterTransfo['sParallel'][:] - rasterTransfo['sParallel'][indStartOfRunout]
-    else:
+    elif cfgRangeTime['GENERAL']['sType'].lower() == 'projected':
         rangeGates = rasterTransfo['s'][:] - rasterTransfo['s'][indStartOfRunout]
+    else:
+        message = ('sType for tt-diagram is invalid, valid options are: projected and parallel' %
+            cfgRangeTime['GENERAL']['sType'])
+        log.error(message)
+        raise AssertionError
     rangeRaster = np.repeat([rangeGates], newRasterDEM.shape[1], axis=0).T
 
     # create dictionary with info on front distance, mean values, range distance array
@@ -456,8 +461,13 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
         cLower = max(lindex)
         if mtiInfo['sType'].lower() == 'parallel':
             rangeValue = rasterTransfo['sParallel'][cLower] - rasterTransfo['sParallel'][indStartOfRunout]
-        else:
+        elif:
             rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
+        else:
+            message = ('sType for tt-diagram is invalid, valid options are: projected and parallel' %
+                cfgRangeTime['GENERAL']['sType'])
+            log.error(message)
+            raise AssertionError
         mtiInfo['rangeList'].append(rangeValue)
         # if animation plot shall be created add transformation info to mtiInfo dict for plots
         if cfgRangeTime['PLOTS'].getboolean('animate'):
@@ -467,6 +477,10 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     else:
         cLower = np.nan
         mtiInfo['rangeList'].append(np.nan)
+        if cfgRangeTime['PLOTS'].getboolean('animate'):
+            mtiInfo['slRaster'] = slRaster
+            mtiInfo['rasterTransfo'] = rasterTransfo
+            mtiInfo['cLower'] = cLower
 
     # plot avalanche front and transformed raster field
     if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
