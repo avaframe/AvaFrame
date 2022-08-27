@@ -345,11 +345,43 @@ def test_splitVariationToArraySteps():
     value = '40$4'
     itemsTest = np.append(np.linspace(0.6, 1.4, 4), np.array([1.]))
     itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
+    print('itemsTest', itemsTest)
+    print('itemsArray', itemsArray)
 
     assert np.array_equal(itemsArray, itemsTest)
 
-    value = '40$4'
+    value = '2$5'
+    key = 'relThRangeVariation'
     fullCfg['GENERAL'] = {'addStandardConfig': 'False'}
     itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
 
-    assert np.array_equal(itemsArray, np.linspace(0.6, 1.4, 4))
+    assert np.array_equal(itemsArray, np.linspace(-2, 2, 5))
+
+    value = '+2$5'
+    key = 'relThRangeVariation'
+    fullCfg['GENERAL'] = {'addStandardConfig': 'False'}
+    itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
+
+    assert np.array_equal(itemsArray, np.linspace(0, 2, 5))
+
+    value = '-2$5'
+    key = 'relThRangeVariation'
+    fullCfg['GENERAL'] = {'addStandardConfig': 'False'}
+    itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
+
+    assert np.array_equal(itemsArray, np.linspace(-2, 0, 5))
+
+    value = 'normaldistribution$3$0.1$95$ci95$10000'
+    key = 'relThDistVariation'
+    fullCfg['GENERAL'] = {'addStandardConfig': 'False'}
+    itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
+
+    assert np.array_equal(itemsArray, ['0$normaldistribution$3$0.1$95$ci95$10000',
+        '1$normaldistribution$3$0.1$95$ci95$10000', '2$normaldistribution$3$0.1$95$ci95$10000'])
+
+    value = '4$normaldistribution$3$0.1$95$ci95$10000'
+    key = 'relThDistVariation'
+    fullCfg['GENERAL'] = {'addStandardConfig': 'False'}
+    itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
+
+    assert np.array_equal(itemsArray, ['4$normaldistribution$3$0.1$95$ci95$10000'])
