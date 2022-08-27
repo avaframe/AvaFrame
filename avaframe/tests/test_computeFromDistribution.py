@@ -155,3 +155,44 @@ def test_EmpiricalCDFNEW():
     print('ECDF', ECDF, sampleSorted)
 
     assert np.allclose(np.linspace(0.05, 1, 20), ECDF, atol=1.e-6)
+
+
+def test_extractNormalDist():
+    """ test extracting a sample from a normal distribution """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'sampleSize': 11, 'mean': 0.0, 'minMaxInterval': 95, 'buildType': 'std',
+        'buildValue': 1., 'support': 10000}
+
+    # test draw sample
+    CDFint, sampleVect, pdf, x = cD.extractNormalDist(cfg['GENERAL'])
+
+    assert np.isclose(-1.96, x[0], rtol=1.e-3)
+    assert np.isclose(1.96, x[-1], rtol=1.e-3)
+    assert len(sampleVect) == 11
+    assert sampleVect[5] == 0.0
+
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'sampleSize': 11, 'mean': 0.0, 'minMaxInterval': 95, 'buildType': 'ci95',
+        'buildValue': 1.96, 'support': 10000}
+
+    # test draw sample
+    CDFint, sampleVect, pdf, x = cD.extractNormalDist(cfg['GENERAL'])
+
+    assert np.isclose(-1.96, x[0], rtol=1.e-3)
+    assert np.isclose(1.96, x[-1], rtol=1.e-3)
+    assert len(sampleVect) == 11
+    assert sampleVect[5] == 0.0
+
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'sampleSize': 11, 'mean': 0.0, 'minMaxInterval': 99, 'buildType': 'ci95',
+        'buildValue': 1.96, 'support': 10000}
+
+    # test draw sample
+    CDFint, sampleVect, pdf, x = cD.extractNormalDist(cfg['GENERAL'])
+
+    assert np.isclose(-2.58, x[0], rtol=1.e-2)
+    assert np.isclose(2.58, x[-1], rtol=1.e-2)
+    assert len(sampleVect) == 11
+    assert sampleVect[5] == 0.0
