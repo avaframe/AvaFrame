@@ -374,7 +374,7 @@ def splitVariationToArraySteps(value, key, fullCfg):
                     itemsArray.append('%d$' % i + value)
             else:
                 message = ('Format of %s is not correct - required format: \
-                    typeOfDistribution$numberOfSteps$ci95value$ci95$support, \
+                    typeOfDistribution$numberOfSteps$ci95value$minMaxInterval$ci95$support, \
                     where the first item step is optional' % value)
                 log.error(message)
                 raise AssertionError
@@ -383,7 +383,7 @@ def splitVariationToArraySteps(value, key, fullCfg):
 
     if fullCfg['GENERAL'].getboolean('addStandardConfig'):
         # add parameter value of standard configuration to distribution
-        addStandardConfig(key, itemsArray)
+        itemsArray = addStandardConfig(key, itemsArray)
 
     return itemsArray
 
