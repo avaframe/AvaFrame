@@ -382,12 +382,37 @@ def splitVariationToArraySteps(value, key, fullCfg):
             itemsArray = [value]
 
     if fullCfg['GENERAL'].getboolean('addStandardConfig'):
-        if 'Percent' in key and (1 not in itemsArray):
-            itemsArray = np.append(itemsArray, 1.)
-            log.info('Standard configuration value added for %s' % (key))
-        if 'Range' in key and (0 not in itemsArray):
-            itemsArray = np.append(itemsArray, 0.)
-            log.info('Standard configuration value added for %s' % (key))
+        # add parameter value of standard configuration to distribution
+        addStandardConfig(key, itemsArray)
+
+    return itemsArray
+
+
+def addStandardConfig(key, itemsArray):
+    """ add value of standard configuration to parameter variation if not already included
+        only available for percent or range variation
+
+        Parameters
+        -----------
+        varName: string
+            name of parameter
+        itemsArray: list
+            list of parameter values used to derive parameter variation
+
+        Returns
+        --------
+        itemsArray: list
+            updated itemsArray
+    """
+
+    if 'Percent' in key and (1 not in itemsArray):
+        itemsArray = np.append(itemsArray, 1.)
+        log.info('Standard configuration value added for %s' % (key))
+    elif 'Range' in key and (0 not in itemsArray):
+        itemsArray = np.append(itemsArray, 0.)
+        log.info('Standard configuration value added for %s' % (key))
+    elif 'Dist' in key and ((len(itemsArray) % 2) == 0):
+        log.warning('Adding a standard configuration value for variation using a normal distribution is not available')
 
     return itemsArray
 
