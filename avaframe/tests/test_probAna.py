@@ -196,3 +196,72 @@ def test_updateCfgRange():
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
     assert cfgNew['GENERAL']['addStandardConfig'] == 'False'
+
+    # setup inputs
+    cfg = configparser.ConfigParser()
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'range','addStandardConfig': 'False',
+                      'variationValue': '0.1|0.5', 'numberOfSteps': '5|12',
+                      'defaultSetup': 'True'}
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'mu'
+
+    varDict = pA.makeDictFromVars(cfg['PROBRUN'])
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
+
+    assert np.isclose(float(cfgNew['GENERAL']['mu'].split(':')[0]), 0.055, rtol=1.e-5)
+    assert np.isclose(float(cfgNew['GENERAL']['mu'].split(':')[1]), 0.255, rtol=1.e-5)
+    assert cfgNew['GENERAL']['mu'].split(':')[2] == '5'
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThPercentVariation'] == ''
+
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'relTh'
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
+
+    assert cfgNew['GENERAL']['mu'] == '0.155'
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThRangeVariation'] == '0.5$12'
+
+
+    # setup inputs
+    cfg = configparser.ConfigParser()
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'normaldistribution',
+                      'addStandardConfig': 'False',
+                      'variationValue': '0.1|0.3', 'numberOfSteps': '3|12',
+                      'defaultSetup': 'True'}
+    cfg['computeFromDistribution_override'] = {'buildType': 'ci95', 'minMaxInterval': '95',
+        'support': '10000'}
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'mu'
+
+    varDict = pA.makeDictFromVars(cfg['PROBRUN'])
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
+
+    assert np.isclose(float(cfgNew['GENERAL']['mu'].split('|')[0]), 0.055, rtol=1.e-3)
+    assert np.isclose(float(cfgNew['GENERAL']['mu'].split('|')[1]), 0.155, rtol=1.e-3)
+    assert np.isclose(float(cfgNew['GENERAL']['mu'].split('|')[2]), 0.255, rtol=1.e-3)
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThDistVariation'] == ''
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'relTh'
+
+    varDict = pA.makeDictFromVars(cfg['PROBRUN'])
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
+
+    print('value', cfgNew['GENERAL']['relThPercentVariation'])
+
+    assert cfgNew['GENERAL']['mu'] == '0.155'
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThDistVariation'] == 'normaldistribution$12$0.3$95$ci95$10000'
