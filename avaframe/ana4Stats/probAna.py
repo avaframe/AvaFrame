@@ -136,6 +136,9 @@ def updateCfgRange(cfg, cfgProb, varName):
                 log.info('Reference value of %s: %s is added' % (varName, str(valVal)))
                 cfg['GENERAL'][varName] = cfg['GENERAL'][varName] + '&' + str(valVal)
 
+    # add a scenario Name to VISUALISATION
+    cfg['VISUALISATION']['scenario'] = varName
+
     return cfg
 
 
