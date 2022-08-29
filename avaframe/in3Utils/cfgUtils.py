@@ -511,8 +511,11 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     cfgDict = convertConfigParserToDict(cfgObject)
     simItemDFGeneral = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
     simItemDFInput = pd.DataFrame(data=cfgDict['INPUT'], index=indexItem)
-    simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
-    simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
+    if 'VISUALISATION' in cfgDict:
+        simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
+        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
+    else:
+        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
     simItemDF = simItemDF.assign(simName=simName)
     if isinstance(simDF, str):
         simDF = simItemDF
