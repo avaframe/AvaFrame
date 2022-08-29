@@ -87,7 +87,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     return pathDict
 
 
-def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
+def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
     """ Define reference simulation used for aimec analysis.
 
         if the configuration files are available and a varParList is provided, the simulations
@@ -105,7 +105,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             dataFrame with simulations to analyze and path to result files
         comModule: str
             computational module used to produce the results to analyze
-        cfgSetup: configParser object
+        cfg: configParser object
             configuration for aimec - referenceSimValue, varParList used here
 
         Returns
@@ -121,6 +121,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         colorVariation: boolean
             True if a color variation should be applied in the plots
     """
+
+    cfgSetup = cfg['AIMECSETUP']
     inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
     if not inputDir.is_dir():
         message = 'Input directory %s does not exist - check anaMod' % inputDir
@@ -144,6 +146,14 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             raise e(message)
         else:
             configFound = False
+
+    # filter simulations
+    if cfg.has_section('FILTER'):
+        parametersDict = fU.getFilterDict(cfg, 'FILTER')
+        simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
+        inputsDF = inputsDF[inputsDF['simName'].isin(simNameList)]
+        log.info('%d simulations found matching filter criteria' % inputsDF.size[0])
+
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
     if configFound and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
