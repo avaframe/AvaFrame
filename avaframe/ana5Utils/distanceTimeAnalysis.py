@@ -461,7 +461,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
         cLower = max(lindex)
         if mtiInfo['sType'].lower() == 'parallel':
             rangeValue = rasterTransfo['sParallel'][cLower] - rasterTransfo['sParallel'][indStartOfRunout]
-        elif:
+        elif mtiInfo['sType'].lower() == 'projected':
             rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
         else:
             message = ('sType for tt-diagram is invalid, valid options are: projected and parallel' %
