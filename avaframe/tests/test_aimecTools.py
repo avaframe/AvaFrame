@@ -41,7 +41,7 @@ def test_fetchReferenceSimNo(tmp_path):
                                                                               cfgSetup)
     assert refSimName == 'testSim_no1'
     assert colorParameter is False
-    assert inputsDF.loc[refSimHash, cfgSetup['GENERAL']['resType']] == test1PFV
+    assert inputsDF.loc[refSimHash, cfgSetup['AIMECSETUP']['resType']] == test1PFV
 
 
 def test_computeCellSizeSL(tmp_path):
