@@ -28,16 +28,17 @@ def test_fetchReferenceSimNo(tmp_path):
          'pft': [test1PFT, test2PFT], 'pfv': [test1PFV, test2PFV]}
     inputsDF = pd.DataFrame(data=d, index=['testSim_no1', 'testSim_no2'])
     cfgSetup = configparser.ConfigParser()
-    cfgSetup['GENERAL'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2', 'referenceSimValue': '',
+    cfgSetup['AIMECSETUP'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2', 'referenceSimValue': '',
                            'varParList': ''}
+
     refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
-                                                                              cfgSetup['GENERAL'])
+                                                                              cfgSetup)
     assert refSimName == 'testSim_no2'
     assert colorParameter is False
 
-    cfgSetup['GENERAL']['referenceSimName'] = ''
+    cfgSetup['AIMECSETUP']['referenceSimName'] = ''
     refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
-                                                                              cfgSetup['GENERAL'])
+                                                                              cfgSetup)
     assert refSimName == 'testSim_no1'
     assert colorParameter is False
     assert inputsDF.loc[refSimHash, cfgSetup['GENERAL']['resType']] == test1PFV

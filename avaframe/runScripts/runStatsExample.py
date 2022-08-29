@@ -71,7 +71,7 @@ if cfg.getboolean('aimec'):
     # TODO: define referenceFile
     pathDict['numSim'] = len(pathDict['ppr'])
     # define reference simulation
-    pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgAimecSetup)
+    pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgAIMEC)
 
     # Extract input file locations
     pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=cfgAimecSetup['anaMod'])
