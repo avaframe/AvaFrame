@@ -7,6 +7,7 @@
 import logging
 import numpy as np
 import pathlib
+import pandas as pd
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -90,7 +91,7 @@ def addInfoToSimName(avalancheDir, csvString=''):
     return(simDF[vars])
 
 
-def filterSims(avalancheDir, parametersDict, specDir=''):
+def filterSims(avalancheDir, parametersDict, specDir='', simDF=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
         if ~ is used as a prefix for a parameter - it is filtered according to values that do NOT match the value
         provided with the ~Parameter
@@ -103,6 +104,8 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
             dictionary with parameter and parameter values for filtering
         specDir: str
             path to a directory where simulation configuration files can be found - optional
+        simDF: pandas DataFrame
+            optional - if simDF already available
 
         Returns
         --------
@@ -110,8 +113,9 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
             list of simNames that match filtering criteria
     """
 
-    # load dataFrame for all configurations
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
+    if isinstance(simDF, pd.DataFrame) is False:
+        # load dataFrame for all configurations
+        simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
 
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
