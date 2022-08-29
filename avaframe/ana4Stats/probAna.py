@@ -135,7 +135,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             parValue = valVariation + '$' + valSteps
         # if variation using absolute range
         elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
-            parName = varPar + 'RangeVariation'
+            parName = varName + 'RangeVariation'
             parValue = valVariation + '$' + valSteps
         else:
             message = ('Variation Type: %s - not a valid option, options are: percent, range, normaldistribution' % cfgProb['PROBRUN']['variationType'])
