@@ -79,7 +79,7 @@ for probConf in probabilityConfigurations:
         log.warning('No files found for configuration: %s' % probConf)
     # make a plot of the map
     inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
-    sP.plotProbMap(avaDir, inputDir, cfgProb)
+    sP.plotProbMap(avaDir, inputDir, cfgProb, demPlot=True)
 
     # copy outputs to folder called like probability configurations
     outputFiles = avaDir / 'Outputs' / 'ana4Stats'
