@@ -440,7 +440,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
 
     # use the max or the mean of each cross section
-    if cfgRangeTime['GENERAL']['maxOrMean'] == 'max':
+    if cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
         aCross = aCrossMax
     else:
         aCross = aCrossMean

@@ -500,7 +500,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
 def putAvaNameOnPlot(ax, avaDir, date=True):
     '''
     Puts the date and avalanche name (or a list of ava names) in the lower left corner of the given
-    matplotlib axes
+    matplotlib axes, if date=False only avalanche name is put
     '''
 
     # if avaDir is just a single avaDir or a list of avaDirs
