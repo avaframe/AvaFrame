@@ -234,6 +234,11 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                 resAnalysisDF[resType + 'CrossMean'] = np.nan
                 resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
 
+            # add max, min and std values of result fields
+            resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
+            resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(rasterData['rasterData'])
+            resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(rasterData['rasterData'])
+
             # analyze all fields
             resAnalysisDF = aT.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
 
