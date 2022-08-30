@@ -84,4 +84,4 @@ for probConf in probabilityConfigurations:
     # copy outputs to folder called like probability configurations
     outputFiles = avaDir / 'Outputs' / 'ana4Stats'
     saveFiles = avaDir / 'Outputs' / ('ana4Stats_' + probConf)
-    shutil.copytree(outputFiles, saveFiles)
+    shutil.move(outputFiles, saveFiles)
