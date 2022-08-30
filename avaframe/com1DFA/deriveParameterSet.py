@@ -520,7 +520,7 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
     # fetch ci95 list
     ci95List = cfg['INPUT'][thType + 'Ci95'].split('|')
 
-    # do some preprocessing if varTypu is dist
+    # do some preprocessing if varType is dist
     if varType == 'Dist':
         distInfo = variationFactor.split('$')
         if len(distInfo) != 7:
