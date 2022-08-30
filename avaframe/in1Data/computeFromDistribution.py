@@ -8,7 +8,6 @@ import scipy.special as sc
 from scipy.interpolate import interp1d
 import logging
 from scipy.stats import norm
-import matplotlib.pyplot as plt
 
 
 # create local logger
