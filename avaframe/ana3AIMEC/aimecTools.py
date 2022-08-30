@@ -152,7 +152,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
         parametersDict = fU.getFilterDict(cfg, 'FILTER')
         simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
         inputsDF = inputsDF[inputsDF['simName'].isin(simNameList)]
-        log.info('%d simulations found matching filter criteria' % inputsDF.size[0])
+        log.info('%d simulations found matching filter criteria' % inputsDF.shape[0])
 
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
     if configFound and cfgSetup['varParList'] != '':
