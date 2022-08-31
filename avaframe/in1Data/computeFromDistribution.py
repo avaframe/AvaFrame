@@ -173,13 +173,7 @@ def extractNormalDist(cfg):
     # create interpolated function of cdf to draw samples from
     CDFint = interp1d(cdf, x)
     # draw sampleSize samples from distribution
-    # also consider if min and max value shall be part of the final sample
-    # TODO: do we need this flagMinMax?
-    # if cfg['flagMinMax'] == 'False':
-    #     sampleSize = sampleSize + 2
     xSample = np.linspace(np.min(cdf), np.max(cdf), sampleSize)
     sampleVect = CDFint(xSample)
-    # if cfg['flagMinMax'] == 'False':
-    #     sampleVect = sampleVect[1:-1]
 
     return CDFint, sampleVect, pdf, x
