@@ -231,12 +231,13 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
+    cfg.optionxform = str
     cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'normaldistribution',
                       'addStandardConfig': 'False',
                       'variationValue': '0.1|0.3', 'numberOfSteps': '3|12',
                       'defaultSetup': 'True'}
     cfg['computeFromDistribution_override'] = {'buildType': 'ci95', 'minMaxInterval': '95',
-        'support': '10000'}
+        'defaultConfig': 'True'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
