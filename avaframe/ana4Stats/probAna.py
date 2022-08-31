@@ -117,6 +117,12 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     valSteps = varDict['numberOfSteps']
     valVal = cfg['GENERAL'][varName]
 
+    if cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+        # get computeFromDistribution configuration and apply override
+        cfgDist = cfgUtils.getModuleConfig(cP, fileOverride='', modInfo=False, toPrint=False,
+                                              onlyDefault=cfgProb['computeFromDistribution_override']['defaultConfig'])
+        cfgDist, cfgProb = cfgHandling.applyCfgOverride(cfgDist, cfgProb, cP, addModValues=False)
+
     # set variation in configuration
     if varName in ['relTh', 'entTh', 'secondaryRelTh']:
         # if variation using normal distribution
@@ -126,9 +132,9 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
                 valVariation = '-'
             parValue = (cfgProb['PROBRUN']['variationType'] + '$'
                 + valSteps + '$'  + valVariation + '$'
-                + cfgProb['computeFromDistribution_override']['minMaxInterval'] + '$'
-                + cfgProb['computeFromDistribution_override']['buildType'] + '$'
-                + cfgProb['computeFromDistribution_override']['support'])
+                + cfgDist['GENERAL']['minMaxInterval'] + '$'
+                + cfgDist['GENERAL']['buildType'] + '$'
+                + cfgDist['GENERAL']['support'])
         # if variation using percent
         elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
             parName = varName + 'PercentVariation'
@@ -150,8 +156,8 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             cfgDist = {'sampleSize': valSteps, 'mean': valVal,
                 'buildType': cfgProb['computeFromDistribution_override']['buildType'],
                 'buildValue': valVariation,
-                'minMaxInterval':  cfgProb['computeFromDistribution_override']['minMaxInterval'],
-                'support': cfgProb['computeFromDistribution_override']['support']}
+                'minMaxInterval':  cfgDist['GENERAL']['minMaxInterval'],
+                'support': cfgDist['GENERAL']['support']}
             _, valValues, _, _ = cP.extractNormalDist(cfgDist)
             cfg['GENERAL'][varName] = dP.writeToCfgLine(valValues)
         elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
