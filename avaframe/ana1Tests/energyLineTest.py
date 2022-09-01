@@ -1,6 +1,5 @@
 """
 Energy line test
-
 This module runs a DFA simulation extracts the center of mass path
 and compares it to the analytic geometric/alpha line solution
 """
@@ -29,7 +28,6 @@ log = logging.getLogger(__name__)
 
 def mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem):
     """This is the core function of the energyLineTest module
-
     This module extracts the center of mass path from a DFA simulation
     and compares it to he analytic geometric/alpha line solution
     """
@@ -49,7 +47,6 @@ def mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem
 
 def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaProfileMass, dem, fieldsList, simName):
     """ Make energy test analysis and plot results
-
     Parameters
     -----------
     avalancheDir: pathlib
@@ -130,6 +127,9 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
 
     # add alpha line
     ax2.plot(sGeomL, zGeomL, 'b-', label=r'$\alpha$ line (%.2f°)' % alphaDeg)
+    if energyLineTestCfg['energyLineTest'].getboolean('shiftedAlphaLine'):
+        ax2.plot(avaProfileMass['s'], avaProfileMass['z'][-1] - (avaProfileMass['s']-avaProfileMass['s'][-1]) * mu,
+                 'b-.', label=r'shifted $\alpha$ line (%.2f°)' % alphaDeg)
     zLim = ax2.get_ylim()
     sLim = ax2.get_xlim()
     zMin = zLim[0]
@@ -171,6 +171,9 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
 
     # add alpha line
     ax3.plot(sGeomL, zGeomL-z0, 'b-', label=r'$\alpha$ line (%.2f°)' % alphaDeg)
+    if energyLineTestCfg['energyLineTest'].getboolean('shiftedAlphaLine'):
+        ax3.plot(avaProfileMass['s'], avaProfileMass['z'][-1]-z0 - (avaProfileMass['s']-avaProfileMass['s'][-1]) * mu,
+                 'b-.', label=r'shifted $\alpha$ line (%.2f°)' % alphaDeg)
 
     # add horizontal line at the final mass averaged position
     # compute plot limits
@@ -185,6 +188,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
     zMin = avaProfileMass['z'][-1] + min(slopeExt*(sMax - avaProfileMass['s'][-1]), 0 - 2*errorZ)-z0
     zMax = avaProfileMass['z'][0] - sMin*np.tan(min(runOutAngleRad, alphaRad))-z0
     if avaProfileMass['z'][-1] == zIntersection:
+        zMin = zMin - (zMax-zMin)*0.1
+    if errorZ < 1e-3:
         zMin = zMin - (zMax-zMin)*0.1
     ax3.vlines(x=avaProfileMass['s'][-1], ymin=zMin, ymax=avaProfileMass['z'][-1]-z0,
                color='r', linestyle='--')
@@ -222,7 +227,6 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
 
 def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
     """Compute the center of mass runout angle
-
     Parameters
     -----------
     avaProfileMass: dict
@@ -232,7 +236,6 @@ def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
         0 by default - so full mass averaged path from top
     indEnd: int
         index of the start of the mass averaged pass (to discard the bottom extension). -1 by default
-
     Returns
     --------
     runOutAngleRad: float
@@ -252,10 +255,8 @@ def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
 def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     """Extend the  profile path and compute the intersection
     between the theoretical energy line and the path profile
-
     The profile is extended by a line. The line slope is computed
     from the slope of the regression on the las points of the profile
-
     Parameters
     -----------
     energyLineTestCfg: configParser
@@ -266,7 +267,6 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
         friction coefficient
     csz: float
         dem cell size
-
     Returns
     --------
     slopeExt: float
@@ -321,7 +321,6 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
 
 def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAngleDeg, alphaDeg):
     """Compute energy dots and errors
-
     Parameters
     -----------
     avaProfileMass: dict
@@ -340,7 +339,6 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
         center of mass runout angle in radians
     runOutAngleDeg: float
         center of mass runout angle in degrees
-
     Returns
     --------
     zEne: numpy 1D array
