@@ -2104,12 +2104,8 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
     y = yArray[k]
 
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-<<<<<<< HEAD
-    v[j] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
-=======
 
     v[k] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
->>>>>>> add com1DFA options:
 
   return v
 
