@@ -256,8 +256,11 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         # zNew = zNew.reshape(np.shape(xGrid))
 
     # create header of remeshed DEM
-    headerRemeshed = copy.deepcopy(header)
     # set new header
+    headerRemeshed = {}
+    headerRemeshed['xllcenter'] = header['xllcenter']
+    headerRemeshed['yllcenter'] = header['yllcenter']
+    headerRemeshed['noDataValue'] = header['noDataValue']
     headerRemeshed['cellsize'] = cellSizeNew
     headerRemeshed['ncols'] = ncolsNew
     headerRemeshed['nrows'] = nrowsNew
@@ -992,8 +995,8 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
     if cellSizeNew is not None:
         xExtent = (ncols-1) * csz
         yExtent = (nrows-1) * csz
-        ncolsNew = int(xExtent/cellSizeNew) + 1
-        nrowsNew = int(yExtent/cellSizeNew) + 1
+        ncolsNew = int(xExtent/cellSizeNew + 1)
+        nrowsNew = int(yExtent/cellSizeNew + 1)
         # get rid of the case cellSizeNew = csz (which would lead to a too large grid)
         if larger and ((ncolsNew-1) * cellSizeNew < xExtent):
             ncols = ncolsNew + 1
@@ -1026,8 +1029,8 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     xEnd = (ncols-1) * csz
     yEnd = (nrows-1) * csz
 
-    xp = np.linspace(xllc, xllc + xEnd, ncols)
-    yp = np.linspace(yllc, yllc + yEnd, nrows)
+    xp = np.linspace(0, xEnd, ncols) + xllc
+    yp = np.linspace(0, yEnd, nrows) + yllc
 
     xGrid, yGrid = np.meshgrid(xp, yp)
     return xGrid, yGrid
