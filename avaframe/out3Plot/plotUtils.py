@@ -512,12 +512,13 @@ def putAvaNameOnPlot(ax, avaDir, date=True):
             infoText = str(avaName)
     else:
         if date:
-            infoText = datetime.datetime.now().strftime("%d.%m.%y")
+            infoText = datetime.datetime.now().strftime("%d.%m.%y") + ';'
         else:
             infoText = ''
-        for ava in avaDir:
+        for ava in avaDir[:-1]:
             avaName = pathlib.PurePath(ava).name
-            infoText = infoText + ';' + str(avaName)
+            infoText = infoText + str(avaName) + ';'
+        infoText = infoText + str(pathlib.PurePath(avaDir[-1]).name)
 
     ax.annotate(infoText, xy=(0.01, 0.01), xycoords='axes fraction',
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
