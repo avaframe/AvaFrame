@@ -245,6 +245,30 @@ def test_splitIniValueToArraySteps():
     assert isinstance(items3, list)
 
 
+    cfgValues4 = '10$50$11'
+    cfgValues5 = '10$-50$11'
+    cfgValues6 = '10$+50$11'
+
+    # call function to be tested
+    items4 = fU.splitIniValueToArraySteps(cfgValues4)
+    items5 = fU.splitIniValueToArraySteps(cfgValues5)
+    items6 = fU.splitIniValueToArraySteps(cfgValues6)
+
+    assert np.array_equal(items4, np.linspace(5., 15., 11))
+    assert np.array_equal(items5, np.linspace(10., 5., 11))
+    assert np.array_equal(items6, np.linspace(10., 15., 11))
+
+    cfgValues4 = '10$50$11&20'
+    cfgValues6 = '10:50:11&40'
+
+    # call function to be tested
+    items4 = fU.splitIniValueToArraySteps(cfgValues4)
+    items6 = fU.splitIniValueToArraySteps(cfgValues6)
+
+    assert np.array_equal(items4, np.append(np.linspace(5., 15., 11), 20))
+    assert np.array_equal(items6, np.append(np.linspace(10, 50, 11), 40))
+
+
 def test_splitTimeValueToArrayInterval():
     """ Test if splitting into an array works fine  """
 
