@@ -37,6 +37,13 @@ Setup AvaFrame
 
       python3 -m pip install --user avaframe
 
+#. To avoid a numpy error (see note at bottom of page), update numpy and pandas:
+
+    .. code-block::
+     
+      python3 -m pip install --user --upgrade numpy pandas
+
+
 Setup QGis and run
 ^^^^^^^^^^^^^^^^^^
 
@@ -49,18 +56,6 @@ Setup QGis and run
 #. Add the described data and run. Results will be loaded after a while
    (depending on the size of your DEM).
 
-.. Note::
-   If you encounter an error similar to this (lowest/last line of the error message; the numbers might differ)::
-
-      ValueError: numpy.ndarray size changed, may indicate binary
-      incompatibility. Expected 88 from C header, got 80 from PyObject
-
-   run the following in OSGeo4W shell (the *py3_env* command is not needed on newer versions of QGis, skip it)::
-
-     py3_env
-     python3 -m pip install --user --upgrade numpy pandas
-
-   and restart QGis.
 
 
 Update Avaframe to a new release
@@ -83,11 +78,27 @@ Update Avaframe to a new release
 
       python3 -m pip install -U --user avaframe
 
-   Note: sometimes it is necessary to run this command twice. **If you run into a *classFactory ....* error, please also consider
-   the note further above!**
+#. To avoid a numpy error (see note at bottom of page), update numpy and pandas:
+
+    .. code-block::
+     
+      python3 -m pip install --user --upgrade numpy pandas
+
 
 #. Restart/Open QGis from your start menu and go to Plugins -> Manage and Install Plugins
 
 #. Search for `AvaFrameConnector` and check whether it also needs updating
 
 
+.. Note::
+   If you encounter an error similar to this (lowest/last line of the error message; the numbers might differ)::
+
+      ValueError: numpy.ndarray size changed, may indicate binary
+      incompatibility. Expected 88 from C header, got 80 from PyObject
+
+   run the following in OSGeo4W shell (the *py3_env* command is not needed on newer versions of QGis, skip it)::
+
+     py3_env
+     python3 -m pip install --user --upgrade numpy pandas
+
+   and restart QGis.

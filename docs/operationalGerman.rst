@@ -37,6 +37,13 @@ Setup AvaFrame
 
       python3 -m pip install --user avaframe
 
+#. Um einen potentiellen Fehler zu vermeiden (siehe Note unten), numpy und pandas mittels folgendem Befehl updaten:
+
+    .. code-block::
+     
+      python3 -m pip install --user --upgrade numpy pandas
+
+
 Setup QGis 
 ^^^^^^^^^^
 
@@ -49,23 +56,9 @@ Setup QGis
 #. Fügen Sie die beschriebenen Daten hinzu und starten Sie den Connector. Die Ergebnisse werden nach einer Weile geladen 
    (abhängig von der Größe Ihres DEM).
 
-.. Note::
-   Wenn Sie auf einen Fehler wie diesen stoßen (unterste/letzte Zeile der Fehlermeldung; die Zahlen können abweichen):
 
-      ValueError: numpy.ndarray size changed, may indicate binary
-      incompatibility. Expected 88 from C header, got 80 from PyObject
-
-   Führen Sie das Folgende in der OSGeo4W-Shell aus (der py3_env-Befehl wird bei neueren Versionen von QGis 
-   nicht benötigt, überspringen Sie ihn)::
-
-     py3_env
-     python3 -m pip install --user --upgrade numpy pandas
-
-   und starten Sie QGis neu.
-
-
-Update Avaframe to a new release
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Update Avaframe 
+^^^^^^^^^^^^^^^
 
 #. Die **OSGeo4W Shell** aus dem Windows Startmenu aufrufen (ist bei jeder Windows QGis Installation inkludiert)
 
@@ -85,11 +78,29 @@ Update Avaframe to a new release
 
       python3 -m pip install -U --user avaframe
 
-   Hinweis: Manchmal ist es notwendig, diesen Befehl zweimal auszuführen. Wenn Sie auf einen
-   *classFactory ....* Fehler stoßen, beachten Sie bitte auch den Hinweis weiter oben!
+#. Um einen potentiellen Fehler zu vermeiden (siehe Note unten), numpy und pandas mittels folgendem Befehl updaten:
+
+    .. code-block::
+     
+      python3 -m pip install --user --upgrade numpy pandas
 
 #. Starten Sie QGis neu/öffnen Sie es über Ihr Startmenü und gehen Sie zu Plugins -> Plugins verwalten und installieren
 
 #. Suchen Sie nach AvaFrameConnector und prüfen Sie, ob es aktualisiert werden muss
+
+
+.. Note::
+   Wenn Sie auf einen Fehler wie diesen stoßen (unterste/letzte Zeile der Fehlermeldung; die Zahlen können abweichen):
+
+      ValueError: numpy.ndarray size changed, may indicate binary
+      incompatibility. Expected 88 from C header, got 80 from PyObject
+
+   Führen Sie das Folgende in der OSGeo4W-Shell aus (der py3_env-Befehl wird bei neueren Versionen von QGis 
+   nicht benötigt, überspringen Sie ihn)::
+
+     py3_env
+     python3 -m pip install --user --upgrade numpy pandas
+
+   und starten Sie QGis neu.
 
 
