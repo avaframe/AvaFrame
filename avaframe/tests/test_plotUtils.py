@@ -75,6 +75,16 @@ def test_putAvaNameOnPlot(tmp_path):
     assert infoText2 == (datetime.datetime.now().strftime("%d.%m.%y") + ';' + 'avaTest;avaTest2')
 
 
+    # call function to be tested
+    infoText = pU.putAvaNameOnPlot(ax, avaDir, date=False)
+    infoText2 = pU.putAvaNameOnPlot(ax, avaDirL, date=False)
+    print('info', infoText)
+    print('info2', infoText2)
+
+    assert infoText == (avaDir.stem)
+    assert infoText2 == ('avaTest;avaTest2')    
+
+
 def test_makeColorMap():
     """ test generating a customized colormap """
 

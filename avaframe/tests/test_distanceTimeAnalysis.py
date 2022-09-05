@@ -256,7 +256,7 @@ def test_setupThalwegTimeDiagram():
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 40., 'avalancheDir': avaDir,
         'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
-        'dsMin': 30}
+        'dsMin': 30, 'sType': 'projected'}
 
     # call function to be tested
     mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
@@ -264,11 +264,12 @@ def test_setupThalwegTimeDiagram():
     print('mtiInfo', mtiInfo['betaPoint'], mtiInfo['betaPointAngle'],
     mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
 
-    assert len(mtiInfo['rangeGates']) == len(mtiInfo['s'])
+    assert len(mtiInfo['rangeGates']) == len(mtiInfo['rasterTransfo']['s'])
     assert np.isclose(mtiInfo['betaPoint'][1], -4000.)
     assert np.isclose(mtiInfo['betaPointAngle'], 34.)
     assert np.isclose(np.amin(mtiInfo['rangeGates']), -1550)
     assert np.isclose(np.amax(mtiInfo['rangeGates']), 3395)
+
 
 
 def test_initializeRangeTime():
@@ -341,8 +342,9 @@ def test_extractFrontAndMeanValuesTT():
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 10., 'avalancheDir': avaDir,
         'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
-        'dsMin': 30, 'thresholdResult': 0.001, 'simHash': 'simDI'}
-    cfgRangeTime['PLOTS'] = {'debugPlot': False}
+        'dsMin': 30, 'thresholdResult': 0.001, 'simHash': 'simDI', 'sType': 'projected',
+        'maxOrMean': 'mean'}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False, 'anmiate': True}
 
     # call function to created further inputs
     mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
@@ -356,8 +358,28 @@ def test_extractFrontAndMeanValuesTT():
 
     print('mtiInfo', mtiInfo['rangeList'], mtiInfo['mti'])
     print('raster', mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
-    print('mti', mtiInfo['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])
-    print('s', mtiInfo['s'])
+    print('mti', mtiInfo['rasterTransfo']['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])
 
     assert np.array_equal(mtiInfo['mti'], np.ones((len(mtiInfo['rangeGates']),1)))
-    assert mtiInfo['rangeList'] == [np.amax(mtiInfo['s'] - mtiInfo['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])]
+    assert mtiInfo['rangeList'] == [np.amax(mtiInfo['rasterTransfo']['s'] - mtiInfo['rasterTransfo']['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])]
+    assert mtiInfo['sType'] == 'projected'
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 10., 'avalancheDir': avaDir,
+        'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
+        'dsMin': 30, 'thresholdResult': 0.001, 'simHash': 'simDI', 'sType': 'parallel',
+        'maxOrMean': 'mean'}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False, 'anmiate': True}
+
+
+    # call function to created further inputs
+    mtiInfo2 = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
+
+    # create flow field
+    flowF2 = np.ones((dem['rasterData'].shape))
+
+    # call function to be tested
+    mtiInfo2 = dtAna.extractFrontAndMeanValuesTT(cfgRangeTime, flowF2, dem['header'], mtiInfo2)
+
+    assert np.array_equal(mtiInfo2['mti'], np.ones((len(mtiInfo2['rangeGates']),1)))
+    assert mtiInfo2['rangeList'] == [np.amax(mtiInfo2['rasterTransfo']['sParallel'] - mtiInfo2['rasterTransfo']['sParallel'][mtiInfo['rasterTransfo']['indStartOfRunout']])]

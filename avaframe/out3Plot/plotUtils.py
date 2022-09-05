@@ -475,18 +475,21 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
             return rowsMin, rowsMax, colsMin, colsMax
 
 
-def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, tickLabelsList=''):
+def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, tickLabelsList='', location='right'):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
+
+
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9, location=location)
     cbar.outline.set_visible(False)
     # make sure the cbar title does not overlap with the cbar itself
     if extend in ['both', 'max']:
         pad = 25
     else:
         pad = 10
-    cbar.ax.set_title('[' + myUnit + ']', pad=pad)
+    if myUnit != None:
+        cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
     if len(tickLabelsList) > 0:
@@ -494,21 +497,28 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
     return cbar
 
 
-def putAvaNameOnPlot(ax, avaDir):
+def putAvaNameOnPlot(ax, avaDir, date=True):
     '''
     Puts the date and avalanche name (or a list of ava names) in the lower left corner of the given
-    matplotlib axes
+    matplotlib axes, if date=False only avalanche name is put
     '''
 
     # if avaDir is just a single avaDir or a list of avaDirs
     if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
-        infoText = datetime.datetime.now().strftime("%d.%m.%y") + '; ' + str(avaName)
+        if date:
+            infoText = datetime.datetime.now().strftime("%d.%m.%y") + '; ' + str(avaName)
+        else:
+            infoText = str(avaName)
     else:
-        infoText = datetime.datetime.now().strftime("%d.%m.%y")
-        for ava in avaDir:
+        if date:
+            infoText = datetime.datetime.now().strftime("%d.%m.%y") + ';'
+        else:
+            infoText = ''
+        for ava in avaDir[:-1]:
             avaName = pathlib.PurePath(ava).name
-            infoText = infoText + ';' + str(avaName)
+            infoText = infoText + str(avaName) + ';'
+        infoText = infoText + str(pathlib.PurePath(avaDir[-1]).name)
 
     ax.annotate(infoText, xy=(0.01, 0.01), xycoords='axes fraction',
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
@@ -688,7 +698,7 @@ def getColors4Scatter(values, nSamples, unitSC):
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
 
 
-def addHillShadeContours(ax, data, cellSize, extent):
+def addHillShadeContours(ax, data, cellSize, extent, colors=['gray'], onlyContours=False):
     """ add hillshade and contours for given DEM data
 
         Parameters
@@ -701,20 +711,28 @@ def addHillShadeContours(ax, data, cellSize, extent):
             cell size of data
         extent: list
             extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
+        colors: list
+            optional, colors for elevation contour lines
+        onlyContours: bool
+            if True add only contour lines but no hillshade
     """
-    # create lightSource
-    ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
 
-    # add hillshade to axes
-    im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]), cmap='gray',
-                    extent=extent, origin='lower', aspect='equal', zorder=1)
+    if onlyContours:
+        ls = None
+    else:
+        # create lightSource
+        ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
+
+        # add hillshade to axes
+        im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]), cmap='gray',
+                        extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
     nrows, ncols = data.shape
     X, Y = gT.makeCoordinateGrid(extent[0], extent[2], cellSize, ncols, nrows)
 
     # add contour lines
-    CS = ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
+    CS = ax.contour(X, Y, data, colors=colors, levels=hillshadeContLevs, alpha=1.,
                     linewidths=0.5, zorder=2)
 
     # add labels

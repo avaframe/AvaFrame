@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import logging
 import pathlib
 from cmcrameri import cm
+from matplotlib import colors
 from matplotlib.colors import LightSource
 
 # Local imports
@@ -26,7 +27,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
             list with distance to reference point of avalanche front (rangeList)
         cfgRangeTime: configparser object
             configuration settings for range time diagram - here used avalancheDir, rangeTimeResType,
-            simHash
+            simHash, and from plots width, height, lw, ..
 
     """
 
@@ -35,13 +36,19 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     rangeGates = mtiInfo['rangeGates']
     timeList = mtiInfo['timeList']
     rangeList = mtiInfo['rangeList']
-    rangeTimeResType = cfgRangeTime['rangeTimeResType']
-    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime.getfloat('minVelTimeStep'))
+    rangeTimeResType = cfgRangeTime['GENERAL']['rangeTimeResType']
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime['GENERAL'].getfloat('minVelTimeStep'))
 
     # in case time steps are not ordered - the colormesh x and y need to be ordered
     timeIndex = np.argsort(np.array(timeList))
     timeListNew = np.array(timeList)[timeIndex]
     mti = mti[:, timeIndex]
+
+    # fetch velocity legend style info
+    width = cfgRangeTime['PLOTS'].getfloat('width')
+    height = cfgRangeTime['PLOTS'].getfloat('height')
+    lw = cfgRangeTime['PLOTS'].getfloat('lw')
+    textsize = cfgRangeTime['PLOTS'].getfloat('textsize')
 
     # create plot
     fig = plt.figure(figsize=(pU.figW, pU.figH))
@@ -51,14 +58,23 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     plt.plot(timeList, rangeList , '.', color='black', markersize=4,
         label='avalanche front')
     plt.xlabel('Time [s]')
-    plt.ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
+    # add y label axis
+    if mtiInfo['type'] == 'thalwegTime':
+        sTypeCapital = mtiInfo['sType'][0].upper() +  mtiInfo['sType'][1:]
+        plt.ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
+    else:
+        plt.ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
-    cName = 'avg. ' + pU.cfgPlotUtils['name' + rangeTimeResType]
+    if mtiInfo['type'] == 'thalwegTime' and cfgRangeTime['GENERAL']['maxOrMean'] == 'max':
+        avgType = 'max'
+    else:
+        avgType = 'avg.'
+    cName = '%s ' % avgType + pU.cfgPlotUtils['name' + rangeTimeResType]
     pU.addColorBar(pc, ax, None, unit, title=cName)
-    pU.putAvaNameOnPlot(ax, cfgRangeTime['avalancheDir'])
-    rangeTimeVelocityLegend(timeListNew, rangeGates, ax, maxVel, width=0.25, height=0.25, lw=0.5, textsize=7)
+    pU.putAvaNameOnPlot(ax, cfgRangeTime['GENERAL']['avalancheDir'])
+    rangeTimeVelocityLegend(timeListNew, rangeGates, ax, maxVel, width=width, height=height, lw=lw, textsize=textsize)
     # add max velocity location
     ax.plot(timeVel, rangeVel, 'r*', label='max velocity location')
 
@@ -73,8 +89,8 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
             label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
 
     # set path for saving figure
-    outDir = pathlib.Path(cfgRangeTime['avalancheDir'], 'Outputs', 'ana5Utils')
-    outFileName = mtiInfo['type'] + '_' + rangeTimeResType + '_' + cfgRangeTime['simHash']
+    outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
+    outFileName = mtiInfo['type'] + '_' + rangeTimeResType + '_' + cfgRangeTime['GENERAL']['simHash']
     plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
 
@@ -212,8 +228,11 @@ def plotRangeRaster(slRaster, rasterTransfo, cfgRangeTime, rangeRaster, cLower):
     # add horizontal line indicating location of start of runout area and avalanche front
     ax1.axhline(y=s[indStartOfRunout], color='w', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    ax1.axhline(y=s[cLower], color='y', linestyle='--',
-                label='avalanche front based on %s limit %s' % (resType, cfgRangeTime['thresholdResult']))
+    if np.isnan(cLower):
+        log.debug('No avalanche front found for this time step')
+    else:
+        ax1.axhline(y=s[cLower], color='y', linestyle='--',
+                    label='avalanche front based on %s limit %s' % (resType, cfgRangeTime['thresholdResult']))
 
     # add result field masked with threshold
     bmaskRes = slRaster < cfgRangeTime.getfloat('thresholdResult')
@@ -316,6 +335,30 @@ def rangeTimeVelocityLegend(timeSteps, rangeGates, ax, maxVel, width=0.25, heigh
     # fetch points for drawing velocity legend
     point = getVelocityPoints(1, 1, width, height, 1, 1, maxVel, kPlot)
 
+    # add title and boundary box and diagonal lines using point
+    addTitleBox(ax, lw, point, maxVel=True)
+
+    # compute velocity values
+    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, kPlot)
+    # add velocity legend labels
+    addVelocityValues(ax, dataPoint, point, maxVel=maxVel)
+
+
+def addTitleBox(ax, lw, point, maxVel=True):
+    """ add velocity legend title and boundary box and diagonal lines
+        if maxVel=True add max velocity line
+
+        Parameters
+        -----------
+        point: list
+            list of points coordinates for velocity legend
+        lw: float
+            linewidth
+        ax: matplotlib axis object
+        maxVel: bool
+            if True add max velocity line in red
+    """
+
     # add title
     ax.text(point[1][0], point[1][1], 'Approach \n velocity [m/s]', size=6,
         transform=ax.transAxes, va='top', ha='right', fontweight='bold',
@@ -331,13 +374,25 @@ def rangeTimeVelocityLegend(timeSteps, rangeGates, ax, maxVel, width=0.25, heigh
     for j in range(2, len(point) - 1):
         x1 = [point[0][0], point[j][0]]
         y1 = [point[0][1], point[j][1]]
-        if j == 9: # max velocity make red
+        if j == 9 and maxVel: # max velocity make red
             ax.plot(x1, y1, color='r', linewidth=1.0, transform=ax.transAxes)
         else:
             ax.plot(x1, y1, color='k', linewidth=0.5, transform=ax.transAxes)
 
-    # compute velocity values
-    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, kPlot)
+def addVelocityValues(ax, dataPoint, point, maxVel=''):
+    """ add velocity values as labels
+
+        Parameters
+        -----------
+        ax: matplotlib axis object
+        dataPoint: list
+            list of points coordinates for velocity label locations
+        point: list
+            list of points coordinates for velocity lines
+        maxVel: float
+            max velocity
+    """
+
     velocity = []
     for i in range(2, len(dataPoint)-1):
         deltaS = dataPoint[0][1] - dataPoint[i][1]
@@ -352,7 +407,7 @@ def rangeTimeVelocityLegend(timeSteps, rangeGates, ax, maxVel, width=0.25, heigh
         if j < 5: # text along vertical axes
             ax.text(x1[1]+0.01, y1[1]+0.002, '%.1f' % velocity[j-2], size=5, fontweight='bold',
                 color='k', transform=ax.transAxes, gid=j, va='center',ha='left')
-        elif j == 9: # text for max velocity
+        elif j == 9 and maxVel != '': # text for max velocity
             if velocity[j-2] < velocity[3]:
                 xLoc = x1[1]-0.04
                 yLoc =  y1[1]-0.004
@@ -368,6 +423,7 @@ def rangeTimeVelocityLegend(timeSteps, rangeGates, ax, maxVel, width=0.25, heigh
         else: # text along horizontal axes
             ax.text(x1[1], y1[1]-0.01, '%.1f' % velocity[j-2], size=5, fontweight='bold',
                 color='k', transform=ax.transAxes, gid=j, va='top', ha='center')
+
 
 
 def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, kPlot):
@@ -397,7 +453,9 @@ def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, k
     points.append([xMax - width/2*xinterval, yMax - height*yinterval])
     points.append([xMax - width/4*3*xinterval, yMax - height*yinterval])
 
-    if maxVel > kPlot:
+    if np.isnan(maxVel):
+        points.append([np.nan, np.nan])
+    elif maxVel > kPlot:
         points.append([(xMax - width*xinterval) + width*xinterval/maxVel*kPlot, yMax-height*yinterval])
     else:
         points.append([xMax, yMax - height*yinterval*maxVel/kPlot])
@@ -405,3 +463,247 @@ def getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, maxVel, k
     points.append([xMax - width*xinterval, yMax - height*yinterval])
 
     return points
+
+
+
+def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeStep):
+    """ 3 panel plot: result in x,y, result in s, l, tt diagram
+
+        Parameters
+        -----------
+        demData: dict
+            info on dem with header and rasterData
+        data: numpy array
+            result type data
+        cellSize: float
+            cell size of result type and dem
+        resType: str
+            name of result type, e.g. FV, FT
+        cfgRangeTime: configparser object
+            configuration of range time diagram settings
+        mtiInfo: dict
+            info dictionary for color plot of tt diagram, also info on domain transformation into s,l
+        timeStep: float
+            actual time step of sim result
+    """
+
+    # read required configuration for final plots, e.g. result min and max for colorbar range
+    resMin = cfgRangeTime['ANIMATE'].getfloat('resMin')
+    resMax = cfgRangeTime['ANIMATE'].getfloat('resMax')
+
+    # fetch unit of result type
+    unit = pU.cfgPlotUtils['unit%s' % resType]
+
+    # choose colormap with min max result type range
+    cmapRes, col, ticksRes, normRes = pU.makeColorMap(pU.colorMaps[resType], resMin, resMax, continuous=pU.contCmap)
+
+    # set up 3 panel plot
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH))
+
+    #+++++++++++++++PANEL 1++++++++++++++++++
+    # result field in x,y with s,l domain on top
+    ax1 = fig.add_subplot(131)
+    # check if noDataValue is found and if replace with nans for plotting
+    demField = np.where(demData['rasterData'] == demData['header']['noDataValue'], np.nan, demData['rasterData'])
+    # initialize x, y vectors of result field domain
+    xllc = demData['header']['xllcenter']
+    yllc = demData['header']['yllcenter']
+    x = np.arange(demData['header']['ncols'])*cellSize + xllc
+    y = np.arange(demData['header']['nrows'])*cellSize + yllc
+
+    # mask data for plot where it is zero
+    data = np.ma.masked_where(data == 0.0, data)
+
+    # set alpha to zero
+    cmapRes.set_bad(alpha=0)
+    # uncomment this to set the under value for discrete cmap transparent
+    #cmap.set_under(alpha=0)
+
+    # add DEM hillshade with contour lines
+    ls, CS = pU.addHillShadeContours(ax1, demField, cellSize, [x.min(), x.max(), y.min(), y.max()], colors=['white'])
+
+    # add peak field data
+    im1 = ax1.imshow(data, cmap=cmapRes, norm=normRes, extent=[x.min(), x.max(), y.min(), y.max()], origin='lower', aspect='equal', zorder=4)
+    cName1 = '%s [%s]' % (pU.cfgPlotUtils['name' + resType], pU.cfgPlotUtils['unit' + resType])
+    pU.addColorBar(im1, ax1, ticksRes, None, title=cName1, location='right')
+
+    # add domain transformation info
+    # read avaPath with scale
+    rasterTransfo = mtiInfo['rasterTransfo']
+    xPath = rasterTransfo['x']
+    yPath = rasterTransfo['y']
+    # read domain boundaries with scale
+    cellSizeSL = rasterTransfo['cellSizeSL']
+    DBXl = rasterTransfo['DBXl']*cellSizeSL
+    DBXr = rasterTransfo['DBXr']*cellSizeSL
+    DBYl = rasterTransfo['DBYl']*cellSizeSL
+    DBYr = rasterTransfo['DBYr']*cellSizeSL
+    # add indication for run out area based on beta point but fetch for x, y coordinates
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    betaPointX = rasterTransfo['gridx'][indStartOfRunout]
+    betaPointY = rasterTransfo['gridy'][indStartOfRunout]
+    # add indication for avalanche front based on s,l but fetch for x, y coordinates
+    cLower = mtiInfo['cLower']
+    if np.isnan(cLower):
+        log.debug('No avalanche front found for this time step')
+    else:
+
+        frontLineX = rasterTransfo['gridx'][cLower]
+        frontLineY = rasterTransfo['gridy'][cLower]
+        ax1.plot(frontLineX, frontLineY, 'k:', linewidth=2, zorder=5, label='avalanche front')
+
+    # add lines to plot about path following domain
+    ax1.plot(xPath, yPath, 'k--', zorder=5, label='thalweg')
+    ax1.plot(DBXl, DBYl, 'k-', label='s,l domain')
+    ax1.plot(DBXr, DBYr, 'k-')
+    ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
+    ax1.plot(betaPointX, betaPointY, 'b--', zorder=5, label='beta Point')
+    ax1.legend(loc='upper right')
+    # label x, y axes
+    if cfgRangeTime['ANIMATE'].getboolean('xyEastNorth'):
+            ax1.set_xlabel('East x [m]')
+            ax1.set_ylabel('North y [m]')
+    else:
+        ax1.set_xlabel('x [m]')
+        ax1.set_ylabel('y [m]')
+    # optional add title to panel
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax1.set_title('simulation x,y extent at t=%.2fs' % timeStep)
+
+    # add avaName
+    pU.putAvaNameOnPlot(ax1, cfgRangeTime['GENERAL']['avalancheDir'], date=False)
+
+    #+++++++++++++++PANEL 2#############
+    # result field bigger than threshold  in s,l with ava front and runout area start
+    ax2 = fig.add_subplot(132)
+
+    # fetch avalanche front info
+    cLower = mtiInfo['cLower']
+    slRaster = mtiInfo['slRaster']
+    rasterTransfo = mtiInfo['rasterTransfo']
+    rangeRaster = mtiInfo['rangeRaster']
+    sType = mtiInfo['sType']
+
+    # fetch s. l coordinates
+    l = rasterTransfo['l']
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    # determine if sParallel or sProjected has been used
+    if sType.lower() == 'parallel':
+        s = rasterTransfo['sParallel'] - rasterTransfo['sParallel'][indStartOfRunout]
+        sLabel = 'Parallel distance to beta point [m]'
+    elif sType.lower() == 'projected':
+        s = rasterTransfo['s'] - rasterTransfo['s'][indStartOfRunout]
+        sLabel = 'Projected distance to beta point [m]'
+
+    # create figure
+    # add line indicating location of start of runout area and avalanche front
+    ax2.axhline(y=s[indStartOfRunout], color='b', linestyle='--',
+                label='beta point (%.1f°)' % mtiInfo['betaPointAngle'])
+    # only plot front if a front found - e.g. if FV is zero in first time step no front found
+    if np.isnan(cLower):
+        log.debug('No avalanche front found for this time step')
+    else:
+        ax2.axhline(y=s[cLower], color='k', linewidth=2.5, linestyle = (0,(0.1,2)),
+            dash_capstyle = 'round', label='avalanche front')
+
+    # add result field masked with threshold
+    bmaskRes = slRaster < cfgRangeTime['GENERAL'].getfloat('thresholdResult')
+    maskResType = np.ma.array(slRaster, mask=bmaskRes)
+
+    # plot masked result type, add norm res to scale to colorbar
+    cmapRes.set_bad(alpha=0.0)
+    ref2, im3 = pU.NonUnifIm(ax2, l, s, maskResType, 'l [m]', sLabel,
+                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmapRes, norm=normRes,
+                            origin='lower')
+
+    # add elevation contours, first get z coordinates of s,l points
+    zPoints = {'x': rasterTransfo['gridx'], 'y': rasterTransfo['gridy']}
+    zPoints, _ = gT.projectOnRaster(demData, zPoints)
+    ls, CS = pU.addHillShadeContours(ax2, zPoints['z'], rasterTransfo['cellSizeSL'],
+        [l.min(), l.max(), s.min(), s.max()], colors=['gray'], onlyContours=True)
+
+    # invert y axis
+    ax2.invert_yaxis()
+
+    # add legend and colorbar
+    ax2.legend(loc='lower right', facecolor='white', framealpha=0.2)
+
+    # optionally add title
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax2.set_title('s,l domain extent')
+
+    #+++++++++++++++PANEL 3++++++++++++++++++
+    # tt-diagram of result field bigger than threshold
+    ax3 = fig.add_subplot(133)
+
+    # fetch required input info
+    mti =  mtiInfo['mti']
+    rangeGates = mtiInfo['rangeGates']
+    timeList = mtiInfo['timeList']
+    rangeList = mtiInfo['rangeList']
+
+    # compute approach velocity - required for approach velocity legend
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime['GENERAL'].getfloat('minVelTimeStep'))
+
+    # in case time steps are not ordered - the colormesh x and y need to be ordered
+    timeIndex = np.argsort(np.array(timeList))
+    timeListNew = np.array(timeList)[timeIndex]
+    mti = mti[:, timeIndex]
+
+    # create fig
+    pc = ax3.pcolormesh(timeListNew, rangeGates, mti, vmin=resMin, vmax=resMax, cmap=pU.cmapRangeTime)
+    ax3.plot(timeList, rangeList , '.', color='black', markersize=4,
+        label='avalanche front')
+    ax3.set_xlabel('Time [s]')
+    sTypeCapital = sType[0].upper() +  sType[1:]
+    ax3.set_ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
+
+    # add colorbar and infobox
+    cName = '%s [%s]' % (cfgRangeTime['GENERAL']['maxOrMean'] + ' ' + pU.cfgPlotUtils['name' + resType],
+        pU.cfgPlotUtils['unit' + resType])
+    pU.addColorBar(pc, ax3, None, None, title=cName)
+    width = cfgRangeTime['PLOTS'].getfloat('width')
+    height = cfgRangeTime['PLOTS'].getfloat('height')
+    lw = cfgRangeTime['PLOTS'].getfloat('lw')
+    textsize = cfgRangeTime['PLOTS'].getfloat('textsize')
+    xMin = cfgRangeTime['ANIMATE'].getfloat('xMin')
+    xMax = cfgRangeTime['ANIMATE'].getfloat('xMax')
+    yMax = cfgRangeTime['ANIMATE'].getfloat('yMax')
+    yMin = cfgRangeTime['ANIMATE'].getfloat('yMin')
+    xinterval = xMax - xMin
+    yinterval = yMax - yMin
+    kPlot = (yinterval / xinterval)
+
+    # fetch points for drawing velocity legend
+    point = getVelocityPoints(1, 1, width, height, 1, 1, np.nan, kPlot)
+
+    # add title and boundary box and diagonal lines using point
+    addTitleBox(ax3, lw, point, maxVel=False)
+
+    # compute velocity values
+    dataPoint = getVelocityPoints(xMax, yMax, width, height, xinterval, yinterval, np.nan, kPlot)
+
+    # add velocity legend labels
+    addVelocityValues(ax3, dataPoint, point, maxVel='')
+
+    # set limits for plot (depends on final time step)
+    ax3.set_ylim([yMin, yMax])
+    ax3.set_xlim([xMin, xMax])
+
+    # add info on avalanche front in legend
+    plt.legend(facecolor='grey', framealpha=0.2, loc='lower right', fontsize=8)
+
+    # if tt-diagram add beta point info
+    # invert y axis as ava flow starts from minus distance to beta point
+    ax3.invert_yaxis()
+    ax3.axhline(y=0.0, color='b', linestyle='--',
+        label='beta point: %.1f°' % mtiInfo['betaPointAngle'])
+
+    # optional - add title to panel
+    if cfgRangeTime['ANIMATE'].getboolean('panelTitles'):
+        ax3.set_title('tt-diagram')
+
+    # # set path for saving figure
+    outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
+    outFileName = mtiInfo['type'] + '_' + resType + '_' + cfgRangeTime['GENERAL']['simHash'] + '_%08.3f' % timeStep
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
