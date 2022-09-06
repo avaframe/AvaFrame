@@ -16,3 +16,4 @@ coverage:
 
 ignore:
   - "**/run*.py"
+  - "**/com4FlowPy/*"

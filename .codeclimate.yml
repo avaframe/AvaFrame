@@ -50,6 +50,7 @@ exclude_patterns:
 - "**/.*"
 - "**/data/"
 - "**/runScripts/"
+- "**/com4FlowPy/"
 - "**/tinyHelper/"
 - "features/"
 - "**/node_modules/"
