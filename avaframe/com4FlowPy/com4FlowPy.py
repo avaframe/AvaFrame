@@ -2,13 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon May  7 14:23:00 2018
-
-@author: Michael Neuhauser
 """
 
 # Load modules
 import pathlib
-import glob
 import numpy as np
 from datetime import datetime
 from multiprocessing import cpu_count
@@ -25,10 +22,9 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 # Flow-Py Libraries
-from avaframe.com4FlowPy import com4FlowPy
-import avaframe.com4FlowPy.raster_io as io
-import avaframe.com4FlowPy.flow_core as fc
-import avaframe.com4FlowPy.split_and_merge as SPAM
+import avaframe.com4FlowPy.rasterIo as io
+import avaframe.com4FlowPy.flowCore as fc
+import avaframe.com4FlowPy.splitAndMerge as SPAM
 
 # create local logger
 log = logging.getLogger(__name__)

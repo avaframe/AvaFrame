@@ -921,7 +921,6 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # Initialize mesh
     log.debug('Initializing Mesh')
     dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
-    originalHeader = dem['originalHeader']
 
     # ------------------------
     log.debug('Initializing main release area')
@@ -930,33 +929,31 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         releaseLine = inputSimLines['releaseLineBuffer']
         releaseLineReal = inputSimLines['releaseLine']
         # check if release features overlap between features
-        geoTrans.prepareArea(releaseLineReal, originalHeader, thresholdPointInPoly, combine=True, checkOverlap=True)
+        geoTrans.prepareArea(releaseLineReal, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
         buffer1 = (cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') *
                    cfg['GENERAL'].getfloat('bufferZoneFactor'))
         if len(relThField) == 0:
             # if no release thickness field or function - set release according to shapefile or ini file
             # this is a list of release rasters that we want to combine
-            releaseLineReal = geoTrans.prepareArea(releaseLineReal, originalHeader, buffer1,
-                                                   thList=releaseLineReal['thickness'], combine=True,
-                                                   checkOverlap=False)
+            releaseLineReal = geoTrans.prepareArea(releaseLineReal, dem, buffer1, thList=releaseLineReal['thickness'],
+                                                   combine=True, checkOverlap=False)
         else:
             # if relTh provided - set release thickness with field or function
-            releaseLineReal = geoTrans.prepareArea(releaseLineReal, originalHeader, buffer1, combine=True,
-                                                   checkOverlap=False)
+            releaseLineReal = geoTrans.prepareArea(releaseLineReal, dem, buffer1, combine=True, checkOverlap=False)
 
     else:
         releaseLine = inputSimLines['releaseLine']
         # check if release features overlap between features
-        geoTrans.prepareArea(releaseLine, originalHeader, thresholdPointInPoly, combine=True, checkOverlap=True)
+        geoTrans.prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
 
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = geoTrans.prepareArea(releaseLine, originalHeader, np.sqrt(2), thList=releaseLine['thickness'],
+        releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), thList=releaseLine['thickness'],
                                            combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
-        releaseLine = geoTrans.prepareArea(releaseLine, originalHeader, np.sqrt(2), combine=True, checkOverlap=False)
+        releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
 
     # plot release area scenario
     outCom1DFA.plotReleaseScenarioView(cfgGen['avalancheDir'], releaseLine, dem,
@@ -1470,7 +1467,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entrainmentArea = entLine['fileName']
         log.info('Initializing entrainment area: %s' % (entrainmentArea))
         log.info('Entrainment area features: %s' % (entLine['Name']))
-        entLine = geoTrans.prepareArea(entLine, header, thresholdPointInPoly, thList=entLine['thickness'])
+        entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine['thickness'])
         entrMassRaster = entLine['rasterData']
         # ToDo: not used in samos but implemented
         # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ')) * cfgGen.getfloat('entTempGrad')
@@ -1523,7 +1520,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         resistanceArea = resLine['fileName']
         log.info('Initializing resistance area: %s' % (resistanceArea))
         log.info('Resistance area features: %s' % (resLine['Name']))
-        resLine = geoTrans.prepareArea(resLine, header, thresholdPointInPoly)
+        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
         reportAreaInfo['resistance'] = 'Yes'
@@ -2016,6 +2013,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     """ convert shape file polygon to raster
+
     Parameters
     ----------
     line: dict
@@ -2035,6 +2033,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         if False check if features are overlaping and average the value for overlaping areas
         (Attention: if combine is set to False, you do not see the result of the averaging
         since the list of raters was not affected by the averaging step)
+
     Returns
     -------
     updates the line dictionary with the rasterData: Either
@@ -2097,6 +2096,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
 
 def polygon2Raster(demHeader, Line, radius, th=''):
     """ convert line to raster
+
     Parameters
     ----------
     demHeader: dict
@@ -2107,6 +2107,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         include all cells which center is in the polygon or close enough
     th: float
         thickness value ot the line feature
+
     Returns
     -------
     Mask : 2D numpy array
@@ -2160,6 +2161,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
 
 def checkParticlesInRelease(particles, line, radius):
     """ remove particles laying outside the polygon
+
     Parameters
     ----------
     particles : dict
@@ -2169,6 +2171,7 @@ def checkParticlesInRelease(particles, line, radius):
     radius: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
+
     Returns
     -------
     particles : dict
@@ -2202,6 +2205,7 @@ def checkParticlesInRelease(particles, line, radius):
 
 def pointInPolygon(demHeader, points, Line, radius):
     """ find particles within a polygon
+
     Parameters
     ----------
     demHeader: dict
@@ -2213,6 +2217,7 @@ def pointInPolygon(demHeader, points, Line, radius):
     radius: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
+
     Returns
     -------
     Mask : 1D numpy array

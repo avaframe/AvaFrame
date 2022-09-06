@@ -9,15 +9,13 @@ import scipy as sp
 import scipy.interpolate
 import shapely as shp
 import copy
-import matplotlib.pyplot as plt
-import pandas as pd
-import shapely as shp
 from scipy.interpolate import splprep, splev
+import matplotlib.path as mpltPath
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
-
+from avaframe.com1DFA import particleTools
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -89,13 +87,13 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
     nrow, ncol = np.shape(Z)
     # initialize outputs
-    z = np.ones((np.shape(x)))*np.NaN
-    dx = np.ones((np.shape(x)))*np.NaN
-    dy = np.ones((np.shape(x)))*np.NaN
-    f11 = np.ones((np.shape(x)))*np.NaN
-    f12 = np.ones((np.shape(x)))*np.NaN
-    f21 = np.ones((np.shape(x)))*np.NaN
-    f22 = np.ones((np.shape(x)))*np.NaN
+    z = np.ones((np.shape(x))) * np.NaN
+    dx = np.ones((np.shape(x))) * np.NaN
+    dy = np.ones((np.shape(x))) * np.NaN
+    f11 = np.ones((np.shape(x))) * np.NaN
+    f12 = np.ones((np.shape(x))) * np.NaN
+    f21 = np.ones((np.shape(x))) * np.NaN
+    f22 = np.ones((np.shape(x))) * np.NaN
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lxx = (x - xllc) / csz
@@ -107,25 +105,25 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     if interp == 'nearest':
         Lx[np.where((Lxx <= -0.5))] = np.NaN
         Ly[np.where((Lxx <= -0.5))] = np.NaN
-        Lx[np.where(Lxx >= (ncol-0.5))] = np.NaN
-        Ly[np.where(Lxx >= (ncol-0.5))] = np.NaN
+        Lx[np.where(Lxx >= (ncol - 0.5))] = np.NaN
+        Ly[np.where(Lxx >= (ncol - 0.5))] = np.NaN
         Lx[np.where(Lyy <= -0.5)] = np.NaN
         Ly[np.where(Lyy <= -0.5)] = np.NaN
-        Lx[np.where(Lyy >= (nrow-0.5))] = np.NaN
-        Ly[np.where(Lyy >= (nrow-0.5))] = np.NaN
+        Lx[np.where(Lyy >= (nrow - 0.5))] = np.NaN
+        Ly[np.where(Lyy >= (nrow - 0.5))] = np.NaN
     elif interp == 'bilinear':
         Lx[np.where((Lxx < 0))] = np.NaN
         Ly[np.where((Lxx < 0))] = np.NaN
-        Lx[np.where(Lxx >= (ncol-1))] = np.NaN
-        Ly[np.where(Lxx >= (ncol-1))] = np.NaN
+        Lx[np.where(Lxx >= (ncol - 1))] = np.NaN
+        Ly[np.where(Lxx >= (ncol - 1))] = np.NaN
         Lx[np.where(Lyy < 0)] = np.NaN
         Ly[np.where(Lyy < 0)] = np.NaN
-        Lx[np.where(Lyy >= (nrow-1))] = np.NaN
-        Ly[np.where(Lyy >= (nrow-1))] = np.NaN
+        Lx[np.where(Lyy >= (nrow - 1))] = np.NaN
+        Ly[np.where(Lyy >= (nrow - 1))] = np.NaN
 
-    # find index of index of not nan value
-    mask = ~np.isnan(Lx+Ly)
-    maskInd = np.argwhere(~np.isnan(Lx+Ly))[:, 0]
+    # find index of not nan value
+    mask = ~np.isnan(Lx + Ly)
+    maskInd = np.argwhere(~np.isnan(Lx + Ly))[:, 0]
     itot = len(Lx)
     iinb = len(maskInd)
     ioob = itot - iinb
@@ -148,7 +146,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
         f21[mask] = Z[Ly0[mask].astype('int'), Lx1[mask].astype('int')]
         f22[mask] = Z[Ly1[mask].astype('int'), Lx1[mask].astype('int')]
         # using bilinear interpolation on the cell
-        z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+        z = f11 * (1 - dx) * (1 - dy) + f21 * dx * (1 - dy) + f12 * (1 - dx) * dy + f22 * dx * dy
 
     return z, ioob
 
@@ -180,8 +178,8 @@ def resizeData(raster, rasterRef):
         csz = headerRef['cellsize']
         xllc = headerRef['xllcenter']
         yllc = headerRef['yllcenter']
-        xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
-        ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+        xgrid = np.linspace(xllc, xllc + (ncols - 1) * csz, ncols)
+        ygrid = np.linspace(yllc, yllc + (nrows - 1) * csz, nrows)
         X, Y = np.meshgrid(xgrid, ygrid)
         Points = {'x': X, 'y': Y}
         Points, _ = projectOnRaster(raster, Points, interp='bilinear')
@@ -192,16 +190,16 @@ def resizeData(raster, rasterRef):
 def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='cubic', larger=True):
     """ compute raster data on a new mesh with cellSize using the specified remeshOption.
 
-        remeshOption are to choose between 'griddata', 'interp2d' or 'RectBivariateSpline'
+        remeshOption are to choose between 'griddata' or 'RectBivariateSpline'
         Only the 'griddata' works properly if the input data contains noData points,
-        'interp2d' or 'RectBivariateSpline' are faster but fail if input data contains noData points.
+        'RectBivariateSpline' is faster but fails if input data contains noData points.
         The new mesh is as big or smaller as the original mesh if larger is False and bigger if larger is True
 
     Parameters
     ----------
     rasterDict : dict
         raster dictionary (with header and rasterData)
-    cellSize : float
+    cellSizeNew : float
         mesh size of new mesh
     remeshOption: str
         method used to remesh ('griddata' or 'RectBivariateSpline')
@@ -224,8 +222,8 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
     xGrid, yGrid, _, _ = makeCoordGridFromHeader(header)
     xGridNew, yGridNew, ncolsNew, nrowsNew = makeCoordGridFromHeader(header, cellSizeNew=cellSizeNew, larger=larger)
     z = rasterDict['rasterData']
-    log.info('Remeshed data extent difference x: %f and y %f' % (xGrid[-1, -1]-xGridNew[-1, -1],
-                                                                 yGrid[-1, -1]-yGridNew[-1, -1]))
+    log.info('Remeshed data extent difference x: %f and y %f' % (xGrid[-1, -1] - xGridNew[-1, -1],
+                                                                 yGrid[-1, -1] - yGridNew[-1, -1]))
 
     if remeshOption == 'griddata':
         xGrid = xGrid.flatten()
@@ -283,7 +281,7 @@ def remeshDEM(demFile, cfgSim, onlySearch=False):
     Parameters
     ----------
     demFile: str or pathlib path
-        path to DEM in Inputs/
+        file path to DEM in Inputs/
     cfgSim : configParser
         meshCellSizeThreshold : threshold under which no remeshing is done
         meshCellSize : desired cell size
@@ -347,7 +345,7 @@ def searchRemeshedDEM(demName, cfgSim):
         DEMFound: bool
             flag if dem is found
         allDEMNames: list
-            list of all names of dems found in Inputs/DEMremeshed
+            of all names of dems found in Inputs/DEMremeshed
     """
 
     # path to remeshed DEM folder
@@ -397,12 +395,12 @@ def computeS(avaPath):
     """
     xcoord = avaPath['x']
     ycoord = avaPath['y']
-    n = np.size((xcoord))
+    n = np.size(xcoord)
     # compute s
-    dxs = xcoord[1:n]-xcoord[0:n-1]
-    dys = ycoord[1:n]-ycoord[0:n-1]
+    dxs = xcoord[1:n] - xcoord[0:n - 1]
+    dys = ycoord[1:n] - ycoord[0:n - 1]
     # deduce the distance in s direction
-    ds2 = (dxs*dxs + dys*dys)
+    ds2 = (dxs * dxs + dys * dys)
     ds = np.sqrt(ds2)
     scoord = np.cumsum(ds)
     avaPath['s'] = np.insert(scoord, 0, 0)
@@ -450,9 +448,9 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
     # create a B-spline with scipy for given x, y line
     if len(xNew) <= 3:
-        tck, u = splprep([xNew, yNew], k=len(xNew)-1)
+        tck, u = splprep([xNew, yNew], k=len(xNew) - 1)
         log.warning('Path is defined by only %d points - degree of spline is set to %d' %
-            (len(xNew), len(xNew)-1))
+                    (len(xNew), len(xNew) - 1))
     else:
         tck, u = splprep([xNew, yNew])
 
@@ -460,7 +458,7 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     s = computeLengthOfLine2D(xNew, yNew)
     # compute number of desired points along spline of x, y as a function of
     # length of the spline and the desired resample distance of the line
-    nPoints = np.ceil(s[-1]/distance) + 1
+    nPoints = np.ceil(s[-1] / distance) + 1
     # evaluate spline for nPoints
     uPoints = np.linspace(0, 1, int(nPoints))
     xcoornew, ycoornew = splev(uPoints, tck)
@@ -501,7 +499,7 @@ def computeLengthOfLine2D(x, y):
     """
     dx = np.diff(x)
     dy = np.diff(y)
-    s = np.sqrt(dx**2 + dy**2)
+    s = np.sqrt(dx ** 2 + dy ** 2)
     s = s.cumsum()
 
     return s
@@ -550,7 +548,7 @@ def findSplitPoint(avaProfile, Points):
     -----------
     avaProfile: dict
         line dictionary with x and y coordinates
-    Point: dict
+    Points: dict
         a point dictionary
 
     Returns
@@ -575,7 +573,7 @@ def findSplitPoint(avaProfile, Points):
 
 
 def findClosestPoint(xcoor, ycoor, pointsDict):
-    """ find closest point of pointDict along line defined by xcoor and ycoor - only xy plane!
+    """ find the closest point of pointDict along line defined by xcoor and ycoor - only xy plane!
 
         Parameters
         -----------
@@ -593,7 +591,7 @@ def findClosestPoint(xcoor, ycoor, pointsDict):
     Dist = np.empty((0))
     IndSplit = np.empty((0))
     for i in range(len(pointsDict['x'])):
-        dist = np.sqrt((xcoor - pointsDict['x'][i]) ** 2 + (ycoor - pointsDict['y'][i])**2)
+        dist = np.sqrt((xcoor - pointsDict['x'][i]) ** 2 + (ycoor - pointsDict['y'][i]) ** 2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
         Dist = np.append(Dist, dist[indSplit])
@@ -634,11 +632,12 @@ def computeAlongLineDistance(line, dim='2D'):
 
     # compute distance of points along line
     distancePoints = [0]
-    for i in range(len(x)-1):
+    for i in range(len(x) - 1):
         if dim.lower() != '2d':
-            distancePoints.append(distancePoints[i] + np.sqrt((x[i+1]-x[i])**2 + ((y[i+1]-y[i])**2) + (z[i+1]-z[i])**2))
+            distancePoints.append(
+                distancePoints[i] + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2) + (z[i + 1] - z[i]) ** 2))
         else:
-            distancePoints.append(distancePoints[i] + np.sqrt((x[i+1]-x[i])**2 + ((y[i+1]-y[i])**2)))
+            distancePoints.append(distancePoints[i] + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2)))
 
     return distancePoints
 
@@ -712,13 +711,13 @@ def findAngleProfile(tmp, ds, dsMin):
     condition = True
     if np.size(tmp) == 0:
         raise IndexError(noPointFoundMessage)
-    while (i <= np.size(tmp) and condition):
+    while i <= np.size(tmp) and condition:
         ind = tmp[i]
         j = 0
         dist = 0
         while dist < dsMin:
             try:
-                condition = condition and (tmp[i+j+1] == ind+j+1)
+                condition = condition and (tmp[i + j + 1] == ind + j + 1)
                 dist = dist + ds[i + j]
             except IndexError:
                 raise IndexError(noPointFoundMessage)
@@ -796,7 +795,7 @@ def isCounterClockWise(path):
     isCounterCloc1: int
         1 if the path is counter clockwise, 0 otherwise
     """
-    v = path.vertices-path.vertices[0, :]
+    v = path.vertices - path.vertices[0, :]
     a = np.arctan2(v[1:, 1], v[1:, 0])
     isCounterClock = (a[1:] >= a[:-1]).astype(int).mean() >= 0.5
     return isCounterClock
@@ -827,15 +826,15 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
     yllc = header['yllcenter']
     csz = header['cellsize']
     # normalize line coordinates
-    xArray = (lineDict['x'] - xllc)/csz
-    yArray = (lineDict['y'] - yllc)/csz
+    xArray = (lineDict['x'] - xllc) / csz
+    yArray = (lineDict['y'] - yllc) / csz
     # loop on line points
     cellsCrossed = np.zeros((ncols * nrows))
-    for i in range(np.size(xArray)-1):
+    for i in range(np.size(xArray) - 1):
         xA = xArray[i]
-        xB = xArray[i+1]
+        xB = xArray[i + 1]
         yA = yArray[i]
-        yB = yArray[i+1]
+        yB = yArray[i + 1]
         dx = xB - xA
         dy = yB - yA
         sx = np.sign(dx)
@@ -848,8 +847,8 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
         if addBuffer:
             cellsCrossed, _, _ = getNeighborCells(indX, indY, ncols, nrows, cellsCrossed)
         # find next intersection with vertical and horizontal axis
-        tIx = dy * (indX + sx/2 - xA) if dx != 0 else float("+inf")
-        tIy = dx * (indY + sy/2 - yA) if dy != 0 else float("+inf")
+        tIx = dy * (indX + sx / 2 - xA) if dx != 0 else float("+inf")
+        tIy = dx * (indY + sy / 2 - yA) if dy != 0 else float("+inf")
         indXB = round(xB)
         indYB = round(yB)
         while (indX, indY) != (indXB, indYB):
@@ -859,12 +858,12 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
             if movx:
                 # intersection is at (indX + sx, yA + tIx / dx^2)
                 indX += sx
-                tIx = dy * (indX + sx/2 - xA)
+                tIx = dy * (indX + sx / 2 - xA)
 
             if movy:
                 # intersection is at (xA + tIy / dy^2, indY + sy)
                 indY += sy
-                tIy = dx * (indY + sy/2 - yA)
+                tIy = dx * (indY + sy / 2 - yA)
 
             indX = round(indX)
             indY = round(indY)
@@ -948,27 +947,27 @@ def path2domain(xyPath, rasterTransfo):
     x = xyPath['x']
     y = xyPath['y']
     # compute the non dimensional width
-    w = rasterTransfo['domainWidth']/2/csz
+    w = rasterTransfo['domainWidth'] / 2 / csz
     # remove scaling due to cellsize
-    x = x/csz
-    y = y/csz
+    x = x / csz
+    y = y / csz
 
     # Difference between x- bzw. y-Coordinates of Polyline
     # first and last  Vertex: Difference between this and the next
     # other vertices: Difference between previous and next
-    dx = np.array((x[1]-x[0]))
-    dy = np.array((y[1]-y[0]))
+    dx = np.array((x[1] - x[0]))
+    dy = np.array((y[1] - y[0]))
     n = len(x)
     for i in range(2, n):
-        dx = np.append(dx, (x[i]-x[i-2])/2.)
-        dy = np.append(dy, (y[i]-y[i-2])/2.)
+        dx = np.append(dx, (x[i] - x[i - 2]) / 2.)
+        dy = np.append(dy, (y[i] - y[i - 2]) / 2.)
 
-    dx = np.append(dx, x[-1]-x[-2])
-    dy = np.append(dy, y[-1]-y[-2])
+    dx = np.append(dx, x[-1] - x[-2])
+    dy = np.append(dy, y[-1] - y[-2])
 
     # Direction of normal vector of difference,
     # a.k.a. bisecting line of angle
-    d = np.arctan2(dy, dx) + math.pi/2
+    d = np.arctan2(dy, dx) + math.pi / 2
 
     # x- and y-Coordinates (left and right) of path edges,
     # total width w
@@ -1006,8 +1005,8 @@ def areaPoly(X, Y):
     X = np.append(X, X[0])
     Y = np.append(Y, Y[0])
     area = 0
-    for i in range(np.size(X)-1):
-        area = area + (X[i]*Y[i+1]-Y[i]*X[i+1])/2
+    for i in range(np.size(X) - 1):
+        area = area + (X[i] * Y[i + 1] - Y[i] * X[i + 1]) / 2
     return area
 
 
@@ -1052,14 +1051,13 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
         name = NameRel[i]
         start = StartRel[i]
         end = start + LengthRel[i]
-        avapath = {}
-        avapath['x'] = line['x'][int(start):int(end)]
-        avapath['y'] = line['y'][int(start):int(end)]
-        avapath['Name'] = name
+        avapath = {'x': line['x'][int(start):int(end)],
+                   'y': line['y'][int(start):int(end)],
+                   'Name': name}
         # if relTh is given - set relTh
         if thList != '':
             log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
-                     line['thicknessSource'][i]))
+                                                                        line['thicknessSource'][i]))
             Raster = polygon2Raster(header, avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(header, avapath, radius)
@@ -1079,11 +1077,9 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
                 raise AssertionError(message)
             else:
                 # if there is an overlap, take average of values for the overlapping cells
-                Raster = np.where(((Raster > 0) & (rast > 0)), (Raster + rast)/2, Raster + rast)
+                Raster = np.where(((Raster > 0) & (rast > 0)), (Raster + rast) / 2, Raster + rast)
         else:
             Raster = Raster + rast
-    if debugPlot:
-        debPlot.plotAreaDebug(header, avapath, Raster)
     if combine:
         line['rasterData'] = Raster
         return line
@@ -1125,8 +1121,6 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     else:
         xCoord = copy.deepcopy(xCoord0)
         yCoord = copy.deepcopy(yCoord0)
-        xCoord0 = np.append(xCoord0, xCoord0[0])
-        yCoord0 = np.append(yCoord0, yCoord0[0])
 
     # get the raster corresponding to the polygon
     polygon = np.stack((xCoord, yCoord), axis=-1)
@@ -1135,9 +1129,9 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = isCounterClockWise(path)
-    r = (radius*is_ccw - radius*(1-is_ccw))
-    x = np.linspace(0, ncols-1, ncols)
-    y = np.linspace(0, nrows-1, nrows)
+    r = (radius * is_ccw - radius * (1 - is_ccw))
+    x = np.linspace(0, ncols - 1, ncols)
+    y = np.linspace(0, nrows - 1, nrows)
     X, Y = np.meshgrid(x, y)
     X = X.flatten()
     Y = Y.flatten()
@@ -1150,9 +1144,6 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         Mask = np.where(Mask > 0, th, 0.)
     else:
         Mask = np.where(Mask > 0, 1., 0.)
-
-    if debugPlot:
-        debPlot.plotRemovePart(xCoord0, yCoord0, demHeader, X, Y, Mask, mask)
 
     return Mask
 
@@ -1183,21 +1174,20 @@ def checkParticlesInRelease(particles, line, radius):
         name = NameRel[i]
         start = StartRel[i]
         end = start + LengthRel[i]
-        avapath = {}
-        avapath['x'] = line['x'][int(start):int(end)]
-        avapath['y'] = line['y'][int(start):int(end)]
-        avapath['Name'] = name
+        avapath = {'x': line['x'][int(start):int(end)],
+                   'y': line['y'][int(start):int(end)],
+                   'Name': name}
         mask = pointInPolygon(line['header'], particles, avapath, radius)
         Mask = np.logical_or(Mask, mask)
 
     # also remove particles with negative mass
     mask = np.where(particles['m'] <= 0, False, True)
     Mask = np.logical_and(Mask, mask)
-    nRemove = len(Mask)-np.sum(Mask)
+    nRemove = len(Mask) - np.sum(Mask)
     if nRemove > 0:
         particles = particleTools.removePart(particles, Mask, nRemove,
-            'because they are not within the release polygon')
-        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
+                                             'because they are not within the release polygon')
+        log.debug('removed %s particles because they are not within the release polygon' % nRemove)
 
     return particles
 
@@ -1232,8 +1222,6 @@ def pointInPolygon(demHeader, points, Line, radius):
     else:
         xCoord = copy.deepcopy(xCoord0)
         yCoord = copy.deepcopy(yCoord0)
-        xCoord0 = np.append(xCoord0, xCoord0[0])
-        yCoord0 = np.append(yCoord0, yCoord0[0])
 
     # get the raster corresponding to the polygon
     polygon = np.stack((xCoord, yCoord), axis=-1)
@@ -1242,13 +1230,10 @@ def pointInPolygon(demHeader, points, Line, radius):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = isCounterClockWise(path)
-    r = (radius*is_ccw - radius*(1-is_ccw))
+    r = (radius * is_ccw - radius * (1 - is_ccw))
     points2Check = np.stack((points['x'], points['y']), axis=-1)
     mask = path.contains_points(points2Check, radius=r)
     mask = np.where(mask > 0, True, False)
-
-    if debugPlot:
-        debPlot.plotPartAfterRemove(points, xCoord0, yCoord0, mask)
 
     return mask
 
@@ -1312,8 +1297,8 @@ def cartToSpherical(X, Y, Z):
             for elevation angle defined from Z-axis down [degrees]
     """
 
-    xy = X**2 + Y**2
-    r = np.sqrt(xy + Z**2)
+    xy = X ** 2 + Y ** 2
+    r = np.sqrt(xy + Z ** 2)
     # for elevation angle defined from Z-axis down
     theta = np.arctan2(np.sqrt(xy), Z)
     theta = np.degrees(theta)
@@ -1399,14 +1384,14 @@ def rotate(locationPoints, theta, deg=True):
     rotationMatrix = np.array([
         [np.cos(theta), -np.sin(theta)],
         [np.sin(theta), np.cos(theta)],
-        ])
+    ])
 
     # rotate vector
     vectorRot = np.dot(rotationMatrix, vector)
 
     # create rotated line as list of start and end point
-    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0][0])],  # x
-                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1][0])]  # y
+    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0] + vectorRot[0][0])],  # x
+                   [locationPoints[1][0], float(locationPoints[1][0] + vectorRot[1][0])]  # y
                    ]
 
     return rotatedLine
@@ -1443,12 +1428,12 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
     csz = rasterHeader['cellsize']
     # if a new cell size is provided, compute the new ncols and nrows
     if cellSizeNew is not None:
-        xExtent = (ncols-1) * csz
-        yExtent = (nrows-1) * csz
-        ncolsNew = int(xExtent/cellSizeNew + 1)
-        nrowsNew = int(yExtent/cellSizeNew + 1)
+        xExtent = (ncols - 1) * csz
+        yExtent = (nrows - 1) * csz
+        ncolsNew = int(xExtent / cellSizeNew + 1)
+        nrowsNew = int(yExtent / cellSizeNew + 1)
         # get rid of the case cellSizeNew = csz (which would lead to a too large grid)
-        if larger and ((ncolsNew-1) * cellSizeNew < xExtent):
+        if larger and ((ncolsNew - 1) * cellSizeNew < xExtent):
             ncols = ncolsNew + 1
             nrows = nrowsNew + 1
         else:
@@ -1477,8 +1462,8 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
         2D vector of x and y values for mesh center coordinates (produced using meshgrid)
     """
 
-    xEnd = (ncols-1) * csz
-    yEnd = (nrows-1) * csz
+    xEnd = (ncols - 1) * csz
+    yEnd = (nrows - 1) * csz
 
     xp = np.linspace(0, xEnd, ncols) + xllc
     yp = np.linspace(0, yEnd, nrows) + yllc
@@ -1511,17 +1496,15 @@ def snapPtsToLine(dbData, projstr, lineName, pointsList):
         dbData[pt + '_' + projstr + '_snapped'] = np.empty(len(dbData))
         dbData['distanceXY'] = np.empty(len(dbData))
 
-    distP = []
     for index, row in dbData.iterrows():
         xcoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[0]
         ycoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[1]
         zcoorTemp = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords
         zcoor = np.asarray([coord[2] for coord in zcoorTemp])
 
-        xyInd = []
         for pt in pointsList:
             pointsDict = {'x': [dbData.loc[index, ('%s_%s' % (pt, projstr))].x],
-                'y': [dbData.loc[index, ('%s_%s' % (pt, projstr))].y]}
+                          'y': [dbData.loc[index, ('%s_%s' % (pt, projstr))].y]}
 
             indSplit = findClosestPoint(xcoor, ycoor, pointsDict)
             projPoint = shp.Point(xcoor[indSplit], ycoor[indSplit], zcoor[indSplit])

@@ -5,7 +5,7 @@ import logging
 import pickle
 import gc
 import numpy as np
-import avaframe.com4FlowPy.raster_io as io
+import avaframe.com4FlowPy.rasterIo as io
 
 # create local logger
 log = logging.getLogger(__name__)

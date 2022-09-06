@@ -51,17 +51,19 @@ Computational modules
     * :doc:`moduleCom2AB`
     * :doc:`moduleCom3Hybrid`
     * :doc:`moduleCom5SnowSlide`
+    * :doc:`moduleCom4FlowPy`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
-   :caption: Computatonal modules
+   :caption: Computational modules
 
    moduleCom1DFA.rst
    moduleCom1DFAOrig.rst
    moduleCom2AB.rst
    moduleCom3Hybrid.rst
    moduleCom5SnowSlide.rst
+   moduleCom4FlowPy.rst
 
 Input/transformation modules
 ============================
@@ -116,6 +118,7 @@ Theory
     * :doc:`theoryCom1DFA`
     * :doc:`DFAnumerics`
     * :doc:`com1DFAAlgorithm`
+    * :doc:`theoryCom4FlowPy`
 
 .. toctree::
    :maxdepth: 3
@@ -125,6 +128,7 @@ Theory
    theoryCom1DFA.rst
    DFAnumerics.rst
    com1DFAAlgorithm.rst
+   theoryCom4FlowPy.rst
 
 .. only:: html
 
