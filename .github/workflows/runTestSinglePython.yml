@@ -8,10 +8,12 @@ on:
     branches: [ master ]
     paths-ignore:
           - 'docs/**'
+          - 'avaframe/com4FlowPy/**'
   pull_request:
     branches: [ master ]
     paths-ignore:
           - 'docs/**'
+          - 'avaframe/com4FlowPy/**'
   workflow_dispatch:
 
 jobs:
