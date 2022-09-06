@@ -1311,6 +1311,9 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     massEntrained = []
     massTotal = []
 
+    # setup a result fields info data frame to save max values of fields and avalanche front
+    resultsDF = setupresultsDF(resTypesLast, cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'))
+
     # TODO: add here different time stepping options
     log.debug('Use standard time stepping')
     # Initialize time and counters
@@ -1352,6 +1355,12 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         # Perform computations
         particles, fields, zPartArray0, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU,
                                                                     frictType)
+        # set max values of fields to dataframe
+        if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
+            rangeValue = mtiInfo['rangeList'][-1]
+        else:
+            rangeValue = ''
+        resultsDF = addMaxValuesToDF(resultsDF, fields, t, resTypesLast, rangeValue=rangeValue)
 
         tCPU['nSave'] = nSave
         particles['t'] = t
@@ -1447,7 +1456,74 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
                                                         fields, mtiInfo)
         dtAna.exportData(mtiInfo, cfgRangeTime, 'com1DFA')
 
+    # save resultsDF to file
+    resultsDFPath = pathlib.Path(cfgGen['avalancheDir'], 'Outputs', 'com1DFA', 'resultsDF_%s.csv' % simHash)
+    resultsDF.to_csv(resultsDFPath)
+
     return Tsave, particlesList, fieldsList, infoDict
+
+
+def setupresultsDF(resTypes, cfgRangeTime):
+    """ setup result fields max values dataframe for initial time step
+        for all resTypes used and optional for avalanche front
+
+        Parameters
+        -----------
+        resTypes: list
+            list of all resultTypes
+        cfgRangeTime: bool
+            config info if range time diagram should be performed and rangeList is available
+
+        Returns
+        --------
+        resultsDF: dataframe
+            data frame with on line for iniital time step and max and mean values of fields
+    """
+
+    resDict = {'timeStep': [0.0]}
+    for resT in resTypes:
+        if resT != 'particles':
+            resDict['max' + resT] = [0.0]
+    if cfgRangeTime:
+        resDict['rangeList'] = [0.0]
+    resultsDF = pd.DataFrame.from_dict(resDict)
+    resultsDF = resultsDF.set_index('timeStep')
+
+    return resultsDF
+
+
+def addMaxValuesToDF(resultsDF, fields, timeStep, resTypes, rangeValue=''):
+    """ add max values of peakFields to dataframe and optionally rangeValue
+
+        Parameters
+        -----------
+        fields: dict
+            dict with all result type fields
+        resultsDF: dataframe
+            data frame with on line for each time step and max and mean values of fields
+        timeStep: float
+            computation time step
+        resTypes: list
+            list of all resultTypes
+        rangeValue: float
+            avalanche front location -optional
+
+        Returns
+        --------
+        resultsDF: data frame
+            updated data frame
+    """
+
+    newLine = []
+    for resT in resTypes:
+        if resT != 'particles':
+            newLine.append(np.nanmax(fields[resT]))
+
+    if rangeValue != '':
+        newLine.append(rangeValue)
+    resultsDF.loc[timeStep] = newLine
+
+    return resultsDF
 
 
 def updateSavingTimeStep(dtSave, cfg, t):

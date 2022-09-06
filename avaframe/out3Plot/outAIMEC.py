@@ -612,8 +612,8 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             contourComp = ax2.contour(
                 L, S, compData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
         else:
-            log.warning('Simulation %d did not reach the run out area!' % simName)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %d did not reach the run out area!' % simName,
+            log.warning('Simulation %s did not reach the run out area!' % simName)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %s did not reach the run out area!' % simName,
                      fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 

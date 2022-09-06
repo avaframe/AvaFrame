@@ -121,18 +121,18 @@ def filterSims(avalancheDir, parametersDict, specDir='', simDF=''):
     if parametersDict != '':
         for key, value in parametersDict.items():
             # first check if values are valid
-            if value != '' and value != []:
+            if value == '' or value == []:
+                log.debug('Parameter %s is not used for filtering as no valid value is provided: %s' % (key, value))
+                # required as np.float64 is False for np.float64 != []
+            else:
                 # convert values to list
                 if not isinstance(value, (list, np.ndarray)):
                     value = [value]
-
                 # remove non matching simulations from simDF
                 if key in ['relTh', 'entTh', 'secondaryRelTh', '~relTh', '~entTh', '~secondaryRelTh']:
                     simDF = filterCom1DFAThicknessValues(key, value, simDF)
                 else:
                     simDF = removeSimsNotMatching(simDF, key, value)
-            else:
-                log.debug('Parameter %s is not used for filtering as no valid value is provided: %s' % (key, value))
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
