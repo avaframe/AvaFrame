@@ -404,8 +404,9 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         plt.close(fig)
 
 
-def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parametersDict=''):
+def resultHistPlot(cfg, dataDF, xName='', scenario='', stat='count', parametersDict=''):
     """ create a histogram of values and optional colorcode using scenario name
+        and option to filter simulations using parametersDict
 
         Parameters
         -----------
@@ -421,7 +422,7 @@ def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parameters
         stat: str
             statistical measure to show (percent, probability, density, count, frequency), default count
         parametersDict: dict
-            optional - dictionary filter criteria
+            optional - dictionary filter criteria, parameter name and list of values
 
 
         Returns
@@ -431,7 +432,7 @@ def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parameters
 
     """
 
-    # filter DF
+    # filter DF with parametersDict
     if parametersDict != '':
         simNameList = cfgHandling.filterSims(cfg['avalancheDir'], parametersDict, specDir='', simDF=dataDF)
         dataDF = dataDF[dataDF['simName'].isin(simNameList)]
@@ -456,7 +457,8 @@ def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parameters
 
 
 def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', type=''):
-    """ create a dist plot from dataframe
+    """ create a dist plot from dataframe for name1 on x axis and name2 on y axis, optionally
+        colorcoded with scenario name and filtered with parametersDict
 
         Parameters
         -----------
@@ -465,11 +467,12 @@ def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', ty
         dataDF: dataframe
             dataframe with one line per simulation and info on model parameters and results
         name1: str
-            column name of dataDF to use for plot
+            column name of dataDF to use for plot x axis
         name2: str
-            column name of dataDF to use for plot
+            column name of dataDF to use for plot y axis
         scenario: str
-            optional name of column used to colorcode points in plots
+            optional name of column used to colorcode points in plots for type=scatter
+            or kde for type=dist
         parametersDict: dict
             optional - dictionary filter criteria
         type: str
@@ -482,7 +485,7 @@ def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', ty
 
     """
 
-    # filter DF
+    # filter DF using parametersDict
     if parametersDict != '':
         simNameList = cfgHandling.filterSims(cfg['avalancheDir'], parametersDict, specDir='', simDF=dataDF)
         dataDF = dataDF[dataDF['simName'].isin(simNameList)]
