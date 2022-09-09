@@ -392,7 +392,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         ax2.set_xlabel('x [m]')
         ax2.set_ylabel('y [m]')
 
-        plt.legend(handles, labels, facecolor = 'white', framealpha = 0.4)
+        plt.legend(handles, labels, facecolor = 'black', framealpha = 0.04)
         pU.addColorBar(im2, ax2, ticks, unit)
 
         outDir = inDir / 'plots'
