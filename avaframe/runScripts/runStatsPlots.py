@@ -44,12 +44,14 @@ cfg = cfgStats['GENERAL']
 outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
 cfgStats['GENERAL']['outDir'] = outDir
 cfgStats['GENERAL']['avalancheDir'] = avaDir
+avaDir = 'data/avaWog2'
 # Specify where you want the results to be stored
 fU.makeADir(outDir)
 
 # Start logging
 log = logUtils.initiateLogger(outDir, logName)
 
+# requires aimec output resAnalysisDF files if not already create set aimec flag to True
 if cfgStats['GENERAL'].getboolean('aimec'):
     # clean all existing aimec files first
     initProj.cleanModuleFiles(avaDir, ana3AIMEC)
@@ -61,17 +63,23 @@ if cfgStats['GENERAL'].getboolean('aimec'):
 # load results from aimec
 pathToCsv = pathlib.Path(avaDir, 'Outputs', 'ana3AIMEC', modName)
 resAnalysisDFFiles = list(pathToCsv.glob('*resAnalysisDF.csv'))
+if len(resAnalysisDFFiles) > 1:
+    log.warning('Multiple resAnalysisDF files found, taking only first one: %s' % resAnalysisDFFiles[0])
+elif len(resAnalysisDFFiles) == 0:
+    message = 'No resAnalysisDF file found'
+    log.error(message)
+    raise FileNotFoundError
 
-for resFile in resAnalysisDFFiles:
-    resAnalysisDF = pd.read_csv(resFile)
+# load dataframe
+resAnalysisDF = pd.read_csv(resAnalysisDFFiles[0])
 
-    # filter simulations
-    parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
+# filter simulations
+parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
-    # ------- runout histogram plot
-    sPlot.resultHistPlot(cfgStats['GENERAL'], resAnalysisDF, xName='sRunout', scenario='scenario',
-        stat='probability', parametersDict=parametersDict)
+# ------- runout histogram plot
+sPlot.resultHistPlot(cfgStats['GENERAL'], resAnalysisDF, xName='sRunout', scenario='scenario',
+    stat='probability', parametersDict=parametersDict)
 
-    # -------- max result values scatter plot
-    sPlot.plotDistFromDF(cfgStats['GENERAL'], resAnalysisDF, name1='pftFieldMax',
-        name2='pfvFieldMax', scenario='scenario', parametersDict=parametersDict, type='')
+# -------- max result values scatter plot
+sPlot.plotDistFromDF(cfgStats['GENERAL'], resAnalysisDF, name1='pftFieldMax',
+    name2='pfvFieldMax', scenario='scenario', parametersDict=parametersDict, type='')
