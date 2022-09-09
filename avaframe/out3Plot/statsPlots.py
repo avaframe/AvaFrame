@@ -403,7 +403,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
 
 def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parametersDict=''):
-    """ create a histogram of values and optional colorcode using scenarion name
+    """ create a histogram of values and optional colorcode using scenario name
 
         Parameters
         -----------
@@ -420,6 +420,12 @@ def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parameters
             statistical measure to show (percent, probability, density, count, frequency), default count
         parametersDict: dict
             optional - dictionary filter criteria
+
+
+        Returns
+        --------
+        plotPath: pathlib path
+            path to figure
 
     """
 
