@@ -18,6 +18,7 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in1Data.getInput as gI
+from avaframe.in3Utils import cfgHandling
 
 
 # create local logger
@@ -401,3 +402,108 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         outFile = outDir / ('%s_probMap_lim%s.%s' % (avaName, cfgFull['GENERAL']['peakLim'], pU.outputFormat))
         fig.savefig(outFile)
         plt.close(fig)
+
+
+def resultHistPlot(cfg, dataDF, xName='',  scenario='', stat='count', parametersDict=''):
+    """ create a histogram of values and optional colorcode using scenario name
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration info here used outDir
+        dataDF: dataFrame
+            dataFrame with info on simulation results and configuration one line per simulation
+            (e.g. aimec resAnalysisDF)
+        xName: str
+            column name for x axis
+        scenario: str
+            column name used to colorcode values
+        stat: str
+            statistical measure to show (percent, probability, density, count, frequency), default count
+        parametersDict: dict
+            optional - dictionary filter criteria
+
+
+        Returns
+        --------
+        plotPath: pathlib path
+            path to figure
+
+    """
+
+    # filter DF
+    if parametersDict != '':
+        simNameList = cfgHandling.filterSims(cfg['avalancheDir'], parametersDict, specDir='', simDF=dataDF)
+        dataDF = dataDF[dataDF['simName'].isin(simNameList)]
+
+    # initialize figure
+    fig, ax = plt.subplots()
+
+    # create histogram
+    bars = sns.histplot(data=dataDF, x=xName, hue="scenario", stat=stat, ax=ax)
+
+    # create second y axis for ecdf
+    ax2 = ax.twinx()
+    cdf = sns.ecdfplot(data=dataDF, x=xName, hue='scenario', stat='count', ax=ax2)
+
+    ax.set_ylabel('histogram ' + stat)
+    ax2.set_ylabel('ecdf count')
+
+    outFileName = '%s_' % xName + 'histogram'
+    plotPath = pU.saveAndOrPlot({'pathResult': cfg['outDir']}, outFileName, fig)
+
+    return plotPath
+
+
+def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', type=''):
+    """ create a dist plot from dataframe
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings here outDir
+        dataDF: dataframe
+            dataframe with one line per simulation and info on model parameters and results
+        name1: str
+            column name of dataDF to use for plot
+        name2: str
+            column name of dataDF to use for plot
+        scenario: str
+            optional name of column used to colorcode points in plots
+        parametersDict: dict
+            optional - dictionary filter criteria
+        type: str
+            optional - type of plot dist or scatter
+
+        Returns
+        --------
+        plotPath: pathlib path
+            path to figure
+
+    """
+
+    # filter DF
+    if parametersDict != '':
+        simNameList = cfgHandling.filterSims(cfg['avalancheDir'], parametersDict, specDir='', simDF=dataDF)
+        dataDF = dataDF[dataDF['simName'].isin(simNameList)]
+
+    # # create figure
+    if scenario !='':
+        if type == 'scatter':
+            fig, ax = plt.subplots()
+            ax = sns.scatterplot(data=dataDF[dataDF['simName'].isin(simNameList)], x=name1, y=name2, hue=scenario)
+        else:
+            dist = sns.jointplot(data=dataDF[dataDF['simName'].isin(simNameList)], x=name1, y=name2, hue=scenario)
+            ax = dist.ax_joint
+            fig = dist.fig
+    else:
+        dist = sns.jointplot(data=dataDF[dataDF['simName'].isin(simNameList)], x=name1, y=name2)
+        ax = dist.ax_joint
+        fig = dist.fig
+
+    # put ava name on plot and save figure
+    pU.putAvaNameOnPlot(ax, cfg['avalancheDir'])
+    outFileName = '%s_vs_%s_' % (name1, name2) + 'distplot'
+    plotPath = pU.saveAndOrPlot({'pathResult': cfg['outDir']}, outFileName, fig)
+
+    return plotPath
