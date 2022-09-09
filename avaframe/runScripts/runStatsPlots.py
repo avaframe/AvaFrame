@@ -44,7 +44,7 @@ cfg = cfgStats['GENERAL']
 outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
 cfgStats['GENERAL']['outDir'] = outDir
 cfgStats['GENERAL']['avalancheDir'] = avaDir
-avaDir = 'data/avaWog2'
+
 # Specify where you want the results to be stored
 fU.makeADir(outDir)
 
