@@ -385,13 +385,15 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1)
         else:
             CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, colors=colorsP, linewidths=1)
-        for i in range(len(labels)):
-            CS2.collections[i].set_label(labels[i])
 
-        pU.addColorBar(im2, ax2, ticks, unit)
+        # Get the handles for the legend elements
+        handles, _ = CS2.legend_elements()
+
         ax2.set_xlabel('x [m]')
         ax2.set_ylabel('y [m]')
-        plt.legend(facecolor='black', framealpha=0.04)
+
+        plt.legend(handles, labels, facecolor = 'black', framealpha = 0.04)
+        pU.addColorBar(im2, ax2, ticks, unit)
 
         outDir = inDir / 'plots'
         fU.makeADir(outDir)
