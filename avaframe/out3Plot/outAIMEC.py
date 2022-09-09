@@ -703,7 +703,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
     outFileName = '_'.join(['Results', projectName, str(runoutResType), 'lim', str(thresholdValue), 'w',
-                           str(domainWidth)]) + '.csv'
+                           str(domainWidth)]) + 'resAnalysisDF' + '.csv'
     outname = os.path.join(pathResult, outFileName)
     outFileNameStats = '_'.join(['Results', projectName, str(runoutResType), 'lim', str(thresholdValue), 'w',
                                 str(domainWidth)]) + 'stats.csv'
