@@ -305,9 +305,10 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             extentOption=False, constrainedData=True)
         dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
 
-        # create figure
+        # create figure and add title
         fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-        suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
+        fullTitle = cfg['name'] + ' based on %s $>$ %s %s' % (cfgFull['GENERAL']['peakVar'], cfgFull['GENERAL']['peakLim'], cfgFull['GENERAL']['unit'])
+        suptitle = fig.suptitle(fullTitle, fontsize=14, color='0.5')
         ax1 = fig.add_subplot(121)
 
         # set extent in meters using cellSize
@@ -350,7 +351,6 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         pU.addColorBar(im1, ax1, ticks, unit)
         title = str('%s' % cfg['name'])
-        ax1.set_title(title)
         ax1.set_xlabel('x [m]')
         ax1.set_ylabel('y [m]')
 
