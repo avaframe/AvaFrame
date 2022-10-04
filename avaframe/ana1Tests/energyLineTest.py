@@ -294,7 +294,7 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     # find the intersection segment
     idx = np.argwhere(np.diff(np.sign(z - alphaLine))).flatten()
     idx = idx[-1]
-    coefExt = 0
+    coefExt = 1
     # did not find the intersection, look further
     while s[idx] == 0 and coefExt < 4:
         s = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
