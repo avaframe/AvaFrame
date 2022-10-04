@@ -1,5 +1,5 @@
-Dense Flow Avalanche algorithm and workflow
-============================================
+com1DFA Algorithm and workflow
+==============================
 
 Algorithm graph
 ----------------
@@ -293,7 +293,7 @@ The mesh values are updated with the particles properties using
 This is used to compute flow thickness, flow velocity and pressure fields from the particle properties.
 
 Update particles flow thickness
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The mesh flow thickness is finally used to update the particle flow thickness value
 using :ref:`mesh to particle interpolation <DFAnumerics:Mesh to particle>` methods.
 

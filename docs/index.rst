@@ -15,34 +15,28 @@ General
 
     * :doc:`introduction`
     * :doc:`installation`
-    * :doc:`operational`
-    * :doc:`operationalGerman`
-    * :doc:`developinstall`
-    * :doc:`gettingstarted`
+    * :doc:`connector`
+    * :doc:`develop`
     * :doc:`testing`
     * :doc:`Visualisation`
     * :doc:`FAQ`
     * :doc:`releaseNotes`
     * :doc:`api`
-    * :doc:`develop`
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    :hidden:
    :caption: General
 
    introduction.rst
    installation.rst
-   operational.rst
-   operationalGerman.rst
-   developinstall.rst
-   gettingstarted.rst
+   connector.rst
+   develop.rst
    testing.rst
    Visualisation.rst
    FAQ.rst
    releaseNotes.rst
    api.rst
-   develop.rst
 
 
 Computational modules
