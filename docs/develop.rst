@@ -1,5 +1,9 @@
-Notes to Developers 
-===================
+Advanced Usage (Script)
+=======================
+
+
+Notes to developers
+-------------------
 
 Here you can find notes on design principles and how to contribute to AvaFrame.
 
@@ -32,7 +36,15 @@ AF-STYLE-4: No dead code
   reading the source code. Old code is available in the source history if
   it is needed.
 
+--------------------
 
+.. include:: developinstall.rst
+
+--------------------------
+
+.. include:: gettingstarted.rst
+
+--------------------------
 
 Our suggested git workflow
 --------------------------
@@ -88,6 +100,9 @@ repository/origin will be handled by the pull request)::
   git branch -d myAwesomeFeature
 
 
+--------------------------
+
+
 Build the documentation
 ------------------------
 
@@ -127,6 +142,7 @@ and you should see something like::
 
   ==========================1 passed in 0.02s =========================
 
+---------------------------
 
 How to add a benchmark test
 ----------------------------
@@ -162,31 +178,32 @@ Now, you are ready to go! Move to ``AvaFrame/avaframe`` and run: ::
 You can check out the markdown-style report of the comparison at:
 ``tests/reports/standardTestsReportPy.md``.
 
+---------------------------
 
-Examples
----------
+Example runscripts
+------------------
 
 In :py:mod:`runScripts` we provide ready-to-use scripts for different applications of the modules provided within
 AvaFrame.
 
 
 Derive input data
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 - :py:mod:`runScripts.runComputeDist`
 
 Create a new project
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 - :py:mod:`runScripts.runInitializeProject`
 
 
 Generate idealized/generic topography data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - :py:mod:`runScripts.runGenerateTopo`
 - :py:mod:`runScripts.runGenProjTopoRelease`
 
 
 Postprocessing
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 - :py:mod:`runScripts.runAna3AIMEC`
 - :py:mod:`runScripts.runAna3AIMECCompMods`
@@ -196,7 +213,7 @@ Postprocessing
 
 
 Visualisation
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 - :py:mod:`runScripts.runQuickPlotSimple`
 - :py:mod:`runScripts.runQuickPlotOne`
 - :py:mod:`runScripts.runPlotTopo`
@@ -204,7 +221,7 @@ Visualisation
 
 
 Testing
-~~~~~~~~
+^^^^^^^^
 - :py:mod:`runScripts.runDamBreak`
 - :py:mod:`runScripts.runSimilaritySol`
 - :py:mod:`runScripts.runTestFP`

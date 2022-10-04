@@ -1,5 +1,5 @@
-Development Installation 
-------------------------
+Advanced (Script) Installation 
+------------------------------
 
 This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
@@ -24,7 +24,7 @@ Setup AvaFrame
 
 Create a new `conda environment
 <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_
-for AvaFrame, activate it and install pip in this environment::
+for AvaFrame, activate it and install pip, numpy and cython in this environment::
 
   conda create --name avaframe_env
   conda activate avaframe_env
@@ -55,7 +55,7 @@ current (local) version will be used.
 Test it by starting ``python`` and do an ``import avaframe``. If no error comes
 up, you are good to go.
 
-Head over to :ref:`gettingstarted:Getting Started` for the next steps.
+Head over to :ref:`gettingstarted:Basic usage` for the next steps.
 
 Update AvaFrame
 ^^^^^^^^^^^^^^^

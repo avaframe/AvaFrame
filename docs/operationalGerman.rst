@@ -1,5 +1,5 @@
-Operationelle Installation (Deutsch)
-====================================
+Manuelle Installation
+=====================
 
 Dies ist der Schnellstart für die Inbetriebnahme von AvaFrame mit QGis als Frontend. Derzeit nur für Windows beschrieben 
 (Linux-Benutzer können ein beliebiges Terminal verwenden, um die gleichen Schritte durchzugehen)
@@ -92,8 +92,8 @@ Update Avaframe
 .. Note::
    Wenn Sie auf einen Fehler wie diesen stoßen (unterste/letzte Zeile der Fehlermeldung; die Zahlen können abweichen):
 
-      ValueError: numpy.ndarray size changed, may indicate binary
-      incompatibility. Expected 88 from C header, got 80 from PyObject
+     ValueError: numpy.ndarray size changed, may indicate binary
+     incompatibility. Expected 88 from C header, got 80 from PyObject
 
    Führen Sie das Folgende in der OSGeo4W-Shell aus (der py3_env-Befehl wird bei neueren Versionen von QGis 
    nicht benötigt, überspringen Sie ihn)::
