@@ -11,7 +11,6 @@
 """
 
 import pathlib
-import pandas as pd
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
@@ -25,7 +24,7 @@ import avaframe.out3Plot.outAna1Plots as outAna1Plots
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
-logName = 'runSimilarityTest'
+logName = 'runAnalyzeSimilarityTest'
 
 # Load general configuration
 cfgMain = cfgUtils.getGeneralConfig()
@@ -72,7 +71,7 @@ simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, simiSolCfg, simDF,
 
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', 'vhErrorL2',
-                                              'aPPK', 'nPPK0', logScale=True, fit=False)
+                                              'aPPK', 'sphKernelRadius', logScale=True, fit=True)
 
 # make convergence plot
 outAna1Plots.plotTimeCPULog(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', 'sphKernelRadius', 'nPPK0')
@@ -84,6 +83,6 @@ outAna1Plots.plotTimeCPULog(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', '
 # same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
 # and saves itermediate plots
 fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', 'hErrorL2',
-                                          'aPPK', 'nPPK0', logScale=True, fit=True)
+                                          'aPPK', 'sphKernelRadius', logScale=True, fit=True)
 
 outAna1Plots.plotTimeCPULog(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')

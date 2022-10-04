@@ -135,11 +135,12 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
     zMin = zLim[0]
     ax2.vlines(x=avaProfileMass['s'][-1], ymin=zMin, ymax=avaProfileMass['z'][-1],
                color='r', linestyle='--')
-    ax2.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection, linestyle='--')
+    if ~np.isnan(sIntersection):
+        ax2.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection, linestyle='--')
+        ax2.hlines(y=zIntersection, color='b', xmin=0, xmax=sIntersection, linestyle='--')
 
     ax2.hlines(y=avaProfileMass['z'][-1], xmin=0, xmax=avaProfileMass['s'][-1],
                color='r', linestyle='--')
-    ax2.hlines(y=zIntersection, color='b', xmin=0, xmax=sIntersection, linestyle='--')
 
     ax2.set_xlabel('s [m]')
     ax2.set_ylabel('z [m]')
@@ -183,8 +184,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
     rmseVelocityElevation = resultEnergyTest['rmseVelocityElevation']
     errorS = abs(runOutSError)
     errorZ = abs(runOutZError)
-    sMin = min(avaProfileMass['s'][-1], sIntersection) - max(errorS, 0)
-    sMax = max(avaProfileMass['s'][-1], sIntersection) + max(errorS, 0)
+    sMin = np.nanmin(np.array([avaProfileMass['s'][-1], sIntersection])) - np.nanmax(np.array([errorS, 0]))
+    sMax = np.nanmax(np.array([avaProfileMass['s'][-1], sIntersection])) + np.nanmax(np.array([errorS, 0]))
     zMin = avaProfileMass['z'][-1] + min(slopeExt*(sMax - avaProfileMass['s'][-1]), 0 - 2*errorZ)-z0
     zMax = avaProfileMass['z'][0] - sMin*np.tan(min(runOutAngleRad, alphaRad))-z0
     if avaProfileMass['z'][-1] == zIntersection:
@@ -193,11 +194,12 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
         zMin = zMin - (zMax-zMin)*0.1
     ax3.vlines(x=avaProfileMass['s'][-1], ymin=zMin, ymax=avaProfileMass['z'][-1]-z0,
                color='r', linestyle='--')
-    ax3.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection-z0, linestyle='--')
+    if ~np.isnan(sIntersection):
+        ax3.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection-z0, linestyle='--')
+        ax3.hlines(y=zIntersection-z0, color='b', xmin=sMin, xmax=sIntersection, linestyle='--')
 
     ax3.hlines(y=avaProfileMass['z'][-1]-z0, xmin=sMin, xmax=avaProfileMass['s'][-1],
                color='r', linestyle='--')
-    ax3.hlines(y=zIntersection-z0, color='b', xmin=sMin, xmax=sIntersection, linestyle='--')
 
     ax3.set_xlabel('s [m]')
     ax3.set_ylabel('$\Delta z$ [m]')
@@ -310,8 +312,14 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     zP1 = z[idx+1]
     zA0 = alphaLine[idx]
     zA1 = alphaLine[idx+1]
-    sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
-    zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
+    if s0 == 0:
+        sIntersection = np.nan
+        zIntersection = np.nan
+        s[-1] = avaProfileMass['s'][-1]
+        z[-1] = avaProfileMass['z'][-1]
+    else:
+        sIntersection = s0 + (s1-s0)*(zA0-zP0)/((zP1-zP0)-(zA1-zA0))
+        zIntersection = zP0 + (sIntersection-s0) * (zP1-zP0) / (s1-s0)
     if coefExt > 0:
         s[-1] = sIntersection
         z[-1] = zIntersection
@@ -363,7 +371,10 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
     GK = sIntersection * mu
     z_end = avaProfileMass['z'][0] - GK
     zEneTarget = avaProfileMass['z'][0] - avaProfileMass['s'] * mu
-    sGeomL = [avaProfileMass['s'][0], sIntersection]
+    if ~np.isnan(sIntersection):
+        sGeomL = [avaProfileMass['s'][0], sIntersection]
+    else:
+        sGeomL = [avaProfileMass['s'][0], avaProfileMass['s'][-1]]
     zGeomL = [avaProfileMass['z'][0], z_end]
     # compute errors
     # rmse of the energy height

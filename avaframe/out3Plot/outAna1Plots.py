@@ -57,7 +57,7 @@ def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header
     comSol['tSave'] = tSave
 
     # profile in flow direction
-    fig1 = plt.figure(figsize=(4*pU.figW, 2*pU.figH))
+    fig1 = plt.figure(figsize=(2.5*pU.figW, 1*pU.figH))
     fig1.suptitle('Similarty solution test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=20)
     ax1 = plt.subplot2grid((1, 2), (0, 0))
     comSol['indFinal'] = int(nrows * 0.5) -1
@@ -76,7 +76,7 @@ def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header
 def makeContourSimiPlot(avalancheDir, simHash, fieldFT, limits, simiDict, fieldHeader, tSave, outDirTest):
     """
     """
-    fig, ax1 = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
+    fig, ax1 = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*2, pU.figH))
     # make flow momentum comparison plot
     ax1 = plt.subplot2grid((1, 1), (0, 0))
     ax1 = addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=16)
@@ -198,7 +198,7 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
 
 
 def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
-                        vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi):
+                       vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi):
     """ Plot sumary figure of the similarity solution test
 
     Parameters
@@ -260,37 +260,36 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
     comSol['outDirTest'] = outDirTest
     comSol['tSave'] = tSave
 
-
     # create figures and plots
-    fig = plt.figure(figsize=(pU.figW*4, pU.figH*2))
+    fig = plt.figure(figsize=(pU.figW*2.5, pU.figH*2))
     fig.suptitle('Similarty solution test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
     # make comparison profile plot in flow direction
-    ax1 = plt.subplot2grid((2, 6), (0, 0), colspan=3)
-    comSol['indFinal'] = int(nrows * 0.5) -1
+    ax1 = plt.subplot2grid((2, 8), (0, 0), colspan=4)
+    comSol['indFinal'] = int(nrows * 0.5) - 1
     ax1, ax11 = _plotVariable(ax1, cfgSimi, simiDict, comSol, limits, 'xaxis')
     ax1.set_title('Profile in flow direction (y = 0 m)')
 
     # make flow momentum comparison plot
-    ax2 = plt.subplot2grid((2, 6), (0, 3), colspan=3)
+    ax2 = plt.subplot2grid((2, 8), (0, 4), colspan=4)
     comSol['indFinal'] = int(np.round((xCenter - xllc)/csz) + 1)
     ax2, ax22 = _plotVariable(ax2, cfgSimi, simiDict, comSol, limits, 'yaxis')
     ax2.set_title('Profile across flow direction (x = %.2f m)' % xCenter)
 
     # make bird view plot
-    ax3 = plt.subplot2grid((2, 6), (1, 0), colspan=2)
+    ax3 = plt.subplot2grid((2, 8), (1, 0), colspan=3)
     ax3 = addContour2Plot(ax3, fieldsList[indT]['FT'], simiDict, fieldHeader, limits)
     ax3.set_title(pU.cfgPlotUtils['nameFT'] + ' contours')
     pU.putAvaNameOnPlot(ax3, avalancheDir)
 
     # make error plot
-    ax4 = plt.subplot2grid((2, 6), (1, 2), colspan=2)
+    ax4 = plt.subplot2grid((2, 8), (1, 3), colspan=3)
     title = '\n between analytical solution and com1DFA'
     title = getTitleError(relativ, title)
     ax4.set_title(title)
     ax4, ax5 = addErrorTime(ax4, timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
                             relativ, tSave)
 
-    ax7 = plt.subplot2grid((2, 6), (1, 4), colspan=2)
+    ax7 = plt.subplot2grid((2, 8), (1, 6), colspan=2)
     ax7.axis("off")
     ax7.invert_yaxis()
     text = ''
@@ -408,7 +407,7 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
     # setup index for time of analyitcal solution
     indTime = np.searchsorted(solDam['tAna'], tSave)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*2, pU.figH*1))
     ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFT, dataAnaFT, solDam['xAna'], solDam['xMidAna'],
                                        solDam['hAna'], indTime, limits['maxFT'],  pU.cfgPlotUtils['nameFT'],
                                        pU.cfgPlotUtils['unitFT'])
@@ -490,11 +489,11 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
 
     """
     # Initialise DEM
-    demFile = gI.getDEMPath(avalancheDir)
-    demOri = IOf.readRaster(demFile, noDataToNan=True)
-    dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, cfg['GENERAL'].getint('methodMeshNormal'))
-    dem['header']['xllcenter'] = dem['originalHeader']['xllcenter']
-    dem['header']['yllcenter'] = dem['originalHeader']['yllcenter']
+    # demFile = gI.getDEMPath(avalancheDir)
+    # demOri = IOf.readRaster(demFile, noDataToNan=True)
+    # dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, cfg['GENERAL'].getint('methodMeshNormal'))
+    # dem['header']['xllcenter'] = dem['originalHeader']['xllcenter']
+    # dem['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
     cfgDam = cfg['DAMBREAK']
     phi = cfgDam.getfloat('phi')
@@ -548,7 +547,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     limits = getPlotLimits(cfgDam, fieldsList[:indT], fieldHeader)
 
     # create figures and plots
-    fig = plt.figure(figsize=(pU.figW*4, pU.figH*2))
+    fig = plt.figure(figsize=(pU.figW*2.5, pU.figH*1.5))
     fig.suptitle('DamBreak test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
     # make flow thickness comparison plot
     ax1 = plt.subplot2grid((2, 6), (0, 0), colspan=2)
@@ -577,7 +576,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax6 = plt.subplot2grid((2, 6), (1, 0), colspan=2)
     ax6, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax6, fieldHeader, dataFT, 'FT')
     cbar0.ax.set_ylabel(pU.cfgPlotUtils['nameFT'])
-    ax6 = outCom1DFA.addDem2Plot(ax6, dem, what='slope', extent=extent)
+    # ax6 = outCom1DFA.addDem2Plot(ax6, dem, what='slope', extent=extent)
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(dataFT, fieldHeader['cellsize'],
                                                                  extentOption=True, constrainedData=False, buffer='')
     # draw rectangle corresponding to the error measurement domain
@@ -733,7 +732,7 @@ def addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=9):
     # ax3.clabel(CS, inline=1, fontsize=8)
     h1,_ = cs1.legend_elements()
     h2,_ = cs2.legend_elements()
-    ax1.legend([h1[-1], h2[-1]], ['simulation', 'analytical'])
+    ax1.legend([h1[-1], h2[-1]], ['simulation', 'analytical'], loc='upper left')
     ax1.set_ylim([-widthY, widthY])
     ax1.set_xlim([-widthX+xCenter, widthX+xCenter])
     ax1.set_xlabel('x [m]')
@@ -741,7 +740,7 @@ def addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=9):
     # add vertical and horizontal line showing the location of the profile plots cuts
     ax1.axvline(xCenter, color='b', linestyle=':')
     ax1.axhline(0, color='r', linestyle=':')
-    ax1.text(xCenter+5, -widthY, "x = %.2f m" % (xCenter), color='b')
+    ax1.text(xCenter+5, widthY, "x = %.2f m" % (xCenter), color='b', verticalalignment='top')
     ax1.text(-widthX+xCenter, 5, "y = 0 m", color='r')
 
     return ax1
@@ -774,11 +773,12 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
     fit: boolean
         if True add power law regression
     """
+    paramConvInfo = cfgSimi['paramConvInfo'].split('|')
     tSave = simDF['timeError'][0]
     relativ = cfgSimi.getboolean('relativError')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]),
                                            continuous=pU.contCmap)
-    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(3*pU.figW, 2*pU.figH))
+    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(2*pU.figW, pU.figH))
     # get the sizing function
     sizeList = simDF[sizedBy].unique()
     lenSize = len(sizeList)
@@ -808,20 +808,25 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
             ax1.plot(xArray, p0H*xArray**p1H, color=color)
             if np.size(rSquaredH) == 0:
                 rSquaredH = np.nan
-            log.debug('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' %
-                     (colorValue, p0H, p1H, rSquaredH))
+            log.debug('power law fit sphKernelRadius = %.2f m: %s = %.1f * Npart^{%.2f}, r=%.2f' %
+                     (colorValue, yField, p0H, p1H, rSquaredH))
 
     if logScale:
         ax1.set_yscale('log')
         ax1.set_xscale('log')
 
     fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
-    ax1.set_title(getTitleError(relativ, r' L2 on flow thickness'))
+    if yField == 'vhErrorL2':
+        what = getLabel(' on flow momentum ', '', dir='', vert=True)
+    else:
+        what = r' on flow thickness $h$'
+    ax1.set_title(getTitleError(relativ, what))
     ax1.set_xlabel(xField)
-    ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
+    ax1.set_ylabel(getTitleError(relativ, what))
     if lenColor<=10:
         lenColor = None
-    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
+    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), bbox_to_anchor=(1, 0.95), loc="upper right",
+                         title=coloredBy)
     ax1.add_artist(legend1)
 
     # produce a legend with a cross section of sizes from the scatter
@@ -829,9 +834,16 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
         lenSize = None
     kw = dict(prop="sizes", color=scatter1.cmap(0.7),
           func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
-    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
-    ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
-    ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
+    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), bbox_to_anchor=(0.8, 0.95), loc="upper right",
+                         title=sizedBy)
+    ax1.grid(color='grey', linestyle='-', linewidth=0.5, alpha=0.75)
+    ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.5, alpha=0.5)
+
+    text = ''
+    for param in paramConvInfo:
+        text = text + (param + ' = %.2f' % simDF[param][0]) + '\n'
+    ax1.text(0.1, 0.1, text, transform=ax1.transAxes, ha='left', va='bottom', fontsize=pU.fs)
+
     pU.saveAndOrPlot({'pathResult': outDirTest}, 'ErrorLog%ds' % int(tSave), fig1)
     return fig1, ax1
 
@@ -909,9 +921,9 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
         scatter1 = ax1.scatter(simDFNew[xField], simDFNew[yField], c=simDFNew[coloredBy], s=sizeList,
                                cmap=cmap, norm=norm, marker=pU.markers[0], alpha=1)
         fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
-        ax1.set_title(getTitleError(relativ, r' L2 on flow thickness'))
+        ax1.set_title(getTitleError(relativ, r' on flow thickness'))
         ax1.set_xlabel(xField)
-        ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
+        ax1.set_ylabel(getTitleError(relativ, r' on flow thickness'))
         legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
         ax1.add_artist(legend1)
 
@@ -1088,9 +1100,9 @@ def getPlotLimits(cfgSimi, fieldsList, fieldHeader):
 def getTitleError(relativ, ending=''):
     """Get error plot title (relativ error or not?)"""
     if relativ:
-        return 'Relative error difference' + ending
+        return 'Relative L2 deviation' + ending
     else:
-        return 'Error difference' + ending
+        return 'L2 deviation' + ending
 
 
 def getLabel(start, end, dir='', vert=True):
