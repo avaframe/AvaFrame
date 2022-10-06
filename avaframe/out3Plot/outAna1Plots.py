@@ -815,12 +815,12 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
         ax1.set_yscale('log')
         ax1.set_xscale('log')
 
-    fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
+    fig1.suptitle('Convergence of DFA simulation at t = %.2fs' % tSave)
     if yField == 'vhErrorL2':
-        what = getLabel(' on flow momentum ', '', dir='', vert=True)
+        what = getLabel(' on ', '', dir='', vert=True)
     else:
         what = r' on flow thickness $h$'
-    ax1.set_title(getTitleError(relativ, what))
+    # ax1.set_title(getTitleError(relativ, what))
     ax1.set_xlabel(xField)
     ax1.set_ylabel(getTitleError(relativ, what))
     if lenColor<=10:
@@ -842,7 +842,7 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
     text = ''
     for param in paramConvInfo:
         text = text + (param + ' = %.2f' % simDF[param][0]) + '\n'
-    ax1.text(0.1, 0.1, text, transform=ax1.transAxes, ha='left', va='bottom', fontsize=pU.fs)
+    ax1.text(0.05, 0.05, text, transform=ax1.transAxes, ha='left', va='bottom', fontsize=pU.fs)
 
     pU.saveAndOrPlot({'pathResult': outDirTest}, 'ErrorLog%ds' % int(tSave), fig1)
     return fig1, ax1

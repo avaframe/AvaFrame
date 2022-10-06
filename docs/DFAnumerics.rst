@@ -15,8 +15,8 @@ thickness is tracked using the mesh. The mesh is also used to access topographic
 Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
 equations as well as basal normal stress :eq:`sigmab` are computed numerically using a SPH method
 (**S**\ moothed **P**\ article **H**\ ydrodynamics) (:cite:`Mo1992`) for the variables
-:math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
-:math:`\overline{h}` by discretization of the released avalanche volume
+:math:`\overline{\mathbf{u}}` and
+:math:`h` by discretization of the released avalanche volume
 in a large number of mass elements. SPH in general, is a mesh-less
 numerical method for solving partial differential equations. The SPH
 algorithm discretizes the numerical problem within a domain using
@@ -35,9 +35,9 @@ Discretization
 Space discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The domain is discretized in particles. The following properties are assigned to each particle :math:`p_k`:
-a mass :math:`m_{p_k}`, a thickness :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
-a velocity :math:`\mathbf{{u}}_{p_k}=({u}_{p_k,1}, {u}_{p_k,2})` (**those
+The domain is discretized in particles. The following properties are assigned to each particle :math:`k`:
+a mass :math:`m_{k}`, a thickness :math:`{h}_{k}`, a density :math:`\rho_{k}=\rho_0` and
+a velocity :math:`\mathbf{{u}}_{k}` (**those
 quantities are thickness averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
 In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
 whereas  :math:`k` and :math:`l` indexes refer to particles.
@@ -49,8 +49,7 @@ from particle property to mesh property using the interpolation methods describe
 Time step
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A fixed time step can be used or an adaptive time step can be computed using a
-Courant-Friedrich-Lewy condition.
+A fixed time step can be used or an adaptive time step can be computed based on the grid cell size.
 
 
 Mesh and interpolation
@@ -274,8 +273,8 @@ In the case of thickness integrated equations (for example SWE), a scalar functi
 Which gives for the flow thickness:
 
 .. math::
-    \overline{h}_{k} &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
-    \mathbf{\nabla}\overline{h}_{k} &= -\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\mathbf{\nabla}W_{kl}
+    h_{k} &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
+    \mathbf{\nabla}h_{k} &= -\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\mathbf{\nabla}W_{kl}
     :label: sph formulation for fd
 
 Where :math:`W` represents the SPH-Kernel function.
@@ -517,7 +516,7 @@ take this phenomena into account. The following viscosity force is added:
 
 .. math::
     \begin{aligned}
-    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
+    \mathbf{F}^\text{viscosity} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
     \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
     = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
     \end{aligned}
@@ -536,7 +535,7 @@ The viscous force acting on particle :math:`k` reads:
 
 .. math::
   \begin{aligned}
-  \mathbf{F_k^{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
+  \mathbf{F}_k^\text{viscosity} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
   \mathbf{du}_k^{new}\\
   = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}_k^{old}\| A_{Lat}
   (\mathbf{u}_k^{new} - \mathbf{\bar{u}}_k^{old})
@@ -567,7 +566,7 @@ which is formally the same as adding a viscous force. Implementing it for the SP
 this viscous force applied on a given particle :math:`k` can be expressed as follows:
 
 .. math::
-  \mathbf{F_k^{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
+  \mathbf{F}_k^\text{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
 
 with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
 \frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
@@ -595,39 +594,13 @@ Lateral force
 ~~~~~~~~~~~~~~
 
 The SPH method is introduced when expressing the flow thickness gradient for each
-particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in :math:`p_k` is dropped
-(same applies for :math:`p_l`).
-
-The lateral pressure forces on each particle are calculated from the compression
-forces on the boundary of the particle.
-The boundary is approximated as a square with the base side length
-:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to
-(subscript :math:`|_{.,i}` stands for the component in the :math:`i^{th}`
-direction, :math:`i = {1,2}`):
-
-.. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\oint\limits_{\partial{A_{k}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
-
-From equation :eq:`momentum-balance6`
-
-.. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}-
-    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}+\frac{\Delta{s}}{2}}\right)
-    = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{k}
-
-The product of the average flow thickness :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
-reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
-
-.. math::
-   \overline{h}\,\overline{\sigma}^{(b)} = \overline{h}^2\,\rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)
-   \approx \overline{h}^2\,\rho_0\,g_3
-
+particle as a weighted sum of its neighbors (:cite:`LiLi2010,Sa2007`).
 Which leads to, using the relation :eq:`sph formulation`:
 
 .. math::
-    F_{k,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,A_{k}\,\overline{h}_{k}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{k}
-    = -K_{(i)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\left.\frac{d\,W_{kl}}{d\,x_i}\right\rvert_{l}
+    \mathbf{F}_{k}^{\text{lat}} =
+    - \rho_0 \, g^\text{eff} \, h A^b \boldsymbol{\nabla}_{\!s} h
+    = -m_{k}\,g^\text{eff}\,.\,\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\left.\boldsymbol{\nabla}_{\!s}W_{kl}\right\rvert_{l}
     :label: lateral force
 
 
@@ -638,20 +611,20 @@ The bottom friction forces on each particle depend on the chose friction model. 
 reads:
 
 .. math::
-    F_{k,i}^{\text{bot}} = -\frac{\overline{u}_{k,i}}{\|\mathbf{u}_k\|}\,A_{k}\,\tau^{(b)}_{k}
-    = -\delta_{k1}\,A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{k}
-     + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
+    \mathbf{F}_{k}^{\text{bot}} = A_{k}\,\boldsymbol{\tau}_{k}^b
+    = -A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\boldsymbol{\sigma}_{k}^b\cdot\mathbf{n^b}
+     + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right)\mathbf{v}_1
     :label: bottom force
 
 
 Added resistance force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
-is a function of the average flow thickness :math:`\overline{h}_{k}`):
+is a function of the average flow thickness :math:`h_{k}`):
 
 .. math::
-    F_{k,i}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
+    \mathbf{F}_{k}^{\text{res}}
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\overline{\mathbf{u}}_{k}^2\,\mathbf{v}_1
     :label: resistance force
 
 Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
@@ -660,11 +633,11 @@ equals the driving forces. See :cite:`MaVi2003` for more information.
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The term :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
+The term :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,h)}{\mathrm{d}t}`
 related to the entrained mass in :eq:`momentum-balance3` now reads:
 
 .. math::
-    - \overline{u}_{k,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
+    - \overline{u}_{k,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
     = - \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
 
 
@@ -672,7 +645,7 @@ The mass of entrained snow for each particle depends on the type of entrainment 
 (plowing or erosion) and reads:
 
 .. math::
-    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
     = \frac{\mathrm{d}\,m_{k}}{\mathrm{d}t}
     = A_{k}^\text{ent}\,q_{k}^{\text{ent}}
 
@@ -680,10 +653,10 @@ with
 
 .. math::
     \begin{aligned}
-    A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,\overline{h}_{k}}}\,h_{k}^{\text{ent}}
+    A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,h_{k}}}\,h_{k}^{\text{ent}}
     \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for plowing}\\
-    A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,\overline{h}_{k}}
+    A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,h_{k}}
     \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for erosion}\end{aligned}
 

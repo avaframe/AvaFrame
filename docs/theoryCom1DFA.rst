@@ -10,13 +10,14 @@ Governing Equations for the Dense Flow Avalanche
 
 The governing equations of the dense flow avalanche are derived from the
 incompressible mass and momentum balance on a Lagrange control volume (:cite:`Zw2000,ZwKlSa2003`).
+The detailed derivation can be found in the AvaFrame paper.
 
 Mass balance:
 ~~~~~~~~~~~~~~~
 
 .. math::
-    \frac{d}{dt} \int\limits_{V(t)} \rho_0 \,\mathrm{d}V = \rho_0 \frac{dV(t)}{dt} =
-    \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A
+    \frac{\mathrm{d}}{\mathrm{d}t}\underbrace{\int\limits_{V(t)} \rho_0 \,\mathrm{d}V}_{m(t)} = \rho_0 \frac{\mathrm{d}V(t)}{\mathrm{d}t} =
+    \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,
     :label: mass-balance1
 
 Where :math:`q^{\text{ent}}` represents the snow entrainment rate.
@@ -25,43 +26,23 @@ Momentum balance:
 ~~~~~~~~~~~~~~~~~~~
 
 .. math::
-    \rho_0 \frac{d}{dt} \int\limits_{V(t)} u_i \,\mathrm{d}V = \oint\limits_{\partial V(t)}
-    \sigma^{\text{tot}}_{ij}n_j \,\mathrm{d}A + \rho_0 \int\limits_{V(t)} g_i \,\mathrm{d}V, \quad i=(1,2,3)
+    \frac{\mathrm{d}}{\mathrm{d}t}\int\limits_{V(t)} \rho_0 \, \mathbf{u}\,\mathrm{d}V = \underbrace{\oint\limits_{\partial V(t)}
+    \boldsymbol{\sigma}\cdot\mathbf{n}\,\mathrm{d}A}_{\text{surface forces}}
+    + \underbrace{\int\limits_{V(t)} \rho_0 \, \mathbf{g}\,\mathrm{d}V}_{\text{body force}} +
+    \, \mathbf{F}^\text{ent} + \mathbf{F}^\text{res},
     :label: momentum-balance1
 
 
-We introduce the volume average of a quantity :math:`P(\mathbf{x},t)`:
-
-.. math::
-    \overline{P}(\mathbf{x},t) =  \frac{1}{V(t)} \int\limits_{V(t)} P(\mathbf{x},t) \,\mathrm{d}V
-..    :label: volume-average
-
-and split the area integral into :
-
-.. math::
-   \oint\limits_{\partial V(t)} \sigma^{\text{tot}}_{ij}n_j \,\mathrm{d}A =
-   \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,\mathrm{d}A + F_i^{\text{ent}} + F_i^{\text{res}}, \quad i=(1,2,3)
-..   :label: area-integral
-
-:math:`F_i^{\text{ent}}` represents the force required to break the
+where :math:`\mathbf{u}` is the fluid velocity and :math:`\mathbf{g}` the gravity acceleration.
+:math:`\boldsymbol{\sigma} = -pI+\boldsymbol{\mathrm{T}}` represents the
+stress tensor, where :math:`I` is the identity tensor, :math:`p` the pressure
+and :math:`\boldsymbol{\mathrm{T}}` the deviatoric part of the stress tensor.
+:math:`\mathbf{n}` is the normal vector to math:`\partial V(t)`. :math:`\mathbf{F}^{\text{ent}}` represents the force required to break the
 entrained snow from the ground and to compress it (since the dense-flow
 bulk density is usually larger than the density of the entrained snow,
-i.e. :math:`\rho_{\text{ent}}<\rho`) and :math:`F_i^{\text{res}}`
+i.e. :math:`\rho_{\text{ent}}<\rho`) and :math:`\mathbf{F}^{\text{res}}`
 represents the resistance force due to obstacles (for example trees).
-This leads to in :eq:`momentum-balance1`:
 
-.. math::
-   \rho_0 \frac{dV(t) \overline{u}_i}{dt} = \rho_0 V \frac{d\overline{u}_i}{dt} +
-   \rho_0 \overline{u}_i \frac{dV}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j
-   \,\mathrm{d}A + \rho_0 V g_i + F_i^{\text{ent}} + F_i^{\text{res}}, \quad i=(1,2,3)
-..   :label: momentum-balance2
-
-Using the mass balance equation :eq:`mass-balance1`, we get:
-
-.. math::
-   \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,\mathrm{d}A
-   + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
-   :label: momentum-balance3
 
 Boundary conditions:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,27 +55,36 @@ The bottom surface is defined by :
 
     .. math:: F_b(\mathbf{x}) = z-b(x,y)=0
 
-The boundary conditions at the free surface and bottom of the flow read:
+The boundary conditions at the bottom (:math:`\mathcal{S}_b`) and free (:math:`\mathcal{S}_{fs}`) surfaces are introduced.
+:math:`\boldsymbol{\sigma^s} = \boldsymbol{\sigma}\cdot\mathbf{n^s}`, respectively :math:`\boldsymbol{\sigma^b} = \boldsymbol{\sigma}\cdot\mathbf{n^b}`, represent the restriction of :math:`\boldsymbol{\sigma}`
+to the free surface :math:`\mathcal{S}_{fs}`, respectively the bottom surface :math:`\mathcal{S}_b`:
 
-.. math::
-   \left\{\begin{aligned}
-   &\frac{dF_s}{dt} = \frac{\partial F_s}{\partial t} +  u_i\frac{\partial F_s}{\partial x_i} =0 \quad & \mbox{at  }F_s(\mathbf{x},t) =0 \quad & \mbox{Kinematic BC (Material boundary)}\\
-   &\sigma_{ij}n_j = 0 \quad & \mbox{at  }F_s(\mathbf{x},t) =0 \quad & \mbox{Dynamic BC (Traction free surface)}\\
-   &u_in_i = 0 \quad & \mbox{at  }F_b(\mathbf{x},t) =0 \quad & \mbox{Kinematic BC (No detachment)}\\
-   &\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})\quad & \mbox{at  }F_b(\mathbf{x},t) =0\quad & \mbox{Dynamic BC (Chosen friction law)}
-   \end{aligned}
-   \right.
-   :label: boundary-conditions
+- traction free free-surface: :math:`\boldsymbol{\sigma_s}\cdot\mathbf{n_s} = \mathbf{0}` on :math:`\mathcal{S}_{fs}`
 
-:math:`\sigma^{(b)}_i = (\sigma_{kl}n_ln_k)n_i` represents the normal stress at the bottom and
-:math:`\tau^{(b)}_i = \sigma_{ij}n_j - \sigma^{(b)}_i` represents the shear stress at the bottom surface.
-:math:`f` describes the chosen friction model and are described in :ref:`theoryCom1DFA:Friction Model`.
-The normals at the free surface (:math:`n_i^{(s)}`) and bottom surface (:math:`n_i^{(b)}`) are:
+- impenetrable bottom surface without detachment, :math:`\mathbf{u^b}\cdot\mathbf{n^b} = \mathbf{0}` on :math:`\mathcal{S}_{b}`
 
-.. math::
-   n_i^{(s,b)} = \frac{\partial F_{s,b}}{\partial x_i}\left(\frac{\partial F_{s,b}}{\partial x_j}
-   \frac{\partial F_{s,b}}{\partial x_j}\right)^{-1/2}
-..   :label: surface-normals
+- bottom friction law: :math:`\boldsymbol{\tau^b} = \boldsymbol{\sigma^b}\cdot\mathbf{n^b}-
+    ((\boldsymbol{\sigma^b}\cdot\mathbf{n^b})\cdot\mathbf{n^b})\mathbf{n^b}
+    =\mathbf{f}(\boldsymbol{\sigma^b},\,\overline{\mathbf{u}},\,h,\,\rho_0,\,t,\,\mathbf{x})
+    = -f(\boldsymbol{\sigma^b},\,\overline{\mathbf{u}},\,h,\,\rho_0,t,\,\mathbf{x})
+    \mathbf{v}_1` on :math:`\mathcal{S}_{b}`
+
+Hypothesis
+~~~~~~~~~~~
+
+We consider in the following a shallow flow on moderately curved surfaces. This means
+that the aspect ratio, :math:`\qquad\qquad\varepsilon = H / L`, of the characteristic length L
+of the avalanche over its characteristic thickness H stays small.
+
+.. _fig-characteristic_size:
+
+.. figure:: _static/characteristic_size.png
+        :width: 90%
+
+        Characteristic size of the avalanche along its path (from :cite:`Zw2000`, modified)
+
+
+
 
 Choice of the coordinate system:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,25 +100,28 @@ and :math:`\mathbf{v_3}` with the normal to the slope, i.e.:
    \quad \mathbf{v_3} = \mathbf{n^{(b)}}
 ..   :label: natural-coordinate-system
 
-The origin :math:`B` of the NCS is attached to the slope. This choice
-leads to:
-
-.. math::
-   n^{(b)}_i = \delta_{i3}, \quad \left.\frac{\partial b}{\partial x_i}\right\rvert_{\mathbf{0}} = 0\quad
-   \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
-..   :label: NCS-consequence
-
 Thickness averaged equations:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In this NCS and considering a prism-like Control volume, the volume
-content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
-of the basal area of the prism, :math:`A_b`, with the averaged value of
-the flow thickness,
+
+We introduce the following average of a quantity:
 
 .. math::
-    \overline{h} = \frac{1}{A_b(t)}\int\limits_{A_b(t)} [s(\mathbf{x})-b(\mathbf{x})]\,\mathrm{d}A = \frac{1}{A_b(t)}\int\limits_{A_b(t)} h(\mathbf{x})\,\mathrm{d}A,\qquad
-    \overline{u}_i = \frac{1}{V(t)}\int\limits_{V(t)} u_i(\mathbf{x})\,\mathrm{d}V
-    :label: hmean-umean
+    \begin{aligned}
+    \widetilde{f} &= \frac{1}{V(t)}\int\limits_{V(t)} f\,\mathrm{d}V\\
+    \widehat{f} &= \frac{1}{A^b(t)}\int\limits_{\mathcal{S}_b} f\,\mathrm{d}A\\
+    \overline{f} &= \frac{1}{h(t)}\int\limits_{0}^{h(t)} f\,\mathrm{d}x_3
+    \end{aligned}
+    \quad\quad \text{and} \quad \quad
+    \begin{aligned}
+    \widetilde {f}(x_3) &
+    \approx \frac{1}{A^b(\widehat{h}-x_3)}\int\limits_{\mathcal{S}_b}
+    \left(\int\limits_{x_3}^{h(t)} f\,\mathrm{d}x_3\right)\,\mathrm{d}A \\
+    \overline{f}(x_3) &= \frac{1}{(h-x_3)}\int\limits_{x_3}^{h(t)} f\,\mathrm{d}x_3.
+    \end{aligned}
+
+In this NCS and considering a prism-like Control volume, the volume
+content :math:`V(t) = A_b(t)h` is obtained by multiplication
+of the basal area of the prism, :math:`A_b`.
 
 
 .. _small-lagrange:
@@ -139,7 +132,7 @@ the flow thickness,
         Small Lagrangian prism-like Control volume
 
 Entrainment:
-"""""""""""""
+~~~~~~~~~~~~
 
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
 at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed as a function of the
@@ -156,46 +149,46 @@ the avalanche:
 
 The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed as a function of the
 bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
-the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`:
+the bottom shear stress :math:`\boldsymbol{\tau^b}` and the specific erosion energy :math:`e_b`:
 
 .. math::
     \oint\limits_{\partial V(t)} q^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q^{\text{ero}}\,
-    \mathrm{d}A = A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    \mathrm{d}A = A_b\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
     :label: erosion
 
 
 This leads in the mass balance :eq:`mass-balance1` to :
 
 .. math::
-   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_b\overline{h})}{\mathrm{d}t}
+   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_bh)}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert +
-   \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance2
 
-The force :math:`F_i^{\text{ent}}` required to break the entrained snow
+The force :math:`\mathbf{F}^{\text{ent}}` required to break the entrained snow
 from the ground and to compress it is expressed as a function of the required
 breaking energy per fracture surface unit :math:`e_s`
 (:math:`J.m^{-2}`), the deformation energy per entrained mass element
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow thickness
 (:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
 
-.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)
+.. math::
+    \mathbf{F}^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)\mathbf{v}_1
 
 
 Resistance:
-"""""""""""""
+~~~~~~~~~~~
 
-The force :math:`F_i^{\text{res}}` due to obstacles is expressed
+The force :math:`\mathbf{F}^{\text{res}}` due to obstacles is expressed
 as a function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
 coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
-is defined as :math:`\min(\overline{h}, h_{res} )`:
+is defined as :math:`\min(h, h_{res} )`:
 
 .. math::
-   F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
-    h^{\text{eff}}\,\overline{u}^2\,
-    \frac{\overline{u}_i}{\|\overline{u}\|}
+   \mathbf{F}^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
+    h^{\text{eff}}\,\overline{u}^2\,\mathbf{v}_1
 
 
 .. _f-res:
@@ -208,194 +201,88 @@ is defined as :math:`\min(\overline{h}, h_{res} )`:
 
 
 Surface integral forces:
-"""""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The surface integral is split in three terms, an integral over
-:math:`A_b` the bottom :math:`x_3 = b(x_1,x_2)`, :math:`A_s` the top
-:math:`x_3 = s(x_1,x_2,t)` and :math:`A_h` the lateral surface.
+:math:`\mathcal{S}_b` the bottom :math:`x_3 = b(x_1,x_2)`, :math:`\mathcal{S}_{fs}` the top
+:math:`x_3 = s(x_1,x_2,t)` and :math:`\mathcal{S}_\text{lat}` the lateral surface.
 Introducing the boundary conditions :eq:`boundary-conditions` leads to:
 
 .. math::
-   \begin{aligned}
-   \oint\limits_{\partial{V(t)}}\sigma_{ij}n_j\,\mathrm{d}A & =
-   \int\limits_{A_b}\underbrace{\sigma_{ij}\,n_j^{(b)}}_{-\sigma_{i3}}\,\mathrm{d}A +  \int\limits_{A_s}\underbrace{\sigma_{ij}\,n_j^{(s)}}_{0}\,\mathrm{d}A + \int\limits_{A_h}\sigma_{ij}\,n_j\,\mathrm{d}A\\
-   &= -A_b\overline{\sigma}_{i3}^{(b)} + \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,\mathrm{d}x_3\right)\,\mathrm{d}l
-   \end{aligned}
+   \oint\limits_{\partial{V(t)}} \boldsymbol{\sigma}\cdot\mathbf{n}\mathrm{d}A
+		= \int\limits_{\mathcal{S}_b} \boldsymbol{\sigma^b}\cdot\mathbf{n^b}\mathrm{d}A
+		+ \cancelto{\mathbf{0}}{\int\limits_{\mathcal{S}_{fs}}
+		\boldsymbol{\sigma_s}\cdot\mathbf{n_s}\mathrm{d}A}
+		+	\int\limits_{\mathcal{S}_{lat}} \boldsymbol{\sigma}\cdot\mathbf{n}\mathrm{d}A
+		= \underbrace{\int\limits_{\mathcal{S}_b}
+		\boldsymbol{\sigma^b}\cdot\mathbf{n^b}\mathrm{d}A}_{\text{bottom force}}
+		+	\underbrace{\oint\limits_{\partial\mathcal{S}_b}
+		\left(\int\limits_0^h\boldsymbol{\sigma}\cdot\mathbf{n}\,
+		\mathrm{d}x_3\right)\,\mathrm{d}l}_{\text{lateral force}}.
 ..   :label: surface forces
 
-Which simplifies the momentum balance :eq:`momentum-balance3` to:
 
-.. math::
-   \begin{aligned}
-   \rho_0 V \frac{d\overline{u}_i}{dt} = & \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,
-   \mathrm{d}x_3\right)\,\mathrm{d}l -A_b\overline{\sigma}_{i3}^{(b)} + \rho_0 V g_i  + F_i^{\text{ent}} +
-   F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,\\
-   &\quad i=(1,2,3)
-   \end{aligned}
-   :label: momentum-balance5
-
-The momentum balance in direction :math:`x_3` (normal to the slope) is
-used to obtain a relation for the vertical distribution of the stress
-tensor (:cite:`Sa2007`). Due to the choice of
-coordinate system and because of the kinematic boundary condition at the
-bottom, the left side of :eq:`momentum-balance5` can be
-expressed as a function of the velocity :math:`\overline{u}_1` in direction
-:math:`x_1` and the curvature of the terrain in this same direction
-:math:`\frac{\partial^2{b}}{\partial{x_1^2}}` (:cite:`Zw2000`):
-
-.. math::
-   \rho\,A_b\,\overline{h}\,\frac{\,\mathrm{d}\overline{u}_3}{\,\mathrm{d}t} =
-   \rho\,A_b\,\overline{h}\,\frac{\partial^2{b}}{\partial{x_1^2}}\,\overline{u}_1^2,
-
-rearranging the terms in the momentum equation leads to:
-
-.. math::
-  \overline{\sigma}_{33}(x_3) = \rho_0\,(s-x_3)\left(g_3-\frac{\partial^2{b}}{\partial{x_1^2}}\,\overline{u}_1^2\right)+ \frac{1}{A_b}
-  \oint\limits_{\partial A_b}\left(\int_{x_3}^s\sigma_{3j}\,n_j\,\mathrm{d}x_3\right)\,\mathrm{d}l
-  :label: sigma33
-
-Non-dimensional Equations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. _fig-characteristic_size:
-
-.. figure:: _static/characteristic_size.png
-        :width: 90%
-
-        Characteristic size of the avalanche along its path (from :cite:`Zw2000`, modified)
-
-The previous equations :eq:`momentum-balance5` and :eq:`sigma33` can be further simplified by
-introducing a scaling based on the characteristic values of the physical
-quantities describing the avalanche. The characteristic length L, the
-thickness H, the acceleration due to gravity g and the characteristic
-radius of curvature of the terrain R are the chosen quantities. From
-those values, it is possible to form two non dimensional parameters that
-describe the flow:
-
--  Aspect ratio: :math:`\qquad\qquad\varepsilon = H / L\qquad`
-
--  Curvature:  :math:`\qquad\lambda = L / R\qquad`
-
-The different properties involved are then expressed in terms of
-characteristic quantities :math:`L`, :math:`H`, :math:`g`, :math:`\rho_0` and :math:`R`
-(see :numref:`fig-characteristic_size`):
-
-.. math::
-   \begin{aligned}
-    x_i &= L\, x_i^*\\
-    (dx_3,h,\overline{h}) &= H\,(dx_3^*,h^*,\overline{h}^*)\\
-    A_b &= L^2\, A_b^*\\
-    t &= \sqrt{L/\text{g}}\, t^*\\
-    \overline{u_i} &= \sqrt{\text{g}L}\,\overline{u_i}^*\\
-    \text{g}_i &= \text{g} \, \text{g}_i^*\\
-    \frac{\partial^2{b}}{\partial{x_1}^2} &= \frac{1}{R}\,\frac{\partial^2{b^*}}{\partial{x_1}^{*2}}\end{aligned}
-
-The normal part of the stress tensor is directly related to the
-hydro-static pressure:
-
-.. math:: \sigma_{ii} = \rho_0\,\text{g}\,H\,\sigma_{ii}^*
-
-The dimensionless properties are indicated by a superscripted asterisk.
-Introducing those properties in :eq:`sigma33`, leads to
-:
-
-.. math::
-   \overline{\sigma^*}_{33} = \left(g^*_3-\lambda\frac{\partial^2{b^*}}{\partial{x_1^{*2}}}\,\overline{u}_1^{*2}\right)
-   (s^*-x^*_3) + \underbrace{\varepsilon\oint\limits_{\partial A_b^*}\left(\int\limits_{x^*_3}^{s^*}\sigma^*_{31}\,\mathrm{d}x^*_3\right)\,\mathrm{d}l^*}_{O(\varepsilon)}.
-   :label: sigma33star
-
-The height, H of dense flow avalanches is assumed to be small compared
-to its length, L. Meaning that the equations are examined in the limit
-:math:`\varepsilon \ll 1`. It is then possible to neglect the last term
-in :eq:`sigma33star` which leads to (after reinserting
-the dimensions):
-
-.. math::
-    \overline{\sigma}_{33}(x_3) = \rho_0\,\underbrace{\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)}_{g_\text{eff}}
-    \left[\overline{h}-x_3\right]
-    :label: sigma33dim
-
-And at the bottom of the avalanche, with :math:`x_3 = 0`, the normal
-stress can be expressed as:
-
-.. math::
-     \overline{\sigma}^{(b)}_{33} = \rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)\,\overline{h}
-     :label: sigmab
-
-Calculating the surface integral in equation :eq:`momentum-balance5` requires to
-express the other components of the stress tensor. Here again a
-magnitude consideration between the shear stresses :math:`\sigma_{12} = \sigma_{21}` and :math:`\sigma_{13}`.
-The shear stresses are based on a generalized Newtonian law of materials,
-which controls the influence of normal stress and the rate of deformation through the viscosity.
-
-.. math::
-    \tau_{ij} = \eta\left(\frac{\partial{u_i}}{\partial{x_j}}+\frac{\partial{u_j}}{\partial{x_i}}\right), ~ i\neq j
-
-Because :math:`\partial x_1` and :math:`\partial x_2` are of the order of :math:`L`, whereas :math:`\partial x_3`
-is of the order of :math:`H`, it follows that:
-
-.. math::
-    O\left(\frac{\sigma_{12}}{\sigma_{13}}\right) = \frac{H}{L} = \varepsilon \ll 1
-
-and thus :math:`\sigma_{12} = \sigma_{21}` is negligible compared to :math:`\sigma_{13}`.
-:math:`\sigma_{13}` is expressed using the bottom friction law
-:math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`
-introduced in :eq:`boundary-conditions`.
-
-
-In addition, a relation linking the horizontal normal stresses,
-:math:`\sigma_{ii}`, :math:`i = (1,2)`, to the vertical pressure distribution given
-by :eq:`sigmab` is introduced. In complete analogy to the arguments used by
-Savage and Hutter (:cite:`SaHu1989`) the horizontal normal stresses are given as:
-
-.. math::
-    \sigma_{ii} = K_{(i)}\,\sigma_{33}
-
-Where :math:`K_{(i)}` are the earth pressure coefficients (cf. :cite:`ZwKlSa2003,Sa2004`):
-
-.. math::
-    \sigma_{11} &= K_{x~akt/pass}\,\sigma_{33}\\
-    \sigma_{22} &= K_{y~akt/pass}^{(x~akt/pass)}\,\sigma_{33}
-
-With the above specifications, the integral of the stresses over the
-flow height is simplified in equation :eq:`momentum-balance5` to:
-
-.. math::
-   \int\limits_b^s\sigma_{ij}\,\mathrm{d}x_3 = \int\limits_b^s K_{(i)}\,\sigma_{33}\,\mathrm{d}x_3 =
-    K_{(i)}\,\frac{\overline{h}\,\sigma^{(b)}}{2}
-
-and the momentum balance can be written:
-
-.. math::
-    \begin{aligned}
-    \rho_0\,A\,\overline{h}\,\frac{\,\mathrm{d}\overline{u}_i}{\,\mathrm{d}t} =
-    &\rho_0\,A\,\overline{h}\,g_i + \underbrace{K_{(i)}\,\oint\limits_{\partial{A}}\left(\frac{\overline{h}\,\sigma^{(b)}}{2}\right)n_i\,\mathrm{d}l}_{F_i^{\text{lat}}}
-    \underbrace{-\delta_{i1}\,A\,\tau^{(b)}}_{F_i^{\text{bot}}}
-    \underbrace{- \rho_0\,A\,h_{\text{eff}}\,C_{\text{res}}\,\overline{\mathbf{u}}^2\,\frac{\overline{u_i}}{\|\overline{\mathbf{u}}\|}}_{F_i^{\text{res}}}\\
-    &- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}\left(A\,\overline{h}\right)}{\mathrm{d}t}
-    + F_i^{\text{ent}}
-    \end{aligned}
-    :label: momentum-balance6
-
-with
-
-.. math:: C_{\text{res}} = \frac{1}{2}\,\overline{d}\,\frac{c_w}{s_{\text{res}}^2}.
+Mass conservation equation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The mass balance :eq:`mass-balance2`
 remains unchanged:
 
 .. math::
-   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_b\overline{h}\right)}{\mathrm{d}t}
-   = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-   + \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-   :label: mass-balance3
+  \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_bh\right)}{\mathrm{d}t}
+  = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+  + \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+  :label: mass-balance3
 
-The unknown :math:`\overline{u}_1`, :math:`\overline{u}_2` and
-:math:`\overline{h}` satisfy :eq:`sigmab`,
+
+Pressure distribution, thickness integrated pressure and pressure gradient
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Exploiting the normal component of the momentum equation enables to express the pressure and its gradient:
+
+.. math::
+   p^b = p(x_3=0) = \rho_0 h\left(g_{\mathbf{N^b}}
+	 + \overline{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{N^b}}
+   {\mathrm{d}t}\right) = \rho_0 h \, g^\text{eff}
+
+and
+
+.. math::
+   h\overline{p} = \int\limits_0^h p(x_3)\,\mathrm{d}x_3
+	 = -\rho_0 \frac{h^2}{2}\left(g_{\mathbf{N^b}}
+	 + \overline{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{N^b}}
+   {\mathrm{d}t}\right) = -\rho_0 \frac{h^2}{2} \, g^\text{eff}
+
+and
+
+.. math::
+	\label{eq-pressure-gradient}
+	 \boldsymbol{\nabla} h\overline{p} = -\rho_0 \, g^\text{eff} \, h \boldsymbol{\nabla} h
+
+Tangential momentum conservation equation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using the pressure distribution equation and the mass conservation equation, the tangential momentum equations
+reads:
+
+.. math::
+    \rho_0 V \frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t} =
+    - A^bp\mathbf{n^b}
+    + A^b\boldsymbol{\tau^b}
+    - \rho_0 \, g^\text{eff} \, h A^b \boldsymbol{\nabla}_{\!s} h
+    + \rho_0 V \mathbf{g}_s
+    + \mathbf{F}^{\text{ent}}
+    - \mathbf{F}^{\text{res}}
+    - \underbrace{\overline{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}\left(A^b\,h\right)}{\mathrm{d}t}}_{\text{from the mass balance}}
+    - \underbrace{\rho_0 V \left( \overline{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{v}_3}{\mathrm{d}t} \right)\mathbf{v}_3}_{\text{curvature acceleration}}
+    :label: momentum-balance6
+
+
+The unknown :math:`\overline{\mathbf{u}}` and :math:`h` satisfy :eq:`sigmab`,
 :eq:`momentum-balance6` and
 :eq:`mass-balance3`. In equation
 :eq:`momentum-balance6` the bottom shear
-stress :math:`\tau^{(b)}` remains unknown, and and a constitutive equation
+stress :math:`\boldsymbol{\tau^b}` remains unknown and a constitutive equation
 has to be introduced in order to completely solve the equations.
 
 
@@ -403,20 +290,20 @@ Friction Model
 ~~~~~~~~~~~~~~~~~
 
 The problem can be solved by introducing a constitutive equation which
-describes the basal shear stress tensor :math:`\tau^{(b)}` as a function
+describes the basal shear stress tensor :math:`\boldsymbol{\tau^b}` as a function
 of the flow state of the avalanche.
 
 .. math::
-    \tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})
+    \boldsymbol{\tau^b} = f(\boldsymbol{\sigma^b},\overline{u},h,\rho_0,t,\mathbf{x})
     :label: samosAT friction model
 
 With
 
 .. math::
    \begin{aligned}
-   &\sigma^{(b)} \qquad &\text{normal component of the stress tensor}\\
+   &\boldsymbol{\sigma^b}\cdot\mathbf{n^b} \qquad &\text{normal component of the stress tensor}\\
    &\overline{u} \qquad &\text{average velocity}\\
-   &\overline{h} \qquad &\text{average flow thickness}\\
+   &h \qquad &\text{average flow thickness}\\
    &\rho_0 \qquad &\text{density}\\
    &t \qquad &\text{time}\\
    &\mathbf{x} \qquad &\text{position vector}\end{aligned}
@@ -432,10 +319,10 @@ The Mohr-Coulomb friction model describes the friction interaction between twos 
 The bottom shear stress simply reads:
 
 .. math::
- \tau^{(b)} = \tan{\delta}\,\sigma^{(b)}
+ \boldsymbol{\tau^b} = -\left(\tan{\delta}\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}\right) \mathbf{v}_1
 
 :math:`\tan{\delta}=\mu` is the friction coefficient (and :math:`\delta` the friction angle). The bottom shear stress linearly
-increases with the normal stress component :math:`\sigma^{(b)}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
+increases with the normal stress component :math:`\boldsymbol{\sigma^b}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
 
 With this friction model, an avalanche starts to flow if the slope inclination is steeper than the
 friction angle :math:`\delta`. In the case of an infinite slope of constant inclination,
@@ -451,7 +338,7 @@ The Chezy friction model describes viscous friction interaction.
 The bottom shear stress then reads:
 
 .. math::
- \tau^{(b)} = c_{\text{dyn}}\,\rho_0\,\bar{u}^2
+ \boldsymbol{\tau^b} = -\left(c_{\text{dyn}}\,\rho_0\,\bar{u}^2\right) \mathbf{v}_1
 
 :math:`c_{\text{dyn}}` is the viscous friction coefficient. The bottom shear stress
 is a quadratic function of the velocity. (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
@@ -467,7 +354,8 @@ He first had the idea to combine both the Mohr-Coulomb and the Chezy model by su
 in order to take advantage of both. This leads to the following friction law:
 
 .. math::
- \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2
+ \boldsymbol{\tau^b} = -\left(\tan{\delta}\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}
+ + c_\text{dyn}\,\rho_0\,\bar{u}^2\right) \mathbf{v}_1
 
 
 This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`, and the turbulent
@@ -478,12 +366,12 @@ SamosAT friction model
 """"""""""""""""""""""""
 
 SamosAT friction model is a modification of some more classical models
-such as Voellmy model :ref:`Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
+such as Voellmy model :ref:`Voellmy friction model`. The basal shear stress tensor :math:`\boldsymbol{\tau^b}`
 is expressed as (:cite:`Sa2007`):
 
 .. math::
-   \tau^{(b)} = \tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}
-    + \frac{\rho_0\,\overline{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}
+   \boldsymbol{\tau^b} = -\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}
+    + \frac{\rho_0\,\overline{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right) \mathbf{v}_1
 
 With
 
@@ -498,11 +386,11 @@ With
 
 The minimum shear stress :math:`\tau_0` defines a lower limit below
 which no flow takes place with the condition
-:math:`\rho_0\,\overline{h}\,g\,\sin{\alpha} > \tau_0`. :math:`\alpha`
+:math:`\rho_0\,h\,g\,\sin{\alpha} > \tau_0`. :math:`\alpha`
 being the slope. :math:`\tau_0` is independent of the flow thickness, which
 leeds to a strong avalanche deceleration, especially for avalanches with
 low flow heights. :math:`R_s` is expressed as
-:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\sigma^{(b)}}`. Together
+:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\boldsymbol{\sigma^b}\cdot\mathbf{n^b}}`. Together
 with the empirical parameter :math:`R_s^0` the term
 :math:`\frac{R_s^0}{R_s^0+R_s}` defines the Coulomb basal friction.
 Therefore lower avalanche speeds lead to a higher bed friction, making
@@ -567,7 +455,7 @@ The grid cells crossed by the dam as well as their neighbor cells are memorized 
 ..   \begin{aligned}
 ..     \frac{\tilde{u}}{u_{\tau}} &= \frac{1}{\kappa}\,\ln{\frac{x_3}{R}} + B\\
 ..     &\text{mit}\\
-..     u_{\tau} &= \sqrt{\frac{\tau^{(b)}}{\bar{\rho}}},
+..     u_{\tau} &= \sqrt{\frac{\boldsymbol{\tau^b}}{\bar{\rho}}},
 ..   \end{aligned}
 ..
 ..
@@ -599,16 +487,16 @@ The grid cells crossed by the dam as well as their neighbor cells are memorized 
 ..
 .. Durch Einsetzen für $u_{\tau}$ und Ersetzen von $\tilde{u}_\text{max}$ durch die in Kapitel \ref{sec:vereinfachtegleichungen}
 .. tiefengemittelte Geschwindigkeit $\bar{u}$
-.. erhält man nach Umformen schließlich eine Beziehung für die gesuchte Bodenschubspannung $\tau^{(b)}$.
+.. erhält man nach Umformen schließlich eine Beziehung für die gesuchte Bodenschubspannung $\boldsymbol{\tau^b}$.
 ..
 .. .. math::
-..     \tau^{(b)} = \frac{\bar{\rho}\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}}+B\right)^2}
+..     \boldsymbol{\tau^b} = \frac{\bar{\rho}\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}}+B\right)^2}
 ..
 ..
 .. Dieses Modell lässt sich wie beim Voellmy-Modell mit der Coulomb'schen Reibung kombinieren.
 ..
 .. .. math::
-..     \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} +
+..     \boldsymbol{\tau^b} = \tan{\delta}\,\boldsymbol{\sigma^b} +
 ..     \frac{\bar{\rho}\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}}+B\right)^2}
 ..
 ..
