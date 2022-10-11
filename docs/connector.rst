@@ -14,13 +14,13 @@ Operational
 .. glossary::
    :sorted:
   
-   RunCom1DFA
+   Dense Flow Standard 
       Runs dense flow avalanche module com1DFA. For more specific info about the inputs (shapefile attributes etc), see 
       :ref:`moduleCom1DFA:Input`. You can select multiple shapefiles for release areas, each will be calculated as one scenario. 
       Each shapefile can contain multiple polygons. If you provide entrainment/resistance areas, each scenario will be calculated 
       once without them (i.e null simulation) and once with them. 
 
-   FullOperationalRun
+   Full Operational Run
       Runs com1DFA and additionally com2AB if profile and splitpoint are set. 
       Additional info see description of runCom1DFA. 
 
