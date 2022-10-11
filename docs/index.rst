@@ -16,12 +16,13 @@ General
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`connector`
-    * :doc:`develop`
+    * :doc:`advancedUsage`
     * :doc:`testing`
     * :doc:`Visualisation`
     * :doc:`FAQ`
     * :doc:`releaseNotes`
     * :doc:`api`
+    * :doc:`develop`
 
 .. toctree::
    :maxdepth: 4
@@ -31,12 +32,13 @@ General
    introduction.rst
    installation.rst
    connector.rst
-   develop.rst
+   advancedUsage.rst
    testing.rst
    Visualisation.rst
    FAQ.rst
    releaseNotes.rst
    api.rst
+   develop.rst
 
 
 Computational modules

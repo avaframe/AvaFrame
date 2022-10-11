@@ -1,17 +1,15 @@
-Basic usage
------------
+.. Basic usage
+.. -----------
 
-.. Note::
+.. .. Note::
 
-   These instructions target the development installation. If you are using the standard / operational installation we
-   provide a recording from the first public `AvaFrame workshop <https://youtu.be/HOFygSkCmp0>`_ . You will find a demo
-   starting at around the 17:25min mark.  
+   .. These instructions target the development installation. If you are using the standard / operational installation we
+   .. provide a recording from the first public `AvaFrame workshop <https://youtu.be/HOFygSkCmp0>`_ . You will find a demo
+   .. starting at around the 17:25min mark.  
 
-After the installation, the next sections describe on how to get started. The sections configuration and logging
-describe the general methods we use, this is helpful to understand how you can change model parameters and similar. 
 
 First run
-^^^^^^^^^
+---------
 
 Follow these steps to run your first simulation:
 
@@ -49,11 +47,11 @@ Some other options are:
 
 
 Workflow example
-^^^^^^^^^^^^^^^^
+----------------
 
 The following example should make it easier for you to find your way in AvaFrame and setup your own AvaFrame workflow
 after you did the full setup. There is also a directory with examples for different workflows, see more here:
-:ref:`develop:Example runScripts`.
+:ref:`advancedUsage:Example runScripts`.
 
 Make sure you change to your ``AvaFrame`` directory by::
 
@@ -62,7 +60,7 @@ Make sure you change to your ``AvaFrame`` directory by::
 Replace ``[YOURDIR]`` with the directory from your installation step.
 
 Initialize project
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 To create the folder where the input data lies and where the
 output results will be saved, specify the full path to the folder
@@ -83,7 +81,7 @@ This will create a new directory with the input required by AvaFrame structured 
 in :ref:`moduleIn3Utils:Initialize Project`.
 
 Input data
-~~~~~~~~~~
+^^^^^^^^^^
 
 Check the input data required by the different modules you want to use and fill
 the ``Inputs/`` inside the ``[avalancheDir]`` folder from the initialize step accordingly.
@@ -97,7 +95,7 @@ file and modify the desired parameters.
 More information about the configuration can be found here: :ref:`configuration:Configuration`
 
 Building your run script
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create your own workflow by taking the ``runOperational.py`` script as
 template.
@@ -105,12 +103,5 @@ template.
 We suggest you copy it and adjust it to your liking. There are annotations in
 the code that should help you to understand the structure.
 
-A lot more examples can be found in the ``runScripts`` directory (see also :ref:`develop:Example runscripts`).
+A lot more examples can be found in the ``runScripts`` directory (see also :ref:`advancedUsage:Example runscripts`).
 
--------------------------
-
-.. include:: configuration.rst
-
--------------------------
-
-.. include:: logging.rst

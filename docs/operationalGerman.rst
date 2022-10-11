@@ -90,7 +90,7 @@ Update Avaframe
 
 
 .. Note::
-   Wenn Sie auf einen Fehler wie diesen stoßen (unterste/letzte Zeile der Fehlermeldung; die Zahlen können abweichen):
+   Wenn Sie auf einen Fehler wie diesen stoßen (unterste/letzte Zeile der Fehlermeldung; die Zahlen können abweichen)::
 
      ValueError: numpy.ndarray size changed, may indicate binary
      incompatibility. Expected 88 from C header, got 80 from PyObject
