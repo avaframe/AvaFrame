@@ -38,7 +38,7 @@ fileOverride = ''
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
 
-# Clean input directory(ies) of old work and output files
+# Clean input directory(ies) of old work files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 # setup work folder
 workPath = pathlib.Path(avalancheDir, 'Work', 'ana1Tests', 'simiSolTest')

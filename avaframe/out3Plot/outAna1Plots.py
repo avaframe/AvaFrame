@@ -261,7 +261,7 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
     comSol['tSave'] = tSave
 
     # create figures and plots
-    fig = plt.figure(figsize=(pU.figW*2.5, pU.figH*2))
+    fig = plt.figure(figsize=(pU.figW*3.5, pU.figH*2))
     fig.suptitle('Similarty solution test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
     # make comparison profile plot in flow direction
     ax1 = plt.subplot2grid((2, 8), (0, 0), colspan=4)
@@ -295,7 +295,7 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
     text = ''
     for param in paramInfo:
         text = text + (param + ' = %.2f' % simDFrow[param]) + '\n'
-    ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.fs)
+    ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.cfg['titleSize'])
 
     outFileName = '_'.join([simHash, 'SimiSolTest'])
     pU.saveAndOrPlot({'pathResult': outDirTest}, outFileName, fig)
@@ -424,7 +424,7 @@ def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, lim
     ax3 = _plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFT*dataIniV, dataAnaFT*dataAnaV, solDam['xAna'],
                              solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
                              pU.cfgPlotUtils['nameFTV'], pU.cfgPlotUtils['unitFTV'])
-    ax3.set_title(getLabel(pU.cfgPlotUtils['nameFTV'] + ' profile', '', dir='', vert=True))
+    ax3.set_title(pU.cfgPlotUtils['nameFTV'] + ' profile')
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simHash, tSave), fontsize=30)
     outputName = 'compareDamBreak%s_%.02f' % (simHash, tSave)
@@ -562,7 +562,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfgDam, dataIniFT*dataIniV, dataFT*dataV, solDam['xAna'],
                           solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
                           pU.cfgPlotUtils['nameFTV'], pU.cfgPlotUtils['unitFTV'])
-    ax2.set_title(getLabel(pU.cfgPlotUtils['nameFTV'] + ' profile', '', dir='', vert=True))
+    ax2.set_title(pU.cfgPlotUtils['nameFTV'] + ' profile')
 
     # make flow velocity comparison plot
     ax3 = plt.subplot2grid((2, 6), (0, 2), colspan=2)
@@ -609,7 +609,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     text = ''
     for param in paramInfo:
         text = text + (param + ' = %.2f' % simDFrow[param]) + '\n'
-    ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.fs)
+    ax7.text(0.5, 0.5, text, transform=ax7.transAxes, ha='center', va='center', fontsize=pU.cfg['titleSize'])
 
     outFileName = '_'.join([simHash, 'DamBreakTest'])
     pU.saveAndOrPlot({'pathResult': outDirTest}, outFileName, fig)
