@@ -617,108 +617,6 @@ These parameters should be adjusted according to the expected accuracy of the re
 Determining the optimal parameter values for :math:`\alpha`, :math:`r_{\text{kernel}}^0` and :math:`n_{\text{ppk}}^0`, for example according to a user's needs in terms of accuracy and computational efficiency, requires a specific and detailed investigation of the considered case.
 In the Sect.~\ref{sec-verification}, we will explore model convergence using the condition eq.~\ref{eq-convergence-criterion} with different values of :math:`\alpha`.
 
-Numerical stability
----------------------
-
-Because the lateral shear force term was removed when deriving the model equations
-(because of its relative smallness, :cite:`GrEd2014`), :eq:`eq-momentum-balance-approx`
-is hyperbolic.
-Hyperbolic systems have the characteristic of carrying discontinuities or shocks which
-will cause numerical instabilities.
-They would fail to converge if for example an Euler forward in time scheme is used
-(:cite:`Le1990`).
-Several methods exist to stabilize the numerical integration of an hyperbolic system
-of differential equations.
-All aim at adding some upwinding in the discretization scheme.
-Some methods tackle this problem by introducing some upwinding in the discretization
-of the derivatives (:cite:`HaLaLe1983, HaHy1983`).
-Others introduce some artificial viscosity (as in :cite:`Mo1992`).
-
-Two options are available to add viscosity to stabilize the numerics. The first option
-consists in adding artificial viscosity (``viscOption`` = 1). This is the default
-method and is used for operational applications. The second option attempts
-to adapt the Lax-Friedrich scheme (usually applied to grids) to the particle method
-(``viscOption`` = 2). This method Finally, ``viscOption`` = 0 deactivates any viscosity force.
-
-SAMOS Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
-equations for the DFA were derived and all first order or smaller terms where neglected.
-Among those terms is the lateral shear stress. This term leads toward
-the homogenization of the velocity field. It means that two neighbor elements
-of fluid should have similar velocities. The aim behind adding artificial viscosity is to
-take this phenomena into account. The following viscosity force is added:
-
-.. math::
-    \begin{aligned}
-    \mathbf{F}^\text{viscosity} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
-    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
-    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
-    \end{aligned}
-
-Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
-(:math:`\mathbf{\bar{u}}` is the grid velocity interpolated at the particle position).
-:math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
-equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the grid size. Its value is set to 100
-and should be discussed and further tested.
-
-Adding the viscous force
-""""""""""""""""""""""""
-
-The viscous force acting on particle :math:`k` reads:
-
-.. math::
-  \begin{aligned}
-  \mathbf{F}_k^\text{viscosity} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
-  \mathbf{du}_k^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}_k^{old}\| A_{Lat}
-  (\mathbf{u}_k^{new} - \mathbf{\bar{u}}_k^{old})
-  \end{aligned}
-
-Updating the velocity is done in two steps. First adding the explicit term related to the
-mean grid velocity and then the implicit term which leads to:
-
-.. math::
-  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old} - C_{vis}\mathbf{\bar{u}}_k^{old}}{1 + C_{vis}}
-
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}\frac{dt}{m}`
-
-
-Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Shallow Water Equations are well known for being hyperbolic transport equations.
-They have the particularity of carrying discontinuities or shocks which will cause
-numerical instabilities.
-
-A decentering in time allows to better capture the discontinuities.
-This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
-which is formally the same as adding a viscous force. Implementing it for the SPH method,
-this viscous force applied on a given particle :math:`k` can be expressed as follows:
-
-.. math::
-  \mathbf{F}_k^\text{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \boldsymbol{\nabla}W_{kl}
-
-with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
-\frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
-:math:`\boldsymbol{\nabla}W_{kl}` is the gradient of the kernel function and
-is described in :ref:`DFAnumerics:SPH gradient`.
-
-:math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
-between particle k and l, :math:`\mathbf{r}_{kl} = \mathbf{x}_k - \mathbf{x}_l` is
-the vector going from particles :math:`l` to particle :math:`k` and
-:math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with :math:`c_k = \sqrt{gh_l}`
-the wave speed. The :math:`\lambda_{kl}` is obtained by turning expressions
-related to time and spatial discretization parameters into an expression
-on maximal speed between both particles in the Lax Friedrich scheme.
-
-Due to the expression of the viscosity force, it makes sense to
-compute it at the same place where the SPH pressure force are computed (for this reason, the
-``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
-in combination with the ``sphOption`` = 2).
-
 
 Forces discretization
 ----------------------
@@ -803,19 +701,198 @@ Adding forces
 The different components are added following an operator splitting method.
 This means particle velocities are updated successively with the different forces.
 
+Numerical stability
+---------------------
+
+Because the lateral shear force term was removed when deriving the model equations
+(because of its relative smallness, :cite:`GrEd2014`), :eq:`eq-momentum-balance-approx`
+is hyperbolic.
+Hyperbolic systems have the characteristic of carrying discontinuities or shocks which
+will cause numerical instabilities.
+They would fail to converge if for example an Euler forward in time scheme is used
+(:cite:`Le1990`).
+Several methods exist to stabilize the numerical integration of an hyperbolic system
+of differential equations.
+All aim at adding some upwinding in the discretization scheme.
+Some methods tackle this problem by introducing some upwinding in the discretization
+of the derivatives (:cite:`HaLaLe1983, HaHy1983`).
+Others introduce some artificial viscosity (as in :cite:`Mo1992`).
+
+Two options are available to add viscosity to stabilize the numerics. The first option
+consists in adding artificial viscosity (``viscOption`` = 1). This is the default
+method and is used for operational applications. The second option attempts
+to adapt the Lax-Friedrich scheme (usually applied to grids) to the particle method
+(``viscOption`` = 2). This method Finally, ``viscOption`` = 0 deactivates any viscosity force.
+
+SAMOS Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The artificial viscosity force acting on particle :math:`k` then reads:
+
+.. math::
+  \begin{aligned}
+  \mathbf{F_k^{visc}} = &- \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\overline{u}}_k\Vert^2
+  \frac{\mathbf{d\overline{u}}_k}{\Vert\mathbf{d\overline{u}}_k\Vert}\\
+  = & - \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\overline{u}}_k\Vert \mathbf{d\overline{u}}_k,
+  \end{aligned}
+
+where the velocity difference reads :math:`\mathbf{d\overline{u}}_k = \overline{\mathbf{u}}_k - \widehat{\overline{\mathbf{u}}}_k` (:math:`\widehat{\overline{\mathbf{u}}}_k` represents the averaged velocity of the neighbor particles and is practically the grid velocity interpolated at the particle position).
+:math:`C_{Lat}` is a coefficient that controls the viscous force.
+It would be the equivalent of :math:`C_{Drag}` in the case of the drag force.
+:math:`C_{Lat}` is a numerical parameter that depends on the grid size.
+
+In this expression, let :math:`\mathbf{\overline{u}}_k^{n}` be the velocity at the beginning of the time step and  :math:`{\overline{\mathbf{u}}_k^{n+1}}^\blacktriangle` be the velocity
+after adding the numerical viscosity (\fig{\ref{fig-DFA-solver}}).
+In the norm term :math:`\Vert\mathbf{d\overline{u}}_k\Vert` the particle and grid velocity at the beginning of the time step are used.
+This ensures no implicit relation on the norm term or on the average velocity :math:`\widehat{\overline{\mathbf{u}}}_k`.
+On the contrary, an implicit formulation is used in :math:`\mathbf{d\overline{u}}_k` because the new value of the velocity is used there.
+The artificial viscosity force now reads:
+
+.. math::
+ 	\mathbf{F_k^{visc}} =  -\frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\overline{\mathbf{u}}_k^{n} - \widehat{\overline{\mathbf{u}}}_k^{n}\Vert
+ 	\left(\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle - \widehat{\overline{\mathbf{u}}}_k^{n}\right)
+
+Updating the velocity then gives:
+
+.. math::
+ 	\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \frac{\overline{\mathbf{u}}_k^{n} - C_{vis}\widehat{\overline{\mathbf{u}}}_k^{n}}{1 + C_{vis}}
+
+with
+
+.. math::
+	C_{vis} = \frac{1}{2}\rho_0 C_{Lat}A_k^{\text{Lat}} \Vert\overline{\mathbf{u}}_k^{n} - \widehat{\overline{\mathbf{u}}}_k^{n}\Vert\frac{\Delta t}{m}.
+
+This approach to stabilize the momentum equation (:eq:`eq-momentum-particle`) is not
+optimal for different reasons.
+Firstly, it introduces a new coefficient :math:`C_{vis}` which is not a physical
+quantity and will require to be calibrated.
+
+Secondly, it artificially adds a force that should be described physically.
+So it would be more interesting to take the physical force into account in the first
+place.
+
+Potential solutions could be  taking the physical shear force into account,
+using for example the :math:`\mu`-I rheology (:cite:`GrEd2014, BaBaGr2016`).
+Another option would be to replace the artificial viscosity with a purely
+numerical artifact aiming to stabilize the equations such as a SPH version of
+the Lax-Friedrich scheme as presented in :cite:`AtSo2005`.
+
+Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Shallow Water Equations are well known for being hyperbolic transport equations.
+They have the particularity of carrying discontinuities or shocks which will cause
+numerical instabilities.
+
+A decentering in time allows to better capture the discontinuities.
+This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
+which is formally the same as adding a viscous force. Implementing it for the SPH method,
+this viscous force applied on a given particle :math:`k` can be expressed as follows:
+
+.. math::
+  \mathbf{F}_k^\text{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \boldsymbol{\nabla}W_{kl}
+
+with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
+\frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
+:math:`\boldsymbol{\nabla}W_{kl}` is the gradient of the kernel function and
+is described in :ref:`DFAnumerics:SPH gradient`.
+
+:math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
+between particle k and l, :math:`\mathbf{r}_{kl} = \mathbf{x}_k - \mathbf{x}_l` is
+the vector going from particles :math:`l` to particle :math:`k` and
+:math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with :math:`c_k = \sqrt{gh_l}`
+the wave speed. The :math:`\lambda_{kl}` is obtained by turning expressions
+related to time and spatial discretization parameters into an expression
+on maximal speed between both particles in the Lax Friedrich scheme.
+
+Due to the expression of the viscosity force, it makes sense to
+compute it at the same place where the SPH pressure force are computed (for this reason, the
+``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
+in combination with the ``sphOption`` = 2).
+
 
 Adding artificial viscosity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
-in :ref:`DFAnumerics:Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
-``viscOption`` is set to 2, artificial viscosity is added during SPH force computation. (TODO add link to description)
+in :ref:`DFAnumerics:SAMOS Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
+``viscOption`` is set to 2, artificial viscosity is added during SPH force computation
+(so in :ref:`DFAnumerics:Account for driving forces` according to the :math:`\mathbf{F}_k^\text{viscosity}`
+computed in :ref:`DFAnumerics:Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme`)
 
-Adding entrainment
-~~~~~~~~~~~~~~~~~~~
-Entrainment is taken into account by first adding the component representing the loss of momentum due to
-acceleration of the entrained mass :math:`- \overline{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
-Second by adding the force due to the need to break and compact the
-entrained mass (:math:`\mathbf{F}_k^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
+
+Curvature acceleration term
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. \label{sec-curvature-acc-term-estimation}
+
+The last term of the particular momentum equation (:eq:`eq-momentum-particle`)
+as well as the effective gravity :math:`g^{\text{eff}}` are the final terms to be
+discretized before the numerical integration.
+In both of these terms, the remaining unknown is the curvature acceleration term
+:math:`\overline{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}`.
+Using the forward Euler time discretization for the temporal derivative of the
+normal vector :math:`\mathbf{v}_{3,k}` gives:
+
+.. math::
+	\left.\frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \approx
+	\frac{\mathbf{v}_{3,k}^{n+1} - \mathbf{v}_{3,k}^n}{\Delta t}
+
+:math:`\mathbf{v}_{3,k}^n` is a known quantity, the normal vector of the bottom surface at
+:math:`\mathbf{x}_k^n` wich is interpolated from the grid normal vector values at the
+position of the particle :math:`k` at time :math:`t^n`.
+:math:`\mathbf{v}_{3,k}^{n+1}` is unknown since :math:`\mathbf{x}_k^{n+1}` is not known yet,
+hence we estimate :math:`\mathbf{x}_k^{n+1}` based the position  :math:`\mathbf{x}_k^n` and
+the velocity at :math:`t^n`:
+
+.. math::
+	\mathbf{x}_k^{n+1} =\mathbf{x}_k^n + \Delta t \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+
+This position at :math:`t^{n+1}` is projected onto the topography and
+:math:`\mathbf{v}_{3,k}^{n+1}` can be interpolated from the grid normal vector values.
+
+Note that the curvature acceleration term is needed to compute the bottom pressure
+(:eq:`eq-pressure-distribution`),  which is used for the bottom friction
+computation and for the pressure gradient computation.
+The curvature acceleration term can lead to a negative value, which means detachment
+of the particles from the bottom surface.
+In **com1DFA**, surface detachment is not allowed and if pressure becomes
+negative, it is set back to zero forcing the material to remain in contact with the
+topography.
+
+
+
+Account for entrainment
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Entrainment is taken into account by:
+* First adding the component representing the loss of momentum due to
+	acceleration of the entrained mass :math:`- \overline{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
+	The entrained mass by a particle :math:`k` during a time step :math:`\Delta t` reads:
+
+	.. math::
+	    \mathrm{d}m_k^{n}  = m_k^{n+1} - m_k^{n} = \Delta t \,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+
+	Which leads by the way to the new mass of particle :math:`m_k^{n+1}`:
+
+	.. math::
+	    m_k^{n+1} =  m_k^{n} + \mathrm{d}m_k^{n} = m_k^{n} + \Delta t \,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+
+	Implicitly updating the velocity leads to (if we call :math:`\overline{\mathbf{u}}_k^{n+1}`
+	the velocity before adding the momentum loss and
+	:math:`\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle` the velocity after):
+
+	.. math::
+		\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \overline{\mathbf{u}}_k^{n+1}
+		\frac{m_k^{n}}{m_k^{n} + \mathrm{d}m_k^n} = \overline{\mathbf{u}}_k^{n+1}
+		\frac{m_k^{n}}{m_k^{n+1}}
+
+* Second by adding the force due to the need to break and compact the
+	entrained mass (:math:`\mathbf{F}_k^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
+
+	.. warning::
+		ToDO
+
+	.. math::
+	    \mathbf{F}_k^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)\mathbf{v}_1
 
 Account for driving forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -827,12 +904,14 @@ The velocity is updated as follows
 driving force into account):
 
 .. math::
-  {\overline{\mathbf{u}}_k^{n+1}}^\bigstar = \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
-	+ \frac{\Delta t}{m_k}\mathbf{F}_{k}^{\text{drive}}
-	= \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
-	+ \frac{\Delta t}{m_k} \left(- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h
-	+ m_k \mathbf{g}_s  - m_k \left( \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle \cdot \left . \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \right)\mathbf{v}_{3,k}^n\right)
-  :label: eq-adding-driving-force
+	\begin{aligned}
+  	{\overline{\mathbf{u}}_k^{n+1}}^\bigstar &= \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+		+ \frac{\Delta t}{m_k}\mathbf{F}_{k}^{\text{drive}}\\
+		&= \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+		+ \frac{\Delta t}{m_k} \left(- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h
+			+ m_k \mathbf{g}_s  - m_k \left( \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle \cdot \left . \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \right)\mathbf{v}_{3,k}^n\right)
+	\end{aligned}
+	:label: eq-adding-driving-force
 
 Account for friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -885,6 +964,33 @@ This  would lead to oscillations of the particles instead of stopping.
 Adding the friction force following this approach (:cite:`MaVi2003`) allows the
 particles to start and stop flowing properly.
 
+
+Reprojection
+~~~~~~~~~~~~~
+
+The last term in :eq:`eq-momentum-particle` (accounting for the curvature effects)
+adds a non tangential component allowing
+the new velocity to lie in a different plane than the one from the previous time step.
+This enables the particles to follow the topography.
+But because the curvature term was only based on an estimation
+(see Sect.~\ref{sec-curvature-acc-term-estimation}),
+it can happen that the new particle position is not necessarily on the topography
+and the new velocity does not necessarily lie in the tangent plane at this new
+position.
+Furthermore, in case of a strong convex curvature and high velocities, the particles
+can theoretically be in a free fall state (detachment) as mentioned in
+Sect.~\ref{sec-pressure-distribution}.
+**com1DFA** does not allow detachment of the particles and the particles are
+forced to stay on the topography. This consists in a limitation
+of the model/method which will lead to nonphysical behaviors in special cases
+(material flowing over a cliff).
+In both of the previously mentioned cases, the particles positions are projected back
+onto the topography and the velocity direction is corrected to be tangential to the
+topography.
+The position reprojection is done using an iterative method that attempts to conserve
+the distance traveled by each particle between :math:`t^n` and :math:`t^{n+1}``.
+The velocity reprojection changes the direction of the velocity but its magnitude is
+conserved.
 
 Neighbor search
 ------------------
