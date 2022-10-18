@@ -50,11 +50,11 @@ jobs:
       run: |
         pytest -ra --cov --cov-report=xml --cov-config=.coveragerc
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v2.7.5
+      uses: paambaati/codeclimate-action@v3.1.0
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_ID }}
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: false
         name: codecov-umbrella

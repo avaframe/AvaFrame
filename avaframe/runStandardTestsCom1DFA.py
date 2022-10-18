@@ -20,7 +20,6 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import logUtils
-from benchmarks import simParametersDict
 
 
 # +++++++++REQUIRED+++++++++++++
