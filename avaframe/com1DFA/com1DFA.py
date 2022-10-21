@@ -2097,7 +2097,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         inDir: str
             path to input directory
         resType: list
-            list of desired result types
+            list of desired result types, if string converted to list
         simName : str
             simulation name
         flagAvaDir: bool
@@ -2121,6 +2121,9 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         tme corresponding to elements in fieldsList
 
     """
+
+    if isinstance(resType, list) is False:
+        resType = [resType]
 
     if flagAvaDir:
         inDir = pathlib.Path(inDir, 'Outputs', comModule, 'peakFiles', 'timeSteps')
