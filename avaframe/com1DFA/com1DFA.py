@@ -469,7 +469,7 @@ def prepareInputData(inputSimFiles, cfg):
     relThFile = inputSimFiles['relThFile']
 
     # get dem dictionary - already read DEM with correct mesh cell size
-    demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], cfg['INPUT']['DEM'])
+    demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], demPath=cfg['INPUT']['DEM'])
 
     # read data from relThFile
     if relThFile != '':
