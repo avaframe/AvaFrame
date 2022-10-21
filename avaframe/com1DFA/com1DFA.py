@@ -1384,7 +1384,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
                 dtAnaPlots.animationPlot(demRT, fields[TTResType], demRT['header']['cellsize'], TTResType, cfgRangeTime, mtiInfo, t)
 
         # make sure the array is not empty
-        if t >= dtSave[0]:
+        if t >= (dtSave[0] - 1.e-8):
             Tsave.append(t)
             log.debug('Saving results for time step t = %f s', t)
             log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
@@ -1548,7 +1548,7 @@ def updateSavingTimeStep(dtSave, cfg, t):
     if dtSave.size == 1:
         dtSave = np.asarray([2*cfg.getfloat('tEnd')])
     else:
-        indSave = np.where(dtSave > t)
+        indSave = np.where(dtSave > (t+1.e-8))
         dtSave = dtSave[indSave]
 
     return dtSave
