@@ -270,10 +270,9 @@ def test_getThickness(tmp_path):
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
         'flagSecondaryRelease': 'No'}}
 
-    inputSimFiles, cfgFilesRels = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfg)
+    inputSimFiles, cfg = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfg)
 
     print('inputSimFiles', inputSimFiles)
-    print('cfgFilesRels', sorted(cfgFilesRels))
 
     assert inputSimFiles['release1HS']['thickness'] == ['1.0']
     assert inputSimFiles['release2HS']['thickness'] == ['1.0', '1.0']
@@ -281,27 +280,25 @@ def test_getThickness(tmp_path):
     assert inputSimFiles['release2HS']['id'] == ['0', '1']
     assert inputSimFiles['entrainment1HS']['thickness'] == ['0.3']
     assert inputSimFiles['entrainment1HS']['id'] == ['0']
-    assert cfgFilesRels[0].name == 'release1HS_com1DFACfg.ini'
-    assert cfgFilesRels[1].name == 'release2HS_com1DFACfg.ini'
-    assert len(cfgFilesRels) == 2
+    assert cfg['INPUT']['releaseScenario'] == 'release1HS|release2HS'
+    assert cfg['INPUT']['release1HS_relThId'] == '0'
+    assert cfg['INPUT']['release2HS_relThId'] == '0|1'
+    assert cfg['INPUT']['release1HS_relThThickness'] == '1.0'
+    assert cfg['INPUT']['release2HS_relThThickness'] == '1.0|1.0'
+    assert cfg['INPUT']['release1HS_relThCi95'] == 'None'
+    assert cfg['INPUT']['release2HS_relThCi95'] == 'None|None'
 
-    cfgTest1 = configparser.ConfigParser()
-    cfgTest1.read(cfgFilesRels[1])
-
-    assert cfgTest1['GENERAL']['relTh'] == ''
-    assert cfgTest1['GENERAL'].getboolean('relThFromShp') == True
-    assert cfgTest1['GENERAL'].getboolean('relThFromFile') == False
-    assert cfgTest1['GENERAL']['entTh'] == ''
-    assert cfgTest1['GENERAL'].getboolean('entThFromShp') == True
-    assert cfgTest1['INPUT']['releaseScenario'] == 'release2HS'
-    assert cfgTest1['INPUT']['relThId'] == '0|1'
-    assert cfgTest1['INPUT']['relThThickness'] == '1.0|1.0'
-    assert cfgTest1['INPUT']['entrainmentScenario'] == 'entrainment1HS'
-    assert cfgTest1['INPUT']['entThId'] == '0'
-    assert cfgTest1['INPUT']['entThThickness'] == '0.3'
+    assert cfg['GENERAL']['relTh'] == ''
+    assert cfg['GENERAL'].getboolean('relThFromShp') == True
+    assert cfg['GENERAL'].getboolean('relThFromFile') == False
+    assert cfg['GENERAL']['entTh'] == ''
+    assert cfg['GENERAL'].getboolean('entThFromShp') == True
+    assert cfg['INPUT']['entrainmentScenario'] == 'entrainment1HS'
+    assert cfg['INPUT']['entThId'] == '0'
+    assert cfg['INPUT']['entThThickness'] == '0.3'
 
 
-def test_selectReleaseScenario(tmp_path):
+def test_selectReleaseFile(tmp_path):
     """ testing selecting a release area scenario according to configuration settings """
 
     # setup the required inputs
@@ -314,28 +311,61 @@ def test_selectReleaseScenario(tmp_path):
     cfg['INPUT'] = {'releaseScenario': 'rel1'}
 
     # call function to be tested
-    inputSimFiles = getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
+    inputSimFiles = getInput.selectReleaseFile(inputSimFiles, cfg['INPUT']['releaseScenario'])
 
     assert inputSimFiles['relFiles'][0].name == 'rel1.shp'
-    assert len(inputSimFiles['relFiles']) == 1
+    assert inputSimFiles['relFiles'][1].name == 'rel2.shp'
+    assert len(inputSimFiles['relFiles']) == 2
+    assert inputSimFiles['releaseScenario'] == rel1
 
     cfg = configparser.ConfigParser()
     cfg['INPUT'] = {'releaseScenario': 'rel2'}
     inputSimFiles = {'relFiles': [rel1, rel2]}
 
     # call function to be tested
-    inputSimFiles = getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
+    inputSimFiles = getInput.selectReleaseFile(inputSimFiles, cfg['INPUT']['releaseScenario'])
 
 
-    assert inputSimFiles['relFiles'][0].name == 'rel2.shp'
-    assert len(inputSimFiles['relFiles']) == 1
+    assert inputSimFiles['relFiles'][0].name == 'rel1.shp'
+    assert inputSimFiles['relFiles'][1].name == 'rel2.shp'
+    assert len(inputSimFiles['relFiles']) == 2
+    assert inputSimFiles['releaseScenario'] == rel2
+
+
+
+
+def test_fetchReleaseFile(tmp_path):
+    """ testing selecting a release area scenario according to configuration settings """
+
+    # setup the required inputs
+    testPath = pathlib.Path(tmp_path, 'avaTest', 'Inputs', 'REL')
+    rel1 = testPath / 'rel1.shp'
+    rel2 = testPath / 'rel2.shp'
+
+    inputSimFiles = {'relFiles': [rel1, rel2]}
+    cfg = configparser.ConfigParser()
+    cfg['INPUT'] = {'releaseScenario': 'rel1'}
+    cfg['GENERAL'] = {'relThFromShp': False}
+    releaseScenario = 'rel1'
+    releaseList = ['rel1', 'rel2']
+
+    # call function to be tested
+    releaseScenarioPath, cfg = getInput.fetchReleaseFile(inputSimFiles, releaseScenario, cfg, releaseList)
+
+    assert releaseScenarioPath == rel1
+    assert cfg['INPUT']['releaseScenario'] == 'rel1'
 
 
     cfg = configparser.ConfigParser()
     cfg['INPUT'] = {'releaseScenario': 'rel2'}
-    inputSimFiles = {'relFiles': [rel1]}
+    inputSimFiles = {'relFiles': [rel1, rel2]}
+    cfg['GENERAL'] = {'relThFromShp': True}
+    cfg['INPUT'] = {'rel2_relThId': '0', 'rel2_relThThickness': '2.', 'rel2_relThCi95': '',
+        'rel1_relThId': '1', 'rel1_relThThickness': '1.', 'rel1_relThCi95': ''}
+    # call function to be tested
+    releaseScenarioPath, cfg = getInput.fetchReleaseFile(inputSimFiles, 'rel2', cfg, releaseList)
 
-
-    with pytest.raises(FileNotFoundError) as e:
-        assert getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
-    assert str(e.value) == ("Release area scenario %s not found - check input data" % ('rel2'))
+    assert releaseScenarioPath == rel2
+    assert cfg['INPUT']['relThId'] == '0'
+    assert cfg['INPUT']['relThThickness'] == '2.'
+    assert cfg['INPUT']['relThCi95'] == ''

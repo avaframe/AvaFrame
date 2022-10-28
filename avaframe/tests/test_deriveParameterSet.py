@@ -21,6 +21,7 @@ def test_getVariationDict():
                       'tSteps' : '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
                       'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                       'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
+    cfg['INPUT'] = {'releaseScenario': 'relTest'}
     modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'], 'resType': ['ppr|pft|pfv', 'ppr|pft|pfv|particles|FT'],
                 'tSteps': ['0:1', '1'], 'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']},
                 'TEST': {'test': ['test1', '']}}
@@ -30,7 +31,7 @@ def test_getVariationDict():
 
     print('variations', variations)
 
-    variationsTest = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400])}
+    variationsTest = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400]), 'releaseScenario': ['relTest']}
 
     assert len(variations.keys()) == len(variationsTest.keys())
     assert variations['simTypeList'][0] == 'null'
@@ -51,7 +52,7 @@ def test_getVariationDict():
     print('variations2', variations2)
 
     variationsTest2 = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400]),
-        'relThPercentVariation': np.linspace(0.6, 1.4, 5)}
+        'relThPercentVariation': np.linspace(0.6, 1.4, 5), 'releaseScenario': ['relTest']}
 
     assert len(variations2.keys()) == len(variationsTest2.keys())
     assert variations2['simTypeList'][0] == 'null'
@@ -136,8 +137,8 @@ def test_getThicknessValue():
 
     cfg = dP.getThicknessValue(cfg, inputSimFiles, 'release1HS', thType)
 
-    assert cfg['INPUT']['relThId'] == '0|1'
-    assert cfg['INPUT']['relThThickness'] == '1.2|1.4'
+    assert cfg['INPUT']['release1HS_relThId'] == '0|1'
+    assert cfg['INPUT']['release1HS_relThThickness'] == '1.2|1.4'
     assert cfg['GENERAL']['relThPercentVariation'] == '40$3'
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', 'None']}}

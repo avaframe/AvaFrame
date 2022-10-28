@@ -6,6 +6,10 @@
 import logging
 import math
 
+# local imports
+import avaframe.com1DFA.deriveParameterSet as dP
+from avaframe.in1Data import getInput as gI
+
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
@@ -55,3 +59,35 @@ def getPartInitMethod(cfg, csz, relThForPart):
         massPerPart = rho * math.pi * cszMin * cszMin * relThForPart / nPPK
 
     return massPerPart, nPPK
+
+
+def setRelThIni(avaDir, modName, cfgInitial):
+    """ Add thickness values in configuration file according to thickness flags, ini settings or shapefile attributes
+        and create inputSimFiles dictionary with file paths to input data
+
+        Parameters
+        -----------
+        avaDir: str or pathlib path
+            path to avalanche directory
+        modName: module
+            computational module
+        cfgInitial: configparser object
+            full configuration settings of com Module
+
+        Returns
+        --------
+        inputSimFilesAll: dict
+            dictionary with infos about input data file paths and flags for entrainment, resistance
+    """
+
+    # check if thickness settings in ini file are valid
+    for thType in ['entTh', 'relTh', 'secondaryRelTh']:
+        _ = dP.checkThicknessSettings(cfgInitial, thType)
+
+    # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
+    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial)
+
+    # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
+    inputSimFilesAll, cfgInitial = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgInitial)
+
+    return inputSimFilesAll, cfgInitial
