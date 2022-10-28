@@ -164,13 +164,6 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
         dictionary containing only differences from default
     '''
 
-    modDict = {}
-    printOutInfo = list()
-
-    # initialize our final configparser object
-    cfg = configparser.ConfigParser()
-    cfg.optionxform = str
-
     if compare:
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize configparser object to read
@@ -182,87 +175,126 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
 
-        # loop through all sections of the defCfg
         log.debug('Writing cfg for: %s', modName)
-        for section in defCfg.sections():
-            modDict[section] = {}
-            cfg.add_section(section)
-            printOutInfo.append('\t' + section)
-
-            # Take section and loop through keys
-            for key in defCfg.items(section):
-                defValue = key[1]
-                # check if key is also in the localCfg
-                if locCfg.has_option(section, key[0]):
-                    locValue = locCfg.get(section, key[0])
-                    if locValue != defValue:
-                        # if yes and if this value is different add this key to
-                        # the cfg that will be returned
-                        cfg.set(section, key[0], locValue)
-                        printOutInfo.append('\t\t%s : %s \t(default value was : %s)'
-                                % (key[0], locValue, defValue))
-                        modString = [locValue, defValue]
-                        modDict[section][key[0]] = modString
-                    else:
-                        cfg.set(section, key[0], defValue)
-                        printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
-
-                    # remove the key from the localCfg
-                    locCfg.remove_option(section, key[0])
-
-                # if key is not in the localCfg, just take default
-                else:
-                    cfg.set(section, key[0], defValue)
-                    printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
-
-        # Now check if there are some sections/ keys left in the local cfg and
-        # that are not used
-        for section in locCfg.sections():
-            if defCfg.has_section(section):
-                for key in locCfg.items(section):
-                    # an exception is made for thickness values that are added for the features of a releaseScenario,
-                    # entrainment Scenario or secondar. release scenario
-                    # these are added to the configuration and also to the modDict if variation is applied
-                    validItems = ['entrainmentScenario', 'DEM', 'secondaryReleaseScenario']
-                    searchItems = ['relTh', 'entTh', 'secondaryRelTh']
-                    if any(s in key[0] for s in searchItems) or key[0] in validItems:
-                        locValue = locCfg.get(section, key[0])
-                        cfg.set(section, key[0], locValue)
-                        printOutInfo.append('\t\t%s : %s added to %s' % (key[0], locValue, section))
-                        if '$' in locValue:
-                            modString = [locValue, locValue.split('$')[0]]
-                            modDict[section][key[0]] = modString
-                    else:
-                        log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
-            else:
-                cfg.add_section(section)
-                printOutInfo.append('Additional section [\'%s\'] is added to the configuration.' % (section))
-                for key in locCfg.items(section):
-                    printOutInfo.append('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
-                             (key[0], section))
-                    cfg.set(section, key[0], key[1])
-                    printOutInfo.append('\t\t%s : %s' % (key[0], key[1]))
-
-        # Check if cfg should be printed. If not, give a hint and
-        # ALWAYS print the keys and values that are different from default
-        if toPrint:
-            for element in printOutInfo:
-                log.info(element)
-        else:
-            log.info('Print is turned off, giving difference summary')
-            for element in printOutInfo:
-                if 'default value was' in element:
-                    log.info(element)
+        # compare to default config and get modification dictionary and config
+        modDict, modCfg = compareTwoConfigs(defCfg, locCfg, toPrint=toPrint)
 
     else:
         log.info('Reading config from: %s', iniFile)
+        # initialize our final configparser object
+        modCfg = configparser.ConfigParser()
+        modCfg.optionxform = str
         # Finally read it
-        cfg.read(iniFile)
+        modCfg.read(iniFile)
+        modDict = {}
         # Write config to log file
         if toPrint:
-            logUtils.writeCfg2Log(cfg, modName)
+            logUtils.writeCfg2Log(modCfg, modName)
 
-    return cfg, modDict
+    return modCfg, modDict
+
+
+def compareTwoConfigs(defCfg, locCfg, toPrint=False):
+    """ compare locCfg to defCfg and return a cfg object and modification dict
+
+        Parameters
+        -----------
+        defCfg: configparser object
+            default configuration
+        locCfg: configuration object
+            configuration that is compared to defCfg
+        toPrint: bool
+            flag if config shall be printed to log
+
+        Returns
+        --------
+        modDict: dict
+            dictionary containing only differences from default
+        cfg: configParser object
+            contains combined config
+
+    """
+
+    # initialize modDict and printOutInfo
+    modDict = {}
+    printOutInfo = list()
+
+    # initialize our final configparser object
+    modCfg = configparser.ConfigParser()
+    modCfg.optionxform = str
+
+    # loop through all sections of the defCfg
+    for section in defCfg.sections():
+        modDict[section] = {}
+        modCfg.add_section(section)
+        printOutInfo.append('\t' + section)
+
+        # Take section and loop through keys
+        for key in defCfg.items(section):
+            defValue = key[1]
+            # check if key is also in the localCfg
+            if locCfg.has_option(section, key[0]):
+                locValue = locCfg.get(section, key[0])
+                if locValue != defValue:
+                    # if yes and if this value is different add this key to
+                    # the cfg that will be returned
+                    modCfg.set(section, key[0], locValue)
+                    printOutInfo.append('\t\t%s : %s \t(default value was : %s)'
+                            % (key[0], locValue, defValue))
+                    modString = [locValue, defValue]
+                    modDict[section][key[0]] = modString
+                else:
+                    modCfg.set(section, key[0], defValue)
+                    printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
+
+                # remove the key from the localCfg
+                locCfg.remove_option(section, key[0])
+
+            # if key is not in the localCfg, just take default
+            else:
+                modCfg.set(section, key[0], defValue)
+                printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
+
+    # Now check if there are some sections/ keys left in the local cfg and
+    # that are not used
+    for section in locCfg.sections():
+        if defCfg.has_section(section):
+            for key in locCfg.items(section):
+                # an exception is made for thickness values that are added for the features of a releaseScenario,
+                # entrainment Scenario or secondar. release scenario
+                # these are added to the configuration and also to the modDict if variation is applied
+                validItems = ['entrainmentScenario', 'DEM', 'secondaryReleaseScenario']
+                searchItems = ['relTh', 'entTh', 'secondaryRelTh']
+                if any(s in key[0] for s in searchItems) or key[0] in validItems:
+                    locValue = locCfg.get(section, key[0])
+                    modCfg.set(section, key[0], locValue)
+                    printOutInfo.append('\t\t%s : %s added to %s' % (key[0], locValue, section))
+                    if '$' in locValue:
+                        modString = [locValue, locValue.split('$')[0]]
+                        modDict[section][key[0]] = modString
+                else:
+                    log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
+        else:
+            modCfg.add_section(section)
+            printOutInfo.append('Additional section [\'%s\'] is added to the configuration.' % (section))
+            for key in locCfg.items(section):
+                printOutInfo.append('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
+                         (key[0], section))
+                modCfg.set(section, key[0], key[1])
+                printOutInfo.append('\t\t%s : %s' % (key[0], key[1]))
+
+    # Check if cfg should be printed. If not, give a hint and
+    # ALWAYS print the keys and values that are different from default
+    if toPrint:
+        for element in printOutInfo:
+            log.info(element)
+    else:
+        log.info('Print is turned off, giving difference summary')
+        for element in printOutInfo:
+            if 'default value was' in element:
+                log.info(element)
+
+    return modDict, modCfg
 
 
 def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
@@ -644,3 +676,27 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
     simDF.to_csv(configFiles)
 
     return configFiles
+
+
+def convertToCfgList(parameterList):
+    """ convert a list into a string where inidividual list items are separated by |
+
+        Parameters
+        -----------
+        parameterList: list
+            list of parameter values
+
+        Returns
+        ---------
+        parameterString: str
+            str with parameter values separated by |
+    """
+
+    if len(parameterList) == 0:
+        parameterString = ''
+    else:
+        parameterString = parameterList[0]
+        for item in parameterList[1:]:
+            parameterString = parameterString + '|' + item
+
+    return parameterString

@@ -79,8 +79,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
 
         # only produce a plot if it does not already exists
-        # make sure to remove the outpu folder if you want to regenerate the plot
-        # this enables to append simulations to an already existing output without regenerating all plits
+        # make sure to remove the Outputs folder if you want to regenerate the plot
+        # this enables to append simulations to an already existing output without regenerating all plots
         if not plotName.is_file():
             # Load data
             raster = IOf.readRaster(fileName, noDataToNan=True)
@@ -108,10 +108,13 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             cmap.set_bad(alpha=0)
             # uncomment this to set the under value for discrete cmap transparent
             # cmap.set_under(alpha=0)
-            rowsMinPlot = rowsMin*cellSize
-            rowsMaxPlot = (rowsMax+1)*cellSize
-            colsMinPlot = colsMin*cellSize
-            colsMaxPlot = (colsMax+1)*cellSize
+            # add origin of data to extent and cellssize to rows and columns
+            xllcenter = raster['header']['xllcenter']
+            yllcenter = raster['header']['yllcenter']
+            rowsMinPlot = rowsMin*cellSize + yllcenter
+            rowsMaxPlot = (rowsMax+1)*cellSize + yllcenter
+            colsMinPlot = colsMin*cellSize + xllcenter
+            colsMaxPlot = (colsMax+1)*cellSize + xllcenter
             extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
 
             # add DEM hillshade with contour lines

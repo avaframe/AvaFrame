@@ -13,6 +13,7 @@ import pickle
 from datetime import datetime
 import matplotlib.path as mpltPath
 from itertools import product
+import configparser
 
 # Local imports
 from avaframe.version import getVersion
@@ -51,42 +52,76 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def setRelThIni(avaDir, modName, cfgInitial):
-    """ Add thickness values in configuration file according to thickness flags, ini settings or shapefile attributes
-        and create one cfgFile for each releaseScenario
+def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
+    """ preprocess information from configuration, read input data and gather into inputSimFiles,
+        create one config object for each of all desired simulations,
+        create dataFrame with one line per simulations of already existing sims in avalancheDir
 
         Parameters
-        -----------
-        avaDir: str or pathlib path
-            path to avalanche directory
-        modName: module
-            computational module
-        cfgInitial: configparser object
-            full configuration settings of com Module
+        ------------
+        avalancheDir: str or pathlib Path
+            path to avalanche data
+        cfgMain: configparser object
+            main configuration of AvaFrame
+        cfgInfo: str or pathlib Path or configparser object
+            path to configuration file if overwrite is desired - optional
+            if not local (if available) or default configuration will be loaded
+            if cfgInfo is a configparser object take this as initial config
 
         Returns
         --------
-        inputSimFilesAll: dict
-            dictionary with infos about input data file paths and flags for entrainment, resistance
-        cfgFilesRels: list
-            list of paths to one cfgFile for each releaseScenario with updated thickness values
-
+        simDict: dict
+            dictionary with one key per simulation to perform including its config object
+        inputSimFiles: dict
+            dictionary with input files info
+        outDir: str
+            path to store outputs
     """
 
-    # check if thickness settings in ini file are valid
-    for thType in ['entTh', 'relTh', 'secondaryRelTh']:
-        _ = dP.checkThicknessSettings(cfgInitial, thType)
+    modName = str(pathlib.Path(com1DFA.__file__).stem)
 
-    # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
-    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial)
+    # read initial configuration
+    if isinstance(cfgInfo, (pathlib.Path, str)) or cfgInfo == '':
+        cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
+    elif isinstance(cfgInfo, configparser.ConfigParser):
+        cfgStart = cfgInfo
 
-    # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgInitial)
+    # Create output and work directories
+    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
+                                               cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
-    return inputSimFilesAll, cfgFilesRels
+    # read input data files (release, DEM, etc.) and update configuration with this
+    inputSimFilesAll, cfgStart = com1DFATools.setRelThIni(avalancheDir, com1DFA, cfgStart)
+
+    # initialise reportDictList and flag indicating whether simulations have been performed
+    reportDictList = []
+    simsPerformed = False
+
+    # reset variationDict
+    variationDict = ''
+
+    # create a dictionary with information on which parameter shall be varied for individual simulations
+    # compare cfgStart to default module config for this
+    modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgStart)
+
+    # first fetch info on already existing simulations in Outputs
+    # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
+    simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
+
+    # create a configuration object per simulation to run (from configuration) gathered in simDict
+    # only new simulations are included in this simDict
+    # key is simName and corresponds to one simulation
+    simDict = prepareVarSimDict(modCfg, inputSimFilesAll, variationDict, simNameOld=simNameOld)
+
+    # write full configuration (.ini file) to file
+    date = datetime.today()
+    fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
+    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+
+    return simDict, outDir, inputSimFilesAll, simDFOld
 
 
-def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
+def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
 
         Parameters
@@ -95,13 +130,15 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
             path to avalanche data
         cfgMain: configparser object
             main configuration of AvaFrame
-        cfgFile: str or pathlib Path
+        cfgInfo: str or pathlib Path or configparser object
             path to configuration file if overwrite is desired - optional
+            if not local (if available) or default configuration will be loaded
+            if cfgInfo is a configparser object take this as initial config
 
         Returns
         --------
         dem: dict
-            dictionary with dem header and raster data (that has been used for computations)
+            dictionary with dem header and raster data (that has been used for the final run)
         plotDict: dict
             information on result plot paths
         reportDictList: list
@@ -111,147 +148,148 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
             of the already existing ones)
     """
 
-    modName = 'com1DFA'
+    # preprocessing to create configuration objects for all simulations to run
+    simDict, outDir, inputSimFiles, simDFOld = com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=cfgInfo)
 
-    # read initial configuration
-    cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, toPrint=False)
+    # TODO: once it is confirmed that inputSimFiles is not changed within sim
+    # keep for now for testing
+    inputSimFilesTest = inputSimFiles.copy()
 
-    # Create output and work directories
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
-                                               cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
-    # create one cfg files for each releaseScenarios and fetch input data
-    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart)
-
-    # initialise reportDictList and flag indicating whether simulations have been performed
+    # initialize reportDict list
     reportDictList = []
-    simsPerformed = False
 
-    # loop over cfg files of all release scenarios
-    for cfgFileRel in cfgFilesRels:
+    # is there any simulation to run?
+    if bool(simDict):
 
-        log.debug('Full cfg file %s' % cfgFileRel)
+        # reset simDF and timing
+        simDF = ''
+        tCPUDF = ''
 
-        # copy inputSimFilesAll - as this becomes changed according to current release scenario
-        inputSimFiles = inputSimFilesAll.copy()
+        # loop over all simulations
+        for cuSim in simDict:
 
-        # reset variationDict
-        variationDict = ''
+            # load configuration object for current sim
+            cfg = simDict[cuSim]['cfgSim']
 
-        # get information on simulations that shall be performed according to parameter variation
-        modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFileRel)
+            # check configuraton for consistency
+            checkCfg.checkCfgConsistency(cfg)
 
-        # select release input data according to chosen release scenario
-        inputSimFiles = gI.selectReleaseScenario(inputSimFiles, modCfg['INPUT'])
+            # fetch simHash for current sim
+            simHash = simDict[cuSim]['simHash']
+            # append configuration to dataframe
+            simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
 
-        # TODO: once it is confirmed that inputSimFiles is not changed within sim
-        # keep for now for testing
-        inputSimFilesTest = inputSimFiles.copy()
-        # first remove demFile entry as this is removed once the simulation DEMs are set
-        inputSimFilesTest.pop('demFile')
+            # log simulation name
+            log.info('Run simulation: %s' % cuSim)
 
-        # create a list of simulations and generate an individual configuration object for each simulation
-        # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
-        # first get info on already existing simulations in Outputs
-        simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
+            # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
+            dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg,
+                avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
+            simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
 
-        # prepare simulations to run (only the new ones)
-        simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+            # TODO check if inputSimFiles not changed within sim
+            for key in inputSimFilesTest:
+                if key != 'releaseScenario':
+                    if inputSimFilesNEW[key] != inputSimFilesTest[key]:
+                        log.error('InputFilesDict has changed')
 
-        # is there any simulation to run?
-        if bool(simDict):
+            # append time to data frame
+            tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
 
-            # reset simDF and timing
-            simDF = ''
-            tCPUDF = ''
+            # add report dict to list for report generation
+            reportDictList.append(reportDict)
 
-            # loop over all simulations
-            for cuSim in simDict:
+            # create hash to check if configuration didn't change
+            simHashFinal = cfgUtils.cfgHash(cfgFinal)
+            if simHashFinal != simHash:
+                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+                message = 'Simulation configuration has been changed since start'
+                log.error(message)
+                raise AssertionError(message)
 
-                # load configuration dictionary for cuSim
-                cfg = simDict[cuSim]['cfgSim']
-
-                # check configuraton for consistency
-                checkCfg.checkCfgConsistency(cfg)
-
-                # save configuration settings for each simulation
-                simHash = simDict[cuSim]['simHash']
-                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
-                # append configuration to dataframe
-                simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
-
-                # log simulation name
-                log.info('Run simulation: %s' % cuSim)
-
-                # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
-                dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg,
-                    avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
-                simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
-
-                # TODO check if inputSimFiles not changed within sim
-                if inputSimFilesNEW != inputSimFilesTest:
-                    log.error('InputFilesDict has changed')
-
-                tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
-
-                # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-                # add report dict to list for report generation
-                reportDictList.append(reportDict)
-
-                # create hash to check if configuration didn't change
-                simHashFinal = cfgUtils.cfgHash(cfgFinal)
-                if simHashFinal != simHash:
-                    cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
-                    message = 'Simulation configuration has been changed since start'
-                    log.error(message)
-                    raise AssertionError(message)
-
-            # prepare for writing configuration info
-            simDF = cfgUtils.convertDF2numerics(simDF)
-            # add cpu time info to the dataframe
-            simDF = simDF.join(tCPUDF)
-
-            # append new simulations configuration to old ones (if they exist),
-            # return total dataFrame and write it to csv
-            simDFNew = pd.concat([simDF, simDFOld], axis=0)
-            cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
-
-            # write full configuration (.ini file) to file
-            date = datetime.today()
-            fileName = 'sourceConfiguration_' + cfg['INPUT']['releaseScenario'] + '_' +\
-                       '{:%d_%m_%Y_%H_%M_%S}'.format(date)
-            cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
-            simsPerformed = True
-
-        else:
-            log.warning('There is no simulation to be performed for releaseScenario')
-
-    if simsPerformed:
-        # Set directory for report
-        reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
-        # Generate plots for all peakFiles
-        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
-        # write report
-        gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+        # postprocessing: writing report, creating plots
+        dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictList)
 
         return dem, plotDict, reportDictList, simDFNew
+
     else:
 
+        log.warning('There is no simulation to be performed for releaseScenario')
+
         return 0, {}, [], ''
+
+
+def com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictList):
+    """ postprocessing of simulation results: save configuration to csv, create plots and report
+
+        Parameters
+        -----------
+        simDF: pandas DataFrame
+            dataframe with one line per simulation and info on parameters used
+        tCPUDF:
+            computation time
+        simDFOld: pandas DataFrame
+            dataframe with one line per simulation and info on parameters used before
+            simulations have been performed
+        cfg: configparser object
+            full configuration object of all sims
+        cfgMain: configparser object
+            global avaframe config
+        dem: dict
+            dem dictionary
+        reportDictList: list
+            list of dictionaries for each simulation with info for report creation
+
+        Returns
+        --------
+        dem: dict
+            dictionary with dem header and raster data (that has been used for final sim)
+        plotDict: dict
+            information on result plot paths
+        reportDictList: list
+            list of report dictionaries for all performed simulations
+        simDFNew: pandas dataFrame
+            configuration dataFrame of the simulations computed and the ones that have been already
+            in the Outputs folder (if no simulation computed, configuration dataFrame
+            of the already existing ones)
+    """
+
+    modName = 'com1DFA'
+    avalancheDir = cfg['GENERAL']['avalancheDir']
+
+    # prepare for writing configuration info
+    simDF = cfgUtils.convertDF2numerics(simDF)
+    # add cpu time info to the dataframe
+    simDF = simDF.join(tCPUDF)
+
+    # append new simulations configuration to old ones (if they exist),
+    # return total dataFrame and write it to csv
+    simDFNew = pd.concat([simDF, simDFOld], axis=0)
+    cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
+
+    # Set directory for report
+    reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
+    # Generate plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    # write report
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+
+    return dem, plotDict, reportDictList, simDFNew
 
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     """ Run main com1DFA model
 
-    This will compute a dense flow avalanche
+    This will compute a dense flow avalanche with the settings specified in cfg and the name cuSimName
 
     Parameters
     ----------
-    cfg : dict
-        configuration read from ini file
+    cfg : configparser object
+        configuration object for simulation to be performed
     cuSimName: str
         name of simulation
     inputSimFiles: dict
-        dictionary with input files
+        dictionary with input files, release scenario chosen according to inputSimFiles['releaseScenario']
     avaDir : str or pathlib object
         path to avalanche directory
     outDir: str or pathlib object
@@ -263,19 +301,38 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     -------
     reportDictList : list
         list of dictionaries that contain information on simulations that can be used for report generation
+    dem: dict
+        dictionary with info on header and dem data
+    reportDict: dict
+        dictionary that contains information on simulation that can be used for report generation
+    cfg: configparser object
+        configuration object for simulation to be performed
+    infoDict['tCPU']: dict
+        info on cpu timing
+    inputSimFiles: dict
+        dictionary with input files
+    particlesList: list
+        list of particle dictionaries for all saving time steps
+    fieldsList: list
+        list of fields dictionaries for all saving time steps
+    Tsave: numpy array
+        vector of saving time steps
     """
 
-    # Setup configuration
+    # load GENERAL configuration
     cfgGen = cfg['GENERAL']
 
-    # create required input from files
+    # select release area input data according to chosen release scenario
+    inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg['INPUT']['releaseScenario'])
+
+    # create required input from input files
     demOri, inputSimLines = prepareInputData(inputSimFiles, cfg)
 
     if cfgGen.getboolean('iniStep'):
         # append buffered release Area
         inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
 
-    # find out which simulations to perform
+    # set thickness values for the release area, entrainment and secondary release areas
     relName, inputSimLines, badName = prepareReleaseEntrainment(cfg, inputSimFiles['releaseScenario'], inputSimLines)
 
     log.info('Perform %s simulation' % cuSimName)
@@ -283,6 +340,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
+
+    # initialize particles, fields, dem
     particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, outDir, demOri, inputSimLines, cuSimName)
 
     # ------------------------
@@ -326,7 +385,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
 
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
-    """ get Simulation to run for a given release
+    """ set thickness values for release, secondary release and entrainment
+        set flag to append _AF to release scenario name if it includes an underscore
 
     Parameters
     ----------
@@ -341,11 +401,12 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     -------
     relName : str
         release name
-    relDict : list
-        release dictionary
+    inputSimLines : dict
+        dictionary with dictionaries with input data infos now updated with thickness values (releaseLine, entLine, ...)
     badName : boolean
         changed release name
     """
+
     # Set release areas and release thickness
     relName = rel.stem
     badName = False
@@ -2263,7 +2324,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             dictionary with parameter to be varied as key and list of it's values
         simNameOld: list
             list of simulation names that already exist (optional). If provided,
-            only carry on simulation that do not exist
+            only carry on simulations that do not exist
 
         Returns
         -------
@@ -2290,19 +2351,19 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
     simDict = {}
 
-    # create release scenario name for simulation name
-    rel = inputSimFiles['relFiles'][0]
-    relName = rel.stem
-    if '_' in relName:
-        relNameSim = relName + '_AF'
-    else:
-        relNameSim = relName
-
     # loop over all simulations that shall be performed according to variationDF
     # one row per simulation
     for row in variationDF.itertuples():
         # convert full configuration to dict
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
+        # create release scenario name for simulation name
+        rel, cfgSim = gI.fetchReleaseFile(inputSimFiles, row._asdict()['releaseScenario'], cfgSim, variationDict['releaseScenario'])
+        relName = rel.stem
+        if '_' in relName:
+            relNameSim = relName + '_AF'
+        else:
+            relNameSim = relName
+
         # update info for parameters that are given in variationDF
         for parameter in variationDict:
             # add simType
@@ -2316,6 +2377,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             if parameter in keyList:
                 # set thickness value according to percent variation info
                 cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim, cfgSim['GENERAL']['simTypeActual'], row)
+            elif parameter == 'releaseScenario':
+                cfgSim['INPUT'][parameter] = row._asdict()[parameter]
             else:
                 cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
 
@@ -2349,6 +2412,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                 'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                 'cfgSim': cfgSimObject}
+            # write configuration file
+            cfgUtils.writeCfgFile(cfgSimObject['GENERAL']['avalancheDir'], com1DFA, cfgSimObject, fileName=simName)
         else:
             log.warning('Simulation %s already exists, not repeating it' % simName)
 

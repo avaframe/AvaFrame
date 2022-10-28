@@ -1378,7 +1378,7 @@ def test_initializeFields():
     assert ~fields['computeP']
 
 
-def test_prepareVarSimDict(caplog):
+def test_prepareVarSimDict(tmp_path, caplog):
     """ test prepare variation sim dictionary """
 
     # setup required input
@@ -1396,12 +1396,14 @@ def test_prepareVarSimDict(caplog):
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / '..' / 'data' / 'avaAlr'
     avaDEM = avaDir / 'Inputs' / 'avaAlr.asc'
+    avaDirTest = pathlib.Path(dirName, 'data', 'avaTest')
     standardCfg['INPUT']['DEM'] = 'avaAlr.asc'
-
-    relPath = pathlib.Path('test', 'relTest.shp')
+    standardCfg['GENERAL']['avalancheDir'] = str(avaDirTest)
+    relPath = pathlib.Path(avaDir, 'Inputs', 'REL', 'relAlr.shp')
+    print('avaDIIIIR', relPath)
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
-    variationDict = {'rho': np.asarray([200., 150.])}
+    variationDict = {'rho': np.asarray([200., 150.]), 'releaseScenario': ['relAlr']}
 
 
     # call function to be tested
@@ -1416,13 +1418,13 @@ def test_prepareVarSimDict(caplog):
                           'entThDistVariation': '', 'relThDistVariation': '',
                           'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
 
-    testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
+    testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
-
+    testCfg['GENERAL']['avalancheDir'] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
-    simName1 = 'relTest_' + simHash + '_entres_dfa'
-    testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relTest',
+    simName1 = 'relAlr_' + simHash + '_entres_dfa'
+    testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relAlr',
                            'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
     for key in testDict[simName1]:
@@ -1433,10 +1435,10 @@ def test_prepareVarSimDict(caplog):
             assert simDict[simName1]['cfgSim'][section][key] == testCfg[section][key]
 
     # call function to be tested
-    relPath = pathlib.Path('test', 'relTest_extended.shp')
+    #relPath = pathlib.Path('test', 'relTest_extended.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
-    variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent']}
+    variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent'], 'releaseScenario': ['relAlr']}
     simDict2 = com1DFA.prepareVarSimDict(
         standardCfg, inputSimFiles, variationDict)
 
@@ -1452,11 +1454,12 @@ def test_prepareVarSimDict(caplog):
                            'relThRangeVariation': '',
                            'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
                            'meshCellSizeThreshold': '0.001'}
-    testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
+    testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
+    testCfg2['GENERAL']['avalancheDir'] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
-    simName2 = 'relTest_extended_AF_' + simHash2 + '_entres_dfa'
-    testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
+    simName2 = 'relAlr_' + simHash2 + '_entres_dfa'
+    testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relAlr',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
 
     for key in testDict2[simName2]:
@@ -1591,7 +1594,7 @@ def test_runCom1DFA(tmp_path, caplog):
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
-        avaDir, cfgMain, cfgFile=cfgFile)
+        avaDir, cfgMain, cfgInfo=cfgFile)
 
     dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
@@ -1639,7 +1642,7 @@ def test_runCom1DFA(tmp_path, caplog):
 
     initProj.cleanModuleFiles(avaDir, com1DFA, deleteOutput=False)
     with caplog.at_level(logging.WARNING):
-        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=cfgFile)
+        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgInfo=cfgFile)
     assert 'There is no simulation to be performed' in caplog.text
 
 

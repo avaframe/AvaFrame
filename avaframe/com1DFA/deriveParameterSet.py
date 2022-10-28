@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def getVariationDict(avaDir, fullCfg, modDict):
     """ Create a dictionary with all the parameters that shall be varied from the standard configuration;
-        ONLY accounts for variations in section GENERAL
+        ONLY accounts for variations in section GENERAL and INPUT/releaseScenario
 
         Parameters
         -----------
@@ -65,6 +65,9 @@ def getVariationDict(avaDir, fullCfg, modDict):
                     variations[key] = locValue
                     defValue = modDict[section][key][1]
                     log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
+
+    # add releaseScenario info to variations dict - also if this parameter is not varied
+    variations['releaseScenario'] = fullCfg['INPUT']['releaseScenario'].split('|')
 
     # print modified parameters
     for sec in modDict:
@@ -155,15 +158,17 @@ def validateVarDict(variationDict, standardCfg):
     return variationDict
 
 
-def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile):
-    """ read info on which simulations shall be performed according to parameter variation
+def getParameterVariationInfo(avalancheDir, module, cfgStart):
+    """ create a variation dictionary according to parameter variation given in cfg object
 
         Parameters
         -----------
         avalancheDir: str or pathlib Path
             path to avalanche directory
-        cfgFile: str or pathlib Path
-            path to override configuration file
+        module: module
+
+        cfgStart: configparser object
+            full configuration object
 
         Returns
         --------
@@ -174,9 +179,10 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile):
 
     """
 
-    # generate list of simulations from desired configuration
-    # Load full configuration
-    modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+    # Load full configuration: default model settings to compare configuration with modifications
+    defCfg = cfgUtils.getDefaultModuleConfig(module, toPrint=False)
+    modInfo, modCfg = cfgUtils.compareTwoConfigs(defCfg, cfgStart, toPrint=True)
+    # create variation dictionary from modification with respect to the default settings
     variationDict = getVariationDict(avalancheDir, modCfg, modInfo)
 
     # add avalanche directory info to cfg
@@ -187,7 +193,7 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile):
 
 def getThicknessValue(cfg, inputSimFiles, fName, thType):
     """ set thickness values according to settings chosen and add info to cfg
-        if thFromShp = True - add in INPUT section thickness and id info
+        if thFromShp = True - add in INPUT section thickness and id info and ci95
         if thFromShp = False - check format of thickness value in GENERAL section
 
         Parameters
@@ -217,6 +223,12 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     thFlag = thType + 'FromShp'
     thDistVariation = thType + 'DistVariation'
 
+    # create prefix for release area
+    if thType == 'relTh':
+        fNamePrefix = fName + '_'
+    else:
+        fNamePrefix = ''
+
     # if thickness should be read from shape file
     if cfg['GENERAL'].getboolean(thFlag):
         # if at least one but not all features in a shapefile have a thickness value - error
@@ -238,10 +250,11 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
                 thThickness = thThickness + '|' + thicknessList[count+1]
                 thCi95 = thCi95 + '|' + ci95List[count+1]
 
-            # add in INPUT section
-            cfg['INPUT'][thType + 'Id'] = thId
-            cfg['INPUT'][thType + 'Thickness'] = thThickness
-            cfg['INPUT'][thType + 'Ci95'] = thCi95
+            # add in INPUT section for each feature thickness, id and ci95 values
+            # append name of release Scenario in case multiple are provided
+            cfg['INPUT'][fNamePrefix + thType + 'Id'] = thId
+            cfg['INPUT'][fNamePrefix + thType + 'Thickness'] = thThickness
+            cfg['INPUT'][fNamePrefix + thType + 'Ci95'] = thCi95
 
     else:
         # if thickness should be read from ini file - check if format is correct
@@ -342,10 +355,10 @@ def splitVariationToArraySteps(value, key, fullCfg):
         if '-' in itemsL[0]:
             itemsP = itemsL[0].split('-')[1]
             percentsStart = 1. - float(itemsP) / 100.
-            percentsStop = 1. - float(itemsP) / 100.
+            percentsStop = 1.0
         elif '+' in itemsL[0]:
             itemsP = itemsL[0].split('+')[1]
-            percentsStart = 1. + float(itemsP) / 100.
+            percentsStart = 1.0
             percentsStop = 1. + float(itemsP) / 100.
         else:
             percentsStart = 1. - float(itemsL[0]) / 100.
