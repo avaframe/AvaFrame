@@ -13,11 +13,14 @@ from matplotlib.colors import LightSource
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in3Utils.geoTrans as gT
+from avaframe.com1DFA import com1DFA
+from avaframe.in3Utils import cfgUtils
+from avaframe.com1DFA import particleTools 
 
 log = logging.getLogger(__name__)
 
 
-def plotRangeTime(mtiInfo, cfgRangeTime):
+def plotRangeTime(mtiInfo, cfgRangeTime, F, index):
     """ plot range-time diagram with avalanche front and colorcoded average values of result parameter
 
         Parameters
@@ -28,8 +31,22 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
         cfgRangeTime: configparser object
             configuration settings for range time diagram - here used avalancheDir, rangeTimeResType,
             simHash, and from plots width, height, lw, ..
+        index: avalanche index 
 
     """
+    # Experimental data 
+    file = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C10_radarCS.csv"
+    Time = [x.split(',')[0] for x in open(file).readlines()]
+    Distance_to_radar = [x.split(',')[1] for x in open(file).readlines()]
+    velocity = [x.split(',')[2] for x in open(file).readlines()]
+
+    time = [i*10**-1 for i in range(0, len(Distance_to_radar[1:]))]
+    distance_to_radar = [float(i) for i in Distance_to_radar[1:]]
+
+    # Selecting the correct time  start for the experimental data  
+    indexes = velocity.index(next((i for i in velocity[1:] if float(i)>1),None))
+    time_treated = [i-time[indexes] for i in time[indexes:]]  
+    distance_to_radar_treated = distance_to_radar[indexes:]    
 
     # fetch required input info
     mti = mtiInfo['mti']
@@ -53,7 +70,20 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     # create plot
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     ax = fig.add_subplot(1, 1, 1)
-    plt.title(mtiInfo['plotTitle'])
+    
+    ava_num = index 
+    if F.frictModel[0] =='Coulomb':
+        plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index]), fontsize=18)
+    elif F.frictModel[0] =='Voellmy':
+        plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index])+", xsi="+str(F.xsi[index]), fontsize=18)
+    elif F.frictModel[0] =='samosAT':
+        plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index])+", tau0="+str(F.tau0[index]), fontsize=18)
+    else:
+        plt.title(mtiInfo['plotTitle']+"No friction model found!", fontsize=18)
+        
+    #plt.title(mtiInfo['plotTitle']+'mu='+F.mu[ava_num])
+    print(F.mu[ava_num])  
+    
     pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
     plt.plot(timeList, rangeList, '.', color='black', markersize=4,
              label='avalanche front')
@@ -82,8 +112,12 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     #FSO: is this needed?
     # cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
 
+    # add experimental AvaNode data 
+    plt.plot(time_treated, distance_to_radar_treated, color = 'red', linestyle = 'dashdot',linewidth=1, label='AvaNode location')  # velocity
+
     # add info on avalanche front in legend
-    plt.legend(facecolor='grey', framealpha=0.2, loc='lower right', fontsize=8)
+    plt.legend(facecolor='grey', framealpha=0.2, loc='upper left', fontsize=8)
+
 
     # if tt-diagram add beta point info
     if mtiInfo['type'] == 'thalwegTime':

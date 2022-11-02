@@ -79,11 +79,11 @@ for i in range(0, number_files):
         
 #%% Experiment 
 
-# Reading the experiment files 
-file = avalancheDir + "/220222_C10_avalanche_GPS.txt"
+# Reading the experiment files for AvaNode C07 
+file = avalancheDir + "/AvaNode_data/220222_C07_avalanche_GPS.txt"
 isExist = os.path.exists(file)
 if isExist== False:
-    print("No experiment data found: the AvaNode data should be in "+avalancheDir+"/220222_C10_avalanche_GPS.txt")
+    print("No experiment data found: the AvaNode data should be in "+avalancheDir+"/AvaNode_data/220222_C10_avalanche_GPS.txt")
     key = 0 
 else:      
     Time_experiment = [x.split(',')[0] for x in open(file).readlines()]
@@ -101,12 +101,70 @@ else:
     # Deleting the null velocity before the blasting  
     threshold = 1             # Warning: arbitrary 
     index = vel.index(next((i for i in vel if int(i)>threshold),None))
-    vel_experimental= vel[index:]
-    time_experimental = [i-time[index] for i in time[index:]] 
+    vel_experimental_C07= vel[index:]
+    time_experimental_C07 = [i-time[index] for i in time[index:]] 
+    
+    # Key to plot only if the experimental data have been found 
+    key = 1 
+
+# Reading the experiment files for AvaNode C09
+file = avalancheDir + "/AvaNode_data/220222_C09_avalanche_GPS.txt"
+isExist = os.path.exists(file)
+if isExist== False:
+    print("No experiment data found: the AvaNode data should be in "+avalancheDir+"/AvaNode_data/220222_C09_avalanche_GPS.txt")
+    key = 0 
+else:      
+    Time_experiment = [x.split(',')[0] for x in open(file).readlines()]
+    velN = [x.split(',')[7] for x in open(file).readlines()]
+    velE = [x.split(',')[8]for x in open(file).readlines()]
+    velD = [x.split(',')[9] for x in open(file).readlines()]
+    
+    # Calculating the velocity norm
+    vel = [None]*(len(velN)-1)
+    time = [None]*(len(velN)-1)
+    for i in range(1, len(velN)):
+        vel[i-1] = np.sqrt(int(velN[i])**2 + int(velE[i])**2 + int(velD[i])**2) * 10**-3
+        time[i-1] = int(Time_experiment[i])*10**-6
+    
+    # Deleting the null velocity before the blasting  
+    threshold = 1             # Warning: arbitrary 
+    index = vel.index(next((i for i in vel if int(i)>threshold),None))
+    vel_experimental_C09 = vel[index:]
+    time_experimental_C09 = [i-time[index] for i in time[index:]] 
     
     # Key to plot only if the experimental data have been found 
     key = 1 
     
+    
+# Reading the experiment files for AvaNode C10  
+file = avalancheDir + "/AvaNode_data/220222_C10_avalanche_GPS.txt"
+isExist = os.path.exists(file)
+if isExist== False:
+    print("No experiment data found: the AvaNode data should be in "+avalancheDir+"/AvaNode_data/220222_C10_avalanche_GPS.txt")
+    key = 0 
+else:      
+    Time_experiment = [x.split(',')[0] for x in open(file).readlines()]
+    velN = [x.split(',')[7] for x in open(file).readlines()]
+    velE = [x.split(',')[8]for x in open(file).readlines()]
+    velD = [x.split(',')[9] for x in open(file).readlines()]
+    
+    # Calculating the velocity norm
+    vel = [None]*(len(velN)-1)
+    time = [None]*(len(velN)-1)
+    for i in range(1, len(velN)):
+        vel[i-1] = np.sqrt(int(velN[i])**2 + int(velE[i])**2 + int(velD[i])**2) * 10**-3
+        time[i-1] = int(Time_experiment[i])*10**-6
+    
+    # Deleting the null velocity before the blasting  
+    threshold = 1             # Warning: arbitrary 
+    index = vel.index(next((i for i in vel if int(i)>threshold),None))
+    vel_experimental_C10= vel[index:]
+    time_experimental_C10 = [i-time[index] for i in time[index:]] 
+    
+    # Key to plot only if the experimental data have been found 
+    key = 1 
+
+
     
     
     
@@ -123,9 +181,9 @@ if key == 1:
         nrow = 2
         ncol = 1 
     elif number_files == 3: 
-        fig, ax = plt.subplots(2,2,figsize=(20, 20),sharex=True,sharey=True) 
-        nrow = 2
-        ncol = 2 
+        fig, ax = plt.subplots(1,3,figsize=(20, 20),sharex=True,sharey=True) 
+        nrow = 1
+        ncol = 3
     elif number_files == 4: 
         fig, ax = plt.subplots(2,2,figsize=(20, 20),sharex=True,sharey=True) 
         nrow = 2
@@ -166,19 +224,23 @@ if key == 1:
     #     else:
     #         friction_formulation[i] = 'explicit'
     
+    # Colormap 
+    cmap = cm.vik
+    rgba = cmap(0.2) 
+        
     # For 1D plots 
     if nrow == 1 or ncol == 1:
         for i in range(0,max(nrow,ncol)):
-            ax[i].plot(Time[simu_number], Max[simu_number], color='blue')  # max
-            ax[i].plot(Time[simu_number], Min[simu_number], color='blue')  # min
-            ax[i].plot(Time[simu_number], Mean[simu_number], color='black',
-                     linestyle='dashed', markersize=1.8)  # mean
-            ax[i].plot(Time[simu_number], Median[simu_number], linestyle='dotted',
-                     color='black', markersize=1.8)  # median
+            ax[i].plot(Time[simu_number], Max[simu_number], color=cmap(0.01))  # max
+            ax[i].plot(Time[simu_number], Min[simu_number], color=cmap(0.01))  # min
+            ax[i].plot(Time[simu_number], Mean[simu_number], linestyle='dashed', color=cmap(0.7), markersize=1.8)  # mean
+            ax[i].plot(Time[simu_number], Median[simu_number], linestyle='dotted', color=cmap(0.7), markersize=1.8)  # median
             # filling the space between the max and min
-            ax[i].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color='blue', alpha=0.2)
+            ax[i].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color=cmap(0.2), alpha=0.2)
             # Experiment (AvaRange)
-            ax[i].plot(time_experimental, vel_experimental, color = 'red')  # AvaNode velocity
+            ax[i].plot(time_experimental_C07, vel_experimental_C07, color=cmap(0.95))  # AvaNode velocity
+            ax[i].plot(time_experimental_C09, vel_experimental_C09, color=cmap(0.95))  # AvaNode velocity
+            ax[i].plot(time_experimental_C10, vel_experimental_C10, color=cmap(0.95))  # AvaNode velocity
             # Plotting parameters
             if friction_model=='Coulomb':
                 ax[i].set_title("mu ="+str(F.mu[simu_number]), fontsize=18)
@@ -188,23 +250,23 @@ if key == 1:
                 ax[i].set_title("mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number]), fontsize=18)
             else:
                 ax[i].set_title("No friction model found!", fontsize=18)
-            ax[i].set_xlim(right=max_time)
+            #ax[i].set_xlim(right=max_time)
             simu_number += 1 
             
-    # For 2D plots         
+    # For 2D plots       
     else: 
         for i in range (0,nrow):
             for j in range (0,ncol):
-                ax[i,j].plot(Time[simu_number], Max[simu_number], color='blue')  # max
-                ax[i,j].plot(Time[simu_number], Min[simu_number], color='blue')  # min
-                ax[i,j].plot(Time[simu_number], Mean[simu_number], color='black',
-                         linestyle='dashed', markersize=1.8)  # mean
-                ax[i,j].plot(Time[simu_number], Median[simu_number], linestyle='dotted',
-                         color='black', markersize=1.8)  # median
+                ax[i,j].plot(Time[simu_number], Max[simu_number], color=cmap(0.01))  # max
+                ax[i,j].plot(Time[simu_number], Min[simu_number], color=cmap(0.01))  # min
+                ax[i,j].plot(Time[simu_number], Mean[simu_number], color=cmap(0.65),linestyle='dashed', markersize=1.8)  # mean
+                ax[i,j].plot(Time[simu_number], Median[simu_number], linestyle='dotted', color=cmap(0.65), markersize=1.8)  # median
                 # filling the space between the max and min
-                ax[i,j].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color='blue', alpha=0.2)
+                ax[i,j].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color=cmap(0.2), alpha=0.2)
                 # Experiment (AvaRange)
-                ax[i,j].plot(time_experimental, vel_experimental, color = 'red')  # AvaNode velocity
+                ax[i,j].plot(time_experimental_C07, vel_experimental_C07, color=cmap(0.80))  # AvaNode velocity
+                ax[i,j].plot(time_experimental_C09, vel_experimental_C09, color=cmap(0.90))  # AvaNode velocity
+                ax[i,j].plot(time_experimental_C10, vel_experimental_C10, color=cmap(0.99))  # AvaNode velocity   
                 # Plotting parameters
                 if friction_model=='Coulomb':
                     ax[i,j].set_title("mu ="+str(F.mu[simu_number]), fontsize=18)
@@ -216,12 +278,9 @@ if key == 1:
                     ax[i,j].set_title("No friction model found!", fontsize=18)
                 ax[i,j].set_xlim(right=max_time)
                 simu_number += 1 
-        # If the number of subplots does not match with the number of simulations, delete the last subplot
-        if simu_number!=number_files:
-            fig.delaxes(ax[nrow,ncol])
             
     # set legend position 
-    fig.legend(['Maximum values','Minimum values','Mean','Median','Velocity envelope','AvaNode Velocity'],loc='lower center', ncol=6, fancybox = True, shadow=False)
+    fig.legend(['Maximum values','Minimum values','Mean','Median','AvaNode C07 Velocity','AvaNode C09 Velocity','AvaNode C10 Velocity','Velocity envelope'],loc='lower center', ncol=5, fancybox = True, shadow=False)
     fig.suptitle('Velocity envelope - Seilbahnrinne,\n '+friction_model+' model with stopCrit='+str(stopping_model))
 
     for axs in ax.flat:

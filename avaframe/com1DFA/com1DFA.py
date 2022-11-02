@@ -42,6 +42,8 @@ from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
+from avaframe import runFindAvalancheInfo
+
 #######################################
 # Set flags here
 #######################################
@@ -156,6 +158,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
         # prepare simulations to run (only the new ones)
         simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+         
 
         # is there any simulation to run?
         if bool(simDict):
@@ -178,6 +181,9 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
                 cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
                 # append configuration to dataframe
                 simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
+                
+                # Extracting the different avalanche simulations of the output file 
+                F = runFindAvalancheInfo.postProcess(avalancheDir, cfgMain, simDF)
 
                 # log simulation name
                 log.info('Run simulation: %s' % cuSim)
@@ -229,7 +235,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
         # Set directory for report
         reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
         # Generate plots for all peakFiles
-        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, F, demData=dem)
         # write report
         gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
@@ -294,7 +300,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
 
     tCPUDFA = '%.2f' % (time.time() - startTime)
     log.info(('cpu time DFA = %s s' % (tCPUDFA)))
-
+    
     cfgTrackPart = cfg['TRACKPARTICLES']
     # track particles
     if cfgTrackPart.getboolean('trackParticles'):
@@ -2078,6 +2084,9 @@ def trackParticles(cfgTrackPart, dem, particlesList):
         track: boolean
             False if no particles are tracked
     """
+   
+    print('DEM', dem) 
+    print('DEM', dem['originalHeader']) 
 
     # read particle properties to be extracted
     particleProperties = cfgTrackPart['particleProperties']

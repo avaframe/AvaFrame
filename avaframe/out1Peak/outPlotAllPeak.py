@@ -14,11 +14,14 @@ import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
+from avaframe.data.avaSeilbahn.AvaNode_data import gps_imu_tools as git
+from avaframe.data.avaSeilbahn.AvaNode_data import GPS_Class 
+            
 # create local logger
 log = logging.getLogger(__name__)
 
 
-def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
+def plotAllPeakFields(avaDir, cfgFLAGS, modName, F, demData=''):
     """ Plot all peak fields and return dictionary with paths to plots
         with DEM in background
 
@@ -43,6 +46,20 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
     avaDir = pathlib.Path(avaDir)
     inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    
+    # Load information on AvAnodes data and changing coordinate system
+    gps_c10 = GPS_Class.GPSData()
+    gps_c09 = GPS_Class.GPSData()
+    gps_c07 = GPS_Class.GPSData()
+    gps_c10.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C10_avalanche_GPS.txt"
+    gps_c09.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C09_avalanche_GPS.txt"
+    gps_c07.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C07_avalanche_GPS.txt"
+    gps_c10.read_data() 
+    gps_c09.read_data() 
+    gps_c07.read_data() 
+    n10,e10,z10 = git.gps_to_mercator(gps_c10) 
+    n09,e09,z09 = git.gps_to_mercator(gps_c09)
+    n07,e07,z07 = git.gps_to_mercator(gps_c07)
 
     if demData == '':
         demFile = gI.getDEMPath(avaDir)
@@ -79,7 +96,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
 
         # only produce a plot if it does not already exists
-        # make sure to remove the outpu folder if you want to regenerate the plot
+        # make sure to remove the output folder if you want to regenerate the plot
         # this enables to append simulations to an already existing output without regenerating all plits
         if not plotName.is_file():
             # Load data
@@ -108,24 +125,50 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             cmap.set_bad(alpha=0)
             # uncomment this to set the under value for discrete cmap transparent
             # cmap.set_under(alpha=0)
-            rowsMinPlot = rowsMin*cellSize
-            rowsMaxPlot = (rowsMax+1)*cellSize
-            colsMinPlot = colsMin*cellSize
-            colsMaxPlot = (colsMax+1)*cellSize
+            xllcenter = raster['header']['xllcenter']
+            yllcenter = raster['header']['yllcenter']
+            rowsMinPlot = rowsMin*cellSize + yllcenter
+            rowsMaxPlot = (rowsMax+1)*cellSize + yllcenter
+            colsMinPlot = colsMin*cellSize + xllcenter
+            colsMaxPlot = (colsMax+1)*cellSize + xllcenter
+
+            # rowsMinPlot = rowsMin*cellSize
+            # rowsMaxPlot = (rowsMax+1)*cellSize
+            # colsMinPlot = colsMin*cellSize
+            # colsMaxPlot = (colsMax+1)*cellSize
             extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
 
             # add DEM hillshade with contour lines
             ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
 
             # add peak field data
-            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin='lower', aspect='equal', zorder=4)
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin='lower', aspect='equal', zorder=2)
             pU.addColorBar(im1, ax, ticks, unit)
+            
+            # add AvaNode data 
+            ax.plot(e10,n10, color='orange', label='AvaNode C10')
+            ax.plot(e09,n09, color='green', label='AvaNode C09')
+            ax.plot(e07,n07, color='brown', label='AvaNode C07')
 
             # add title, labels and ava Info
-            title = str('%s' % name)
-            ax.set_title(title)
-            ax.set_xlabel('x [m]')
+            #title = str('%s' % name)
+            #ax.set_title(title +'\n')
+            ax.set_xlabel('x [m] \n\n')
             ax.set_ylabel('y [m]')
+
+            # title 
+            simu_number = name[21:31] 
+            if F.frictModel[0] =='Coulomb':
+                plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+"\n", fontsize=18)
+            elif F.frictModel[0] =='Voellmy':
+                plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+", xsi="+str(F.xsi[simu_number])+"\n", fontsize=18)
+            elif F.frictModel[0] =='samosAT':
+                plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number])+"\n", fontsize=18)
+            else:
+                plt.title('%s' % name+"No friction model found!", fontsize=18)
+            
+            # add AvaNode legend 
+            fig.legend(loc='lower center', ncol=3, fancybox=True, shadow=True)
             pU.putAvaNameOnPlot(ax, avaDir)
 
             if cfgFLAGS.getboolean('showPlot'):
