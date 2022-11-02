@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 import statistics as stat
 import os 
 from cmcrameri import cm
+from scipy.interpolate import interp1d 
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -61,7 +62,7 @@ for i in range(0, number_files):
     for k in range(0, number_time_steps):
         df[k] = L[i][k]['ux']**2 + L[i][k]['uy']**2 + L[i][k]['uz']**2
         for l in range (0,len(df[k])):
-            df[k][l] = np.sqrt(df[k][l])
+            df[k][l] = np.sqrt(df[k][l])  
 
     # Preparing time, maximum values, minimum values, mean, median for avalanche i 
     Time[i] = [None]*number_time_steps
@@ -75,7 +76,7 @@ for i in range(0, number_files):
         Max[i][j] = max(df[j])
         Min[i][j] = min(df[j])
         Mean[i][j] = stat.mean(df[j])
-        Median[i][j] = stat.median(df[j])
+        Median[i][j] = stat.median(df[j]) 
         
 #%% Experiment 
 
@@ -164,11 +165,43 @@ else:
     # Key to plot only if the experimental data have been found 
     key = 1 
 
+#%% Boxplot 
 
+# Calculating the difference between the avaframe velocity and the sensor velocity
+boxplot_data = [None]*number_files
+for i in range(0, number_files):
+    f = interp1d(time_experimental_C10, vel_experimental_C10)
+    if max(Time[i]) > max(time_experimental_C10):
+        index = Time[i].index(next((j for j in Time[i] if int(j)>max(time_experimental_C10)),None))
+        vel_experimental_C10_interpolated = f(Time[i][0:index]) 
+        boxplot_data[i] = Mean[i][0:index] - vel_experimental_C10_interpolated
+    else:
+        vel_experimental_C10_interpolated = f(Time[i]) 
+        boxplot_data[i] = Mean[i] - vel_experimental_C10_interpolated
+
+# Making the boxplot plot 
+fig = plt.figure() 
+ax = fig.add_subplot(111)
+plt.boxplot(boxplot_data, whis=200)
+# x-axis labels
+friction_model = F.frictModel[0]
+stopping_model = F.stopCrit[0]  
+if friction_model=='Coulomb':
+    labels = ["mu ="+str(F.mu[i]) for i in range(0,number_files)]
+elif friction_model=='Voellmy':
+    labels = ["mu ="+str(F.mu[i])+"\nxsi="+str(F.xsi[i]) for i in range(0,number_files)]
+elif friction_model=='samosAT':
+    labels = ["mu ="+str(F.mu[i])+"\ntau0="+str(F.tau0[i]) for i in range(0,number_files)]
+else:
+    labels = ["No friction model found!" for i in range(0,number_files)]
+
+fig.suptitle('Velocity difference between the mean avaframe velocity and the Node velocity\nSeilbahnrinne, explicit '+friction_model+' model with stopCrit='+str(stopping_model), fontsize= 20)
+ax.set_xticklabels(labels, color='black', fontsize=15)
+ax.tick_params(axis='y', colors='black', labelsize=15) 
+ax.set_ylabel("Velocity difference[m/s]", color='black', fontsize=15)
+plt.show() 
     
-    
-    
-#%% Plotting 
+#%% Plotting velocity envelope 
 
 # Preparing the subplots regarding the number of avalanches found 
 if key == 1:  
@@ -280,8 +313,8 @@ if key == 1:
                 simu_number += 1 
             
     # set legend position 
-    fig.legend(['Maximum values','Minimum values','Mean','Median','AvaNode C07 Velocity','AvaNode C09 Velocity','AvaNode C10 Velocity','Velocity envelope'],loc='lower center', ncol=5, fancybox = True, shadow=False)
-    fig.suptitle('Velocity envelope - Seilbahnrinne,\n '+friction_model+' model with stopCrit='+str(stopping_model))
+    fig.legend(['Maximum values','Minimum values','Mean','Median','Velocity envelope','AvaNode C07 Velocity','AvaNode C09 Velocity','AvaNode C10 Velocity'],loc='lower center', ncol=5, fancybox = True, shadow=False)
+    fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model))
 
     for axs in ax.flat:
         axs.set_ylabel("Velocity[m/s]", fontsize=15)
