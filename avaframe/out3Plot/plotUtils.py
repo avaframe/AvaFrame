@@ -743,3 +743,29 @@ def addHillShadeContours(ax, data, cellSize, extent, colors=['gray'], onlyContou
                hAlignment='left', alphaF=1.0)
 
     return ls, CS
+
+
+def fetchContourCoords(xGrid, yGrid, data, level):
+    """ fetch contour line coordinates
+
+        Parameters
+        -----------
+        xGrid, yGrid: 2D numpy arrays
+            2D vector of x and y values for mesh center coordinates (produced using meshgrid)
+        data: numpy array
+            field data
+        level: float
+            level of contour line
+
+        Returns
+        ---------
+        x, y: numpy array
+            x,y coordinates of contour line
+    """
+
+    # create contour lines and extract coordinates and write to dict
+    contourP = plt.contour(xGrid, yGrid, data, levels=[level])
+    x = contourP.allsegs[0][0][:,0]
+    y = contourP.allsegs[0][0][:,1]
+
+    return x, y

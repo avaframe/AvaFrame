@@ -13,7 +13,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib
 from matplotlib import cm
-
+from cmcrameri import cm as cmapCrameri
+import matplotlib as mpl
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -861,3 +862,137 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return
+
+
+def fetchContourLines(rasterTransfo, inputs, level, contourDict):
+    """ fetch contour line of transformed field data
+
+        Parameters
+        -----------
+        rasterTransfo: dict
+            raster transformation dictionary
+        inputs: dict
+            input data here needed the transformed field data and simName
+        level: float
+            the contour level
+        contourDict: dict
+            dictionary with x, y coordinates for each sim contour line
+
+        Returns
+        ---------
+        contourDict: dict
+            updat. dictionary with x, y coordinates for each sim contour line -> added info 
+            of current simulation
+    """
+
+    # fetch input data
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
+    compData = inputs['compData']
+    simName = inputs['simName']
+
+    gridL, gridS = np.meshgrid(l, s)
+
+    # create contour lines and extract coordinates and write to dict
+    x, y = pU.fetchContourCoords(gridL, gridS, compData, level)
+    # add to dict
+    contourDict[simName] = {'x': x, 'y': y}
+
+    return contourDict
+
+
+def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
+    """ plot contour lines of all transformed fields
+        colorcode contour lines with first parameter in varParList if not type string of value
+
+        Parameters
+        -----------
+        contourDict: dict
+            dictionary with contourline coordinates
+        pathDict: dict
+            dictionary with info on project name
+        rasterTransfo: dict
+            raster transformation dictionary
+        cfgSetup: configparser
+            configuration settings for AIMECSETUP
+
+    """
+    # fetch raster coordinate data
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    unit = pU.cfgPlotUtils['unit' + cfgSetup['runoutResType']]
+    colorOrdering = False
+    minVal = 0
+    maxVal = 1
+
+    if pathDict['colorParameter']:
+        # fetch parameter info for sims
+        simDF = cfgUtils.createConfigurationInfo(pathDict['avalancheDir'], specDir='')
+        varParList = cfgSetup['varParList'].split('|')
+        paraVar = varParList[0]
+        values = simDF[varParList[0]].to_list()
+
+        if isinstance(values[0], str) is False:
+            minVal = np.amin(values)
+            maxVal = np.amax(values)
+            colorOrdering = True
+
+    # intialize fig
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+
+    # PANEL 1 show contour lines of all sims in contourDict for thresholdValue runoutResType
+    ax1 = fig.add_subplot(121)
+    ax1.set_title('%s %s %s contour lines' % (cfgSetup['runoutResType'], cfgSetup['thresholdValue'],
+        unit))
+    ax1.set_ylabel('along path [m]')
+    ax1.set_xlabel('across path [m]')
+    pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
+
+    norm = mpl.colors.Normalize(vmin=minVal, vmax=maxVal)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cmapCrameri.hawaii)
+    cmap.set_array([])
+    # limit extent to avalanche extent
+    yMax = 0
+    for index, simName in enumerate(contourDict):
+        if colorOrdering:
+            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
+        else:
+            cmapVal = index / len(contourDict)
+        ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
+        if np.amax(contourDict[simName]['y'])> yMax:
+            yMax = np.amax(contourDict[simName]['y'])
+
+    sMax = np.where(s > yMax)[0][0]
+    ax1.set_ylim([s[0], s[sMax]])
+    if colorOrdering:
+        cbar = ax1.figure.colorbar(cmap)
+        cbar.outline.set_visible(False)
+        cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
+        cbar.set_label(paraVar)
+    else:
+        log.warning('ordering for contour line plot not available for parameter of type string')
+
+    # add indication for runout area
+    ax1.axhline(s[indStartOfRunout], color='k', linestyle='--', label='runout area')
+    ax1.legend(loc='lower right')
+
+    # PANEL 2 zoom into runout area
+    ax2 = fig.add_subplot(122)
+    ax2.set_title('zoom into runout area')
+    ax2.set_ylabel('along path [m]')
+    ax2.set_xlabel('across path [m]')
+    pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
+    for index, simName in enumerate(contourDict):
+        if colorOrdering:
+            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
+        else:
+            cmapVal = index / len(contourDict)
+
+        ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
+
+    ax2.set_ylim([s[indStartOfRunout], s[sMax]])
+
+    # save and or plot fig
+    outFileName = pathDict['projectName'] + '_ContourLinesAll'
+    pU.saveAndOrPlot(pathDict, outFileName, fig)

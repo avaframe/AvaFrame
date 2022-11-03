@@ -83,6 +83,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     pathDict['projectName'] = projectName
     pathName = profileLayer[0].stem
     pathDict['pathName'] = pathName
+    pathDict['avalancheDir'] = avalancheDir
 
     return pathDict
 
@@ -997,7 +998,7 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     return resAnalysisDF
 
 
-def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict):
+def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict, contourDict):
     """Compare area results to reference.
 
     Compute True positive, False negative... areas.
@@ -1017,6 +1018,9 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
         as well as the levels for the contour line plot
     pathDict: dict
         path to data dem data and lines for aimec analysis
+    contourDict: dict
+        dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
+        for thresholdValue
 
     Returns
     -------
@@ -1030,6 +1034,9 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
                 ref = True sim2 = False
             TN: float
                 ref = False sim2 = False
+    contourDict: dict
+        dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
+        for thresholdValue - updated
     """
     runoutResType = cfgSetup['runoutResType']
     refSimRowHash = pathDict['refSimRowHash']
@@ -1104,8 +1111,9 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
     if simRowHash != refSimRowHash:
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
+        contourDict = outAimec.fetchContourLines(rasterTransfo, inputs, cfgSetup.getfloat('thresholdValue'), contourDict)
 
-    return resAnalysisDF, compPlotPath
+    return resAnalysisDF, compPlotPath, contourDict
 
 
 def readWrite(fname_ent, time):

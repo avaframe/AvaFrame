@@ -397,11 +397,10 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         pU.addColorBar(im2, ax2, ticks, unit)
 
         outDir = inDir / 'plots'
-        fU.makeADir(outDir)
         avaName = pathlib.PurePath(avaDir).name
-        outFile = outDir / ('%s_probMap_lim%s.%s' % (avaName, cfgFull['GENERAL']['peakLim'], pU.outputFormat))
-        fig.savefig(outFile)
-        plt.close(fig)
+        outFileName = '%s_probMap_lim%s' % (avaName, cfgFull['GENERAL']['peakLim'])
+        pathDict = {'pathResult': outDir}
+        pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
 def resultHistPlot(cfg, dataDF, xName='', scenario='', stat='count', parametersDict=''):
