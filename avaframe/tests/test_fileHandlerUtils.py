@@ -331,7 +331,7 @@ def test_getFilterDict():
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
     cfg['GENERAL'] = {'tEnd': '20'}
-    cfg['FILTER'] = {'relTh': '1:2:3', 'entH': 200, 'simType': '', 'secRelArea': 'True'}
+    cfg['FILTER'] = {'relTh': '1:2:3', 'entH': 200, 'simType': '', 'secRelArea': 'True', 'mu': '<0.1'}
 
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
@@ -343,6 +343,7 @@ def test_getFilterDict():
     assert noKey is False
     assert parametersDict['entH'] == [200.]
     assert parametersDict['secRelArea'] == ['True']
+    assert parametersDict['mu'] == ['<0.1']
 
     parametersDict = fU.getFilterDict(cfg, 'TESTS')
 

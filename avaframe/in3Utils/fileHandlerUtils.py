@@ -255,6 +255,12 @@ def getFilterDict(cfg, section):
                 locValue = splitIniValueToArraySteps(value)
                 parametersDict[key] = locValue
                 log.info('Filter simulations that match %s: %s' % (key, locValue))
+            elif '>' in value:
+                parametersDict[key] = [value]
+                log.info('Filter simulations where %s is greater than %s' % (key, value))
+            elif '<' in value:
+                parametersDict[key] = [value]
+                log.info('Filter simulations where %s is smaller than %s' % (key, value))
             elif isinstance(value, str):
                 testValue = value.replace('.', '')
                 if testValue.isdigit():

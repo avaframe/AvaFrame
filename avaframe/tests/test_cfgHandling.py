@@ -126,6 +126,24 @@ def test_filterSims(tmp_path):
     assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_6f35cbd808_null_dfa',
                         'relGar_b9b17dd019_ent_dfa', 'relGar_c4337e50ac_null_dfa']
 
+    parametersDict = {'relTh': '>1.0'}
+
+    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames = sorted(simNames)
+    print('SIMAMES', simNames)
+
+    assert len(simNames) == 4
+    assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_789ce37489_ent_dfa',
+    'relGar_9b75355a9a_ent_dfa','relGar_c4337e50ac_null_dfa']
+
+    parametersDict = {'relTh': '<1.0'}
+
+    simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames = sorted(simNames)
+
+    assert len(simNames) == 1
+    assert simNames == ['relGar_d5a270b689_ent_dfa']
+
 
 def test_applyCfgOverride(caplog):
     """ test overriding cfg parameters in a cfg object from another cfg with an override section """

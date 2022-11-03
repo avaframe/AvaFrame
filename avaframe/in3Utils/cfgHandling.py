@@ -166,10 +166,15 @@ def removeSimsNotMatching(simDF, key, value):
 
     # only keep simulations in simDF that match filtering criteria
     if isinstance(value[0], str):
-        if notIn:
-            simDF = simDF[~simDF[key].isin(value)]
+        if '<' in value[0]:
+            simDF = simDF[simDF[key] < float(value[0].split('<')[1])]
+        elif '>' in value[0]:
+            simDF = simDF[simDF[key] > float(value[0].split('>')[1])]
         else:
-            simDF = simDF[simDF[key].isin(value)]
+            if notIn:
+                simDF = simDF[~simDF[key].isin(value)]
+            else:
+                simDF = simDF[simDF[key].isin(value)]
     else:
         # if float comparison allow for tolerance
         filterMask = np.isclose(simDF[key].values.reshape(-1, 1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)
@@ -354,7 +359,9 @@ def filterCom1DFAThicknessValues(key, value, simDF):
             allThNames = allThNames + [key]
         # check if filter criteria are met by thickness parameters for the sim in simDFrow
         for val in value:
-            if (simDFrow[thNames].values == [val] * len(thIdList)).all():
+            validationString = fetchValidationString(val, thIdList, thNames, simDFrow)
+            # if we set new column value to True 
+            if validationString:
                 simDF.loc[simHash, 'toBeAdded'] = True
 
     # get a list with all thickness parameters included in search
@@ -369,6 +376,37 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     log.info('simulations for %s found with values: %s' % (key, simDF[allThNames]))
 
     return simDF
+
+
+def fetchValidationString(val, thIdList, thNames, simDFrow):
+    """ create a validation string to be checked if simDFrow matches filtering criteria (given by val)
+
+        Parameters
+        -----------
+        val: str, float
+            value to be checked
+        thIdList: list
+            list with thickness feature ids
+        thNames: list
+            list with thickness feature names
+        simDFrow: pandas dataframe row
+            parameters of simulation
+
+        Returns
+        --------
+        validationString: bool
+            bool if simulation given by simDFrow matches filtering criteria
+    """
+
+    if isinstance(val, str):
+        if '<' in val:
+            validationString = (simDFrow[thNames].values < [float(val.split('<')[1])] * len(thIdList)).all()
+        elif '>' in val:
+            validationString = (simDFrow[thNames].values > [float(val.split('>')[1])] * len(thIdList)).all()
+    else:
+        validationString = (simDFrow[thNames].values == [val] * len(thIdList)).all()
+
+    return validationString
 
 
 def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModValues=False):
