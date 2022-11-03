@@ -83,14 +83,15 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
 
     # postprocess reference...
+    contourDict = {}
     timeMass = None
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
-                                                           timeMass, refSimRowHash)
+    resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
+                                                           timeMass, refSimRowHash, contourDict)
     # postprocess other simulations
     for simRowHash, inputsDFrow in inputsDF.iterrows():
         if simRowHash != refSimRowHash:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF,
-                                                                   newRasters, timeMass, simRowHash)
+            resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF,
+                                                                   newRasters, timeMass, simRowHash, contourDict)
             pathDict['simRowHash'] = simRowHash
 
     # -----------------------------------------------------------
@@ -99,6 +100,9 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
+    # plot the contour lines of all sims for the thresholdValue of runoutResType
+    outAimec.plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup)
+
     if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
         outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
@@ -126,7 +130,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     return rasterTransfo, resAnalysisDF, plotDict
 
 
-def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash):
+def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash, contourDict):
     """ Apply domain transformation and analyse result data (for example pressure, thickness, velocity...)
 
     Apply the domain tranformation to peak results
@@ -151,6 +155,9 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         time array for mass analysis (if flagMass=True, otherwise None)
     simRowHash: str
         dataframe hash of the current simulation to analyze
+    contourDict: dict
+        dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
+        for thresholdValue
 
     Returns
     -------
@@ -209,6 +216,9 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                     growth index
             -growthGrad: float
                     growth gradient
+    contourDict: dict
+        dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
+        for thresholdValue - updated with info for current simulation
     """
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
@@ -255,11 +265,11 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
-                                                 pathDict)
+    resAnalysisDF, compPlotPath, contourDict = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
+                                                 pathDict, contourDict)
 
     resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
-    return resAnalysisDF, newRasters, timeMass
+    return resAnalysisDF, newRasters, timeMass, contourDict
 
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):

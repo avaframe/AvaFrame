@@ -330,7 +330,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
 
-        Be aware: files are being sorted after getting them from the directory! 
+        Be aware: files are being sorted after getting them from the directory!
         (Important for the differences)
 
         Parameters
@@ -523,3 +523,36 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     plt.close(fig)
 
     return plotDict
+
+
+def plotContours(contourDict, resType, thresholdValue, pathDict):
+    """ plot contour lines of all transformed fields
+
+        Parameters
+        -----------
+        contourDict: dict
+            dictionary with contourline coordinates
+        resType: str
+            result type
+        thresholdValue: float
+            value for contour level
+        pathDict: dict
+            dictionary with info on project name, ...
+    """
+
+    unit = pU.cfgPlotUtils['unit' + resType]
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+
+    # show flow path
+    ax1 = fig.add_subplot(121)
+    ax1.set_title('%s %s %s contour lines' % (resType, thresholdValue, unit ))
+    ax1.set_ylabel('x [m]')
+    ax1.set_xlabel('y [m]')
+    pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
+
+    # loop over all sims 
+    for simName in contourDict:
+        ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'])
+
+    outFileName = pathDict['plotScenario'] + '_ContourLinesAll'
+    pU.saveAndOrPlot(pathDict, outFileName, fig)

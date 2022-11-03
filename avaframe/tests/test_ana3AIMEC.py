@@ -79,18 +79,19 @@ def test_analyzeArea(tmp_path):
     rasterTransfo['rasterArea'] = np.ones((500, 100))
     rasterTransfo['indStartOfRunout'] = 400
     rasterTransfo['startOfRunoutAreaAngle'] = 10
+    contourDict = {}
 
     # Analyze data
     # postprocess reference
     timeMass = None
-    inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, 0)
+    inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
+                                                                newRasters, timeMass, 0, contourDict)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
-            inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                        newRasters, timeMass, index)
+            inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
+                                                                        newRasters, timeMass, index, contourDict)
     print(inputsDF['sRunout'])
     print(inputsDF['xRunout'])
     print(inputsDF['yRunout'])
@@ -182,18 +183,19 @@ def test_makeDomainTransfo(tmp_path):
     interpMethod = cfgSetup['interpMethod']
     newRasterDEM = aT.transform(dem, pathDict['demSource'], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM
+    contourDict = {}
 
     # Analyze data
     # postprocess reference
     timeMass = None
-    inputsDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, refSimRowHash)
+    inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
+                                                                newRasters, timeMass, refSimRowHash, contourDict)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
-            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                             newRasters, timeMass, index)
+            resAnalysisDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
+                                                                             newRasters, timeMass, index, contourDict)
 
     for i in range(5):
         rasterSource = inputsDF['ppr'][i]
@@ -249,6 +251,7 @@ def test_mainAIMEC(tmp_path):
     pathDict['refSimName'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
+    pathDict['colorParameter'] = False
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']

@@ -19,6 +19,7 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.out3Plot import outQuickPlot as oP
 
 
 # -------USER INPUT ------------
@@ -74,12 +75,15 @@ for probConf in probabilityConfigurations:
     parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
 
     # perform probability analysis
-    analysisPerformed = probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
+    analysisPerformed, contourDict = probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
     if analysisPerformed is False:
         log.warning('No files found for configuration: %s' % probConf)
     # make a plot of the map
     inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
     sP.plotProbMap(avaDir, inputDir, cfgProb, demPlot=True)
+    # make a plot of the contours
+    pathDict = {'pathResult': str(inputDir), 'avaDir': str(avaDir), 'plotScenario': probConf}
+    oP.plotContours(contourDict, cfgProb['GENERAL']['peakVar'], cfgProb['GENERAL']['peakLim'], pathDict)
 
     # copy outputs to folder called like probability configurations
     outputFiles = avaDir / 'Outputs' / 'ana4Stats'

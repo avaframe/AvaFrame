@@ -16,6 +16,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in1Data.computeFromDistribution as cP
 import avaframe.com1DFA.deriveParameterSet as dP
+from avaframe.in3Utils import geoTrans as gT
 
 
 # create local logger
@@ -250,6 +251,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     # Initialise array for computations
     probSum = np.zeros((nRows, nCols))
     count = 0
+    contourDict = {}
 
     # Loop through peakFiles and compute probability
     for m in range(len(peakFilesDF['names'])):
@@ -261,8 +263,14 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
                 # Load data
                 fileName = peakFilesDF['files'][m]
-                data = np.loadtxt(fileName, skiprows=6)
                 dataLim = np.zeros((nRows, nCols))
+                fileData = IOf.readRaster(fileName)
+                data = np.flipud(fileData['rasterData'])
+
+                # fetch contourline info
+                xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(fileData['header'])
+                x, y = pU.fetchContourCoords(xGrid, yGrid, data, float(cfg['GENERAL']['peakLim']))
+                contourDict[fileName.stem] = {'x': x, 'y': y}
 
                 log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
 
@@ -285,7 +293,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     IOf.writeResultToAsc(header, probMap, outFile)
     analysisPerformed = True
 
-    return analysisPerformed
+    return analysisPerformed, contourDict
 
 
 def makeDictFromVars(cfg):
