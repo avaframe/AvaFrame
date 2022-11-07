@@ -25,6 +25,7 @@ logName = 'runEnergyLineTest'
 # if left empty, use the energyLineTestCfg.ini and local_energyLineTestCfg.ini configuration files
 # use 'ana1Tests/figAnalytic_energyLineTestCfg.ini' or 'ana1Tests/figCurvature_energyLineTestCfg.ini'
 # or 'ana1Tests/figPressure_energyLineTestCfg.ini' to produce the energy line plots from the Theory Paper
+# (use 'avaSlide' in the avaFrameCfg.ini)
 fileOverride = ''
 # ++++++++++++++++++++++++++++++
 

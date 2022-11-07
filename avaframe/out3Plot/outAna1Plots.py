@@ -488,13 +488,6 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
         configuration setting for avalanche simulation including DAMBREAK section
 
     """
-    # Initialise DEM
-    # demFile = gI.getDEMPath(avalancheDir)
-    # demOri = IOf.readRaster(demFile, noDataToNan=True)
-    # dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, cfg['GENERAL'].getint('methodMeshNormal'))
-    # dem['header']['xllcenter'] = dem['originalHeader']['xllcenter']
-    # dem['header']['yllcenter'] = dem['originalHeader']['yllcenter']
-
     cfgDam = cfg['DAMBREAK']
     phi = cfgDam.getfloat('phi')
     phiRad = np.radians(phi)
@@ -576,7 +569,6 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax6 = plt.subplot2grid((2, 6), (1, 0), colspan=2)
     ax6, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax6, fieldHeader, dataFT, 'FT')
     cbar0.ax.set_ylabel(pU.cfgPlotUtils['nameFT'])
-    # ax6 = outCom1DFA.addDem2Plot(ax6, dem, what='slope', extent=extent)
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(dataFT, fieldHeader['cellsize'],
                                                                  extentOption=True, constrainedData=False, buffer='')
     # draw rectangle corresponding to the error measurement domain

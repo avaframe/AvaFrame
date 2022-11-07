@@ -25,7 +25,7 @@ from avaframe.ana1Tests import energyLineTest
 logName = 'runRotationTest'
 # if left empty, use the rotationTestCfg.ini and local_rotationTestCfg.ini configuration files
 # use 'ana1Tests/figPressure_rotationTestCfg.ini' or 'ana1Tests/figAnalytic_rotationTestCfg.ini' to produce
-# the rotation test plots from the Theory Paper
+# the rotation test plots from the Theory Paper (use 'avaTripleParabola' or 'avaTripleBowl' in the avaFrameCfg.ini)
 fileOverride = ''
 # ++++++++++++++++++++++++++++++
 

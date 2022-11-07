@@ -503,24 +503,6 @@ friction laws. Note that using such a SPH method would lead to a fully particula
 But since the flow thickness is only used in some cases for the friction force computation, using a the
 previously describe grid method should not affect significantly the computation.
 
-Friction force discretization
----------------------------------
-.. \label{sec-discretizing-friction}
-
-Expressing the friction force term in :Eq:`eq-momentum-particle` for a particle reads:
-
-.. math::
-	\mathbf{F}_k^\text{fric} = A_k^b \, \boldsymbol{\tau^b} =
-	- {\left\Vert\mathbf{F}_k^\text{fric}\right\Vert}_\text{max}
-  \, \mathbf{v}_1
-	:label: eq-coulomb-friction-particle
-
-This relation stands if the particle is moving. The starting and stopping processes
-satisfy a different equation and are handled differently in the numerical
-implementation (using the same equation would lead to a non-physical behavior).
-This is described in more details in Sect.~\ref{sec-adding-friction}.
-
-
 Convergence
 ------------
 .. \label{sec-convergence-criterion}
@@ -568,6 +550,7 @@ The particle size can be expressed as a function of the SPH kernel radius:
 	r_{\text{part}} = \left(\frac{A^b}{\pi}\right)^{1/2} =
 	\left(\frac{A_{\text{kernel}}}{\pi n_{\text{ppk}}}\right)^{1/2}
 	=  \frac{r_{\text{kernel}}}{n_{\text{ppk}}^{1/2}},
+
 where the particles basal area was assumed to be a circle.
 
 Note that this does not affect the results except adding a different shape factor in
@@ -621,12 +604,30 @@ In the Sect.~\ref{sec-verification}, we will explore model convergence using the
 Forces discretization
 ----------------------
 
+Friction force discretization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. \label{sec-discretizing-friction}
+
+Expressing the friction force term in :Eq:`eq-momentum-particle` for a particle reads:
+
+.. math::
+	\mathbf{F}_k^\text{fric} = A_k^b \, \boldsymbol{\tau^b} =
+	- {\left\Vert\mathbf{F}_k^\text{fric}\right\Vert}_\text{max}
+  \, \mathbf{v}_1
+	:label: eq-coulomb-friction-particle
+
+This relation stands if the particle is moving. The starting and stopping processes
+satisfy a different equation and are handled differently in the numerical
+implementation (using the same equation would lead to a non-physical behavior).
+This is described in more details in Sect.~\ref{sec-adding-friction}.
+
+
 Lateral force
 ~~~~~~~~~~~~~~
 
 The SPH method is introduced when expressing the flow thickness gradient for each
 particle as a weighted sum of its neighbors (:cite:`LiLi2010,Sa2007`).
-Which leads to, using the relation :eq:`sph formulation`:
+Which leads to, using the relation :eq:`eq-sph-formulation`:
 
 .. math::
     \mathbf{F}_{k}^{\text{lat}} =
@@ -638,8 +639,7 @@ Which leads to, using the relation :eq:`sph formulation`:
 Bottom friction force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The bottom friction forces on each particle depend on the chose friction model. Using the SamosAT friction model
-(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`) the formulation of the bottom friction forec
-reads:
+the formulation of the bottom friction force reads:
 
 .. math::
     \mathbf{F}_{k}^{\text{bot}} = A_{k}\,\boldsymbol{\tau}_{k}^b
@@ -864,6 +864,7 @@ Account for entrainment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Entrainment is taken into account by:
+
 * First adding the component representing the loss of momentum due to
 	acceleration of the entrained mass :math:`- \overline{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
 	The entrained mass by a particle :math:`k` during a time step :math:`\Delta t` reads:

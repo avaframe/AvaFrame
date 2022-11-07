@@ -98,7 +98,7 @@ simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, simiSolCfg, simDF,
 # do some filtering before plotting
 # simDF = simDF[simDF['nPPK0'] == 30]
 
-# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+# make convergence plot (if you add the fitting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, simiSolCfg['SIMISOL'], 'nPart', 'vhErrorL2',
                                               'aPPK', 'sphKernelRadius', logScale=True, fit=True)
 
