@@ -199,6 +199,7 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
 
     return modCfg, modDict
 
+
 def _splitDeepDiffValuesChangedItem(inKey, inVal):
     """ splits one item of a deepdiff result into section, key, old value, new value 
 
@@ -296,7 +297,6 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
         log.info(line.replace('root',''))
 
     return modInfo, modCfg
-
 
 
 def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):
@@ -597,7 +597,7 @@ def convertDF2numerics(simDF):
         simDF: pandas DataFrame
     """
 
-    for name, values in simDF.iteritems():
+    for name, values in simDF.items():
         simDFTest = simDF[name].str.replace('.', '', regex=True)
         # allow for - sign too
         simDFTest = simDFTest.replace('-', '', regex=True)
@@ -678,7 +678,6 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
     simDF.to_csv(configFiles)
 
     return configFiles
-
 
 def convertToCfgList(parameterList):
     """ convert a list into a string where inidividual list items are separated by |
