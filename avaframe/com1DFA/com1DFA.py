@@ -319,16 +319,13 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         vector of saving time steps
     """
 
-    # load GENERAL configuration
-    cfgGen = cfg['GENERAL']
-
     # select release area input data according to chosen release scenario
     inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg['INPUT']['releaseScenario'])
 
     # create required input from input files
     demOri, inputSimLines = prepareInputData(inputSimFiles, cfg)
 
-    if cfgGen.getboolean('iniStep'):
+    if cfg['GENERAL'].getboolean('iniStep'):
         # append buffered release Area
         inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
 
@@ -377,7 +374,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
 
     # write report dictionary
-    reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfgGen, reportAreaInfo)
+    reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfg, reportAreaInfo)
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
 
@@ -612,7 +609,7 @@ def prepareInputData(inputSimFiles, cfg):
     return demOri, inputSimLines
 
 
-def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportAreaInfo):
+def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInfo):
     """ create simulaton report dictionary
 
     Parameters
@@ -623,8 +620,8 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
         release name
     relDict : dict
         release dictionary
-    cfgGen : configparser
-        general configuration file
+    cfg : configparser
+        simulation configuration 
     entrainmentArea : str
         entrainment file name
     resistanceArea : str
@@ -644,8 +641,11 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
     resistanceArea = inputSimLines['resistanceArea']
     relDict = inputSimLines['releaseLine']
 
+
+    # Get default cfg and convert to dict for comparison
+    cfgGen = cfg['GENERAL']
+
     # Create dictionary
-    reportST = {}
     reportST = {}
     reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
                 'avaName': {'type': 'avaName', 'name': str(avaDir)},
@@ -654,7 +654,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                 'Simulation Parameters': {
                 'type': 'list',
                 'Program version': getVersion(),
-                'Parameter set': '',
+                'Parameter set': 'Default',
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
@@ -665,6 +665,26 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['thickness']}}
+
+    # Check if parameter set is modified from default, and add section to report
+    if '_C_' in logName:
+        reportST['Simulation Parameters']['Parameter set'] = 'Changed'
+        reportST.update({'Parameters changed from default': {
+                        'type': 'list'
+                         }})
+        cfgDict = cfgUtils.convertConfigParserToDict(cfg)
+        _, changedVals = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgDict)
+
+        for key, val in changedVals.items():
+            # Format key string for better readability (without loosing the parameter path)
+            keyStr = key.replace('root','')
+            keyStr = keyStr.replace("\'][\'","->")
+            keyStr = keyStr.replace("[\'","")
+            keyStr = keyStr.replace("\']","")
+
+            valStr = val['new_value'] + ' (default is ' + val['old_value'] +')'
+
+            reportST['Parameters changed from default'][keyStr] = valStr
 
     if entInfo == 'Yes':
         entDict = inputSimLines['entLine']
@@ -2405,8 +2425,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-        simName = (relNameSim + '_' + simHash + '_' + row._asdict()['simTypeList'] + '_'
-                   + cfgSim['GENERAL']['modelType'])
+       
+        # check differences to default and add indicator to name
+        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
+
+        simName = '_'.join([relNameSim, simHash, defID, row._asdict()['simTypeList'], cfgSim['GENERAL']['modelType']])
+
         # check if simulation exists. If yes do not append it
         if simName not in simNameExisting:
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,

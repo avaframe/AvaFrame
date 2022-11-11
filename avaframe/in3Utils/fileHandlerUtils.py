@@ -545,7 +545,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
-    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName': [],
+    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'isDefault': [], 'simName': [],
             'modelType': [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
@@ -572,17 +572,37 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
         data['releaseArea'].append(relNameSim)
         data[simID].append(infoParts[0])
-        data['simType'].append(infoParts[1])
-        data['modelType'].append(infoParts[2])
-        data['resType'].append(infoParts[3])
-        data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 
-        header = IOf.readASCheader(datafiles[m])
-        data['cellSize'].append(header['cellsize'])
-        if len(infoParts) == 5:
-            data['timeStep'].append(infoParts[4])
+        indiStr = ['_C_', '_D_']
+        if any(x in name for x in indiStr): 
+            data['isDefault'].append(infoParts[1])
+            data['simType'].append(infoParts[2])
+            data['modelType'].append(infoParts[3])
+            data['resType'].append(infoParts[4])
+            data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:4])))
+
+            header = IOf.readASCheader(datafiles[m])
+            data['cellSize'].append(header['cellsize'])
+            if len(infoParts) == 6:
+                data['timeStep'].append(infoParts[5])
+            else:
+                data['timeStep'].append('')
+
+        # If it still is an 'old' simname 
+        # This can be removed at one point
         else:
-            data['timeStep'].append('')
+            data['isDefault'].append(None)
+            data['simType'].append(infoParts[1])
+            data['modelType'].append(infoParts[2])
+            data['resType'].append(infoParts[3])
+            data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
+
+            header = IOf.readASCheader(datafiles[m])
+            data['cellSize'].append(header['cellsize'])
+            if len(infoParts) == 5:
+                data['timeStep'].append(infoParts[4])
+            else:
+                data['timeStep'].append('')
 
         # Set name of avalanche if avaDir is given
         if avaDir != '':

@@ -351,7 +351,7 @@ def test_createReportDict():
 
     # call function to be tested
     reportST = com1DFA.createReportDict(
-        avaDir, logName, relName, inputSimLines, cfg['GENERAL'], reportAreaInfo)
+        avaDir, logName, relName, inputSimLines, cfg, reportAreaInfo)
 
     assert 'Simulation Parameters' in reportST
     assert 'Program version' in reportST['Simulation Parameters']
@@ -1422,11 +1422,13 @@ def test_prepareVarSimDict(tmp_path, caplog):
     testCfg['GENERAL']['avalancheDir'] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
-    simName1 = 'relAlr_' + simHash + '_entres_dfa'
+    print(simHash)
+    simName1 = 'relAlr_' + simHash + '_C_entres_dfa'
     testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relAlr',
                            'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
     for key in testDict[simName1]:
+        print(simDict[simName1][key])
         assert simDict[simName1][key] == testDict[simName1][key]
 
     for section in testCfg.sections():
@@ -1457,10 +1459,13 @@ def test_prepareVarSimDict(tmp_path, caplog):
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     testCfg2['GENERAL']['avalancheDir'] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
-    simName2 = 'relAlr_' + simHash2 + '_entres_dfa'
+    simName2 = 'relAlr_' + simHash2 + '_C_entres_dfa'
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relAlr',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
 
+
+    print(simDict2)
+    print(testDict2)
     for key in testDict2[simName2]:
         assert simDict2[simName2][key] == testDict2[simName2][key]
 
