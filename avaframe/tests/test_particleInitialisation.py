@@ -140,7 +140,7 @@ def test_getIniPosition(tmp_path):
         logName='', relThField='')
 
     # initialize fields
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, '')
 
     # call function to be tested
     particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, '')

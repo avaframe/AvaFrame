@@ -3,12 +3,15 @@ import pathlib
 import copy
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import avaframe.com1DFA.DFAtools as DFAtls
 
 
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 
 def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
@@ -18,6 +21,45 @@ def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
     plt.plot(xBuffered, yBuffered, 'b')
     plt.title('Buffered release polygon')
     plt.show()
+
+
+def plotBondsGlideSnowIni(xOutline, yOutline, triangles):
+    fig, (ax1) = plt.subplots(ncols=1)
+    ax1.set_aspect('equal')
+    ax1.plot(xOutline, yOutline, 'ro-', lw=3, ms=6, zorder=1, label='edge')
+    ax1.triplot(triangles, 'b-', lw=1, zorder=3, label='inner')
+    fig.legend()
+    plt.show()
+
+
+def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines):
+    fig, (ax1) = plt.subplots(ncols=1)
+    ax1.set_aspect('equal')
+
+    if cfg['GENERAL'].getint('cohesion') == 1:
+        points = np.zeros((particles['nPart'], 2))
+        points[:, 0] = particles['x'] - 0*dem['originalHeader']['xllcenter']
+        points[:, 1] = particles['y'] - 0*dem['originalHeader']['yllcenter']
+        edges = DFAfunC.plotBondC(particles)
+        lc = LineCollection(points[edges])
+        plt.gca().add_collection(lc)
+    # ax1.plot(particles['x'], particles['y'], '.b')
+    particles['v'] = DFAtls.norm(particles['ux'], particles['uy'], particles['uz'])
+    ax1, cb = outCom1DFA.addParticles2Plot(particles, ax1, dem, whatS='m', whatC='h')
+    NameRel = inputSimLines['resLine']['Name']
+    StartRel = inputSimLines['resLine']['Start']
+    LengthRel = inputSimLines['resLine']['Length']
+    for i in range(len(NameRel)):
+        start = StartRel[i]
+        end = start + LengthRel[i]
+        avapath = {}
+        avapath['x'] = inputSimLines['resLine']['x'][int(start):int(end)] - dem['originalHeader']['xllcenter']
+        avapath['y'] = inputSimLines['resLine']['y'][int(start):int(end)] - dem['originalHeader']['yllcenter']
+        plt.plot(avapath['x'], avapath['y'], 'g')
+    fig.legend()
+    plt.show()
+    # plt.pause(1)
+    plt.close()
 
 
 def plotPartIni(particles, dem):

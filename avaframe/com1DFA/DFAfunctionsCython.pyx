@@ -1221,6 +1221,214 @@ def getNeighborsC(particles, dem):
     return particles
 
 
+def computeCohesionForceC(cfg, particles, force):
+  """ compute cohesion forces acting on the particles
+  Parameters
+  ----------
+  cfg: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  force : dict
+      force dictionary
+  Returns
+  -------
+particles : dict
+  particles dictionary at t (updated bondDist due to breaking)
+force : dict
+  force dictionary with bonding elastic force
+  """
+  # read input parameters
+  cdef double dt = particles['dt']
+  cdef double cohesiveSurfaceTension = cfg.getfloat('cohesiveSurfaceTension')
+  cdef double cohesionMaxStrain = cfg.getfloat('cohesionMaxStrain')
+  cdef int nPart = particles['nPart']
+  # read particles and fields
+  cdef double[:] mass = particles['m']
+  cdef double[:] hArray = particles['h']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
+  cdef int[:] bondStart = particles['bondStart']
+  cdef double[:] bondDist = particles['bondDist']
+  cdef int[:] bondPart = particles['bondPart']
+  cdef double[:] forceSPHX = force['forceSPHX']
+  cdef double[:] forceSPHY = force['forceSPHY']
+  cdef double[:] forceSPHZ = force['forceSPHZ']
+  # initialize outputs
+  cdef int k, l, ib
+  cdef double dist0, dist, vx, vy, vz, xk, yk, zk, xl, yl, zl
+  cdef double mk, ml, hk, hl, ux, uy, uz, dx, dy, dz
+  cdef double e, hkl, mkl, Akl, contact, forcecohesion
+  # loop on particles
+  for k in range(nPart):
+    mk = mass[k]
+    hk = hArray[k]
+    xk = xArray[k]
+    yk = yArray[k]
+    zk = zArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    # loop on all bonded particles
+    for ib in range(bondStart[k], bondStart[k + 1]):
+      # get initial distance between particles
+       dist0 = bondDist[ib]
+       # if bond already broken, just skipp it
+       if (dist0 < 0.0):
+         continue
+       # get the bonded particle
+       l = bondPart[ib]
+       xl = xArray[l]
+       yl = yArray[l]
+       zl = zArray[l]
+       vx = uxArray[l]
+       vy = uyArray[l]
+       vz = uzArray[l]
+       dx = xl - xk + dt * (vx - ux)
+       dy = yl - yk + dt * (vy - uy)
+       dz = zl - zk + dt * (vz - uz)
+       dist = DFAtlsC.norm(dx, dy, dz)
+
+       if (dist > 1.0e-3):
+         # strain
+         e = dist / dist0 - 1.0
+         # allow breaking in both compression and extention
+         if (abs(e) > cohesionMaxStrain):
+           # break bond
+           bondDist[ib] = -1
+         # if not broken add elastic force
+         else:
+           ml = mass[l]
+           hl = hArray[l]
+           # compute average depth and mass
+           hkl = 0.5 * (hk + hl)
+           mkl = 0.5 * (mk + ml)
+           # sqrt(3) from 6-neighbors-assumption (Iwould add a 2 here... 2/sqrt(3))
+           Akl = hkl * dist / math.sqrt(3)
+           # cohesiveSurfaceTension used as elasticity module (Pa)
+           contact = Akl * cohesiveSurfaceTension
+           # dx / dist is  the unit direction vector towards bonded particle l
+           urf = (1.0 + contact * dt * dt / (dist0 * mkl))
+           # cohesion force (including the normalizing factor 1/dist)
+           forcecohesion = (1 / dist) * e * contact / urf
+           forceSPHX[k] = forceSPHX[k] + forcecohesion * dx
+           forceSPHY[k] = forceSPHY[k] + forcecohesion * dy
+           forceSPHZ[k] = forceSPHZ[k] + forcecohesion * dz
+  force['forceSPHX'] = np.asarray(forceSPHX)
+  force['forceSPHY'] = np.asarray(forceSPHY)
+  force['forceSPHZ'] = np.asarray(forceSPHZ)
+  particles['bondDist'] = np.asarray(bondDist)
+  return force, particles
+
+
+def plotBondC(particles):
+  """ update edges for plot (bonds that still exist)
+  Cython implementation
+  Parameters
+  ----------
+  particles : dict
+      particles dictionary
+  Returns
+  -------
+  edges : 2D numpy array
+      bonds that still exist
+  """
+  # read input parameters
+  cdef int nPart = particles['nPart']
+  # read particles and fields
+  cdef int[:] bondStart = particles['bondStart']
+  cdef double[:] bondDist = particles['bondDist']
+  cdef int[:] bondPart = particles['bondPart']
+  cdef int nEdges = bondPart.shape[0]
+  cdef int[:, :] edges = np.zeros((nEdges, 2), dtype=np.int32)
+  # initialize outputs
+  cdef int k, l, ib, count = 0
+  # loop on particles
+  for k in range(nPart):
+    # loop on all bonded particles
+    for ib in range(bondStart[k], bondStart[k + 1]):
+      # get initial distance between particles
+       dist0 = bondDist[ib]
+       # if bond already broken, just skipp it
+       if (dist0 > 0.0):
+         l = bondPart[ib]
+         edges[count, 0] = k
+         edges[count, 1] = l
+         count = count + 1
+  return edges
+
+
+def initiaizeBondsC(particles, triangles):
+  """ Initialize bonds if cohesion is activated
+  Parameters
+  ----------
+  particles : dict
+      particles dictionary at t start
+  triangles : matplotlib object
+      result from tri.Triangulation(x, y)
+  Returns
+  -------
+  particles : dict
+    particles dictionary updated with the bonds
+  """
+  # get all inputs
+  # particle information
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef int[:, :] tri = triangles.triangles
+  cdef int[:, :] edges = triangles.edges
+  cdef int nPart = xArray.shape[0]
+  cdef int nTri = tri.shape[0]
+  cdef int nEdges = edges.shape[0]
+  # cdef int nEdges = nPart + nTri - 1
+
+  # initialize variables and outputs
+  cdef int[:] bondStart = np.zeros(nPart + 1, dtype=np.int32)
+  cdef int[:] bondStart2 = np.zeros(nPart + 1, dtype=np.int32)
+  cdef int[:] bondPart = np.zeros(2 * nEdges, dtype=np.int32)
+  cdef double[:] bondDist = np.zeros(2 * nEdges, dtype=np.float64)
+  cdef double dx, dy, dz
+  cdef int k, e, p1, p2
+  cdef double distanceIni
+
+  # count bonds for each particle
+  for e in range(nEdges):
+    p1 = edges[e, 0]
+    p2 = edges[e, 1]
+    bondStart[p1+1] = bondStart[p1+1] + 1
+    bondStart[p2+1] = bondStart[p2+1] + 1
+    # create cumulative sum
+  for k in range(nPart):
+    bondStart[k+1] = bondStart[k] + bondStart[k+1]
+    bondStart2[k+1] = bondStart[k+1]
+
+  # make the list of which particles are bonded with which particle
+  for e in range(nEdges):
+    p1 = edges[e, 0]
+    p2 = edges[e, 1]
+    dx = xArray[p1] - xArray[p2]
+    dy = yArray[p1] - yArray[p2]
+    dz = zArray[p1] - zArray[p2]
+    distanceIni = DFAtlsC.norm(dx, dy, dz)
+    bondPart[bondStart2[p1+1]-1] = p2
+    bondDist[bondStart2[p1+1]-1] = distanceIni
+    bondStart2[p1+1] = bondStart2[p1+1] - 1
+    bondPart[bondStart2[p2+1]-1] = p1
+    bondDist[bondStart2[p2+1]-1] = distanceIni
+    bondStart2[p2+1] = bondStart2[p2+1] - 1
+
+
+  particles['bondStart'] = np.asarray(bondStart)
+  particles['bondPart'] = np.asarray(bondPart)
+  particles['bondDist'] = np.asarray(bondDist)
+  return particles
+
+
 def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
 
