@@ -14,6 +14,8 @@ from datetime import datetime
 import matplotlib.path as mpltPath
 from itertools import product
 import configparser
+import matplotlib.tri as tri
+from shapely.geometry import Polygon as sPolygon
 
 # Local imports
 from avaframe.version import getVersion
@@ -346,7 +348,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
 
     # ------------------------
     #  Start time step computation
-    Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem, simHash=simHash)
+    Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=simHash)
 
     # write mass balance to File
     writeMBFile(infoDict, avaDir, cuSimName)
@@ -859,7 +861,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     inputSimLines['releaseLine']['header'] = dem['originalHeader']
     particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines,
                                     logName=logName, relThField=relThField)
-    particles, fields = initializeFields(cfg, dem, particles)
+    particles, fields = initializeFields(cfg, dem, particles, releaseLine)
 
     # initialize Dam
     damLine = inputSimLines['damLine']
@@ -1118,8 +1120,8 @@ def getRelThFromPart(cfg, releaseLine, relThField):
     return relThForPart
 
 
-def initializeFields(cfg, dem, particles):
-    """Initialize fields and update particles flow thickness
+def initializeFields(cfg, dem, particles, releaseLine):
+    """Initialize fields and update particles flow thickness. Eventually build bond array if cohesion is activated
 
     Parameters
     ----------
@@ -1136,6 +1138,8 @@ def initializeFields(cfg, dem, particles):
         particles dictionary at initial time step updated with the flow thickness
     fields : dict
         fields dictionary at initial time step
+    releaseLine : dict
+        release line dictionary
     """
     # read config
     cfgGen = cfg['GENERAL']
@@ -1188,6 +1192,36 @@ def initializeFields(cfg, dem, particles):
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
 
+    if cfgGen.getint('cohesion') == 1:
+        # Initialize the bonds between particles if the cohesion is activated
+        # get particles
+        x = particles['x']
+        y = particles['y']
+        # get release outline (in order to remove spurious bonds)
+        xOutline = releaseLine['x']-dem['originalHeader']['xllcenter']
+        yOutline = releaseLine['y']-dem['originalHeader']['yllcenter']
+        # original triangulation (make delaunay triangulation on points)
+        triangles = tri.Triangulation(x, y)
+        # masking triangles exiting the release (plan small buffer to be sure to keep all inner edges)
+        outline = sPolygon(zip(xOutline, yOutline)).buffer(.01)
+        mask = [not outline.contains(sPolygon(zip(x[tri], y[tri])))
+                for tri in triangles.get_masked_triangles()]
+        triangles.set_mask(mask)
+        # masking triangles with sidelength bigger than some cellSize
+        # ToDo: is this a good creterion?
+        maxRadius = dem['header']['cellsize']
+        triang = triangles.triangles
+        # Mask off unwanted triangles.
+        xtri = x[triang] - np.roll(x[triang], 1, axis=1)
+        ytri = y[triang] - np.roll(y[triang], 1, axis=1)
+        maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
+        triangles.set_mask(maxi > maxRadius)
+
+        # debugg plot
+        if debugPlot:
+            debPlot.plotBondsGlideSnowIni(xOutline, yOutline, triangles)
+        # build the bond array from the triagular mesh (put it to a format that suits us for cython)
+        particles = DFAfunC.initiaizeBondsC(particles, triangles)
     return particles, fields
 
 
@@ -1333,7 +1367,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     return cResRaster, reportAreaInfo
 
 
-def DFAIterate(cfg, particles, fields, dem, simHash=''):
+def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     """ Perform time loop for DFA simulation
      Save results at desired intervals
 
@@ -1349,6 +1383,8 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         fields dictionary at initial time step
     dem : dict
         dictionary with dem information
+    inputSimLines : dict
+        dictionary with dictionaries (releaseLine, entLine, ...)
 
     Returns
     -------
@@ -1482,6 +1518,10 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
             # remove saving time steps that have already been saved
             dtSave = updateSavingTimeStep(dtSave, cfg['GENERAL'], t)
 
+            # debugg plot
+            # if debugPlot:
+            #     debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
+
         # derive time step
         if cfgGen.getboolean('sphKernelRadiusTimeStepping'):
             dt = dtSPHKR
@@ -1513,6 +1553,9 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     Tsave.append(t-dt)
 
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
+    # debugg plot
+    if debugPlot:
+        debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
 
     # create infoDict for report and mass log file
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'tCPU': tCPU,
@@ -1744,6 +1787,10 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, cfg.getint('sphOption'), gradient=0)
     tCPUForceSPH = time.time() - startTime
     tCPU['timeForceSPH'] = tCPU['timeForceSPH'] + tCPUForceSPH
+
+    # add bonding force if required (if cohesion is activated)
+    if cfg.getint('cohesion') == 1:
+        force, particles = DFAfunC.computeCohesionForceC(cfg, particles, force)
 
     # update velocity and particle position
     startTime = time.time()

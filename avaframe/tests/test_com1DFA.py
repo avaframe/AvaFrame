@@ -1069,7 +1069,7 @@ def test_initializeParticles():
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, releaseLine)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1101,7 +1101,7 @@ def test_initializeParticles():
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDIR'
     cfg['GENERAL'].update({'massPerPart': '60.'})
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, releaseLine)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1137,7 +1137,7 @@ def test_initializeParticles():
     cfg['GENERAL'].update({'aPPK': '-1'})
     cfg['GENERAL'].update({'relTh': '1.'})
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, releaseLine)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1345,7 +1345,7 @@ def test_initializeFields():
     dem['header']['yllcenter'] = 0.0
 
     # call function to be tested
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, '')
 
     print('particles', particles)
     print('fields', fields)
@@ -1370,7 +1370,7 @@ def test_initializeFields():
     cfg['REPORT'] = {'plotFields': 'pft|pfv'}
     cfg['GENERAL'] = {'resType': 'pke|pta|pft|pfv', 'rho': '200.', 'interpOption': '2'}
     # call function to be tested
-    particles, fields = com1DFA.initializeFields(cfg, dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg, dem, particles, '')
     assert len(fields) == 16
     assert fields['computeTA']
     assert fields['computeKE']

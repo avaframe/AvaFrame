@@ -1,8 +1,10 @@
 """Tests for module com1DFAtools"""
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import configparser
 import pytest
+import matplotlib.tri as tri
 
 # Local imports
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
@@ -357,3 +359,144 @@ def test_computeTravelAngle():
     assert gamma[0] == 45
     assert gamma[1] == pytest.approx(41.9872125, rel=1e-6)
     assert gamma[3] == pytest.approx(41.9872125, rel=1e-6)
+
+
+
+def test_initiaizeBondsC():
+    nPart = 3
+    x = np.array([0., 1., 0.])
+    y = np.array([0., 0., 1.])
+    z = np.array([0., 0., 0.])
+    # original triangulation
+    triangles = tri.Triangulation(x, y)
+    particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z}
+    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    print(triangles.triangles)
+    print(triangles.edges)
+    print(particles['bondStart'])
+    print(particles['bondDist'])
+    print(particles['bondPart'])
+    bondStart = particles['bondStart']
+    bondDist = particles['bondDist']
+    bondPart = particles['bondPart']
+    assert np.array_equal(bondStart, np.asarray([0, 2, 4, 6]))
+    for k in range(nPart):
+        # loop on all bonded particles
+        neighbors = list()
+        for ib in range(bondStart[k], bondStart[k + 1]):
+            l = bondPart[ib]
+            neighbors.append(l)
+
+        neighbors.sort()
+        if k == 0:
+            assert neighbors == [1, 2]
+        if k == 1:
+            assert neighbors == [0, 2]
+        if k == 2:
+            assert neighbors == [0, 1]
+    bondDist.sort()
+    assert np.array_equal(bondDist, np.asarray([1, 1, 1, 1, math.sqrt(2), math.sqrt(2)]))
+
+
+def test_computeCohesionForceC():
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'cohesiveSurfaceTension': '50000', 'cohesionMaxStrain': '0.2'}
+    nPart = 3
+    x = np.array([0., 1., 0.])
+    y = np.array([0., 0., 1.])
+    z = np.array([0., 0., 0.])
+    ux = np.array([0., 0., 0.])
+    uy = np.array([0., 0., 0.])
+    uz = np.array([0., 0., 0.])
+    m = np.array([1., 1., 1.])
+    h = np.array([1., 1., 1.])
+    force = {}
+    force['forceSPHX'] = np.zeros(np.shape(x))
+    force['forceSPHY'] = np.zeros(np.shape(x))
+    force['forceSPHZ'] = np.zeros(np.shape(x))
+    # original triangulation
+    triangles = tri.Triangulation(x, y)
+    particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m, 'h': h, 'dt': 0.05}
+    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    # bond breaking
+    particles['x'][1] = 1.21
+    force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
+    print(particles['bondStart'])
+    print(particles['bondDist'])
+    print(particles['bondPart'])
+    print(force['forceSPHX'])
+    print(force['forceSPHY'])
+    print(force['forceSPHZ'])
+    bondStart = particles['bondStart']
+    bondDist = particles['bondDist']
+    bondPart = particles['bondPart']
+    for k in range(nPart):
+        # loop on all bonded particles
+        neighbors = list()
+        for ib in range(bondStart[k], bondStart[k + 1]):
+            l = bondPart[ib]
+            neighbors.append(l)
+            if k == 0:
+                if l == 1:
+                    assert bondDist[ib] == -1
+            if k == 0:
+                if l == 1:
+                    assert bondDist[ib] == -1
+
+        neighbors.sort()
+        if k == 0:
+            assert neighbors == [1, 2]
+        if k == 1:
+            assert neighbors == [0, 2]
+        if k == 2:
+            assert neighbors == [0, 1]
+    bondDist.sort()
+    assert np.array_equal(bondDist, np.asarray([-1, -1, 1, 1, math.sqrt(2), math.sqrt(2)]))
+    assert force['forceSPHX'][0] == 0
+    assert force['forceSPHY'][0] == 0
+    assert force['forceSPHX'][1] < 0
+    assert force['forceSPHY'][1] > 0
+    assert force['forceSPHX'][2] > 0
+    assert force['forceSPHY'][2] < 0
+    assert force['forceSPHX'][1] == -force['forceSPHX'][2]
+    assert force['forceSPHY'][1] == -force['forceSPHY'][2]
+
+    # bound not breaking
+    particles['x'][1] = 1
+    particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m, 'h': h, 'dt': 0.05}
+    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    particles['x'][1] = 1.09
+    force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
+    print(particles['bondStart'])
+    print(particles['bondDist'])
+    print(particles['bondPart'])
+    print(force['forceSPHX'])
+    print(force['forceSPHY'])
+    print(force['forceSPHZ'])
+    bondStart = particles['bondStart']
+    bondDist = particles['bondDist']
+    bondPart = particles['bondPart']
+    for k in range(nPart):
+        # loop on all bonded particles
+        neighbors = list()
+        for ib in range(bondStart[k], bondStart[k + 1]):
+            l = bondPart[ib]
+            neighbors.append(l)
+
+        neighbors.sort()
+        if k == 0:
+            assert neighbors == [1, 2]
+        if k == 1:
+            assert neighbors == [0, 2]
+        if k == 2:
+            assert neighbors == [0, 1]
+    bondDist.sort()
+    assert np.array_equal(bondDist, np.asarray([1, 1, 1, 1, math.sqrt(2), math.sqrt(2)]))
+
+    assert force['forceSPHX'][0] > 0
+    assert force['forceSPHY'][0] == 0
+    assert force['forceSPHX'][1] < 0
+    assert force['forceSPHY'][1] > 0
+    assert force['forceSPHX'][2] > 0
+    assert force['forceSPHY'][2] < 0
+    assert force['forceSPHY'][1] == -force['forceSPHY'][2]

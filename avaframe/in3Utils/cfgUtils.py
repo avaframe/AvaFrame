@@ -605,7 +605,7 @@ def convertDF2numerics(simDF):
         if simDFTest.str.isdigit().any():
             # problem here is that it finds even if not present in | although not in ini
             simDFTest = simDF[name].str.replace('|', '§', regex=True)
-            if simDFTest.str.contains('§').any() == False:
+            if simDFTest.str.contains('§').any() is False:
                 simDF[name] = pd.to_numeric(simDF[name])
                 log.debug('Converted to numeric %s' % name)
         else:
