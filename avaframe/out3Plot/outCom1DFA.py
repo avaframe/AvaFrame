@@ -8,13 +8,15 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe import runFindNodeInfo 
 
+import avaframe.out3Plot.plotUtils as pU
 
 cfgMain = cfgUtils.getGeneralConfig()
 cfgFlags = cfgMain['FLAGS']
 
 
-def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
+def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem,cuSimName):
     """ Plot time series of tracked partcles
     Parameters
     ----------
@@ -62,9 +64,27 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
     velocity = DFAtls.norm(trackedPartProp['ux'], trackedPartProp['uy'],
                            trackedPartProp['uz'])
     ax3.plot(time, velocity)
+    # add the Nodes velocity 
+    Nodes = runFindNodeInfo.FindNodeVelocity([7,9,10])
+    ax3.plot(Nodes['C07']['Time'], Nodes['C07']['Velocity'], color='brown', label='AvaNode C07')
+    ax3.plot(Nodes['C09']['Time'], Nodes['C09']['Velocity'], color='green', label='AvaNode C09')
+    ax3.plot(Nodes['C10']['Time'], Nodes['C10']['Velocity'], color='orange', label='AvaNode C10')
+    # title     
+    if cfg['GENERAL']['frictModel'] =='Coulomb':
+        ax3.set_title(cfg['GENERAL']['frictModel']+" model,"+ " mu ="+str(cfg['GENERAL']['mu'])+"\n", fontsize=18)
+    elif cfg['GENERAL']['frictModel'] =='Voellmy':
+        ax3.set_title(cfg['GENERAL']['frictModel']+" model,"+ " mu ="+str(cfg['GENERAL']['mu'])+", xsi="+str(cfg['GENERAL']['xsi'])+"\n", fontsize=18)
+    elif cfg['GENERAL']['frictModel'] =='samosAT':
+        ax3.set_title(cfg['GENERAL']['frictModel']+" model,"+ " mu ="+str(cfg['GENERAL']['mu'])+", tau0="+str(cfg['GENERAL']['tau0'])+"\n", fontsize=18)
+    elif cfg['GENERAL']['frictModel'] =='VoellmyUpgraded':
+        ax3.set_title(cfg['GENERAL']['frictModel']+" model,"+ " mu ="+str(cfg['GENERAL']['mu'])+", tau0="+str(cfg['GENERAL']['tau0'])+", xsi="+str(cfg['GENERAL']['xsi'])+"\n", fontsize=18)      
+    else:
+        ax3.set_title("No friction model found!", fontsize=18)  
+    
     ax3.set_xlabel('t [s]')
     ax3.set_ylabel('v [m/s]')
-    ax3.set_title('Velocity')
+    # add AvaNode legend 
+    ax3.legend(loc='upper right', ncol=1, fancybox=False, shadow=False)
 
     ax4 = plt.subplot(224)
     ax4.plot(time, trackedPartProp['h'])
@@ -74,7 +94,8 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
-    outFileName = 'trackedParticles'
+    #plotName = outDirData / ('%s.%s' % (name, pU.outputFormat))
+    outFileName = 'trackedParticles_'+ str(cuSimName) 
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     if cfgFlags.getboolean('showPlot'):

@@ -33,7 +33,7 @@ avalancheDir = cfgMain['MAIN']['avalancheDir']
 # Load configuration info of all com1DFA simulations
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-# Extracting the different avalanche simulations of the output file 
+# # Extracting the different avalanche simulations of the output file 
 F = runFindAvalancheInfo.postProcess(avalancheDir, cfgMain, simDF)
 
 # Creating a dictionary containing information on each avalanche 
@@ -78,6 +78,54 @@ for i in range(0, number_files):
         Mean[i][j] = stat.mean(df[j])
         Median[i][j] = stat.median(df[j]) 
         
+#%% Dissipation energy 
+
+Kinetic = [None]*number_files
+Potential = [None]*number_files
+Mechanic = [None]*number_files
+Dissipation = [None]*number_files
+Mass = [None]*number_files
+
+
+for i in range(0, number_files):
+    number_time_steps = len(L[i])
+    # Reading and calculating the velocity magnitude for avalanche i  
+    Kinetic[i] = [None]*number_time_steps
+    Potential[i] = [None]*number_time_steps
+    Mechanic[i] = [None]*number_time_steps
+    Dissipation[i] = [None]*number_time_steps
+    Mass[i] = [None]*number_time_steps
+    for k in range(0, number_time_steps):
+        Kinetic[i][k] = L[i][k]['kineticEne']
+        Potential[i][k] = L[i][k]['potentialEne']
+        Mass[i][k] = L[i][k]['m']
+        Mechanic[i][k] = Kinetic[i][k] + Potential[i][k] 
+
+Potential[0] = np.array(Potential[0]) - Potential[0][-1]
+Dissipation[0] = Potential[0][0] - np.array(Potential[0]+Kinetic[0]) 
+
+Mean_mass = np.mean(Mass[0][:],1)
+# Calculating the energy per unit mass 
+Kinetic[0] = np.array(Kinetic[0])/Mean_mass
+Potential[0] = np.array(Potential[0])/Mean_mass
+Mechanic[0] = np.array(Mechanic[0])/Mean_mass
+Dissipation[0] = np.array(Dissipation[0])/Mean_mass
+
+
+fig = plt.figure() 
+ax = fig.add_subplot(111) 
+plt.axhline(y=Potential[0][0], linestyle='dashed', color='black') 
+plt.plot(Time[0],Kinetic[0], label='Kin')
+plt.plot(Time[0],Potential[0], label='Pot')
+#plt.plot(Time[0],Mechanic[0], label='Mech')
+plt.plot(Time[0],Dissipation[0], label='Diss')
+ax.set_title("Avaframe, energy balance", fontsize=20)
+ax.set_ylabel("Energy per unit mass [m²/s²]", fontsize=15)
+ax.set_xlabel("Time [s]\n\n", fontsize=15)
+plt.legend()
+plt.show()
+
+
 #%% Experiment 
 
 # Reading the experiment files for AvaNode C07 
@@ -173,8 +221,8 @@ for i in range(0, number_files):
     f = interp1d(time_experimental_C10, vel_experimental_C10)
     if max(Time[i]) > max(time_experimental_C10):
         index = Time[i].index(next((j for j in Time[i] if int(j)>max(time_experimental_C10)),None))
-        vel_experimental_C10_interpolated = f(Time[i][0:index]) 
-        boxplot_data[i] = Mean[i][0:index] - vel_experimental_C10_interpolated
+        vel_experimental_C10_interpolated = f(Time[i][0:index-1]) 
+        boxplot_data[i] = Mean[i][0:index-1] - vel_experimental_C10_interpolated
     else:
         vel_experimental_C10_interpolated = f(Time[i]) 
         boxplot_data[i] = Mean[i] - vel_experimental_C10_interpolated
@@ -192,6 +240,8 @@ elif friction_model=='Voellmy':
     labels = ["mu ="+str(F.mu[i])+"\nxsi="+str(F.xsi[i]) for i in range(0,number_files)]
 elif friction_model=='samosAT':
     labels = ["mu ="+str(F.mu[i])+"\ntau0="+str(F.tau0[i]) for i in range(0,number_files)]
+elif friction_model=='VoellmyUpgraded':
+        labels = ["mu ="+str(F.mu[i])+"\ntau0="+str(F.tau0[i])+"\nxsi="+str(F.xsi[i]) for i in range(0,number_files)]
 else:
     labels = ["No friction model found!" for i in range(0,number_files)]
 
@@ -271,8 +321,8 @@ if key == 1:
             # filling the space between the max and min
             ax[i].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color=cmap(0.2), alpha=0.2)
             # Experiment (AvaRange)
-            ax[i].plot(time_experimental_C07, vel_experimental_C07, color=cmap(0.95))  # AvaNode velocity
-            ax[i].plot(time_experimental_C09, vel_experimental_C09, color=cmap(0.95))  # AvaNode velocity
+            ax[i].plot(time_experimental_C07, vel_experimental_C07, color=cmap(0.80))  # AvaNode velocity
+            ax[i].plot(time_experimental_C09, vel_experimental_C09, color=cmap(0.90))  # AvaNode velocity
             ax[i].plot(time_experimental_C10, vel_experimental_C10, color=cmap(0.95))  # AvaNode velocity
             # Plotting parameters
             if friction_model=='Coulomb':
@@ -281,6 +331,8 @@ if key == 1:
                 ax[i].set_title("mu ="+str(F.mu[simu_number])+", xsi="+str(F.xsi[simu_number]), fontsize=18)
             elif friction_model=='samosAT':
                 ax[i].set_title("mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number]), fontsize=18)
+            elif friction_model=='VoellmyUpgraded':
+                ax[i].set_title("mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number])+", xsi="+str(F.xsi[i]), fontsize=15)
             else:
                 ax[i].set_title("No friction model found!", fontsize=18)
             #ax[i].set_xlim(right=max_time)
@@ -307,6 +359,8 @@ if key == 1:
                     ax[i,j].set_title("mu ="+str(F.mu[simu_number])+", xsi="+str(F.xsi[simu_number]), fontsize=18)
                 elif friction_model=='samosAT':
                     ax[i,j].set_title("mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number]), fontsize=18)
+                elif friction_model=='VoellmyUpgraded':
+                    ax[i,j].set_title("mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number])+", xsi="+str(F.xsi[i]), fontsize=15)
                 else:
                     ax[i,j].set_title("No friction model found!", fontsize=18)
                 ax[i,j].set_xlim(right=max_time)

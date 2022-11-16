@@ -50,6 +50,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   -------
   force : dict
       force dictionary
+  particles : dict 
   """
   # read input parameters
   cdef double tau0 = cfg.getfloat('tau0')
@@ -233,6 +234,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           elif frictType == 3:
             # voellmy friction type
             tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
+          elif frictType == 4:
+            #tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi + tau0 - tau0*np.exp(-(1-mu)*sigmaB/tau0)
+            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi + tau0 
           else:
             tau = 0.0
 

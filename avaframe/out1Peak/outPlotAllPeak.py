@@ -164,8 +164,10 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, F, demData=''):
                 plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+", xsi="+str(F.xsi[simu_number])+"\n", fontsize=18)
             elif F.frictModel[0] =='samosAT':
                 plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number])+"\n", fontsize=18)
+            elif F.frictModel[0] =='VoellmyUpgraded':
+                plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[simu_number])+", tau0="+str(F.tau0[simu_number])+", xsi="+str(F.xsi[simu_number])+"\n", fontsize=18)
             else:
-                plt.title('%s' % name+"No friction model found!", fontsize=18)
+                plt.title('%s' % name+" No friction model found!", fontsize=18)
             
             # add AvaNode legend 
             fig.legend(loc='lower center', ncol=3, fancybox=True, shadow=True)

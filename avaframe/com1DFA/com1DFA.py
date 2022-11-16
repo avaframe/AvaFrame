@@ -308,7 +308,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         if track:
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
-            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
+            # Load configuration info of all com1DFA simulations 
+            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
@@ -986,6 +987,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     kineticEne = np.sum(0.5 * mPartArray * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * mPartArray * particles['z'])
+    particles['dissipationEne'] = 0.0 
     particles['peakKinEne'] = kineticEne
     particles['peakForceSPH'] = 0.0
     particles['forceSPHIni'] = 0.0
@@ -1328,7 +1330,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     resTypesLast = list(set(resTypes + resTypesReport + ['particles']))
     # derive friction type
     # turn friction model into integer
-    frictModelsList = ['samosat', 'coulomb', 'voellmy']
+    frictModelsList = ['samosat', 'coulomb', 'voellmy','voellmyupgraded']
     frictModel = cfgGen['frictModel'].lower()
     frictType = frictModelsList.index(frictModel) + 1
     log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))
@@ -1547,10 +1549,15 @@ def addMaxValuesToDF(resultsDF, fields, timeStep, resTypes, rangeValue=''):
     for resT in resTypes:
         if resT != 'particles':
             newLine.append(np.nanmax(fields[resT]))
-
+    print(rangeValue)
     if rangeValue != '':
         newLine.append(rangeValue)
+        
+    print(newLine)
+    
     resultsDF.loc[timeStep] = newLine
+    
+    print(resultsDF.loc[timeStep])
 
     return resultsDF
 
@@ -1671,12 +1678,22 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     """
     # get forces
     startTime = time.time()
+    
+    # Calculating the mechanical energy at time t 
+    mechanicalEne_t = particles['kineticEne'] + particles['potentialEne']
 
     # loop version of the compute force
     log.debug('Compute Force C')
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType)
     tCPUForce = time.time() - startTime
     tCPU['timeForce'] = tCPU['timeForce'] + tCPUForce
+      
+    # Calculating the mechanical energy at time t+dt  
+    mechanicalEne_dt = particles['kineticEne'] + particles['potentialEne']
+    
+    # Calculating the energy dissipations between t and t+dt 
+    dissipationEne = mechanicalEne_dt - mechanicalEne_t
+    particles['dissipationEne'] = dissipationEne
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
@@ -2084,9 +2101,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
         track: boolean
             False if no particles are tracked
     """
-   
-    print('DEM', dem) 
-    print('DEM', dem['originalHeader']) 
 
     # read particle properties to be extracted
     particleProperties = cfgTrackPart['particleProperties']

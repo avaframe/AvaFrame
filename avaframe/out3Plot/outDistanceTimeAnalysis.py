@@ -82,7 +82,6 @@ def plotRangeTime(mtiInfo, cfgRangeTime, F, index):
         plt.title(mtiInfo['plotTitle']+"No friction model found!", fontsize=18)
         
     #plt.title(mtiInfo['plotTitle']+'mu='+F.mu[ava_num])
-    print(F.mu[ava_num])  
     
     pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
     plt.plot(timeList, rangeList, '.', color='black', markersize=4,
