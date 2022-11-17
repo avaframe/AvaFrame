@@ -10,7 +10,7 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
                                                                           int, double[:], double[:], double[:],
                                                                           double[:], double[:], double[:],
                                                                           double[:], double[:], double[:],
-                                                                          int, int, double, int, double,
+                                                                          int, int, double, int, double, int,
                                                                           double[:,:], double[:,:], double[:,:],
                                                                           double[:,:], double[:,:])
 

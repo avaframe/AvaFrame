@@ -31,7 +31,7 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
                                                                           double[:] xCrownArray, double[:] yCrownArray, double[:] zCrownArray,
                                                                           double[:] xTangentArray, double[:] yTangentArray, double[:] zTangentArray,
                                                                           int ncols, int nrows, double csz, int interpOption, double restitutionCoefficient,
-                                                                          double[:,:] nxArray, double[:,:] nyArray, double[:,:] nzArray,
+                                                                          int nIterDam, double[:,:] nxArray, double[:,:] nyArray, double[:,:] nzArray,
                                                                           double[:,:] ZDEM, double[:,:] FT):
   """ Check if the particle trajectory intersects the dam lines and compute intersection coordinates
 
@@ -92,6 +92,8 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
     -2: bilinear interpolation
   restitutionCoefficient: float
     value between 0 and 1, 0, for a complete dissipation of the normal energy, 1 for a bounce with no dissipation
+  nIterDam: int
+    max number of interactuion points with the dam
   nxArray : 2D numpy array
     x component of the normal vector of the DEM
   nyArray : 2D numpy array
@@ -137,11 +139,16 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
   cdef double txWall, tyWall, tzWall
   cdef double normalComponent
   cdef double dissEm = 0
-  cdef int foundIntersection
+  cdef double velMagMin = 0.000001
+  cdef int iterate = nIterDam
+  cdef int foundIntersection, foundIntersectionNew
+  sectionNew = -1
   # wall interactions
   foundIntersection, section, xFoot, yFoot, zFoot, xCrown, yCrown, zCrown, txWall, tyWall, tzWall = getIntersection(xOld, yOld,
       xNew, yNew, xFootArray, yFootArray, zFootArray, xCrownArray, yCrownArray, zCrownArray, xTangentArray, yTangentArray, zTangentArray, nDamPoints)
-  if foundIntersection:
+  foundIntersectionNew = foundIntersection
+  while foundIntersectionNew and iterate>0:
+    iterate = iterate - 1
     # get cell and weights of intersection point
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(xFoot, yFoot, ncols, nrows, csz, interpOption)
     # if(iCell < 0) continue; TODO: do we need to check for this?
@@ -153,11 +160,13 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
     nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     # get average normal between old and new position
     nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
-    hFootVertical = hFoot / (nz+0.01)  # ToDo: hFoot / (nz+0.01) in Peter's code, but nz can never be 0 right?
+    hFootVertical = hFoot / nz  # ToDo: hFoot / (nz+0.01) in Peter's code, but nz can never be 0 right?
     # compute wall normal considering filling of the dam
     # update foot z coordinate. ToDo this is very artificial
     zFootFilled = zFoot + 0.5*hFootVertical
     # compute normal vector
+    if zCrown-zFootFilled <= 0:
+      log.info('flow depth exceeds dam height')
     # If the snow fills the dam which means zCrown>zFootFilled, we compute the normal the same way
     nxWall, nyWall, nzWall = DFAtlsC.crossProd(xCrown-xFoot, yCrown-yFoot, zCrown-zFootFilled, txWall, tyWall, tzWall)
     # TODO: carefull, if zCrown-zFootFilled = 0 and the slope of the dam is 90° we have a vector of lenght 0...
@@ -167,21 +176,57 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
     # compute normal component of the trajectory from the foot to the xNew with no dam
     normalComponent = DFAtlsC.scalProd(nxWall, nyWall, nzWall, xNew-xFoot, yNew-yFoot, zNew-zFoot)
     # update position (reflection + dissipation)
-    # ToDo: We should bounce frome the intersection point
-    xNew = xOld - (1.0 + restitutionCoefficient) * normalComponent * nxWall
-    yNew = yOld - (1.0 + restitutionCoefficient) * normalComponent * nyWall
-    zNew = zOld - (1.0 + restitutionCoefficient) * normalComponent * nzWall
+    # Samos
+    # xNew = xOld - (1.0 + restitutionCoefficient) * normalComponent * nxWall
+    # yNew = yOld - (1.0 + restitutionCoefficient) * normalComponent * nyWall
+    # zNew = zOld - (1.0 + restitutionCoefficient) * normalComponent * nzWall
+    # same as samos but from new position
+    # xNew = xNew - (1.0 + restitutionCoefficient) * normalComponent * nxWall
+    # yNew = yNew - (1.0 + restitutionCoefficient) * normalComponent * nyWall
+    # zNew = zNew - (1.0 + restitutionCoefficient) * normalComponent * nzWall
+    # dissiparion in velocity direction and not in wall normal direction
+    xNew = (1.0 - restitutionCoefficient) * xFoot + restitutionCoefficient * xNew - 2 * restitutionCoefficient * normalComponent * nxWall
+    yNew = (1.0 - restitutionCoefficient) * yFoot + restitutionCoefficient * yNew - 2 * restitutionCoefficient * normalComponent * nyWall
+    zNew = (1.0 - restitutionCoefficient) * zFoot + restitutionCoefficient * zNew - 2 * restitutionCoefficient * normalComponent * nzWall
 
     # update velocity (reflection + dissipation)
     normalComponent = DFAtlsC.scalProd(nxWall, nyWall, nzWall, uxNew, uyNew, uzNew)
-    uxNew = uxNew - (1.0 + restitutionCoefficient) * normalComponent * nxWall
-    uyNew = uyNew - (1.0 + restitutionCoefficient) * normalComponent * nyWall
-    uzNew = uzNew - (1.0 + restitutionCoefficient) * normalComponent * nzWall
-
-    # ToDo: We should make sure we do not cross the dam again and bounce another time!!!
+    # samos
+    # uxNew = uxNew - (1.0 + restitutionCoefficient) * normalComponent * nxWall
+    # uyNew = uyNew - (1.0 + restitutionCoefficient) * normalComponent * nyWall
+    # uzNew = uzNew - (1.0 + restitutionCoefficient) * normalComponent * nzWall
+    # dissiparion in velocity direction and not in wall normal direction
+    uxNew = (uxNew - 2 * normalComponent * nxWall) * restitutionCoefficient
+    uyNew = (uyNew - 2 * normalComponent * nyWall) * restitutionCoefficient
+    uzNew = (uzNew - 2 * normalComponent * nzWall) * restitutionCoefficient
 
     dissEm = -(zCrown-zFoot)
 
+    if iterate>0:
+      # reproject position
+      # a simple vertical reprojection is done.
+      LxNew0, LyNew0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
+      if iCellNew >= 0:
+        zNew = DFAtlsC.getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+
+      # reproject velocity
+      # get normal at the new particle location
+      nxNew, nyNew, nzNew = DFAtlsC.getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+      # normalize new normal
+      nxNew, nyNew, nzNew = DFAtlsC.normalize(nxNew, nyNew, nzNew)
+      uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin, 0)
+
+      # We need to make sure we do not cross the dam again and bounce another time!!!
+      # check if we have another intersection after reflexion
+      # change the foot to make sure the intersection point is on the left part of the dam
+      xFoot = xFoot + 0.0001 * nxWall
+      yFoot = yFoot + 0.0001 * nyWall
+      foundIntersectionNew, sectionNew, xFoot, yFoot, zFoot, xCrown, yCrown, zCrown, txWall, tyWall, tzWall = getIntersection(xFoot, yFoot,
+          xNew, yNew, xFootArray, yFootArray, zFootArray, xCrownArray, yCrownArray, zCrownArray, xTangentArray, yTangentArray, zTangentArray, nDamPoints)
+
+      if foundIntersectionNew and section==sectionNew:
+        # crossing the dam on the same section is allowed
+        foundIntersectionNew = 0
   return foundIntersection, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dissEm
 
 
@@ -263,7 +308,7 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
   cdef double xF1, yF1, zF1, xF2, yF2, zF2
   cdef double xF, yF, zF
   cdef double xC, yC, zC, xC1, yC1, zC1, xC2, yC2, zC2
-  cdef double xT1, yT1, zT1, xT2, yT2, zT2, xT, yT, zT
+  cdef double xT, yT, zT
 
   for i in range(nDamPoints-1):
     # get end points of the considered wall section
@@ -285,13 +330,11 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
       zC1 = zCrown[i]
       zC2 = zCrown[i+1]
       # get tangent vectors of wall segment
-      # ToDo: the tangent should be the same as the segment vector at the intersection
-      xT1 = xTangent[i]
-      xT2 = xTangent[i+1]
-      yT1 = yTangent[i]
-      yT2 = yTangent[i+1]
-      zT1 = zTangent[i]
-      zT2 = zTangent[i+1]
+      # which is the same as the tangent vector at the intersection
+      xT = xTangent[i]
+      yT = yTangent[i]
+      zT = zTangent[i]
+      # compute intersection
       xF = (1.0-r)*xF1 + r*xF2
       yF = (1.0-r)*yF1 + r*yF2
       zF = (1.0-r)*zF1 + r*zF2
@@ -299,10 +342,6 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
       xC = (1.0-r)*xC1 + r*xC2
       yC = (1.0-r)*yC1 + r*yC2
       zC = (1.0-r)*zC1 + r*zC2
-      # get tangent vector at intersection
-      xT = (1.0)*xT1 + r*xT2
-      yT = (1.0)*yT1 + r*yT2
-      zT = (1.0)*zT1 + r*zT2
       return intersection, i, xF, yF, zF, xC, yC, zC, xT, yT, zT
   return intersection, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -413,6 +452,7 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
     nDamPoints = np.size(wallLineDict['x'])
     wallLineDict['nPoints'] = nDamPoints
     wallLineDict['restitutionCoefficient'] = cfg.getfloat('restitutionCoefficient')
+    wallLineDict['nIterDam'] = cfg.getfloat('nIterDam')
     try:
       log.info('Using dam slope from shape file: %s °' % wallLineDict['slope'])
       wallLineDict['slope'] = np.ones(nDamPoints) * np.radians(wallLineDict['slope'])
@@ -420,26 +460,33 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
       message = 'Provide a valid slope value for the dam (\'slope\' attribute in the dam line shape file)'
       log.error(message)
       raise TypeError(message)
+
     # compute wall tangent vector
-    tangentsX = np.zeros(nDamPoints)
-    tangentsY = np.zeros(nDamPoints)
-    tangentsZ = np.zeros(nDamPoints)
+    tangentsX = np.zeros(nDamPoints-1)
+    tangentsY = np.zeros(nDamPoints-1)
+    tangentsZ = np.zeros(nDamPoints-1)
+    tangentsTempX = np.zeros(nDamPoints)
+    tangentsTempY = np.zeros(nDamPoints)
+    tangentsTempZ = np.zeros(nDamPoints)
     # tangent between i and i+1
     for i in range(nDamPoints-1):
       tx = wallLineDict['x'][i+1] - wallLineDict['x'][i]
       ty = wallLineDict['y'][i+1] - wallLineDict['y'][i]
       tz = wallLineDict['z'][i+1] - wallLineDict['z'][i]
       tx, ty, tz = DFAtlsC.normalize(tx, ty, tz)
+      # add it to i
+      tangentsX[i] = tx
+      tangentsY[i] = ty
+      tangentsZ[i] = tz
       # add it to i and i+1
-      # ToDo: the tangent vector should be the segment vector not the average of the two segments...
-      tangentsX[i] = tangentsX[i] + tx
-      tangentsY[i] = tangentsY[i] + ty
-      tangentsZ[i] = tangentsZ[i] + tz
-      tangentsX[i+1] = tangentsX[i+1] + tx
-      tangentsY[i+1] = tangentsY[i+1] + ty
-      tangentsZ[i+1] = tangentsZ[i+1] + tz
+      tangentsTempX[i] = tangentsTempX[i] + tx
+      tangentsTempY[i] = tangentsTempY[i] + ty
+      tangentsTempZ[i] = tangentsTempZ[i] + tz
+      tangentsTempX[i+1] = tangentsTempX[i+1] + tx
+      tangentsTempY[i+1] = tangentsTempY[i+1] + ty
+      tangentsTempZ[i+1] = tangentsTempZ[i+1] + tz
     # normalize
-    tangentsX, tangentsY, tangentsZ = DFAtls.normalize(tangentsX, tangentsY, tangentsZ)
+    tangentsTempX, tangentsTempY, tangentsTempZ = DFAtls.normalize(tangentsTempX, tangentsTempY, tangentsTempZ)
     # add it to the wallLineDict
     wallLineDict['xTangent'] = tangentsX
     wallLineDict['yTangent'] = tangentsY
@@ -472,7 +519,7 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
       crownY[i] = y
       # compute the normal to the dam in 2D ("top view")
       # (0, 0, 1) and (tangentsX[i], tangentsY[i], tangentsZ[i]) but they are not ortogonal, d is not of norm 1
-      dx, dy, dz = DFAtls.crossProd(0, 0, 1, tangentsX[i], tangentsY[i], tangentsZ[i])
+      dx, dy, dz = DFAtls.crossProd(0, 0, 1, tangentsTempX[i], tangentsTempY[i], tangentsTempZ[i])
       d = DFAtlsC.norm(dx, dy, dz)
       # add the z component to get the tangent vector to the sloped wall
       dz = - np.tan(slope) * d
@@ -509,7 +556,7 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
     wallLineDict = {'dam': 0, 'cellsCrossed': np.zeros((dem['header']['ncols']*dem['header']['nrows'])).astype(int)}
     for key in ['x', 'y', 'z', 'xCrown', 'yCrown', 'zCrown', 'xTangent', 'yTangent', 'zTangent']:
       wallLineDict[key] = np.ones((1))*1.0
-    for key in ['nPoints', 'height', 'slope', 'restitutionCoefficient']:
+    for key in ['nPoints', 'height', 'slope', 'restitutionCoefficient', 'nIterDam']:
       wallLineDict[key] = 0
 
   return wallLineDict

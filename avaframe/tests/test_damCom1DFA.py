@@ -245,7 +245,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
@@ -266,7 +266,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
@@ -289,7 +289,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     assert fI == 1
@@ -311,7 +311,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
@@ -334,7 +334,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     assert fI == 1
@@ -378,7 +378,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
@@ -423,7 +423,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['x'], wallLineDict['y'], wallLineDict['z'],
         wallLineDict['xCrown'], wallLineDict['yCrown'], wallLineDict['zCrown'],
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
-        ncols, nrows, csz, interpOption, restitutionCoefficient,
+        ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
     print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-10
