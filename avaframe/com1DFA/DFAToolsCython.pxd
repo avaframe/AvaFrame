@@ -23,7 +23,7 @@ cpdef (double, double, double, double) getWeights(double, double, int, double, i
 cpdef (int, int, int, double, double, double, double) getCellAndWeights(double, double, int, int, double, int)
 
 cpdef (double, double, double, double) reprojectVelocity(double , double , double, double,
-                                                         double , double , double)
+                                                         double , double , double, int)
 
 cpdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
   double , double , double, double[:,:], double[:,:], double[:,:],

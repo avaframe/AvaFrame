@@ -334,7 +334,7 @@ cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x
 
 
 cpdef (double, double, double, double) reprojectVelocity(double uxNew, double uyNew, double uzNew, double nxNew,
-                                                         double nyNew, double nzNew, double velMagMin):
+                                                         double nyNew, double nzNew, double velMagMin, int keep):
   """ Reproject velocity vector on the topography
   Parameters
   ----------
@@ -352,6 +352,8 @@ cpdef (double, double, double, double) reprojectVelocity(double uxNew, double uy
       z component of the normal vector
     velMagMin: float
       velocity magnitude
+    keep: int
+    if 1 conserve velocity magnitude after the reprojection (does not work if the velocity is normal to the surface)
   """
   cdef double uMag, uN, uMagNew
   # velocity magnitude
@@ -364,7 +366,7 @@ cpdef (double, double, double, double) reprojectVelocity(double uxNew, double uy
   uzNew = uzNew - uN * nzNew
   # velocity magnitude new
   uMagNew = norm(uxNew, uyNew, uzNew)
-  if uMag > 0.0:
+  if uMag > 0.0 and keep == 1:
     # ensure that velocitity magnitude stays the same also after reprojection onto terrain
     uxNew = uxNew * uMag / (uMagNew + velMagMin)
     uyNew = uyNew * uMag / (uMagNew + velMagMin)

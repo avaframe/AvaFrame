@@ -553,6 +553,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   dam = dem['damLine']
   cdef int flagDam = dam['dam']
   cdef int restitutionCoefficient = dam['restitutionCoefficient']
+  cdef int nIterDam = dam['nIterDam']
   cdef int nDamPoints = dam['nPoints']
   cdef long[:] cellsCrossed = dam['cellsCrossed']
   cdef double[:] xFootArray = dam['x']
@@ -697,7 +698,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     sCorNew = sCor + nz*dl
 
     # reproject velocity
-    uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin)
+    uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin, 1)
 
     #  ############## Start add Dam interaction ##############################################
     if flagDam and cellsCrossed[iCell] == 1:
@@ -705,10 +706,9 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       inter, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, dissEm = damCom1DFA.getWallInteraction(x, y, z,
         xNew, yNew, zNew, uxNew, uyNew, uzNew, nDamPoints, xFootArray, yFootArray, zFootArray,
         xCrownArray, yCrownArray, zCrownArray, xTangentArray, yTangentArray, zTangentArray,
-        ncols, nrows, csz, interpOption, restitutionCoefficient, nxArray, nyArray, nzArray, ZDEM, FD)
+        ncols, nrows, csz, interpOption, restitutionCoefficient, nIterDam, nxArray, nyArray, nzArray, ZDEM, FD)
       # if there was an interaction with the dam, reproject and take dEM into account
       if inter == 1:
-        # in the C++ code, a simple vertical reprojection is done...
         LxNew0, LyNew0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
         if iCellNew >= 0:
           zNew = DFAtlsC.getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
@@ -745,7 +745,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
             uyNew = uyNew + dv * fNy
             uzNew = uzNew + dv * fNz
             # reproject velocity
-            uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin)
+            uxNew, uyNew, uzNew, uMag = DFAtlsC.reprojectVelocity(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew, velMagMin, 1)
     #  ############## End add Dam interaction ##############################################
 
     # prepare for stopping criterion

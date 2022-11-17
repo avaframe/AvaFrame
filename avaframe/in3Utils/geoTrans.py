@@ -19,7 +19,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def projectOnRaster(dem, Points, interp='bilinear', what='rasterData', where='z'):
+def projectOnRaster(dem, Points, interp='bilinear', inData='rasterData', outData='z'):
     """Projects Points on raster
     using a bilinear or nearest interpolation and returns the z coord (no for loop)
 
@@ -31,10 +31,10 @@ def projectOnRaster(dem, Points, interp='bilinear', what='rasterData', where='z'
         Points dictionary (x,y)
     interp: str
         interpolation option, between nearest or bilinear
-    what: str
-        which key in the dem dict should be used for the interpolation?
-    where: str
-        which key in the Points dict should be updated with the interpolated data?
+    inData: str
+        key in the dem dict of the 2D field to use for the interpolation.
+    outData: str
+        key in the Points dict toe updat with the interpolated data.
 
     Returns
     -------
@@ -44,7 +44,7 @@ def projectOnRaster(dem, Points, interp='bilinear', what='rasterData', where='z'
         number of out of bounds indexes
     """
     header = dem['header']
-    rasterdata = dem[what]
+    rasterdata = dem[inData]
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     cellsize = header['cellsize']
@@ -52,7 +52,7 @@ def projectOnRaster(dem, Points, interp='bilinear', what='rasterData', where='z'
     ycoor = Points['y']
 
     zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc, yllc=yllc, interp=interp)
-    Points[where] = zcoor
+    Points[outData] = zcoor
     return Points, ioob
 
 
