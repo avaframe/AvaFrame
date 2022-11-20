@@ -25,6 +25,8 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAToolsCython as DFAtllsC
+import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
@@ -281,7 +283,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, outDir, demOri, inputSimLines, cuSimName)
 
     # ------------------------
     #  Start time step computation
@@ -469,7 +471,7 @@ def prepareInputData(inputSimFiles, cfg):
     relThFile = inputSimFiles['relThFile']
 
     # get dem dictionary - already read DEM with correct mesh cell size
-    demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], cfg['INPUT']['DEM'])
+    demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], demPath=cfg['INPUT']['DEM'])
 
     # read data from relThFile
     if relThFile != '':
@@ -527,8 +529,22 @@ def prepareInputData(inputSimFiles, cfg):
         resLine = None
         resistanceArea = ''
 
+    # get line from dam
+    if cfg['GENERAL'].getboolean('dam'):
+        if entResInfo['dam'] == 'Yes':
+            damFile = inputSimFiles['damFile']
+            damLine = shpConv.readLine(damFile, '', demOri)
+            damLine['fileName'] = [damFile]
+            damLine['type'] = 'Dam'
+        else:
+            message = 'Take dam is set, but no dam file found, skipping it'
+            log.warning(message)
+            damLine = None
+    else:
+        damLine = None
+
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
-                     'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
+                     'entLine': entLine, 'resLine': resLine, 'damLine': damLine, 'entrainmentArea': entrainmentArea,
                      'resistanceArea': resistanceArea, 'entResInfo': entResInfo,
                      'relThField': relThFieldData}
 
@@ -687,13 +703,15 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName):
+def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     """ create simulaton report dictionary
 
     Parameters
     ----------
     cfg : str
         simulation scenario name
+    outDir : pathlib path
+        path to output directory (to save the dam foot line if a dam is used)
     demOri : dict
         dictionary with original dem
     inputSimLines : dict
@@ -782,6 +800,12 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
                                     logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfg, dem, particles)
 
+    # initialize Dam
+    damLine = inputSimLines['damLine']
+    damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
+    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
+    dem['damLine'] = damLine
+
     # perform initialisation step for redistributing particles
     if cfg['GENERAL'].getboolean('iniStep'):
         startTimeIni = time.time()
@@ -818,7 +842,6 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, dem, simTypeActual, inputSimLines['resLine'],
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
-
     return particles, fields, dem, reportAreaInfo
 
 
@@ -926,7 +949,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             else:
                 idFixed = np.append(idFixed, np.ones(n))
 
-        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
+        hPartArray = DFAtllsC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
         # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
         # partticles have the same area but may have different flow thickness which means a different mass)
@@ -1384,7 +1407,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
                 dtAnaPlots.animationPlot(demRT, fields[TTResType], demRT['header']['cellsize'], TTResType, cfgRangeTime, mtiInfo, t)
 
         # make sure the array is not empty
-        if t >= dtSave[0]:
+        if t >= (dtSave[0] - 1.e-8):
             Tsave.append(t)
             log.debug('Saving results for time step t = %f s', t)
             log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
@@ -1548,7 +1571,7 @@ def updateSavingTimeStep(dtSave, cfg, t):
     if dtSave.size == 1:
         dtSave = np.asarray([2*cfg.getfloat('tEnd')])
     else:
-        indSave = np.where(dtSave > t)
+        indSave = np.where(dtSave > (t+1.e-8))
         dtSave = dtSave[indSave]
 
     return dtSave
@@ -1665,7 +1688,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug('Update position C')
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, typeStop=0)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, fields, typeStop=0)
     tCPUPos = time.time() - startTime
     tCPU['timePos'] = tCPU['timePos'] + tCPUPos
 
@@ -2068,8 +2091,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     centerList = centerList.split('|')
     centerTrackPartPoint = {'x': np.array([float(centerList[0])]),
                             'y': np.array([float(centerList[1])])}
-    centerTrackPartPoint, _ = geoTrans.projectOnRaster(
-        dem, centerTrackPartPoint, interp='bilinear')
     centerTrackPartPoint['x'] = (centerTrackPartPoint['x']
                                  - dem['originalHeader']['xllcenter'])
     centerTrackPartPoint['y'] = (centerTrackPartPoint['y']
@@ -2097,7 +2118,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         inDir: str
             path to input directory
         resType: list
-            list of desired result types
+            list of desired result types, if string converted to list
         simName : str
             simulation name
         flagAvaDir: bool
@@ -2121,6 +2142,9 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         tme corresponding to elements in fieldsList
 
     """
+
+    if isinstance(resType, list) is False:
+        resType = [resType]
 
     if flagAvaDir:
         inDir = pathlib.Path(inDir, 'Outputs', comModule, 'peakFiles', 'timeSteps')
