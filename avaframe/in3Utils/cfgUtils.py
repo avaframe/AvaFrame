@@ -10,12 +10,15 @@ import hashlib
 import json
 import pandas as pd
 import numpy as np
+import os 
+import shutil
 
 # Local imports
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
-
+import avaframe.r_avaflow as r_avaflow
+import avaframe.com1DFA as com1DFA
 
 log = logging.getLogger(__name__)
 
@@ -644,3 +647,145 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
     simDF.to_csv(configFiles)
 
     return configFiles
+
+def getModuleConfig_avaflow(module, fileOverride='', modInfo=False, toPrint=True):
+    ''' Returns the configuration for a given module
+    returns a configParser object
+
+    module object: module : the calling function provides the already imported
+           module eg.:
+           from avaframe.com2AB import com2AB
+           leads to getModuleConfig(com2AB)
+           whereas
+           from avaframe.com2AB import com2AB as c2
+           leads to getModuleConfig(c2)
+
+    Str: fileOverride : allows for a completely different file location
+
+    modInfo: bool
+        true if dictionary with info on differences to standard config
+
+    Order is as follows:
+    fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
+
+    '''
+
+    # get path of module
+    modPath = pathlib.Path(r_avaflow.__file__).resolve().parent
+    print(modPath)
+
+    # get filename of module
+    modName = "r_avaflow"
+
+    localFile = modPath / ('local_r_avaflowCfg.ini')
+    defaultFile = modPath / ('r_avaflowCfg.ini')
+
+    log.debug('localFile: %s', localFile)
+    log.debug('defaultFile: %s', defaultFile)
+
+    # Decide which one to take
+    if fileOverride:
+        fileOverride = fU.checkPathlib(fileOverride)
+        if fileOverride.is_file():
+            iniFile = [defaultFile, fileOverride]
+            compare = True
+        else:
+            raise FileNotFoundError('Provided fileOverride does not exist: ' +
+                                    str(fileOverride))
+
+    elif localFile.is_file():
+        iniFile = localFile
+        iniFile = [defaultFile, localFile]
+        compare = True
+    elif defaultFile.is_file():
+        iniFile = defaultFile
+        compare = False
+    else:
+        raise FileNotFoundError('None of the provided cfg files exist ')
+
+    # Finally read it
+    cfg, modDict = readCompareConfig(iniFile, modName, compare, toPrint)
+
+    if modInfo:
+        return cfg, modDict
+
+    return cfg
+
+def getModuleConfig_avaflow2(module, fileOverride='', modInfo=False, toPrint=True):
+    ''' Returns the configuration for a given module
+    returns a configParser object
+
+    module object: module : the calling function provides the already imported
+           module eg.:
+           from avaframe.com2AB import com2AB
+           leads to getModuleConfig(com2AB)
+           whereas
+           from avaframe.com2AB import com2AB as c2
+           leads to getModuleConfig(c2)
+
+    Str: fileOverride : allows for a completely different file location
+
+    modInfo: bool
+        true if dictionary with info on differences to standard config
+
+    Order is as follows:
+    fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
+
+    '''
+
+    # Start for .ini-file transfer
+    # get path of module
+    modPath = pathlib.Path(com1DFA.__file__).resolve().parent
+    print(modPath)
+    
+    localFile_com1DFA = modPath / ('local_com1DFACfg.ini')
+    defaultFile_com1DFA = modPath / ('com1DFACfg.ini')
+
+    #Check .ini file at destination folder of r_avaflow
+    # get path of module
+    modPath = pathlib.Path(r_avaflow.__file__).resolve().parent
+    
+    #Transfer .ini-file also to r_avaflow 
+    src_dir = localFile_com1DFA
+    print("This is src_dir:", src_dir)
+    dest_dir = modPath
+    print("This is dest_dir:", dest_dir)
+    print("This is modPath:", modPath)
+    shutil.copy2(src_dir, dest_dir)  
+
+    # get filename of module
+    modName = "r_avaflow"
+
+    localFile = modPath / ('local_com1DFACfg.ini')
+    defaultFile = modPath / ('com1DFACfg.ini')
+
+    log.debug('localFile: %s', localFile)
+    log.debug('defaultFile: %s', defaultFile)
+
+    # Decide which one to take
+    if fileOverride:
+        fileOverride = fU.checkPathlib(fileOverride)
+        if fileOverride.is_file():
+            iniFile = [defaultFile, fileOverride]
+            compare = True
+        else:
+            raise FileNotFoundError('Provided fileOverride does not exist: ' +
+                                    str(fileOverride))
+
+    elif localFile.is_file():
+        iniFile = localFile
+        iniFile = [defaultFile, localFile]
+        compare = True
+    elif defaultFile.is_file():
+        iniFile = defaultFile
+        compare = False
+    else:
+        raise FileNotFoundError('None of the provided cfg files exist ')
+
+    # Finally read it
+    cfg, modDict = readCompareConfig(iniFile, modName, compare, toPrint)
+
+    if modInfo:
+        return cfg, modDict
+
+    return cfg

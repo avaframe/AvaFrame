@@ -201,6 +201,8 @@ def createFolderStruct(pathAvaName):
     checkMakeDir(pathAvaName, 'Outputs')
 
     checkMakeDir(pathAvaName, 'Work')
+    
+    checkMakeDir(pathAvaName, 'Avaflow_Input')
 
 
 def checkMakeDir(base, dirName):
