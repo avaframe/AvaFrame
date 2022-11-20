@@ -7,12 +7,15 @@ import os
 import glob
 import pathlib
 import logging
+import shutil     
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.com1DFA.deriveParameterSet as dP
+import avaframe.in2Trans.shp_to_ascii as shp_to_ascii
+import avaframe.in2Trans.cellsize_change as cellsize_change
 
 
 # create local logger
@@ -240,6 +243,115 @@ def getInputDataCom1DFA(avaDir, cfg):
                      'relThFile': relThFile}
 
     return inputSimFiles
+
+def getCellsize(avaDir):
+    
+    modName = 'r_avaflow'
+    modNameCom1DFA = 'com1DFA'
+    cfgAvaflow = cfgUtils.getModuleConfig_avaflow(modName, fileOverride='', toPrint=False)
+    cfgCom1DFA = cfgUtils.getModuleConfig_avaflow2(modNameCom1DFA, fileOverride='', toPrint=False)
+    
+    cfgGen = cfgAvaflow["GENERAL"]
+    cfgCom1DFA = cfgCom1DFA["GENERAL"]
+    
+    paramflag = cfgGen["paramflag"]
+    cellsize_ravaflow = cfgGen["cellsize"]
+    cellsize_com1DFA = cfgCom1DFA["meshCellSize"]
+    
+    if paramflag == "1":
+        cellsize_return = cellsize_com1DFA
+    else:
+        cellsize_return = cellsize_ravaflow
+        
+    return cellsize_return, cellsize_ravaflow
+    
+    
+
+def getInputDataravaflow(avaDir, cfg):
+    
+    # Transfer DEM file from com1DFA directory to avaflow input
+    inputDir = pathlib.Path(avaDir, 'Inputs')
+    demFile = list(inputDir.glob('*.asc'))
+    if len(demFile) > 1:
+        message = 'There should be exactly one topography .asc file in %s/Inputs/' % (avaDir)
+        log.error(message)
+        raise AssertionError(message)
+    
+    if len(demFile) == 0:
+        print('No topography .asc-file supplied in com1DFA directory -> Topography file in avaflow directory will be used' )
+
+    if len(demFile) == 1:
+        demFp = demFile[0]
+        
+        orig = demFp
+        target = os.path.join(avaDir, 'Avaflow_Input')
+        
+        shutil.copy(orig, target)
+    
+    # Transfer release file from com1DFA directory to avaflow input
+    inputDir_rel = pathlib.Path(avaDir, 'Inputs/REL')
+    shpFile = list(inputDir_rel.glob('*.shp'))
+    
+    if len(shpFile) == 0:
+        print('No release .shp-file supplied in com1DFA directory -> Release file in avaflow directory will be used')
+
+    if len(shpFile) >= 1:
+        # Transfer file also to avaflow input
+        src_dir = os.path.join(avaDir, 'Inputs', 'REL')
+        dest_dir = os.path.join(avaDir, 'Avaflow_Input')
+        # fetching all the files in the source directory
+        files=os.listdir(src_dir)
+     
+        for fname in files:
+             
+            shutil.copy2(os.path.join(src_dir,fname), dest_dir)
+       
+    # Transfer secondary release file from com1DFA directory to avaflow input
+    inputDir_rel = pathlib.Path(avaDir, 'Inputs/SECREL')
+    shpFile = list(inputDir_rel.glob('*.shp'))
+    
+    if len(shpFile) == 0:
+        print('No secondary release .shp-file')
+
+    if len(shpFile) == 1:
+        # Transfer file also to avaflow input
+        src_dir = os.path.join(avaDir, 'Inputs', 'SECREL')
+        dest_dir = os.path.join(avaDir, 'Avaflow_Input')
+        # fetching all the files in the source directory
+        files=os.listdir(src_dir)
+     
+        for fname in files:
+             
+            shutil.copy2(os.path.join(src_dir,fname), dest_dir)
+            
+    # Transfer entrainment area file from com1DFA directory to avaflow input
+    inputDir_rel = pathlib.Path(avaDir, 'Inputs/ENT')
+    shpFile = list(inputDir_rel.glob('*.shp'))
+    
+    if len(shpFile) == 0:
+        print('No entrainment area .shp-file')
+
+    if len(shpFile) == 1:
+        # Transfer file also to avaflow input
+        src_dir = os.path.join(avaDir, 'Inputs', 'ENT')
+        dest_dir = os.path.join(avaDir, 'Avaflow_Input')
+        # fetching all the files in the source directory
+        files=os.listdir(src_dir)
+     
+        for fname in files:
+             
+            shutil.copy2(os.path.join(src_dir,fname), dest_dir)
+            
+    # Transform those files to ascii
+    shp_to_ascii.shptoasc(avaDir)
+    
+    ### Change the cellsize of the ascii grids to defined value in cfg-file 
+    # cellsize = getCellsize(avaDir)
+    # cellsize_change.Cellsize_change(avaDir, int(cellsize[0]))
+    
+    #Internal storage in r-avaflow needs to be increased, sofar only larger grids are possible
+    cellsize_change.Cellsize_change(avaDir, 20)
+    
 
 
 def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
