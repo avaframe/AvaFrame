@@ -511,6 +511,45 @@ without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`).
 
 
+Dam 
+~~~
+
+The dam is described by a crown line, that is to say a series of x, y, z points describing the crown of
+the dam (the dam wall is located on the left side of the line), by the slope of the dam wall
+(slope measured from the horizontal, :math:`\beta`) and a restitution coefficient (describing if we consider
+more elastic or inelastic collisions between the particles and the dam wall, varying between 0 and 1).
+
+The geometrical description of the dam is given on the figure :numref:`fig-DamToolSide`.
+The dam crown line (:math:`\mathbf{x_\text{crown}}`) is projected onto the topography, which provides us
+with the dam center line (:math:`\mathbf{x_\text{center}}`). We compute the tangent vector to the
+center line (:math:`\mathbf{t_f}`). From this tangent vector and the dam slope, it is possible to
+compute the wall tangent vector (:math:`\mathbf{t_w}`). Knowing the wall tangent vector and height,
+it is possible to determine normal vector to the wall (:math:`\mathbf{n_w}`) and the foot line which
+is the intersection between the dam wall and the topography (:math:`\mathbf{x_\text{foot}}`).
+
+When the dam fills up (flow thickness increases), the foot line is modified
+(:math:`\mathbf{x_\text{foot}^\text{filled}} = \mathbf{x_\text{foot}} + \frac{h_v}{2} \mathbf{e_z}`).
+The normal and tangent vectors to the dam wall are readjusted accordingly.
+
+
+.. _fig-DamToolSide:
+
+.. figure:: _static/damToolSideView.png
+          :width: 90%
+
+          Side view of the dam (cut view). :math:`\mathbf{x_\text{crown}}` describes the crown
+          of the dam, :math:`\mathbf{x_\text{center}}` is the vertical projection of the crown
+          on the topography (here the light blue line represents the topography).
+          The tangent vector to the center line (:math:`\mathbf{t_f}`) is computed from the
+          center line points. The tangent vector to the center line with the dam slope angle enable to compute
+          the tangent (:math:`\mathbf{t_w}`) and normal (:math:`\mathbf{n_w}`) vector to the dam wall.
+          Finally, this normal vector is adjusted depending on the snow thickness at the dam location
+          (filling of the dam , :math:`\mathbf{n_w^\text{filled}}`)
+
+
+In the initialization of the simulation, the dam tangent vector to the center line (:math:`\mathbf{t_f}`),
+foot line (:math:`\mathbf{x_\text{foot}}`) and normal vector to the wall (:math:`\mathbf{n_w}`) are computed.
+The grid cells crossed by the dam as well as their neighbor cells are memorized (tagged as dam cells).
 
 
 .. Logarithmic friction model
