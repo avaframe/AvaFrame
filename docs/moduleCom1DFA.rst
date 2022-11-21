@@ -100,8 +100,32 @@ If the cell size of the DEM in ``Inputs`` is equal to the desired mesh cell size
     - cleanDEMremeshed = False and no matching DEM is found in Inputs/DEMremeshed - the DEM in Inputs/ is remeshed
       to the desired cell size
 
-If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed` and available for subsequent
+If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed`` and available for subsequent
 simulations.
+
+
+Dam input 
+^^^^^^^^^
+
+The com1DFA module provides the option to take the effect of dams into account.
+This is done using a ad-hoc method based on particles being reflected/deflected by a dam wall.
+
+The dam is described by the crown line, the slope and the restitution coefficient:
+
+  - crown line as shape file (use the line type and enable the "additional dimensions" option in order
+    to specify the z coordinate). 
+    The z coordinate corresponds to the absolute height (terrain elevation plus dam height). 
+    The dam is then located on the left side of the dam (when one travels from the first point to the last 
+    point of the shapefile line).
+    The dam shape files live in the ``avaDir/Inputs/DAM/`` directory (only one file is allowed).
+
+  - the ``slope`` of the dam (in degrees °) between the horizontal plane and the wall to be provided in the shape file
+    as an attribute (default value is 60° in the provided examples: avaSlide, avaKot and avaBowl)
+
+  - the restitution coefficient (:math:`\alpha_\text{rest}`), a float between 0 (no reflection 
+    in the normal direction) and 1 (full reflection) to be specified in the ini file (default value is 0)
+
+
 
 
 Model configuration

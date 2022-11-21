@@ -47,6 +47,11 @@ Check consistency of rasters according to the following rules:
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
+Initialize Dam
+~~~~~~~~~~~~~~~~~~~~~
+
+If the dam option is activated and the dam input shapefile is provided, the dam is initialized.
+
 Initialize particles
 ~~~~~~~~~~~~~~~~~~~~~
 Particles are initialized according to the release raster extracted from the release shapefile
@@ -240,8 +245,48 @@ Update particle position
 The particles position is updated using the new velocity and a centered Euler scheme:
 
 .. math::
-  \mathbf{x}^{new} = \mathbf{x}^{old} + dt 0.5 (\mathbf{u}^{old} + \mathbf{u}^{new})
+  \mathbf{x}_\text{new} = \mathbf{x}_\text{old} + dt 0.5 (\mathbf{u}_\text{old} + \mathbf{u}_\text{new})
 
+Take dam interaction into account
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the dam option is activated, the interaction between the particles and the dam is taken into account.
+During the computation of the DFA simulation, at each time step, if a particle enters one of the dam cells, the dam
+algorithm is called. The first step is to check if the particle crosses the dam during the time step.
+If not, the particle position and velocity are updated as if there was no dam. If yes, the intersection point between
+the particle trajectory and the dam line is computed. The dam properties are interpolated at the intersection point
+(dam tangent and normal vectors). The wall tangent and normal vectors are updated taking the flow thickness
+into account. The particle position and velocity are updated taking the dam into account.
+
+Let :math:`\mathbf{x_\text{foot}}` and :math:`\mathbf{x_\text{new}}` be the intersection point with
+the dam and the new particle position vector if there was no dam. :math:`\mathbf{u_\text{new}}` is the new particle
+velocity with no dam. First the position :math:`\mathbf{x_\text{b}}` after elastic bouncing of the particle on the dam is computed:
+
+.. math::
+
+  \mathbf{x_\text{b}} = \mathbf{x_\text{new}} - 2 \left\{\mathbf{n_w^\text{filled}} \cdot (\mathbf{x_\text{new}} - \mathbf{x_\text{foot}})\right\}\mathbf{n_w^\text{filled}}
+
+Which gives the direction :math:`\mathbf{e_\text{b}}`:
+
+.. math::
+
+  \mathbf{e_\text{b}} = \mathbf{x_\text{b}} - \mathbf{x_\text{foot}}
+
+Next, the restitution coefficient is accounted for which leads to the new velocity:
+
+
+.. math::
+
+  \mathbf{x^\star_\text{new}} = \mathbf{x_\text{foot}} - \alpha_\text{rest} \mathbf{e_\text{b}} =
+  \alpha_\text{rest} \mathbf{x_\text{b}} + (1-\alpha_\text{rest}) \mathbf{x_\text{foot}})
+
+
+
+The velocity vector :math:`\mathbf{u_\text{new}^\star}` after the dam interaction reads:
+
+.. math::
+
+  \mathbf{u^\star_\text{new}} = (\mathbf{u_\text{new}} - 2  \left\{\mathbf{n_w^\text{filled}} \cdot \mathbf{u_\text{new}}\right\}\mathbf{n_w^\text{filled}})\alpha_\text{rest}
+Finally, the new velocity and position are re-projected onto the topography.
 
 Correction step:
 ~~~~~~~~~~~~~~~~
