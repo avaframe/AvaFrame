@@ -477,6 +477,83 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
     return avaProfile, projPoint
 
+def prepareLineNewVersion(dem, avapath, distance=5, Point=None):
+        """
+
+        Parameters
+        -----------
+        dem: dict
+            dem dictionary
+        avapath: dict
+            line dictionary
+        distance: float
+            resampling distance
+        Point: dict
+            a point dictionary (optional, can contain several point)
+
+        Returns
+        -------
+        avaProfile: dict
+            the resampled avapath with the z coordinate
+        projPoint: dict
+            point dictionary projected on the profile (if several points
+            were give in input, only the closest point to the profile
+            is projected)
+        """
+        
+        from scipy.interpolate import splprep, splev
+        
+        xcoor = avapath['x']
+        ycoor = avapath['y']
+        okay = np.where(np.abs(np.diff(xcoor)) + np.abs(np.diff(ycoor)) > 0)
+        xcoorNew = xcoor[okay]
+        xcoor = np.append(xcoorNew, xcoor[-1])
+        ycoorNew = ycoor[okay]
+        ycoor = np.append(ycoorNew, ycoor[-1])
+
+        (tck, u), fp, ier, msg = splprep([xcoor,ycoor], s=0, u=None, per=0, k=2, full_output=True) #s = optional parameter (default used here)
+        
+        uNew = np.linspace(0,1,1000)
+        xcoornew, ycoornew = splev(uNew, tck, der=0)
+        dx = np.diff(xcoornew)
+        dy = np.diff(ycoornew)
+        s = np.sqrt(dx**2 + dy**2)
+        s = s.cumsum()
+        nelements = np.ceil(s[-1]/distance) +1
+        
+        uNew = np.linspace(0,1, int(nelements))
+        xcoornew, ycoornew = splev(uNew, tck, der=0)
+        
+        dx = np.diff(xcoornew)
+        dy = np.diff(ycoornew)
+        s = np.sqrt(dx**2 + dy**2)
+        s = s.cumsum()
+        s = np.append([0], s)
+        
+        
+        #xcoornew = np.arange(xcoor[0], xcoor[-1], distance)
+        #xcoornew[-1] = len(xcoornew)*distance 
+        plt.scatter(xcoor,ycoor,c='k')
+        plt.plot(xcoornew, ycoornew, 'o', markersize=1)
+        plt.axis('equal')
+        plt.show() 
+        #ycoornew = f(xcoornew) 
+        
+        resampAvaPath = avapath
+        resampAvaPath['x'] = xcoornew
+        resampAvaPath['y'] = ycoornew
+        resampAvaPath, _ = projectOnRaster(dem, resampAvaPath)
+        resampAvaPath['s'] = s
+        avaProfile = resampAvaPath
+        
+        # find split point by computing the distance to the line
+        if Point:
+            projPoint = findSplitPoint(avaProfile, Point)
+        else:
+            projPoint = None
+        
+        return avaProfile, projPoint
+
 
 def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
     """ find point on dem given a direction and a z value to reach

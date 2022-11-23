@@ -49,6 +49,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   -------
   force : dict
       force dictionary
+  particles : dict
   """
   # read input parameters
   cdef double enthRef = cfg.getfloat('enthRef')
@@ -274,6 +275,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           elif frictType == 6:
             # SamosAT friction type (bottom shear stress) - for medium ava calibration parameters
             tau = DFAtlsC.SamosATfric(rho, tau0SamosAtMedium, Rs0SamosAtMedium, muSamosAtMedium, kappaSamosAtMedium, BSamosAtMedium, RSamosAtMedium, uMag, sigmaB, h)
+          elif frictType == 7:
+            # voellmy upgraded friction type
+            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi + tau0
           else:
             tau = 0.0
 

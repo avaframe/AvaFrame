@@ -155,7 +155,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     ax1.set_xlim([colsMin, colsMax])
     l1 = ax1.legend()
     l1.set_zorder(40)
-    ax1.set_title('Avalanche path')
+    ax1.set_title('Avalanche thalweg')
     pU.putAvaNameOnPlot(ax1, avalancheDir)
 
 
@@ -183,10 +183,10 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     ax3.text(minX, 10, "%.0f°" % (10), color='0.8', ha="left", va="bottom")
     # ax3.axvline(x=avaProfileMass['s'][indStart], color='b', linewidth=1, linestyle='-.', label='Start of profile')
     # ax3.axvline(x=avaProfileMass['s'][indEnd], color='g', linewidth=1, linestyle='-.', label='End of profile')
-    ax3.set_xlabel('s [m]')
+    ax3.set_xlabel('$s_{xy}$ [m]')
     ax3.set_ylabel('slope angle [°]')
     ax3.legend()
-    ax3.set_title('Avalanche path profile slope')
+    ax3.set_title('Avalanche thalweg profile slope')
 
     # make profile plot, zoomed out
     ax2 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
@@ -215,12 +215,12 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     zLim = ax2.get_ylim()
     sLim = ax2.get_xlim()
 
-    ax2.set_xlabel('s [m]')
+    ax2.set_xlabel('$s_{xy}$ [m]')
     ax2.set_ylabel('z [m]')
     ax2.set_xlim(sLim)
     ax2.set_ylim(zLim)
     ax2.legend()
-    ax2.set_title('Avalanche path profile')
+    ax2.set_title('Avalanche thalweg profile')
 
     outFileName = '_'.join([simName, 'DFAPath'])
     outDir = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath')
