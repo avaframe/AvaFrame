@@ -28,10 +28,10 @@ def runAna3AIMEC(avalancheDir, cfg):
     # Setup input from computational module
     inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
     # define reference simulation
-    refSimRowHash, refSimName, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
+    refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
                                                                                          cfg)
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
-                'colorParameter': colorParameter, 'resTypeList': resTypeList}
+                'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",

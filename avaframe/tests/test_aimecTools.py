@@ -31,13 +31,14 @@ def test_fetchReferenceSimNo(tmp_path):
     cfgSetup['AIMECSETUP'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no2', 'referenceSimValue': '',
                            'varParList': ''}
 
-    refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
+    refSimHash, refSimName, inputsDF, colorParameter, valRef = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
                                                                               cfgSetup)
     assert refSimName == 'testSim_no2'
     assert colorParameter is False
+    assert valRef == ''
 
     cfgSetup['AIMECSETUP']['referenceSimName'] = ''
-    refSimHash, refSimName, inputsDF, colorParameter = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
+    refSimHash, refSimName, inputsDF, colorParameter, valRef = aT.fetchReferenceSimNo(avaDir, inputsDF, 'comModule',
                                                                               cfgSetup)
     assert refSimName == 'testSim_no1'
     assert colorParameter is False

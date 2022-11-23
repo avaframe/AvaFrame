@@ -881,7 +881,7 @@ def fetchContourLines(rasterTransfo, inputs, level, contourDict):
         Returns
         ---------
         contourDict: dict
-            updat. dictionary with x, y coordinates for each sim contour line -> added info 
+            updat. dictionary with x, y coordinates for each sim contour line -> added info
             of current simulation
     """
 
@@ -959,7 +959,11 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
         else:
             cmapVal = index / len(contourDict)
-        ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
+        if simName == pathDict['refSimName']:
+            ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k', label='reference',
+                zorder=len(contourDict))
+        else:
+            ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
         if np.amax(contourDict[simName]['y'])> yMax:
             yMax = np.amax(contourDict[simName]['y'])
 
@@ -988,10 +992,18 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
         else:
             cmapVal = index / len(contourDict)
-
-        ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
+        if simName == pathDict['refSimName']:
+            if pathDict['valRef'] == '':
+                labelReference = 'reference'
+            else:
+                labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
+                ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k',
+                    label=labelReference, zorder=len(contourDict))
+        else:
+            ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
 
     ax2.set_ylim([s[indStartOfRunout], s[sMax]])
+    ax2.legend()
 
     # save and or plot fig
     outFileName = pathDict['projectName'] + '_ContourLinesAll'
