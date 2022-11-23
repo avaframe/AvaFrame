@@ -113,7 +113,7 @@ else:
 
         # fetch all flow parameter result fields
         flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
-        simNameSuffix = index + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
+        simNameSuffix = simDFrow['simName'] + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
         flowFields =  fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
 
         # check if simulation results are available

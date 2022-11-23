@@ -236,6 +236,8 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     # get line of sight distance to identify front, use threshold to mask flowF
     # line of sight min of masked array
     losDistance = rMaskedAvaRadar.min()
+    if isinstance(losDistance, np.ma.core.MaskedArray):
+        losDistance = np.nan
 
     # update lists of time step and front location
     mtiInfo['rangeList'].append(losDistance)
@@ -726,7 +728,12 @@ def approachVelocity(mtiInfo):
     # convert to only positive distance values (move reference point to end of ava)
     # to get correct distance increments for velocity computation
     # nanmin required as if FV is zero range is nan
-    rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
+    if mtiInfo['type'] == 'rangeTime':
+        # if in rangeList is measured in line of sight to the radar, in order to find the max runout close to the end of
+        # the array, reference point is moved to closest found distance to radar and measured from start towards radar
+        rangeListSorted = (np.asarray(rangeList)[np.argsort(timeList)] - abs(np.nanmax(np.asarray(rangeList)))) *-1.
+    else:
+        rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
     maxVel = 0.0
     rangeVel = 0.0
     timeVel = 0.0
@@ -766,7 +773,10 @@ def approachVelocity(mtiInfo):
 
     idxMaxVel = np.argmax(appVelClean)
     maxVel = appVelClean[idxMaxVel]
-    rangeVel = rangeAppVelClean[idxMaxVel] - abs(np.nanmin(np.asarray(rangeList)))
+    if mtiInfo['type'] == 'rangeTime':
+        rangeVel = rangeAppVelClean[idxMaxVel] * -1. + abs(np.nanmax(np.asarray(rangeList)))
+    else:
+        rangeVel = rangeAppVelClean[idxMaxVel] - abs(np.nanmin(np.asarray(rangeList)))
     timeVel = timeAppVelClean[idxMaxVel]
 
     return maxVel, rangeVel, timeVel
