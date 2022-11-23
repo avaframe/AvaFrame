@@ -5,14 +5,15 @@ from matplotlib import pyplot as plt
 import logging
 import pathlib
 from cmcrameri import cm
-from matplotlib import colors
 from matplotlib.colors import LightSource
+from matplotlib.ticker import FormatStrFormatter
+import pandas as pd
 
 # Local imports
-
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in3Utils.geoTrans as gT
+from avaframe.Tools import NodeTools
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,21 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
         plt.ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
     else:
         plt.ylabel("Distance to %s [m]" % mtiInfo["referencePointName"])
+
+    # from oscar +++++++
+    plt.ylabel('$S_{xy}$')
+
+    xMin = cfgRangeTime['ANIMATE'].getfloat('xMin')
+    xMax = cfgRangeTime['ANIMATE'].getfloat('xMax')
+    yMax = cfgRangeTime['ANIMATE'].getfloat('yMax')
+    yMin = cfgRangeTime['ANIMATE'].getfloat('yMin')
+
+    # set limits for plot (depends on final time step)
+    ax.set_ylim([yMin, yMax])
+    ax.set_xlim([xMin, xMax])
+
+    #+++++++++++++
+
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils["unit" + rangeTimeResType]

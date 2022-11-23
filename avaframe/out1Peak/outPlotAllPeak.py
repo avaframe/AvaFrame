@@ -3,7 +3,6 @@ Functions to plot 2D simulation results: plot of all peak files at once
 
 """
 
-import os
 import logging
 import numpy as np
 import matplotlib

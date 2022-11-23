@@ -127,7 +127,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
 
-    return rasterTransfo, resAnalysisDF, plotDict
+    return rasterTransfo, resAnalysisDF, plotDict, newRasters
 
 
 def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash, contourDict):
@@ -246,11 +246,14 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                 newRasters['newRefRaster' + resType.upper()] = newRaster
                 resAnalysisDF[resType + 'CrossMax'] = np.nan
                 resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+                resAnalysisDF[resType + 'CrossMin'] = np.nan
+                resAnalysisDF[resType + 'CrossMin'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
                 resAnalysisDF[resType + 'CrossMean'] = np.nan
                 resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
 
             # add max, min and std values of result fields
             resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
+            resAnalysisDF.at[simRowHash, resType + 'FieldMin'] = np.nanmin(rasterData['rasterData'])
             resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(rasterData['rasterData'])
             resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(rasterData['rasterData'])
 
@@ -320,10 +323,10 @@ def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
         benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFRef['entMass']})
 
     return reportD, benchD
-    
-    
+
+
 def aimecTransform(rasterTransfo, particle, dem):
-    """ Adding s projected and l projected to the particle dictionary 
+    """ Adding s projected and l projected to the particle dictionary
     Parameters
     ----------
     rasterTransfo: dict
@@ -331,19 +334,19 @@ def aimecTransform(rasterTransfo, particle, dem):
     Returns
     -------
     particle: dict
-        particle dictionary with s grid and l grid added 
+        particle dictionary with s grid and l grid added
     """
     lList = []
-    sList  = [] 
+    sList  = []
     xllcenter = dem['header']['xllcenter']
     yllcenter = dem['header']['yllcenter']
-    for x, y in zip(particle['x'], particle['y']):      
-        # calculating the distance between the particle position and the grid points 
-        distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2) 
+    for x, y in zip(particle['x'], particle['y']):
+        # calculating the distance between the particle position and the grid points
+        distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2)
         # Finding the coordinates of the grid point which minimizes the difference
         (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
-        lList.append(rasterTransfo['l'][lIndex]) 
+        lList.append(rasterTransfo['l'][lIndex])
         sList.append(rasterTransfo['s'][sIndex])
     particle['lAimec'] = lList
     particle['sAimec'] = sList
-    return(particle)    
+    return(particle)

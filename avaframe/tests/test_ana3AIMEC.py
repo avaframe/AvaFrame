@@ -7,6 +7,7 @@ import pathlib
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
+from avaframe.com1DFA import particleTools as paT
 from avaframe.in3Utils import cfgUtils
 
 
@@ -275,25 +276,58 @@ def test_aimecTransform():
     # Extract dem
     dem = {}
     dem['header'] = {}
-    dem['header']['xllcenter'] = 0 
-    dem['header']['yllcenter'] = 0 
-    
+    dem['header']['xllcenter'] = 0
+    dem['header']['yllcenter'] = 0
+
     # Create rasterTransfo
     rasterTransfo = {}
     rasterTransfo['s'] = np.arange(0, 8, 1)
     rasterTransfo['l'] = np.arange(-2, 3, 1)
-    gridy, gridx = np.meshgrid(rasterTransfo['l'], rasterTransfo['s']) 
-    rasterTransfo['gridx'] = gridx + 0.5 
-    rasterTransfo['gridy'] = gridy + 3.1 
+    gridy, gridx = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
+    rasterTransfo['gridx'] = gridx + 0.5
+    rasterTransfo['gridy'] = gridy + 3.1
 
     # create particle
     particle = {}
     particle['x'] = [1,7.6]
     particle['y'] = [0.6, 5.0]
-        
-    # run aimecTransform and test the output 
-    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem) 
-    assert particle['lAimec'] == [-2,2] 
+
+    # run aimecTransform and test the output
+    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+    assert particle['lAimec'] == [-2,2]
     assert particle['sAimec'] == [0,7]
-    
-# F = test_aimecTransform() 
+
+    # F = test_aimecTransform()
+    # Extract input file locations
+    pathDict = {}
+    dir = pathlib.Path(__file__).parents[0]
+    dirname = dir / 'data' / 'testAna3Aimec'
+
+    # Extract dem
+    demSource = list(dirname.glob('*.asc'))
+    pathDict['demSource'] = demSource[0]
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
+
+    # Create rasterTransfo
+    rasterTransfo = {}
+    rasterTransfo['s'] = np.linspace(0, 499, 500)
+    rasterTransfo['l'] = np.linspace(0, 99, 100)
+    gridy, gridx = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
+    rasterTransfo['x'] = rasterTransfo['s']
+    rasterTransfo['y'] = 50*np.ones(np.shape(rasterTransfo['s']))
+    rasterTransfo['gridx'] = gridx
+    rasterTransfo['gridy'] = gridy
+    rasterTransfo['rasterArea'] = np.ones((500, 100))
+    rasterTransfo['indStartOfRunout'] = 400
+    rasterTransfo['startOfRunoutAreaAngle'] = 10
+
+    # create particle
+    particle = {}
+    particle['x'] = np.linspace(200, 50, 400)
+    particle['y'] = np.linspace(0, 50, 100)
+
+    # run aimecTransform and test the output
+    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+    assert particle['lAimec'] != []
+    assert particle['sAimec'] != []

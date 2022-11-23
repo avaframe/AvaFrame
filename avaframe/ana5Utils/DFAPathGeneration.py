@@ -255,7 +255,7 @@ def extendDFAPath(cfg, avaProfile, dem, particlesIni):
     """
     # resample the profile
     resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
-    avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
+    avaProfile, _ = gT.prepareLineNewVersion(dem, avaProfile, distance=resampleDistance, Point=None)
     avaProfile = extendProfileTop(cfg.getint('extTopOption'), particlesIni, avaProfile)
     avaProfile = extendProfileBottom(cfg, dem, avaProfile)
     return avaProfile
@@ -553,15 +553,16 @@ def resamplePath(cfg, dem, avaProfile):
     avaProfile: dict
         resampled path profile
     """
-    resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
+    #resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
+    resampleDistance = 5 
     indFirst = avaProfile['indStartMassAverage']
     indEnd = avaProfile['indEndMassAverage']
     s0 = avaProfile['s'][indFirst]
     sEnd = avaProfile['s'][indEnd]
-    avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
+    avaProfile, _ = gT.prepareLineNewVersion(dem, avaProfile, distance=resampleDistance, Point=None)
     # make sure we get the good start and end point... prepareLine might make a small error on the s coord
     indFirst = np.argwhere(avaProfile['s'] >= s0 - resampleDistance/3)[0][0]
-    # look for the first point in the extension and take the one before
+    # look for the first point in the extension and take the one before 
     indEnd = np.argwhere(avaProfile['s'] >= sEnd + resampleDistance/3)[0][0]-1
     avaProfile['indStartMassAverage'] = indFirst
     avaProfile['indEndMassAverage'] = indEnd

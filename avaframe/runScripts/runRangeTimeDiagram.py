@@ -2,14 +2,8 @@
     Run script for creating a range-time diagram from avalanche simulations
 """
 
-import matplotlib.pyplot as plt
-from cmcrameri import cm
 import pathlib
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib as mpl
-from matplotlib import pyplot as plt
 import numpy as np
-import configparser
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -75,7 +69,6 @@ if preProcessedData:
                 mtiInfo['rangeGates'], mtiInfo['dem'])
             # create plot
             dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
-
 else:
     # fetch dem data
     demInputs = gI.readDEM(avalancheDir)
@@ -114,7 +107,7 @@ else:
         # fetch all flow parameter result fields
         flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
         simNameSuffix = simDFrow['simName'] + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
-        flowFields =  fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
+        flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
 
         # check if simulation results are available
         if len(flowFields) == 0:
@@ -133,4 +126,4 @@ else:
             mtiInfo['timeList'].append(timeStep[0])
 
         # create plot
-        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
+        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime )
