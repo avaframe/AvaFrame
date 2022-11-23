@@ -65,7 +65,9 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem,cuSim
                            trackedPartProp['uz'])
     ax3.plot(time, velocity)
     # add the Nodes velocity 
-    Nodes = runFindNodeInfo.FindNodeVelocity([7,9,10])
+    cfgMain = cfgUtils.getGeneralConfig()
+    avalancheDir = cfgMain['MAIN']['avalancheDir'] 
+    Nodes = runFindNodeInfo.FindNodeVelocity([7,9,10],cfgMain,avalancheDir)
     ax3.plot(Nodes['C07']['Time'], Nodes['C07']['Velocity'], color='brown', label='AvaNode C07')
     ax3.plot(Nodes['C09']['Time'], Nodes['C09']['Velocity'], color='green', label='AvaNode C09')
     ax3.plot(Nodes['C10']['Time'], Nodes['C10']['Velocity'], color='orange', label='AvaNode C10')

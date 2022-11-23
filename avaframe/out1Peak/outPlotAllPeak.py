@@ -48,9 +48,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, F, demData=''):
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
     
     # Load information on AvAnodes data and changing coordinate system
-    gps_c10 = GPS_Class.GPSData()
-    gps_c09 = GPS_Class.GPSData()
-    gps_c07 = GPS_Class.GPSData()
+    gps_c10 = GPS_Class.GPSData() 
+    gps_c09 = GPS_Class.GPSData() 
+    gps_c07 = GPS_Class.GPSData() 
     gps_c10.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C10_avalanche_GPS.txt"
     gps_c09.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C09_avalanche_GPS.txt"
     gps_c07.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C07_avalanche_GPS.txt"
@@ -88,7 +88,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, F, demData=''):
 
         # Load names and paths of peakFiles
         name = peakFilesDF['names'][m]
-        fileName = peakFilesDF['files'][m]
+        fileName = peakFilesDF['files'][m] 
         avaName = peakFilesDF['avaName'][m]
         resType = peakFilesDF['resType'][m]
         log.debug('now plot %s:' % (fileName))
