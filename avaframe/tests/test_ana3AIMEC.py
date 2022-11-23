@@ -242,6 +242,7 @@ def test_mainAIMEC(tmp_path):
 
     pathResult = tmp_path / 'results'
     pathDict['pathResult'] = pathResult
+    pathDict['valRef'] = ''
 
     pathDict['projectName'] = 'testAna3Aimec'
     pathName = profileLayer[0].stem

@@ -121,6 +121,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
             com1DFA configuration is merged to the inputsDF
         colorVariation: boolean
             True if a color variation should be applied in the plots
+        valRef: str
+            value of vapParList[0] used to define reference sim
     """
 
     cfgSetup = cfg['AIMECSETUP']
@@ -155,6 +157,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
         inputsDF = inputsDF[inputsDF['simName'].isin(simNameList)]
         log.info('%d simulations found matching filter criteria' % inputsDF.shape[0])
 
+    # set reference value to empty string
+    valRef = ''
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
     if configFound and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
@@ -166,7 +170,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
         if referenceSimValue != '':
             # if a referenceSimValue is provided, find the corresponding simulation
             # get the value of the first parameter used for ordering (this will be usefull for colorcoding in plots)
-            refSimRowHash, refSimName = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
+            refSimRowHash, refSimName, valRef = defineRefOnSimValue(referenceSimValue, varParList, inputsDF)
 
         elif cfgSetup['referenceSimName'] != '':
             # else if a referenceSimName is provided, find the corresponding simulation - set
@@ -195,7 +199,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
                    % refSimName)
         log.warning(message)
 
-    return refSimRowHash, refSimName, inputsDF, colorVariation
+    return refSimRowHash, refSimName, inputsDF, colorVariation, valRef
 
 
 def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
@@ -218,6 +222,8 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         dataframe hash (not simHash) of the simulation used as reference
     refSimName : str
         name of THE reference simulation
+    valRef: str
+        value of vapParList[0] used to define reference sim
     """
     sortingParameter = inputsDF[varParList[0]].to_list()
     # if a simulation has an empty field for varParList[0], we get a nan or empty string
@@ -248,7 +254,7 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
         message = 'Did not find any simulation matching %s = %s.' % (varParList[0], referenceSimValue)
         log.error(message)
         raise ValueError(message)
-    return refSimRowHash, refSimName
+    return refSimRowHash, refSimName, str(valRef)
 
 
 def defineRefOnSimName(referenceSimName, inputsDF):
@@ -1111,7 +1117,8 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
     if simRowHash != refSimRowHash:
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
-        contourDict = outAimec.fetchContourLines(rasterTransfo, inputs, cfgSetup.getfloat('thresholdValue'), contourDict)
+    # add contourlines to contourDict
+    contourDict = outAimec.fetchContourLines(rasterTransfo, inputs, cfgSetup.getfloat('thresholdValue'), contourDict)
 
     return resAnalysisDF, compPlotPath, contourDict
 
