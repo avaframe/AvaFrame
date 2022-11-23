@@ -393,16 +393,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     tCPUDFA = '%.2f' % (time.time() - startTime)
     log.info(('cpu time DFA = %s s' % (tCPUDFA)))
 
-    cfgTrackPart = cfg['TRACKPARTICLES']
-    # track particles
-    if cfgTrackPart.getboolean('trackParticles'):
-        particlesList, trackedPartProp, track = trackParticles(cfgTrackPart, dem, particlesList)
-        if track:
-            outDirData = outDir / 'particles'
-            fU.makeADir(outDirData)
-            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
-            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg)
-
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
     outDirData = outDir / 'particles'
@@ -426,6 +416,16 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         contDictXY = outCom1DFA.fetchContCoors(dem['header'],
             fieldsList[-1][cfg['VISUALISATION']['contourResType']], cfg['VISUALISATION'], cuSimName)
         reportDict['contours'] = contDictXY
+
+    cfgTrackPart = cfg['TRACKPARTICLES']
+    # track particles
+    if cfgTrackPart.getboolean('trackParticles'):
+        particlesList, trackedPartProp, track = trackParticles(cfgTrackPart, dem, particlesList)
+        if track:
+            outDirData = outDir / 'particles'
+            fU.makeADir(outDirData)
+            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
+            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg)
 
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 

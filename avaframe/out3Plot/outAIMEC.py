@@ -693,7 +693,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
         forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']
     forStats = list(set(forStats) & set(resAnalysisDF.columns))
     # compute some statistics
-    resAnalysisStatsDF = resAnalysisDF[forStats].describe(percentiles=None)
+    resAnalysisStatsDF = resAnalysisDF[list(forStats)].describe(percentiles=None)
 
     header = ''.join(['projectName: ', projectName, '\n',
                       'path: ', pathName, '\n',
@@ -967,7 +967,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
         if np.amax(contourDict[simName]['y'])> yMax:
             yMax = np.amax(contourDict[simName]['y'])
 
-    sMax = np.where(s > yMax)[0][0]
+    sMax = np.where(s >= yMax)[0][0]
     ax1.set_ylim([s[0], s[sMax]])
     if colorOrdering:
         cbar = ax1.figure.colorbar(cmap)

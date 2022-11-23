@@ -3,7 +3,7 @@
 """
 # Load modules
 import logging
-import copy 
+import copy
 
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
@@ -28,9 +28,15 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 
 def runAna3AIMECTransform(avalancheDir, particlesProperties, cfg):
     """ run script for AIMEC analysis
-    proceeds to AIMEC analysis and add projected r and l to the particles dictionary 
+    proceeds to AIMEC analysis and add projected r and l to the particles dictionary
+<<<<<<< HEAD
     """
-    
+
+=======
+    Also adds the angle beta and the s of the beta point to the particle file
+    """
+
+>>>>>>> 9405b6d4 (Oscar Dick code related to AvaNode/Particle plotting /tracking)
     cfgSetup = cfg['AIMECSETUP']
     anaMod = cfgSetup['anaMod']
 
@@ -44,45 +50,47 @@ def runAna3AIMECTransform(avalancheDir, particlesProperties, cfg):
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
-             pathDict['demSource'], pathDict['profileLayer'])  
+             pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
-    rasterTransfo, resAnalysisDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
-    
-    #DEM 
+    rasterTransfo, resAnalysisDF, plotDict, newRasters = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+
+    #DEM
     demSource = pathDict['demSource']
     dem = IOf.readRaster(demSource)
-    
+
     # fetch all flow parameter result fields
     modName = 'com1DFA'
     configDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'configurationFiles')
     if (configDir.is_dir() is False) or ( len(list(configDir.glob('*.ini'))) == 0):
         fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
             configDir))
-        
-    # load info on particles 
-    inputDir = pathlib.Path(avalancheDir,'Outputs',modName, 'particles') 
-    particleList, timeStepInfo = paT.readPartFromPickle(inputDir, simName='', flagAvaDir=False, comModule='com1DFA')
-    
-    # Create new particles list by copying the already existing one 
-    particlesListDict  = copy.copy(particleList) 
 
-    # Prepare output direction 
+    # load info on particles
+    inputDir = pathlib.Path(avalancheDir,'Outputs',modName, 'particles')
+    particleList, timeStepInfo = paT.readPartFromPickle(inputDir, simName='', flagAvaDir=False, comModule='com1DFA')
+
+    # Create new particles list by copying the already existing one
+    particlesListDict  = copy.copy(particleList)
+
+    # Prepare output direction
     outDir = pathlib.Path(avalancheDir, 'Outputs','Aimec','ParticlesProjected')
     outDirPicData = outDir / 'particles'
     fU.makeADir(outDirPicData)
-        
+
     log.info('Perform particles projection')
     for particle in particlesListDict:
         particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+        particle['sBetaPoint'] = rasterTransfo['s'][rasterTransfo['indStartOfRunout']]
+        particle['beta'] = rasterTransfo['startOfRunoutAreaAngle'] 
         simName = particle['simName']
-        # save pickle file  
+        # save pickle file
         log.info('Saving pickle file')
         savePartToPickle(particle, outDirPicData, simName)
-    
-    # save csv files 
-    log.info('Saving csv files')        
+
+    # save csv files
+    log.info('Saving csv files')
     paT.savePartToCsv(particlesProperties[0], particlesListDict, outDir)
-        
+
     return particlesListDict
 
 
@@ -90,7 +98,7 @@ if __name__ == '__main__':
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
     avalancheDir = cfgMain['MAIN']['avalancheDir']
-    
+
     # Load configuration info of all com1DFA simulations
     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
     particlesProperties = simDF['particleProperties']
