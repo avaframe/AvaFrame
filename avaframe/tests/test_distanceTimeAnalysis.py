@@ -99,20 +99,22 @@ def test_appraoachVelocity():
     """ test computing approach velocity """
 
     # setup required inputs
-    mtiInfo = {'timeList': [0., 2., 3., 7., 8., 9., 10.],
-               'rangeList': [0., 2., 4., 4., 7., 10., 12]}
+    mtiInfo = {'timeList': [0., 1., 2., 3., 7., 8., 10.],
+               'rangeList': [12, 10., 7.5, 4.5, 4., 2., 0.]}
     minVelTimeStep = 2.
+    mtiInfo['type'] = 'rangeTime'
 
     # call function to be tested
     maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
     print(maxVel, rangeVel, timeVel)
-    assert maxVel == pytest.approx(1.0, rel=1e-8)
-    assert rangeVel == 0.
-    assert timeVel == 0.
+    assert maxVel == pytest.approx(2.5, rel=1e-8)
+    assert rangeVel == 10.
+    assert timeVel == 1.
 
     # setup required inputs
     mtiInfo = {'timeList': [0., 2., 3., 7., 8., 9., 10.],
                'rangeList': [0., np.nan, 4., 6., 7., 10., 12]}
+    mtiInfo['type'] = 'thalwegTime'
     minVelTimeStep = 2.
 
     # call function to be tested
@@ -245,6 +247,23 @@ def test_extractFrontAndMeanValuesRadar():
     assert mtiInfo['mti'][1] == 0
     assert mtiInfo['mti'][2] == 6.
     assert mtiInfo['mti'][3] == 23./3
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 30.1}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False}
+    mtiInfo = {'rangeGates': np.arange(4), 'rangeMasked': rangeMasked, 'rArray': range,
+               'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
+
+    # call function to be tested
+    mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
+    print('mtiInfo2', mtiInfo)
+
+    assert mtiInfo['timeList'] == []
+    assert mtiInfo['rangeList'] == [np.nan]
+    assert mtiInfo['mti'][0] == 0
+    assert mtiInfo['mti'][1] == 0
+    assert mtiInfo['mti'][2] == 0.
+    assert mtiInfo['mti'][3] == 0.
 
 
 def test_setupThalwegTimeDiagram():
