@@ -16,7 +16,6 @@ If the friction model is SamosAT, compares plots for different mu and tau0.
 import numpy as np
 from matplotlib import pyplot as plt
 import statistics as stat
-import os 
 from cmcrameri import cm
 from scipy.interpolate import interp1d 
 import pathlib
@@ -24,8 +23,11 @@ import pathlib
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.com1DFA import particleTools 
-from avaframe import runFindAvalancheInfo
-from avaframe import NodeTools 
+from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.out3Plot.plotUtils as pU
+import runFindAvalancheInfo
+import NodeTools 
+import PlotTools 
 
 
 # Load avalanche directory from general configuration file
@@ -39,6 +41,7 @@ simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 Sim = runFindAvalancheInfo.postProcess(avalancheDir, cfgMain, simDF)
 
 # Creating a dictionary containing information on each avalanche 
+dict = {}
 for i in range(0, len(Sim.index)):
     print('Avalanche found in the output file: '+Sim.index[i])
     dict[i], _ = particleTools.readPartFromPickle(
@@ -50,6 +53,13 @@ friction_model = Sim.frictModel[0]
 stopping_model = Sim.stopCrit[0] 
 avaDir = pathlib.Path(avalancheDir)
 modName = 'com1DFA'
+# To make comparisons between implicit and explicit methods 
+friction_formulation = [None]*len(Sim.explicitFriction)
+for i in range (0,number_ava):
+    if Sim.explicitFriction[i]==0:
+        friction_formulation[i] = 'implict'
+    else:
+        friction_formulation[i] = 'explicit'
 
 #%%Calculating the velocity envelope (time, max, min, mean, median) 
 
@@ -159,7 +169,7 @@ for i in range(0, number_ava):
         boxplot_data[i] = Mean[i] - vel_experimental_interpolated
 
 # Making the boxplot plot 
-fig = plt.figure() 
+fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))  
 ax = fig.add_subplot(111)
 plt.boxplot(boxplot_data, whis=200)
 # x-axis labels
@@ -178,10 +188,19 @@ fig.suptitle('Velocity difference between the mean avaframe velocity and the Nod
 ax.set_xticklabels(labels, color='black', fontsize=15)
 ax.tick_params(axis='y', colors='black', labelsize=15) 
 ax.set_ylabel("Velocity difference[m/s]", color='black', fontsize=15)
+
+# saving the plot
+outDir = avaDir / 'Outputs' / modName /'ComparisonPlots'/'Boxplot'
+fU.makeADir(outDir)
+name = 'Boxplot_'+friction_formulation[0]+'_'+friction_model
+plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
+fig.savefig(plotName)
+plotPath = pathlib.Path.cwd() / plotName
+    
 plt.show() 
     
 #%% Plotting velocity envelope 
-import avaframe.out3Plot.plotUtils as pU
+
 # Preparing the subplots regarding the number of avalanches found 
 if key == 1:  
     if number_ava == 1:
@@ -217,7 +236,7 @@ if key == 1:
         nrow = 2
         ncol = 4
     elif number_ava == 9: 
-        fig, ax = plt.subplots(3,3,figsize=(20, 20),sharex=True,sharey=True) 
+        fig, ax = plt.subplots(3,3,figsize=(pU.figW+10, pU.figH+3),sharex=True,sharey=True) 
         nrow = 3
         ncol = 3 
     else:
@@ -225,14 +244,6 @@ if key == 1:
         
     max_time = max(max(Time[:]))
     simu_number = 0 
-    
-    ## To make comparisons between implicit and explicit methods 
-    # friction_formulation = [None]*len(F.explicitFriction)
-    # for i in range (0,len(F.explicitFriction)):
-    #     if F.explicitFriction[i]==0:
-    #         friction_formulation[i] = 'implict'
-    #     else:
-    #         friction_formulation[i] = 'explicit'
     
     # Colormap 
     cmap = cm.vik
@@ -333,8 +344,9 @@ if key == 1:
     fig.tight_layout()
     
     # saving the plot
-    outDir = avaDir / 'Outputs' / modName /'ComparisonPlots'/'VelocityEnvelopes'
+    outDir = avaDir / 'Outputs' / modName /'ComparisonPlots'/'Velocity_Envelopes'
     fU.makeADir(outDir)
+    name = 'Velocity_envelope_'+friction_formulation[0]+'_'+friction_model
     plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
     fig.savefig(plotName)
     plotPath = pathlib.Path.cwd() / plotName
@@ -342,168 +354,71 @@ if key == 1:
     plt.show() 
 
 
-#%% function to plot a range-time diagram
-
-#%% function to plot peak flow velocity 
-
-import os
-import numpy as np
-from matplotlib import pyplot as plt
-import pathlib 
-
-import avaframe.out3Plot.plotUtils as pU
-import avaframe.in1Data.getInput as gI
-from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
-
-from avaframe.data.avaSeilbahn.AvaNode_data import gps_imu_tools as git
-from avaframe.data.avaSeilbahn.AvaNode_data import GPS_Class 
-
-def PeakFields(avaDir, cfgFLAGS, modName, n, demData=''):
-    """ Plot all peak fields and return dictionary with paths to plots
-        with DEM in background
-
-        Parameters
-        ----------
-        avaDir : str
-            path to avalanche directoy
-        cfgFLAGS : str
-            general configuration, required to define if plots saved to reports directoy
-        modName : str
-            name of module that has been used to produce data to be plotted
-        demData: dictionary
-            optional - if not the dem in the avaDir/Inputs folder has been used but a different one
-
-        Returns
-        -------
-        plotDict : dict
-            dictionary with info on plots, like path to plot
-        """
-
-    # Load all infos on simulations
-    avaDir = pathlib.Path(avaDir)
-    inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-    peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-
-    if demData == '':
-        demFile = gI.getDEMPath(avaDir)
-        demData = IOf.readRaster(demFile, noDataToNan=True)
-        demDataField = demData['rasterData']
-    else:
-        # check if noDataValue is found and if replace with nans for plotting
-        demDataField = np.where(demData['rasterData'] == demData['header']['noDataValue'], np.nan, demData['rasterData'])
-    demField = demDataField
-
-
-    # Initialise plot dictionary with simulation names
-    # plotDict = {}
-    # for sName in peakFilesDF['simName']:
-    #     plotDict[sName] = {}
-
-    #print(peakFilesDF['simName']) 
-    # Loop through peakFiles 
-    #for m in range(len(peakFilesDF['names'])):
-
-    # Load names and paths of peakFiles
-    name = peakFilesDF['names'][n]
-    fileName = peakFilesDF['files'][n] 
-    avaName = peakFilesDF['avaName'][n]
-    resType = peakFilesDF['resType'][n]
-
-    # Load data
-    raster = IOf.readRaster(fileName, noDataToNan=True)
-    data = raster['rasterData']
-
-    # constrain data to where there is data
-    cellSize = peakFilesDF['cellSize'][simu_number]
-    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-    dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
-    demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
-
-    data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-    unit = pU.cfgPlotUtils['unit%s' % resType]
-
-    # Set extent of peak file
-    ny = data.shape[0]
-    nx = data.shape[1]
-    Ly = ny*cellSize
-    Lx = nx*cellSize
-    
-
-    return resType, data, raster, rowsMin, rowsMax, colsMin, colsMax, cellSize, demConstrained, unit, name, peakFilesDF
-
-def change_coordinate():
-    # Load information on AvAnodes data and changing coordinate system
-    gps_c10 = GPS_Class.GPSData() 
-    gps_c09 = GPS_Class.GPSData() 
-    gps_c07 = GPS_Class.GPSData() 
-    gps_c10.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C10_avalanche_GPS.txt"
-    gps_c09.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C09_avalanche_GPS.txt"
-    gps_c07.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C07_avalanche_GPS.txt"
-    gps_c10.read_data() 
-    gps_c09.read_data() 
-    gps_c07.read_data() 
-    n10,e10,z10 = git.gps_to_mercator(gps_c10) 
-    n09,e09,z09 = git.gps_to_mercator(gps_c09)
-    n07,e07,z07 = git.gps_to_mercator(gps_c07)
-    return e07, n07, e09, n09, e10, n10 
-
 #%% Plotting different tools together
 
-friction_model = F.frictModel[0]   
-stopping_model = F.stopCrit[0] 
+# Preparing nodes data 
+e07, n07, e09, n09, e10, n10 = NodeTools.change_coordinate()
 
-for simu_number in range(0,number_files): 
+for simu_number in range(0,number_ava): 
     
-    # Load all infos on simulations
-    avaDir = pathlib.Path(avalancheDir)
-    modName = 'com1DFA'
+    # Load all infos from the peak files
     inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
-    sim = F.index[simu_number] 
+    sim = Sim.index[simu_number] 
     simu_numb = np.where(peakFilesDF.simID== sim)
         
     for k in range (0,3):
+        
         fig, ax = plt.subplots(1,3,figsize=(pU.figW+10, pU.figH+3))  
-        # ax[0]
         
-        # ax[1]
-        # Generate plots for all peakFiles
-        n = simu_numb[0][2+k]
-
-        resType, data, raster, rowsMin, rowsMax, colsMin, colsMax, cellSize, demConstrained, unit, name, peakFilesDF = PeakFields(avalancheDir, cfgMain['FLAGS'], modName, n, demData='')
-        e07, n07, e09, n09, e10, n10 = change_coordinate()
+        ### ax[0]
+        mtiInfo, cfgRangeTime, F, index = PlotTools.RangeTimeDiagram() 
         
-        # Figure  shows the result parameter data
-        #fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        ### ax[1]
+        # Generate data for the simulation peakFile
+        plotDict = PlotTools.PeakFields(avalancheDir, peakFilesDF, simu_numb[0][2+k], demData='')
         # choose colormap
-        cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
+        cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[plotDict['resType']], np.amin(plotDict['data']), np.amax(plotDict['data']), continuous=pU.contCmap)
         cmap.set_bad(alpha=0)
         # uncomment this to set the under value for discrete cmap transparent
         # cmap.set_under(alpha=0)
-        xllcenter = raster['header']['xllcenter']
-        yllcenter = raster['header']['yllcenter']
-        rowsMinPlot = rowsMin*cellSize + yllcenter
-        rowsMaxPlot = (rowsMax+1)*cellSize + yllcenter
-        colsMinPlot = colsMin*cellSize + xllcenter
-        colsMaxPlot = (colsMax+1)*cellSize + xllcenter
-        
-        # rowsMinPlot = rowsMin*cellSize
-        # rowsMaxPlot = (rowsMax+1)*cellSize
-        # colsMinPlot = colsMin*cellSize
-        # colsMaxPlot = (colsMax+1)*cellSize
+        xllcenter = plotDict['raster']['header']['xllcenter']
+        yllcenter = plotDict['raster']['header']['yllcenter']
+        rowsMinPlot = plotDict['rowsMin']*plotDict['cellSize'] + yllcenter
+        rowsMaxPlot = (plotDict['rowsMax']+1)*plotDict['cellSize'] + yllcenter
+        colsMinPlot = plotDict['colsMin']*plotDict['cellSize'] + xllcenter
+        colsMaxPlot = (plotDict['colsMax']+1)*plotDict['cellSize'] + xllcenter
+    
         extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
         
         # add DEM hillshade with contour lines
-        ls, CS = pU.addHillShadeContours(ax[1], demConstrained, cellSize, extent)
+        ls, CS = pU.addHillShadeContours(ax[1], plotDict['demConstrained'], plotDict['cellSize'], extent)
         
         # add peak field data
-        im1 = ax[1].imshow(data, cmap=cmap, norm=norm, extent=extent, origin='lower', aspect='equal', zorder=2)
-        #im1 = ax[1].imshow(data, cmap=cmap, norm=norm, aspect='equal', zorder=2)
-        pU.addColorBar(im1, ax[1], ticks, unit)
+        im1 = ax[1].imshow(plotDict['data'], cmap=cmap, norm=norm, extent=extent, origin='lower', aspect='equal', zorder=2)
+        pU.addColorBar(im1, ax[1], ticks, plotDict['unit'])
         
-        # # add AvaNode data 
+        # add AvaNode data 
         ax[1].plot(e10,n10, color='orange', label='AvaNode C10')
         ax[1].plot(e09,n09, color='green', label='AvaNode C09')
         ax[1].plot(e07,n07, color='brown', label='AvaNode C07')
@@ -516,10 +431,11 @@ for simu_number in range(0,number_files):
         
         
         
-        # # ax[2] 
+        ### ax[2] 
         # Colormap 
         cmap = cm.vik
         rgba = cmap(0.2) 
+        # Plotting the velocity envelope 
         ax[2].plot(Time[simu_number], Max[simu_number], color=cmap(0.01), label='Maximum and Minimum values')  # max
         ax[2].plot(Time[simu_number], Min[simu_number], color=cmap(0.01))  # min
         ax[2].plot(Time[simu_number], Mean[simu_number], linestyle='dashed', color=cmap(0.7), markersize=1.8, label='Mean')  # mean
@@ -527,36 +443,33 @@ for simu_number in range(0,number_files):
         # filling the space between the max and min
         ax[2].fill_between(Time[simu_number], Min[simu_number], Max[simu_number], color=cmap(0.2), alpha=0.2)
         # Experiment (AvaRange)
-        ax[2].plot(time_experimental_C07, vel_experimental_C07, color='brown')  # AvaNode velocity
-        ax[2].plot(time_experimental_C09, vel_experimental_C09, color='green')  # AvaNode velocity
-        ax[2].plot(time_experimental_C10, vel_experimental_C10, color='orange')  # AvaNode velocity
+        ax[2].plot(Nodes['C07']['Time'], Nodes['C07']['Velocity'], color='brown')  # AvaNode velocity
+        ax[2].plot(Nodes['C09']['Time'], Nodes['C09']['Velocity'], color='green')  # AvaNode velocity
+        ax[2].plot(Nodes['C10']['Time'], Nodes['C10']['Velocity'], color='orange')  # AvaNode velocity
         ax[2].set_ylabel("Velocity[m/s]", fontsize=15)
         ax[2].set_xlabel("Time[s]\n\n", fontsize=15)
         
         
-        # Plot title 
+        ### Add title, legends and save the plot
+        # add title 
         if friction_model=='Coulomb':
-            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(F.mu[simu_number]), fontsize=25)
+            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(Sim.mu[simu_number]), fontsize=25)
         elif friction_model=='Voellmy':
-            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(F.mu[simu_number])+', xsi='+str(F.xsi[i]), fontsize=25 )
+            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(Sim.mu[simu_number])+', xsi='+str(Sim.xsi[i]), fontsize=25 )
         elif friction_model=='samosAT':
-            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(F.mu[simu_number])+', tau0='+str(F.tau0[simu_number]), fontsize=25 )
+            fig.suptitle('Velocity envelope - Seilbahnrinne,\n explicit '+friction_model+' model with stopCrit='+str(stopping_model)+'\n mu ='+str(Sim.mu[simu_number])+', tau0='+str(Sim.tau0[simu_number]), fontsize=25 )
         elif friction_model=='VoellmyUpgraded':
-            fig.suptitle('Seilbahnrinne, explicit '+friction_model+' model with stopCrit='+str(stopping_model)+', mu ='+str(F.mu[simu_number])+', tau0='+str(F.tau0[simu_number])+', xsi='+str(F.xsi[i])+'\n', fontsize=23 )
+            fig.suptitle('Seilbahnrinne, explicit '+friction_model+' model with stopCrit='+str(stopping_model)+', mu ='+str(Sim.mu[simu_number])+', tau0='+str(Sim.tau0[simu_number])+', xsi='+str(Sim.xsi[i])+'\n', fontsize=23 )
         else:
-            fig.suptitle("No friction model found!", fontsize=25)
-            
-            
-        # Add legend 
+            fig.suptitle("No friction model found!", fontsize=25)          
+        # add legend 
         fig.legend(loc='lower center', ncol=3, fancybox=True, shadow=True, fontsize=10)
-        
-        
-        # if cfgFLAGS.getboolean('showPlot'):
-        #     plt.show()
+        # save data 
         avaDir = pathlib.Path(avalancheDir)
-        outDir = avaDir / 'Outputs' / modName /'ComparisonPlots'/'GraphicInterface'
+        outDir = avaDir / 'Outputs' / modName /'ComparisonPlots'/'Graphic_Interface'
         fU.makeADir(outDir)
-        plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
+        plotName = outDir / ('%s.%s' % (plotDict['name'], pU.outputFormat))
         fig.savefig(plotName)
         plotPath = pathlib.Path.cwd() / plotName
+        print ("Plot for "+str(plotDict['name'])+" successfully done")
         plt.close(fig)

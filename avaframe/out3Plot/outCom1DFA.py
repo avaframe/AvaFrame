@@ -8,7 +8,7 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
-from avaframe import runFindNodeInfo 
+from avaframe import NodeTools 
 
 import avaframe.out3Plot.plotUtils as pU
 
@@ -67,7 +67,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem,cuSim
     # add the Nodes velocity 
     cfgMain = cfgUtils.getGeneralConfig()
     avalancheDir = cfgMain['MAIN']['avalancheDir'] 
-    Nodes = runFindNodeInfo.FindNodeVelocity([7,9,10],cfgMain,avalancheDir)
+    Nodes = NodeTools.FindNodeVelocity([7,9,10],cfgMain,avalancheDir)
     ax3.plot(Nodes['C07']['Time'], Nodes['C07']['Velocity'], color='brown', label='AvaNode C07')
     ax3.plot(Nodes['C09']['Time'], Nodes['C09']['Velocity'], color='green', label='AvaNode C09')
     ax3.plot(Nodes['C10']['Time'], Nodes['C10']['Velocity'], color='orange', label='AvaNode C10')
