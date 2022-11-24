@@ -95,7 +95,7 @@ for test in testList:
     # Set timing
     startTime = time.time()
     # call com1DFA run
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=standardCfg)
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgInfo=standardCfg)
     endTime = time.time()
     timeNeeded = endTime - startTime
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
