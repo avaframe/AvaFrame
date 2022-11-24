@@ -106,19 +106,19 @@ def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
 
     # first fetch info on already existing simulations in Outputs
     # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
-    simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
+    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
 
     # create a configuration object per simulation to run (from configuration) gathered in simDict
     # only new simulations are included in this simDict
     # key is simName and corresponds to one simulation
-    simDict = prepareVarSimDict(modCfg, inputSimFilesAll, variationDict, simNameOld=simNameOld)
+    simDict = prepareVarSimDict(modCfg, inputSimFilesAll, variationDict, simNameExisting=simNameExisting)
 
     # write full configuration (.ini file) to file
     date = datetime.today()
     fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
     cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
 
-    return simDict, outDir, inputSimFilesAll, simDFOld
+    return simDict, outDir, inputSimFilesAll, simDFExisting
 
 
 def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
@@ -149,7 +149,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
     """
 
     # preprocessing to create configuration objects for all simulations to run
-    simDict, outDir, inputSimFiles, simDFOld = com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=cfgInfo)
+    simDict, outDir, inputSimFiles, simDFExisting = com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=cfgInfo)
 
     # TODO: once it is confirmed that inputSimFiles is not changed within sim
     # keep for now for testing
@@ -208,7 +208,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
                 raise AssertionError(message)
 
         # postprocessing: writing report, creating plots
-        dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictList)
+        dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList)
 
         return dem, plotDict, reportDictList, simDFNew
 
@@ -219,7 +219,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
         return 0, {}, [], ''
 
 
-def com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictList):
+def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList):
     """ postprocessing of simulation results: save configuration to csv, create plots and report
 
         Parameters
@@ -228,7 +228,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictLis
             dataframe with one line per simulation and info on parameters used
         tCPUDF:
             computation time
-        simDFOld: pandas DataFrame
+        simDFExisting: pandas DataFrame
             dataframe with one line per simulation and info on parameters used before
             simulations have been performed
         cfg: configparser object
@@ -264,7 +264,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFOld, cfg, cfgMain, dem, reportDictLis
 
     # append new simulations configuration to old ones (if they exist),
     # return total dataFrame and write it to csv
-    simDFNew = pd.concat([simDF, simDFOld], axis=0)
+    simDFNew = pd.concat([simDF, simDFExisting], axis=0)
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
     # Set directory for report
@@ -2311,7 +2311,7 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
         countTime = countTime + 1
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting=''):
     """ Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
         Parameters
@@ -2322,7 +2322,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             info dict on available input data
         variationDict: dict
             dictionary with parameter to be varied as key and list of it's values
-        simNameOld: list
+        simNameExisting: list
             list of simulation names that already exist (optional). If provided,
             only carry on simulations that do not exist
 
@@ -2408,7 +2408,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         simName = (relNameSim + '_' + simHash + '_' + row._asdict()['simTypeList'] + '_'
                    + cfgSim['GENERAL']['modelType'])
         # check if simulation exists. If yes do not append it
-        if simName not in simNameOld:
+        if simName not in simNameExisting:
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                 'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                 'cfgSim': cfgSimObject}
@@ -2513,7 +2513,7 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
         # clean avalanche directory
         iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=deleteOutput)
         # Run the DFA simulation
-        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=cfgFile)
+        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=cfgFile)
     else:
         # read simulation dem
         demOri = gI.readDEM(avalancheDir)

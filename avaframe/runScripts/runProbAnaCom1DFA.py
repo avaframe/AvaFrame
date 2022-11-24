@@ -60,7 +60,7 @@ cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
 # perform com1DFA simulations
 for varPar in cfgFiles:
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
-    cfgFile=cfgFiles[varPar]['cfgFile'])
+    cfgInfo=cfgFiles[varPar]['cfgFile'])
 
     # Clean input directory(ies) of old work files but keep outputs
     initProj.cleanSingleAvaDir(avaDir, keep=logName, deleteOutput=False)

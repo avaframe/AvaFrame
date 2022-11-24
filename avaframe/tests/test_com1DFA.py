@@ -1472,7 +1472,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
 
     # What if a simulation already exists
     with caplog.at_level(logging.WARNING):
-        simDict2 = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=[simName2])
+        simDict2 = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting=[simName2])
     assert ('Simulation %s already exists, not repeating it' % simName2) in caplog.text
     assert simName2 not in simDict2
 
