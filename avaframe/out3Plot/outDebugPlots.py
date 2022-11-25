@@ -21,18 +21,12 @@ def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
     plt.plot(xBuffered, yBuffered, 'b')
     plt.title('Buffered release polygon')
     plt.show()
-
-
-def plotBondsGlideSnowIni(xOutline, yOutline, triangles):
-    fig, (ax1) = plt.subplots(ncols=1)
-    ax1.set_aspect('equal')
-    ax1.plot(xOutline, yOutline, 'ro-', lw=3, ms=6, zorder=1, label='edge')
-    ax1.triplot(triangles, 'b-', lw=1, zorder=3, label='inner')
-    fig.legend()
     plt.show()
 
 
-def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines):
+def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines=''):
+    """With cohesion on, plot the bonds between particles as well as the particles properties
+    """
     fig, (ax1) = plt.subplots(ncols=1)
     ax1.set_aspect('equal')
 
@@ -45,18 +39,21 @@ def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines):
         plt.gca().add_collection(lc)
     # ax1.plot(particles['x'], particles['y'], '.b')
     particles['v'] = DFAtls.norm(particles['ux'], particles['uy'], particles['uz'])
-    ax1, cb = outCom1DFA.addParticles2Plot(particles, ax1, dem, whatS='m', whatC='h')
-    NameRel = inputSimLines['resLine']['Name']
-    StartRel = inputSimLines['resLine']['Start']
-    LengthRel = inputSimLines['resLine']['Length']
-    for i in range(len(NameRel)):
-        start = StartRel[i]
-        end = start + LengthRel[i]
-        avapath = {}
-        avapath['x'] = inputSimLines['resLine']['x'][int(start):int(end)] - dem['originalHeader']['xllcenter']
-        avapath['y'] = inputSimLines['resLine']['y'][int(start):int(end)] - dem['originalHeader']['yllcenter']
-        plt.plot(avapath['x'], avapath['y'], 'g')
+    ax1, cb = outCom1DFA.addParticles2Plot(particles, ax1, dem, whatS='m', whatC='h', colBarResType='FT')
+    if inputSimLines != '':
+        if inputSimLines['resLine'] is not None:
+            NameRel = inputSimLines['resLine']['Name']
+            StartRel = inputSimLines['resLine']['Start']
+            LengthRel = inputSimLines['resLine']['Length']
+            for i in range(len(NameRel)):
+                start = StartRel[i]
+                end = start + LengthRel[i]
+                avapath = {}
+                avapath['x'] = inputSimLines['resLine']['x'][int(start):int(end)] - dem['originalHeader']['xllcenter']
+                avapath['y'] = inputSimLines['resLine']['y'][int(start):int(end)] - dem['originalHeader']['yllcenter']
+                plt.plot(avapath['x'], avapath['y'], 'g')
     fig.legend()
+    plt.title('Bonds between particles with cohesion option activated')
     plt.show()
     # plt.pause(1)
     plt.close()

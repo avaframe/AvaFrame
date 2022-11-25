@@ -511,7 +511,7 @@ without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`).
 
 
-Dam 
+Dam
 ~~~
 
 The dam is described by a crown line, that is to say a series of x, y, z points describing the crown of

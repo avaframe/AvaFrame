@@ -113,6 +113,7 @@ Theory
 
     * :doc:`theoryCom1DFA`
     * :doc:`DFAnumerics`
+    * :doc:`glideSnowToolCom1DFA`
     * :doc:`com1DFAAlgorithm`
 
 .. toctree::
@@ -122,6 +123,7 @@ Theory
 
    theoryCom1DFA.rst
    DFAnumerics.rst
+   glideSnowToolCom1DFA.rst
    com1DFAAlgorithm.rst
 
 .. only:: html

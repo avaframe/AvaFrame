@@ -18,6 +18,7 @@ def test_placeParticles():
     csz = 5
     aCell = csz * csz
     hCell = 10/25
+    ratioArea = 1
     massPerPart = 2.
     thresholdMassSplit = 1.5
     initPartDistType = 'uniform'
@@ -28,7 +29,7 @@ def test_placeParticles():
     rng = np.random.default_rng(12345)
     # call funciton to be tested - uniform
     xpart, ypart, mPart, nPart, aPart = particleTools.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK,
-                                                                     rng, cfg['GENERAL'])
+                                                                     rng, cfg['GENERAL'], ratioArea)
     xpartTest = np.asarray([-1.66666666, 0.0, 1.66666666, -1.66666666, 0., 1.66666666, -1.66666666,
                             0.0, 1.66666666])
     ypartTest = np.asarray([3.33333333, 3.33333333, 3.33333333, 5.0, 5., 5., 6.66666666, 6.66666666,
@@ -42,7 +43,7 @@ def test_placeParticles():
     # call funciton to be tested - uniform
     hCell = 8/25
     xpart, ypart, mPart, nPart, aPart = particleTools.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK,
-                                                                     rng, cfg['GENERAL'])
+                                                                     rng, cfg['GENERAL'], ratioArea)
     xpartTest = np.asarray([-1.25, 1.25, -1.25, 1.25])
     ypartTest = np.asarray([3.75, 3.75, 6.25, 6.25])
 
@@ -55,7 +56,7 @@ def test_placeParticles():
     hCell = 11.5/25
     cfg['GENERAL']['initPartDistType'] = 'random'
     xpart, ypart, mPart, nPart, aPart = particleTools.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK,
-                                                                     rng, cfg['GENERAL'])
+                                                                     rng, cfg['GENERAL'], ratioArea)
     xpartTest = np.asarray(
         [-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377, -1.56632907])
     ypartTest = np.asarray(
@@ -74,7 +75,7 @@ def test_placeParticles():
     hCell = 8/16
     cfg['GENERAL']['initPartDistType'] = 'semiRandom'
     xpart, ypart, mPart, nPart, aPart = particleTools.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK,
-                                                                     rng, cfg['GENERAL'])
+                                                                     rng, cfg['GENERAL'], ratioArea)
 
     print('xpart', xpart)
     print('ypart', ypart)

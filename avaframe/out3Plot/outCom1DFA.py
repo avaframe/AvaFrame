@@ -117,7 +117,7 @@ def updateTrackPart(particles, ax, dem):
     return ax
 
 
-def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
+def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h', colBarResType=''):
     """Update axes with particles
     Parameters
     ----------
@@ -140,6 +140,10 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
     X = particles['x'] + xllc
     Y = particles['y'] + yllc
     cmap = pU.cmapT
+    if colBarResType != '':
+        unit = pU.cfgPlotUtils['unit%s' % colBarResType]
+    else:
+        unit = ''
     variableC = particles[whatC]
     variableS = particles[whatS]
     minMax = np.nanmax(variableS)-np.nanmin(variableS)
@@ -149,8 +153,8 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
         variableS = pU.ms
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.amin(variableC), np.amax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
-    sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.', zorder=15)
-    cb = pU.addColorBar(sc, ax, ticks, 'm')
+    sc = ax.scatter(X, Y, c=variableC, s=variableS, cmap=cmap, marker='.', zorder=15)
+    cb = pU.addColorBar(sc, ax, ticks, unit)
     return ax, cb
 
 

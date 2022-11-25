@@ -14,6 +14,7 @@ import pickle
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 
 
 # create local logger
@@ -57,7 +58,7 @@ def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     return particles, hPartArray
 
 
-def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
+def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg, ratioArea):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -82,6 +83,10 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
         number of particles per kernel radius (used only if massPerParticleDeterminationMethod = MPPKR)
     cfg: configParser
         com1DFA general configParser
+    ratioArea: float
+        ratio between projected release area and real release area (used for the triangular initialization)
+        limitations appear if there are multiple release areas feature (the ratio stands for the average of all release
+        areas so it is not specific to each feature).
     Returns
     -------
     xPart : 1D numpy array
@@ -119,7 +124,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
         # make sure we do not violate the (massCell / n) < thresholdMassSplit x massPerPart rule
         if (massCell / n) / massPerPart >= thresholdMassSplit:
             n = n + 1
-    else:
+    elif initPartDistType == 'semirandom' or initPartDistType == 'uniform':
         n1 = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
         n = n1*n1
         d = csz/n1
@@ -127,6 +132,28 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
         x, y = np.meshgrid(pos, pos)
         x = x.flatten()
         y = y.flatten()
+    elif initPartDistType == 'triangular':
+        if massPerParticleDeterminationMethod == 'MPPKR':
+            # impose a number of particles within a kernel radius so impose number of particles in a cell
+            # (regardless of the slope)
+            nPPC = nPPK / math.pi
+        else:
+            # number of particles needed (floating number)
+            # ToDo: this only works if the release thickness is constant in a release area!!!
+            nPPC = hCell * (csz**2 / ratioArea) * rho / massPerPart
+        n = int(np.floor(nPPC))
+        indx = indx - 1/2
+        indy = indy - 1/2
+        # compute triangles properties
+        Aparticle = csz**2 / n
+        sTri = math.sqrt(Aparticle/(math.sqrt(3)/2))
+        hTri = sTri * math.sqrt(3)/2
+        jMin = int(indy * csz/hTri)
+        if jMin * hTri < indy * csz:
+            jMin = jMin + 1
+    else:
+        log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
+                    initPartDistType)
 
     mPart = massCell / n
     aPart = aCell / n
@@ -138,7 +165,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
         # place particles randomly in the cell
         xPart = csz * (rng.random(n) - 0.5 + indx)
         yPart = csz * (rng.random(n) - 0.5 + indy)
-    else:
+    elif initPartDistType == 'semirandom' or initPartDistType == 'uniform':
         # place particles equaly distributed
         xPart = csz * (- 0.5 + indx) + x
         yPart = csz * (- 0.5 + indy) + y
@@ -146,14 +173,28 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
             # place particles equaly distributed with a small variation
             xPart = xPart + (rng.random(n) - 0.5) * d
             yPart = yPart + (rng.random(n) - 0.5) * d
-        elif initPartDistType != 'uniform':
-            log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
-                        initPartDistType)
+    elif initPartDistType == 'triangular':
+        xPart = np.empty(0)
+        yPart = np.empty(0)
+        n = 0
+        j = jMin
+        iTemp = int(indx * csz/sTri)
+        if iTemp * sTri < indx * csz:
+            iTemp = iTemp + 1
+        while j * hTri < (indy+1) * csz:
+            i = iTemp - 1/2 * j%2
+            while i * sTri < (indx+1) * csz:
+                if i * sTri >= indx * csz and j * hTri >= indy * csz:
+                    xPart = np.append(xPart, i*sTri)
+                    yPart = np.append(yPart, j*hTri)
+                    n = n+1
+                i = i+1
+            j = j+1
 
     return xPart, yPart, mPart, n, aPart
 
 
-def removePart(particles, mask, nRemove, reasonString=''):
+def removePart(particles, mask, nRemove, reasonString='', cohesion=0):
     """ remove given particles
 
     Parameters
@@ -175,6 +216,11 @@ def removePart(particles, mask, nRemove, reasonString=''):
     if reasonString != '':
         log.info('removed %s particles %s' % (nRemove, reasonString))
     nPart = particles['nPart']
+    if cohesion == 1:
+        # if cohesion is activated, we need to remove the particles as well as the bonds accordingly
+        # we do this first befor nPart changes
+        nBondRemove = DFAfunC.countRemovedBonds(particles, mask, nRemove)
+        particles = DFAfunC.removedBonds(particles, mask, nRemove, nBondRemove)
     for key in particles:
         if key == 'nPart':
             particles['nPart'] = particles['nPart'] - nRemove
@@ -218,7 +264,7 @@ def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
     # update total number of particles and number of IDs used so far
     particles['nPart'] = particles['nPart'] + nAdd
     particles['nID'] = nID + nAdd
-    # log.info('Spliting particle %s in %s' % (ind, nSplit))
+    # log.info('Spliting particle %s in %s' % (ind, nAdd))
     for key in particles:
         # update splitted particle mass
         # first update the old particle
@@ -238,6 +284,10 @@ def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
                 particles[key] = np.append(particles[key], yNew[1:])
             elif key == 'z':
                 particles[key] = np.append(particles[key], zNew[1:])
+            elif key == 'bondStart':
+                # no bonds for added particles:
+                nBondsParts = np.size(particles['bondPart'])
+                particles[key] = np.append(particles[key], nBondsParts*np.ones((nAdd)))
             # set the parent properties to new particles due to splitting
             elif np.size(particles[key]) == nPart:
                 particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))

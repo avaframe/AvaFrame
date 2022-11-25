@@ -2,3 +2,7 @@
 # Cython dependency is optional, see setup.py for details.
 # For the package (run-time) dependencies, see setup.cfg.
 requires = ["setuptools", "numpy", "cython"]
+
+[flake8]
+max-line-length = 120
+
