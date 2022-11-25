@@ -512,6 +512,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double centeredPosition = cfg.getfloat('centeredPosition')
+  cdef int cohesion = cfg.getint('cohesion')
   cdef int dissDam = cfg.getint('dissDam')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -842,7 +843,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
     mask = np.array(np.asarray(keepParticle), dtype=bool)
-    particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain')
+    particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', cohesion=cohesion)
 
   return particles
 
@@ -1222,26 +1223,29 @@ def getNeighborsC(particles, dem):
 
 
 def computeCohesionForceC(cfg, particles, force):
-  """ compute cohesion forces acting on the particles
+  """ compute elastic cohesion forces acting on the particles
+  this is computed when the glide snow option is activated (cohesion = 1
+  )
   Parameters
   ----------
   cfg: configparser
       configuration for DFA simulation
   particles : dict
-      particles dictionary at t
+      particles dictionary at time t
   force : dict
       force dictionary
   Returns
   -------
-particles : dict
-  particles dictionary at t (updated bondDist due to breaking)
-force : dict
-  force dictionary with bonding elastic force
+  particles : dict
+    particles dictionary at t (updated bondDist due to breaking)
+  force : dict
+    force dictionary with bonding elastic force
   """
   # read input parameters
   cdef double dt = particles['dt']
   cdef double cohesiveSurfaceTension = cfg.getfloat('cohesiveSurfaceTension')
   cdef double cohesionMaxStrain = cfg.getfloat('cohesionMaxStrain')
+  cdef double minDistCohesion = cfg.getfloat('minDistCohesion')
   cdef int nPart = particles['nPart']
   # read particles and fields
   cdef double[:] mass = particles['m']
@@ -1252,20 +1256,19 @@ force : dict
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
-  cdef int[:] bondStart = particles['bondStart']
+  cdef int[:] bondStart = particles['bondStart'].astype('intc')
   cdef double[:] bondDist = particles['bondDist']
-  cdef int[:] bondPart = particles['bondPart']
+  cdef int[:] bondPart = particles['bondPart'].astype('intc')
   cdef double[:] forceSPHX = force['forceSPHX']
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
   # initialize outputs
   cdef int k, l, ib
   cdef double dist0, dist, vx, vy, vz, xk, yk, zk, xl, yl, zl
-  cdef double mk, ml, hk, hl, ux, uy, uz, dx, dy, dz
-  cdef double e, hkl, mkl, Akl, contact, forcecohesion
+  cdef double hk, hl, ux, uy, uz, dx, dy, dz
+  cdef double epsilon, mkl, Akl, contact, forceCohesion
   # loop on particles
   for k in range(nPart):
-    mk = mass[k]
     hk = hArray[k]
     xk = xArray[k]
     yk = yArray[k]
@@ -1277,7 +1280,7 @@ force : dict
     for ib in range(bondStart[k], bondStart[k + 1]):
       # get initial distance between particles
        dist0 = bondDist[ib]
-       # if bond already broken, just skipp it
+       # if bond already broken, just skip it
        if (dist0 < 0.0):
          continue
        # get the bonded particle
@@ -1292,29 +1295,26 @@ force : dict
        dy = yl - yk + dt * (vy - uy)
        dz = zl - zk + dt * (vz - uz)
        dist = DFAtlsC.norm(dx, dy, dz)
-
-       if (dist > 1.0e-3):
+       # only if the distance is bigger than a threshold (avoid dividing by 0)
+       if (dist > minDistCohesion):
          # strain
-         e = dist / dist0 - 1.0
-         # allow breaking in both compression and extention
-         if (abs(e) > cohesionMaxStrain):
+         epsilon = dist / dist0 - 1.0
+         # allow breaking in both compression and extension
+         if (abs(epsilon) > cohesionMaxStrain):
            # break bond
            bondDist[ib] = -1
          # if not broken add elastic force
          else:
-           ml = mass[l]
            hl = hArray[l]
            # compute average depth and mass
            hkl = 0.5 * (hk + hl)
-           mkl = 0.5 * (mk + ml)
            # sqrt(3) from 6-neighbors-assumption (Iwould add a 2 here... 2/sqrt(3))
            Akl = hkl * dist / math.sqrt(3)
-           # cohesiveSurfaceTension used as elasticity module (Pa)
+           # cohesiveSurfaceTension used as elasticity modulus (Pa)
            contact = Akl * cohesiveSurfaceTension
            # dx / dist is  the unit direction vector towards bonded particle l
-           urf = (1.0 + contact * dt * dt / (dist0 * mkl))
            # cohesion force (including the normalizing factor 1/dist)
-           forcecohesion = (1 / dist) * e * contact / urf
+           forcecohesion = (1 / dist) * epsilon * contact
            forceSPHX[k] = forceSPHX[k] + forcecohesion * dx
            forceSPHY[k] = forceSPHY[k] + forcecohesion * dy
            forceSPHZ[k] = forceSPHZ[k] + forcecohesion * dz
@@ -1340,20 +1340,21 @@ def plotBondC(particles):
   # read input parameters
   cdef int nPart = particles['nPart']
   # read particles and fields
-  cdef int[:] bondStart = particles['bondStart']
+  cdef int[:] bondStart = particles['bondStart'].astype('intc')
   cdef double[:] bondDist = particles['bondDist']
-  cdef int[:] bondPart = particles['bondPart']
+  cdef int[:] bondPart = particles['bondPart'].astype('intc')
   cdef int nEdges = bondPart.shape[0]
   cdef int[:, :] edges = np.zeros((nEdges, 2), dtype=np.int32)
   # initialize outputs
   cdef int k, l, ib, count = 0
+  cdef double dist0
   # loop on particles
   for k in range(nPart):
     # loop on all bonded particles
     for ib in range(bondStart[k], bondStart[k + 1]):
       # get initial distance between particles
        dist0 = bondDist[ib]
-       # if bond already broken, just skipp it
+       # if bond already broken, just skip it
        if (dist0 > 0.0):
          l = bondPart[ib]
          edges[count, 0] = k
@@ -1362,7 +1363,7 @@ def plotBondC(particles):
   return edges
 
 
-def initiaizeBondsC(particles, triangles):
+def initializeBondsC(particles, triangles):
   """ Initialize bonds if cohesion is activated
   Parameters
   ----------
@@ -1385,7 +1386,6 @@ def initiaizeBondsC(particles, triangles):
   cdef int nPart = xArray.shape[0]
   cdef int nTri = tri.shape[0]
   cdef int nEdges = edges.shape[0]
-  # cdef int nEdges = nPart + nTri - 1
 
   # initialize variables and outputs
   cdef int[:] bondStart = np.zeros(nPart + 1, dtype=np.int32)
@@ -1422,10 +1422,104 @@ def initiaizeBondsC(particles, triangles):
     bondDist[bondStart2[p2+1]-1] = distanceIni
     bondStart2[p2+1] = bondStart2[p2+1] - 1
 
-
   particles['bondStart'] = np.asarray(bondStart)
   particles['bondPart'] = np.asarray(bondPart)
   particles['bondDist'] = np.asarray(bondDist)
+  return particles
+
+def countRemovedBonds(particles, mask, nRemove):
+  """ count number of bonds to remove
+  Parameters
+  ----------
+  particles : dict
+    particles dictionary at t start
+  mask : 1D numpy array
+    particles to keep
+  nRemove : int
+    number of particles removed
+  Returns
+  -------
+  nBondRemove : int
+    number of bonds removed
+  """
+  # read input parameters
+  cdef int nPart = particles['nPart']
+  cdef int[:] bondStart = particles['bondStart'].astype('intc')
+  # read particles and fields
+  cdef int[:] keepParticle = mask.astype('intc')
+  cdef int nBondRemove = 0
+  cdef int k, ib
+
+  # count bonds for each particle
+  for k in range(nPart):
+    if keepParticle[k] == 0:
+      # loop on all bonded particles
+      for ib in range(bondStart[k], bondStart[k + 1]):
+        nBondRemove = nBondRemove + 2
+  return nBondRemove
+
+
+def removedBonds(particles, mask, nRemove, nBondRemove):
+  """ Remove bonds of removed particles
+  Parameters
+  ----------
+  particles : dict
+      particles dictionary at t start
+      mask : 1D numpy array
+          particles to keep
+      nRemove : int
+          number of particles removed
+  Returns
+  -------
+  particles : dict
+    particles dictionary according to removed particles
+  """
+  # read input parameters
+  cdef int nPart = particles['nPart']
+  # read particles and fields
+  cdef int[:] bondStart = particles['bondStart'].astype('intc')
+  cdef double[:] bondDist = particles['bondDist']
+  cdef int[:] bondPart = particles['bondPart'].astype('intc')
+  cdef int[:] keepParticle = mask.astype('intc')
+  cdef int nEdges = bondPart.shape[0]
+  cdef int nPartRemoved = nRemove
+  cdef int[:] bondStartNew = np.zeros(nPart + 1, dtype=np.int32)
+  cdef int[:] bondPartNew = np.zeros(nEdges - nBondRemove, dtype=np.int32)
+  cdef double[:] bondDistNew = np.zeros(nEdges - nBondRemove, dtype=np.float64)
+  cdef int countBond = 0
+  cdef int countBondNew = 0
+  cdef int k, ib, l, nBond
+
+  # countBond bonds for each particle
+  for k in range(nPart):
+    # count the bonds of the particle
+    nBond = 0
+    if keepParticle[k] == 1:
+      # loop on all bonded particles to k
+      for ib in range(bondStart[k], bondStart[k + 1]):
+         l = bondPart[ib]
+         if keepParticle[l] == 1:
+           # we keep the particle l so add it to the arrays
+           bondPartNew[countBondNew] = l
+           bondDistNew[countBondNew] = bondDist[ib]
+           countBondNew = countBondNew + 1
+           countBond = countBond + 1
+           nBond = nBond + 1
+         else:
+           countBond = countBond + 1
+      bondStartNew[k + 1] = bondStartNew[k] + nBond
+    else:
+      # we do not keep the particle
+      bondStartNew[k + 1] = bondStartNew[k]
+      # loop on all bonded particles
+      for ib in range(bondStart[k], bondStart[k + 1]):
+        # increment the counter without doing any thing else
+         countBond = countBond + 1
+
+
+  particles['bondStart'] = np.asarray(bondStartNew)
+  particles['bondPart'] = np.asarray(bondPartNew)
+  particles['bondDist'] = np.asarray(bondDistNew)
   return particles
 
 

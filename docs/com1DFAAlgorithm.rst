@@ -50,7 +50,8 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Initialize Dam
 ~~~~~~~~~~~~~~~~~~~~~
 
-If the dam option is activated and the dam input shapefile is provided, the dam is initialized.
+If the dam option is activated (which is the case in the default configuration ``dam`` is ``True``)
+AND the dam input shapefile is provided, the dam is initialized and will be take into account for in the DFA computation.
 
 Initialize particles
 ~~~~~~~~~~~~~~~~~~~~~
@@ -65,7 +66,7 @@ The mass per particle determination method can be chosen between:
     using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
     the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
-    - MPPKR= mass per particles through number of particles per kernel radius. There is no ``massPerPart`` since it can
+  - MPPKR= mass per particles through number of particles per kernel radius. There is no ``massPerPart`` since it can
     vary from one cell to another depending on the release thickness of the cells. The aim of this method is to ensure a
     constant density of particles within the snow domain (``nPPK`` particles per kernel radius is the target value).
     This is related to the SPH method used for computing the flow thickness gradient. It requires a
@@ -81,12 +82,55 @@ The mass per particle determination method can be chosen between:
            particles per cell. Finally, using the MPPKR method, the number of particles per cell is independent from
            both cell size and release thickness (``nPPK`` particles per kernel radius is the target value).
 
-The number of particles placed in each release cell is computed according to the ``massPerPart`` or ``nPPK`` depending
+The number of particles placed in each release cell ``nPartPerCell`` is computed according to the ``massPerPart`` or ``nPPK`` depending
 on the ``massPerParticleDeterminationMethod`` chosen and the area and/or release thickness of the cell.
 The number should be an integer meaning that the float is rounded up or down with a probability corresponding to the
 decimal part (i.e. 5.7 will be rounded to 6 with a probability of 0.7 and 5 with a probability of 0.3).
-This ensures a better match with the desired ``massPerPart`` value. Particles are then placed randomly within the
-mesh cell.
+This ensures a better match with the desired ``massPerPart`` value.
+
+There are then different ways to place the particles in the cells. This is decided by the
+``initPartDistType`` parameter in the configuration file:
+
+    - ``random`` initialization:
+      The ``nPartPerCell`` particles are placed randomly within each release cell.
+      This initialization method allows steps of ones in the choice of ``nPartPerCell``, which enables to
+      avoid large jumps in the mass of the particles or the number of particles per Cell between one release cell to another.
+      Due to the random initialization process, some particles cluster can appear. For operational applications,
+      this does not seem to have a significant impact since the particles will redistribute in the first
+      few time steps due to the pressure gradient. For some specific research applications (e.g. the dam break test),
+      clusters might disturb the results. In this case, applying an initialization reprocessing
+      can help (see  ``iniStep`` in the configuration file).
+      The random number generator is controlled by a random seed which ensures the possibility to
+      reproduce the DFA results.
+
+    - ``uniform`` initialization:
+      The release (square) cell is divided into (square) subcells (as many as ``nPartPerCell``). The particles
+      are placed in the center of each subcell. This method allows only steps of 1, 4, 9, 16, ... due to the
+      square subdivision of the cells. This can lead, in some cases, to significant variations in the number of particles
+      per cell or in the mass of the particles. This can then lead to spurious numerical artifacts.
+      The particles are aligned with the grid, which can also lead to some
+      spurious numerical artifacts.
+
+    - ``semirandom`` initialization:
+      This method uses the uniform division of the release cell into subcells but the particles are
+      placed randomly within each subcell. This method has the same disadvantage as the ``uniform`` method,
+      it allows only steps of 1, 4, 9, 16, ... due to the square subdivision of the cells.
+      This can lead, in some cases, to significant variations in the number of particles per cell or in the
+      mass of the particles. But due to the random position of particles in the subcells
+      particles are not aligned anymore with the grid.
+
+    - ``triangular`` initialization:
+      The particles are initialized along a regular triangular mesh within the release area.
+      This allows a regular distribution of particles with steps of one (like in the case of ``random`` initialization).
+      The disadvantages are that the same triangle size is used within the whole release leading in some cases to
+      significant differences in the mass of the particles. The same comment applies if multiple release features are used.
+      Finally, this method only works for constant release thickness.
+
+      .. Note:: This initialization option is meant to be used when the glide snow option is activated
+                (``cohesion`` activated).
+                The behavior in the standard case (``cohesion`` deactivated) has not been tested.
+
+
 Other particles properties velocity, cell number... are also initialized here.
 See :py:func:`com1DFA.com1DFA.initializeParticles`.
 

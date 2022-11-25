@@ -971,6 +971,12 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         indRelYReal, indRelXReal = np.nonzero(relRaster)
     iReal = list(zip(indRelYReal, indRelXReal))
 
+    # get approximate ratio between projected and real release area
+    # because relRasterMask has a none 0 value where the release is but we want a 1 there
+    realArea = np.sum(areaRaster * np.where(relRasterMask > 0, 1, 0))
+    projectedArea = csz*csz*np.size(indRelY)
+    ratioArea = projectedArea / realArea
+
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
         if cfg.getboolean('iniStep'):
@@ -999,7 +1005,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             hCell = relRaster[indRely, indRelx]
             aCell = areaRaster[indRely, indRelx]
             xPart, yPart, mPart, n, aPart = particleTools.placeParticles(hCell, aCell, indRelx, indRely, csz,
-                                                                         massPerPart, nPPK, rng, cfg)
+                                                                         massPerPart, nPPK, rng, cfg, ratioArea)
             nPart = nPart + n
             partPerCell[indRely, indRelx] = n
             # initialize particles position, mass, height...
@@ -1202,26 +1208,34 @@ def initializeFields(cfg, dem, particles, releaseLine):
         yOutline = releaseLine['y']-dem['originalHeader']['yllcenter']
         # original triangulation (make delaunay triangulation on points)
         triangles = tri.Triangulation(x, y)
+
+        # Cleaning up the triangles (remove unwanted bonds)
         # masking triangles exiting the release (plan small buffer to be sure to keep all inner edges)
-        outline = sPolygon(zip(xOutline, yOutline)).buffer(.01)
+        # this happends on non-convex release areas
+        outline = sPolygon(zip(xOutline, yOutline)).buffer(cfgGen.getfloat('thresholdPointInPoly'))
         mask = [not outline.contains(sPolygon(zip(x[tri], y[tri])))
                 for tri in triangles.get_masked_triangles()]
         triangles.set_mask(mask)
-        # masking triangles with sidelength bigger than some cellSize
-        # ToDo: is this a good creterion?
-        maxRadius = dem['header']['cellsize']
+        # masking triangles with sidelength bigger than some threshold
+        # (this removes spurious bonds that appear on the sides of the release polygon)
         triang = triangles.triangles
         # Mask off unwanted triangles.
         xtri = x[triang] - np.roll(x[triang], 1, axis=1)
         ytri = y[triang] - np.roll(y[triang], 1, axis=1)
         maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
+        if cfgGen['initPartDistType'] == 'triangular':
+            # if it is a regular triangular mesh, remove all bonds longer than the triangle side size (np.nanmin(maxi))
+            maxRadius = np.nanmin(maxi)*1.1
+        else:
+            # otherwise remove bonds that are longer than sqrt(5)csz (worst case senario with one particle per cell)
+            maxRadius = dem['header']['cellsize']*math.sqrt(5)
         triangles.set_mask(maxi > maxRadius)
 
+        # build the bond array from the triagular mesh (put it to a format that suits us for cython)
+        particles = DFAfunC.initializeBondsC(particles, triangles)
         # debugg plot
         if debugPlot:
-            debPlot.plotBondsGlideSnowIni(xOutline, yOutline, triangles)
-        # build the bond array from the triagular mesh (put it to a format that suits us for cython)
-        particles = DFAfunC.initiaizeBondsC(particles, triangles)
+            debPlot.plotBondsGlideSnowFinal(cfg, particles, dem)
     return particles, fields
 
 
@@ -1384,7 +1398,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     dem : dict
         dictionary with dem information
     inputSimLines : dict
-        dictionary with dictionaries (releaseLine, entLine, ...)
+        dictionary with input data dictionaries (releaseLine, entLine, ...)
 
     Returns
     -------
@@ -1519,8 +1533,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
             dtSave = updateSavingTimeStep(dtSave, cfg['GENERAL'], t)
 
             # debugg plot
-            # if debugPlot:
-            #     debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
+            if debugPlot:
+                debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
 
         # derive time step
         if cfgGen.getboolean('sphKernelRadiusTimeStepping'):

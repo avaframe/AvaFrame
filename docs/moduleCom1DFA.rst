@@ -6,8 +6,8 @@ It is a python and cython implementation of the DFA C++ implementation samosAT
 (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz (see :ref:`moduleCom1DFAOrig:com1DFAOrig: Original DFA-Kernel`).
 Calculations are based on the thickness integrated governing equations and
-solved numerically using the smoothed particle hydrodynamics (sph) method. Please note 
-the use of *thickness averaged/integrated* instead of *depth averaged/integrated* for clarity and consistency. 
+solved numerically using the smoothed particle hydrodynamics (sph) method. Please note
+the use of *thickness averaged/integrated* instead of *depth averaged/integrated* for clarity and consistency.
 
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
 entrainment and/or resistance areas, and is controlled via a configuration file.
@@ -104,7 +104,7 @@ If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed`` an
 simulations.
 
 
-Dam input 
+Dam input
 ^^^^^^^^^
 
 The com1DFA module provides the option to take the effect of dams into account.
@@ -113,16 +113,16 @@ This is done using a ad-hoc method based on particles being reflected/deflected 
 The dam is described by the crown line, the slope and the restitution coefficient:
 
   - crown line as shape file (use the line type and enable the "additional dimensions" option in order
-    to specify the z coordinate). 
-    The z coordinate corresponds to the absolute height (terrain elevation plus dam height). 
-    The dam is then located on the left side of the dam (when one travels from the first point to the last 
+    to specify the z coordinate).
+    The z coordinate corresponds to the absolute height (terrain elevation plus dam height).
+    The dam is then located on the left side of the dam (when one travels from the first point to the last
     point of the shapefile line).
     The dam shape files live in the ``avaDir/Inputs/DAM/`` directory (only one file is allowed).
 
   - the ``slope`` of the dam (in degrees °) between the horizontal plane and the wall to be provided in the shape file
     as an attribute (default value is 60° in the provided examples: avaSlide, avaKot and avaBowl)
 
-  - the restitution coefficient (:math:`\alpha_\text{rest}`), a float between 0 (no reflection 
+  - the restitution coefficient (:math:`\alpha_\text{rest}`), a float between 0 (no reflection
     in the normal direction) and 1 (full reflection) to be specified in the ini file (default value is 0)
 
 

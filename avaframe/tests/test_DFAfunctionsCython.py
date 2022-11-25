@@ -1,7 +1,6 @@
-"""Tests for module com1DFAtools"""
+""
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 import configparser
 import pytest
 import matplotlib.tri as tri
@@ -188,7 +187,7 @@ def test_updatePositionC():
                       'uFlowingThreshold': '0.1', 'gravAcc': '9.81', 'velMagMin': '1.e-6',  'rho': '100.',
                       'interpOption': '2',   'explicitFriction': '0', 'centeredPosition': '1',
                       'reprojMethodPosition': '2', 'reprojectionIterations': '5', 'thresholdProjection': '0.001',
-                      'dissDam': 1}
+                      'dissDam': '1', 'cohesion': '1'}
 
     particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
                   'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
@@ -361,8 +360,7 @@ def test_computeTravelAngle():
     assert gamma[3] == pytest.approx(41.9872125, rel=1e-6)
 
 
-
-def test_initiaizeBondsC():
+def test_initializeBondsC():
     nPart = 3
     x = np.array([0., 1., 0.])
     y = np.array([0., 0., 1.])
@@ -370,7 +368,7 @@ def test_initiaizeBondsC():
     # original triangulation
     triangles = tri.Triangulation(x, y)
     particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z}
-    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    particles = DFAfunC.initializeBondsC(particles, triangles)
     print(triangles.triangles)
     print(triangles.edges)
     print(particles['bondStart'])
@@ -398,9 +396,54 @@ def test_initiaizeBondsC():
     assert np.array_equal(bondDist, np.asarray([1, 1, 1, 1, math.sqrt(2), math.sqrt(2)]))
 
 
+def test_removeBondsC():
+    nPart = 3
+    x = np.array([0., 1., 0.])
+    y = np.array([0., 0., 1.])
+    z = np.array([0., 0., 0.])
+    # original triangulation
+    triangles = tri.Triangulation(x, y)
+    particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z}
+    particles = DFAfunC.initializeBondsC(particles, triangles)
+    print(particles['bondStart'])
+    print(particles['bondDist'])
+    print(particles['bondPart'])
+
+    # now remove one particle (here particle 1):
+    keepParticle = np.array([1., 0., 1.])
+    nRemove = 1
+    nBondRemove = DFAfunC.countRemovedBonds(particles, keepParticle, nRemove)
+    print(nBondRemove)
+    assert nBondRemove == 4
+    particles = DFAfunC.removedBonds(particles, keepParticle, nRemove, nBondRemove)
+    print(particles['bondStart'])
+    print(particles['bondDist'])
+    print(particles['bondPart'])
+    bondStart = particles['bondStart']
+    bondDist = particles['bondDist']
+    bondPart = particles['bondPart']
+    assert np.array_equal(bondStart, np.asarray([0, 1, 1, 2]))
+    for k in range(nPart):
+        # loop on all bonded particles
+        neighbors = list()
+        for ib in range(bondStart[k], bondStart[k + 1]):
+            l = bondPart[ib]
+            neighbors.append(l)
+
+        neighbors.sort()
+        if k == 0:
+            assert neighbors == [2]
+        if k == 1:
+            assert neighbors == []
+        if k == 2:
+            assert neighbors == [0]
+    bondDist.sort()
+    assert np.array_equal(bondDist, np.asarray([1, 1]))
+
+
 def test_computeCohesionForceC():
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'cohesiveSurfaceTension': '50000', 'cohesionMaxStrain': '0.2'}
+    cfg['GENERAL'] = {'cohesiveSurfaceTension': '50000', 'cohesionMaxStrain': '0.2', 'minDistCohesion' : '1.0e-3'}
     nPart = 3
     x = np.array([0., 1., 0.])
     y = np.array([0., 0., 1.])
@@ -417,10 +460,12 @@ def test_computeCohesionForceC():
     # original triangulation
     triangles = tri.Triangulation(x, y)
     particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m, 'h': h, 'dt': 0.05}
-    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    particles = DFAfunC.initializeBondsC(particles, triangles)
     # bond breaking
     particles['x'][1] = 1.21
+    print('Here')
     force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
+    print('Here')
     print(particles['bondStart'])
     print(particles['bondDist'])
     print(particles['bondPart'])
@@ -464,7 +509,7 @@ def test_computeCohesionForceC():
     # bound not breaking
     particles['x'][1] = 1
     particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m, 'h': h, 'dt': 0.05}
-    particles = DFAfunC.initiaizeBondsC(particles, triangles)
+    particles = DFAfunC.initializeBondsC(particles, triangles)
     particles['x'][1] = 1.09
     force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
     print(particles['bondStart'])
