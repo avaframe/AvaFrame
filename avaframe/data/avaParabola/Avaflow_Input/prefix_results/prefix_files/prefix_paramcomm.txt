@@ -1,0 +1,169 @@
+Name of main mapset (relevant with GRASS)	0
+Identifier for single model run (0) or multiple model runs (1)	0
+Mesh spacing (multiple of ascii raster cell size)	1
+Prefix for output	prefix_
+Name of directory with input files	/home/user1/Master_Carina/AvaFrame/avaframe/data/avaParabola/Avaflow_Input/
+Path and prefix for storing output ascii raster maps	./data/avaParabola/Avaflow_Input/prefix_results/prefix_ascii/
+Path and prefix for storing output text files	./data/avaParabola/Avaflow_Input/prefix_results/prefix_files/
+Path and prefix for storing output paraview files	./data/avaParabola/Avaflow_Input/prefix_results/prefix_paraview/
+Path and prefix for storing output R plots	./data/avaParabola/Avaflow_Input/prefix_results/prefix_plots/
+Model (0=mixture, 1=one-phase, 7=multi-phase)	7
+Phase 1 (1=solid, 2=fine-solid, 3=fluid)	1
+Phase 2 (1=solid, 2=fine-solid, 3=fluid)	2
+Phase 3 (1=solid, 2=fine-solid, 3=fluid)	3
+Control for additional output raster maps (0=no, 1=yes)	1
+Control for Paraview visualization (0=no, 1=yes)	1
+Tsunami mode (0=no, 1=yes)	0
+Gravity (m/s²)	9.81
+Numerical limiter (1=Minmod, 2=Superbee, 3=Woodward, 4=van Leer)	1
+Layer mode (0=no, 1=weak, 2=strong)	0
+Conversion control (0=no, 1=yes)	0
+Diffusion control (0=no, 1=yes)	0
+Curvature control (0=no, 1=decelerating, 2=all)	1
+Surface control (0=no, 1=edge control, 2=force balancing, 3=all)	0
+Entrainment and deposition control (0=no, 1-4=type of approach)	0
+Stopping control (0=no, 1-3=type of approach)	0
+Friction control (0=no, 1=yes)	0
+Control for non-hydrostatic effects (0=no, 1=dispersion, 2=enhanced gravity, 2=dispersion and enhanced gravity)	0
+Control for phase separation	0
+Control for hydrograph management ( 0=reset flow, 1=impose on flow, 2=impose on centre)	2
+Control for deceleration management (0=suppress friction- or viscosity-induced change of direction, 1=do not suppress)	0
+Elevation map	DEM.asc
+Release mass MIXTURE or PHASE 1 map	rel_rst.asc
+Release mass PHASE 2 map	None
+Release mass PHASE 3 map	None
+Fraction of PHASE 1 release heigh	 1.00
+Variation of release height	1.00
+Release velocity x MIXTURE or PHASE 1 map	None
+Release velocity x PHASE 2 map	None
+Release velocity x PHASE 3 map	None
+Release velocity y MIXTURE or PHASE 1 map	None
+Release velocity y PHASE 2 map	None
+Release velocity y PHASE 3 map	None
+Maximum height of entrainment MIXTURE or PHASE 1 map	None
+Maximum height of entrainment PHASE 2 map	None
+Maximum height of entrainment PHASE 3 map	None
+Fraction of PHASE 1 maximum height of entrainment	1.00
+Variation of maximum height of entrainment	1.00
+Zones map	None
+Entrainment coefficient map	None
+Shear velocity coefficient map	None
+Internal friction angle of MIXTURE or PHASE 1 map	None
+Internal friction angle of PHASE 2 map	None
+Internal friction angle of PHASE 3 map	None
+Basal friction difference map	None
+Turbulent friction coefficient map	None
+Basal friction angle of MIXTURE or PHASE 1 map	None
+Basal friction angle of PHASE 2 map	None
+basal friction angle of PHASE 3 map	None
+Kinematic viscosity of MIXTURE or PHASE 1 map	None
+Kinematic viscosity of PHASE 2 map	None
+Kinematic viscosity of PHASE 3 map	None
+Ambient drag map	None
+Fluid friction number map	None
+PHASE 1 - PHASE 2 transformation coefficient map	None
+PHASE 1 - PHASE 3 transformation coefficient map	None
+PHASE 2 - PHASE 3 transformation coefficient map	None
+Release time map	None
+Release stop time map	None
+Stopping time map	None
+Time of initial sliding map	None
+Observed impact area map	None
+Observed height of deposit map	None
+Name of orthophoto channel 1 map	None
+Name of orthophoto channel 2 map	None
+Name of orthophoto channel 3 map	None
+Parameters of hydrograph profiles	None
+Pathes to input hydrograph files	None
+Path to adaptograph file	None
+Path to frictiograph file	None
+Path to transformograph file	None
+Number of flow parameters	57
+Density of PHASE 1 (kg/m³)	2700.00
+Density of PHASE 2 (kg/m³)	1800.00
+Density of PHASE 3 (kg/m³)	1000.00
+Internal friction angle of PHASE 1 (degrees)	35.00
+Internal friction angle of PHASE 2 (degrees)	0.00
+Internal friction angle of PHASE 3 (degrees)	0.00
+Basal friction angle of PHASE 1 (degrees)	20.00
+Basal friction angle of PHASE 2 (degrees)	0.00
+Basal friction angle of PHASE 3 (degrees)	0.00
+Fluid friction number	0.0500
+Log10 of kinematic viscosity of PHASE 1 (m²/s)	-inf
+Yield strength of PHASE 1 (Pa)	-9999.00
+Log10 of kinematic viscosity of PHASE 2 (m²/s)	-3.00
+Yield strength of PHASE 2 (Pa)	-9999.00
+Log10 of kinematic viscosity of PHASE 3 (m²/s)	-3.00
+Yield strength of PHASE 3 (Pa)	0.00
+Log 10 of entrainment coefficient	-7.00
+Stopping criterion	0.00
+Transformation coefficient PHASE 1 - PHASE 2	0.0000
+Transformation coefficient PHASE 1 - PHASE 3	0.0000
+Transformation coefficient PHASE 2 - PHASE 3	0.0000
+Shear velocity coefficient for entrainment and deposition	0.0500
+Basal friction difference for entrainment and deposition	0.0000
+Maximum water content of deposit	0.33
+Ambient drag coefficient	0.0000
+Virtual mass number	10.000000
+l parameter related to the virtual mass coefficients	0.120000
+n parameter related to the virtual mass coefficients	1.000000
+Reduction factor for virtual mass coefficients	1.000000
+Mass flux parameter for drag (m/s)	1.000000
+Exponent for scaling of the fluid-like drag contributions to flow resistance	3.000000
+Exponent for scaling of drag parameter with solid fraction	1
+Terminal velocity (m/s)	0.100000
+Particle Reynolds number	1.000000
+Exponent for drag	1
+Vertical PHASE 1 velocity distribution (0=no shearing, 3=parabolic profile)	1.000000
+Vertical PHASE 2 velocity distribution (0=no shearing, 3=parabolic profile)	1.000000
+Vertical PHASE 3 velocity distribution (0=no shearing, 3=parabolic profile)	1.000000
+Vertical distribution of PHASE 1 (shape factor: 0=uniform, 3=parabolic)	0.000000
+Vertical distribution of PHASE 2 (shape factor: 0=uniform, 3=parabolic)	0.000000
+Vertical distribution of PHASE 3 (shape factor: 0=uniform, 3=parabolic)	0.000000
+exponent for mobility of PHASE 2 at interface with PHASE 1	1.000000
+exponent for mobility of PHASE 3 at interface with PHASE 1	1.000000
+exponent for mobility of PHASE 3 at interface with PHASE 2	1.000000
+Suitably chosen numerical parameter for regularization	10.00
+Exponent for scaling of viscosity with fraction of phase (0=no scaling, 1=linear scaling)	0.000000
+Maximum value of PHASE 1 passive earth pressure coefficient	1.000000
+Maximum value of PHASE 2 passive earth pressure coefficient	1.000000
+Maximum value of PHASE 3 passive earth pressure coefficient	1.000000
+Shear factor for phase separation	0.00
+Multiplication factor for dispersion	1.00
+Coefficient for constraining dispersion and phase separation	4.00
+Maximum slope angle (degrees) considered as plane surface	1.00
+Criterion for maximum flow velocity	200.00
+Minimum value of internal and basal friction (degrees)	0.00
+Kinetic energy coefficient	0.00
+Phase fraction scaling exponent	0.00
+Threshold flow depth for simulation (m)	0.001000
+Threshold for display of flow height (m)	0.100
+Threshold for display of flow kinetic energy (J)	10000.000
+Threshold for display of flow pressure (Pa)	10000.000
+Time interval for writing output (s)	10.00
+Time at which to stop simulation (s)	300.00
+Factor for slow motion	1.00
+Search radius for initial sliding (m)	0.00
+Weighting exponent for initial sliding	0.00
+Coefficient for deformation during initial sliding	0.00
+CFL criterion	0.40
+Length of first time step (s)	0.0010
+Profile vertices (x and y coordinates)	None
+Control points (x and y coordinates)	None
+Minimum flow height for Paraview visualization (m)	0.10
+Reference flow height for Paraview visualization (m)	5.00
+Reference tsunami height for Paraview visualization (m)	5.00
+Minimum level for flow height contours in Paraview (m)	1
+Maximum level for flow height contours in Paraview (m)	100
+Interval for flow height contours in Paraview (m)	2
+Minimum level for elevation contours in Paraview (m)	-11000
+Maximum level for elevation contours in Paraview (m)	9000
+Interval for elevation contours in Paraview (m)	100
+Weight of red colour for flow visualization in Paraview (neglected for multi-phase model)	0.60
+Weight of green colour for flow visualization in Paraview (neglected for multi-phase model)	0.25
+Weight of blue colour for flow visualization in Paraview (neglected for multi-phase model)	0.15
+Exponent of transparency curve for flow visualization in Paraview	0.20
+Exaggeration factor for flow heights in profile plots	1.00
+Path to pvpython for visualization in Paraview	/usr/bin/paraview
+Path to Rscript for visualization in R	/usr/bin/R
+Path to R packages for map plots	None

@@ -37,7 +37,6 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
     paramflag = cfgGen["paramflag"]
     
     # start writing parameter file and initializing parameter file
-    mflag = cfgGen["mflag"]
     p1file = open(paramdir_single, "w")
       
     # mainmapset = cfgGen["mainmapset"]
@@ -45,6 +44,7 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
     print("0", file = p1file)
     
     #Multiple model runs  (0 or 1, default: 0)
+    mflag = "0"
     if mflag == "0":
         print("0", file = p1file) # identifier for single model run
     else:
@@ -173,10 +173,14 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
     
     #Gravitational force
     gravity = cfgGen["gravity"]
+    if gravity == "0":
+        gravity = "9.81"
     print(gravity, file = p1file)
     
     #Numerical limiter (1=Minmod, 2=Superbee, 3=Woodward, 4=van Leer)
     limiter = cfgGen["limiter"]
+    if limiter == "0":
+        limiter = "1"
     print(limiter, file = p1file)
     
     #Layer mode (0=no, 1=weak, 2=strong)
@@ -237,12 +241,6 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
         print(hrelease2, file=p1file)  # name of PHASE 2 release height map
     else:
         print("None", file=p1file)
-            
-    # hrelease2 = cfgGen["hrelease2"]
-    # if hrelease2 != "0":
-    #     print(hrelease2, file=p1file)  # name of PHASE 2 release height map
-    # else:
-    #     print("None", file=p1file)
     
     #Release mass PHASE 3
     hrelease3 = cfgGen["hrelease3"]
@@ -586,7 +584,7 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
         print("None", file=p1file)
      
      # Flow parameters
-    mflag = cfgGen["mflag"] #Multiple model runs  (0 or 1, default: 0)
+    #mflag = cfgGen["mflag"] #Multiple model runs  (0 or 1, default: 0)
     density = cfgGen["density"] #Density for PHASE 1,2,3 (kg/m³)
     friction = cfgGen["friction"]#Internal & Basal friction angle of PHASE 1,2,3 (degrees) + Fluid friction number
     basal = cfgGen["basal"] # Log 10 of entrainment coefficient & Stopping criterion
@@ -655,16 +653,16 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
                 if basal == "0":
                     basal = "-7.0,0.0"
                     
-                    # basal = list(basal.split(","))
-                    # stopCritType = cfgCom1DFA["stopCritType"]                    
-                    # if stopCritType == "kinEnergy":
-                    #     stopCrit = cfgCom1DFA["stopCrit"]
-                    #     basal[1] = stopCrit
-                    # elif stopCritType == "massFlowing":
-                    #     ##uFlowingThreshold = cfgCom1DFA["uFlowingThreshold"] Whats happening with that
-                    #     stopCrit = cfgCom1DFA["stopCrit"]
-                    #     basal[1] = stopCrit
-                    # basal = ",".join(basal)
+                    basal = list(basal.split(","))
+                    stopCritType = cfgCom1DFA["stopCritType"]                    
+                    if stopCritType == "kinEnergy":
+                        stopCrit = cfgCom1DFA["stopCrit"]
+                        basal[1] = stopCrit
+                    elif stopCritType == "massFlowing":
+                        ##uFlowingThreshold = cfgCom1DFA["uFlowingThreshold"] Whats happening with that
+                        stopCrit = cfgCom1DFA["stopCrit"]
+                        basal[1] = stopCrit
+                    basal = ",".join(basal)
                     
                 if special == "0":
                     special = "0.05,0.0,1.0,4.0,1.0,200.0"
@@ -692,16 +690,16 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
                 if basal == "0":
                     basal = "-7.0,0.0"
                     
-                    # basal = list(basal.split(","))
-                    # stopCritType = cfgCom1DFA["stopCritType"]                    
-                    # if stopCritType == "kinEnergy":
-                    #     stopCrit = cfgCom1DFA["stopCrit"]
-                    #     basal[1] = stopCrit
-                    # elif stopCritType == "massFlowing":
-                    #     ##uFlowingThreshold = cfgCom1DFA["uFlowingThreshold"] Whats happening with that
-                    #     stopCrit = cfgCom1DFA["stopCrit"]
-                    #     basal[1] = stopCrit
-                    # basal = ",".join(basal)
+                    basal = list(basal.split(","))
+                    stopCritType = cfgCom1DFA["stopCritType"]                    
+                    if stopCritType == "kinEnergy":
+                        stopCrit = cfgCom1DFA["stopCrit"]
+                        basal[1] = stopCrit
+                    elif stopCritType == "massFlowing":
+                        ##uFlowingThreshold = cfgCom1DFA["uFlowingThreshold"] Whats happening with that
+                        stopCrit = cfgCom1DFA["stopCrit"]
+                        basal[1] = stopCrit
+                    basal = ",".join(basal)
                     
                 if special == "0":
                     special = "0.05,0.0,0.0,1,10,1,1.0,4.0,1.0,200.0"
@@ -1024,8 +1022,8 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
         print(paraview[i], file=p1file) #paraview parameter
         
     # Exaggeration factor for flow heights in profile plots: (0,1,undefined)
-    exaggeration = cfgGen["exaggeration"]
-    print(exaggeration, file = p1file)
+    phexagg = cfgGen["phexagg"]
+    print(phexagg, file = p1file)
 
     print(str("/usr/bin/paraview"), file = p1file)
     print(str("/usr/bin/R"), file=p1file)
