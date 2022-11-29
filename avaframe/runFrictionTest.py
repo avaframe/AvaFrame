@@ -143,12 +143,15 @@ for i in range(0, number_ava):
     
 # Calculating the Nodes velocity
 NumberNodes = [7,9,10]  # Numbers of the nodes you want to plot 
-Nodes = NodeTools.FindNodeVelocity(NumberNodes,cfgMain,avalancheDir)
+Nodes = NodeTools.FindNodeVelocity(NumberNodes,avalancheDir)
 if len(Nodes)==len(NumberNodes):
     key=1
 else:
     key=0
     print("Not all experimental data have been found!")
+    
+# Changing nodes data coordinates  
+e07, n07, e09, n09, e10, n10 = NodeTools.change_coordinate()
     
 
 #%% Boxplot 
@@ -356,8 +359,12 @@ if key == 1:
 
 #%% Plotting different tools together
 
-# Preparing nodes data 
-e07, n07, e09, n09, e10, n10 = NodeTools.change_coordinate()
+import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
+import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+
+
+# preparing simulation data
+simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
 
 for simu_number in range(0,number_ava): 
     
@@ -373,25 +380,66 @@ for simu_number in range(0,number_ava):
         fig, ax = plt.subplots(1,3,figsize=(pU.figW+10, pU.figH+3))  
         
         ### ax[0]
-        mtiInfo, cfgRangeTime, F, index = PlotTools.RangeTimeDiagram() 
+        # preparing range time data for the simulation 
+        mtiInfo, cfgRangeTime = PlotTools.RangeTimeDiagram(avalancheDir, sim, simDF) 
+           
+        # preparing range time data for the node    
+        NumberNodes = [10]  # Numbers of the nodes you want to plot 
+        DictNodRangeTime = NodeTools.FindNodeRangeTime(NumberNodes, avalancheDir)
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        # fetch required input info
+        mti = mtiInfo['mti']
+        rangeGates = mtiInfo['rangeGates']
+        timeList = mtiInfo['timeList']
+        rangeList = mtiInfo['rangeList']
+        rangeTimeResType = cfgRangeTime['GENERAL']['rangeTimeResType']
+        maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
+
+        # in case time steps are not ordered - the colormesh x and y need to be ordered
+        timeIndex = np.argsort(np.array(timeList))
+        timeListNew = np.array(timeList)[timeIndex]
+        mti = mti[:, timeIndex]
+
+        # fetch velocity legend style info
+        width = cfgRangeTime['PLOTS'].getfloat('width')
+        height = cfgRangeTime['PLOTS'].getfloat('height')
+        lw = cfgRangeTime['PLOTS'].getfloat('lw')
+        textsize = cfgRangeTime['PLOTS'].getfloat('textsize')
+
+        # plotting          
+        pc = ax[0].pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
+        ax[0].plot(timeList, rangeList, '.', color='black', markersize=4, label='avalanche front')
+        ax[0].set_xlabel('Time [s]')
+        # add y label axis
+        if mtiInfo['type'] == 'thalwegTime':
+            sTypeCapital = mtiInfo['sType'][0].upper() +  mtiInfo['sType'][1:]
+            ax[0].set_ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
+        else:
+            ax[0].set_ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
+
+        # add colorbar and infobox
+        unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
+        if mtiInfo['type'] == 'thalwegTime' and cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
+            avgType = 'max'
+        else:
+            avgType = 'avg.'
+        cName = '%s ' % avgType + pU.cfgPlotUtils['name' + rangeTimeResType]
+        pU.addColorBar(pc, ax[0], None, unit, title=cName)
+        pU.putAvaNameOnPlot(ax[0], cfgRangeTime['GENERAL']['avalancheDir'])
+        # add range time velocity legend
+        dtAnaPlots.rangeTimeVelocityLegend(ax[0], maxVel, width, height, lw, textsize)
+
+        # add max velocity location
+        ax[0].plot(timeVel, rangeVel, 'r*', label='max velocity location')
+        #FSO: is this needed?
+        # cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
+
+        # add experimental AvaNode data 
+        ax[0].plot(DictNodRangeTime['C10']['Time'], DictNodRangeTime['C10']['RangeTime'], color = 'red', linestyle = 'dashdot',linewidth=1, label='AvaNode location')  # velocity
+
+        # add info on avalanche front in legend
+        ax[0].legend(facecolor='grey', framealpha=0.2, loc='upper left', fontsize=8)
+               
         
         
         ### ax[1]
@@ -446,8 +494,8 @@ for simu_number in range(0,number_ava):
         ax[2].plot(Nodes['C07']['Time'], Nodes['C07']['Velocity'], color='brown')  # AvaNode velocity
         ax[2].plot(Nodes['C09']['Time'], Nodes['C09']['Velocity'], color='green')  # AvaNode velocity
         ax[2].plot(Nodes['C10']['Time'], Nodes['C10']['Velocity'], color='orange')  # AvaNode velocity
-        ax[2].set_ylabel("Velocity[m/s]", fontsize=15)
-        ax[2].set_xlabel("Time[s]\n\n", fontsize=15)
+        ax[2].set_ylabel("Velocity[m/s]")
+        ax[2].set_xlabel("Time[s]\n\n")
         
         
         ### Add title, legends and save the plot

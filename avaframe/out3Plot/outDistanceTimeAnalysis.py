@@ -78,8 +78,10 @@ def plotRangeTime(mtiInfo, cfgRangeTime, F, index):
         plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index])+", xsi="+str(F.xsi[index]), fontsize=18)
     elif F.frictModel[0] =='samosAT':
         plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index])+", tau0="+str(F.tau0[index]), fontsize=18)
+    elif F.frictModel[0] =='VoellmyUpgraded':
+        plt.title(F.frictModel[0]+" model,"+ " mu ="+str(F.mu[index])+", tau0="+str(F.tau0[index])+", xsi="+str(F.xsi[index]), fontsize=18)
     else:
-        plt.title(mtiInfo['plotTitle']+"No friction model found!", fontsize=18)
+        plt.title(mtiInfo['plotTitle']+" No friction model found!", fontsize=18)
         
     #plt.title(mtiInfo['plotTitle']+'mu='+F.mu[ava_num])
     
@@ -93,6 +95,15 @@ def plotRangeTime(mtiInfo, cfgRangeTime, F, index):
         plt.ylabel('%s distance to %s [m]' % (sTypeCapital, mtiInfo['referencePointName']))
     else:
         plt.ylabel('Distance to %s [m]' % mtiInfo['referencePointName'])
+
+    xMin = cfgRangeTime['ANIMATE'].getfloat('xMin')
+    xMax = cfgRangeTime['ANIMATE'].getfloat('xMax')
+    yMax = cfgRangeTime['ANIMATE'].getfloat('yMax')
+    yMin = cfgRangeTime['ANIMATE'].getfloat('yMin')
+
+    # set limits for plot (depends on final time step)
+    ax.set_ylim([yMin, yMax])
+    ax.set_xlim([xMin, xMax])
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
@@ -112,7 +123,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime, F, index):
     # cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
 
     # add experimental AvaNode data 
-    plt.plot(time_treated, distance_to_radar_treated, color = 'red', linestyle = 'dashdot',linewidth=1, label='AvaNode location')  # velocity
+    #plt.plot(time_treated, distance_to_radar_treated, color = 'red', linestyle = 'dashdot',linewidth=1, label='AvaNode location')  # velocity
 
     # add info on avalanche front in legend
     plt.legend(facecolor='grey', framealpha=0.2, loc='upper left', fontsize=8)

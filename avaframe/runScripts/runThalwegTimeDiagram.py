@@ -18,6 +18,7 @@ import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in1Data.getInput as gI
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+from avaframe import runFindAvalancheInfo
 
 #+++++++++++++USER INPUT++++++++
 # if True use preprocessedData
@@ -30,6 +31,12 @@ logName = 'runRangeTimeDiagram'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
+
+# Load configuration info of all com1DFA simulations
+simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
+
+# Extracting the different avalanche simulations of the output file 
+F = runFindAvalancheInfo.postProcess(avalancheDir, cfgMain, simDF)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -124,4 +131,4 @@ else:
             mtiInfo['timeList'].append(timeStep[0])
 
         # create plot
-        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
+        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime, F, index)

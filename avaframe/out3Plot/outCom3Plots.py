@@ -132,6 +132,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     fig = plt.figure(figsize=(pU.figW*2, pU.figH*1.5))
     # make the bird view plot
     ax1 = plt.subplot2grid((2, 2), (1, 0), colspan=1)
+    print(fieldsList)
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['pta'], 5, extentOption=True,
                                                                  constrainedData=False, buffer='')
     ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pta'], 'pta')
