@@ -53,7 +53,9 @@ req_packages = ['numpy',
                 'pandas',
                 'shapely',
                 'configUpdater',
-                'tabulate'
+                'tabulate',
+                'deepdiff',
+                'deepmerge'
                 ]
 
 

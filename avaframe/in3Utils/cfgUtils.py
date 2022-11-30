@@ -9,7 +9,12 @@ import pathlib
 import hashlib
 import json
 import pandas as pd
-import numpy as np
+import re
+import sys 
+from deepmerge import always_merger
+from copy import deepcopy
+from deepdiff import DeepDiff
+from pprint import pformat
 
 # Local imports
 import avaframe as avaf
@@ -59,7 +64,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
            from avaframe.com2AB import com2AB as c2
            leads to getModuleConfig(c2)
 
-    Str: fileOverride : allows for a completely different file location
+    Str: fileOverride : allows for a completely different file location. However note:
+        missing values from the default cfg will always be added!
 
     modInfo: bool
         true if dictionary with info on differences to standard config
@@ -193,9 +199,39 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
 
     return modCfg, modDict
 
+def _splitDeepDiffValuesChangedItem(inKey, inVal):
+    """ splits one item of a deepdiff result into section, key, old value, new value 
+
+        Parameters
+        -----------
+        inputKey: str
+            key of a deepdiff changed_values item 
+        inputValue: dict
+            value of a deepdiff changed_values item 
+
+        Returns
+        --------
+        section: str
+            section name of changed item 
+        key: str
+            key name of changed item 
+        oldVal: str
+            old value
+        newVal: str
+            new value
+    """
+    splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
+    section = splitKey[0]
+    key = splitKey[1]
+
+    return section, key, inVal['old_value'], inVal['new_value']
+
 
 def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     """ compare locCfg to defCfg and return a cfg object and modification dict
+        Values are merged from locCfg to defCfg:
+            - parameters already in defCfg get the value from locCfg
+            - additional values in locCfg get added in the resulting Cfg
 
         Parameters
         -----------
@@ -208,93 +244,59 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
 
         Returns
         --------
-        modDict: dict
+        modInfo: dict
             dictionary containing only differences from default
         cfg: configParser object
             contains combined config
 
     """
 
-    # initialize modDict and printOutInfo
-    modDict = {}
-    printOutInfo = list()
 
-    # initialize our final configparser object
-    modCfg = configparser.ConfigParser()
+
+    # initialize modInfo and printOutInfo
+    modInfo = dict() 
+
+    # Switch to dict
+    defCfgD = convertConfigParserToDict(defCfg)
+    locCfgD = convertConfigParserToDict(locCfg)
+
+    # Get the difference info
+    cfgDiff = DeepDiff(defCfgD, locCfgD)
+
+    # Combine them, different keys are just added, for the same keys, the 
+    # local (right) value is used
+    modCfgD = deepcopy(defCfgD)
+    always_merger.merge(modCfgD, locCfgD)
+
+    # Convert to ConfigParser
+    modCfg = convertDictToConfigParser(modCfgD)
     modCfg.optionxform = str
 
-    # loop through all sections of the defCfg
-    for section in defCfg.sections():
-        modDict[section] = {}
-        modCfg.add_section(section)
-        printOutInfo.append('\t' + section)
-
-        # Take section and loop through keys
-        for key in defCfg.items(section):
-            defValue = key[1]
-            # check if key is also in the localCfg
-            if locCfg.has_option(section, key[0]):
-                locValue = locCfg.get(section, key[0])
-                if locValue != defValue:
-                    # if yes and if this value is different add this key to
-                    # the cfg that will be returned
-                    modCfg.set(section, key[0], locValue)
-                    printOutInfo.append('\t\t%s : %s \t(default value was : %s)'
-                            % (key[0], locValue, defValue))
-                    modString = [locValue, defValue]
-                    modDict[section][key[0]] = modString
-                else:
-                    modCfg.set(section, key[0], defValue)
-                    printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
-
-                # remove the key from the localCfg
-                locCfg.remove_option(section, key[0])
-
-            # if key is not in the localCfg, just take default
-            else:
-                modCfg.set(section, key[0], defValue)
-                printOutInfo.append('\t\t%s : %s' % (key[0], defValue))
-
-    # Now check if there are some sections/ keys left in the local cfg and
-    # that are not used
-    for section in locCfg.sections():
-        if defCfg.has_section(section):
-            for key in locCfg.items(section):
-                # an exception is made for thickness values that are added for the features of a releaseScenario,
-                # entrainment Scenario or secondar. release scenario
-                # these are added to the configuration and also to the modDict if variation is applied
-                validItems = ['entrainmentScenario', 'DEM', 'secondaryReleaseScenario']
-                searchItems = ['relTh', 'entTh', 'secondaryRelTh']
-                if any(s in key[0] for s in searchItems) or key[0] in validItems:
-                    locValue = locCfg.get(section, key[0])
-                    modCfg.set(section, key[0], locValue)
-                    printOutInfo.append('\t\t%s : %s added to %s' % (key[0], locValue, section))
-                    if '$' in locValue:
-                        modString = [locValue, locValue.split('$')[0]]
-                        modDict[section][key[0]] = modString
-                else:
-                    log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
-        else:
-            modCfg.add_section(section)
-            printOutInfo.append('Additional section [\'%s\'] is added to the configuration.' % (section))
-            for key in locCfg.items(section):
-                printOutInfo.append('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
-                         (key[0], section))
-                modCfg.set(section, key[0], key[1])
-                printOutInfo.append('\t\t%s : %s' % (key[0], key[1]))
-
-    # Check if cfg should be printed. If not, give a hint and
-    # ALWAYS print the keys and values that are different from default
+    # Merge is done, from here on down it is only printout and modInfo creation
+    
+    # If toPrint is set, print full configuration:
     if toPrint:
-        for element in printOutInfo:
-            log.info(element)
-    else:
-        log.info('Print is turned off, giving difference summary')
-        for element in printOutInfo:
-            if 'default value was' in element:
-                log.info(element)
+        for line in pformat(modCfgD, sort_dicts=False).split('\n'):
+            log.info(line)
+    
+    # Generate modInfo dictionary for output
+    if 'values_changed' in cfgDiff:
+        for key, value in cfgDiff['values_changed'].items():
+            section, itemKey, defValue, locValue = _splitDeepDiffValuesChangedItem(key, value)
 
-    return modDict, modCfg
+            if section not in modInfo:
+                modInfo[section] = {}
+
+            modString = [locValue, defValue]
+            modInfo[section][itemKey] = modString
+
+    # Log changes 
+    log.info('COMPARING TO DEFAULT, THESE CHANGES HAPPENED:')
+    for line in cfgDiff.pretty().split('\n'):
+        log.info(line.replace('root',''))
+
+    return modInfo, modCfg
+
 
 
 def writeCfgFile(avaDir, module, cfg, fileName='', filePath=''):

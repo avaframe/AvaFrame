@@ -10,7 +10,6 @@ import configparser
 import pathlib
 import copy
 import pickle
-import pandas as pd
 import shutil
 
 
@@ -1591,8 +1590,8 @@ def test_runCom1DFA(tmp_path, caplog):
     cfgMain = configparser.ConfigParser()
     cfgMain['FLAGS'] = {'showPlot': 'False', 'savePlot': 'True', 'ReportDir': 'True', 'reportOneFile': 'True',
         'debugPlot': 'False'}
-    modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
-                                               modInfo=True)
+    modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgInfo=cfgFile)
 

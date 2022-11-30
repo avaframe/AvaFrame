@@ -31,6 +31,9 @@ def test_writeCfg2Log(tmp_path):
     f = open(logFileName).readlines()
     for i in range(4):
         firstLine = f.pop(0)
+    
+    print(f)
 
     fref = open(logFileNameRef).readlines()
+    print(fref)
     assert f == fref

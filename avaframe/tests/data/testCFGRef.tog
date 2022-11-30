@@ -1,18 +1,10 @@
-cfgUtils - WARNING -  Additional Key ['badKey1'] in section ['GOODSECTION1'] is ignored.
-cfgUtils - INFO -  	GENERAL
-cfgUtils - INFO -  		inputDir : path/to/avalanche
-cfgUtils - INFO -  		fullLog : True
-cfgUtils - INFO -  	FLAGS
-cfgUtils - INFO -  		plotFigure : False
-cfgUtils - INFO -  		savePlot : False
-cfgUtils - INFO -  	GOODSECTION1
-cfgUtils - INFO -  		goodKey1 : 1
-cfgUtils - INFO -  		goodKey2 : False 	(default value was : True)
-cfgUtils - INFO -  	GOODSECTION2
-cfgUtils - INFO -  		goodKey3 : 0
-cfgUtils - INFO -  		goodKey4 : False
-cfgUtils - INFO -  Additional section ['BADSECTION1'] is added to the configuration.
-cfgUtils - INFO -  Additional Key ['badKey2'] in section ['BADSECTION1'] is added to the configuration.
-cfgUtils - INFO -  		badKey2 : 10
-cfgUtils - INFO -  Additional Key ['badKey3'] in section ['BADSECTION1'] is added to the configuration.
-cfgUtils - INFO -  		badKey3 : None
+cfgUtils - INFO -  {'GENERAL': {'inputDir': 'path/to/avalanche', 'fullLog': 'True'},
+cfgUtils - INFO -   'FLAGS': {'plotFigure': 'False', 'savePlot': 'False'},
+cfgUtils - INFO -   'GOODSECTION1': {'goodKey1': '1', 'goodKey2': 'False', 'testKey1': 'Bonjour'},
+cfgUtils - INFO -   'GOODSECTION2': {'goodKey3': '0', 'goodKey4': 'False'},
+cfgUtils - INFO -   'TESTSECTION1': {'testKey': '10.:20:4', 'testKey2': '10', 'testKey3': 'None'}}
+cfgUtils - INFO -  COMPARING TO DEFAULT, THESE CHANGES HAPPENED:
+cfgUtils - INFO -  Item ['TESTSECTION1'] added to dictionary.
+cfgUtils - INFO -  Item ['GOODSECTION1']['testKey1'] added to dictionary.
+cfgUtils - INFO -  Item ['GOODSECTION2'] removed from dictionary.
+cfgUtils - INFO -  Value of ['GOODSECTION1']['goodKey2'] changed from "True" to "False".

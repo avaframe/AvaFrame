@@ -5,6 +5,7 @@ from avaframe.tests import test_logUtils
 import pathlib
 import pytest
 import configparser
+import sys
 
 
 def test_getModuleConfig():
@@ -14,21 +15,22 @@ def test_getModuleConfig():
     # test with both a default and local .ini file
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     sections = cfg.sections()
+    cfg.write(sys.stdout)
 
-    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'BADSECTION1']
+    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'TESTSECTION1']
     assert cfg['GENERAL']['inputDir'] == 'path/to/avalanche'
     assert cfg['GENERAL']['fullLog'] == 'True'
     assert cfg['GOODSECTION1']['goodKey1'] == '1'
     assert cfg['GOODSECTION1']['goodKey2'] == 'False'
-    hasKey = cfg.has_option('GOODSECTION1', 'badKey1')
-    assert hasKey is False
+    hasKey = cfg.has_option('GOODSECTION1', 'testKey1')
+    assert hasKey is True
 
     # test reading a different file
     filename = avalancheDir / 'local_test_logUtilsCfg.ini'
     cfg = cfgUtils.getModuleConfig(test_logUtils, fileOverride=filename)
     sections = cfg.sections()
-    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'BADSECTION1']
-    assert sections != ['GENERAL', 'FLAGS', 'GOODSECTION1', 'BADSECTION1']
+    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'TESTSECTION1']
+    assert sections != ['GENERAL', 'FLAGS', 'GOODSECTION1', 'TESTSECTION1']
     assert cfg['GENERAL']['inputDir'] == 'path/to/avalanche'
     assert cfg['GENERAL']['fullLog'] == 'True'
     assert cfg['GOODSECTION1']['goodKey1'] == '1'
@@ -48,13 +50,13 @@ def test_cfgHash():
     uid = cfgUtils.cfgHash(cfg)
 
     # test for the correct uid
-    assert uid == 'bcc6c69699'
+    assert uid == 'f9169a4908'
 
     # change and test again
     cfg['GOODSECTION1']['goodKey1'] = '1.5'
     uid = cfgUtils.cfgHash(cfg)
     # make sure it is not the same hash
-    assert uid != 'bcc6c69699'
+    assert uid != '9d5f7aee27'
 
 
 def test_convertConfigParserToDict():

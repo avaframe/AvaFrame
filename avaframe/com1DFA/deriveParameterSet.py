@@ -4,6 +4,7 @@
 
 import logging
 import numpy as np
+import sys
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -61,10 +62,16 @@ def getVariationDict(avaDir, fullCfg, modDict):
                 log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
             else:
                 if any(c in value for c in [':', '|', '$']):
-                    locValue = fU.splitIniValueToArraySteps(value)
-                    variations[key] = locValue
-                    defValue = modDict[section][key][1]
-                    log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
+                    # look for default value. If it does not exist, it seems 
+                    # to be added, ignore it
+                    try:
+                        defValue = modDict[section][key][1]
+                        locValue = fU.splitIniValueToArraySteps(value)
+                        variations[key] = locValue
+                        log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
+                    except KeyError:
+                        defValue = None
+                        log.warning('Parameter %s: has a variation, seems to be added, is it acutally used? Ignored for now ' % (key))
 
     # add releaseScenario info to variations dict - also if this parameter is not varied
     variations['releaseScenario'] = fullCfg['INPUT']['releaseScenario'].split('|')
