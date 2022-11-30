@@ -10,14 +10,14 @@ import pandas as pd
 import avaframe.com1DFA.deriveParameterSet as dP
 
 
-def test_getVariationDict():
+def test_getVariationDict(caplog):
     """ test creating a variation dictionary """
 
     # setup required input
     avaDir = 'test/avaTest'
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
-    cfg['GENERAL'] = {'simTypeList' : 'null|ent', 'modelType' : 'dfa', 'resType' : 'ppr|pft|pfv|particles|FT',
+    cfg['GENERAL'] = {'simTypeList' : 'null|ent', 'howMeBlue':'10:20:4' ,'modelType' : 'dfa', 'resType' : 'ppr|pft|pfv|particles|FT',
                       'tSteps' : '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
                       'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                       'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
@@ -30,6 +30,9 @@ def test_getVariationDict():
     variations = dP.getVariationDict(avaDir, cfg, modDict)
 
     print('variations', variations)
+
+    # see if a parameter that was locally added to the GENERAL cfg and has a variation is filtered out:
+    assert('Parameter howMeBlue: has a variation, seems to be added') in caplog.text
 
     variationsTest = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400]), 'releaseScenario': ['relTest']}
 
