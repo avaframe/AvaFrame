@@ -315,3 +315,30 @@ def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
         benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFRef['entMass']})
 
     return reportD, benchD
+    
+    
+def aimecTransform(rasterTransfo, particle, dem):
+    """ Adding s projected and l projected to the particle dictionary 
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    Returns
+    -------
+    particle: dict
+        particle dictionary with s grid and l grid added 
+    """
+    lList = []
+    sList  = [] 
+    xllcenter = dem['header']['xllcenter']
+    yllcenter = dem['header']['yllcenter']
+    for x, y in zip(particle['x'], particle['y']):      
+        # calculating the distance between the particle position and the grid points 
+        distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2) 
+        # Finding the coordinates of the grid point which minimizes the difference
+        (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
+        lList.append(rasterTransfo['l'][lIndex]) 
+        sList.append(rasterTransfo['s'][sIndex])
+    particle['lAimec'] = lList
+    particle['sAimec'] = sList
+    return(particle)    
