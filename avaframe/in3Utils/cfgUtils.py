@@ -98,8 +98,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         iniFile = [defaultFile, localFile]
         compare = True
     elif defaultFile.is_file():
-        iniFile = defaultFile
-        compare = False
+        iniFile = defaultFile 
+        compare = False  
     else:
         raise FileNotFoundError('None of the provided cfg files exist ')
 
