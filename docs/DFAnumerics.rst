@@ -29,17 +29,16 @@ Discretizing the material into particles (particle quantities are denoted by the
   :label: eq-particle-continuity-balance
 
 By assuming that the Lagrangian control volume :math:`V` can be represented by a particle,
-we can derive from :eq:`momentum-balance6` to the particular momentum equation in the normal direction and in the tangent plane
-(the entrainment force is detailed in Appendix~\ref{ap-entrainment-force}):
+we can derive from :eq:`momentum-balance6` to the particular momentum equation in the normal direction and in the tangent plane:
 
 .. math::
   \left\{
   \begin{aligned}
     & p_k^b = \rho_0 \, h_k \, g_k^\text{eff}\\
-    &m_k \frac{\mathrm{d}\overline{\mathbf{u}}_k}{\mathrm{d}t} = A_k^b\boldsymbol{\tau^b}
+    &m_k \frac{\mathrm{d}\bar{\mathbf{u}}_k}{\mathrm{d}t} = A_k^b\boldsymbol{\tau^b}
   	- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h	+ m_k \mathbf{g}_s	+ \mathbf{F}_k^{\text{ext}}
-    - \overline{\mathbf{u}}_k A_k^\text{ent} q_k^{\text{ent}}
-    - m_k \left( \overline{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t} \right)\mathbf{v}_{3,k}
+    - \bar{\mathbf{u}}_k A_k^\text{ent} q_k^{\text{ent}}
+    - m_k \left( \bar{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t} \right)\mathbf{v}_{3,k}
   \end{aligned}
   \right.
   :label: eq-momentum-particle
@@ -61,13 +60,13 @@ where :math:`\Delta t` represents the time step and :math:`f^n = f(t^n)`, :math:
 For the velocity this reads:
 
 .. math::
-  \frac{\mathrm{d}\overline{\mathbf{u}}_k}{\mathrm{d}t} \approx
-  \frac{\overline{\mathbf{u}}_k^{n+1} - \overline{\mathbf{u}}_k^n}{\Delta t}
+  \frac{\mathrm{d}\bar{\mathbf{u}}_k}{\mathrm{d}t} \approx
+  \frac{\bar{\mathbf{u}}_k^{n+1} - \bar{\mathbf{u}}_k^n}{\Delta t}
 
 The position of the particles is then updated using a centered Euler scheme:
 
 .. math::
-  \mathbf{x}_{k}^{n+1} = \mathbf{x}_{k}^{n} + \frac{\Delta t}{2m}\left(\overline{\mathbf{u}}^{n+1}_{k} + \overline{\mathbf{u}}^{n}_{k}\right)
+  \mathbf{x}_{k}^{n+1} = \mathbf{x}_{k}^{n} + \frac{\Delta t}{2m}\left(\bar{\mathbf{u}}^{n+1}_{k} + \bar{\mathbf{u}}^{n}_{k}\right)
 
 
 Taking the forces into account is done in two subsequent steps as forces acting on the particles can be
@@ -88,7 +87,7 @@ since the particles are moving.
 Similarly, the particle properties such as mass or momentum, which translate into flow thickness and
 velocity, also need to be interpolated onto the grid.
 Grid velocity is needed to compute the artificial viscosity term, ensuring numerical stability,
-see Sect.~\ref{sec-numerical-stability}.
+see :ref:`SAMOS Artificial viscosity`.
 Grid flow thickness is used to compute the particle flow thickness which is required for computing
 the friction force.
 Due to the utilized regular rectilinear mesh a bilinear interpolation method is applied for its
@@ -342,7 +341,7 @@ In the case of the spiky kernel, :math:`W` reads (2D case):
    \end{aligned}
    \right.
    \end{aligned}
-   :label: kernel function
+   :label: eq-kernel-function
 
 
 :math:`\left\Vert \mathbf{r_{kl}}\right\Vert= \left\Vert \mathbf{x_{k}}-\mathbf{x_{l}}\right\Vert`
@@ -490,7 +489,7 @@ Flow thickness computation
 
 The particles flow thickness is computed with the help of the grid.
 The mass of the particles is interpolated onto the grid using a bilinear interpolation method
-(described in Sect.~\ref{sec-particle grid-interpolation}).
+(described in :ref:`Grid to particle`).
 Then, dividing the mass at the grid cells by the area of the grid cells, while taking the slope of the
 cell into account, returns the flow thickness field on the grid.
 This property is interpolated back to the particles which leads to the particle flow thickness property.
@@ -531,15 +530,9 @@ the equation at the following condition:
 	:label: eq-ben-moussa
 
 Where :math:`r_{\text{part}}` represents the "size" of a particle
-.. (in our case, the "size" is the
-.. basal area of a particle :math:`r_{\text{part}} = \sqrt{A^b/\pi}`
-.. \AW{so it is not the basal area but rPart that we use so maybe say: 'in our case,
-.. the rPart is based on the basal area of the particle following :math:`r_{\text{part}} = \sqrt{A^b/\pi}`' -
-.. however as you bring up the equation for it a bit later in more detail maybe just
-.. skip the info in the brackets here?})
 , :math:`r_{\text{kernel}}` represents the SPH kernel radius, :math:`dt` is the time
 step and :math:`C` a constant.
-The conditions in Eq.~\ref{eq-ben-moussa} mean that both :math:`r_{\text{part}}`
+The conditions in Eq. :Eq:`eq-ben-moussa` mean that both :math:`r_{\text{part}}`
 (particle size) and :math:`r_{\text{kernel}}` (SPH kernel radius) need to go to zero
 but also that the particle size needs to go faster to zero than the SPH kernel radius.
 Finally, the time step needs to go to zero and this at the same rate as
@@ -597,8 +590,9 @@ Note that this criterion leaves some freedom on the choice of exponent :math:`\a
 Even though it seems logical to require a minimum number of particles per kernel radius so that enough neighbors are available
 to get a reasonable estimate of the gradient.
 These parameters should be adjusted according to the expected accuracy of the results and/or the computer power available.
-Determining the optimal parameter values for :math:`\alpha`, :math:`r_{\text{kernel}}^0` and :math:`n_{\text{ppk}}^0`, for example according to a user's needs in terms of accuracy and computational efficiency, requires a specific and detailed investigation of the considered case.
-In the Sect.~\ref{sec-verification}, we will explore model convergence using the condition eq.~\ref{eq-convergence-criterion} with different values of :math:`\alpha`.
+Determining the optimal parameter values for :math:`\alpha`, :math:`r_{\text{kernel}}^0` and :math:`n_{\text{ppk}}^0`,
+for example according to a user's needs in terms of accuracy and computational efficiency,
+requires a specific and detailed investigation of the considered case.
 
 
 Forces discretization
@@ -611,15 +605,13 @@ Friction force discretization
 Expressing the friction force term in :Eq:`eq-momentum-particle` for a particle reads:
 
 .. math::
-	\mathbf{F}_k^\text{fric} = A_k^b \, \boldsymbol{\tau^b} =
-	- {\left\Vert\mathbf{F}_k^\text{fric}\right\Vert}_\text{max}
-  \, \mathbf{v}_1
-	:label: eq-coulomb-friction-particle
+    \mathbf{F}_k^\text{fric} = A_k^b \, \boldsymbol{\tau^b} =
+		- {\left\Vert\mathbf{F}_k^\text{fric}\right\Vert}_\text{max}  \mathbf{v}_1
 
 This relation stands if the particle is moving. The starting and stopping processes
 satisfy a different equation and are handled differently in the numerical
 implementation (using the same equation would lead to a non-physical behavior).
-This is described in more details in Sect.~\ref{sec-adding-friction}.
+This is described in more details in :ref:`Account for friction forces`}.
 
 
 Lateral force
@@ -644,7 +636,7 @@ the formulation of the bottom friction force reads:
 .. math::
     \mathbf{F}_{k}^{\text{bot}} = A_{k}\,\boldsymbol{\tau}_{k}^b
     = -A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\boldsymbol{\sigma}_{k}^b\cdot\mathbf{n^b}
-     + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right)\mathbf{v}_1
+     + \frac{\rho_0\,\mathbf{\bar{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right)\mathbf{v}_1
     :label: bottom force
 
 
@@ -655,7 +647,7 @@ is a function of the average flow thickness :math:`h_{k}`):
 
 .. math::
     \mathbf{F}_{k}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\overline{\mathbf{u}}_{k}^2\,\mathbf{v}_1
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\bar{\mathbf{u}}_{k}^2\,\mathbf{v}_1
     :label: resistance force
 
 Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
@@ -664,12 +656,12 @@ equals the driving forces. See :cite:`MaVi2003` for more information.
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The term :math:`- \overline{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}(A\,h)}{\mathrm{d}t}`
+The term :math:`- \bar{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}(A\,h)}{\mathrm{d}t}`
 related to the entrained mass in :eq:`momentum-balance3` now reads:
 
 .. math::
-    - \overline{\mathbf{u}}_k\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
-    = - \overline{\mathbf{u}}_k\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
+    - \bar{\mathbf{u}}_k\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,h_{k}\right)
+    = - \bar{\mathbf{u}}_k\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
 
 
 The mass of entrained snow for each particle depends on the type of entrainment involved
@@ -685,10 +677,10 @@ with
 .. math::
     \begin{aligned}
     A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,h_{k}}}\,h_{k}^{\text{ent}}
-    \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
+    \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \bar{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for plowing}\\
     A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,h_{k}}
-    \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
+    \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \bar{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for erosion}\end{aligned}
 
 Finaly, the entrainment force reads:
@@ -702,7 +694,7 @@ The different components are added following an operator splitting method.
 This means particle velocities are updated successively with the different forces.
 
 Numerical stability
----------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Because the lateral shear force term was removed when deriving the model equations
 (because of its relative smallness, :cite:`GrEd2014`), :eq:`eq-momentum-balance-approx`
@@ -725,42 +717,43 @@ to adapt the Lax-Friedrich scheme (usually applied to grids) to the particle met
 (``viscOption`` = 2). This method Finally, ``viscOption`` = 0 deactivates any viscosity force.
 
 SAMOS Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""
 
 The artificial viscosity force acting on particle :math:`k` then reads:
 
 .. math::
   \begin{aligned}
-  \mathbf{F_k^{visc}} = &- \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\overline{u}}_k\Vert^2
-  \frac{\mathbf{d\overline{u}}_k}{\Vert\mathbf{d\overline{u}}_k\Vert}\\
-  = & - \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\overline{u}}_k\Vert \mathbf{d\overline{u}}_k,
+  \mathbf{F_k^{visc}} = &- \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\bar{u}}_k\Vert^2
+  \frac{\mathbf{d\bar{u}}_k}{\Vert\mathbf{d\bar{u}}_k\Vert}\\
+  = & - \frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\mathbf{d\bar{u}}_k\Vert \mathbf{d\bar{u}}_k,
   \end{aligned}
 
-where the velocity difference reads :math:`\mathbf{d\overline{u}}_k = \overline{\mathbf{u}}_k - \widehat{\overline{\mathbf{u}}}_k` (:math:`\widehat{\overline{\mathbf{u}}}_k` represents the averaged velocity of the neighbor particles and is practically the grid velocity interpolated at the particle position).
+where the velocity difference reads :math:`\mathbf{d\bar{u}}_k = \bar{\mathbf{u}}_k - \widehat{\bar{\mathbf{u}}}_k` (:math:`\widehat{\bar{\mathbf{u}}}_k` represents the averaged velocity of the neighbor particles and is practically the grid velocity interpolated at the particle position).
 :math:`C_{Lat}` is a coefficient that controls the viscous force.
 It would be the equivalent of :math:`C_{Drag}` in the case of the drag force.
 :math:`C_{Lat}` is a numerical parameter that depends on the grid size.
 
-In this expression, let :math:`\mathbf{\overline{u}}_k^{n}` be the velocity at the beginning of the time step and  :math:`{\overline{\mathbf{u}}_k^{n+1}}^\blacktriangle` be the velocity
-after adding the numerical viscosity (\fig{\ref{fig-DFA-solver}}).
-In the norm term :math:`\Vert\mathbf{d\overline{u}}_k\Vert` the particle and grid velocity at the beginning of the time step are used.
-This ensures no implicit relation on the norm term or on the average velocity :math:`\widehat{\overline{\mathbf{u}}}_k`.
-On the contrary, an implicit formulation is used in :math:`\mathbf{d\overline{u}}_k` because the new value of the velocity is used there.
+In this expression, let :math:`\mathbf{\bar{u}}_k^{n}` be the velocity at the beginning of the time step and
+:math:`{\bar{\mathbf{u}}_k^{n+1}}^\blacktriangle` be the velocity
+after adding the numerical viscosity.
+In the norm term :math:`\Vert\mathbf{d\bar{u}}_k\Vert` the particle and grid velocity at the beginning of the time step are used.
+This ensures no implicit relation on the norm term or on the average velocity :math:`\widehat{\bar{\mathbf{u}}}_k`.
+On the contrary, an implicit formulation is used in :math:`\mathbf{d\bar{u}}_k` because the new value of the velocity is used there.
 The artificial viscosity force now reads:
 
 .. math::
- 	\mathbf{F_k^{visc}} =  -\frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\overline{\mathbf{u}}_k^{n} - \widehat{\overline{\mathbf{u}}}_k^{n}\Vert
- 	\left(\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle - \widehat{\overline{\mathbf{u}}}_k^{n}\right)
+ 	\mathbf{F_k^{visc}} =  -\frac{1}{2}\rho_0 C_{Lat} A_k^{\text{Lat}}\Vert\bar{\mathbf{u}}_k^{n} - \widehat{\bar{\mathbf{u}}}_k^{n}\Vert
+ 	\left(\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle - \widehat{\bar{\mathbf{u}}}_k^{n}\right)
 
 Updating the velocity then gives:
 
 .. math::
- 	\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \frac{\overline{\mathbf{u}}_k^{n} - C_{vis}\widehat{\overline{\mathbf{u}}}_k^{n}}{1 + C_{vis}}
+ 	\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \frac{\bar{\mathbf{u}}_k^{n} - C_{vis}\widehat{\bar{\mathbf{u}}}_k^{n}}{1 + C_{vis}}
 
 with
 
 .. math::
-	C_{vis} = \frac{1}{2}\rho_0 C_{Lat}A_k^{\text{Lat}} \Vert\overline{\mathbf{u}}_k^{n} - \widehat{\overline{\mathbf{u}}}_k^{n}\Vert\frac{\Delta t}{m}.
+	C_{vis} = \frac{1}{2}\rho_0 C_{Lat}A_k^{\text{Lat}} \Vert\bar{\mathbf{u}}_k^{n} - \widehat{\bar{\mathbf{u}}}_k^{n}\Vert\frac{\Delta t}{m}.
 
 This approach to stabilize the momentum equation (:eq:`eq-momentum-particle`) is not
 optimal for different reasons.
@@ -778,7 +771,7 @@ numerical artifact aiming to stabilize the equations such as a SPH version of
 the Lax-Friedrich scheme as presented in :cite:`AtSo2005`.
 
 Ata Artificial viscosity: an upwind method based on Lax-Friedrichs scheme
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Shallow Water Equations are well known for being hyperbolic transport equations.
 They have the particularity of carrying discontinuities or shocks which will cause
@@ -812,7 +805,7 @@ in combination with the ``sphOption`` = 2).
 
 
 Adding artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""
 If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
 in :ref:`DFAnumerics:SAMOS Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
 ``viscOption`` is set to 2, artificial viscosity is added during SPH force computation
@@ -821,14 +814,14 @@ computed in :ref:`DFAnumerics:Ata Artificial viscosity: an upwind method based o
 
 
 Curvature acceleration term
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. \label{sec-curvature-acc-term-estimation}
 
 The last term of the particular momentum equation (:eq:`eq-momentum-particle`)
 as well as the effective gravity :math:`g^{\text{eff}}` are the final terms to be
 discretized before the numerical integration.
 In both of these terms, the remaining unknown is the curvature acceleration term
-:math:`\overline{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}`.
+:math:`\bar{\mathbf{u}}_k \cdot \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}`.
 Using the forward Euler time discretization for the temporal derivative of the
 normal vector :math:`\mathbf{v}_{3,k}` gives:
 
@@ -844,7 +837,7 @@ hence we estimate :math:`\mathbf{x}_k^{n+1}` based the position  :math:`\mathbf{
 the velocity at :math:`t^n`:
 
 .. math::
-	\mathbf{x}_k^{n+1} =\mathbf{x}_k^n + \Delta t \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+	\mathbf{x}_k^{n+1} =\mathbf{x}_k^n + \Delta t \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
 
 This position at :math:`t^{n+1}` is projected onto the topography and
 :math:`\mathbf{v}_{3,k}^{n+1}` can be interpolated from the grid normal vector values.
@@ -861,12 +854,12 @@ topography.
 
 
 Account for entrainment
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Entrainment is taken into account by:
 
 * First adding the component representing the loss of momentum due to
-	acceleration of the entrained mass :math:`- \overline{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
+	acceleration of the entrained mass :math:`- \bar{\mathbf{u}}_{k}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
 	The entrained mass by a particle :math:`k` during a time step :math:`\Delta t` reads:
 
 	.. math::
@@ -877,13 +870,13 @@ Entrainment is taken into account by:
 	.. math::
 	    m_k^{n+1} =  m_k^{n} + \mathrm{d}m_k^{n} = m_k^{n} + \Delta t \,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
 
-	Implicitly updating the velocity leads to (if we call :math:`\overline{\mathbf{u}}_k^{n+1}`
+	Implicitly updating the velocity leads to (if we call :math:`\bar{\mathbf{u}}_k^{n+1}`
 	the velocity before adding the momentum loss and
-	:math:`\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle` the velocity after):
+	:math:`\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle` the velocity after):
 
 	.. math::
-		\left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \overline{\mathbf{u}}_k^{n+1}
-		\frac{m_k^{n}}{m_k^{n} + \mathrm{d}m_k^n} = \overline{\mathbf{u}}_k^{n+1}
+		\left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle = \bar{\mathbf{u}}_k^{n+1}
+		\frac{m_k^{n}}{m_k^{n} + \mathrm{d}m_k^n} = \bar{\mathbf{u}}_k^{n+1}
 		\frac{m_k^{n}}{m_k^{n+1}}
 
 * Second by adding the force due to the need to break and compact the
@@ -896,39 +889,39 @@ Entrainment is taken into account by:
 	    \mathbf{F}_k^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)\mathbf{v}_1
 
 Account for driving forces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adding the driving forces -gravity force and lateral forces- is done after adding
-the artificial viscosity as described on \fig{\ref{fig-DFA-solver}}.
+the artificial viscosity.
 The velocity is updated as follows
-(:math:`{\overline{\mathbf{u}}_k^{n+1}}^\bigstar` is the velocity after taking the
+(:math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar` is the velocity after taking the
 driving force into account):
 
 .. math::
 	\begin{aligned}
-  	{\overline{\mathbf{u}}_k^{n+1}}^\bigstar &= \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+  	{\bar{\mathbf{u}}_k^{n+1}}^\bigstar &= \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
 		+ \frac{\Delta t}{m_k}\mathbf{F}_{k}^{\text{drive}}\\
-		&= \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
+		&= \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle
 		+ \frac{\Delta t}{m_k} \left(- m_k \, g^\text{eff}_k \, \boldsymbol{\nabla}_{s} h
-			+ m_k \mathbf{g}_s  - m_k \left( \left.\overline{\mathbf{u}}_k^{n+1}\right.^\blacktriangle \cdot \left . \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \right)\mathbf{v}_{3,k}^n\right)
+			+ m_k \mathbf{g}_s  - m_k \left( \left.\bar{\mathbf{u}}_k^{n+1}\right.^\blacktriangle \cdot \left . \frac{\mathrm{d}\mathbf{v}_{3,k}}{\mathrm{d}t}\right|^n \right)\mathbf{v}_{3,k}^n\right)
 	\end{aligned}
 	:label: eq-adding-driving-force
 
 Account for friction forces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
 forces in com1DFA.
 
 An implicit method:
 """"""""""""""""""""
 
-If the velocity of the particle :math:`k` reads :math:`{\overline{\mathbf{u}}_k^{n+1}}^\bigstar`
+If the velocity of the particle :math:`k` reads :math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar`
 after adding the driving forces, adding the friction force leads to:
 
 .. math::
-  \overline{\mathbf{u}}_k^{n+1} = \frac{{\overline{\mathbf{u}}_k^{n+1}}^\bigstar}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
+  \bar{\mathbf{u}}_k^{n+1} = \frac{{\bar{\mathbf{u}}_k^{n+1}}^\bigstar}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
 
-where :math:`\mathbf{F}_k^{\text{fric}} = -C_{k}^{\text{fric}}{\overline{\mathbf{u}}_k^{n+1}}^\bigstar = \mathbf{F}_k^{\text{res}} + \mathbf{F}_k^{\text{bot}}`
+where :math:`\mathbf{F}_k^{\text{fric}} = -C_{k}^{\text{fric}}{\bar{\mathbf{u}}_k^{n+1}}^\bigstar = \mathbf{F}_k^{\text{res}} + \mathbf{F}_k^{\text{bot}}`
 (the two forces are described in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
 
 This implicit method has a few draw-backs. First the flow does not start properly if the
@@ -944,20 +937,20 @@ The idea is that the friction force acts against motion, hence it only affects t
 and can not be a driving force (:cite:`MaVi2003`).
 Moreover, the friction force magnitude depends on the particle state, i.e. if it is
 flowing or at rest.
-If the velocity of the particle :math:`k` reads :math:`{\overline{\mathbf{u}}_k^{n+1}}^\bigstar`
+If the velocity of the particle :math:`k` reads :math:`{\bar{\mathbf{u}}_k^{n+1}}^\bigstar`
 after adding the driving forces, adding the friction force leads, depending on the
-sign of :math:`\frac{m_k \left\Vert{\overline{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} - \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_{max}`
+sign of :math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} - \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_{max}`
 (where :math:`\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_{max}`
-depends on the chosen friction law introduced in Sect.~\ref{sec-discretizing-friction}), to:
+depends on the chosen friction law introduced in :ref:`theorycom1DFA:Friction Model`), to:
 
 * :math:`\left\Vert\mathbf{F}^{\text{fric}}\right\Vert = \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}` and
-  :math:`\overline{\mathbf{u}}_k^{n+1} = {\overline{\mathbf{u}}_k^{n+1}}^\bigstar \left(1 - \frac{\Delta t}{m_k} \frac{\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}}{\left\Vert{\overline{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}\right)`,
-  if :math:`\frac{m_k \left\Vert{\overline{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} >
+  :math:`\bar{\mathbf{u}}_k^{n+1} = {\bar{\mathbf{u}}_k^{n+1}}^\bigstar \left(1 - \frac{\Delta t}{m_k} \frac{\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}}{\left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}\right)`,
+  if :math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} >
   \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}`
 
 * :math:`\left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert \leq \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}` and the particle stops moving
-  :math:`\overline{\mathbf{u}}_k^{n+1} = 0` before the end of the time step, if
-	:math:`\frac{m_k \left\Vert{\overline{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} \leq \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}`
+  :math:`\bar{\mathbf{u}}_k^{n+1} = 0` before the end of the time step, if
+	:math:`\frac{m_k \left\Vert{\bar{\mathbf{u}}_k^{n+1}}^\bigstar\right\Vert}{\Delta t} \leq \left\Vert\mathbf{F}_{k}^{\text{fric}}\right\Vert_\text{max}`
 
 This method prevents the friction force to become a driving force and nonphysically
 change the direction of the velocity.
@@ -967,20 +960,20 @@ particles to start and stop flowing properly.
 
 
 Reprojection
-~~~~~~~~~~~~~
+--------------
 
 The last term in :eq:`eq-momentum-particle` (accounting for the curvature effects)
 adds a non tangential component allowing
 the new velocity to lie in a different plane than the one from the previous time step.
 This enables the particles to follow the topography.
 But because the curvature term was only based on an estimation
-(see Sect.~\ref{sec-curvature-acc-term-estimation}),
+(see :ref:`DFANumerics:Curvature acceleration term`),
 it can happen that the new particle position is not necessarily on the topography
 and the new velocity does not necessarily lie in the tangent plane at this new
 position.
 Furthermore, in case of a strong convex curvature and high velocities, the particles
 can theoretically be in a free fall state (detachment) as mentioned in
-Sect.~\ref{sec-pressure-distribution}.
+:ref:`Pressure distribution, thickness integrated pressure and pressure gradient`.
 **com1DFA** does not allow detachment of the particles and the particles are
 forced to stay on the topography. This consists in a limitation
 of the model/method which will lead to nonphysical behaviors in special cases

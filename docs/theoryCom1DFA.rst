@@ -97,8 +97,8 @@ vector to the bottom surface pointing upwards.
 :math:`\overline {\mathbf{u}}` (introduced below).
 
 .. math::
- 	 \mathbf{v_1} = \frac{\overline{\mathbf{u}}}
- 	 {\left\Vert\overline{\mathbf{u}}\right\Vert},\quad \mathbf{v_2} =
+ 	 \mathbf{v_1} = \frac{\bar{\mathbf{u}}}
+ 	 {\left\Vert\bar{\mathbf{u}}\right\Vert},\quad \mathbf{v_2} =
  	 \frac{\mathbf{v_3}\wedge\mathbf{v_1}}{\left\Vert
  	 \mathbf{v_3}\wedge\mathbf{v_1}\right\Vert},
  	 \quad \mathbf{v_3} = \mathbf{N^b}
@@ -123,19 +123,19 @@ We introduce the following average of a quantity (where :math:`f` is a scalar or
     \begin{aligned}
     \widetilde{f} &= \frac{1}{V(t)}\int\limits_{V(t)} f\,\mathrm{d}V\\
     \widehat{f} &= \frac{1}{A^b(t)}\int\limits_{\mathcal{S}_b} f\,\mathrm{d}A\\
-    \overline{f} &= \frac{1}{h(t)}\int\limits_{0}^{h(t)} f\,\mathrm{d}x_3
+    \bar{f} &= \frac{1}{h(t)}\int\limits_{0}^{h(t)} f\,\mathrm{d}x_3
     \end{aligned}
     \quad\quad \text{and} \quad \quad
     \begin{aligned}
     \widetilde {f}(x_3) &
     \approx \frac{1}{A^b(\widehat{h}-x_3)}\int\limits_{\mathcal{S}_b}
     \left(\int\limits_{x_3}^{h(t)} f\,\mathrm{d}x_3\right)\,\mathrm{d}A \\
-    \overline{f}(x_3) &= \frac{1}{(h-x_3)}\int\limits_{x_3}^{h(t)} f\,\mathrm{d}x_3.
+    \bar{f}(x_3) &= \frac{1}{(h-x_3)}\int\limits_{x_3}^{h(t)} f\,\mathrm{d}x_3.
     \end{aligned}
 
-Note that :math:`\widetilde {f}(0)=\widetilde {f}` and :math:`\overline{f}(0)=\overline{f}`.
+Note that :math:`\widetilde {f}(0)=\widetilde {f}` and :math:`\bar{f}(0)=\bar{f}`.
 When the control volume goes to 0, i.e. basal area goes to a point,
-:math:`\widetilde {f}\xrightarrow{A^b\xrightarrow{}0}\overline{f}`
+:math:`\widetilde {f}\xrightarrow{A^b\xrightarrow{}0}\bar{f}`
 and :math:`{\widehat{f}\xrightarrow{A^b\xrightarrow{}0}f}`.
 
 The NCS has some interesting properties that will be useful for projecting and solving the equations.
@@ -175,12 +175,12 @@ of :math:`\frac{\mathrm{d}\mathbf{v}_i}{\mathrm{d}t}` and :math:`\mathbf{v}_i`:
 The derivative of the thickness integrated velocity decomposes to:
 
 .. math::
-  \frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t} =
-  \frac{\mathrm{d}\overline{u}_1\mathbf{v}_1}{\mathrm{d}t} =
-  \overline{u}_1\frac{\mathrm{d}\mathbf{v}_1}{\mathrm{d}t} +
-  \frac{\mathrm{d}\overline{u}_1}{\mathrm{d}t}\mathbf{v}_1 =
-  \overline{u}_1(\alpha_2\mathbf{v}_2 + \alpha_3\mathbf{v}_3) +
-  \frac{\mathrm{d}\overline{u}_1}{\mathrm{d}t}\mathbf{v}_1
+  \frac{\mathrm{d}\bar{\mathbf{u}}}{\mathrm{d}t} =
+  \frac{\mathrm{d}\bar{u}_1\mathbf{v}_1}{\mathrm{d}t} =
+  \bar{u}_1\frac{\mathrm{d}\mathbf{v}_1}{\mathrm{d}t} +
+  \frac{\mathrm{d}\bar{u}_1}{\mathrm{d}t}\mathbf{v}_1 =
+  \bar{u}_1(\alpha_2\mathbf{v}_2 + \alpha_3\mathbf{v}_3) +
+  \frac{\mathrm{d}\bar{u}_1}{\mathrm{d}t}\mathbf{v}_1
   :label: eq-du-in-ncs
 
 
@@ -195,7 +195,7 @@ to the free surface :math:`\mathcal{S}_{fs}`, respectively the bottom surface :m
 
 - impenetrable bottom surface without detachment, :math:`\mathbf{u^b}\cdot\mathbf{n^b} = \mathbf{0}` on :math:`\mathcal{S}_{b}`
 
-- bottom friction law: :math:`\boldsymbol{\tau^b} = \boldsymbol{\sigma^b}\cdot\mathbf{n^b}-((\boldsymbol{\sigma^b}\cdot\mathbf{n^b})\cdot\mathbf{n^b})\mathbf{n^b}=\mathbf{f}(\boldsymbol{\sigma^b},\,\overline{\mathbf{u}},\,h,\,\rho_0,\,t,\,\mathbf{x}) = -f(\boldsymbol{\sigma^b},\,\overline{\mathbf{u}},\,h,\,\rho_0,t,\,\mathbf{x})\mathbf{v}_1` on :math:`\mathcal{S}_{b}`
+- bottom friction law: :math:`\boldsymbol{\tau^b} = \boldsymbol{\sigma^b}\cdot\mathbf{n^b}-((\boldsymbol{\sigma^b}\cdot\mathbf{n^b})\cdot\mathbf{n^b})\mathbf{n^b}=\mathbf{f}(\boldsymbol{\sigma^b},\,\bar{\mathbf{u}},\,h,\,\rho_0,\,t,\,\mathbf{x}) = -f(\boldsymbol{\sigma^b},\,\bar{\mathbf{u}},\,h,\,\rho_0,t,\,\mathbf{x})\mathbf{v}_1` on :math:`\mathcal{S}_{b}`
 
 
 Entrainment
@@ -205,22 +205,22 @@ The snow entrainment is either due to plowing at the front of the avalanche or t
 at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed as a function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow thickness :math:`h_{\text{ent}}`), the velocity of the avalanche at the
-front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
-to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens on the front of
+front :math:`\bar{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
+to the flow velocity :math:`\bar{\mathbf{u}}`). It obviously only happens on the front of
 the avalanche:
 
 .. math::
    \oint\limits_{\partial V(t)} q^{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q^{\text{plo}}\,
-   \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \bar{\mathbf{u}}\right\Vert
    :label: ploughing
 
 The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed as a function of the
-bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
+bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\bar{\mathbf{u}}`,
 the bottom shear stress :math:`\boldsymbol{\tau^b}` and the specific erosion energy :math:`e_b`:
 
 .. math::
     \oint\limits_{\partial V(t)} q^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q^{\text{ero}}\,
-    \mathrm{d}A = A_b\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    \mathrm{d}A = A_b\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \bar{\mathbf{u}}\right\Vert
     :label: erosion
 
 
@@ -228,8 +228,8 @@ This leads in the mass balance :eq:`mass-balance1` to :
 
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_bh)}{\mathrm{d}t}
-   = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert +
-   \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \bar{\mathbf{u}}\right\Vert +
+   \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}\cdot\mathbf{v}_1}{e_b}\,\left\Vert \bar{\mathbf{u}}\right\Vert
    :label: mass-balance2
 
 The force :math:`\mathbf{F}^{\text{ent}}` required to break the entrained snow
@@ -241,21 +241,22 @@ breaking energy per fracture surface unit :math:`e_s`
 
 .. math::
     \mathbf{F}^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)\mathbf{v}_1
+    :label: force-entrainment
 
 
 Resistance
 ~~~~~~~~~~~
 
 The force :math:`\mathbf{F}^{\text{res}}` due to obstacles is expressed
-as a function of the characteristic diameter :math:`\overline{d}` and height
+as a function of the characteristic diameter :math:`\bar{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
 coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
 is defined as :math:`\min(h, h_{res} )`:
 
 .. math::
-   \mathbf{F}^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
-    h^{\text{eff}}\,\overline{u}^2\,\mathbf{v}_1
+   \mathbf{F}^{\text{res}} = -(\frac{1}{2}\,\bar{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
+    h^{\text{eff}}\,\bar{u}^2\,\mathbf{v}_1
 
 
 .. _f-res:
@@ -275,11 +276,11 @@ To close the momentum equation, a constitutive equation describing the basal she
 
 .. math::
   \boldsymbol{\tau^b} =
-  \mathbf{f}(\boldsymbol{\sigma^b},\overline{\mathbf{u}},h,\rho_0,t,\mathbf{x})
+  \mathbf{f}(\boldsymbol{\sigma^b},\bar{\mathbf{u}},h,\rho_0,t,\mathbf{x})
   :label: eq-bottom-frict-law
 
 ..  % where $\boldsymbol{\sigma^b}$ represents the normal component of the stress tensor at the bottom,
-.. % $\overline{\mathbf{u}}$ the thickness average velocity, $h$ the flow thickness $\rho_0$ the density of the material,
+.. % $\bar{\mathbf{u}}$ the thickness average velocity, $h$ the flow thickness $\rho_0$ the density of the material,
 .. % $t$ and $\mathbf{x}$ the time and position vector.
 
 .. In the following, we employ a Mohr-Coulomb friction model that describes the friction interaction between two solids.
@@ -288,7 +289,7 @@ To close the momentum equation, a constitutive equation describing the basal she
 ..
 .. .. math::
 ..   \boldsymbol{\tau^b} =
-..   -\tan{\delta}\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}\, \frac{\mathbf{\overline{u}}}{\Vert\mathbf{\overline{u}}\Vert},
+..   -\tan{\delta}\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}\, \frac{\mathbf{\bar{u}}}{\Vert\mathbf{\bar{u}}\Vert},
 ..
 ..
 .. where :math:`\delta` is the friction angle and :math:`\mu=\tan{\delta}` is the friction coefficient.
@@ -332,7 +333,8 @@ and perform further simplifications:
     \end{aligned}.
   :label: surface forces
 
-Using the notations introduced in Sect.~\ref{sec-averaged-quantities} and the decomposition of the stress tensor,
+Using the notations introduced in :ref:`theorycom1DFA:Choice of the coordinate system and thickness averaged quantities`
+and the decomposition of the stress tensor,
 the bottom force can be expressed as a surface normal component and a surface tangential one:
 
 .. math::
@@ -348,7 +350,7 @@ the bottom force can be expressed as a surface normal component and a surface ta
     \end{aligned},
   :label: eq-basal-surface-forces
 
-where :math:`\boldsymbol{\tau^b}` is the basal friction term (introduced in Sect.~\ref{sec-boundary-conditions}).
+where :math:`\boldsymbol{\tau^b}` is the basal friction term (introduced in :ref:`theorycom1DFA:Boundary conditions`).
 Applying Green's theorem, the lateral force reads:
 
 .. math::
@@ -362,11 +364,11 @@ Applying Green's theorem, the lateral force reads:
 		\left(\int\limits_0^hp\,\mathrm{d}x_3\right)\cdot\mathbf{n}\,\mathrm{d}l
 		+ \oint\limits_{\partial\mathcal{S}_b} \left(\int\limits_0^h\boldsymbol{\mathrm{T}}
 		\,\mathrm{d}x_3\right)\cdot\mathbf{n}\,\mathrm{d}l\\
-		& = -\oint\limits_{\partial\mathcal{S}_b} h\overline{p}\mathbf{n}\,\mathrm{d}l
-		+ \oint\limits_{\partial\mathcal{S}_b} h\boldsymbol{\overline{\mathrm{T}}}\cdot\mathbf{n}\,\mathrm{d}l
-		= -\int\limits_{\mathcal{S}_b} \boldsymbol{\nabla} h\overline{p}\,\mathrm{d}A
-		+ \int\limits_{\mathcal{S}_b} \boldsymbol{\nabla} h\boldsymbol{\overline{\mathrm{T}}}\,\mathrm{d}A\\
-		& = -A^b\widehat{\boldsymbol{\nabla} h\overline{p}} + A^b \widehat{\boldsymbol{\nabla} h\boldsymbol{\overline{\mathrm{T}}}}
+		& = -\oint\limits_{\partial\mathcal{S}_b} h\bar{p}\mathbf{n}\,\mathrm{d}l
+		+ \oint\limits_{\partial\mathcal{S}_b} h\bar{\boldsymbol{\mathrm{T}}}\cdot\mathbf{n}\,\mathrm{d}l
+		= -\int\limits_{\mathcal{S}_b} \boldsymbol{\nabla} h\bar{p}\,\mathrm{d}A
+		+ \int\limits_{\mathcal{S}_b} \boldsymbol{\nabla} h\bar{\boldsymbol{\mathrm{T}}}\,\mathrm{d}A\\
+		& = -A^b\widehat{\boldsymbol{\nabla} h\bar{p}} + A^b \widehat{\boldsymbol{\nabla} h\bar{\boldsymbol{\mathrm{T}}}}
 		\end{aligned}
   :label: eq-lateral-surface-forces
 
@@ -382,8 +384,8 @@ remains unchanged:
 
 .. math::
   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_bh\right)}{\mathrm{d}t}
-  = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-  + \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+  = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \bar{\mathbf{u}}\right\Vert
+  + \frac{A_b}{\rho_0}\,\frac{\boldsymbol{\tau^b}}{e_b}\,\left\Vert \bar{\mathbf{u}}\right\Vert
   :label: mass-balance3
 
 
@@ -391,10 +393,10 @@ remains unchanged:
 Thickness integrated momentum equation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using the definitions of average values given in Sect.~\ref{sec-averaged-quantities}
+Using the definitions of average values given in :ref:`theorycom1DFA:Choice of the coordinate system and thickness averaged quantities`
 and the decomposition of the surface forces given by :eq:`eq-basal-surface-forces`
 and :eq:`eq-lateral-surface-forces` combined with the expression of the
-entrainment force detailed in Appendix~\ref{ap-entrainment-force}, the momentum equation reads:
+entrainment force detailed in :eq:`force-entrainment`, the momentum equation reads:
 
 .. math::
   \rho_0 \frac{\mathrm{d}V(t) \widetilde {\mathbf{u}}}{\mathrm{d}t} = \rho_0 V
@@ -413,10 +415,10 @@ which leads to:
   _{\substack{\text{bottom} \\ \text{ normal force }}}
   \underbrace{+A^b\widehat{\boldsymbol{\tau^b}}}
   _{\substack{\text{bottom} \\ \text{ shear force }}}
-  \underbrace{-A^b\widehat{\boldsymbol{\nabla} h\overline{p}}}
+  \underbrace{-A^b\widehat{\boldsymbol{\nabla} h\bar{p}}}
   _{\substack{\text{lateral} \\ \text{ pressure force }}}
   \underbrace{+A^b\cancelto{O(\boldsymbol{\epsilon}^2)}
-  {\widehat{\boldsymbol{\nabla} h\overline{\boldsymbol{T}}}}}
+  {\widehat{\boldsymbol{\nabla} h\bar{\boldsymbol{T}}}}}
   _{\substack{\text{lateral} \\ \text{ shear force }}}
   + \rho_0 V \mathbf{g} + \mathbf{F}^{\text{ext}} \underbrace{-\widetilde {\mathbf{u}}\,\oint\limits_{\partial V(t)}
   q^{\text{ent}}\,\mathrm{d}A}
@@ -432,14 +434,14 @@ in comparison to the other terms as shown by the dimensional analysis carried ou
   \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,
  :label: eq-mass-balance2
 
-Using the approximations from Sect.~\ref{sec-averaged-quantities}, the momentum
+Using the approximations from :ref:`theorycom1DFA:Choice of the coordinate system and thickness averaged quantities`, the momentum
 equation becomes:
 
 .. math::
-  \rho_0 V \frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t} = - A^bp\mathbf{n^b}
-  + A^b\boldsymbol{\tau^b} - A^b\boldsymbol{\nabla} h\overline{p} + \rho_0 V \mathbf{g}
+  \rho_0 V \frac{\mathrm{d}\bar{\mathbf{u}}}{\mathrm{d}t} = - A^bp\mathbf{n^b}
+  + A^b\boldsymbol{\tau^b} - A^b\boldsymbol{\nabla} h\bar{p} + \rho_0 V \mathbf{g}
   + \mathbf{F}^{\text{ext}}
-  - \overline{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,
+  - \bar{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,
   :label: eq-momentum-balance-approx
 
 
@@ -447,7 +449,7 @@ where all quantities are evaluated at the center of the basal area (point O in :
 This equation is projected in the normal direction :math:`\mathbf{v}_3 = \mathbf{N^b}`
 to get the expression of the basal pressure :math:`p^b`. The projection of this same
 equation on the tangential plane leads to the differential equations satisfied by
-:math:`\overline{\mathbf{u}}`.
+:math:`\bar{\mathbf{u}}`.
 
 Pressure distribution, thickness integrated pressure and pressure gradient
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -459,60 +461,61 @@ component of :eq:`eq-momentum-balance-approx` reads:
 
 .. math::
 	\begin{aligned}
-	\rho_0 V(x_3, t) \frac{\mathrm{d}\overline{\mathbf{u}}(x_3)}{\mathrm{d}t} \cdot  \mathbf{v_3}  =&
-	\rho_0 A^b (h- x_3) \overline{u}_1(x_3)\frac{\mathrm{d}\mathbf{v_1}}{\mathrm{d}t}
-  \cdot\mathbf{v_3}\\
-	=& -\rho_0 A^b (h - x_3) \overline{u}_1(x_3) \mathbf{v_1} \cdot \frac{\mathrm{d}\mathbf{v_3}}{\mathrm{d}t}
-	= -\rho_0 A^b (h - x_3) \overline{\mathbf{u}}(x_3) \cdot \frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t} \\
+	\rho_0 V(x_3, t) \frac{\mathrm{d}\bar{\mathbf{u}}(x_3)}{\mathrm{d}t} \cdot  \mathbf{v_3}  =&
+	\rho_0 A^b (h- x_3)\left(\bar{u}_1(x_3)\frac{\mathrm{d}\mathbf{v_1}}{\mathrm{d}t}  \cdot\mathbf{v_3}
+  + \cancelto{0}{\frac{\mathrm{d}\bar{u}_1(x_3)}{\mathrm{d}t}\mathbf{v_1}\cdot\mathbf{v_3}}\right)\\
+	=& -\rho_0 A^b (h - x_3) \bar{u}_1(x_3) \mathbf{v_1} \cdot \frac{\mathrm{d}\mathbf{v_3}}{\mathrm{d}t}
+	= -\rho_0 A^b (h - x_3) \bar{\mathbf{u}}(x_3) \cdot \frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t} \\
   =& - A^bp\,\cancelto{-1}{\mathbf{n^b}\cdot\mathbf{N^b}}
 	+ A^b\cancelto{0}{\boldsymbol{\tau^b}\cdot\mathbf{N^b}}
-	- A^b\boldsymbol{\nabla} \{(h-x_3)\overline{p}\}\cdot\mathbf{N^b}\\
+	- A^b\boldsymbol{\nabla} \{(h-x_3)\bar{p}\}\cdot\mathbf{N^b}\\
 	& + \rho_0 V \cancelto{g_{N^b}}{\mathbf{g}\cdot\mathbf{N^b}}
 	+ \cancelto{0}{\mathbf{F}^{\text{ext}}\cdot\mathbf{N^b}}
-	- \cancelto{0}{\overline{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A\cdot\mathbf{N^b}}
+	- \cancelto{0}{\bar{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A\cdot\mathbf{N^b}}
 	\end{aligned}
   :label: eq-momentum-balance-x3-projected
 
 Neglecting the normal component of the pressure gradient
-gives the expression for pressure. Under the condition that :math:`\overline{\mathbf{u}}_1(x_3)` is
+gives the expression for pressure. Under the condition that :math:`\bar{\mathbf{u}}(x_3)` is
 independent of :math:`x_3`, pressure follows a linear profile from the bottom
 surface to the free surface:
 Exploiting the normal component of the momentum equation enables to express the pressure and its gradient:
 
 .. math::
   p(x_3) = \rho_0 (h - x_3) \left\{-g_{N^b}
-  - \overline{\mathbf{u}}\cdot\frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t}\right\}
+  - \bar{\mathbf{u}}\cdot\frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t}\right\}
   \quad \mbox{and}  \quad
   p(x_3=0) = p^b
   = \rho_0 h \left\{-g_{N^b}
-  - \overline{\mathbf{u}}\cdot\frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t}\right\}
+  - \bar{\mathbf{u}}\cdot\frac{\mathrm{d}\mathbf{N^b}}{\mathrm{d}t}\right\}
   :label: eq-pressure-distribution
 
 Note that the bottom pressure should always be positive.
 A negative pressure is nonphysical and means that the material is not in contact with the bottom surface anymore.
 This can happen in the case of large velocities on convex topography.
 If so, the material should be in a free fall state until it gets back in contact with the topography.
-A description on how this is handled within the numerical implementation can be found in Sect.~\ref{sec-curvature-acc-term-estimation}.
+A description on how this is handled within the numerical implementation can be found in
+:ref:`DFANumerics:Curvature acceleration term`.
 
 Using the previous result of :eq:`eq-pressure-distribution`, it is possible to express the thickness integrated
-pressure :math:`\overline{p}`:
+pressure :math:`\bar{p}`:
 
 .. math::
-   h\overline{p} = \int\limits_0^h p(x_3)\,\mathrm{d}x_3
+   h\bar{p} = \int\limits_0^h p(x_3)\,\mathrm{d}x_3
 	 = -\rho_0 \frac{h^2}{2}\left(g_{\mathbf{N^b}}
-	 + \overline{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{N^b}}
+	 + \bar{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{N^b}}
    {\mathrm{d}t}\right) = -\rho_0 \frac{h^2}{2} \, g^\text{eff}
    :label: eq-thickness-integrated-pressure
 
 where :math:`g^\text{eff}` is the effective normal acceleration acting on the volume, including the normal component of
 gravity and a curvature component.
-The expression of the thickness integrated pressure is used to derive the pressure gradient :math:`\boldsymbol{\nabla} h\overline{p}`.
+The expression of the thickness integrated pressure is used to derive the pressure gradient :math:`\boldsymbol{\nabla} h\bar{p}`.
 Assuming :math:`g^\text{eff}` to be locally constant (otherwise :math:`g^\text{eff}` would remain inside the gradient
 operator), leads to:
 
 .. math::
 	\label{eq-pressure-gradient}
-	 \boldsymbol{\nabla} h\overline{p} = -\rho_0 \, g^\text{eff} \, h \boldsymbol{\nabla} h
+	 \boldsymbol{\nabla} h\bar{p} = -\rho_0 \, g^\text{eff} \, h \boldsymbol{\nabla} h
    :label: eq-pressure-gradient
 
 Tangential momentum conservation equation
@@ -523,12 +526,12 @@ Using the derived expression of the thickness integrated pressure
 balance (:eq:`eq-momentum-balance-approx`) in the tangent plane leading to the following equation:
 
 .. math::
-  \rho_0 V \left(\frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t}
-  - \left(\frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t} \cdot
+  \rho_0 V \left(\frac{\mathrm{d}\bar{\mathbf{u}}}{\mathrm{d}t}
+  - \left(\frac{\mathrm{d}\bar{\mathbf{u}}}{\mathrm{d}t} \cdot
   \mathbf{v}_3\right)\mathbf{v}_3\right) =
   A^b\boldsymbol{\tau^b} - \rho_0 \, g^\text{eff} \, h A^b \boldsymbol{\nabla}_{s} h
   + \rho_0 V \mathbf{g}_s + \mathbf{F}^{\text{ext}}
-	- \overline{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A
+	- \bar{\mathbf{u}}\oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A
   :label: eq-momentum-balance-tangent
 
 Where :math:`\boldsymbol{\nabla}_{s} = \boldsymbol{\nabla} - (\boldsymbol{\nabla}\cdot\mathbf{N^b})\mathbf{N^b}` respectively
@@ -542,15 +545,14 @@ by the expression developed in :eq:`eq-momentum-balance-x3-projected`,
 
 .. math::
     \begin{aligned}
-    \rho_0 V \frac{\mathrm{d}\overline{\mathbf{u}}}{\mathrm{d}t} =&
-    - A^bp\mathbf{n^b}
-    + A^b\boldsymbol{\tau^b}
+    \rho_0 V \frac{\mathrm{d}\bar{\mathbf{u}}}{\mathrm{d}t} =&
+    A^b\boldsymbol{\tau^b}
     - \rho_0 \, g^\text{eff} \, h A^b \boldsymbol{\nabla}_{\!s} h
     + \rho_0 V \mathbf{g}_s
     + \mathbf{F}^{\text{ent}}
     - \mathbf{F}^{\text{res}}\\
-    &- \underbrace{\overline{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}\left(A^b\,h\right)}{\mathrm{d}t}}_{\text{from the mass balance}}
-    - \underbrace{\rho_0 V \left( \overline{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{v}_3}{\mathrm{d}t} \right)\mathbf{v}_3}_{\text{curvature acceleration}}
+    &- \underbrace{\bar{\mathbf{u}}\,\rho_0\,\frac{\mathrm{d}\left(A^b\,h\right)}{\mathrm{d}t}}_{\text{from the mass balance}}
+    - \underbrace{\rho_0 V \left( \bar{\mathbf{u}} \cdot \frac{\mathrm{d}\mathbf{v}_3}{\mathrm{d}t} \right)\mathbf{v}_3}_{\text{curvature acceleration}}
     \end{aligned}
     :label: momentum-balance6
 
@@ -562,7 +564,7 @@ describes the basal shear stress tensor :math:`\boldsymbol{\tau^b}` as a functio
 of the flow state of the avalanche can be expressed:
 
 .. math::
-    \boldsymbol{\tau^b} = f(\boldsymbol{\sigma^b},\overline{u},h,\rho_0,t,\mathbf{x})
+    \boldsymbol{\tau^b} = f(\boldsymbol{\sigma^b},\bar{u},h,\rho_0,t,\mathbf{x})
     :label: samosAT friction model
 
 With
@@ -570,7 +572,7 @@ With
 .. math::
    \begin{aligned}
    &\boldsymbol{\sigma^b}\cdot\mathbf{n^b} \qquad &\text{normal component of the stress tensor}\\
-   &\overline{u} \qquad &\text{average velocity}\\
+   &\bar{u} \qquad &\text{average velocity}\\
    &h \qquad &\text{average flow thickness}\\
    &\rho_0 \qquad &\text{density}\\
    &t \qquad &\text{time}\\
@@ -639,7 +641,7 @@ is expressed as (:cite:`Sa2007`):
 
 .. math::
    \boldsymbol{\tau^b} = -\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\boldsymbol{\sigma^b}\cdot\mathbf{n^b}
-    + \frac{\rho_0\,\overline{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right) \mathbf{v}_1
+    + \frac{\rho_0\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{h}{R} + B\right)^2}\right) \mathbf{v}_1
 
 With
 
@@ -658,7 +660,7 @@ which no flow takes place with the condition
 being the slope. :math:`\tau_0` is independent of the flow thickness, which
 leeds to a strong avalanche deceleration, especially for avalanches with
 low flow heights. :math:`R_s` is expressed as
-:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\boldsymbol{\sigma^b}\cdot\mathbf{n^b}}`. Together
+:math:`R_s = \frac{\rho_0\,\bar{u}^2}{\boldsymbol{\sigma^b}\cdot\mathbf{n^b}}`. Together
 with the empirical parameter :math:`R_s^0` the term
 :math:`\frac{R_s^0}{R_s^0+R_s}` defines the Coulomb basal friction.
 Therefore lower avalanche speeds lead to a higher bed friction, making
@@ -667,7 +669,7 @@ without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`).
 
 
-Dam 
+Dam
 ~~~
 
 The dam is described by a crown line, that is to say a series of x, y, z points describing the crown of
