@@ -22,6 +22,11 @@ from avaframe.ana1Tests import energyLineTest
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'runEnergyLineTest'
+# if left empty, use the energyLineTestCfg.ini and local_energyLineTestCfg.ini configuration files
+# use 'ana1Tests/figAnalytic_energyLineTestCfg.ini' or 'ana1Tests/figCurvature_energyLineTestCfg.ini'
+# or 'ana1Tests/figPressure_energyLineTestCfg.ini' to produce the energy line plots from the Theory Paper
+# (use 'avaSlide' in the avaFrameCfg.ini)
+fileOverride = ''
 # ++++++++++++++++++++++++++++++
 
 # Load avalanche directory from general configuration file
@@ -38,7 +43,7 @@ log.info('Current avalanche: %s', avalancheDir)
 iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 workPath = pathlib.Path(avalancheDir, 'Work', 'energyLineTest')
 fU.makeADir(workPath)
-energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest)
+energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest, fileOverride=fileOverride)
 
 # ++++++++++ set configurations for all the used modules and override ++++++++++++
 # get comDFA configuration and save to file

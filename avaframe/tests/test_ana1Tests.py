@@ -71,8 +71,14 @@ def test_getIntersection(capfd):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTestCfg.ini'
 
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
-                                                          modInfo=True)
+    energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest, fileOverride=energyLineTestCfgFile)
+
+    # ++++++++++ set configurations for all the used modules and override ++++++++++++
+    # get comDFA configuration and save to file
+    com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                          onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
+    com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
+    # com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
 
     mu = 1
     csz = 1
@@ -144,11 +150,17 @@ def test_getEnergyInfo(capfd):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTestCfg.ini'
 
-    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile),
-                                                          modInfo=True)
+    energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest, fileOverride=energyLineTestCfgFile)
+
+    # ++++++++++ set configurations for all the used modules and override ++++++++++++
+    # get comDFA configuration and save to file
+    com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                          onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
+    com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
+    # com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
 
     g = 9.81
-    alphaDeg = 30
+    alphaDeg = 40
     csz = 5
     mu = np.tan(np.radians(alphaDeg))
 
@@ -169,10 +181,10 @@ def test_getEnergyInfo(capfd):
     print(zGeomL)
     print(errorEnergyTest)
     atol = 1e-10
-    assert errorEnergyTest['runOutZError'] == pytest.approx(-10, abs=atol)
-    assert errorEnergyTest['runOutSError'] == pytest.approx(10, abs=atol)
-    assert errorEnergyTest['runOutAngleError'] == pytest.approx(15, abs=atol)
-    assert errorEnergyTest['rmseVelocityElevation'] == pytest.approx(2.559271214294478, abs=atol)
+    assert errorEnergyTest['runOutZError'] == pytest.approx(2.372464521180824, abs=atol)
+    assert errorEnergyTest['runOutSError'] == pytest.approx(-4.744929042361651, abs=atol)
+    assert errorEnergyTest['runOutAngleError'] == pytest.approx(5, abs=atol)
+    assert errorEnergyTest['rmseVelocityElevation'] == pytest.approx(0.9743001172810509, abs=atol)
 
 
 def test_mainEnegyLineTest(tmp_path):

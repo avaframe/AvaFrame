@@ -21,7 +21,7 @@ import avaframe.out3Plot.outAna1Plots as outAna1Plots
 log = logging.getLogger(__name__)
 
 
-def damBreakSol(avaDir, cfg, cfgC, outDirTest):
+def damBreakSol(avaDir, cfg, damBreakCfg, com1DFACfg, outDirTest):
     """ Compute analytical Flow thickness and velocity for dam break test case
 
         for a granular flow over a dry rough sloping bed with the Savage Hutter model
@@ -32,8 +32,10 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
             path to avalanche directory
         cfg: configParser object
             main avaframe configuration - here showPlot flag used
-        cfgC: configParser object
-            configuration setting for avalanche simulation including DAMBREAK section
+        damBreakCfg: configParser object
+            dam break configuration
+        com1DFACfg: configParser object
+            com1DFA configuration
         outDirTest: pathlib path
             path to output directory
 
@@ -58,21 +60,22 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
 
     # Set Parameters
     # Coordinate system chosen in the direction of the inclined plane
-    g = cfgC['GENERAL'].getfloat('gravAcc')       # acceleration due to gravity [ms-2]
-    phiDeg = cfgC['DAMBREAK'].getfloat('phi')       # slope angle [°]
-    deltaDeg = cfgC['DAMBREAK'].getfloat('delta')       # friction angle [°]
+    cfgGen = com1DFACfg['GENERAL']
+    g = cfgGen.getfloat('gravAcc')       # acceleration due to gravity [ms-2]
+    phiDeg = damBreakCfg.getfloat('phi')       # slope angle [°]
+    deltaDeg = damBreakCfg.getfloat('delta')       # friction angle [°]
     phi = np.radians(phiDeg)                          # slope angle [rad]
     delta = np.radians(deltaDeg)                        # bed friction angle [rad]
     gz = g * np.cos(phi)                          # projection of g perpendicular to the inclined plane
     m0 = gz * (np.tan(phi) - np.tan(delta))       # constant x-acceleration resulting from gravity and friction force
-    hL = cfgC['GENERAL'].getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
+    hL = cfgGen.getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
     cL = np.sqrt(gz * hL)
-    x0R = cfgC['DAMBREAK'].getfloat('xBack') / np.cos(phi)
-    tSave = cfgC['DAMBREAK'].getfloat('tSave')
+    x0R = damBreakCfg.getfloat('xBack') / np.cos(phi)
+    tSave = damBreakCfg.getfloat('tSave')
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
-    tAna = np.arange(0, cfgC['DAMBREAK'].getfloat('tEnd'), cfgC['DAMBREAK'].getfloat('dt'))
-    x = np.arange(cfgC['DAMBREAK'].getfloat('xStart') / np.cos(phi) , cfgC['DAMBREAK'].getfloat('xEnd') / np.cos(phi),
-                  cfgC['DAMBREAK'].getfloat('dx'))
+    tAna = np.arange(0, damBreakCfg.getfloat('tEnd'), damBreakCfg.getfloat('dt'))
+    x = np.arange(damBreakCfg.getfloat('xStart') / np.cos(phi), damBreakCfg.getfloat('xEnd') / np.cos(phi),
+                  damBreakCfg.getfloat('dx'))
     nt = len(tAna)
     nx = len(x)
     # Initialise Flow thickness solution and velocity
@@ -227,13 +230,19 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
     xAna = solDam['xAna']
     hAna = solDam['hAna']
     uAna = solDam['uAna']
-    # get plots limits
-    limits = outAna1Plots.getPlotLimits(cfgDam, fieldsList, fieldHeader)
     hErrorL2Array = np.zeros((len(fieldsList)))
     vhErrorL2Array = np.zeros((len(fieldsList)))
     hErrorLMaxArray = np.zeros((len(fieldsList)))
     vhErrorLMaxArray = np.zeros((len(fieldsList)))
     count = 0
+    tSave = cfgDam.getfloat('tSave')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+    # get plots limits
+    if cfgDam.getboolean('plotSequence'):
+        limits = outAna1Plots.getPlotLimits(cfgDam, fieldsList, fieldHeader)
+    else:
+        limits = outAna1Plots.getPlotLimits(cfgDam, [fieldsList[indT]], fieldHeader)
     # run the comparison routine for each saved time step
     for t, field in zip(timeList, fieldsList):
         # get similartiy solution h, u at required time step
@@ -251,9 +260,9 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
 
         # make analytical results 2D
         nrows, ncols = np.shape(hNumPlus)
-        O = np.ones((nrows, ncols))
-        hDamPlus = O*hDamPlus
-        uDamPlus = O*uDamPlus
+        OnesRaster = np.ones((nrows, ncols))
+        hDamPlus = OnesRaster*hDamPlus
+        uDamPlus = OnesRaster*uDamPlus
 
         hEL2Plus, hL2RelPlus, hLmaxPlus, hLmaxRelPlus = anaTools.normL2Scal(hDamPlus, hNumPlus, cellSize,
                                                                             np.cos(phiRad))
@@ -273,15 +282,12 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
         log.debug("L2 %s error on the Flow thickness at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
         # Make all individual time step comparison plot
-        if cfgDam.getboolean('plotSequence'):
+        if cfgDam.getboolean('plotSequence') or t == tSave:
             outAna1Plots.plotComparisonDam(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, limits,
                                            outDirTest)
         count = count + 1
 
-    tSave = cfgDam.getfloat('tSave')
-    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
-    tSave = timeList[indT]
-    if cfgDam.getboolean('plotErrorTime') and len(timeList)>1:
+    if cfgDam.getboolean('plotErrorTime') and len(timeList) > 1:
         # Create result plots
 
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
