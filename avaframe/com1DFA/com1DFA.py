@@ -1229,7 +1229,10 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ')) * cfgGen.getfloat('entTempGrad')
         # entrEnthRaster = np.where(tempRaster < 0, tempRaster*cfgGen.getfloat('cpIce'),
         #                           tempRaster*cfgGen.getfloat('cpWtr')/cfgGen.getfloat('hFusion'))
-        entrEnthRaster = np.where(entrMassRaster > 0, cfgGen.getfloat('entTempRef')*cfgGen.getfloat('cpIce'), 0)
+        if cfgGen.getint('nassSchnee'):
+            entrEnthRaster = np.where(entrMassRaster > 0, cfgGen.getfloat('entTempRef')*cfgGen.getfloat('cpIce'), 0)
+        else:
+            entrEnthRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'Yes'
     else:
         entrMassRaster = np.zeros((nrows, ncols))
@@ -1693,6 +1696,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         force['forceSPHX'] = np.zeros(np.shape(force['forceX']))
         force['forceSPHY'] = np.zeros(np.shape(force['forceY']))
         force['forceSPHZ'] = np.zeros(np.shape(force['forceZ']))
+        force['dQdtArray'] = np.zeros(np.shape(force['forceZ']))
     else:
         log.debug('Compute Force SPH C')
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, cfg.getint('sphOption'), gradient=0)
