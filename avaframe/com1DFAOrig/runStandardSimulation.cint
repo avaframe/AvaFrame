@@ -131,10 +131,12 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   printf("\n[BatchCom1DFA] Computing Simulation: %s\n",Sim);
 
   // Friction type
+  // set(Sim, "$sph_diffusion_coefficient", "0.1");
+  // set(Sim, "FrictionType", "Nassschnee_cint");
   set(Sim, "FrictionType", "samosAT_Standard");
   //set(Sim, "FrictionType", "Chezy + Mohr-Coulomb");
-  //set(Sim, "DynamicFrictionCoefficient", "0");
-  //set(Sim, "BedFrictionAngle", "21.80140948635181177024");
+  // set(Sim, "DynamicFrictionCoefficient", "0.01");
+  // set(Sim, "BedFrictionAngle", "11.3");
 
   // set(Sim, "MassPerParticleDeterminationMethod", "delta-depth per particle");
   // set(Sim, "DeltaDepthPerParticle", "2");

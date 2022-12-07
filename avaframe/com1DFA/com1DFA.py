@@ -823,18 +823,23 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
-    entrMassRaster, reportAreaInfo = initializeMassEnt(dem, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
-                                                       thresholdPointInPoly, cfgGen.getfloat('rhoEnt'))
+    entrMassRaster, entrEnthRaster, reportAreaInfo = initializeMassEnt(dem, simTypeActual, inputSimLines['entLine'],
+                                                                       reportAreaInfo, thresholdPointInPoly,
+                                                                       cfgGen)
 
     # check if entrainment and release overlap
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
+    entrEnthRaster = geoTrans.checkOverlap(entrEnthRaster, relRaster, 'Entrainment', 'Release', crop=True)
     # check for overlap with the secondary release area
     if secondaryReleaseInfo['flagSecondaryRelease'] == 'Yes':
         for secRelRaster in secondaryReleaseInfo['rasterData']:
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
                                                    crop=True)
+            entrEnthRaster = geoTrans.checkOverlap(entrEnthRaster, secRelRaster, 'Entrainment', 'Secondary release ',
+                                                   crop=True)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster
+    fields['entrEnthRaster'] = entrEnthRaster
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
@@ -875,6 +880,8 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     # get simulation parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
+    cpIce = cfg.getfloat('cpIce')
+    TIni = cfg.getfloat('TIni')
     avaDir = cfg['avalancheDir']
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
     interpOption = cfg.getfloat('interpOption')
@@ -964,6 +971,8 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = mPartArray
         particles['idFixed'] = idFixed
+    # initialize enthalpy
+    particles['totalEnthalpy'] = TIni * cpIce + gravAcc * particles['z']
 
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
@@ -1180,7 +1189,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
     return secondaryReleaseInfo
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfgGen):
     """ Initialize mass for entrainment
 
     Parameters
@@ -1196,8 +1205,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     thresholdPointInPoly: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-    rhoEnt: float
-        density of entrainment snow
+    cfgGen: config parser
+        General configuration
 
     Returns
     -------
@@ -1216,14 +1225,20 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         log.info('Entrainment area features: %s' % (entLine['Name']))
         entLine = prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine['thickness'])
         entrMassRaster = entLine['rasterData']
+        # ToDo: not used in samos but implemented
+        # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ')) * cfgGen.getfloat('entTempGrad')
+        # entrEnthRaster = np.where(tempRaster < 0, tempRaster*cfgGen.getfloat('cpIce'),
+        #                           tempRaster*cfgGen.getfloat('cpWtr')/cfgGen.getfloat('hFusion'))
+        entrEnthRaster = np.where(entrMassRaster > 0, cfgGen.getfloat('entTempRef')*cfgGen.getfloat('cpIce'), 0)
         reportAreaInfo['entrainment'] = 'Yes'
     else:
         entrMassRaster = np.zeros((nrows, ncols))
+        entrEnthRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'No'
 
-    entrMassRaster = entrMassRaster * rhoEnt
+    entrMassRaster = entrMassRaster * cfgGen.getfloat('rhoEnt')
 
-    return entrMassRaster, reportAreaInfo
+    return entrMassRaster, entrEnthRaster, reportAreaInfo
 
 
 def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):

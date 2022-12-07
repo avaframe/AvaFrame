@@ -9,7 +9,6 @@
 # Load modules
 import copy
 import logging
-import math
 import numpy as np
 import cython
 cimport numpy as np
@@ -52,6 +51,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       force dictionary
   """
   # read input parameters
+  cdef int nassSchnee = cfg.getint('nassSchnee')
+  cdef double enthRef = cfg.getfloat('enthRef')
   cdef double tau0 = cfg.getfloat('tau0')
   cdef double Rs0 = cfg.getfloat('Rs0')
   cdef double kappa = cfg.getfloat('kappa')
@@ -96,10 +97,12 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
+  cdef double[:, :] entrEnthRaster = fields['entrEnthRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
@@ -113,8 +116,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
-  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
-  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   # variables for interpolation
@@ -122,6 +125,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double w[4]
   cdef double wEnd[4]
   cdef int k
+  cdef double mu0 = mu
   force = {}
   # loop on particles
   for k in range(nPart):
@@ -222,6 +226,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           # log.info('fluid detatched for particle %s' % j)
           tau = 0.0
       else:
+          if nassSchnee:
+            # add enthalpy dependent mu if nassSchnee is activated
+            totalEnthalpy = totalEnthalpyArray[k]
+            enthalpy = totalEnthalpy - gravAcc * z - 0.5 * uMag * uMag
+            mu = mu0 * math.exp(-enthalpy / enthRef)
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
@@ -251,6 +260,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # compute entrained mass
       entrMassCell = entrMassRaster[indCellY, indCellX]
       dm, areaEntrPart = computeEntMassAndForce(dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
+      if nassSchnee:
+        # enthalpy change due to entrained mass
+        entrEnthCell = entrEnthRaster[indCellY, indCellX]
+        dTotalEnthalpy = (entrEnthCell + gravAcc * z) * dm
+        totalEnthalpy = (totalEnthalpy * m + dTotalEnthalpy)
       # update velocity
       ux = ux * m / (m + dm)
       uy = uy * m / (m + dm)
@@ -259,6 +273,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       m = m + dm
       mass[k] = m
       dM[k] = dm
+      if nassSchnee:
+        # update specific enthalpy of particle
+        totalEnthalpyArray[k] = totalEnthalpy / m
 
       # speed loss due to energy loss due to entrained mass
       dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
@@ -291,6 +308,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
+  particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -318,6 +336,8 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 
   Parameters
   ----------
+  dt: float
+    time step
   entrMassCell : float
       available mass for entrainement
   areaPart : float
@@ -326,6 +346,10 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
       particle speed (velocity magnitude)
   tau : float
       bottom shear stress
+  entEroEnergy: float
+    erosion entrainment energy constant
+  rhoEnt: float
+    entrainement denity
 
   Returns
   -------
@@ -506,6 +530,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
+  cdef int nassSchnee = cfg.getint('nassSchnee')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int reprojMethod = cfg.getint('reprojMethodPosition')
@@ -535,6 +560,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double TotkinEne = particles['kineticEne']
   cdef double TotpotEne = particles['potentialEne']
   cdef double peakKinEne = particles['peakKinEne']
@@ -548,6 +574,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] forceSPHX = force['forceSPHX']
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
+  cdef double[:] dQdtArray = force['dQdtArray']
   cdef double[:] dM = force['dM']
   # read dam
   dam = dem['damLine']
@@ -583,8 +610,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
-  cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall
+  cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed, dQdt
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0, dissEm = 0
@@ -603,6 +630,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     ux = uxArray[k]
     uy = uyArray[k]
     uz = uzArray[k]
+    dQdt = dQdtArray[k]
     s = sArray[k]
     sCor = sCorArray[k]
     l = lArray[k]
@@ -676,6 +704,13 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       keepParticle[k] = 0
       nRemove = nRemove + 1
       continue  # this particle will be removed, skipp to the next particle
+
+    # solve enthalpy equation
+    if nassSchnee == 1:
+        totalEnthalpy = totalEnthalpyArray[k]
+        totalEnthalpyNew = totalEnthalpy + dt * dQdt / m
+    else:
+        totalEnthalpyNew = totalEnthalpy
 
     # get cell and weights at old position
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
@@ -768,6 +803,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       sNewArray[k] = s
       sCorNewArray[k] = s
       mNewArray[k] = m
+      if nassSchnee == 1:
+        totalEnthalpyArray[k] = totalEnthalpy
     else:
       # idfixed = 0 particles belong to the actual releae area
       xNewArray[k] = xNew
@@ -779,6 +816,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       sNewArray[k] = sNew
       sCorNewArray[k] = sCorNew
       mNewArray[k] = mNew
+      if nassSchnee == 1:
+        totalEnthalpyArray[k] = totalEnthalpyNew
 
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
@@ -791,6 +830,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['x'] = np.asarray(xNewArray)
   particles['y'] = np.asarray(yNewArray)
   particles['z'] = np.asarray(zNewArray)
+  particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
   particles['massEntrained'] = massEntrained
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
@@ -1253,14 +1293,16 @@ def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
   nyArray = dem['Ny']
   nzArray = dem['Nz']
 
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, nxArray, nyArray, nzArray, gradient, sphOption)
+  forceSPHX, forceSPHY, forceSPHZ, dQdtArray = computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, nxArray, nyArray, nzArray, gradient, sphOption)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
+  dQdtArray = np.asarray(dQdtArray)
 
   force['forceSPHX'] = forceSPHX
   force['forceSPHY'] = forceSPHY
   force['forceSPHZ'] = forceSPHZ
+  force['dQdtArray'] = dQdtArray
 
   return particles, force
 
@@ -1305,8 +1347,10 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double sphDiffusionCoeff = cfg.getfloat('sphDiffusionCoeff')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int viscOption = cfg.getint('viscOption')
+  cdef int nassSchnee = cfg.getint('nassSchnee')
 
   # grid normal raster information
   cdef double cszNormal = headerNormalGrid['cellsize']
@@ -1323,6 +1367,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double rKernel = cszNeighbourGrid
   cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
+  cdef double d2facKernel = - 2.0 * dfacKernel
   # particle information
   cdef double[:] gEff = particles['gEff']
   cdef double[:] mass = particles['m']
@@ -1333,19 +1378,23 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef int N = xArray.shape[0]
 
   # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
   cdef double[:] GHY = np.zeros(N, dtype=np.float64)
   cdef double[:] GHZ = np.zeros(N, dtype=np.float64)
+  cdef double[:] dQdtArray = np.zeros(N, dtype=np.float64)
   cdef double K1 = 1
   cdef double K2 = 1
   cdef double gravAcc3
-  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
+  cdef double gradhX, gradhY, gradhZ, uMagk, uMagl, nx, ny, nz, G1, G2, mdwdrr
+  cdef double FdiffX, FdiffY, FdiffZ
   cdef double g1, g2, g11, g12, g22, g33
   cdef double x, y, z, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
-  cdef double dx, dy, dz, dux, duy, duz, dn, r, hr, dwdr, wKernel
+  cdef double dx, dy, dz, dux, duy, duz, dn, r, hr, dwdr, d2wdr2, wKernel
+  cdef double enthk, enthl, depthMean, velMean, fac2, diffCoeff
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
   cdef int lInd, rInd
@@ -1362,6 +1411,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    FdiffX = 0
+    FdiffY = 0
+    FdiffZ = 0
     pikl = 0
     G1 = 0
     G2 = 0
@@ -1380,7 +1432,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     # locate particle in SPH grid
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
-
+    if nassSchnee == 1:
+        uMagk = DFAtlsC.norm(ux, uy, uz)
+        enthk = totalEnthalpyArray[k] - gravAcc*z - 0.5*uMagk*uMagk
     if SPHoption > 1:
         # get normal vector
         Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
@@ -1390,8 +1444,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         # This was done I computeForce and is passed over here
         gravAcc3 = gEff[k]
         if SPHoption > 2:
-            uMag = DFAtlsC.norm(ux, uy, uz)
-            if uMag < velMagMin:
+            uMagk = DFAtlsC.norm(ux, uy, uz)
+            if uMagk < velMagMin:
                 ux = 1
                 uy = 0
                 uz = -(1*nx + 0*ny) / nz
@@ -1434,7 +1488,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                 # SamosAT style (no reprojecion on the surface, dz = 0 and gz is used)
                 if SPHoption == 1:
                     dz = 0
-                    # get norm of r = xj - xl
+                    # get norm of r = xk - xl
                     r = DFAtlsC.norm(dx, dy, dz)
                     if r < minRKern * rKernel:
                         # impose a minimum distance between particles
@@ -1447,6 +1501,21 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                         gradhY = gradhY + mdwdrr*dy
                         gradhZ = gradhZ + mdwdrr*dz
                         gravAcc3 = gravAcc
+                        # enthalpy flux and diffusion force
+                        if nassSchnee == 1:
+                            hl = hArray[l]
+                            uMagl = DFAtlsC.norm(uxArray[l], uyArray[l], uzArray[l])
+                            d2wdr2 = d2facKernel * hr
+                            enthl = totalEnthalpyArray[l] - gravAcc*zArray[l] - 0.5*uMagl*uMagl
+                            depthMean = 0.5 * (hk + hl)
+                            velMean = 0.5 * (uMagk + uMagl)
+                            diffCoeff = velMean * depthMean
+                            fac2 = diffCoeff * mass[l] * d2wdr2
+                            # explicit works up to sph_diffusion_coefficient 0.1
+                            FdiffX = FdiffX + fac2 * (uxArray[l] - ux)
+                            FdiffY = FdiffY + fac2 * (uyArray[l] - uy)
+                            FdiffZ = FdiffZ + fac2 * (uzArray[l] - uz)
+                            dQdtArray[k] = dQdtArray[k] + fac2 * (enthl - enthk)
 
 #----------------------------SPHOPTION = 2--------------------------------------
                 # Compute the gradient in the cartesian coord system with reprojecion on the surface
@@ -1482,6 +1551,21 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                         gradhX = gradhX + (flux + pikl)*dwdrr*dx*area
                         gradhY = gradhY + (flux + pikl)*dwdrr*dy*area
                         gradhZ = gradhZ + (flux + pikl)*dwdrr*dz*area
+                        # enthalpy flux and diffusion force
+                        if nassSchnee == 1:
+                            hl = hArray[l]
+                            uMagl = DFAtlsC.norm(uxArray[l], uyArray[l], uzArray[l])
+                            d2wdr2 = d2facKernel * hr
+                            enthl = totalEnthalpyArray[l] - gravAcc*zArray[l] - 0.5*uMagl*uMagl
+                            depthMean = 0.5 * (hk + hl)
+                            velMean = 0.5 * (uMagk + uMagl)
+                            diffCoeff = velMean * depthMean
+                            fac2 = diffCoeff * mass[l] * d2wdr2
+                            # explicit works up to sph_diffusion_coefficient 0.1
+                            FdiffX = FdiffX + fac2 * (uxArray[l] - ux)
+                            FdiffY = FdiffY + fac2 * (uyArray[l] - uy)
+                            FdiffZ = FdiffZ + fac2 * (uzArray[l] - uz)
+                            dQdtArray[k] = dQdtArray[k] + fac2 * (enthl - enthk)
 
 
 #----------------------------SPHOPTION = 3--------------------------------------
@@ -1533,7 +1617,14 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         GHZ[k] = GHZ[k] + gradhZ*gravAcc3 / rho* mk
 
 
-  return GHX, GHY, GHZ
+    if nassSchnee == 1:
+      # enthalpy flux and diffusion force
+      Ak = mk/(rho*hk)
+      GHX[k] = GHX[k] + sphDiffusionCoeff * Ak * FdiffX
+      GHY[k] = GHY[k] + sphDiffusionCoeff * Ak * FdiffY
+      GHZ[k] = GHZ[k] + sphDiffusionCoeff * Ak * FdiffZ
+      dQdtArray[k] = sphDiffusionCoeff * Ak * dQdtArray[k]
+  return GHX, GHY, GHZ, dQdtArray
 
 def computeIniMovement(cfg, particles, dem, dT, fields):
   """ add artifical viscosity effect on velocity
