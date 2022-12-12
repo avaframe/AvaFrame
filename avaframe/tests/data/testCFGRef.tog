@@ -1,3 +1,4 @@
+cfgUtils - INFO -  Comparing two configs
 cfgUtils - INFO -  {'GENERAL': {'inputDir': 'path/to/avalanche', 'fullLog': 'True'},
 cfgUtils - INFO -   'FLAGS': {'plotFigure': 'False', 'savePlot': 'False'},
 cfgUtils - INFO -   'GOODSECTION1': {'goodKey1': '1', 'goodKey2': 'False', 'testKey1': 'Bonjour'},
