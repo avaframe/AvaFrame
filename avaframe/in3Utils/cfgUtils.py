@@ -140,6 +140,7 @@ def getDefaultModuleConfig(module, toPrint=True):
 
     defaultFile = modPath / (modName+'Cfg.ini')
 
+    log.info('Getting the default config for %s', modName)
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
@@ -253,6 +254,7 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     """
 
 
+    log.info('Comparing two configs')
 
     # initialize modInfo and printOutInfo
     modInfo = dict() 

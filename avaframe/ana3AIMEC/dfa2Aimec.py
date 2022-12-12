@@ -146,6 +146,8 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef='', simNameComp=''):
     pathDict['colorParameter'] = colorParameter
     pathDict['refSimRowHash'] = refSimRowHash
     pathDict['refSimName'] = refSimName
+    # set pathDict ValRef to empty as reference sim is not chosen on a value
+    pathDict['valRef'] = ''
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
         refData = getMassInfoInDF(avaDir, refData, comModules[0], sim=refSimName, testName=cfgSetup['testName'])

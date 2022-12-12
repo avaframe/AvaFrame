@@ -658,8 +658,6 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
-                'Parameter variation on': '',
-                'Parameter value': '',
                 'Mu': cfgGen['mu'],
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},

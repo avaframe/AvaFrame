@@ -62,9 +62,6 @@ def runAna3AIMECCompMods(avalancheDir=''):
     cfgSetup = cfg['AIMECSETUP']
     comModules = cfgSetup['comModules'].split('|')
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]))
-
-    # set pathDict ValRef to empty as reference sim is not chosen on a value
-    pathDict['valRef'] = ''
     
     startTime = time.time()
 
