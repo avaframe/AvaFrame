@@ -63,6 +63,9 @@ def runAna3AIMECCompMods(avalancheDir=''):
     comModules = cfgSetup['comModules'].split('|')
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]))
 
+    # set pathDict ValRef to empty as reference sim is not chosen on a value
+    pathDict['valRef'] = ''
+    
     startTime = time.time()
 
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
