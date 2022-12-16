@@ -187,14 +187,14 @@ def test_updatePositionC():
                       'uFlowingThreshold': '0.1', 'gravAcc': '9.81', 'velMagMin': '1.e-6',  'rho': '100.',
                       'interpOption': '2',   'explicitFriction': '0', 'centeredPosition': '1',
                       'reprojMethodPosition': '2', 'reprojectionIterations': '5', 'thresholdProjection': '0.001',
-                      'dissDam': '1', 'cohesion': '1'}
+                      'dissDam': '1', 'cohesion': '1', 'wetSnow': '1'}
 
     particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
                   'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 0.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
-                  'peakMassFlowing': 0.0, 'iterate': True}
+                  'peakMassFlowing': 0.0, 'iterate': True, 'totalEnthalpy': np.asarray([0., 0., 0.])}
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
 
     demHeader = {}
@@ -253,7 +253,7 @@ def test_updatePositionC():
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 100000.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
-                  'peakMassFlowing': 0.0, 'iterate': True}
+                  'peakMassFlowing': 0.0, 'iterate': True, 'totalEnthalpy': np.asarray([0., 0., 0.])}
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
 
     # call function to be tested
@@ -277,7 +277,7 @@ def test_updatePositionC():
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 100000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
-                  'peakMassFlowing': 0.0, 'iterate': True}
+                  'peakMassFlowing': 0.0, 'iterate': True,  'totalEnthalpy': np.asarray([0., 0., 0.])}
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
     typeStop = 1
 
@@ -311,7 +311,7 @@ def test_updatePositionC():
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 1000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
-                  'peakMassFlowing': 0.0, 'iterate': True}
+                  'peakMassFlowing': 0.0, 'iterate': True, 'totalEnthalpy': np.asarray([0., 0., 0.])}
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
     typeStop = 1
 
