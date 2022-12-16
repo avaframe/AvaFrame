@@ -575,6 +575,9 @@ def test_initializeMassEnt():
     dem['header']['xllcenter'] = 0.0
     dem['header']['yllcenter'] = 0.0
 
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rhoEnt': '200.0', 'entTempRef': '-10.', 'cpIce': '2050.', 'TIni': '-10.'}
+
     simTypeActual = 'entres'
     dirName = pathlib.Path(__file__).parents[0]
     fileName = dirName / 'testEnt.shp'
@@ -585,8 +588,8 @@ def test_initializeMassEnt():
     thresholdPointInPoly = 0.001
 
     # call function to be tested
-    entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(
-        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, 200.)
+    entrMassRaster, entrEnthRaster, reportAreaInfo = com1DFA.initializeMassEnt(
+        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfg['GENERAL'])
     testData = np.zeros((nrows, ncols))
     testData[0:11, 0:11] = 1.0 * 200.
 
@@ -600,8 +603,8 @@ def test_initializeMassEnt():
 
     # call function to be tested
     simTypeActual = 'res'
-    entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(
-        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, 200.)
+    entrMassRaster, entrEnthRaster, reportAreaInfo = com1DFA.initializeMassEnt(
+        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfg['GENERAL'])
 
     assert np.array_equal(entrMassRaster, np.zeros((nrows, ncols)))
     assert reportAreaInfo['entrainment'] == 'No'
@@ -896,7 +899,8 @@ def test_releaseSecRelArea():
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
-                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
+                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest',
+                      'entTempRef': '-10.', 'cpIce': '2050.', 'TIni': '-10.'}
     demHeader = {}
     demHeader['cellsize'] = 1
     demHeader['ncols'] = 12
@@ -937,6 +941,7 @@ def test_releaseSecRelArea():
     particlesIn['mTot'] = np.sum(particlesIn['m'])
     particlesIn['t'] = 1.0
     particlesIn['nPart'] = 2.
+    particlesIn['totalEnthalpy'] = np.asarray([6., 7.])
     fieldsFT = np.zeros((demHeader['nrows'], demHeader['ncols']))
     fieldsFT[7:9, 7:9] = 1.0
     fields = {'FT': fieldsFT}
@@ -1033,7 +1038,8 @@ def test_initializeParticles():
     cfg['GENERAL'] = {'resType': 'ppr|pft|pfv', 'rho': '200.', 'gravAcc': '9.81',
                       'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
-                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
+                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest',
+                      'entTempRef': '-10.', 'cpIce': '2050.', 'TIni': '-10.'}
     demHeader = {}
     demHeader['cellsize'] = 1
     demHeader['ncols'] = 12
@@ -1065,7 +1071,7 @@ def test_initializeParticles():
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate', 'idFixed',
-                'peakForceSPH', 'forceSPHIni']
+                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy']
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
@@ -1495,7 +1501,8 @@ def test_initializeSimulation(tmp_path):
                       'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
                       'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest',
-                      'dRes': '0.3', 'cw': '0.5', 'sres': '5', 'initialiseParticlesFromFile': 'False'}
+                      'dRes': '0.3', 'cw': '0.5', 'sres': '5', 'initialiseParticlesFromFile': 'False',
+                      'entTempRef': '-10.', 'cpIce': '2050.', 'TIni': '-10.'}
     # setup dem input
     demHeader = {}
     demHeader['xllcenter'] = 1.0
@@ -1606,7 +1613,8 @@ def test_runCom1DFA(tmp_path, caplog):
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate',
-                'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni', 'gEff', 'curvAcc']
+                'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni', 'gEff', 'curvAcc',
+                'totalEnthalpy']
 
     # read one particles dictionary
     inDir = avaDir / 'Outputs' / 'com1DFA' / 'particles'

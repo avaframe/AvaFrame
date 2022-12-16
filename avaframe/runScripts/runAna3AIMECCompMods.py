@@ -51,6 +51,7 @@ def runAna3AIMECCompMods(avalancheDir=''):
     comModules = cfgSetup['comModules'].split('|')
     referenceSimName = cfgSetup['referenceSimName']
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avalancheDir, cfg, simNameRef=referenceSimName)
+    pathDict['valRef'] = ''
 
     if referenceSimName != '':
         log.info('Reference simulation is based on provided simName: \'%s\' and corresponds to simulation %s'
@@ -62,9 +63,9 @@ def runAna3AIMECCompMods(avalancheDir=''):
     cfgSetup = cfg['AIMECSETUP']
     comModules = cfgSetup['comModules'].split('|')
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]))
-    
-    startTime = time.time()
 
+    startTime = time.time()
+    
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing

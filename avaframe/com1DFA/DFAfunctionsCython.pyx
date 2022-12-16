@@ -9,7 +9,6 @@
 # Load modules
 import copy
 import logging
-import math
 import numpy as np
 import cython
 cimport numpy as np
@@ -52,6 +51,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       force dictionary
   """
   # read input parameters
+  cdef int wetSnow = cfg.getint('wetSnow')
+  cdef double enthRef = cfg.getfloat('enthRef')
   cdef double tau0 = cfg.getfloat('tau0')
   cdef double Rs0 = cfg.getfloat('Rs0')
   cdef double kappa = cfg.getfloat('kappa')
@@ -69,6 +70,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
   cdef double velMagMin = cfg.getfloat('velMagMin')
+  cdef double depMin = cfg.getfloat('depMin')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int reprojMethod = cfg.getint('reprojMethodForce')
@@ -87,6 +89,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] nyArray = dem['Ny']
   cdef double[:, :] nzArray = dem['Nz']
   cdef double[:, :] areaRatser = dem['areaRaster']
+  cdef np.ndarray[np.uint8_t, ndim = 1, cast=True] outOfDEM
+  outOfDEM = np.array(dem['outOfDEM'], dtype=bool)
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] hArray = particles['h']
@@ -96,10 +100,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef long[:] ID = particles['ID']
+  cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
+  cdef double[:, :] entrEnthRaster = fields['entrEnthRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
@@ -113,8 +120,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
-  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
-  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   # variables for interpolation
@@ -122,6 +129,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double w[4]
   cdef double wEnd[4]
   cdef int k
+  cdef double mu0 = mu
   force = {}
   # loop on particles
   for k in range(nPart):
@@ -130,6 +138,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       y = yArray[k]
       z = zArray[k]
       h = hArray[k]
+      if h < depMin:
+        h = depMin
       ux = uxArray[k]
       uy = uyArray[k]
       uz = uzArray[k]
@@ -158,7 +168,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       if reprojMethod == 0:
         # Project vertically on the dem
         iCellEnd = DFAtlsC.getCells(xEnd, yEnd, ncols, nrows, csz)
-        if iCellEnd >= 0:
+        if iCellEnd >= 0 and outOfDEM[iCellEnd] == 0:
           LxEnd0, LyEnd0, iCellEnd, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = DFAtlsC.getCellAndWeights(xEnd, yEnd, ncols, nrows, csz, interpOption)
       elif reprojMethod == 1:
         # project trying to keep the travelled distance constant
@@ -172,6 +182,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
 
       if iCellEnd < 0:
         # if not on the DEM take x, y as end point
+        LxEnd0 = Lx0
+        LyEnd0 = Ly0
+        wEnd = w
+      elif outOfDEM[iCellEnd]:
+        # if in a noData area from the DEM take x, y as end point
         LxEnd0 = Lx0
         LyEnd0 = Ly0
         wEnd = w
@@ -217,11 +232,16 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # get new velocity magnitude (leave 0 if uMag is 0)
       # this is important because uMag is first used to compute tau
       uMag = DFAtlsC.norm(ux, uy, uz)
-      if(effAccNorm > 0.0):
+      if(-effAccNorm < 0.0):
           # if fluid detatched
-          # log.info('fluid detatched for particle %s' % j)
+          # log.info('fluid detatched for particle %s, effAccNorm %.16g' % (k, effAccNorm))
           tau = 0.0
       else:
+          if wetSnow == 1:
+            # add enthalpy dependent mu if wetSnow is activated
+            totalEnthalpy = totalEnthalpyArray[k]
+            enthalpy = totalEnthalpy - gravAcc * z - 0.5 * uMag * uMag
+            mu = mu0 * math.exp(-enthalpy / enthRef)
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
@@ -245,30 +265,48 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       elif explicitFriction == 0:
         # make sure uMag is not 0
         if uMag<velMagMin:
-          uMag = velMagMin
-        forceFrict[k] = forceFrict[k] - forceBotTang/uMag
+          uMagRes = velMagMin
+        else:
+          uMagRes = uMag
+        forceFrict[k] = forceFrict[k] - forceBotTang/uMagRes
 
-      # compute entrained mass
+      # compute entrained mass and if wetSnow case compute total enthalpy of particles with entrainment
       entrMassCell = entrMassRaster[indCellY, indCellX]
-      dm, areaEntrPart = computeEntMassAndForce(dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
-      # update velocity
-      ux = ux * m / (m + dm)
-      uy = uy * m / (m + dm)
-      uz = uz * m / (m + dm)
-      # update mass
-      m = m + dm
-      mass[k] = m
-      dM[k] = dm
+      if entrMassCell > 0.0:
+        # compute entrained mass
+        dm, areaEntrPart = computeEntMassAndForce(dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
+        # speed loss due to energy loss due to entrained mass
+        dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
 
-      # speed loss due to energy loss due to entrained mass
-      dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
-      dis = 1.0 - dEnergyEntr / (0.5 * m * (uMag*uMag + velMagMin))
-      if dis < 0.0:
-        dis = 0.0
-      # update velocity
-      ux = ux * dis
-      uy = uy * dis
-      uz = uz * dis
+        if wetSnow == 1 and dm > 0.0:
+          # enthalpy change due to entrained mass
+          entrEnthCell = entrEnthRaster[indCellY, indCellX]
+          dTotalEnthalpy = (entrEnthCell + gravAcc * z) * dm
+          totalEnthalpy = (totalEnthalpy * m + dTotalEnthalpy)
+
+        # update velocity
+        ux = ux * m / (m + dm)
+        uy = uy * m / (m + dm)
+        uz = uz * m / (m + dm)
+        # update mass
+        m = m + dm
+        mass[k] = m
+        dM[k] = dm
+
+        # speed loss due to energy loss due to entrained mass
+        if dEnergyEntr > 0.0:
+          dis = 1.0 - dEnergyEntr / (0.5 * m * (uMag*uMag + velMagMin))
+          if dis < 0.0:
+            dis = 0.0
+          # update velocity
+          ux = ux * dis
+          uy = uy * dis
+          uz = uz * dis
+
+        # if wetSnow update total enthalpy according to new particle mass
+        if wetSnow == 1 and dm > 0.0:
+          # update specific enthalpy of particle
+          totalEnthalpyArray[k] = totalEnthalpy / m
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -291,6 +329,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
+  particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -318,6 +357,8 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 
   Parameters
   ----------
+  dt: float
+    time step
   entrMassCell : float
       available mass for entrainement
   areaPart : float
@@ -333,6 +374,10 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
       entrained mass
   areaEntrPart : float
       Area for entrainement energy loss computation
+  entEroEnergy: float
+    erosion entrainment energy constant
+  rhoEnt: float
+    entrainement density
   """
   cdef double width, ABotSwiped, areaEntrPart
   # compute entrained mass
@@ -344,6 +389,8 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
           # erosion: erode according to shear and erosion energy
           dm = areaPart * tau * uMag * dt / entEroEnergy
           areaEntrPart = areaPart
+          # TODO why not this?
+          #areaEntrPart = math.sqrt(areaPart) * uMag * dt
       else:
           # ploughing in at avalanche front: erode full area weight
           # mass available in the cell [kg/m²]
@@ -506,6 +553,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
+  cdef int wetSnow = cfg.getint('wetSnow')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int reprojMethod = cfg.getint('reprojMethodPosition')
@@ -536,6 +584,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double TotkinEne = particles['kineticEne']
   cdef double TotpotEne = particles['potentialEne']
   cdef double peakKinEne = particles['peakKinEne']
@@ -585,7 +634,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
   cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0, dissEm = 0
@@ -647,7 +696,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     if reprojMethod == 0:
       # Project vertically on the dem
       iCellNew = DFAtlsC.getCells(xNew, yNew, ncols, nrows, csz)
-      if iCellNew >= 0:
+      if iCellNew >= 0 and outOfDEM[iCellNew] == 0:
         Lx0, Ly0, iCellNew, wNew[0], wNew[1], wNew[2], wNew[3] = DFAtlsC.getCellAndWeights(xNew, yNew, ncols, nrows, csz, interpOption)
         zNew = DFAtlsC.getScalar(Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
@@ -1736,7 +1785,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                 # SamosAT style (no reprojecion on the surface, dz = 0 and gz is used)
                 if SPHoption == 1:
                     dz = 0
-                    # get norm of r = xj - xl
+                    # get norm of r = xk - xl
                     r = DFAtlsC.norm(dx, dy, dz)
                     if r < minRKern * rKernel:
                         # impose a minimum distance between particles
