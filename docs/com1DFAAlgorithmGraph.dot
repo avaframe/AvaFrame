@@ -33,10 +33,10 @@ digraph "com1DFA algorithm graph" {
   href="../com1DFAAlgorithm.html#artificial-viscosity" tooltip="Go to: Artificial viscosity" target="_top"];
 
   computeFrictForce [label="Compute bottom shear force",
-  href="../theoryCom1DFA.html#compute-friction-forces"];
+  href="../com1DFAAlgorithm.html#bottom-shear-force" tooltip="Go to: Bottom shear force" target="_top"];
 
   computeGravityForce [label="Compute gravity driving force",
-  href="../com1DFAAlgorithm.html#compute-body-driving-force" tooltip="Go to: Gravity force" target="_top"];
+  href="../com1DFAAlgorithm.html#compute-driving-force" tooltip="Go to: Gravity force" target="_top"];
 
   computeResForce [label="Compute additional resistance forces",
   href="../com1DFAAlgorithm.html#added-resistance-force" tooltip="Go to: Additional resistance" target="_top"];
@@ -57,7 +57,7 @@ digraph "com1DFA algorithm graph" {
   href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   correctPartPos [label="Correct position and velocity",
-  href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
+  href="../com1DFAAlgorithm.html#correction-step" tooltip="Go to: Update Position" target="_top"];
 
   addSecRelease [label="Release potential secondary release areas",
   href="../com1DFAAlgorithm.html#add-secondary-release-area" tooltip="Go to: Secondary release" target="_top"];

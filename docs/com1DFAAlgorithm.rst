@@ -344,3 +344,14 @@ using :ref:`mesh to particle interpolation <DFAnumerics:Mesh to particle>` metho
 
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
+
+Simulation outputs
+-------------------
+
+At the end of the simulation, the result fields are exported to .asc files in
+:py:func:`com1DFA.com1DFA.exportFields` and the information gathered in an info dictionary is used to
+create a markdown report (:py:func:`log2Report.generateReport.writeReport`).
+Further details on the available outputs can be found in :ref:`moduleCom1DFA:Output`.
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
