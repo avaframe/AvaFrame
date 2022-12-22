@@ -6,7 +6,6 @@ import logging
 import matplotlib.path as mpltPath
 import pathlib
 import shutil
-import os
 import configparser
 
 # Local imports
@@ -630,9 +629,9 @@ def test_cartToSpherical():
 
     # print("r", r, "phi", phi, "theta", theta)
 
-    assert r == np.sqrt(X**2 + Y**2 + Z**2)
-    assert phi == np.rad2deg(np.arctan(2)) - 45
-    assert theta == 90.0 - np.rad2deg(np.arctan(2))
+    assert np.allclose(r, np.sqrt(X**2 + Y**2 + Z**2), atol=1.0e-4)
+    assert np.allclose(phi, np.rad2deg(np.arctan(2)) - 45.0, atol=1.0e-4)
+    assert np.allclose(theta, 90.0 - np.rad2deg(np.arctan(2.0)), atol=1.0e-4)
 
 
 def test_rotate():
