@@ -3,6 +3,11 @@
 # For the package (run-time) dependencies, see setup.cfg.
 requires = ["setuptools", "numpy", "cython"]
 
-[flake8]
-max-line-length = 120
+[tool.flake8]
+max-line-length = 109
+select = ['B950']
+extend-ignore = ['E203', 'E501']
+
+[tool.black]
+line-length = 109
 
