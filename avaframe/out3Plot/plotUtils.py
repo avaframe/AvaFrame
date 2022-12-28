@@ -4,7 +4,6 @@
     This file is part of Avaframe.
 """
 
-import os
 import warnings
 import seaborn as sns
 import copy
@@ -146,9 +145,7 @@ colorAvaframe = [
 cmapAvaframe = mplCol.ListedColormap(colorAvaframe)
 cmapAvaframe.set_bad(color="k")
 # add a continuous version
-cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list(
-    "cmapAvaframeCont", colorAvaframe, N=256
-)
+cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list("cmapAvaframeCont", colorAvaframe, N=256)
 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
@@ -337,9 +334,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             cmap = mplCol.LinearSegmentedColormap.from_list("myCmap", colorsNew, N=256)
         # Houston ve have a problem
         else:
-            message = (
-                "You need a `colors` list or a `cmap` to be able to create the colormap"
-            )
+            message = "You need a `colors` list or a `cmap` to be able to create the colormap"
             log.error(message)
             raise FileNotFoundError(message)
 
@@ -351,9 +346,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             levels = colormapDict["levels"]
         else:
             if "colors" in colormapDict:
-                levels = list(
-                    np.linspace(levMin, levMax, len(colormapDict["colors"]) + 1)
-                )
+                levels = list(np.linspace(levMin, levMax, len(colormapDict["colors"]) + 1))
                 log.warning(
                     "No `levels` list is provided to generate a discrete colormap, \
                             creating %d levels ranging from %.2f to %.2f"
@@ -455,9 +448,7 @@ def saveAndOrPlot(pathDict, outFileName, fig):
     return outPath
 
 
-def constrainPlotsToData(
-    inputData, cellSize, extentOption=False, constrainedData=False, buffer=""
-):
+def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedData=False, buffer=""):
     """constrain inut raster dataset to where there is data plus buffer zone
 
     Parameters
@@ -560,9 +551,7 @@ def putAvaNameOnPlot(ax, avaDir, date=True):
     if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
         if date:
-            infoText = (
-                datetime.datetime.now().strftime("%d.%m.%y") + "; " + str(avaName)
-            )
+            infoText = datetime.datetime.now().strftime("%d.%m.%y") + "; " + str(avaName)
         else:
             infoText = str(avaName)
     else:
@@ -585,9 +574,7 @@ def putAvaNameOnPlot(ax, avaDir, date=True):
     return infoText
 
 
-def putInfoBox(
-    ax, infoText, location="lowerRight", color="black", hAlignment="right", alphaF=0.5
-):
+def putInfoBox(ax, infoText, location="lowerRight", color="black", hAlignment="right", alphaF=0.5):
     """
     Puts the infoBox in the lower right or upper left or upper right or lowerLeft corner of the given
     matplotlib axes
@@ -760,9 +747,7 @@ def getColors4Scatter(values, nSamples, unitSC):
         typeCP = type(values[0])
         if typeCP == str:
             itemsList, ticksSC, colorSC = getColorbarTicksForStrings(values)
-            cmapSC, _, _, normSC = makeColorMap(
-                cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True
-            )
+            cmapSC, _, _, normSC = makeColorMap(cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
             displayColorBar = True
             unitSC = "-"
         else:
@@ -774,9 +759,7 @@ def getColors4Scatter(values, nSamples, unitSC):
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
 
 
-def addHillShadeContours(
-    ax, data, cellSize, extent, colors=["gray"], onlyContours=False
-):
+def addHillShadeContours(ax, data, cellSize, extent, colors=["gray"], onlyContours=False):
     """add hillshade and contours for given DEM data
 
     Parameters
