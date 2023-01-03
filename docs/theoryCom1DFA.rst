@@ -511,6 +511,36 @@ without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`).
 
 
+Wet snow friction type
+""""""""""""""""""""""""
+
+.. Note::
+
+   This is an experimental option to account for wet snow conditions, still under development and not yet tested.
+   Also the parameters are not yet calibrated.
+
+In addition, com1DFA provides an optional friction model implementation to account for wet snow conditions.
+This approach is based on the Voellmy friction model but with an enthalpy dependent friction parameter.
+
+.. math::
+ \tau^{(b)} = \mu\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2
+
+
+where,
+
+
+.. math::
+  \mu = \mu_0\,\exp(-enthalpy/enthRef)
+
+
+The total specific enthalpy of the particles is initialized based on their initial temperature, specific heat capacity,
+altitude and their velocity (which is zero for the initial time step).
+Throughout the computation, the particles specific enthalpy is then computed following:
+
+.. math::
+  enthalpy = totalEnthalpy - g\,z - 0.5\,\bar{u}^2
+
+
 Dam
 ~~~
 
