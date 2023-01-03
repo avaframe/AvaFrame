@@ -592,11 +592,13 @@ def test_initializeMassEnt():
         dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfg['GENERAL'])
     testData = np.zeros((nrows, ncols))
     testData[0:11, 0:11] = 1.0 * 200.
-
+    testEnt = np.zeros((nrows, ncols))
+    testEnt[0:11, 0:11] = -10. * 2050.
     print('data', testData)
     print('ent', entrMassRaster, entLine)
 
     assert np.array_equal(entrMassRaster, testData)
+    assert np.array_equal(entrEnthRaster, testEnt)
     assert np.sum(entrMassRaster) == 24200.
     assert entrMassRaster.shape[0] == nrows
     assert reportAreaInfo['entrainment'] == 'Yes'
@@ -970,10 +972,15 @@ def test_releaseSecRelArea():
     particles2, zPartArray0New2 = com1DFA.releaseSecRelArea(
         cfg['GENERAL'], particlesIn2, fields2, dem, zPartArray0)
 
+    pEnt = -10. * 2050 + 9.81 * 1.
+
+
     print('particles IN pytest socond', particles2)
     assert particles['nPart'] == 6
     assert np.array_equal(particles['x'], np.asarray(
         [6., 7., 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['totalEnthalpy'], np.asarray(
+            [6., 7., pEnt, pEnt, pEnt, pEnt]))
     assert np.array_equal(particles['y'], np.asarray(
         [6., 7., 6.75, 6.75, 7.25, 7.25]))
     assert np.array_equal(zPartArray0New, np.asarray(
@@ -991,6 +998,8 @@ def test_releaseSecRelArea():
     assert np.array_equal(particles2['m'], np.asarray(
         [1250., 1250., 1250., 50., 50., 50., 50., 25., 25., 25., 25.]))
     assert particles2['mTot'] == 4050.0
+
+
 
 
 def test_getRelThFromPart():
@@ -1536,6 +1545,7 @@ def test_initializeSimulation(tmp_path):
     print('dem', dem)
     print('reportAreaInfo', reportAreaInfo)
 
+    pEnt =  -10. *2050. + 9.81 * 1.
     assert np.array_equal(particles['y'], np.asarray(
         [6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
     assert np.sum(fields['pfv']) == 0.0
@@ -1545,6 +1555,8 @@ def test_initializeSimulation(tmp_path):
     assert dem['originalHeader']['xllcenter'] == 1.0
     assert dem['originalHeader']['yllcenter'] == 2.0
     assert particles['nPart'] == 9
+    assert np.array_equal(particles['totalEnthalpy'], np.asarray(
+        [pEnt, pEnt, pEnt, pEnt, pEnt, pEnt, pEnt, pEnt, pEnt]))
     assert np.array_equal(particles['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['m'], np.asarray(
