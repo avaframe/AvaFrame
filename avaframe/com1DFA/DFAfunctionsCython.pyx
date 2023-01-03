@@ -51,7 +51,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       force dictionary
   """
   # read input parameters
-  cdef int wetSnow = cfg.getint('wetSnow')
   cdef double enthRef = cfg.getfloat('enthRef')
   cdef double tau0 = cfg.getfloat('tau0')
   cdef double Rs0 = cfg.getfloat('Rs0')
@@ -80,6 +79,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef int viscOption = cfg.getint('viscOption')
   cdef double dt = particles['dt']
   cdef double mu = cfg.getfloat('mu')
+  cdef double mu0 = cfg.getfloat('mu0WetSnow')
+  cdef double xsiWetSnow = cfg.getfloat('xsiWetSnow')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -129,7 +130,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double w[4]
   cdef double wEnd[4]
   cdef int k
-  cdef double mu0 = mu
   force = {}
   # loop on particles
   for k in range(nPart):
@@ -237,11 +237,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           # log.info('fluid detatched for particle %s, effAccNorm %.16g' % (k, effAccNorm))
           tau = 0.0
       else:
-          if wetSnow == 1:
-            # add enthalpy dependent mu if wetSnow is activated
-            totalEnthalpy = totalEnthalpyArray[k]
-            enthalpy = totalEnthalpy - gravAcc * z - 0.5 * uMag * uMag
-            mu = mu0 * math.exp(-enthalpy / enthRef)
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
@@ -253,6 +248,12 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           elif frictType == 3:
             # voellmy friction type
             tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
+          elif frictType == 4:
+            # add enthalpy dependent mu if wetSnow is activated
+            totalEnthalpy = totalEnthalpyArray[k]
+            enthalpy = totalEnthalpy - gravAcc * z - 0.5 * uMag * uMag
+            mu = mu0 * math.exp(-enthalpy / enthRef)
+            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsiWetSnow
           else:
             tau = 0.0
 
@@ -278,7 +279,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         # speed loss due to energy loss due to entrained mass
         dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
 
-        if wetSnow == 1 and dm > 0.0:
+        if frictType == 4 and dm > 0.0:
           # enthalpy change due to entrained mass
           entrEnthCell = entrEnthRaster[indCellY, indCellX]
           dTotalEnthalpy = (entrEnthCell + gravAcc * z) * dm
@@ -304,7 +305,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           uz = uz * dis
 
         # if wetSnow update total enthalpy according to new particle mass
-        if wetSnow == 1 and dm > 0.0:
+        if frictType == 4 and dm > 0.0:
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
 
@@ -553,7 +554,6 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
-  cdef int wetSnow = cfg.getint('wetSnow')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int reprojMethod = cfg.getint('reprojMethodPosition')
