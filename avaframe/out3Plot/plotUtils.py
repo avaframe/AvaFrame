@@ -517,14 +517,18 @@ def addColorBar(
     extend="neither",
     pad=0.05,
     tickLabelsList="",
-    location="right",
 ):
     """
     Adds, styles and labels a colorbar to the given image and axes
     """
 
     cbar = ax2.figure.colorbar(
-        im, ax=[ax2], ticks=ticks, extend=extend, pad=pad, shrink=0.9, location=location
+        im,
+        ax=ax2,
+        ticks=ticks,
+        extend=extend,
+        pad=pad,
+        shrink=0.9,
     )
     cbar.outline.set_visible(False)
     # make sure the cbar title does not overlap with the cbar itself
