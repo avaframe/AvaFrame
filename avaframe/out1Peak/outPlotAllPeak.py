@@ -131,12 +131,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             ax.set_ylabel('y [m]')
             pU.putAvaNameOnPlot(ax, avaDir)
 
-            if cfgFLAGS.getboolean('showPlot'):
-                plt.show()
-            fig.savefig(plotName)
-            plotPath = pathlib.Path.cwd() / plotName
+            # save and or show figure
+            plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName.stem, fig)
             plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
-            plt.close(fig)
 
     return plotDict
 
@@ -210,9 +207,9 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
+        plotName = '%s' % (name)
 
         pU.putAvaNameOnPlot(ax, avaDir)
 
-        fig.savefig(plotName)
-        plt.close(fig)
+        # save and or show figure
+        plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName, fig)

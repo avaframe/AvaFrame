@@ -273,8 +273,10 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDi
     reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
     # Generate plots for all peakFiles
     plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
-    # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+
+    if cfgMain['FLAGS'].getboolean('createReport'):
+        # write report
+        gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDict)
 
     return dem, plotDict, reportDictList, simDFNew
 
@@ -623,7 +625,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
     relDict : dict
         release dictionary
     cfg : configparser
-        simulation configuration 
+        simulation configuration
     entrainmentArea : str
         entrainment file name
     resistanceArea : str
@@ -2484,7 +2486,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-       
+
         # check differences to default and add indicator to name
         defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
 
