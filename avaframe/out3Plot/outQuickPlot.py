@@ -16,6 +16,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.out3Plot import statsPlots as sPlot
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -202,7 +203,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
                  horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)
 
     saveNameDiff = outDir / ('Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat))
-    fig.savefig(saveNameDiff)
+
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, saveNameDiff.stem, fig)
 
     if crossProfile:
         # Fgiure 2 cross and lonprofile
@@ -221,7 +224,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         ax[0].legend()
         ax[1].legend()
         saveNameProfile = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
-        fig1.savefig(saveNameProfile)
+        # save and or show figure
+        plotPath = pU.saveAndOrPlot({'pathResult': outDir}, saveNameProfile.stem, fig)
 
     log.info('Figures saved to: %s' % outDir)
 
@@ -239,10 +243,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         plotDict['differenceZoom'].append(diffMaxZoom)
         plotDict['differenceZoom'].append(diffMeanZoom)
         plotDict['differenceZoom'].append(diffMinZoom)
-
-    plt.close(fig)
-    if crossProfile:
-        plt.close(fig1)
 
     return plotDict
 
@@ -511,16 +511,11 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
         ax3.set_title('Profile at y ~ %d [%s] (%d)' % (location, unit, ny_loc))
 
     saveNameProfile = outDir / ('Profiles_%s.%s' % (name1, pU.outputFormat))
-    fig.savefig(saveNameProfile)
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, saveNameProfile.stem, fig)
 
     log.info('Figures saved to: %s' % outDir)
-
-    if cfg['FLAGS'].getboolean('showPlot'):
-        plt.show()
-
     plotDict['plots'].append(saveNameProfile)
-
-    plt.close(fig)
 
     return plotDict
 
@@ -550,7 +545,7 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
     ax1.set_xlabel('y [m]')
     pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
 
-    # loop over all sims 
+    # loop over all sims
     for simName in contourDict:
         ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'])
 

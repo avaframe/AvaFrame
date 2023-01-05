@@ -14,6 +14,7 @@ from scipy.interpolate import griddata
 # local imports
 from avaframe.in1Data import getInput
 from avaframe.in3Utils import geoTrans
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 def _generateDEMPlot(X, Y, z, title):
     """Generates 3d DEM plot, use this to style the plot"""
 
-    plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 10))
     ax = plt.axes(projection='3d')
 
     ls = LightSource(270, 45)
@@ -43,7 +44,7 @@ def _generateDEMPlot(X, Y, z, title):
     ax.set_ylabel('y [m]')
     ax.set_zlabel('elevation (m)')
 
-    return ax
+    return ax, fig
 
 
 def plotDEM3D(cfg, showPlot = False):
@@ -83,18 +84,14 @@ def plotDEM3D(cfg, showPlot = False):
     # Set coordinate grid with given origin
     X, Y = geoTrans.makeCoordinateGrid(xl, yl, dx, ncols, nrows)
 
-    ax = _generateDEMPlot(X, Y, z, avaName)
+    ax, fig = _generateDEMPlot(X, Y, z, avaName)
 
     # Save figure to file
-    outName = os.path.splitext(demPath)[0] + '_plot.png'
-    log.info('Saving plot to: %s', outName)
-    plt.savefig(outName)
+    outName = os.path.splitext(demPath)[0] + '_plot'
 
-    # If flag is set, plot figure
-    if showPlot:
-        plt.show()
-
-    plt.close()
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': avalancheDir}, outName, fig)
+    log.info('Saving plot to: %s', plotPath)
 
 
 def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
@@ -116,20 +113,13 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat', 'TPF': 'triple parabola flat',
                  'HS': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
 
-    ax = _generateDEMPlot(X, Y, z, topoNames[nameExt])
+    ax, fig = _generateDEMPlot(X, Y, z, topoNames[nameExt])
 
     # Save figure to file
-    outName = os.path.join(outDir, '%s_%s_plot' % (demName, nameExt))
-
-    log.info('Saving plot to: %s', outName)
-
-    plt.savefig(outName)
-
-    # If flag is set, plot figure
-    if cfgMain['FLAGS'].getboolean('showPlot'):
-        plt.show()
-
-    plt.close()
+    outName = '%s_%s_plot' % (demName, nameExt)
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outName, fig)
+    log.info('Saving plot to: %s', plotPath)
 
 
 def plotReleasePoints(xv, yv, xyPoints, demType):

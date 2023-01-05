@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import glob
 
+import avaframe.out3Plot.plotUtils as pU
+
 
 # flagLim if x axis limited
 flagLim = False
@@ -26,13 +28,9 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     plt.ylabel('CDF')
     plt.grid()
 
-    if flagShow:
-        plt.show()
-
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'CDF_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close(fig)
-
+    # save and or plot fig
+    plotName = 'CDF_%s_%s' % (cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
 def plotSample(workingDir, sample, cfg, flagShow):
     """ Generate bar plot of sample values """
@@ -43,12 +41,9 @@ def plotSample(workingDir, sample, cfg, flagShow):
     plt.ylabel('Sampled values')
     plt.bar(xSteps,sample)
 
-    if flagShow:
-        plt.show()
-
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'samples_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close(fig)
+    # save and or plot fig
+    plotName = 'samples_%s_%s' % (cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
 
 def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
@@ -63,12 +58,9 @@ def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
         ax2.plot(sampleVect, kdeDict[key](sampleVect), label=cfg['bwMethod'])
     ax2.legend(loc='upper right')
 
-    if flagShow:
-        plt.show()
-
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close(fig)
+    # save and or plot fig
+    plotName = 'PDFcompare%s_%s' % (cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
 
 def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow, x=''):
@@ -83,12 +75,10 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow, x=''
     plt.plot(x, CDF, 'g', label='Desired CDF')
     plt.plot(xSample, CDFEmp, 'b*', label='Actual CDF')
 
-    if flagShow:
-        plt.show()
+    # save and or plot fig
+    plotName = 'CDFcompare%s_%s_%s' % (methodAbbr, cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
-    plt.close(fig)
 
 
 def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow, x=''):
@@ -104,12 +94,10 @@ def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow, x=''):
     plt.xlabel('sample values')
     plt.legend()
 
-    if flagShow:
-        plt.show()
+    # save and or plot fig
+    plotName = 'PDFcompare_%s_%s' % (cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close(fig)
 
 
 def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
@@ -125,9 +113,7 @@ def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
     n_bins = int(int(cfg['sampleSize'])* 0.25)
     n, bins, patches = ax.hist(sample, n_bins, density=True, histtype='step',
                            cumulative=True, label='Empirical')
-    if flagShow:
-        plt.show()
 
-    # save fig
-    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
-    plt.close(fig)
+    # save and or plot fig
+    plotName = 'CDFcompare%s_%s_%s' % (methodAbbr, cfg['name'], cfg['distType'])
+    plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)

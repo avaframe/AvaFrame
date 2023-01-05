@@ -19,6 +19,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import cfgHandling
+import avaframe.out3Plot.plotUtils as pU
 
 
 # create local logger
@@ -88,15 +89,10 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
     pU.addColorBar(sc, ax, ticks, unitVar, nameVar, tickLabelsList=itemsList)
     pU.putAvaNameOnPlot(ax, avalancheDir)
 
-    # shpw plot
-    if flagShow:
-        plt.show()
-
-    # save fig
     outDir = cfg['outDir']
-    fig.savefig(os.path.join(outDir, 'Scatter_%s_vs_%s_dist%s_%s.png' %
-                (resType1, resType2, cfg['distType'], cfg['scenario'])))
-    plt.close(fig)
+    plotName = 'Scatter_%s_vs_%s_dist%s_%s' % (resType1, resType2, cfg['distType'], cfg['scenario'])
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName, fig)
 
 
 def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir,
@@ -163,14 +159,9 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir,
 
     # save fig
     outDir = cfg['outDir']
-    plt.savefig(os.path.join(outDir, 'Scatterkde_%s_vs_%s_dist%s_%s.png' %
-                (resType1, resType2, cfg['distType'], cfg['scenario'])))
-
-    # shpw plot
-    if flagShow:
-        plt.show()
-
-    plt.close()
+    plotName = 'Scatterkde_%s_vs_%s_dist%s_%s' % (resType1, resType2, cfg['distType'], cfg['scenario'])
+    # save and or show figure
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName, fig1)
 
 
 def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
