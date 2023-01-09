@@ -1404,7 +1404,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
                               'entThPercentVariation': '', 'relThPercentVariation': '',
                               'entThRangeVariation': '', 'relThRangeVariation': '',
                               'entThDistVariation': '', 'relThDistVariation': '',
-                              'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
+                              'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001',
+                              'sphKernelRadius': '5.'}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
 
     dirName = pathlib.Path(__file__).parents[0]
@@ -1430,7 +1431,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
                           'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
                           'entThDistVariation': '', 'relThDistVariation': '',
-                          'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
+                          'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.'}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
@@ -1469,7 +1470,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
                            'relThRangeVariation': '',
                            'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
-                           'meshCellSizeThreshold': '0.001'}
+                           'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.'}
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     testCfg2['GENERAL']['avalancheDir'] = str(avaDirTest)

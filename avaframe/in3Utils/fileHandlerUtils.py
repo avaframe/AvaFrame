@@ -574,7 +574,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         data[simID].append(infoParts[0])
 
         indiStr = ['_C_', '_D_']
-        if any(x in name for x in indiStr): 
+        if any(x in name for x in indiStr):
             data['isDefault'].append(infoParts[1])
             data['simType'].append(infoParts[2])
             data['modelType'].append(infoParts[3])
@@ -588,7 +588,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             else:
                 data['timeStep'].append('')
 
-        # If it still is an 'old' simname 
+        # If it still is an 'old' simname
         # This can be removed at one point
         else:
             data['isDefault'].append(None)
@@ -682,8 +682,19 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             dataDF = pd.concat([dataDF, newLine], ignore_index=False)
             dataDF.loc[simName, 'releaseArea'] = relNameSim
             dataDF.loc[simName, 'simHash'] = infoParts[0]
-            dataDF.loc[simName, 'simType'] = infoParts[1]
-            dataDF.loc[simName, 'modelType'] = infoParts[2]
+            # TODO: remove once all simNames are updated to include C or D as simModified
+            if len(infoParts) == 5:
+                dataDF.loc[simName, 'simModified'] = infoParts[1]
+                dataDF.loc[simName, 'simType'] = infoParts[2]
+                dataDF.loc[simName, 'modelType'] = infoParts[3]
+            elif len(infoParts) == 4:
+                dataDF.loc[simName, 'simType'] = infoParts[1]
+                dataDF.loc[simName, 'modelType'] = infoParts[2]
+            else:
+                message = 'simName format not recognized for simName: %s' % simName
+                log.error(message)
+                raise AssertionError(message)
+
             # add info about the cell size
             header = IOf.readASCheader(file)
             dataDF.loc[simName, 'cellSize'] = header['cellsize']

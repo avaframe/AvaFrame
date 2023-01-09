@@ -136,22 +136,27 @@ def test_makeSimFromResDF():
 
     # Test function
     dirPath = os.path.dirname(__file__)
-    inputDir = os.path.join(dirPath, 'data', 'testSim')
+    inputDir = os.path.join(dirPath, '..', '..', 'benchmarks', 'avaHelixChannelWetSnowTest')
     dataDF, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
     print(resTypeList)
     print(dataDF.columns)
     print(dataDF.index)
-    assert dataDF['simName'].iloc[0] == 'releaseTest1_0.888_entres_dfa'
-    assert dataDF['releaseArea'].iloc[0] == 'releaseTest1'
-    assert dataDF['simType'].iloc[0] == 'entres'
+    assert dataDF['simName'].iloc[0] == 'release1HX_34ac0b2565_C_ent_dfa'
+    assert dataDF['releaseArea'].iloc[0] == 'release1HX'
+    assert dataDF['simType'].iloc[0] == 'ent'
     assert dataDF['cellSize'].iloc[0] == 5.0
+    assert dataDF['modelType'].iloc[0] == 'dfa'
+    assert dataDF['simModified'].iloc[0] == 'C'
 
     inputDir = os.path.join(dirPath, 'data', 'testSim1')
-    dataDF, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
-    assert dataDF['simName'].iloc[0] == 'releaseTest1_test_AF_0.888_entres_dfa'
-    assert dataDF['releaseArea'].iloc[0] == 'releaseTest1_test'
-    assert dataDF['simType'].iloc[0] == 'entres'
-    assert dataDF['cellSize'].iloc[0] == 5.0
+    dataDF2, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
+    assert dataDF2['simName'].iloc[0] == 'releaseTest1_test_AF_0.888_entres_dfa'
+    assert dataDF2['releaseArea'].iloc[0] == 'releaseTest1_test'
+    assert dataDF2['simHash'].iloc[0] == '0.888'
+    assert dataDF2['cellSize'].iloc[0] == 5.0
+    assert dataDF2['simType'].iloc[0] == 'entres'
+    assert dataDF2['modelType'].iloc[0] == 'dfa'
+    assert ('simModified' in dataDF2.columns ) == False
 
 
 def test_exportcom1DFAOrigOutput(tmp_path):

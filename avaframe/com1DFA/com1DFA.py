@@ -184,6 +184,11 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
             # log simulation name
             log.info('Run simulation: %s' % cuSim)
 
+            # log that remeshed DEM is used
+            if cfg['GENERAL'].getfloat('meshCellSize') != 5.:
+                log.info('meshCellSize is not default value but set to %.2f m, DEM taken from: %s' %
+                    (cfg['GENERAL'].getfloat('meshCellSize'), cfg['INPUT']['DEM']))
+
             # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
             dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg,
                 avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
@@ -2496,6 +2501,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
+
+        # check sphKernelRadius setting
+        cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
 
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
