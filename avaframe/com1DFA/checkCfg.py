@@ -36,3 +36,29 @@ def checkCfgConsistency(cfg):
             log.debug('Ata parameters are consistent')
 
     return True
+
+
+def checkCellSizeKernelRadius(cfg):
+    """ Check if sphKernelRadius is set to match the meshCellSize if so adapt sphKernelRadius value
+
+    Parameters
+    -----------
+    cfg : dict
+        configuration settings here used: sphKernelRadius, meshCellSize
+
+    Returns
+    --------
+    cfg : dict
+        updated configuration settings here used: sphKernelRadius
+
+    """
+
+    # Check if Ata Parameters are consistent
+    sphKernelRadius = cfg['GENERAL']['sphKernelRadius']
+    meshCellSize = cfg['GENERAL']['meshCellSize']
+
+    if sphKernelRadius == 'meshCellSize':
+        cfg['GENERAL']['sphKernelRadius'] = cfg['GENERAL']['meshCellSize']
+        log.info('sphKernelRadius is set to match meshCellSize of %s meters' % meshCellSize)
+
+    return cfg
