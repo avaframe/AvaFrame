@@ -16,6 +16,9 @@ from itertools import product
 import configparser
 import matplotlib.tri as tri
 from shapely.geometry import Polygon as sPolygon
+import multiprocessing
+from functools import partial
+import os
 
 # Local imports
 from avaframe.version import getVersion
@@ -54,15 +57,13 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
+def com1DFAPreprocess(cfgMain, cfgInfo=''):
     """ preprocess information from configuration, read input data and gather into inputSimFiles,
         create one config object for each of all desired simulations,
         create dataFrame with one line per simulations of already existing sims in avalancheDir
 
         Parameters
         ------------
-        avalancheDir: str or pathlib Path
-            path to avalanche data
         cfgMain: configparser object
             main configuration of AvaFrame
         cfgInfo: str or pathlib Path or configparser object
@@ -80,6 +81,8 @@ def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
             path to store outputs
     """
 
+    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+
     modName = str(pathlib.Path(com1DFA.__file__).stem)
 
     # read initial configuration
@@ -89,7 +92,7 @@ def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
         cfgStart = cfgInfo
 
     # Create output and work directories
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
+    _ , outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
                                                cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # read input data files (release, DEM, etc.) and update configuration with this
@@ -123,13 +126,11 @@ def com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=''):
     return simDict, outDir, inputSimFilesAll, simDFExisting
 
 
-def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
+def com1DFAMain(cfgMain, cfgInfo=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
 
         Parameters
         ------------
-        avalancheDir: str or pathlib Path
-            path to avalanche data
         cfgMain: configparser object
             main configuration of AvaFrame
         cfgInfo: str or pathlib Path or configparser object
@@ -150,72 +151,56 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
             of the already existing ones)
     """
 
+    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+
     # preprocessing to create configuration objects for all simulations to run
-    simDict, outDir, inputSimFiles, simDFExisting = com1DFAPreprocess(avalancheDir, cfgMain, cfgInfo=cfgInfo)
+    simDict, outDir, inputSimFiles, simDFExisting = com1DFAPreprocess(cfgMain, cfgInfo=cfgInfo)
 
     # TODO: once it is confirmed that inputSimFiles is not changed within sim
     # keep for now for testing
     inputSimFilesTest = inputSimFiles.copy()
 
     # initialize reportDict list
-    reportDictList = []
+    reportDictList = list()
 
     # is there any simulation to run?
     if bool(simDict):
-
         # reset simDF and timing
-        simDF = ''
-        tCPUDF = ''
+        simDF = pd.DataFrame()
+        tCPUDF = pd.DataFrame()
+        dem = dict()
 
-        # loop over all simulations
-        for cuSim in simDict:
+        startTime = time.time()
 
-            # load configuration object for current sim
-            cfg = simDict[cuSim]['cfgSim']
+        log.info("--- STARTING (potential) PARALLEL PART ----")
+        # Get number of CPU Cores wanted
+        nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(simDict))
 
-            # check configuraton for consistency
-            checkCfg.checkCfgConsistency(cfg)
+        # Supply compute task with inputs
+        com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)  
 
-            # fetch simHash for current sim
-            simHash = simDict[cuSim]['simHash']
-            # append configuration to dataframe
-            simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
 
-            # log simulation name
-            log.info('Run simulation: %s' % cuSim)
+        # Create parallel pool and run
+        with multiprocessing.Pool(processes=nCPU) as pool:
+            results = pool.map(com1DFACoreTaskWithInput, simDict)
+            pool.close()
+            pool.join()
 
-            # log that remeshed DEM is used
-            if cfg['GENERAL'].getfloat('meshCellSize') != 5.:
-                log.info('meshCellSize is not default value but set to %.2f m, DEM taken from: %s' %
-                    (cfg['GENERAL'].getfloat('meshCellSize'), cfg['INPUT']['DEM']))
+        # Split results to according structures
+        for result in results:
+            simDF = pd.concat([simDF, result[0]], axis=0)
+            tCPUDF = pd.concat([tCPUDF, result[1]], axis=0)
+            dem = result[2] #only last dem is used
+            reportDictList.append(result[3])
 
-            # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
-            dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg,
-                avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
-            simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
-
-            # TODO check if inputSimFiles not changed within sim
-            for key in inputSimFilesTest:
-                if key != 'releaseScenario':
-                    if inputSimFilesNEW[key] != inputSimFilesTest[key]:
-                        log.error('InputFilesDict has changed')
-
-            # append time to data frame
-            tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
-
-            # add report dict to list for report generation
-            reportDictList.append(reportDict)
-
-            # create hash to check if configuration didn't change
-            simHashFinal = cfgUtils.cfgHash(cfgFinal)
-            if simHashFinal != simHash:
-                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
-                message = 'Simulation configuration has been changed since start'
-                log.error(message)
-                raise AssertionError(message)
+        timeNeeded = '%.2f' % (time.time() - startTime)
+        log.info('Overall (parallel) com1DFA computation took: %s s ' %timeNeeded)
+        log.info("--- ENDING (potential) PARALLEL PART ----")
 
         # postprocessing: writing report, creating plots
-        dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList)
+        dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
+            simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList
+        )
 
         return dem, plotDict, reportDictList, simDFNew
 
@@ -226,7 +211,66 @@ def com1DFAMain(avalancheDir, cfgMain, cfgInfo=''):
         return 0, {}, [], ''
 
 
-def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList):
+def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
+
+    simDF = pd.DataFrame()
+    tCPUDF = pd.DataFrame() 
+
+    # load configuration object for current sim
+    cfg = simDict[cuSim]["cfgSim"]
+
+    # check configuraton for consistency
+    checkCfg.checkCfgConsistency(cfg)
+
+    # fetch simHash for current sim
+    simHash = simDict[cuSim]["simHash"]
+
+    log.info('%s runs as process: %s' % (cuSim,  os.getpid()))
+
+    # append configuration to dataframe
+    simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
+
+    # log simulation name
+    log.info("Run simulation: %s" % cuSim)
+
+    # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
+    (
+        dem,
+        reportDict,
+        cfgFinal,
+        tCPU,
+        inputSimFilesNEW,
+        particlesList,
+        fieldsList,
+        tSave,
+    ) = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
+    simDF.at[simHash, "nPart"] = str(int(particlesList[0]["nPart"]))
+
+    #     # TODO check if inputSimFiles not changed within sim
+    #     for key in inputSimFilesTest:
+    #         if key != "releaseScenario":
+    #             if inputSimFilesNEW[key] != inputSimFilesTest[key]:
+    #                 log.error("InputFilesDict has changed")
+
+    # append time to data frame
+    tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
+
+
+    #     # create hash to check if configuration didn't change
+    #     simHashFinal = cfgUtils.cfgHash(cfgFinal)
+    #     if simHashFinal != simHash:
+    #         cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName="%s_butModified" % simHash)
+    #         message = "Simulation configuration has been changed since start"
+    #         log.error(message)
+    #         raise AssertionError(message)
+
+    # return simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList
+    return simDF, tCPUDF, dem, reportDict
+
+
+
+
+def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList):
     """ postprocessing of simulation results: save configuration to csv, create plots and report
 
         Parameters
@@ -238,8 +282,6 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDi
         simDFExisting: pandas DataFrame
             dataframe with one line per simulation and info on parameters used before
             simulations have been performed
-        cfg: configparser object
-            full configuration object of all sims
         cfgMain: configparser object
             global avaframe config
         dem: dict
@@ -262,7 +304,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDi
     """
 
     modName = 'com1DFA'
-    avalancheDir = cfg['GENERAL']['avalancheDir']
+    avalancheDir = cfgMain['MAIN']['avalancheDir']
 
     # prepare for writing configuration info
     simDF = cfgUtils.convertDF2numerics(simDF)
@@ -2625,7 +2667,7 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
         # clean avalanche directory
         iP.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=deleteOutput)
         # Run the DFA simulation
-        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=cfgFile)
+        dem, _, _, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFile)
     else:
         # read simulation dem
         demOri = gI.readDEM(avalancheDir)

@@ -51,7 +51,7 @@ relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFA to perform simulation - provide configuration file and release thickness function
-dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=FPCfg)
+dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=FPCfg)
 Particles, Tsave = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True, comModule='com1DFA')
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
