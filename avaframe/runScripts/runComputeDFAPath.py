@@ -69,7 +69,7 @@ for avaName in avaList:
         with open(com1DFACfgFile, 'w') as configfile:
             com1DFACfg.write(configfile)
         # call com1DFA and perform simulations
-        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=com1DFACfgFile)
+        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgFile=com1DFACfgFile)
     else:
         # read simulation dem
         demOri = gI.readDEM(avalancheDir)

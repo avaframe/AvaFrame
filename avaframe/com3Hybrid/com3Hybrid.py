@@ -90,7 +90,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # Run dense flow with coulomb friction
         # Clean input directory of old work and output files from module
         initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=False)
-        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=com1DFACfgFile)
+        dem, _, _, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=com1DFACfgFile)
         simID = simDF.index[0]
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simID, flagAvaDir=True,
                                                                        comModule='com1DFA')

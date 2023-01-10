@@ -10,6 +10,8 @@ import hashlib
 import json
 import pandas as pd
 import re
+import math
+import multiprocessing
 from deepmerge import always_merger
 from copy import deepcopy
 from deepdiff import DeepDiff
@@ -707,3 +709,21 @@ def convertToCfgList(parameterList):
             parameterString = parameterString + '|' + item
 
     return parameterString
+
+def getNumberOfProcesses(cfgMain, nSims):
+
+    maxCPU = multiprocessing.cpu_count()
+
+    if cfgMain["MAIN"]["nCPU"] == 'auto':
+        nCPU = math.floor(maxCPU * 0.9)
+
+    else:
+        nCPU = cfgMain['MAIN'].getint('nCPU')
+
+    # if number of sims is lower than nCPU
+    nCPU = min(nCPU, nSims)
+
+    log.info("Number of simulations to perform: %s " % nSims)
+    log.info("Taking %s cpu cores out of maximum of %s cores." % (nCPU, maxCPU))
+
+    return nCPU

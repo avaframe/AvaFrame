@@ -70,7 +70,7 @@ def runOperational(avalancheDir=''):
 
     # ----------------
     # Run dense flow
-    _, plotDict, reportDictList, _ = com1DFA.com1DFAMain(avalancheDir, cfgMain)
+    _, plotDict, reportDictList, _ = com1DFA.com1DFAMain(cfgMain)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)

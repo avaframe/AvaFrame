@@ -41,4 +41,4 @@ for sphKernelRadius in [5, 3]:
     updater.update_file()
 
     # call com1DFA to perform simulation - provide configuration file and release thickness function
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=damBreakCfg)
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=damBreakCfg)
