@@ -36,9 +36,9 @@ def runGlideSnowTool(avalancheDir, cfgMain, glideSnowCfg):
 
 
     # ++++++++++ set configurations for com1DFA and override ++++++++++++
-    # get comDFA configuration and update with glide snow parameter set 
+    # get comDFA configuration and update with glide snow parameter set
     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-                                          onlyDefault=glideSnowCfg['com1DFA_override']['defaultConfig'])
+                                          onlyDefault=glideSnowCfg['com1DFA_override'].getboolean('defaultConfig'))
     com1DFACfg, glideSnowCfg = cfgHandling.applyCfgOverride(com1DFACfg, glideSnowCfg, com1DFA, addModValues=False)
 
     # run the com1DFA module with glideSnow settings

@@ -43,7 +43,7 @@ energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest)
 # ++++++++++ set configurations for all the used modules and override ++++++++++++
 # get comDFA configuration and save to file
 com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-                                      onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
+                                      onlyDefault=energyLineTestCfg['com1DFA_override'].getboolean('defaultConfig'))
 com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
 com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
 

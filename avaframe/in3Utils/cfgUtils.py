@@ -10,7 +10,7 @@ import hashlib
 import json
 import pandas as pd
 import re
-import sys 
+import sys
 from deepmerge import always_merger
 from copy import deepcopy
 from deepdiff import DeepDiff
@@ -76,6 +76,11 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
 
     '''
+
+    if isinstance(onlyDefault, bool) == False:
+        message = 'OnlyDefault parameter is not a boolean but %s' % type(onlyDefault)
+        log.error(message)
+        raise TypeError(message)
 
     # get path of module
     modPath = pathlib.Path(module.__file__).resolve().parent
@@ -202,21 +207,21 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
 
 
 def _splitDeepDiffValuesChangedItem(inKey, inVal):
-    """ splits one item of a deepdiff result into section, key, old value, new value 
+    """ splits one item of a deepdiff result into section, key, old value, new value
 
         Parameters
         -----------
         inputKey: str
-            key of a deepdiff changed_values item 
+            key of a deepdiff changed_values item
         inputValue: dict
-            value of a deepdiff changed_values item 
+            value of a deepdiff changed_values item
 
         Returns
         --------
         section: str
-            section name of changed item 
+            section name of changed item
         key: str
-            key name of changed item 
+            key name of changed item
         oldVal: str
             old value
         newVal: str
@@ -257,7 +262,7 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     log.info('Comparing two configs')
 
     # initialize modInfo and printOutInfo
-    modInfo = dict() 
+    modInfo = dict()
 
     # Switch to dict
     defCfgD = convertConfigParserToDict(defCfg)
@@ -266,7 +271,7 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     # Get the difference info
     cfgDiff = DeepDiff(defCfgD, locCfgD)
 
-    # Combine them, different keys are just added, for the same keys, the 
+    # Combine them, different keys are just added, for the same keys, the
     # local (right) value is used
     modCfgD = deepcopy(defCfgD)
     always_merger.merge(modCfgD, locCfgD)
@@ -276,12 +281,12 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     modCfg.optionxform = str
 
     # Merge is done, from here on down it is only printout and modInfo creation
-    
+
     # If toPrint is set, print full configuration:
     if toPrint:
         for line in pformat(modCfgD, sort_dicts=False).split('\n'):
             log.info(line)
-    
+
     # Generate modInfo dictionary for output
     if 'values_changed' in cfgDiff:
         for key, value in cfgDiff['values_changed'].items():
@@ -293,7 +298,7 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
             modString = [locValue, defValue]
             modInfo[section][itemKey] = modString
 
-    # Log changes 
+    # Log changes
     log.info('COMPARING TO DEFAULT, THESE CHANGES HAPPENED:')
     for line in cfgDiff.pretty().split('\n'):
         log.info(line.replace('root',''))
