@@ -121,7 +121,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     if cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
         # get computeFromDistribution configuration and apply override
         cfgDist = cfgUtils.getModuleConfig(cP, fileOverride='', modInfo=False, toPrint=False,
-                                              onlyDefault=cfgProb['computeFromDistribution_override']['defaultConfig'])
+                                              onlyDefault=cfgProb['computeFromDistribution_override'].getboolean('defaultConfig'))
         cfgDist, cfgProb = cfgHandling.applyCfgOverride(cfgDist, cfgProb, cP, addModValues=False)
 
     # set variation in configuration
