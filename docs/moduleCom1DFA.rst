@@ -238,7 +238,7 @@ particles :math:`k` and :math:`l` and :math:`\mathbf{e_{kl}}` is the unit vector
 
   \epsilon = \frac{L-L_0}{L_0}
 
-represents the strain (:math:`\epsilon` is positive in the case of elongation and negative in compression).
+represents the strain: :math:`\epsilon` is positive in the case of elongation and negative in compression.
 If the strain exceeds a critical value :math:`\epsilon_c` the bond between the particles :math:`k` and :math:`l`
 breaks.
 
@@ -249,7 +249,7 @@ The contact area :math:`A_{kl}` between particles :math:`k` and :math:`l` reads:
   A_{kl} = h_{kl} d_{kl} = \frac{h_k + h_l}{2} \frac{L}{\sqrt{3}}
 
 :math:`h_{kl}` represents the height of the contact surface and :math:`d_{kl}` represents the
-length of the contact surface in the horizontal plane assuming that each particle has 6 neighbors.
+length of the contact surface in the horizontal plane, assuming that each particle has 6 neighbours.
 
 
 
@@ -259,7 +259,7 @@ Input
 The standard inputs required to perform a simulation run using :py:mod:`com1DFA` cane be found here: :ref:`moduleCom1DFA:Input`.
 There is a run script to perform a glide snow com1DFA run: :py:mod:`runScripts.runGlideSnowCom1DFA.py`,
 and the configuration settings can be found in ``com1DFA/glideSnowCfg.ini``.
-The new glide snow tool specific parameters are:
+The glide snow tool-specific parameters are:
 
   * cohesion is activated by setting ``cohesion`` to 1
 

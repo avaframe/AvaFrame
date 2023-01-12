@@ -34,4 +34,4 @@ log.info('Current avalanche: %s', avalancheDir)
 glideSnowCfg = cfgUtils.getModuleConfig(glideSnow)
 
 # perform com1DFA simulation with glide snow settings
-glideSnow.runGlideSnowTool(cfgMain, glideSnowCfg)
+simDF = glideSnow.runGlideSnowTool(cfgMain, glideSnowCfg)
