@@ -45,3 +45,5 @@ def runGlideSnowTool(cfgMain, glideSnowCfg):
 
     # print info about simulation performed to log
     log.info('Com1DFA run performed with glideSnowTool settings')
+
+    return simDF
