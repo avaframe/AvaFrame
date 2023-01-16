@@ -95,6 +95,7 @@ def createRasterContourDict(inFile, levels):
 
 def plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multiplePlots=True):
     """ plot contour lines of two contourLine dicts only plot lines that are available within ref
+        and save to file
 
         Parameters
         -----------
@@ -117,7 +118,7 @@ def plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multi
         cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cmapCrameri.hawaii)
         cmap.set_array([])
 
-    # setup figure if only one plot 
+    # setup figure if only one plot
     if multiplePlots is False:
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         ax1 = fig.add_subplot(111)
@@ -133,7 +134,7 @@ def plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multi
                 if multiplePlots:
                     fig = plt.figure(figsize=(pU.figW, pU.figH))
                     ax1 = fig.add_subplot(111)
-                    ax1.set_title(pathDict['title'])
+                    ax1.set_title(pathDict['title'] + ' level: %.2f' % contLine)
                     ax1.set_ylabel('x')
                     ax1.set_xlabel('y')
                     ax1.plot(contourDictRef[name]['x'], contourDictRef[name]['y'], 'k.', label='ref')
