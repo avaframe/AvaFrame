@@ -67,6 +67,7 @@ def SHP2Array(infile, defname=None):
     iso = None
     id = None
     ci95 = None
+    layerN = None
 
     # get coordinate system
     sks = getSHPProjection(infile)
@@ -81,6 +82,7 @@ def SHP2Array(infile, defname=None):
     thicknessList = []
     idList = []
     ci95List = []
+    layerNameList = []
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -118,6 +120,8 @@ def SHP2Array(infile, defname=None):
                     sks = value
                 if (name == 'iso'):
                     iso = value
+                if (name == 'layer'):
+                    layerN = value
             # if name is still empty go through file again and take Layer instead
             if ((type(layername) is bytes) or (layername is None)):
                 for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
@@ -132,6 +136,7 @@ def SHP2Array(infile, defname=None):
         log.debug('SHPConv: Found layer %s', layername)
         thicknessList.append(str(thickness))
         ci95List.append(str(ci95))
+        layerNameList.append(layerN)
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -158,6 +163,7 @@ def SHP2Array(infile, defname=None):
     SHPdata['z'] = Coordz
     SHPdata['id'] = idList
     SHPdata['ci95'] = ci95List
+    SHPdata['layerName'] = layerNameList
 
     sf.close()
 
