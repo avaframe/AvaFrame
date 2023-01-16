@@ -41,7 +41,7 @@ def runGlideSnow(cfgMain, glideSnowCfg):
     com1DFACfg, glideSnowCfg = cfgHandling.applyCfgOverride(com1DFACfg, glideSnowCfg, com1DFA, addModValues=False)
 
     # run the com1DFA module with glideSnow settings
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgInfo=com1DFACfg)
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=com1DFACfg)
 
     # print info about simulation performed to log
     log.info('Com1DFA run performed with glideSnowTool settings')

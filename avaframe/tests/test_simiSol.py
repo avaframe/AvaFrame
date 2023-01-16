@@ -31,6 +31,7 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     fU.makeADir(outDirTest)
 
     cfgMain = cfgUtils.getGeneralConfig()
+    cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
     cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
     # Define release thickness distribution
     demFile = gI.getDEMPath(avalancheDir)

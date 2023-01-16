@@ -549,8 +549,9 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
     # of the dam)
     wallLineDict = gT.getCellsAlongLine(dem['header'], wallLineDict, addBuffer=True)
     wallLineDict['dam'] = 1
-    if savePath != '':
-      fileName = shpConv.writeLine2SHPfile(wallLineDict, 'dam foot line', savePath, header=dem['originalHeader'])
+    # FSO: turned off due to being unsafe for parallel computation
+    # if savePath != '':
+    #   fileName = shpConv.writeLine2SHPfile(wallLineDict, 'dam foot line', savePath, header=dem['originalHeader'])
   else:
     # crete a dummy dict (needed so that cython runs)
     wallLineDict = {'dam': 0, 'cellsCrossed': np.zeros((dem['header']['ncols']*dem['header']['nrows'])).astype(int)}

@@ -57,7 +57,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def com1DFAPreprocess(cfgMain, cfgInfo=''):
+def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
     """ preprocess information from configuration, read input data and gather into inputSimFiles,
         create one config object for each of all desired simulations,
         create dataFrame with one line per simulations of already existing sims in avalancheDir
@@ -66,6 +66,8 @@ def com1DFAPreprocess(cfgMain, cfgInfo=''):
         ------------
         cfgMain: configparser object
             main configuration of AvaFrame
+        typeCfgInfo: str
+            name of type of cfgInfo (cfgFromFile or cfgFromObject)
         cfgInfo: str or pathlib Path or configparser object
             path to configuration file if overwrite is desired - optional
             if not local (if available) or default configuration will be loaded
@@ -83,45 +85,17 @@ def com1DFAPreprocess(cfgMain, cfgInfo=''):
 
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
-    modName = str(pathlib.Path(com1DFA.__file__).stem)
-
     # read initial configuration
-    if isinstance(cfgInfo, (pathlib.Path, str)) or cfgInfo == '':
+    if typeCfgInfo in ['cfgFromFile', 'cfgFromDefault']:
         cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
-    elif isinstance(cfgInfo, configparser.ConfigParser):
+    elif typeCfgInfo == 'cfgFromObject':
         cfgStart = cfgInfo
 
-    # Create output and work directories
-    _ , outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
-                                               cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
+    # fetch input data and create work and output directories
+    inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(avalancheDir, cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
-    # read input data files (release, DEM, etc.) and update configuration with this
-    inputSimFilesAll, cfgStart = com1DFATools.setRelThIni(avalancheDir, com1DFA, cfgStart)
-
-    # initialise reportDictList and flag indicating whether simulations have been performed
-    reportDictList = []
-    simsPerformed = False
-
-    # reset variationDict
-    variationDict = ''
-
-    # create a dictionary with information on which parameter shall be varied for individual simulations
-    # compare cfgStart to default module config for this
-    modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgStart)
-
-    # first fetch info on already existing simulations in Outputs
-    # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
-    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
-
-    # create a configuration object per simulation to run (from configuration) gathered in simDict
-    # only new simulations are included in this simDict
-    # key is simName and corresponds to one simulation
-    simDict = prepareVarSimDict(modCfg, inputSimFilesAll, variationDict, simNameExisting=simNameExisting)
-
-    # write full configuration (.ini file) to file
-    date = datetime.today()
-    fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
-    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+    # create dictionary with one key for each simulation that shall be performed
+    simDict = dP.createSimDict(avalancheDir, com1DFA, cfgStart, inputSimFilesAll, simNameExisting)
 
     return simDict, outDir, inputSimFilesAll, simDFExisting
 
@@ -137,6 +111,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
             path to configuration file if overwrite is desired - optional
             if not local (if available) or default configuration will be loaded
             if cfgInfo is a configparser object take this as initial config
+            if path to a directory is provided - load one or multiple override configuration files
 
         Returns
         --------
@@ -153,8 +128,18 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
-    # preprocessing to create configuration objects for all simulations to run
-    simDict, outDir, inputSimFiles, simDFExisting = com1DFAPreprocess(cfgMain, cfgInfo=cfgInfo)
+    # fetch type of cfgInfo
+    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
+    if typeCfgInfo == 'cfgFromDir':
+        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)
+    else:
+        # preprocessing to create configuration objects for all simulations to run
+        simDict, outDir, inputSimFiles, simDFExisting = com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
+
+    log.info('The following simulations will be performed')
+    for key in simDict:
+        log.info('Simulation: %s' % key)
 
     # TODO: once it is confirmed that inputSimFiles is not changed within sim
     # keep for now for testing
@@ -177,7 +162,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
         nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(simDict))
 
         # Supply compute task with inputs
-        com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)  
+        com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)
 
 
         # Create parallel pool and run
@@ -214,7 +199,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
 
     simDF = pd.DataFrame()
-    tCPUDF = pd.DataFrame() 
+    tCPUDF = pd.DataFrame()
 
     # load configuration object for current sim
     cfg = simDict[cuSim]["cfgSim"]
@@ -583,7 +568,7 @@ def prepareInputData(inputSimFiles, cfg):
     demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], demPath=cfg['INPUT']['DEM'])
 
     # read data from relThFile
-    if relThFile != '':
+    if relThFile != None:
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
         if demOri['header']['ncols'] != relThField['header']['ncols'] or \
@@ -932,8 +917,11 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
 
     # initialize Dam
     damLine = inputSimLines['damLine']
-    damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
-    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
+    # FSO: disabled writing of damFootLine inside the initializeWallLines.
+    # This is not threadsafe and leads to errors on multiprocessing
+    # damFootLinePath = outDir / 'dam' / 'damFootLine.shp'
+    # damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, damFootLinePath)
+    damLine = damCom1DFA.initializeWallLines(cfgGen, dem, damLine, '')
     dem['damLine'] = damLine
 
     # perform initialisation step for redistributing particles
@@ -2571,9 +2559,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         else:
             log.warning('Simulation %s already exists, not repeating it' % simName)
 
-    log.info('The following simulations will be performed')
-    for key in simDict:
-        log.info('Simulation: %s' % key)
+    # log.info('The following simulations will be performed')
+    # for key in simDict:
+    #     log.info('Simulation: %s' % key)
 
     inputSimFiles.pop('demFile')
 

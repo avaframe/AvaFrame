@@ -5,6 +5,7 @@
 import logging
 import numpy as np
 import sys
+from datetime import datetime
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -13,6 +14,8 @@ from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import geoTrans
 import avaframe.in1Data.computeFromDistribution as cP
+from avaframe.in1Data import getInput as gI
+
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +65,7 @@ def getVariationDict(avaDir, fullCfg, modDict):
                 log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
             else:
                 if any(c in value for c in [':', '|', '$']):
-                    # look for default value. If it does not exist, it seems 
+                    # look for default value. If it does not exist, it seems
                     # to be added, ignore it
                     try:
                         defValue = modDict[section][key][1]
@@ -744,3 +747,53 @@ def writeToCfgLine(values):
         valString = valString + '|%.12f' % val
 
     return valString
+
+
+def createSimDict(avalancheDir, com1DFA, cfgInitial, inputSimFiles, simNameExisting):
+    """ Create a simDict with all the simulations that shall be performed
+
+        Parameters
+        -----------
+        avalancheDir: pathlib path
+            path to avalanche directory
+        com1DFA: module
+            computational module
+        cfgStart: configparser object
+            configuration settings for com1DFA
+        inputSimFiles: dict
+            dictionary with info in input files (release area, dem, ...)
+        simNameExisting: list
+            list with names of sims that already exist in outputs
+
+        Returns
+        --------
+        simDict: dict
+            dicionary with info on simHash, releaseScenario, release area file path,
+            simType and contains full configuration configparser object for simulation run
+    """
+
+    # check if thickness settings in ini file are valid
+    for thType in ['entTh', 'relTh', 'secondaryRelTh']:
+        _ = checkThicknessSettings(cfgInitial, thType)
+    # update thickness settings, e.g. fetch if th read from shp
+    cfgInitial = gI.updateThicknessCfg(inputSimFiles, avalancheDir, com1DFA, cfgInitial)
+
+    # reset variationDict
+    variationDict = ''
+
+    # create a dictionary with information on which parameter shall be varied for individual simulations
+    # compare cfgStart to default module config for this
+    modCfg, variationDict = getParameterVariationInfo(avalancheDir, com1DFA, cfgInitial)
+
+    # create a configuration object per simulation to run (from configuration) gathered in simDict
+    # only new simulations are included in this simDict
+    # key is simName and corresponds to one simulation
+    simDict = {}
+    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting)
+
+    # write full configuration (.ini file) to file
+    date = datetime.today()
+    fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
+    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+
+    return simDict

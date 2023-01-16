@@ -76,6 +76,7 @@ cpuTimeSim = []
 for test in testList:
 
     avaDir = test['AVADIR']
+    cfgMain['MAIN']['avalancheDir'] = avaDir
 
     # Fetch benchmark test info
     benchDict = test

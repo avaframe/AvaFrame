@@ -152,8 +152,9 @@ def getInputData(avaDir, cfg):
     return demFile, relFiles, entFile, resFile, wallFile, entResInfo
 
 
-def getInputDataCom1DFA(avaDir, cfg):
+def getInputDataCom1DFA(avaDir):
     """ Fetch input datasets required for simulation, duplicated function because
+        now fetch all available files
         simulation type set differently in com1DFA compared to com1DFAOrig:
         TODO: remove duplicate once it is not required anymore
 
@@ -189,34 +190,14 @@ def getInputDataCom1DFA(avaDir, cfg):
     # Set flag if there is an entrainment or resistance area
     entResInfo = {}
 
-    # Initialise release areas, default is to look for shapefiles
-    if cfg['INPUT']['releaseScenario'] != '':
-        releaseDir = 'REL'
-        relFiles = []
-        releaseFiles = cfg['INPUT']['releaseScenario'].split('|')
-        for rel in releaseFiles:
-            if '.shp' in rel:
-                relf = inputDir / releaseDir / rel
-            else:
-                relf = inputDir / releaseDir / ('%s.shp' % (rel))
-            if not relf.is_file():
-                message = 'No release scenario called: %s' % (relf)
-                log.error(message)
-                raise FileNotFoundError(message)
-            relFiles.append(relf)
-        log.debug('Release area file is specified to be: %s' % relFiles)
-    else:
-        releaseDir = 'REL'
-        releaseDir = inputDir / 'REL'
-        relFiles = sorted(list(releaseDir.glob('*.shp')))
+    releaseDir = 'REL'
+    releaseDir = inputDir / 'REL'
+    relFiles = sorted(list(releaseDir.glob('*.shp')))
     log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
 
-    # check for release thickness file if relThFromFile
-    if cfg['GENERAL'].getboolean('relThFromFile'):
-        relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir, 'RELTH',
-                                                                              'release thickness data', fileExt='asc')
-    else:
-        relThFile = ''
+    # check if relThFile is available
+    relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir, 'RELTH',
+                                                                          'release thickness data', fileExt='asc')
 
     # Initialise secondary release areas
     secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL',
@@ -282,8 +263,55 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
     return OutputFile, available
 
 
-def getThickness(inputSimFiles, avaDir, modName, cfgInitial):
-    """ add thickness of shapefiles to dictionary, add available release scenarios to ini file and
+def getThicknessInputSimFiles(inputSimFiles, avaDir, modName):
+    """ add thickness of shapefiles to dictionary
+
+        Parameters
+        -----------
+        inputSimFiles: dict
+            dictionary with info on release and entrainment file paths
+        avaDir: str or pathlib path
+            path to avalanche directory
+        modName : computational module
+            computational module
+
+        Returns
+        --------
+        inputSimFiles: dict
+            updated dictionary with thickness info read from shapefile attributes
+            now includes one separate dictionary for each release, entrainment or secondary release
+            scenario with a thickness and id value for each feature (given as list)
+    """
+
+    # create pathlib Path
+    avaDir = pathlib.Path(avaDir)
+
+    # check if thickness info is required from entrainment and secondary release according to simType
+    thTypeList = ['entFile', 'secondaryReleaseFile']
+
+    # fetch thickness attribute of entrainment area and secondary release
+    for thType in ['entFile', 'secondaryReleaseFile']:
+        if inputSimFiles[thType] != None:
+            thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
+            inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList,
+                'ci95': ci95List}
+
+    # initialize release scenario list
+    releaseScenarioList = []
+
+    # fetch thickness attribute of release areas and add info to input dict
+    for releaseA in inputSimFiles['relFiles']:
+        # fetch thickness and id info from input data
+        thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
+        inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList, 'ci95': ci95List}
+        # append release scenario name to list
+        releaseScenarioList.append(releaseA.stem)
+
+    return inputSimFiles
+
+
+def updateThicknessCfg(inputSimFiles, avaDir, modName, cfgInitial):
+    """ add available release scenarios to ini file and
         set thickness values in ini files
 
         Parameters
@@ -322,23 +350,12 @@ def getThickness(inputSimFiles, avaDir, modName, cfgInitial):
     if cfgInitial['GENERAL'].getboolean('secRelArea'):
         thTypeList.append('secondaryReleaseFile')
 
-    # fetch thickness attribute of entrainment area and secondary release
-    for thType in ['entFile', 'secondaryReleaseFile']:
-        if inputSimFiles[thType] != None:
-            thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
-            inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList,
-                'ci95': ci95List}
-
     # initialize release scenario list
     releaseScenarioList = []
 
     # add input data info to cfg object
-    cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem}
     # fetch thickness attribute of release areas and add info to input dict
     for releaseA in inputSimFiles['relFiles']:
-        # fetch thickness and id info from input data
-        thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
-        inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList, 'ci95': ci95List}
         # append release scenario name to list
         releaseScenarioList.append(releaseA.stem)
         # update configuration with thickness value to be used for simulations
@@ -357,9 +374,17 @@ def getThickness(inputSimFiles, avaDir, modName, cfgInitial):
 
     # create cfg string from release scenario list and add to cfg object
     releaseScenarioName = cfgUtils.convertToCfgList(releaseScenarioList)
-    cfgInitial['INPUT']['releaseScenario'] = releaseScenarioName
+    if cfgInitial['INPUT']['releaseScenario'] == '':
+        cfgInitial['INPUT']['releaseScenario'] = releaseScenarioName
+    else:
+        if cfgInitial['INPUT']['releaseScenario'] not in releaseScenarioList:
+            message = ('Chosen release scenario: %s not available' % cfgInitial['INPUT']['releaseScenario'])
+            log.error(message)
+            raise FileNotFoundError(message)
+        else:
+            log.info('Chosen release scenarios: %s' % cfgInitial['INPUT']['releaseScenario'])
 
-    return inputSimFiles, cfgInitial
+    return cfgInitial
 
 
 def initializeDEM(avaDir, demPath=''):
@@ -386,6 +411,7 @@ def initializeDEM(avaDir, demPath=''):
         dem = IOf.readRaster(demFile, noDataToNan=True)
 
     return dem
+
 
 def selectReleaseFile(inputSimFiles, releaseScenario):
     """ select release scenario
@@ -414,7 +440,6 @@ def selectReleaseFile(inputSimFiles, releaseScenario):
     inputSimFiles['releaseScenario'] =  releaseScenarioPath
 
     return inputSimFiles
-
 
 
 def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
@@ -467,7 +492,5 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
             cfgSim['INPUT'].pop(scenario + '_' + 'relThId')
             cfgSim['INPUT'].pop(scenario + '_' + 'relThThickness')
             cfgSim['INPUT'].pop(scenario + '_' + 'relThCi95')
-
-
 
     return releaseScenarioPath, cfgSim

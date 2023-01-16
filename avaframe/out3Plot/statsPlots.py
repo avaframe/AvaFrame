@@ -500,3 +500,29 @@ def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', ty
     plotPath = pU.saveAndOrPlot({'pathResult': cfg['outDir']}, outFileName, fig)
 
     return plotPath
+
+
+def plotSample(paramValuesD, outDir):
+    """ plot the parameter sample only if two parameters are varied
+
+        Parameters
+        -----------
+        paramValuesD: dict
+            dictionary with parameter names and sets of values
+        outDir: pathlib path
+            path where to save the plot
+    """
+    if len(paramValuesD['names']) == 2:
+        # Figure
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        plt.title('Parameter sample')
+        plt.plot(paramValuesD['values'][:,0], paramValuesD['values'][:,1], 'b*')
+        plt.xlabel(paramValuesD['names'][0])
+        plt.ylabel(paramValuesD['names'][1])
+
+        # put ava name on plot and save figure
+        outFileName = 'ParameterSample'
+        plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
+
+    else:
+        log.debug('More or less than two parameters have been varied - no plot of sample available')
