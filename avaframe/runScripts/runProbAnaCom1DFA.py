@@ -22,9 +22,9 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out3Plot import outQuickPlot as oP
 
 
+
 # -------USER INPUT ------------
 # probability configurations are used to filter simulations for creating probability maps:
-# set for mu and relTh your reference values (from your local_com1DFACfg.ini file)
 # also other parameters can be used for filtering, here for example only null simulations are taken into account
 # for testRelTh and testMu
 probabilityConfigurations = {'testAll': {}, 'testRelTh': {'scenario': 'relTh',
@@ -55,14 +55,15 @@ initProj.cleanSingleAvaDir(avaDir, keep=logName)
 cfgProb = cfgUtils.getModuleConfig(probAna)
 
 # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
-cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
 
 # perform com1DFA simulations
-for varPar in cfgFiles:
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFiles[varPar]['cfgFile'])
+outDir = pathlib.Path(avaDir, 'Outputs')
+dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
 
-    # Clean input directory(ies) of old work files but keep outputs
-    initProj.cleanSingleAvaDir(avaDir, keep=logName, deleteOutput=False)
+# check if sampling strategy is from full sample - then only one configuration is possible
+if cfgProb['PROBRUN'].getint('samplingStrategy') == 1:
+    probabilityConfigurations = {'testAll': {}}
 
 # perform pobability analysis
 for probConf in probabilityConfigurations:

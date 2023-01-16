@@ -17,6 +17,8 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in1Data.computeFromDistribution as cP
 import avaframe.com1DFA.deriveParameterSet as dP
 from avaframe.in3Utils import geoTrans as gT
+from avaframe.ana4Stats import sampling as sAM
+from avaframe.out3Plot import statsPlots as sP
 
 
 # create local logger
@@ -40,18 +42,94 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
 
         Returns
         -------
+        cfgFiles: list
+            list of paths to newly generated configuration files for com module inlcuding
+            parameter variations
+    """
+
+    # setup where configuration file is saved
+    modNameString = str(pathlib.Path(modName.__file__).stem)
+    outDir = avaDir / 'Work' / ('%sConfigFiles' % modNameString)
+    fU.makeADir(outDir)
+
+    if cfgProb['PROBRUN'].getint('samplingStrategy') == 2:
+        log.info('Probability run performed by varying one parameter at a time - local approach.')
+        cfgFiles = cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod)
+
+    else:
+        log.info('Probability run perfromed drawing parameter set from full sample.')
+        cfgFiles = cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod)
+
+    return cfgFiles, outDir
+
+
+def cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod):
+    """ create configuration files with all parameter variations - drawn from full sample
+        for performing sims with modName comModule
+
+        Parameters
+        -----------
+        cfgProb: configParser object
+            configuration settings
+        avaDir: pathlib path
+            path to avalanche directory
+        modName: module
+            computational module
+        cfgFileMod: str
+            path to cfgFile for computational module - optional
+
+        Returns
+        -------
+        cfgFiles: list
+            list of paths to newly generated configuration files for com module inlcuding parameter
+            variations
+    """
+
+     # ++++++++++ set configurations for ana4Stats/sampling and override ++++++++++++
+    # get sampling configuration and update with probRun parameter set
+    cfgSA = cfgUtils.getModuleConfig(sAM, fileOverride='', modInfo=False, toPrint=False,
+                                          onlyDefault=cfgProb['sampling_override'].getboolean('defaultConfig'))
+    cfgSA, cfgProb = cfgHandling.applyCfgOverride(cfgSA, cfgProb, sAM, addModValues=False)
+
+    cfgSA['GENERAL']['varParList'] = cfgProb['PROBRUN']['varParList']
+    cfgSA['GENERAL']['defaultConfig'] = cfgProb['PROBRUN']['defaultComModuleCfg']
+
+    # create sample of all parameter variations
+    paramValuesD = sAM.createSample(cfgSA['GENERAL'])
+
+    # create plot of parameter sample if variation of two parameters
+    sP.plotSample(paramValuesD, outDir)
+
+    # write cfg files one for each parameter set drawn from full sample
+    cfgFiles = sAM.createCfgFiles(paramValuesD, modName, cfgSA, outDir)
+
+    return cfgFiles
+
+
+def cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod):
+    """ create configuration file for performing sims with modName com module
+
+        Parameters
+        -----------
+        cfgProb: configParser object
+            configuration settings
+        avaDir: pathlib path
+            path to avalanche directory
+        modName: module
+            computational module
+        cfgFileMod: str
+            path to cfgFile for computational module name - optional
+
+        Returns
+        -------
         cfgFiles: dict
             dictionary of paths to newly generated configuration files for com module for all parameters
 
     """
 
-    # setup where configuration file is saved
-    outDir = avaDir / 'Outputs'
-    fU.makeADir(outDir)
-
     # loop over all parameters for performing parameter variation
     variationsDict = makeDictFromVars(cfgProb['PROBRUN'])
-    cfgFiles = {}
+    cfgFiles = []
     for varName in variationsDict:
         # define configuration files
         # get filename of module
@@ -59,12 +137,18 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
         cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
 
         # use cfgFile, local com module settings or default settings if local not available
-        modCfg = cfgUtils.getModuleConfig(modName, fileOverride=cfgFileMod)
+        if cfgFileMod != '' and cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'):
+            message = 'fileOverride provided AND defaultComModuleCfg set to True, only one is allowed'
+            log.error(message)
+            raise AssertionError(message)
+        else:
+            modCfg = cfgUtils.getModuleConfig(modName, fileOverride=cfgFileMod, onlyDefault=cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'))
         modCfg = updateCfgRange(modCfg, cfgProb, varName, variationsDict[varName])
+
         with open(cfgFile, 'w') as configfile:
             modCfg.write(configfile)
         # append cfgFiles to list
-        cfgFiles[varName] = {'cfgFile': cfgFile}
+        cfgFiles.append(cfgFile)
 
     return cfgFiles
 

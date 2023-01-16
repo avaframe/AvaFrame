@@ -166,16 +166,10 @@ def test_getInputDataCom1DFA(tmp_path):
     avaData = dirPath / '..'/ 'data'/ avaName / 'Inputs'
     shutil.copytree(avaData, avaInputs)
 
-    # Initialise input in correct format
-    cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'relThFromFile': 'False'}
-    cfg['INPUT'] = {'releaseScenario': ''}
 
     # call function to be tested
-    inputSimFiles = getInput.getInputDataCom1DFA(avaDir, cfg)
-    # second option
-    cfg['INPUT']['releaseScenario'] = 'release1HS'
-    inputSimFiles2 = getInput.getInputDataCom1DFA(avaDir, cfg)
+    inputSimFiles = getInput.getInputDataCom1DFA(avaDir)
+
     # Test
     print(inputSimFiles['demFile'])
     print(avaDir / 'Inputs' / 'DEM_HS_Topo.asc')
@@ -185,25 +179,11 @@ def test_getInputDataCom1DFA(tmp_path):
     assert inputSimFiles['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp',
                                          avaDir / 'Inputs' / 'REL' / 'release2HS.shp',
                                          avaDir / 'Inputs' / 'REL' / 'release3HS.shp']
-    assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
     assert inputSimFiles['resFile'] == None
     assert inputSimFiles['entFile'] == avaDir / 'Inputs' / 'ENT' / 'entrainment1HS.shp'
     assert inputSimFiles['entResInfo']['flagEnt'] == "Yes"
     assert inputSimFiles['entResInfo']['flagRes'] == "No"
-    assert inputSimFiles['relThFile'] == ''
-
-    # call function to be tested
-    cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
-    inputSimFiles3 = getInput.getInputDataCom1DFA(avaDir, cfg)
-
-    assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
-
-    # call function to be tested
-    cfg['INPUT']['releaseScenario'] = 'release4HS'
-    releaseF = avaDir / 'Inputs' / 'REL' / 'release4HS.shp'
-    with pytest.raises(FileNotFoundError) as e:
-        assert getInput.getInputDataCom1DFA(avaDir, cfg)
-    assert str(e.value) == ("No release scenario called: %s" % releaseF)
+    assert inputSimFiles['relThFile'] == None
 
 
 def test_getAndCheckInputFiles(tmp_path):
@@ -240,7 +220,43 @@ def test_getAndCheckInputFiles(tmp_path):
                            (inputType, avaTestDirInputs, folder))
 
 
-def test_getThickness(tmp_path):
+def test_getThicknessInputSimFiles(tmp_path):
+    """ test fetching thickness from shapefiles attributes """
+
+    # setup required input
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = 'avaHockeyChannel'
+    avaDir = dirPath / '..' / 'data' / avaName
+    avaDirInputs =  avaDir / 'Inputs'
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / 'Inputs'
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+    outDir = avaTestDir / 'Outputs' / 'com1DFA'
+    fU.makeADir(outDir)
+
+    demFile = avaTestDirInputs / 'DEM_HS_Topo.asc'
+    relFile1 = avaTestDirInputs / 'REL' / 'release1HS.shp'
+    relFile2 = avaTestDirInputs / 'REL' / 'release2HS.shp'
+    entFile = avaTestDirInputs / 'ENT' / 'entrainment1HS.shp'
+    inputSimFiles = {'demFile': demFile, 'relFiles': [relFile1, relFile2], 'entFile': entFile,
+        'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
+        'flagSecondaryRelease': 'No'}, 'relThFile': None}
+
+    inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles, avaTestDir, com1DFA)
+
+    print('inputSimFiles', inputSimFiles)
+
+    assert inputSimFiles['release1HS']['thickness'] == ['1.0']
+    assert inputSimFiles['release2HS']['thickness'] == ['1.0', '1.0']
+    assert inputSimFiles['release1HS']['id'] == ['0']
+    assert inputSimFiles['release2HS']['id'] == ['0', '1']
+    assert inputSimFiles['release1HS']['ci95'] == ['None']
+    assert inputSimFiles['release2HS']['ci95'] == ['None', 'None']
+    assert inputSimFiles['entrainment1HS']['thickness'] == ['0.3']
+    assert inputSimFiles['entrainment1HS']['id'] == ['0']
+
+
+def test_updateThicknessCfg(tmp_path):
     """ test fetching thickness from shapefiles attributes """
 
     # setup required input
@@ -268,18 +284,16 @@ def test_getThickness(tmp_path):
     entFile = avaTestDirInputs / 'ENT' / 'entrainment1HS.shp'
     inputSimFiles = {'demFile': demFile, 'relFiles': [relFile1, relFile2], 'entFile': entFile,
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
-        'flagSecondaryRelease': 'No'}}
+        'flagSecondaryRelease': 'No'}, 'relThFile': None}
 
-    inputSimFiles, cfg = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfg)
+    inputSimFiles['release1HS'] = {'thickness': ['1.0'], 'id': ['0'], 'ci95': ['None', 'None']}
+    inputSimFiles['release2HS'] = {'thickness': ['1.0', '1.0'], 'id': ['0', '1'], 'ci95': ['None', 'None']}
+    inputSimFiles['entrainment1HS'] = {'thickness': ['0.3'], 'id': ['0'], 'ci95': ['None']}
+
+    cfg = getInput.updateThicknessCfg(inputSimFiles, avaTestDir, com1DFA, cfg)
 
     print('inputSimFiles', inputSimFiles)
 
-    assert inputSimFiles['release1HS']['thickness'] == ['1.0']
-    assert inputSimFiles['release2HS']['thickness'] == ['1.0', '1.0']
-    assert inputSimFiles['release1HS']['id'] == ['0']
-    assert inputSimFiles['release2HS']['id'] == ['0', '1']
-    assert inputSimFiles['entrainment1HS']['thickness'] == ['0.3']
-    assert inputSimFiles['entrainment1HS']['id'] == ['0']
     assert cfg['INPUT']['releaseScenario'] == 'release1HS|release2HS'
     assert cfg['INPUT']['release1HS_relThId'] == '0'
     assert cfg['INPUT']['release2HS_relThId'] == '0|1'

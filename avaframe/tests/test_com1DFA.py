@@ -31,7 +31,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['releaseScenario'] = relFile
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'avaAlr.asc'
     inputSimFiles['entFile'] = avaDir / 'Inputs' / 'ENT' / 'entAlr.shp'
-    inputSimFiles['relThFile'] = ''
+    inputSimFiles['relThFile'] = None
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'ent', 'avalancheDir': str(avaDir)}
     cfg['INPUT'] = {'DEM': 'avaAlr.asc'}
@@ -61,7 +61,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['releaseScenario'] = relFile
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
     inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
-    inputSimFiles['relThFile'] = ''
+    inputSimFiles['relThFile'] = None
     cfg['GENERAL']['simTypeActual'] = 'res'
     cfg['GENERAL']['avalancheDir'] = str(avaDir)
     cfg['INPUT'] = {'DEM': 'DEM_PF_Topo.asc'}
@@ -1405,8 +1405,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
                               'entThRangeVariation': '', 'relThRangeVariation': '',
                               'entThDistVariation': '', 'relThDistVariation': '',
                               'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001',
-                              'sphKernelRadius': '5.'}
-    standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None'}
+                              'sphKernelRadius': 'meshCellSize'}
+    standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': ''}
 
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / '..' / 'data' / 'avaAlr'
@@ -1613,6 +1613,7 @@ def test_runCom1DFA(tmp_path, caplog):
     shutil.copytree(inputDir, avaDir)
     cfgFile = avaDir / 'test_com1DFACfg.ini'
     cfgMain = configparser.ConfigParser()
+    cfgMain['MAIN'] = {'avalancheDir': str(avaDir), 'nCPU': 'auto'}
     cfgMain['FLAGS'] = {'showPlot': 'False', 'savePlot': 'True', 'ReportDir': 'True', 'reportOneFile': 'True',
         'debugPlot': 'False'}
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)

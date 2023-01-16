@@ -28,7 +28,7 @@ def test_glideSnow(tmp_path):
     cfgMain = configparser.ConfigParser()
     cfgMain['FLAGS'] = {'showPlot': 'False', 'savePlot': 'True', 'ReportDir': 'True', 'reportOneFile': 'True',
         'debugPlot': 'False'}
-    cfgMain['MAIN'] = {'avalancheDir': str(avaDir)}
+    cfgMain['MAIN'] = {'avalancheDir': str(avaDir), 'nCPU': '1'}
 
     glideSnowCfg = cfgUtils.getModuleConfig(com5GlideSnow)
     glideSnowCfg['com1DFA_override']['dt'] = '1'

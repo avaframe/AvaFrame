@@ -31,6 +31,7 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     fU.makeADir(outDirTest)
 
     cfgMain = cfgUtils.getGeneralConfig()
+    cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
     cfg = cfgUtils.getModuleConfig(com1DFA, damBreakCfg)
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
