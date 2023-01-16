@@ -45,4 +45,4 @@ contourDictSim = oC.createRasterContourDict(inFileSim, levels)
 # setup pathDict where to save plots
 pathDict = {'avaDir': avalancheDir, 'pathResult': pathlib.Path(avalancheDir, 'Outputs', 'contourPlots'),
     'title': plotTitle, 'parameter': resType, 'unit': unit}
-oC.plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multiplePlots=False)
+oC.plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multiplePlots=True)
