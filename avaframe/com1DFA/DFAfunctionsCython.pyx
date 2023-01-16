@@ -887,7 +887,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     if typeStop == 1:
       log.debug('stopping initial particle distribution')
     else:
-      log.info('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
+      log.debug('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
