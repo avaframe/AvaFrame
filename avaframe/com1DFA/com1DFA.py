@@ -2202,9 +2202,13 @@ def savePartToPickle(dictList, outDir, logName):
 
     if isinstance(dictList, list):
         for dict in dictList:
-            pickle.dump(dict, open(outDir / ("particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
+            fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dict['t'])), "wb")
+            pickle.dump(dict, fi )
+            fi.close()
     else:
-        pickle.dump(dictList, open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
+        fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb")
+        pickle.dump(dictList, fi)
+        fi.close()
 
 
 def trackParticles(cfgTrackPart, dem, particlesList):

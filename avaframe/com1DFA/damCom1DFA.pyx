@@ -166,7 +166,7 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
     zFootFilled = zFoot + 0.5*hFootVertical
     # compute normal vector
     if zCrown-zFootFilled <= 0:
-      log.info('flow depth exceeds dam height')
+      log.debug('flow depth exceeds dam height')
     # If the snow fills the dam which means zCrown>zFootFilled, we compute the normal the same way
     nxWall, nyWall, nzWall = DFAtlsC.crossProd(xCrown-xFoot, yCrown-yFoot, zCrown-zFootFilled, txWall, tyWall, tzWall)
     # TODO: carefull, if zCrown-zFootFilled = 0 and the slope of the dam is 90° we have a vector of lenght 0...
@@ -438,8 +438,8 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
   cdef double w[4]
   cdef int Lx0, Ly0
   if wallLineDict is not None:
-    log.info('Initializing dam line from: %s' % str(wallLineDict['fileName'][0]))
-    log.info('Dam line feature: %s' % str(wallLineDict['Name'][0]))
+    log.debug('Initializing dam line from: %s' % str(wallLineDict['fileName'][0]))
+    log.debug('Dam line feature: %s' % str(wallLineDict['Name'][0]))
     # get z coordinate of the dam polyline
     wallLineDict['x'] = wallLineDict['x'] - dem['originalHeader']['xllcenter']
     wallLineDict['y'] = wallLineDict['y'] - dem['originalHeader']['yllcenter']
@@ -454,7 +454,7 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
     wallLineDict['restitutionCoefficient'] = cfg.getfloat('restitutionCoefficient')
     wallLineDict['nIterDam'] = cfg.getfloat('nIterDam')
     try:
-      log.info('Using dam slope from shape file: %s °' % wallLineDict['slope'])
+      log.debug('Using dam slope from shape file: %s °' % wallLineDict['slope'])
       wallLineDict['slope'] = np.ones(nDamPoints) * np.radians(wallLineDict['slope'])
     except TypeError:
       message = 'Provide a valid slope value for the dam (\'slope\' attribute in the dam line shape file)'
