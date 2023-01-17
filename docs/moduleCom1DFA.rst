@@ -219,11 +219,11 @@ Glide snow tool com1DFA
 ----------------------------
 
 
-The com1DFA computational module provides the option to add an elastic cohesion force between particles. This can
-be used for example to simulate small glide snow avalanches.
+The com1DFA computational module provides the option to add an elastic cohesion force between particles.
+This was developed to simulate small glide snow avalanches.
 
 The cohesion between particles is modeled using elastic bonds with maximum strain rate.
-This means that the cohesion force :math:`\mathbf{F}_{lk}` exerted by :math:`l` on :math:`k` is expressed by:
+This means the cohesion force :math:`\mathbf{F}_{lk}` exerted by :math:`l` on :math:`k` is expressed by:
 
 .. math::
 
@@ -256,7 +256,7 @@ length of the contact surface in the horizontal plane, assuming that each partic
 Input
 ^^^^^^
 
-The standard inputs required to perform a simulation run using :py:mod:`com1DFA` cane be found here: :ref:`moduleCom1DFA:Input`.
+The standard inputs required to perform a simulation run using :py:mod:`com1DFA` can be found here: :ref:`moduleCom1DFA:Input`.
 There is a run script to perform a glide snow com1DFA run: :py:mod:`runScripts.runGlideSnowCom1DFA.py`,
 and the configuration settings can be found in ``com1DFA/glideSnowCfg.ini``.
 The glide snow tool-specific parameters are:
