@@ -25,12 +25,12 @@ def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
 
 
 def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines=''):
-    """With cohesion on, plot the bonds between particles as well as the particles properties
+    """With glideSnow option on, plot the bonds between particles as well as the particles properties
     """
     fig, (ax1) = plt.subplots(ncols=1)
     ax1.set_aspect('equal')
 
-    if cfg['GENERAL'].getint('cohesion') == 1:
+    if cfg['GENERAL'].getint('glideSnow') == 1:
         points = np.zeros((particles['nPart'], 2))
         points[:, 0] = particles['x'] - 0*dem['originalHeader']['xllcenter']
         points[:, 1] = particles['y'] - 0*dem['originalHeader']['yllcenter']
@@ -53,7 +53,7 @@ def plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines=''):
                 avapath['y'] = inputSimLines['resLine']['y'][int(start):int(end)] - dem['originalHeader']['yllcenter']
                 plt.plot(avapath['x'], avapath['y'], 'g')
     fig.legend()
-    plt.title('Bonds between particles with cohesion option activated')
+    plt.title('Bonds between particles with glideSnow option activated')
     plt.show()
     # plt.pause(1)
     plt.close()

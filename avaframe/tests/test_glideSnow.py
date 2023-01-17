@@ -44,4 +44,4 @@ def test_glideSnow(tmp_path):
 
     assert simDF['tEnd'].iloc[0] == 5
     assert simDF['relThFromShp'].iloc[0] == 'True'
-    assert simDF['cohesion'].iloc[0] == 1
+    assert simDF['glideSnow'].iloc[0] == 1
