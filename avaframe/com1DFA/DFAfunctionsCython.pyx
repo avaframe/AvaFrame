@@ -560,7 +560,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double centeredPosition = cfg.getfloat('centeredPosition')
-  cdef int cohesion = cfg.getint('cohesion')
+  cdef int glideSnow = cfg.getint('glideSnow')
   cdef int dissDam = cfg.getint('dissDam')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -892,7 +892,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
     mask = np.array(np.asarray(keepParticle), dtype=bool)
-    particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', cohesion=cohesion)
+    particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', glideSnow=glideSnow)
 
   return particles
 
@@ -1273,7 +1273,7 @@ def getNeighborsC(particles, dem):
 
 def computeCohesionForceC(cfg, particles, force):
   """ compute elastic cohesion forces acting on the particles
-  this is computed when the glide snow option is activated (cohesion = 1
+  this is computed when the glide snow option is activated (glideSnow = 1
   )
   Parameters
   ----------
@@ -1413,7 +1413,7 @@ def plotBondC(particles):
 
 
 def initializeBondsC(particles, triangles):
-  """ Initialize bonds if cohesion is activated
+  """ Initialize bonds if glideSnow is activated
   Parameters
   ----------
   particles : dict

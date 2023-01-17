@@ -1161,7 +1161,7 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
 
 def initializeFields(cfg, dem, particles, releaseLine):
-    """Initialize fields and update particles flow thickness. Eventually build bond array if cohesion is activated
+    """Initialize fields and update particles flow thickness. Eventually build bond array if glideSnow is activated
 
     Parameters
     ----------
@@ -1232,8 +1232,8 @@ def initializeFields(cfg, dem, particles, releaseLine):
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
 
-    if cfgGen.getint('cohesion') == 1:
-        # Initialize the bonds between particles if the cohesion is activated
+    if cfgGen.getint('glideSnow') == 1:
+        # Initialize the bonds between particles if the glideSnow is activated
         # get particles
         x = particles['x']
         y = particles['y']
@@ -1842,8 +1842,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPUForceSPH = time.time() - startTime
     tCPU['timeForceSPH'] = tCPU['timeForceSPH'] + tCPUForceSPH
 
-    # add bonding force if required (if cohesion is activated)
-    if cfg.getint('cohesion') == 1:
+    # add bonding force if required (if glideSnow is activated)
+    if cfg.getint('glideSnow') == 1:
         force, particles = DFAfunC.computeCohesionForceC(cfg, particles, force)
 
     # update velocity and particle position
