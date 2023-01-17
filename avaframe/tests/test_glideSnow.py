@@ -34,6 +34,8 @@ def test_glideSnow(tmp_path):
     glideSnowCfg['com1DFA_override']['dt'] = '1'
     glideSnowCfg['com1DFA_override']['meshCellSize'] = '5'
     glideSnowCfg['com1DFA_override']['tEnd'] = '5'
+    glideSnowCfg['com1DFA_override']['entThFromShp'] = 'False'
+    glideSnowCfg['com1DFA_override']['entTh'] = '0.3'
 
     # call function to be tested
     simDF = glideSnow.runGlideSnowTool(cfgMain, glideSnowCfg)
