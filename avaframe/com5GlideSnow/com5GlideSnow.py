@@ -19,7 +19,7 @@ from avaframe.com1DFA import com1DFA
 log = logging.getLogger(__name__)
 
 
-def runGlideSnowTool(cfgMain, glideSnowCfg):
+def runGlideSnow(cfgMain, glideSnowCfg):
     """ Run glide snow tool and adjust parameters to match glide snow settings for com1DFA run,
         result files, reports and plots are saved analog to a standard com1DFA model run
 
@@ -46,4 +46,4 @@ def runGlideSnowTool(cfgMain, glideSnowCfg):
     # print info about simulation performed to log
     log.info('Com1DFA run performed with glideSnowTool settings')
 
-    return simDF
+    return dem, plotDict, reportDictList, simDF
