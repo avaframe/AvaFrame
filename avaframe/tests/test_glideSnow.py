@@ -12,7 +12,7 @@ import shutil
 
 
 from avaframe.com1DFA import checkCfg
-from avaframe.com1DFA import glideSnow
+from avaframe.com5GlideSnow import com5GlideSnow
 from avaframe.in3Utils import cfgUtils
 
 
@@ -30,7 +30,7 @@ def test_glideSnow(tmp_path):
         'debugPlot': 'False'}
     cfgMain['MAIN'] = {'avalancheDir': str(avaDir)}
 
-    glideSnowCfg = cfgUtils.getModuleConfig(glideSnow)
+    glideSnowCfg = cfgUtils.getModuleConfig(com5GlideSnow)
     glideSnowCfg['com1DFA_override']['dt'] = '1'
     glideSnowCfg['com1DFA_override']['meshCellSize'] = '5'
     glideSnowCfg['com1DFA_override']['tEnd'] = '5'
@@ -38,7 +38,7 @@ def test_glideSnow(tmp_path):
     glideSnowCfg['com1DFA_override']['entTh'] = '0.3'
 
     # call function to be tested
-    simDF = glideSnow.runGlideSnowTool(cfgMain, glideSnowCfg)
+    _, _, _, simDF = com5GlideSnow.runGlideSnow(cfgMain, glideSnowCfg)
 
     print('simDF', simDF.to_string())
 
