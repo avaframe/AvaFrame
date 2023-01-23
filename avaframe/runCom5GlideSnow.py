@@ -35,7 +35,7 @@ def runGlideSnow(avalancheDir=''):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = 'runGlideSnowCom1DFA'
+    logName = 'runCom5GlideSnow'
 
     # Load avalanche directory from general configuration file
     # More information about the configuration can be found here
