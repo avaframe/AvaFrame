@@ -50,6 +50,7 @@ Computational modules
     * :doc:`moduleCom1DFAOrig`
     * :doc:`moduleCom2AB`
     * :doc:`moduleCom3Hybrid`
+    * :doc:`moduleCom5GlideSnow`
 
 .. toctree::
    :maxdepth: 3
@@ -60,6 +61,7 @@ Computational modules
    moduleCom1DFAOrig.rst
    moduleCom2AB.rst
    moduleCom3Hybrid.rst
+   moduleCom5GlideSnow.rst
 
 Input/transformation modules
 ============================
@@ -113,7 +115,6 @@ Theory
 
     * :doc:`theoryCom1DFA`
     * :doc:`DFAnumerics`
-    * :doc:`glideSnowToolCom1DFA`
     * :doc:`com1DFAAlgorithm`
 
 .. toctree::
@@ -123,7 +124,6 @@ Theory
 
    theoryCom1DFA.rst
    DFAnumerics.rst
-   glideSnowToolCom1DFA.rst
    com1DFAAlgorithm.rst
 
 .. only:: html
