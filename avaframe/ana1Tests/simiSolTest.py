@@ -896,9 +896,14 @@ def getReleaseThickness(avaDir, cfg, demFile):
     # Read dem
     demOri = IOf.readRaster(demFile)
     csz = cfg.getfloat("GENERAL", "meshCellSize")
-    _, _, ncols, nrows = geoTrans.makeCoordGridFromHeader(
-        demOri["header"], cellSizeNew=csz, larger=True
-    )
+    # _, _, ncols, nrows = geoTrans.makeCoordGridFromHeader(
+    #     demOri["header"], cellSizeNew=csz, larger=True
+    # )
+
+    # TODO: remesh DEM to actually reproduce the new remeshed DEM in the computations
+    remeshedDEM = geoTrans.remeshData(demOri, csz, remeshOption='griddata', interpMethod='cubic', larger=False)
+    nrows = remeshedDEM['header']['nrows']
+    ncols = remeshedDEM['header']['ncols']
 
     xllc = demOri["header"]["xllcenter"]
     yllc = demOri["header"]["yllcenter"]

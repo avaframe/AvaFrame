@@ -29,6 +29,7 @@ logName = 'runSimilarityTest'
 # Load general configuration
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
+cfgMain['MAIN']['avalancheDir'] = avalancheDir
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
@@ -58,4 +59,6 @@ for sphKernelRadius in [5, 3]:
     relDict = simiSolTest.getReleaseThickness(avalancheDir, cfg, demFile)
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
-    _, _, _, simDF = com1DFA.com1DFAMain(cfgMain, cfgFile=simiSolCfg)
+    _, _, _, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=simiSolCfg)
+    # Clean input directory(ies) of old work 
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
