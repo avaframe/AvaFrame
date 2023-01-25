@@ -42,3 +42,5 @@ for sphKernelRadius in [5, 3]:
 
     # call com1DFA to perform simulation - provide configuration file and release thickness function
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=damBreakCfg)
+    # Clean input directory(ies) of old work 
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
