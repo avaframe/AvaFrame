@@ -710,13 +710,29 @@ def convertToCfgList(parameterList):
 
     return parameterString
 
+
 def getNumberOfProcesses(cfgMain, nSims):
+    """ Determine how many CPU cores to take for parallel tasks 
+
+        Parameters
+        -----------
+        cfgMain: configuration object 
+            the main avaframe configuration
+        nSims: integer
+            number of simulations that need to be calculated
+
+
+        Returns
+        ---------
+        nCPU: int
+            number of cores to take
+    """
 
     maxCPU = multiprocessing.cpu_count()
 
     if cfgMain["MAIN"]["nCPU"] == 'auto':
-        nCPU = math.floor(maxCPU * 0.9)
-
+        cpuPerc = float(cfgMain["MAIN"]["CPUPercent"]) / 100.
+        nCPU = math.floor(maxCPU * cpuPerc)
     else:
         nCPU = cfgMain['MAIN'].getint('nCPU')
 

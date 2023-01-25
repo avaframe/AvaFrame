@@ -3,6 +3,7 @@
 """
 
 import logging
+import os
 import time
 import pathlib
 import numpy as np
@@ -16,9 +17,12 @@ from itertools import product
 import configparser
 import matplotlib.tri as tri
 from shapely.geometry import Polygon as sPolygon
+if os.name == 'nt':
+    from multiprocessing.pool import ThreadPool as Pool
+else:
+    from multiprocessing import Pool
 import multiprocessing
 from functools import partial
-import os
 
 # Local imports
 from avaframe.version import getVersion
@@ -47,6 +51,7 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+import threading
 
 #######################################
 # Set flags here
@@ -166,7 +171,8 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
 
         # Create parallel pool and run
-        with multiprocessing.Pool(processes=nCPU) as pool:
+        # with multiprocessing.Pool(processes=nCPU) as pool:
+        with Pool(processes=nCPU) as pool:
             results = pool.map(com1DFACoreTaskWithInput, simDict)
             pool.close()
             pool.join()
@@ -210,7 +216,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
     # fetch simHash for current sim
     simHash = simDict[cuSim]["simHash"]
 
-    log.info('%s runs as process: %s' % (cuSim,  os.getpid()))
+    log.info('%s runs as process: %s, %s' % (cuSim,  os.getpid(), threading.current_thread().ident))
 
     # append configuration to dataframe
     simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
