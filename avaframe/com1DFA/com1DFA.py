@@ -14,15 +14,13 @@ import pickle
 from datetime import datetime
 import matplotlib.path as mpltPath
 from itertools import product
-import configparser
 import matplotlib.tri as tri
 from shapely.geometry import Polygon as sPolygon
+from functools import partial
 if os.name == 'nt':
     from multiprocessing.pool import ThreadPool as Pool
 else:
     from multiprocessing import Pool
-import multiprocessing
-from functools import partial
 
 # Local imports
 from avaframe.version import getVersion
@@ -41,7 +39,6 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
-import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI
@@ -146,10 +143,6 @@ def com1DFAMain(cfgMain, cfgInfo=''):
     for key in simDict:
         log.info('Simulation: %s' % key)
 
-    # TODO: once it is confirmed that inputSimFiles is not changed within sim
-    # keep for now for testing
-    inputSimFilesTest = inputSimFiles.copy()
-
     # initialize reportDict list
     reportDictList = list()
 
@@ -168,7 +161,6 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
         # Supply compute task with inputs
         com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)
-
 
         # Create parallel pool and run
         # with multiprocessing.Pool(processes=nCPU) as pool:
@@ -203,6 +195,10 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
 
 def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
+    """ This is a subdivision of com1DFAMain to allow for parallel execution.
+        Please read this in the context of the com1DFAMain function.
+    """
+
 
     simDF = pd.DataFrame()
     tCPUDF = pd.DataFrame()
@@ -230,35 +226,24 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
         reportDict,
         cfgFinal,
         tCPU,
-        inputSimFilesNEW,
         particlesList,
-        fieldsList,
-        tSave,
     ) = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
-    simDF.at[simHash, "nPart"] = str(int(particlesList[0]["nPart"]))
 
-    #     # TODO check if inputSimFiles not changed within sim
-    #     for key in inputSimFilesTest:
-    #         if key != "releaseScenario":
-    #             if inputSimFilesNEW[key] != inputSimFilesTest[key]:
-    #                 log.error("InputFilesDict has changed")
+    simDF.at[simHash, "nPart"] = str(int(particlesList[0]["nPart"]))
 
     # append time to data frame
     tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
 
-
-    #     # create hash to check if configuration didn't change
-    #     simHashFinal = cfgUtils.cfgHash(cfgFinal)
-    #     if simHashFinal != simHash:
-    #         cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName="%s_butModified" % simHash)
-    #         message = "Simulation configuration has been changed since start"
-    #         log.error(message)
-    #         raise AssertionError(message)
+    # create hash to check if configuration didn't change
+    simHashFinal = cfgUtils.cfgHash(cfgFinal)
+    if simHashFinal != simHash:
+        cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName="%s_butModified" % simHash)
+        message = "Simulation configuration has been changed since start"
+        log.error(message)
+        raise AssertionError(message)
 
     # return simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList
     return simDF, tCPUDF, dem, reportDict
-
-
 
 
 def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList):
@@ -351,14 +336,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         configuration object for simulation to be performed
     infoDict['tCPU']: dict
         info on cpu timing
-    inputSimFiles: dict
-        dictionary with input files
     particlesList: list
         list of particle dictionaries for all saving time steps
-    fieldsList: list
-        list of fields dictionaries for all saving time steps
-    Tsave: numpy array
-        vector of saving time steps
     """
 
     # select release area input data according to chosen release scenario
@@ -420,7 +399,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
 
-    return dem, reportDict, cfg, infoDict['tCPU'], inputSimFiles, particlesList, fieldsList, Tsave
+    return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
@@ -638,7 +617,7 @@ def prepareInputData(inputSimFiles, cfg):
             damLine['type'] = 'Dam'
         else:
             message = 'Take dam is set, but no dam file found, skipping it'
-            log.warning(message)
+            log.info(message)
             damLine = None
     else:
         damLine = None

@@ -106,7 +106,6 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     # do the diff and analyse
     diff = DeepDiff(defCfg, simCfg, exclude_paths=excludeItems)
 
-
     if 'values_changed' in diff:
         log.info('Comparing to default cfg, values changed:')
         log.info(diff['values_changed'])
@@ -214,7 +213,7 @@ def initializeInputs(avalancheDir, cleanDEMremeshed):
     inputSimFilesAll = gI.getInputDataCom1DFA(avalancheDir)
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll, avalancheDir, modName)
+    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll, avalancheDir)
 
     return inputSimFilesAll, outDir, simDFExisting, simNameExisting
 
