@@ -8,6 +8,7 @@ exceed a particular threshold
 import numpy as np
 import logging
 import pathlib
+from scipy.stats import qmc
 
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
@@ -17,8 +18,8 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in1Data.computeFromDistribution as cP
 import avaframe.com1DFA.deriveParameterSet as dP
 from avaframe.in3Utils import geoTrans as gT
-from avaframe.ana4Stats import sampling as sAM
 from avaframe.out3Plot import statsPlots as sP
+from avaframe.in1Data import getInput as gI
 
 
 # create local logger
@@ -85,23 +86,15 @@ def cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod):
             variations
     """
 
-     # ++++++++++ set configurations for ana4Stats/sampling and override ++++++++++++
-    # get sampling configuration and update with probRun parameter set
-    cfgSA = cfgUtils.getModuleConfig(sAM, fileOverride='', modInfo=False, toPrint=False,
-                                          onlyDefault=cfgProb['sampling_override'].getboolean('defaultConfig'))
-    cfgSA, cfgProb = cfgHandling.applyCfgOverride(cfgSA, cfgProb, sAM, addModValues=False)
-
-    cfgSA['GENERAL']['varParList'] = cfgProb['PROBRUN']['varParList']
-    cfgSA['GENERAL']['defaultConfig'] = cfgProb['PROBRUN']['defaultComModuleCfg']
-
     # create sample of all parameter variations
-    paramValuesD = sAM.createSample(cfgSA['GENERAL'])
+    paramValuesD = createSampleWithPercentVariation(cfgProb, modName, fileOverride=cfgFileMod)
 
     # create plot of parameter sample if variation of two parameters
     sP.plotSample(paramValuesD, outDir)
 
     # write cfg files one for each parameter set drawn from full sample
-    cfgFiles = sAM.createCfgFiles(paramValuesD, modName, cfgSA, outDir)
+    cfgFiles = createCfgFiles(paramValuesD, modName, cfgProb, cfgPath=outDir,
+                              fileOverride=cfgFileMod)
 
     return cfgFiles
 
@@ -137,12 +130,7 @@ def cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod):
         cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
 
         # use cfgFile, local com module settings or default settings if local not available
-        if cfgFileMod != '' and cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'):
-            message = 'fileOverride provided AND defaultComModuleCfg set to True, only one is allowed'
-            log.error(message)
-            raise AssertionError(message)
-        else:
-            modCfg = cfgUtils.getModuleConfig(modName, fileOverride=cfgFileMod, onlyDefault=cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'))
+        modCfg = fetchStartCfg(modName, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), cfgFileMod)
         modCfg = updateCfgRange(modCfg, cfgProb, varName, variationsDict[varName])
 
         with open(cfgFile, 'w') as configfile:
@@ -179,22 +167,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     # also for the other parameters that are varied subsequently
     # first check if no parameter variation in provided for these parameters in the com module ini
     # if so - errror
-    for varPar in varParList:
-        if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
-            message = ('Only one reference value is allowed for %s: but %s is given' %
-                (varPar, cfg['GENERAL'][varPar]))
-            log.error(message)
-            raise AssertionError(message)
-        elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
-            thPercentVariation = varPar + 'PercentVariation'
-            thRangeVariation = varPar + 'RangeVariation'
-            thDistVariation = varPar + 'DistVariation'
-            if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '' or cfg['GENERAL'][thDistVariation] != '':
-                message = ('Only one reference value is allowed for %s: but %s %s or %s %s is given' %
-                    (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation],
-                     thRangeVariation, cfg['GENERAL'][thRangeVariation]))
-                log.error(message)
-                raise AssertionError(message)
+    _, _ = checkParameterSettings(cfg, varParList)
 
     # this is now done for parameter VARNAME from inputs
     # get range, steps and reference value of parameter to perform variations
@@ -275,6 +248,66 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     cfg['VISUALISATION']['scenario'] = varName
 
     return cfg
+
+def checkParameterSettings(cfg, varParList):
+    """ check if parameter settings in comMod configuration do not inlcude variation for parameters to be varied
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings
+        varParList: list
+            list of parameters (names) that shall be varied
+
+    """
+
+    # set a list of all thickness parameters that are set to be read from shp file
+    thReadFromShp = []
+
+    # loop over all parameters and check if no variation is set and if read from shp
+    for varPar in varParList:
+        if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
+            message = ('Only one reference value is allowed for %s: but %s is given' %
+                (varPar, cfg['GENERAL'][varPar]))
+            log.error(message)
+            raise AssertionError(message)
+        elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
+            thFromShp = varPar + 'FromShp'
+            # check if reference settings have already variation of varPar
+            _ = checkForNumberOfReferenceValues(cfg, varPar)
+            # check if th read from shp file
+            if cfg['GENERAL'].getboolean(thFromShp):
+                thReadFromShp.append(varPar)
+
+    return True, thReadFromShp
+
+
+def checkForNumberOfReferenceValues(cfg, varPar):
+    """ check if in reference configuration no variation option of varPar is set
+        if set - throw error
+
+        Parameters
+        -----------
+        cfg: configparser object
+            reference configuration settings
+        varPar: str
+            name of parameter to be checked
+
+    """
+
+    thPercentVariation = varPar + 'PercentVariation'
+    thRangeVariation = varPar + 'RangeVariation'
+    thDistVariation = varPar + 'DistVariation'
+
+    # check if variation is set
+    if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '' or cfg['GENERAL'][thDistVariation] != '':
+        message = ('Only one reference value is allowed for %s: but %s %s or %s %s is given' %
+            (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation],
+             thRangeVariation, cfg['GENERAL'][thRangeVariation]))
+        log.error(message)
+        raise AssertionError(message)
+
+    return True
 
 
 def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
@@ -411,3 +444,199 @@ def makeDictFromVars(cfg):
         variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx]}
 
     return variationsDict
+
+
+def fetchThicknessInfo(avaDir):
+    """ Fetch input data for avaDir and thickness info
+
+        Parameters
+        ------------
+        cfg: configparser object
+            configuration settings
+        avaDir: pathlib path or str
+            path to avalanche directory
+
+        Returns
+        -----------
+    """
+
+    # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
+    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir)
+
+    # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
+    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll, avaDir)
+
+    return inputSimFilesAll
+
+
+def createSampleWithPercentVariation(cfgProb, comMod, fileOverride=''):
+    """ Create a sample of parameters for a desired parameter variation,
+        and draw nSample sets of parameter values from full sample
+        if thickness values read from shp for comMod, convert sample values for these
+        to a percent variation
+
+        Parameters
+        ------------
+        cfgProb: configparser object
+            configuration settings for parameter variation
+        comMod: computational module
+            module to perform then sims for parameter variation
+        fileOverride: pathlib path
+            optional - path to configuration file for comMod settings
+            (for all parameters except those to be varied)
+
+        Returns
+        --------
+        paramValuesD: dict
+         dictionary used to pass parameter variation values
+            names: list
+                list of parameter names (that are varied)
+            values: numpy nd array
+                as many rows as sets of parameter values and as many rows as parameters
+            typeList: list
+                list of types of parameters (float, ...)
+            thReadFromShp: list
+                list of parameter names where the base value is read from shape
+        """
+
+    # random generator initialized with seed
+    randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
+
+    # get filename of module
+    modName = str(pathlib.Path(comMod.__file__).stem)
+
+    # read initial configuration
+    cfgStart = fetchStartCfg(comMod, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
+
+    # fetch parameter names for parameter variation and variation value
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    valVariationValue = cfgProb['PROBRUN']['variationValue'].split('|')
+    # check if thickness parameters are actually read from shp file
+    _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
+
+    if len(thReadFromShp) > 0:
+        if cfgProb['PROBRUN']['variationType'].lower() != 'percent':
+            message = 'If thickness values read from shp file - only percent variation is allowed!'
+            log.error(message)
+            raise AssertionError(message)
+
+    # initialze lower and upper bounds required to get a sample for the parameter values
+    lowerBounds = []
+    upperBounds = []
+    for idx, varPar in enumerate(varParList):
+        # if thickness parameters are read from shapefile - convert to a percent variation value
+        # can be used in ini for thPercentVariation
+        if varPar in thReadFromShp:
+            lowerBounds.append((100. - float(valVariationValue[idx])))
+            upperBounds.append((100. + float(valVariationValue[idx])))
+        else:
+            # if parameter value directly set in configuration modify the value directly
+            varVal = cfgStart['GENERAL'].getfloat(varPar)
+            if cfgProb['PROBRUN']['variationType'].lower() == 'percent':
+                lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
+                uB = varVal + varVal * ( float(valVariationValue[idx]) / 100.)
+            elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
+                lB = varVal - float(valVariationValue[idx])
+                uB = varVal + float(valVariationValue[idx])
+            # update bounds
+            lowerBounds.append(lB)
+            upperBounds.append(uB)
+
+    # create a sample of parameter values using scipy latin hypercube sampling
+    if cfgProb['PROBRUN']['sampleMethod'].lower() == 'latin':
+        sampler = qmc.LatinHypercube(d=len(varParList), seed=randomGen)
+        sample = sampler.random(n=int(cfgProb['PROBRUN']['nSample']))
+        sample = qmc.scale(sample, lowerBounds, upperBounds)
+        log.info('Parameter sample created using latin hypercube sampling')
+    else:
+        message = ('Sampling method: %s not a valid option' % cfgProb['PROBRUN']['sampleMethod'])
+        log.error(message)
+        raise AssertionError(message)
+
+    # create dictionary with all the info
+    paramValuesD = {'names': varParList,
+                    'values': sample,
+                    'typeList': cfgProb['PROBRUN']['varParType'].split('|'),
+                    'thReadFromShp': thReadFromShp}
+
+    return paramValuesD
+
+
+def createCfgFiles(paramValuesD, comMod, cfg, cfgPath='', fileOverride=''):
+    """ create all config files required to run com Module from parameter variations using paramValues
+
+        Parameters
+        -----------
+        paramValuesD: dict
+            dictionary with parameter names and values (array of all sets of parameter values, one row per value set)
+        comMod: com module
+            computational module
+        cfg: configparser object
+            configuration settings
+        cfgPath: str
+            path where cfg files should be saved to
+        fileOverride: pathlib path
+            if config of comMod should be overwritten provide file path
+
+        Returns
+        --------
+        cfgFiles: list
+            list of cfg file paths for comMod including the updated values of the parameters to vary
+
+    """
+
+    # get filename of module
+    modName = str(pathlib.Path(comMod.__file__).stem)
+
+    # read initial configuration
+    cfgStart = fetchStartCfg(comMod, cfg['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
+
+    # create one cfgFile with one line of the parameter values from the full parameter variation
+    cfgFiles = []
+    for count1, pVal in enumerate(paramValuesD['values']):
+        for index, par in enumerate(paramValuesD['names']):
+            # convert percent variation to a +- variation in percent and of step 1
+            if par in paramValuesD['thReadFromShp']:
+                thVal = pVal[index] - 100.
+                signVal = ['+' if thVal > 0 else '']
+                cfgStart['GENERAL'][par + 'PercentVariation'] = signVal[0] + str(thVal) + '$1'
+            else:
+                cfgStart['GENERAL'][par] = str(pVal[index])
+        cfgStart['VISUALISATION']['scenario'] = str(count1)
+        cfgF = pathlib.Path(cfgPath, ('%d_%sCfg.ini' % (count1, modName)))
+        with open(cfgF, 'w') as configfile:
+            cfgStart.write(configfile)
+        # append file path to list of cfg files
+        cfgFiles.append(cfgF)
+
+    return cfgFiles
+
+
+def fetchStartCfg(comMod, onlyDefault, fileOverride):
+    """ fetch start configuration of comMod
+        if onlyDefault True and fileOverride path provided throw error
+
+        Parameters
+        -----------
+        comMod: computational module
+            module where configuration is read from
+        onlyDefault: bool
+            if True - read default config and not local
+        fileOverride: pathlib path
+            path to optional override configuration file
+
+        Returns
+        --------
+        cfgStart: configparser object
+            configuration object of comMod
+    """
+
+    if fileOverride != '' and onlyDefault:
+        message = 'fileOverride provided AND defaultComModuleCfg set to True, only one is allowed'
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        cfgStart = cfgUtils.getModuleConfig(comMod, fileOverride=fileOverride, toPrint=False,
+                                            onlyDefault=onlyDefault)
+
+    return cfgStart

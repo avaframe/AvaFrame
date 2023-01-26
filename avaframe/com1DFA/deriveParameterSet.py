@@ -366,10 +366,16 @@ def splitVariationToArraySteps(value, key, fullCfg):
             itemsP = itemsL[0].split('-')[1]
             percentsStart = 1. - float(itemsP) / 100.
             percentsStop = 1.0
+            # to be sure the right value is taken
+            if int(itemsL[1]) == 1:
+                percentsStop = percentsStart
         elif '+' in itemsL[0]:
             itemsP = itemsL[0].split('+')[1]
             percentsStart = 1.0
             percentsStop = 1. + float(itemsP) / 100.
+            # this is required as the linspace would instead take 1 if only one step
+            if int(itemsL[1]) == 1:
+                percentsStart = percentsStop
         else:
             percentsStart = 1. - float(itemsL[0]) / 100.
             percentsStop = 1. + float(itemsL[0]) / 100.

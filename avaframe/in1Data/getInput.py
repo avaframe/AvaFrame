@@ -263,7 +263,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
     return OutputFile, available
 
 
-def getThicknessInputSimFiles(inputSimFiles, avaDir, modName):
+def getThicknessInputSimFiles(inputSimFiles, avaDir):
     """ add thickness of shapefiles to dictionary
 
         Parameters
@@ -272,8 +272,6 @@ def getThicknessInputSimFiles(inputSimFiles, avaDir, modName):
             dictionary with info on release and entrainment file paths
         avaDir: str or pathlib path
             path to avalanche directory
-        modName : computational module
-            computational module
 
         Returns
         --------

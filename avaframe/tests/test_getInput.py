@@ -242,7 +242,7 @@ def test_getThicknessInputSimFiles(tmp_path):
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
         'flagSecondaryRelease': 'No'}, 'relThFile': None}
 
-    inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles, avaTestDir, com1DFA)
+    inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles, avaTestDir)
 
     print('inputSimFiles', inputSimFiles)
 
@@ -271,7 +271,7 @@ def test_updateThicknessCfg(tmp_path):
     fU.makeADir(outDir)
 
     cfg = configparser.ConfigParser()
-    cfg = cfgUtils.getModuleConfig(com1DFA, toPrint=False)
+    cfg = cfgUtils.getModuleConfig(com1DFA, toPrint=False, onlyDefault=True)
 
     cfg['GENERAL']['relThFromFile'] = 'False'
     cfg['GENERAL']['simTypeList'] = 'null|ent'

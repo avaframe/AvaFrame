@@ -1613,7 +1613,7 @@ def test_runCom1DFA(tmp_path, caplog):
     shutil.copytree(inputDir, avaDir)
     cfgFile = avaDir / 'test_com1DFACfg.ini'
     cfgMain = configparser.ConfigParser()
-    cfgMain['MAIN'] = {'avalancheDir': str(avaDir), 'nCPU': 'auto'}
+    cfgMain['MAIN'] = {'avalancheDir': str(avaDir), 'nCPU': 'auto', 'CPUPercent': '90'}
     cfgMain['FLAGS'] = {'showPlot': 'False', 'savePlot': 'True', 'ReportDir': 'True', 'reportOneFile': 'True',
         'debugPlot': 'False'}
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)

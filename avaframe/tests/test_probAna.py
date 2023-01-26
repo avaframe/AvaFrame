@@ -144,17 +144,71 @@ def test_createComModConfig(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
                           'addStandardConfig': 'True',
-                          'defaultSetup': 'True', 'samplingStrategy': '1', 'defaultComModuleCfg': 'False'}
-    cfgProb['sampling_override'] = {'defaultConfig': 'True', 'varParType': 'float|float',
-                                'varParMin': '0.1|1.', 'varParMax': '0.2|2.', 'nSample': '40',
-                                'seed': '12345', 'sampleMethod': 'latin'}
+                          'defaultSetup': 'True', 'samplingStrategy': '1',
+                          'defaultComModuleCfg': 'False',
+                          'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
+                          'sampleMethod': 'latin'}
+
 
     # call function to be tested
     cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
 
     print('cfgFiles', cfgFiles)
 
+    cfgTest = configparser.ConfigParser()
+    cfgTest.read(cfgFiles[0])
+    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+        cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['mu'])
+
+    assert cfgTest['GENERAL']['relThFromShp'] == 'False'
+    assert cfgTest['GENERAL']['relTh'] == '1.6341620830145123'
     assert len(cfgFiles) == 40
+
+    cfgProb = configparser.ConfigParser()
+    cfgProb.optionxform = str
+    cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent',
+                          'variationValue': '60|50', 'numberOfSteps': '2|3',
+                          'addStandardConfig': 'True',
+                          'defaultSetup': 'True', 'samplingStrategy': '1', 'defaultComModuleCfg': 'True',
+                          'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
+                          'sampleMethod': 'latin'}
+
+
+    # call function to be tested
+    cfgFiles2, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+
+    print('cfgFiles', cfgFiles2)
+
+    cfgTest2 = configparser.ConfigParser()
+    cfgTest2.read(cfgFiles2[0])
+    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+        cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['mu'])
+
+    assert cfgTest2['GENERAL']['relThFromShp'] == 'True'
+    assert cfgTest2['GENERAL']['relTh'] == ''
+    assert cfgTest2['GENERAL']['relThPercentVariation'] == '-18.291895849274383$1'
+    assert len(cfgFiles) == 40
+
+    cfgProb = configparser.ConfigParser()
+    cfgProb.optionxform = str
+    cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'range',
+                          'variationValue': '0.2|1.2', 'numberOfSteps': '2|3',
+                          'addStandardConfig': 'False',
+                          'samplingStrategy': '2',
+                          'defaultComModuleCfg': 'True'}
+
+    # call function to be tested
+    cfgFiles3, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+
+    print('cfgFiles', cfgFiles3)
+
+    cfgTest3 = configparser.ConfigParser()
+    cfgTest3.read(cfgFiles3[1])
+
+    assert cfgTest3['GENERAL']['relThFromShp'] == 'True'
+    assert cfgTest3['GENERAL']['relTh'] == ''
+    assert cfgTest3['GENERAL']['relThRangeVariation'] == '1.2$3'
+    assert len(cfgFiles3) == 2
 
 
 def test_updateCfgRange():
