@@ -163,6 +163,23 @@ optional outputs
 However, in the configuration file, it is possible to change the result parameters and time Steps that shall be exported.
 Have a look at the designated subsection Output in ``com1DFA/com1DFACfg.ini``.
 
+Parallel computation
+--------------------
+
+If multiple runs of com1DFA are to be executed, these will be calulated in parallel via
+multiprocessing. So each task itself is calculated on only one core, but different tasks
+are run at the same time. 
+
+This happens if you have one of the following (or a combination of them):
+
+* multiple scenarios (multiple input release shapefiles)
+* multiple runtypes, i.e null variant and entrainment/resistance variant
+* some kind of parameter variation (eg: relTh = 1.0|1.5|1.7)
+
+The number of CPU cores is controlled in the main ``avaframeCfg.ini`` file. By default a
+maximimum of 90 percent of your available cores is being utilized. However you can set
+a different number if needed. For sequential execution set nCPU to 1. 
+
 
 To run
 --------
