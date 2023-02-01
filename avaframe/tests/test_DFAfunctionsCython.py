@@ -189,8 +189,8 @@ def test_updatePositionC():
                       'reprojMethodPosition': '2', 'reprojectionIterations': '5', 'thresholdProjection': '0.001',
                       'dissDam': '1', 'glideSnow': '1', 'wetSnow': '1'}
 
-    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'travelLengthXY': np.asarray([0., 0., 0.]),
+                  'travelLengthXYCor': np.asarray([0., 0., 0.]), 'travelLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 0.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
@@ -248,8 +248,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == True
 
-    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'travelLengthXY': np.asarray([0., 0., 0.]),
+                  'travelLengthXYCor': np.asarray([0., 0., 0.]), 'travelLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 100000.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
@@ -272,8 +272,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == False
 
-    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'travelLengthXY': np.asarray([0., 0., 0.]),
+                  'travelLengthXYCor': np.asarray([0., 0., 0.]), 'travelLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 100000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
@@ -306,8 +306,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == False
 
-    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'travelLengthXY': np.asarray([0., 0., 0.]),
+                  'travelLengthXYCor': np.asarray([0., 0., 0.]), 'travelLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 1000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
@@ -350,7 +350,7 @@ def test_computeTravelAngle():
     zPartArray0 = np.array([10.0, 9.0, 8.0])
     s = np.array([10.0, 10.0, 0.0, 10.0])
     z = np.array([0.0, 0.0, 0.0, 1.0])
-    particles = {'nPart': nPart, 'parentID': parentID, 's': s, 'z': z}
+    particles = {'nPart': nPart, 'parentID': parentID, 'travelLengthXY': s, 'z': z}
     particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
     print(particles['travelAngle'])
     gamma = particles['travelAngle']
