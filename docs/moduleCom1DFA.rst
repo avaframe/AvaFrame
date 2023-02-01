@@ -173,11 +173,11 @@ are run at the same time.
 This happens if you have one of the following (or a combination of them):
 
 * multiple scenarios (multiple input release shapefiles)
-* multiple runtypes, i.e null variant and entrainment/resistance variant
-* some kind of parameter variation (eg: relTh = 1.0|1.5|1.7)
+* multiple runtypes, i.e null variant and entrainment/resistance variant (e.g.: simTypeList = null|ent)
+* some kind of parameter variation (e.g.: relTh = 1.0|1.5|1.7)
 
 The number of CPU cores is controlled in the main ``avaframeCfg.ini`` file. By default a
-maximimum of 90 percent of your available cores is being utilized. However you can set
+maximimum of 50 percent of your available cores is being utilized. However you can set
 a different number if needed. For sequential execution set nCPU to 1. 
 
 
