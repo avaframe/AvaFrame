@@ -1089,9 +1089,9 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['ux'] = np.zeros(np.shape(hPartArray))
     particles['uy'] = np.zeros(np.shape(hPartArray))
     particles['uz'] = np.zeros(np.shape(hPartArray))
-    particles['s'] = np.zeros(np.shape(hPartArray))
-    particles['sCor'] = np.zeros(np.shape(hPartArray))
-    particles['l'] = np.zeros(np.shape(hPartArray))
+    particles['travelLengthXY'] = np.zeros(np.shape(hPartArray))
+    particles['travelLengthXYCor'] = np.zeros(np.shape(hPartArray))
+    particles['travelLengthXYZ'] = np.zeros(np.shape(hPartArray))
     particles['travelAngle'] = np.zeros(np.shape(hPartArray))
     particles['stoppCriteria'] = False
     mPartArray = particles['m']

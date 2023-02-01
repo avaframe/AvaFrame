@@ -111,11 +111,14 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
     """
 
     propList = ['x', 'y', 'z', 's', 'sCor']
+    propListPart = ['x', 'y', 'z', 'travelLengthXY', 'travelLengthXYCor']
     avaProfileMass = {}
     # do we have velocity info?
     if addVelocityInfo:
         propList.append('u2')
         propList.append('ekin')
+        propListPart.append('u2')
+        propListPart.append('ekin')
         avaProfileMass['totEKin'] = np.empty((0, 1))
     # initialize other properties
     for prop in propList:
@@ -137,7 +140,7 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
                 particles['ekin'] = kineticEneArray
 
             # mass-averaged path
-            avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, m)
+            avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, m, naming=propListPart)
 
             if addVelocityInfo:
                 avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], np.nansum(kineticEneArray))
@@ -628,7 +631,7 @@ def weightedAvgAndStd(values, weights):
     return (average, math.sqrt(variance))
 
 
-def appendAverageStd(propList, avaProfile, particles, weights):
+def appendAverageStd(propList, avaProfile, particles, weights, naming=''):
     """ append averaged to path
 
     Parameters
@@ -641,14 +644,17 @@ def appendAverageStd(propList, avaProfile, particles, weights):
         particles dict
     weights: numpy array
         array of weights (same size as particles)
+    naming: list
+        optional - list of properties at source (if different than final naming in avaProfile)
 
     Returns
     --------
     avaProfile: dict
         averaged profile
     """
-    for prop in propList:
-        avg, std = weightedAvgAndStd(particles[prop], weights)
+    propListNames = naming if naming != '' else propList
+    for prop, propName in zip(propList, propListNames):
+        avg, std = weightedAvgAndStd(particles[propName], weights)
         avaProfile[prop] = np.append(avaProfile[prop], avg)
         avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
     return avaProfile
