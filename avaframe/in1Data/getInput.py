@@ -305,6 +305,9 @@ def getThicknessInputSimFiles(inputSimFiles, avaDir):
         # append release scenario name to list
         releaseScenarioList.append(releaseA.stem)
 
+    # append release scenario names
+    inputSimFiles['releaseScenarioList'] = releaseScenarioList
+
     return inputSimFiles
 
 
@@ -349,15 +352,17 @@ def updateThicknessCfg(inputSimFiles, avaDir, modName, cfgInitial):
         thTypeList.append('secondaryReleaseFile')
 
     # initialize release scenario list
-    releaseScenarioList = []
+    releaseScenarioIni = cfgInitial['INPUT']['releaseScenario']
+    if releaseScenarioIni == '':
+        releaseScenarioList = inputSimFiles['releaseScenarioList']
+    else:
+        releaseScenarioList = cfgInitial['INPUT']['releaseScenario'].split('|')
 
     # add input data info to cfg object
     # fetch thickness attribute of release areas and add info to input dict
-    for releaseA in inputSimFiles['relFiles']:
-        # append release scenario name to list
-        releaseScenarioList.append(releaseA.stem)
+    for releaseA in releaseScenarioList:
         # update configuration with thickness value to be used for simulations
-        cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
+        cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, 'relTh')
         if cfgInitial['GENERAL'].getboolean('relThFromFile'):
             cfgInitial['INPUT']['relThFile'] = str(pathlib.Path('RELTH', inputSimFiles['relThFile'].name))
 

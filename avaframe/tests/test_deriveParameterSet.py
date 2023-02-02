@@ -243,7 +243,7 @@ def test_appendShpThickness():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'relThFromShp': 'True', 'relTh': '',
-        'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': '',
+        'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': '', 'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
         'relThDistVariation': ''}
     cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
 
@@ -258,6 +258,7 @@ def test_appendShpThickness():
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'relThFromShp': 'True', 'relTh': '',
         'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThRangeVariation': '',
+        'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
         'relThDistVariation': ''}
     cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
     cfg = dP.appendShpThickness(cfg)

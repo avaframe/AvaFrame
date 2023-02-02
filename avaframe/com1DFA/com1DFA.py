@@ -481,7 +481,10 @@ def setThickness(cfg, lineTh, typeTh):
     thFlag = typeTh + 'FromShp'
     # set thickness source info
     if cfg['GENERAL'].getboolean(thFlag):
-        lineTh['thicknessSource'] = ['shp file'] * len(lineTh['thickness'])
+        if cfg['INPUT']['thFromIni'] != '' and typeTh in cfg['INPUT']['thFromIni']:
+            lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
+        else:
+            lineTh['thicknessSource'] = ['shp file'] * len(lineTh['thickness'])
     else:
         lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
 
@@ -2492,8 +2495,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             keyList = ['relThPercentVariation', 'entThPercentVariation',
                        'secondaryRelThPercentVariation', 'relThRangeVariation',
                        'entThRangeVariation', 'secondaryRelThRangeVariation',
-                       'relThDistVariation', 'entThDistVariation',
-                                  'secondaryRelThDistVariation']
+                       'relThRangeFromCiVariation', 'entThRangeFromCiVariation',
+                       'secondaryRelThRangeFromCiVariation', 'relThDistVariation',
+                       'entThDistVariation', 'secondaryRelThDistVariation']
             if parameter in keyList:
                 # set thickness value according to percent variation info
                 cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim, cfgSim['GENERAL']['simTypeActual'], row)

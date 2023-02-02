@@ -53,18 +53,20 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
     outDir = avaDir / 'Work' / ('%sConfigFiles' % modNameString)
     fU.makeADir(outDir)
 
+    # check variation settings
+    variationsDict = makeDictFromVars(cfgProb['PROBRUN'])
+
     if cfgProb['PROBRUN'].getint('samplingStrategy') == 2:
         log.info('Probability run performed by varying one parameter at a time - local approach.')
-        cfgFiles = cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod)
-
+        cfgFiles = cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod)
     else:
         log.info('Probability run perfromed drawing parameter set from full sample.')
-        cfgFiles = cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod)
+        cfgFiles = cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod)
 
     return cfgFiles, outDir
 
 
-def cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod):
+def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
     """ create configuration files with all parameter variations - drawn from full sample
         for performing sims with modName comModule
 
@@ -87,23 +89,30 @@ def cfgFilesGlobalApproach(cfgProb, modName, outDir, cfgFileMod):
     """
 
     # create sample of all parameter variations
-    paramValuesD = createSampleWithPercentVariation(cfgProb, modName, fileOverride=cfgFileMod)
+    paramValuesDList = createSampleFromConfig(avaDir, cfgProb, modName, fileOverride=cfgFileMod)
 
     # create plot of parameter sample if variation of two parameters
-    sP.plotSample(paramValuesD, outDir)
+    for paramValuesD in paramValuesDList:
+        if 'releaseScenario' in paramValuesD.keys():
+            releaseScenario = paramValuesD['releaseScenario']
+        else:
+            releaseScenario = ''
+        sP.plotSample(paramValuesD, outDir, releaseScenario=releaseScenario)
 
     # write cfg files one for each parameter set drawn from full sample
-    cfgFiles = createCfgFiles(paramValuesD, modName, cfgProb, cfgPath=outDir,
+    cfgFiles = createCfgFiles(paramValuesDList, modName, cfgProb, cfgPath=outDir,
                               fileOverride=cfgFileMod)
 
     return cfgFiles
 
 
-def cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod):
+def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod):
     """ create configuration file for performing sims with modName com module
 
         Parameters
         -----------
+        variationsDict: dict
+            dictionary with for each varName, varVariation, varSteps, and type of variation
         cfgProb: configParser object
             configuration settings
         avaDir: pathlib path
@@ -120,8 +129,6 @@ def cfgFilesLocalApproach(cfgProb, modName, outDir, cfgFileMod):
 
     """
 
-    # loop over all parameters for performing parameter variation
-    variationsDict = makeDictFromVars(cfgProb['PROBRUN'])
     cfgFiles = []
     for varName in variationsDict:
         # define configuration files
@@ -174,8 +181,9 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     valVariation = varDict['variationValue']
     valSteps = varDict['numberOfSteps']
     valVal = cfg['GENERAL'][varName]
+    variationType = varDict['variationType']
 
-    if cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+    if variationType.lower() == 'normaldistribution':
         # get computeFromDistribution configuration and apply override
         cfgDist = cfgUtils.getModuleConfig(cP, fileOverride='', modInfo=False, toPrint=False,
                                               onlyDefault=cfgProb['computeFromDistribution_override'].getboolean('defaultConfig'))
@@ -184,25 +192,35 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     # set variation in configuration
     if varName in ['relTh', 'entTh', 'secondaryRelTh']:
         # if variation using normal distribution
-        if cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+        if variationType.lower() == 'normaldistribution':
             parName = varName + 'DistVariation'
             if valVariation == '':
                 valVariation = '-'
-            parValue = (cfgProb['PROBRUN']['variationType'] + '$'
+            parValue = (variationType + '$'
                 + valSteps + '$'  + valVariation + '$'
                 + cfgDist['GENERAL']['minMaxInterval'] + '$'
                 + cfgDist['GENERAL']['buildType'] + '$'
                 + cfgDist['GENERAL']['support'])
         # if variation using percent
-        elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
+        elif variationType.lower() == 'percent':
             parName = varName + 'PercentVariation'
             parValue = valVariation + '$' + valSteps
         # if variation using absolute range
-        elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
+        elif variationType.lower() == 'range':
             parName = varName + 'RangeVariation'
             parValue = valVariation + '$' + valSteps
+            if 'ci' in valVariation:
+                message = ('Variation Type: range - variationValue is %s not a valid option - only \
+                 scalar value allowed or consider variationType rangefromci' %
+                    valVariation)
+                log.error(message)
+                raise AssertionError(message)
+        elif variationType.lower() == 'rangefromci':
+            parName = varName + 'RangeFromCiVariation'
+            parValue = valVariation + '$' + valSteps
         else:
-            message = ('Variation Type: %s - not a valid option, options are: percent, range, normaldistribution' % cfgProb['PROBRUN']['variationType'])
+            message = ('Variation Type: %s - not a valid option, options are: percent, range, \
+                normaldistribution, rangefromci' % variationType)
             log.error(message)
             raise AssertionError(message)
         # write parameter variation for varName in config file
@@ -210,7 +228,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
         cfg['GENERAL']['addStandardConfig'] = cfgProb['PROBRUN']['addStandardConfig']
     else:
         # set variation
-        if  cfgProb['PROBRUN']['variationType'].lower() == 'normaldistribution':
+        if  variationType.lower() == 'normaldistribution':
             cfgDist = {'sampleSize': valSteps, 'mean': valVal,
                 'buildType': cfgProb['computeFromDistribution_override']['buildType'],
                 'buildValue': valVariation,
@@ -218,11 +236,11 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
                 'support': cfgDist['GENERAL']['support']}
             _, valValues, _, _ = cP.extractNormalDist(cfgDist)
             cfg['GENERAL'][varName] = dP.writeToCfgLine(valValues)
-        elif cfgProb['PROBRUN']['variationType'].lower() == 'percent':
+        elif variationType.lower() == 'percent':
             cfg['GENERAL'][varName] = '%s$%s$%s' % (valVal, valVariation, valSteps)
             valValues = fU.splitIniValueToArraySteps(cfg['GENERAL'][varName])
 
-        elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
+        elif variationType.lower() == 'range':
             if '-' in valVariation or '+' in valVariation:
                 valStart = str(float(valVal) + float(valVariation))
                 valStop = float(valVal)
@@ -232,7 +250,8 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             cfg['GENERAL'][varName] = '%s:%s:%s' % (valStart, valStop, valSteps)
             valValues = np.linspace(float(valStart), float(valStop), int(valSteps))
         else:
-            message = ('Variation Type: %s - not a valid option, options are: percent, range, normaldistribution' % cfgProb['PROBRUN']['variationType'])
+            message = ('Variation Type: %s - not a valid option, options are: percent, range, \
+                normaldistribution, rangefromci' % variationType)
             log.error(message)
             raise AssertionError(message)
 
@@ -248,6 +267,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     cfg['VISUALISATION']['scenario'] = varName
 
     return cfg
+
 
 def checkParameterSettings(cfg, varParList):
     """ check if parameter settings in comMod configuration do not inlcude variation for parameters to be varied
@@ -274,7 +294,7 @@ def checkParameterSettings(cfg, varParList):
         elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
             thFromShp = varPar + 'FromShp'
             # check if reference settings have already variation of varPar
-            _ = checkForNumberOfReferenceValues(cfg, varPar)
+            _ = checkForNumberOfReferenceValues(cfg['GENERAL'], varPar)
             # check if th read from shp file
             if cfg['GENERAL'].getboolean(thFromShp):
                 thReadFromShp.append(varPar)
@@ -282,28 +302,29 @@ def checkParameterSettings(cfg, varParList):
     return True, thReadFromShp
 
 
-def checkForNumberOfReferenceValues(cfg, varPar):
+def checkForNumberOfReferenceValues(cfgGen, varPar):
     """ check if in reference configuration no variation option of varPar is set
         if set - throw error
 
         Parameters
         -----------
-        cfg: configparser object
+        cfgGen: configparser object
             reference configuration settings
         varPar: str
             name of parameter to be checked
 
     """
 
-    thPercentVariation = varPar + 'PercentVariation'
-    thRangeVariation = varPar + 'RangeVariation'
-    thDistVariation = varPar + 'DistVariation'
+    thPV = varPar + 'PercentVariation'
+    thRV = varPar + 'RangeVariation'
+    thDV = varPar + 'DistVariation'
+    thRCiV = varPar + 'RangeFromCiVariation'
 
     # check if variation is set
-    if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '' or cfg['GENERAL'][thDistVariation] != '':
-        message = ('Only one reference value is allowed for %s: but %s %s or %s %s is given' %
-            (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation],
-             thRangeVariation, cfg['GENERAL'][thRangeVariation]))
+    if cfgGen[thPV] != '' or cfgGen[thRV] != '' or cfgGen[thDV] != '' or cfgGen[thRCiV] != '':
+        message = ('Only one reference value is allowed for %s: but %s %s, %s %s, %s %s, %s %s is given' %
+            (varPar, thPV, cfgGen[thPV], thRV, cfgGen[thRV], thDV, cfgGen[thDV],thRCiV,
+             cfgGen[thRCiV]))
         log.error(message)
         raise AssertionError(message)
 
@@ -425,23 +446,35 @@ def makeDictFromVars(cfg):
         Returns
         --------
         variationsDict: dict
-            dictionary with for each varName, varVariation, varSteps
+            dictionary with for each varName, varVariation, varSteps, and type of variation
 
     """
 
     varParList = cfg['varParList'].split('|')
     varValues = cfg['variationValue'].split('|')
     varSteps = cfg['numberOfSteps'].split('|')
+    varTypes = cfg['variationType'].split('|')
 
     # check if value is provided for each parameter
-    if (len(varParList) == len(varValues) == len(varSteps)) is False:
-        message = 'For every parameter in varParList a variationValue and numberOfSteps needs to be provided'
+    if (len(varParList) == len(varValues) == len(varSteps) == len(varTypes)) is False:
+        message = 'For every parameter in varParList a variationValue, numberOfSteps and variationType needs to be provided'
         log.error(message)
-        raise AssertionError
+        raise AssertionError(message)
+
+    # check if correct values provided for rangefromci
+    rangeFromCi = [idx for idx, v in enumerate(varTypes) if v.lower() == 'rangefromci']
+    varValuesRCi = np.asarray(varValues)[rangeFromCi]
+    ciCheck = [False for ci in varValuesRCi if ci != 'ci95']
+
+    if len(ciCheck) > 0:
+        message = 'If rangefromci is chosen as variation type, ci95 is required as variationValue'
+        log.error(message)
+        raise AssertionError(message)
 
     variationsDict = {}
     for idx, val in enumerate(varParList):
-        variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx]}
+        variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx],
+                               'variationType': varTypes[idx]}
 
     return variationsDict
 
@@ -458,6 +491,8 @@ def fetchThicknessInfo(avaDir):
 
         Returns
         -----------
+        inputSimFilesAll: dict
+            dictionary with info on available input data (release areas, entrainment, and thickness info)
     """
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
@@ -469,14 +504,15 @@ def fetchThicknessInfo(avaDir):
     return inputSimFilesAll
 
 
-def createSampleWithPercentVariation(cfgProb, comMod, fileOverride=''):
+def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
     """ Create a sample of parameters for a desired parameter variation,
-        and draw nSample sets of parameter values from full sample
+        and draw nSample sets of parameter values
         if thickness values read from shp for comMod, convert sample values for these
-        to a percent variation
 
         Parameters
         ------------
+        avaDir: pathlib path
+            path to avalanche directory
         cfgProb: configparser object
             configuration settings for parameter variation
         comMod: computational module
@@ -487,88 +523,300 @@ def createSampleWithPercentVariation(cfgProb, comMod, fileOverride=''):
 
         Returns
         --------
-        paramValuesD: dict
-         dictionary used to pass parameter variation values
-            names: list
-                list of parameter names (that are varied)
-            values: numpy nd array
-                as many rows as sets of parameter values and as many rows as parameters
-            typeList: list
-                list of types of parameters (float, ...)
-            thReadFromShp: list
-                list of parameter names where the base value is read from shape
+        paramValuesDList: list
+            list of paramValuesD (multiple if multiple release area scenarios)
+            paramValuesD: dict
+             dictionary used to pass parameter variation values
+                names: list
+                    list of parameter names (that are varied)
+                values: numpy nd array
+                    as many rows as sets of parameter values and as many rows as parameters
+                typeList: list
+                    list of types of parameters (float, ...)
+                thFromIni: str
+                    str of parameter names where the base value is read from shape
         """
-
-    # random generator initialized with seed
-    randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
-
-    # get filename of module
-    modName = str(pathlib.Path(comMod.__file__).stem)
 
     # read initial configuration
     cfgStart = fetchStartCfg(comMod, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
 
-    # fetch parameter names for parameter variation and variation value
+    # fetch parameter names for parameter variation and variation value and variation type
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
     valVariationValue = cfgProb['PROBRUN']['variationValue'].split('|')
+    varType = cfgProb['PROBRUN']['variationType'].split('|')
     # check if thickness parameters are actually read from shp file
     _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
 
+    # create sets of parameters values for parameter variation
     if len(thReadFromShp) > 0:
-        if cfgProb['PROBRUN']['variationType'].lower() != 'percent':
-            message = 'If thickness values read from shp file - only percent variation is allowed!'
-            log.error(message)
-            raise AssertionError(message)
+         paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType)
+    else:
+        paramValuesD = createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, valVariationValue, varType)
+        paramValuesDList = [paramValuesD]
+
+    return paramValuesDList
+
+
+def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, valVariationValue, varType):
+    """ create a sample for a parameter variation using latin hypercube sampling
+
+    Parameters
+    ------------
+    cfgProb: configparser object
+        configuration settings for parameter variation
+    cfgStart: configparser object
+        configuration settings for comMod without variation values
+    varParList: list
+        list of parameters that shall be varied
+    valVariationValue: list
+        list if value used for variation
+    varType: list
+        list of type of variation for each parameter (percent, range, rangefromci)
+
+    Returns
+    --------
+    paramValuesD: dict
+     dictionary used to pass parameter variation values
+        names: list
+            list of parameter names (that are varied)
+        values: numpy nd array
+            as many rows as sets of parameter values and as many rows as parameters
+        typeList: list
+            list of types of parameters (float, ...)
+        thFromIni: str
+            str of parameter names where the base value is read from shape
+    """
 
     # initialze lower and upper bounds required to get a sample for the parameter values
     lowerBounds = []
     upperBounds = []
     for idx, varPar in enumerate(varParList):
-        # if thickness parameters are read from shapefile - convert to a percent variation value
-        # can be used in ini for thPercentVariation
-        if varPar in thReadFromShp:
-            lowerBounds.append((100. - float(valVariationValue[idx])))
-            upperBounds.append((100. + float(valVariationValue[idx])))
+        # if parameter value directly set in configuration modify the value directly
+        varVal = cfgStart['GENERAL'].getfloat(varPar)
+        if varType[idx].lower() == 'percent':
+            lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
+            uB = varVal + varVal * ( float(valVariationValue[idx]) / 100.)
+        elif varType[idx].lower() == 'range':
+            lB = varVal - float(valVariationValue[idx])
+            uB = varVal + float(valVariationValue[idx])
         else:
-            # if parameter value directly set in configuration modify the value directly
-            varVal = cfgStart['GENERAL'].getfloat(varPar)
-            if cfgProb['PROBRUN']['variationType'].lower() == 'percent':
-                lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
-                uB = varVal + varVal * ( float(valVariationValue[idx]) / 100.)
-            elif cfgProb['PROBRUN']['variationType'].lower() == 'range':
-                lB = varVal - float(valVariationValue[idx])
-                uB = varVal + float(valVariationValue[idx])
-            # update bounds
-            lowerBounds.append(lB)
-            upperBounds.append(uB)
+            message = ('Variation method: %s not a valid option' % varType[idx])
+            log.error(message)
+            raise AssertionError(message)
+        # update bounds
+        lowerBounds.append(lB)
+        upperBounds.append(uB)
+
+    # create a sample of parameter values using scipy latin hypercube sampling
+    sample = createSample(cfgProb, varParList)
+    sampleWBounds = qmc.scale(sample, lowerBounds, upperBounds)
+
+    # create dictionary with all the info
+    paramValuesD = {'names': varParList,
+                    'values': sampleWBounds,
+                    'typeList': cfgProb['PROBRUN']['varParType'].split('|'),
+                    'thFromIni': ''}
+
+    return paramValuesD
+
+
+def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType):
+    """ Create a sample of parameters for a desired parameter variation,
+         and fetch thickness values from shp file and perform variation for each feature within
+         shapefile but treating the features of one shapefile as not-independent
+
+        Parameters
+        ------------
+        cfgProb: configparser object
+            configuration settings for parameter variation
+        cfgStart: configparser object
+            configuration settings for comMod without variation values
+        varParList: list
+            list of parameters that shall be varied
+        valVariationValue: list
+            list if value used for variation
+        varType: list
+            list of type of variation for each parameter (percent, range, rangefromci)
+
+        Returns
+        --------
+        paramValuesDList: list
+            list of paramValuesD (multiple if multiple release area scenarios)
+            paramValuesD: dict
+             dictionary used to pass parameter variation values
+                names: list
+                    list of parameter names (that are varied)
+                values: numpy nd array
+                    as many rows as sets of parameter values and as many rows as parameters
+                typeList: list
+                    list of types of parameters (float, ...)
+                thFromIni: str
+                    str of parameter names where the base value is read from shape
+        """
+
+    # fetch input files and corresponding thickness info
+    inputSimFiles = fetchThicknessInfo(avaDir)
+
+    paramValuesDList = []
+    for iRel, relF in enumerate(inputSimFiles['relFiles']):
+        paramValuesD = {}
+        # create lower and upper bounds for all thickness parameters - taking into account all features
+        fullListOfParameters = []
+        parentParameterId = []
+        staParameter = []
+        thValues = np.asarray([])
+        ciValues = np.asarray([])
+        for idx1, varPar in enumerate(varParList):
+            if varPar in ['relTh', 'entTh', 'secondaryRelTh']:
+                ciRequired = varType[idx1].lower() == 'rangefromci'
+                thV, ciV, thFeatureNames = fetchThThicknessLists(varPar, inputSimFiles, relF, ciRequired=ciRequired)
+                # add to list all the parameter names
+                fullListOfParameters = fullListOfParameters + thFeatureNames
+                parentParameterId = parentParameterId + [varParList.index(varPar)]*len(thFeatureNames)
+                thValues = np.append(thValues,thV)
+                ciValues = np.append(ciValues,ciV)
+            else:
+                parentParameterId.append(varParList.index(varPar))
+                fullListOfParameters.append(varPar)
+                staParameter.append(varPar)
+                thValues = np.append(thValues,np.asarray([None]))
+                ciValues = np.append(ciValues,np.asarray([None]))
+
+        # initialize lower and upper bounds required to get a sample for the parameter values
+        # numpy arrays required to do masking as lists don't work for a list indices
+        varValList = np.asarray([cfgStart['GENERAL'].getfloat(varPar) if varPar in staParameter else thValues[idx] for idx, varPar in enumerate(fullListOfParameters)])
+        fullValVar = np.asarray([float(valVariationValue[i]) if valVariationValue[i] != 'ci95' else np.nan for i in parentParameterId])
+        fullVarType = np.asarray([varType[i].lower() for i in parentParameterId])
+        lowerBounds = np.asarray([None]*len(fullListOfParameters))
+        upperBounds = np.asarray([None]*len(fullListOfParameters))
+
+        # set lower and upper bounds depending on varType (percent, range, rangefromci)
+        lowerBounds[fullVarType == 'percent'] = (varValList[fullVarType == 'percent'] -
+            varValList[fullVarType == 'percent'] * (fullValVar[fullVarType == 'percent'] / 100.))
+        upperBounds[fullVarType == 'percent'] = (varValList[fullVarType == 'percent'] +
+            varValList[fullVarType == 'percent'] * (fullValVar[fullVarType == 'percent'] / 100.))
+
+        lowerBounds[fullVarType == 'range'] = (varValList[fullVarType == 'range'] -
+                fullValVar[fullVarType == 'range'])
+        upperBounds[fullVarType == 'range'] = (varValList[fullVarType == 'range'] +
+                fullValVar[fullVarType == 'range'])
+
+        lowerBounds[fullVarType == 'rangefromci'] = (varValList[fullVarType == 'rangefromci'] -
+                ciValues[fullVarType == 'rangefromci'])
+        upperBounds[fullVarType == 'rangefromci'] = (varValList[fullVarType == 'rangefromci'] +
+                ciValues[fullVarType == 'rangefromci'])
+
+        # create a sample of parameter values using scipy latin hypercube sampling
+        sample = createSample(cfgProb, varParList)
+
+        # create a full sample including those thickness values for the potentially multiple features
+        # however, the thickness values for one parameter (relTh or entTh or secondaryRelTh) should not
+        # be independent for the different features within one parameter
+        fullSample = np.zeros((int(cfgProb['PROBRUN']['nSample']), len(fullListOfParameters)))
+        for idx, varPar in enumerate(fullListOfParameters):
+            lB = [0]*len(varParList)
+            uB = [1]*len(varParList)
+            lB[parentParameterId[idx]] = lowerBounds[idx]
+            uB[parentParameterId[idx]] = upperBounds[idx]
+            parSample = qmc.scale(sample, lB, uB)
+            fullSample[:,idx] = parSample[:,parentParameterId[idx]]
+
+        # create dictionary with all the info
+        thFromIni = cfgUtils.convertToCfgList(list(set(varParList).symmetric_difference(set(staParameter))))
+        paramValuesD = {'names': fullListOfParameters,
+                        'values': fullSample,
+                        'typeList': cfgProb['PROBRUN']['varParType'].split('|'),
+                        'thFromIni': thFromIni,
+                        'releaseScenario': relF.stem}
+
+        paramValuesDList.append(paramValuesD)
+
+    return paramValuesDList
+
+
+def createSample(cfgProb, varParList):
+    """ create a sample of parameters
+
+        Parameters
+        -----------
+        cfgProb: configparser object
+            configuration settings
+        varParList: list
+            list of parameters used for creating a sample
+
+        Returns
+        --------
+        sample: scipy object
+            sample object of given dimension that can be adjusted to desired bounds
+    """
+
+    # random generator initialized with seed
+    randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
 
     # create a sample of parameter values using scipy latin hypercube sampling
     if cfgProb['PROBRUN']['sampleMethod'].lower() == 'latin':
         sampler = qmc.LatinHypercube(d=len(varParList), seed=randomGen)
         sample = sampler.random(n=int(cfgProb['PROBRUN']['nSample']))
-        sample = qmc.scale(sample, lowerBounds, upperBounds)
         log.info('Parameter sample created using latin hypercube sampling')
     else:
         message = ('Sampling method: %s not a valid option' % cfgProb['PROBRUN']['sampleMethod'])
         log.error(message)
         raise AssertionError(message)
 
-    # create dictionary with all the info
-    paramValuesD = {'names': varParList,
-                    'values': sample,
-                    'typeList': cfgProb['PROBRUN']['varParType'].split('|'),
-                    'thReadFromShp': thReadFromShp}
-
-    return paramValuesD
+    return sample
 
 
-def createCfgFiles(paramValuesD, comMod, cfg, cfgPath='', fileOverride=''):
+def fetchThThicknessLists(varPar, inputSimFiles, releaseFile, ciRequired=False):
+    """ fetch the desired thickness shp file info on thickness, id and ci values
+        of all available features in shp file
+
+        Parameters
+        -----------
+        varPar: str
+            name of thickness parameter
+        inputSimFiles: dict
+            dictionary with info in input data
+        ciRequired: bool
+            if True throw error if ci Values not provided
+
+        Returns
+        --------
+        thicknessFeatureNames: list
+            list of names of thickness features
+        thValues: list
+            list of thickness values for all features
+        ciValues: list
+            list of ci values for all feature
+    """
+
+    if varPar == 'relTh':
+        thFile = [inputSimFiles['relFiles'][idx] for idx, relF in enumerate(inputSimFiles['relFiles']) if relF == releaseFile][0]
+    elif varPar == 'entTh':
+        thFile = inputSimFiles['entFile']
+    elif varPar == 'secondaryRelTh':
+        thFile = inputSimFiles['secondaryReleaseFile']
+
+    infoDict = inputSimFiles[thFile.stem]
+    thicknessFeatureNames = [varPar+str(id) for id in infoDict['id']]
+    thValues = [float(th) for th in infoDict['thickness']]
+    ciValues = [float(ci) if ci != 'None' else np.nan for ci in infoDict['ci95']]
+
+    if np.nan in ciValues and ciRequired:
+        msg = ('ci95 values required in shape file but not provided for %s' % varPar)
+        log.error(msg)
+        raise AssertionError(msg)
+
+    return thValues, ciValues, thicknessFeatureNames
+
+
+def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath='', fileOverride=''):
     """ create all config files required to run com Module from parameter variations using paramValues
 
         Parameters
         -----------
-        paramValuesD: dict
-            dictionary with parameter names and values (array of all sets of parameter values, one row per value set)
+        paramValuesDList: list
+            list of dictionaries with parameter names and values (array of all sets of parameter values, one row per value set)
+            multiple dictionaries if multiple release area scenarios and thFromShp
         comMod: com module
             computational module
         cfg: configparser object
@@ -588,26 +836,25 @@ def createCfgFiles(paramValuesD, comMod, cfg, cfgPath='', fileOverride=''):
     # get filename of module
     modName = str(pathlib.Path(comMod.__file__).stem)
 
-    # read initial configuration
-    cfgStart = fetchStartCfg(comMod, cfg['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
-
     # create one cfgFile with one line of the parameter values from the full parameter variation
     cfgFiles = []
-    for count1, pVal in enumerate(paramValuesD['values']):
-        for index, par in enumerate(paramValuesD['names']):
-            # convert percent variation to a +- variation in percent and of step 1
-            if par in paramValuesD['thReadFromShp']:
-                thVal = pVal[index] - 100.
-                signVal = ['+' if thVal > 0 else '']
-                cfgStart['GENERAL'][par + 'PercentVariation'] = signVal[0] + str(thVal) + '$1'
-            else:
+    countS = 0
+    for paramValuesD in paramValuesDList:
+        # read initial configuration
+        cfgStart = fetchStartCfg(comMod, cfg['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
+        for count1, pVal in enumerate(paramValuesD['values']):
+            for index, par in enumerate(paramValuesD['names']):
                 cfgStart['GENERAL'][par] = str(pVal[index])
-        cfgStart['VISUALISATION']['scenario'] = str(count1)
-        cfgF = pathlib.Path(cfgPath, ('%d_%sCfg.ini' % (count1, modName)))
-        with open(cfgF, 'w') as configfile:
-            cfgStart.write(configfile)
-        # append file path to list of cfg files
-        cfgFiles.append(cfgF)
+            cfgStart['VISUALISATION']['scenario'] = str(count1)
+            cfgStart['INPUT']['thFromIni'] = paramValuesD['thFromIni']
+            if 'releaseScenario' in paramValuesD.keys():
+                cfgStart['INPUT']['releaseScenario'] = paramValuesD['releaseScenario']
+            cfgF = pathlib.Path(cfgPath, ('%d_%sCfg.ini' % (countS, modName)))
+            with open(cfgF, 'w') as configfile:
+                cfgStart.write(configfile)
+            # append file path to list of cfg files
+            cfgFiles.append(cfgF)
+            countS = countS + 1
 
     return cfgFiles
 
@@ -640,3 +887,31 @@ def fetchStartCfg(comMod, onlyDefault, fileOverride):
                                             onlyDefault=onlyDefault)
 
     return cfgStart
+
+
+def fetchProbConfigs(cfg):
+    """ fetch configurations of prob run in order to filter simulations
+        e.g. to create probability maps for different scenarios
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration setting, here used: samplingStrategy, varParList
+
+        Returns
+        --------
+        probConfigs: dict
+            dictionary with one key per config and a dict per key with parameter and value
+    """
+
+    probConfigs = {'testAll': {}}
+
+    if cfg.getint('samplingStrategy') == 2:
+        for par in cfg['varParList'].split('|'):
+            probConfigs['test' + par] = {'scenario': par}
+        log.info('Probability maps are created for full parameter variation and for %s separately' %
+            cfg['varParList'])
+    else:
+        log.info('Probability map is created for full parameter variation')
+
+    return probConfigs

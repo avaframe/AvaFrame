@@ -54,8 +54,9 @@ def getVariationDict(avaDir, fullCfg, modDict):
             keyList = ['relThPercentVariation', 'entThPercentVariation',
                 'secondaryRelThPercentVariation', 'relThRangeVariation',
                 'entThRangeVariation', 'secondaryRelThRangeVariation',
-                'relThDistVariation', 'entThDistVariation',
-                           'secondaryRelThDistVariation']
+                'relThDistVariation', 'entThDistVariation', 'relThRangeFromCiVariation',
+                'entThRangeFromCiVariation', 'secondaryRelThRangeFromCiVariation',
+                           'secondaryRelThDistVariation', ]
             if key in keyList and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
@@ -324,8 +325,9 @@ def checkThicknessSettings(cfg, thName):
 
     thRV = thName + 'RangeVariation'
     thPV = thName + 'PercentVariation'
+    thRCiV = thName + 'RangeFromCiVariation'
 
-    if cfg['GENERAL'][thRV] != '' and cfg['GENERAL'][thPV] != '':
+    if cfg['GENERAL'][thRV] != '' and cfg['GENERAL'][thPV] != '' and cfg['GENERAL'][thRCiV] != '':
         message = 'Only one variation type is allowed - check %s and %s' % (thRV, thPV)
         log.error(message)
         raise AssertionError(message)
@@ -383,6 +385,15 @@ def splitVariationToArraySteps(value, key, fullCfg):
         steps = int(itemsL[1])
         # create array with variation factor
         itemsArray = np.linspace(percentsStart, percentsStop, steps)
+    elif 'RangeFromCi' in key:
+        if len(itemsL) == 2:
+            itemsArray = ['%d$' % i + value for i in range(int(itemsL[1]))]
+        elif len(itemsL) == 3:
+            itemsArray = [value]
+        else:
+            message = ('Format of %s is not correct' % value)
+            log.error(message)
+            raise AssertionError
     # TODO add standard value to range
     elif 'Range' in key:
         if '-' in itemsL[0]:
@@ -469,7 +480,9 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     """
 
     # fetch info if variation is performed based on a given range or percentage
-    if 'Range' in key:
+    if 'RangeFromCi' in key:
+        varType = 'RangeFromCi'
+    elif 'Range' in key:
         varType = 'Range'
     elif 'Percent' in key:
         varType = 'Percent'
@@ -482,7 +495,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     relCondition = (key == ('relTh%sVariation' % varType))
 
     # fetch variation factor
-    if varType == 'Dist':
+    if varType == 'Dist' or varType == 'RangeFromCi':
         # if dist - this is still a string as distribution is only build once mean value is known -
         # if read from shp file - not available yet
         variationFactor = row._asdict()[key]
@@ -502,6 +515,10 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
             # update ini thValue if thFromShape=False
             if varType == 'Range':
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) + variationFactor)
+            elif varType == 'RangeFromCi':
+                message = ('Variation using RangeFromCi is only allowed if thFromShp is set to True')
+                log.error(message)
+                raise AssertionError
             elif varType == 'Percent':
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
             elif varType == 'Dist':
@@ -533,7 +550,7 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
             thickness type (e.g. relTh, entTh, ...)
         varType: str
             type of variation (range or percent)
-        variationFactor: float
+        variationFactor: float or str (if Dist or rangeFromCi)
             value used for variation
 
         Returns
@@ -568,8 +585,14 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
         if varType == 'Percent':
             # set thickness value in in file for the feature with id Id
             cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
-            variationIni = setPercentVariation(cfg, variationFactor, thNameId)
-
+            variationIni = setPercentVariation(variationFactor, variationFactor, thNameId)
+        elif varType == 'RangeFromCi':
+            fromCiVal = setRangeFromCiVariation(cfg, variationFactor,
+                thicknessList[count], ci95List[count])
+            cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + fromCiVal)
+            variationIni = variationFactor
+            strIni = cfg['INPUT']['thFromIni']
+            cfg['INPUT']['thFromIni'] = (thNameId if strIni == '' else strIni + '|' + thNameId)
         elif varType == 'Range':
             # set thickness value in in file for the feature with id Id
             cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
@@ -658,6 +681,47 @@ def setRangeVariation(cfg, variationFactor, thNameId):
     return variationIni
 
 
+def setRangeFromCiVariation(cfg, variationFactor, thValue, ciValue):
+    """ determine thickness value if set from rangeFromCiVariation and set from shp file and update
+        rangeFromCiVariation value that is used for exactely this sim
+
+        this is required for reproducing this sim when using its configuration file - so that in the
+        rangeFromCiVariation parameter it is only one value e.g. ci95$4$1 so -ci95m
+
+        Parameters
+        -----------
+        cfg: configparser object
+            comModule configuration file with info on thickness settings
+        variationFactor: str
+            value of range variation in terms of required addition to the reference value
+            (e.g. variationFactor= chi95$4$0 - a variation of -ci95 value performed by addition of reference
+            value + the variation value)
+        thValue: str
+            thickness value of thickness feature in meter
+        ciValue: str
+            ci value of thickness features in meter
+
+        Returns
+        ---------
+        variationValue: float
+            actual thickness value modified according to variation for feature
+        variationIni: str
+            rangeFromCiVariation parameter value for this sim to be added in cfg file
+    """
+
+    if ciValue == 'None':
+        msg = ('ci95 values required in shape file for rangeFromCi variation but not provided')
+        log.error(msg)
+        raise AssertionError(msg)
+
+    varValStep = int(variationFactor.split('$')[0])
+    allSteps = int(variationFactor.split('$')[2])
+    thicknessValues = np.linspace(-float(ciValue), float(ciValue), allSteps)
+    variationValue = float(thicknessValues[varValStep])
+
+    return variationValue
+
+
 def appendShpThickness(cfg):
     """ append thickness values to GENERAL section if read from shp and not varied
 
@@ -673,11 +737,13 @@ def appendShpThickness(cfg):
 
     """
 
+    cfgGen = cfg['GENERAL']
+
     # first create which type of thickness settings are relevant for the current cfg dict
     thTypes = ['relTh']
-    if cfg['GENERAL']['simTypeActual'] in ['ent', 'entres']:
+    if cfgGen['simTypeActual'] in ['ent', 'entres']:
         thTypes.append('entTh')
-    if cfg['GENERAL']['secRelArea'] == 'True':
+    if cfgGen['secRelArea'] == 'True':
         thTypes.append('secondaryRelTh')
 
     # loop over all types and if thickness value read from shp file and no variation has been applied
@@ -687,14 +753,19 @@ def appendShpThickness(cfg):
         thPV = thType + 'PercentVariation'
         thRV = thType + 'RangeVariation'
         thDV = thType + 'DistVariation'
-        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '' and cfg['GENERAL'][thRV] == '' and cfg['GENERAL'][thDV] == '':
+        thRCiV = thType + 'RangeFromCiVariation'
+        if cfgGen[thFlag] == 'True' and cfgGen[thPV] == '' and cfgGen[thRV] == '' and cfgGen[thDV] == '' and cfgGen[thRCiV] == '':
             thThickness = thType + 'Thickness'
             thId = thType + 'Id'
             thicknessList = cfg['INPUT'][thThickness].split('|')
             idList = cfg['INPUT'][thId].split('|')
             for count, id in enumerate(idList):
                 thNameId = thType + id
-                cfg['GENERAL'][thNameId] = str(float(thicknessList[count]))
+                if thNameId in cfg['GENERAL'].keys():
+                    log.info('Thickness value for %s already set in initial config file, \
+                              read from there not from shp file' % thNameId)
+                else:
+                    cfgGen[thNameId] = str(float(thicknessList[count]))
 
     return cfg
 
