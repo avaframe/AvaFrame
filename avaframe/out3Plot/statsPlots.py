@@ -502,7 +502,7 @@ def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', ty
     return plotPath
 
 
-def plotSample(paramValuesD, outDir):
+def plotSample(paramValuesD, outDir, releaseScenario=''):
     """ plot the parameter sample only if two parameters are varied
 
         Parameters
@@ -521,7 +521,7 @@ def plotSample(paramValuesD, outDir):
         plt.ylabel(paramValuesD['names'][1])
 
         # put ava name on plot and save figure
-        outFileName = 'ParameterSample'
+        outFileName = 'ParameterSample_%s' % releaseScenario
         plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
     else:

@@ -284,7 +284,8 @@ def test_updateThicknessCfg(tmp_path):
     entFile = avaTestDirInputs / 'ENT' / 'entrainment1HS.shp'
     inputSimFiles = {'demFile': demFile, 'relFiles': [relFile1, relFile2], 'entFile': entFile,
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
-        'flagSecondaryRelease': 'No'}, 'relThFile': None}
+        'flagSecondaryRelease': 'No'}, 'relThFile': None,
+        'releaseScenarioList': ['release1HS', 'release2HS']}
 
     inputSimFiles['release1HS'] = {'thickness': ['1.0'], 'id': ['0'], 'ci95': ['None', 'None']}
     inputSimFiles['release2HS'] = {'thickness': ['1.0', '1.0'], 'id': ['0', '1'], 'ci95': ['None', 'None']}

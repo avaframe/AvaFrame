@@ -128,7 +128,7 @@ def test_prepareReleaseEntrainment(tmp_path):
                       'relThFromFile': 'False',
                       'relTh': '1.32', 'secondaryRelTh0': '1.789', 'secondaryRelThPercentVariation': '0.7',
                       'simTypeActual': 'null'}
-    cfg['INPUT'] = {'secondaryRelThThickness': '1.2523', 'secondaryRelThId': '0'}
+    cfg['INPUT'] = {'secondaryRelThThickness': '1.2523', 'secondaryRelThId': '0', 'thFromIni': ''}
 
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
@@ -156,7 +156,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg['GENERAL']['relTh'] = ''
     cfg['GENERAL']['secondaryRelThPercentVariation'] = ''
     cfg['GENERAL']['relThPercentVariation'] = ''
-    cfg['INPUT'] = {'relThThickness': '1.78|4.328', 'relThId': '0|1'}
+    cfg['INPUT'] = {'relThThickness': '1.78|4.328', 'relThId': '0|1', 'thFromIni': ''}
     cfg['GENERAL']['relTh0'] = '1.78'
     cfg['GENERAL']['relTh1'] = '4.328'
 
@@ -272,7 +272,7 @@ def test_setThickness():
     # setup required input
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'entThFromShp': 'False', 'entTh': '1.0', 'entThPercentVariation': ''}
-    cfg['INPUT'] = {}
+    cfg['INPUT'] = {'thFromIni': ''}
 
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
               'Length': np.asarray([5, 5]), 'thickness': ['None', 'None'],
@@ -1404,6 +1404,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                               'entThPercentVariation': '', 'relThPercentVariation': '',
                               'entThRangeVariation': '', 'relThRangeVariation': '',
                               'entThDistVariation': '', 'relThDistVariation': '',
+                              'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                               'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001',
                               'sphKernelRadius': 'meshCellSize'}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': ''}
@@ -1431,6 +1432,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
                           'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
                           'entThDistVariation': '', 'relThDistVariation': '',
+                          'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                           'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.'}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
@@ -1467,6 +1469,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                            'simTypeActual': 'entres', 'secRelArea': 'False',
                            'relThFromShp': 'False', 'entThFromShp': 'True',
                            'entThPercentVariation': '', 'relThPercentVariation': '',
+                           'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
                            'relThRangeVariation': '',
                            'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
