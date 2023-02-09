@@ -66,6 +66,9 @@ Release, entrainment and secondary release thickness can be specified in two dif
     Additionally, a variation can be added with the `THICKNESSRangeVariation` parameter in the configuration file in the
     form of ``+-range$numberOfSteps``. Provided a `+` a positive variation will be performed,
     if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
+    Furthermore, there is the option to vary the thickness in a range of +- the 95% confidence interval value, which is
+    also read from the shape file (requires an attribute called ci95). In order to use this variation,
+    set the 'THICKESSRangeFromCiVariation' to ``ci95$numberOfSteps``.
 
 2. Via **configuration file (ini)**:
   - set the flag 'THICKNESSFromShp' to False
@@ -168,7 +171,7 @@ Parallel computation
 
 If multiple runs of com1DFA are to be executed, these will be calulated in parallel via
 multiprocessing. So each task itself is calculated on only one core, but different tasks
-are run at the same time. 
+are run at the same time.
 
 This happens if you have one of the following (or a combination of them):
 
@@ -178,7 +181,7 @@ This happens if you have one of the following (or a combination of them):
 
 The number of CPU cores is controlled in the main ``avaframeCfg.ini`` file. By default a
 maximimum of 50 percent of your available cores is being utilized. However you can set
-a different number if needed. For sequential execution set nCPU to 1. 
+a different number if needed. For sequential execution set nCPU to 1.
 
 
 To run
