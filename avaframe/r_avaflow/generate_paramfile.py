@@ -12,6 +12,10 @@ import avaframe.r_avaflow as r_avaflow
 
 def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
     """
+    Generates through the config files of r.avaflow and com1DFA a parameter file 
+    which is needed as input for the r.avaflow executable 
+    
+    
     Parameters
     ----------
     cfgAvaflow : configparser object
@@ -56,11 +60,13 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
         if sampling == "0":
             sampling == "100"
         
-        
+    #Mesh spacing  
     print("1", file = p1file) # mesh spacing (multiple of ascii cell size)
     
     #Prefix for output, files and folders
     prefix = cfgGen["prefix"]
+    if prefix == "0":
+        prefix = "prefix_"
     print(prefix, file = p1file)
     
     directory = pathlib.Path(r_avaflow.__file__).resolve().parent
@@ -164,8 +170,8 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
         print(aflag, file = p1file)
 
     #Paraview output  (0 or 1, default: 1)
-    pflag = cfgGen["pflag"]      
-    print(pflag, file = p1file)
+    # pflag = cfgGen["pflag"]      
+    # print(pflag, file = p1file)
      
     #map plots of impact wave or tsunami height  (0 or 1, default: 0)
     tflag = cfgGen["tflag"]      # control for tsunami output 
@@ -648,7 +654,14 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
                     mu = cfgCom1DFA["mu"]
                     mu = math.degrees(math.atan(float(mu)))
                     friction[1] = str(mu)
+                    
+                    xsi = cfgCom1DFA["xsi"]
+                    xsi = math.log10(float(xsi))
+                    friction[2] = str(xsi)
+                    
                     friction = ",".join(friction)
+                    
+                    
                     
                 if basal == "0":
                     basal = "-7.0,0.0"
@@ -917,8 +930,16 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
     
     if paramflag == "1":
         tSteps = cfgCom1DFA["tSteps"]
-        tSteps = tSteps.split(":")
-        tint = tSteps[1]
+        
+        if tSteps.find(":") != -1:
+            tSteps = tSteps.split(":")
+            tint = tSteps[1]
+            
+        elif tSteps.find("|") != -1:
+            print("Please adapt the 'tSteps' parameter to the first option.")
+            
+        else:
+           tint = tSteps[0] 
     
         tEnd = cfgCom1DFA["tEnd"]
         tstop = tEnd
@@ -1015,21 +1036,31 @@ def generate_param(cfgAvaflow,cfgCom1DFA,avalancheDir):
        ## Exponent of transparency curve for flow visualization in Paraview
     paraview = cfgGen["paraview"]
     if paraview == "0":
-            #paraview = "0.1,5.0,5.0,1,100,2,-11000,9000,100,0.60,0.25,0.15,0.2,1.0,None,None,None"
-            paraview = "0.1,5.0,5.0,1,100,2,-11000,9000,100,0.60,0.25,0.15,0.2" #adapted !!!
+            paraview = "0.1,5.0,5.0,1,100,2,-11000,9000,100,0.60,0.25,0.15,0.2" 
     paraview = paraview.split(",")
     for i in range(0, len(paraview)):
         print(paraview[i], file=p1file) #paraview parameter
         
     # Exaggeration factor for flow heights in profile plots: (0,1,undefined)
     phexagg = cfgGen["phexagg"]
+    if phexagg == "0":
+        phexagg = "1"
     print(phexagg, file = p1file)
 
-    print(str("/usr/bin/paraview"), file = p1file)
-    print(str("/usr/bin/R"), file=p1file)
+    # Local path to paraview
+    paraview_path = cfgGen["paraview_path"]
+    if paraview_path == "0":
+        paraview_path = "/usr/bin/paraview"
+    print(str(paraview_path), file = p1file)
+    
+    # Local path to R
+    r_path = cfgGen["r_path"]
+    if r_path == "0":
+        r_path = "/usr/bin/R"
+    print(str(r_path), file=p1file)
+    
+    
     print("None", file=p1file)
-     
-
     p1file.close() # closing parameter file
     
     print("Parameter file generated")
