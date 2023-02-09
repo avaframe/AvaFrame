@@ -10,7 +10,7 @@ probAna
 probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
 These maps show for each point in space the probability for a chosen parameter to exceed a given threshold.
 For example, it is possible to compute the probability map of an avalanche to exceed a
-peak pressure of 1kPa, but is also possible to chose other parameters and threshold values.
+peak pressure of 1kPa, but it is also possible to chose other result variables and threshold values.
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with :py:mod:`com1DFA`
 using a parameter variation, different release-, entrainment- or resistance scenarios.
@@ -45,15 +45,20 @@ In order to run this example:
 
       Probability map example.
 
-Another example is given in :py:mod:`runScripts.runProbAnaCom1DFA.py`, but here only
-one parameter is varied at a time.
+Another example is given in :py:mod:`runScripts.runProbAnaCom1DFA.py`.
 Avalanche simulations are performed with the settings defined in the configuration file of
 :py:mod:`com1DFA` and in addition a parameter variation is performed according to the parameters
-set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN. All the parameters set in PROBRUN are
-varied on at a time, i.e. simulations are performed for the standard settings of all parameters,
+set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN.
+The parameters to be varied are set in **varParList**, the type of variation in **variationType**
+(options are: percent, range, rangefromci) and the value of the variation in **variationValue**.
+Then there are two sampling strategies to choose from, for performing the parameter variation:
+(1) a latin hypercube sample of all the parameters to be varied (provided in varParList)
+is generated and simulations are performed using sets of parameters drawn from this sample.
+Using sampling strategy (2) all the parameters set in *PROBRUN* are varied on at a time, i.e.
+simulations are performed for the standard settings of all parameters,
 except the one parameter to be varied, subsequently the other variations are performed.
-In the beginning of the script, filtering criteria for the probability maps can be set.
-
+One probability map is created for all the different simulations and in case of sampling strategy (2),
+also one map per parameter that is varied once at a time, is created in addition.
 
 .. _Theory:
 
