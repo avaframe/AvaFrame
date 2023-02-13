@@ -225,7 +225,6 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             raise AssertionError(message)
         # write parameter variation for varName in config file
         cfg['GENERAL'][parName] = parValue
-        cfg['GENERAL']['addStandardConfig'] = cfgProb['PROBRUN']['addStandardConfig']
     else:
         # set variation
         if  variationType.lower() == 'normaldistribution':
@@ -254,14 +253,6 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
                 normaldistribution, rangefromci' % variationType)
             log.error(message)
             raise AssertionError(message)
-
-        # if reference value is not in variation - add reference values
-        if cfgProb['PROBRUN'].getboolean('addStandardConfig'):
-            if np.isclose(valValues, float(valVal), atol=1.e-7, rtol=1.e-8).any():
-                log.info('Reference value is in variation for %s' % (varName))
-            else:
-                log.info('Reference value of %s: %s is added' % (varName, str(valVal)))
-                cfg['GENERAL'][varName] = cfg['GENERAL'][varName] + '&' + str(valVal)
 
     # add a scenario Name to VISUALISATION
     cfg['VISUALISATION']['scenario'] = varName
