@@ -86,7 +86,6 @@ def test_createComModConfig(tmp_path):
     cfgProb = configparser.ConfigParser()
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'True',
                           'defaultSetup': 'True', 'samplingStrategy': '2',
                           'defaultComModuleCfg': 'True'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
@@ -105,7 +104,7 @@ def test_createComModConfig(tmp_path):
 
     print(cfgMu['GENERAL']['mu'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['mu'], cfgRelTh['GENERAL']['relTh'])
 
-    assert cfgMu['GENERAL']['mu'] == '0.155$60$2&0.155'
+    assert cfgMu['GENERAL']['mu'] == '0.155$60$2'
     assert cfgMu['GENERAL']['relTh'] == ''
     assert cfgRelTh['GENERAL']['mu'] == '0.155'
     assert cfgRelTh['GENERAL']['relTh'] == ''
@@ -113,10 +112,8 @@ def test_createComModConfig(tmp_path):
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
     assert cfgMu['GENERAL']['relThFromShp'] == 'True'
-    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'True'
+    assert cfgRelTh.has_option('GENERAL', 'addStandardConfig') == False
 
-
-    cfgProb['PROBRUN']['addStandardConfig'] = 'False'
     cfgProb['PROBRUN']['defaultComModuleCfg'] = 'False'
     # call function to be tested
     cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
@@ -138,14 +135,12 @@ def test_createComModConfig(tmp_path):
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'
     assert cfgMu['GENERAL']['relThFromShp'] == 'False'
-    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'False'
 
 
     cfgProb = configparser.ConfigParser()
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'True',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
                           'defaultComModuleCfg': 'False',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
@@ -170,7 +165,6 @@ def test_createComModConfig(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'True',
                           'defaultSetup': 'True', 'samplingStrategy': '1', 'defaultComModuleCfg': 'True',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
@@ -207,7 +201,6 @@ def test_createComModConfig(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'range|range',
                           'variationValue': '0.2|1.2', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'False',
                           'samplingStrategy': '2',
                           'defaultComModuleCfg': 'True'}
 
@@ -260,7 +253,7 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent','addStandardConfig': 'True',
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                       'variationValue': '60|50', 'numberOfSteps': '2|2',
                       'defaultSetup': 'True'}
 
@@ -271,7 +264,7 @@ def test_updateCfgRange():
     # call function
     cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
-    assert cfgNew['GENERAL']['mu'] == '0.155$60$2&0.155'
+    assert cfgNew['GENERAL']['mu'] == '0.155$60$2'
     assert cfgNew['GENERAL']['relTh'] == ''
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == ''
@@ -287,10 +280,6 @@ def test_updateCfgRange():
     assert cfgNew['GENERAL']['relTh'] == ''
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
-    assert cfgNew['GENERAL']['addStandardConfig'] == 'True'
-
-
-    cfg['PROBRUN']['addStandardConfig'] = 'False'
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
@@ -316,11 +305,10 @@ def test_updateCfgRange():
     assert cfgNew['GENERAL']['relTh'] == ''
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
-    assert cfgNew['GENERAL']['addStandardConfig'] == 'False'
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'range|range','addStandardConfig': 'False',
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'range|range',
                       'variationValue': '0.1|0.5', 'numberOfSteps': '5|12',
                       'defaultSetup': 'True'}
 
@@ -354,7 +342,6 @@ def test_updateCfgRange():
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
     cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'normaldistribution|normaldistribution',
-                      'addStandardConfig': 'False',
                       'variationValue': '0.1|0.3', 'numberOfSteps': '3|12',
                       'defaultSetup': 'True'}
     cfg['computeFromDistribution_override'] = {'buildType': 'ci95', 'minMaxInterval': '95',
@@ -391,7 +378,7 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|rangefromci','addStandardConfig': 'False',
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|rangefromci',
                       'variationValue': '60|ci95', 'numberOfSteps': '2|2',
                       'defaultSetup': 'True'}
 
@@ -410,7 +397,7 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|range','addStandardConfig': 'True',
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|range',
                       'variationValue': '60|0.25', 'numberOfSteps': '2|8',
                       'defaultSetup': 'True'}
 
@@ -706,7 +693,6 @@ def test_cfgFilesGlobalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'True',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
                           'defaultComModuleCfg': 'False',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
@@ -732,7 +718,6 @@ def test_cfgFilesGlobalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'addStandardConfig': 'True',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
                           'defaultComModuleCfg': 'True',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
@@ -771,7 +756,6 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|percent',
               'variationValue': '60|50', 'numberOfSteps': '2|3',
-              'addStandardConfig': 'True',
               'defaultSetup': 'True', 'samplingStrategy': '2',
               'defaultComModuleCfg': 'True'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
@@ -793,7 +777,7 @@ def test_cfgFilesLocalApproach(tmp_path):
 
     print(cfgMu['GENERAL']['mu'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['mu'], cfgRelTh['GENERAL']['relTh'])
 
-    assert cfgMu['GENERAL']['mu'] == '0.155$60$2&0.155'
+    assert cfgMu['GENERAL']['mu'] == '0.155$60$2'
     assert cfgMu['GENERAL']['relTh'] == ''
     assert cfgRelTh['GENERAL']['mu'] == '0.155'
     assert cfgRelTh['GENERAL']['relTh'] == ''
@@ -801,13 +785,11 @@ def test_cfgFilesLocalApproach(tmp_path):
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
     assert cfgMu['GENERAL']['relThFromShp'] == 'True'
-    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'True'
 
     cfgProb = configparser.ConfigParser()
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'variationType': 'percent|range',
               'variationValue': '60|0.5', 'numberOfSteps': '2|3',
-              'addStandardConfig': 'False',
               'samplingStrategy': '2',
               'defaultComModuleCfg': 'False'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
@@ -837,7 +819,6 @@ def test_cfgFilesLocalApproach(tmp_path):
     assert cfgRelTh['GENERAL']['relThRangeVariation'] == '0.5$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'
     assert cfgMu['GENERAL']['relThFromShp'] == 'False'
-    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'False'
 
 
 def test_checkParameterSettings():
