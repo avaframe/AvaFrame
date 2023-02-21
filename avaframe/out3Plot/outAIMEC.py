@@ -993,12 +993,13 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
         else:
             cmapVal = index / len(contourDict)
         if simName == pathDict['refSimName']:
+            # define label for reference sim, if info on what it is based is available
             if pathDict['valRef'] == '':
                 labelReference = 'reference'
             else:
                 labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
-                ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k',
-                    label=labelReference, zorder=len(contourDict))
+            ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k',
+                label=labelReference, zorder=len(contourDict))
         else:
             ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
 
