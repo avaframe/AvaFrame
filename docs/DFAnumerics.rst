@@ -49,8 +49,7 @@ from particle property to mesh property using the interpolation methods describe
 Time step
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A fixed time step can be used or an adaptive time step can be computed using a
-Courant-Friedrich-Lewy condition.
+A fixed time step can be used or an adaptive time step that depends on the sph kernel radius as well as the particle size.
 
 
 Mesh and interpolation
