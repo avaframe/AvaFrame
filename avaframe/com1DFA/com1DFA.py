@@ -17,7 +17,10 @@ from itertools import product
 import matplotlib.tri as tri
 from shapely.geometry import Polygon as sPolygon
 from functools import partial
+import platform
 if os.name == 'nt':
+    from multiprocessing.pool import ThreadPool as Pool
+if platform.system() == 'Darwin':
     from multiprocessing.pool import ThreadPool as Pool
 else:
     from multiprocessing import Pool
