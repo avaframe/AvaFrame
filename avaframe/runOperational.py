@@ -6,6 +6,7 @@
 # importing general python modules
 import time
 import logging
+import argparse
 import pathlib
 import pandas
 
@@ -114,4 +115,10 @@ def runOperational(avalancheDir=''):
 
 
 if __name__ == '__main__':
-    runOperational()
+
+    parser = argparse.ArgumentParser(description='Run Operational workflow')
+    parser.add_argument('avadir', metavar='a', type=str, nargs='+',
+                        help='the avalanche directory')
+
+    args = parser.parse_args()
+    runOperational(str(args.avadir[0]))

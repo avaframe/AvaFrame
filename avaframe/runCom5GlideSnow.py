@@ -4,6 +4,7 @@ Run the glide snow tool of com1DFA
 
 import pathlib
 import time
+import argparse
 
 # Local imports
 # import config and init tools
@@ -85,4 +86,10 @@ def runGlideSnow(avalancheDir=''):
 
 
 if __name__ == '__main__':
-    runGlideSnow()
+
+    parser = argparse.ArgumentParser(description='Run glide snow workflow')
+    parser.add_argument('avadir', metavar='avadir', type=str, nargs='+',
+                        help='the avalanche directory')
+
+    args = parser.parse_args()
+    runGlideSnow(str(args.avadir[0]))
