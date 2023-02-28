@@ -290,6 +290,11 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # add cpu time info to the dataframe
     simDF = simDF.join(tCPUDF)
 
+    # write the actually simulated sims to a separate csv file, 
+    # this is used for the qgis connector
+    cfgUtils.writeAllConfigurationInfo(avalancheDir, simDF, specDir='',
+                                       csvName='latestSims.csv')
+
     # append new simulations configuration to old ones (if they exist),
     # return total dataFrame and write it to csv
     simDFNew = pd.concat([simDF, simDFExisting], axis=0)
