@@ -658,7 +658,7 @@ def readAllConfigurationInfo(avaDir, specDir=''):
     return simDF, simDFName
 
 
-def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
+def writeAllConfigurationInfo(avaDir, simDF, specDir='', csvName='allConfigurations.csv'):
     """ Write cfg configuration to allConfigurations.csv
 
         Parameters
@@ -669,6 +669,8 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
             daaframe of the configuration
         specDir: str
             path to a directory where simulation configuration shal be saved - optional
+        csvName: str
+            name of csv file in which to save to - optional
 
         Returns
         --------
@@ -681,7 +683,7 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
-    configFiles = inDir / 'allConfigurations.csv'
+    configFiles = inDir / csvName
 
     simDF.to_csv(configFiles)
 
