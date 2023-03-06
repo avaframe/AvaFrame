@@ -11,9 +11,11 @@ https://doi.org/10.1007/BF01176861
 
 # imports
 import numpy as np
+import pandas as pd
 from scipy.integrate import ode
 import math
 import logging
+import pathlib
 
 # local imports
 from avaframe.in3Utils import cfgUtils
@@ -679,6 +681,22 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
             simHash,
             simDFrow,
         )
+
+        # write error to resultsDF
+
+        resDict = {}
+        resDict = {'timeStep': timeList}
+        resDict['hErrorL2'] = hEL2Array
+        resDict['vhErrorL2'] = vhEL2Array
+        resDict['hErrorLMax'] = hELMaxArray
+        resDict['vhErrorLMax'] = vhELMaxArray
+        resultsDF = pd.DataFrame.from_dict(resDict)
+        resultsDF = resultsDF.set_index('timeStep')
+
+        # save resultsDF to file
+        resultsDFPath = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'resultsSimiSolDF_%s.csv' % simHash)
+        resultsDF.to_csv(resultsDFPath)
+
         # add result of error analysis
         # save results in the simDF
         simDF.loc[simHash, "timeError"] = t

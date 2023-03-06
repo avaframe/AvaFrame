@@ -290,7 +290,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # add cpu time info to the dataframe
     simDF = simDF.join(tCPUDF)
 
-    # write the actually simulated sims to a separate csv file, 
+    # write the actually simulated sims to a separate csv file,
     # this is used for the qgis connector
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDF, specDir='',
                                        csvName='latestSims.csv')
@@ -672,7 +672,11 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
     entrainmentArea = inputSimLines['entrainmentArea']
     resistanceArea = inputSimLines['resistanceArea']
     relDict = inputSimLines['releaseLine']
-
+    secRelAreaInfo = reportAreaInfo['secRelArea']
+    if secRelAreaInfo == 'No':
+        secRelAreaFlag = 'No'
+    else:
+        secRelAreaFlag = 'Yes'
 
     # Get default cfg and convert to dict for comparison
     cfgGen = cfg['GENERAL']
@@ -690,11 +694,15 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
+                'Secondary release area': secRelAreaFlag,
                 'Mu': cfgGen['mu'],
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['thickness']}}
+    # check if secondary release area
+    if secRelAreaFlag == 'Yes':
+        reportST['Secondary release Area'] = secRelAreaInfo
 
     # Check if parameter set is modified from default, and add section to report
     if '_C_' in logName:
@@ -930,7 +938,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
-    secondaryReleaseInfo = initializeSecRelease(inputSimLines, dem, relRaster)
+    secondaryReleaseInfo, reportAreaInfo = initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo)
 
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
@@ -1299,7 +1307,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     return particles, fields
 
 
-def initializeSecRelease(inputSimLines, dem, relRaster):
+def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     """ Initialize secondary release area
 
     Parameters
@@ -1314,6 +1322,8 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
         dem dictionary
     relRaster: 2D numpy array
         release Raster (to check overlap)
+    reportAreaInfo: dict
+        simulation area information dictionary
 
     Returns
     -------
@@ -1323,6 +1333,9 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
             rasterData: list of secondary release rasters (without the overlapping part with the release)
             flagSecondaryRelease:
                 'Yes' if a secondary release is there
+    reportAreaInfo: dict
+        updated simulation area information dictionary
+
     """
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
@@ -1343,10 +1356,16 @@ def initializeSecRelease(inputSimLines, dem, relRaster):
         # replace the rasterData with noOverlaprasterList (which is the list of rasterData without the overlapping
         # part with the release)
         secondaryReleaseInfo['rasterData'] = noOverlaprasterList
+        reportAreaInfo['secRelArea'] = {'type': 'columns',
+                                                    'Secondary release area scenario': secondaryReleaseInfo['fileName'].stem,
+                                                    'features': secondaryReleaseInfo['Name'].copy(),
+                                                    'thickness [m]': secondaryReleaseInfo['thickness'].copy()}
     else:
         secondaryReleaseInfo = {}
         secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
-    return secondaryReleaseInfo
+        reportAreaInfo['secRelArea'] = 'No'
+
+    return secondaryReleaseInfo, reportAreaInfo
 
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfgGen):
