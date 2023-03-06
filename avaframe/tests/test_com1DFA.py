@@ -344,7 +344,7 @@ def test_createReportDict():
                      {'Name': 'relTestFeature', 'thickness': ['1.45']}, 'entLine': {'Name': ['entTest'],
                       'thickness': ['1.1']}}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
-                      {'Projected Area [m2]': 'm2'}}
+                      {'Projected Area [m2]': 'm2'}, 'secRelArea': 'No'}
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'mu': '0.15500', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
                       'rhoEnt': '100.0'}
@@ -1576,7 +1576,7 @@ def test_initializeSimulation(tmp_path):
     inputSimLines['secondaryReleaseLine'] = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5]),
                                              'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
                                              'Start': np.asarray([0]), 'Length': np.asarray([5]),
-                                             'type': 'Secondary release', 'fileName': 'path2File',
+                                             'type': 'Secondary release', 'fileName': pathlib.Path(tmp_path, 'path2File.shp'),
                                              'Name': ['secRel1'], 'thickness': [0.5], 'thicknessSource': ['ini File']}
 
     relThField = np.zeros((12, 12)) + 0.5
