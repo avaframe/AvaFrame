@@ -2533,6 +2533,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
 
+        # check differences to default and add indicator to name
+        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
+
         # check sphKernelRadius setting
         cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
 
@@ -2540,9 +2543,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-
-        # check differences to default and add indicator to name
-        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
 
         simName = '_'.join([relNameSim, simHash, defID, row._asdict()['simTypeList'], cfgSim['GENERAL']['modelType']])
 
