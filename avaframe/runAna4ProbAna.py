@@ -7,6 +7,7 @@
 # Load modules
 import pathlib
 import shutil
+import argparse
 
 # Local imports
 from avaframe.com1DFA import com1DFA
@@ -38,27 +39,33 @@ def runProbAna(avalancheDir=''):
     # Load general configuration filee
     cfgMain = cfgUtils.getGeneralConfig()
 
-    # Read avalanche directory
-    avaDir = cfgMain['MAIN']['avalancheDir']
-    avaDir = pathlib.Path(avaDir)
-    avaName = avaDir.name
+    # Load avalanche directory from general configuration file
+    # More information about the configuration can be found here
+    # on the Configuration page in the documentation
+    cfgMain = cfgUtils.getGeneralConfig()
+    if avalancheDir != '':
+        cfgMain['MAIN']['avalancheDir'] = avalancheDir
+    else:
+        avalancheDir = cfgMain['MAIN']['avalancheDir']
+
+    avalancheDir = pathlib.Path(avalancheDir)
 
     # Start logging
-    log = logUtils.initiateLogger(avaDir, logName)
+    log = logUtils.initiateLogger(avalancheDir, logName)
     log.info('MAIN SCRIPT')
-    log.info('Current avalanche: %s', avaDir)
+    log.info('Current avalanche: %s', avalancheDir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avaDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
 
     # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
-    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA, cfgFileMod='')
 
     # perform com1DFA simulations
-    outDir = pathlib.Path(avaDir, 'Outputs')
+    outDir = pathlib.Path(avalancheDir, 'Outputs')
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
 
     # check if sampling strategy is from full sample - then only one configuration is possible
@@ -74,22 +81,30 @@ def runProbAna(avalancheDir=''):
         parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
 
         # perform probability analysis
-        analysisPerformed, contourDict = probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
+        analysisPerformed, contourDict = probAna.probAnalysis(avalancheDir, cfgProb, com1DFA, parametersDict=parametersDict)
         if analysisPerformed is False:
             log.warning('No files found for configuration: %s' % probConf)
         # make a plot of the map
-        inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
-        sP.plotProbMap(avaDir, inputDir, cfgProb, demPlot=True)
+        inputDir = pathlib.Path(avalancheDir, 'Outputs', 'ana4Stats')
+        sP.plotProbMap(avalancheDir, inputDir, cfgProb, demPlot=True)
         # make a plot of the contours
-        pathDict = {'pathResult': str(inputDir), 'avaDir': str(avaDir), 'plotScenario': probConf}
+        pathDict = {'pathResult': str(inputDir), 'avaDir': str(avalancheDir), 'plotScenario': probConf}
         oP.plotContours(contourDict, cfgProb['GENERAL']['peakVar'], cfgProb['GENERAL']['peakLim'], pathDict)
 
         # copy outputs to folder called like probability configurations
-        outputFiles = avaDir / 'Outputs' / 'ana4Stats'
-        saveFiles = avaDir / 'Outputs' / ('ana4Stats_' + probConf)
+        outputFiles = avalancheDir / 'Outputs' / 'ana4Stats'
+        saveFiles = avalancheDir / 'Outputs' / ('ana4Stats_' + probConf)
         shutil.move(outputFiles, saveFiles)
 
     return
 
+
 if __name__ == '__main__':
-    runProbAna()
+
+
+    parser = argparse.ArgumentParser(description='Run ana4ProbAna workflow')
+    parser.add_argument('avadir', metavar='a', type=str, nargs='+',
+                        help='the avalanche directory')
+
+    args = parser.parse_args()
+    runProbAna(str(args.avadir[0]))
