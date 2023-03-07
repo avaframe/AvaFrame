@@ -214,7 +214,7 @@ def removePart(particles, mask, nRemove, reasonString='', glideSnow=0):
         particles dictionary
     """
     if reasonString != '':
-        log.info('removed %s particles %s' % (nRemove, reasonString))
+        log.debug('removed %s particles %s' % (nRemove, reasonString))
     nPart = particles['nPart']
     if glideSnow == 1:
         # if glideSnow is activated, we need to remove the particles as well as the bonds accordingly

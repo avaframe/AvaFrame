@@ -361,7 +361,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # set thickness values for the release area, entrainment and secondary release areas
     relName, inputSimLines, badName = prepareReleaseEntrainment(cfg, inputSimFiles['releaseScenario'], inputSimLines)
 
-    log.info('Perform %s simulation' % cuSimName)
+    log.debug('Perform %s simulation' % cuSimName)
 
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
@@ -628,7 +628,7 @@ def prepareInputData(inputSimFiles, cfg):
             damLine['type'] = 'Dam'
         else:
             message = 'Take dam is set, but no dam file found, skipping it'
-            log.info(message)
+            log.debug(message)
             damLine = None
     else:
         damLine = None
@@ -1241,7 +1241,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
         fields['pta'] = np.zeros((nrows, ncols))
         fields['TA'] = np.zeros((nrows, ncols))
         fields['computeTA'] = True
-        log.info('Computing Travel Angle')
+        log.debug('Computing Travel Angle')
     else:
         fields['pta'] = np.zeros((1, 1))
         fields['TA'] = np.zeros((1, 1))
@@ -1249,7 +1249,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     if ('pke' in resTypesLast):
         fields['pke'] = np.zeros((nrows, ncols))
         fields['computeKE'] = True
-        log.info('Computing Kinetic energy')
+        log.debug('Computing Kinetic energy')
     else:
         fields['pke'] = np.zeros((1, 1))
         fields['computeKE'] = False
@@ -1257,7 +1257,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
         fields['P'] = np.zeros((nrows, ncols))
         fields['ppr'] = np.zeros((nrows, ncols))
         fields['computeP'] = True
-        log.info('Computing Pressure')
+        log.debug('Computing Pressure')
     else:
         fields['P'] = np.zeros((1, 1))
         fields['ppr'] = np.zeros((1, 1))
@@ -1639,14 +1639,14 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     log.info('Ending computation at time t = %f s', t-dt)
     log.debug('Saving results for time step t = %f s', t-dt)
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
-    log.info('Computational performances:')
-    log.info(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
-    log.info(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
-    log.info(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
-    log.info(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
-    log.info(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
-    log.info(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
-    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH']
+    log.debug('Computational performances:')
+    log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
+    log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
+    log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
+    log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
+    log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
+    log.debug(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
+    log.debug(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH']
                                                + tCPU['timePos'] + tCPU['timeNeigh']
                                                + tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)

@@ -897,7 +897,7 @@ def fetchProbConfigs(cfg):
 
     probConfigs = {'testAll': {}}
 
-    if cfg.getint('samplingStrategy') == 2:
+    if cfg['PROBRUN'].getint('samplingStrategy') == 2:
         for par in cfg['varParList'].split('|'):
             probConfigs['test' + par] = {'scenario': par}
         log.info('Probability maps are created for full parameter variation and for %s separately' %
