@@ -540,7 +540,7 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
 
     # show flow path
     ax1 = fig.add_subplot(121)
-    ax1.set_title('%s %s %s contour lines' % (resType, thresholdValue, unit ))
+    ax1.set_title('%s %s %s contour lines' % (resType, thresholdValue, unit))
     ax1.set_ylabel('x [m]')
     ax1.set_xlabel('y [m]')
     pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
@@ -549,5 +549,5 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
     for simName in contourDict:
         ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'])
 
-    outFileName = pathDict['plotScenario'] + '_ContourLinesAll'
+    outFileName = pathDict['plotScenario'] + '_ContourLines'
     pU.saveAndOrPlot(pathDict, outFileName, fig)

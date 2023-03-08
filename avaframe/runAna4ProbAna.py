@@ -61,7 +61,8 @@ def runProbAna(avalancheDir=''):
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
 
-    # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
+    # create configuration files for com1DFA simulations including parameter
+    # variation - defined in the probabilistic config
     cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA, cfgFileMod='')
 
     # perform com1DFA simulations
@@ -69,7 +70,7 @@ def runProbAna(avalancheDir=''):
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
 
     # check if sampling strategy is from full sample - then only one configuration is possible
-    probabilityConfigurations = probAna.fetchProbConfigs(cfgProb)
+    probabilityConfigurations = probAna.fetchProbConfigs(cfgProb['PROBRUN'])
 
     # perform pobability analysis
     for probConf in probabilityConfigurations:
@@ -81,20 +82,37 @@ def runProbAna(avalancheDir=''):
         parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
 
         # perform probability analysis
-        analysisPerformed, contourDict = probAna.probAnalysis(avalancheDir, cfgProb, com1DFA, parametersDict=parametersDict)
-        if analysisPerformed is False:
+        anaPerformed, contourDict = probAna.probAnalysis(avalancheDir,
+                                                         cfgProb,
+                                                         com1DFA,
+                                                         parametersDict=parametersDict,
+                                                         probConf=probConf
+                                                         )
+        if anaPerformed is False:
             log.warning('No files found for configuration: %s' % probConf)
-        # make a plot of the map
-        inputDir = pathlib.Path(avalancheDir, 'Outputs', 'ana4Stats')
-        sP.plotProbMap(avalancheDir, inputDir, cfgProb, demPlot=True)
-        # make a plot of the contours
-        pathDict = {'pathResult': str(inputDir), 'avaDir': str(avalancheDir), 'plotScenario': probConf}
-        oP.plotContours(contourDict, cfgProb['GENERAL']['peakVar'], cfgProb['GENERAL']['peakLim'], pathDict)
 
-        # copy outputs to folder called like probability configurations
-        outputFiles = avalancheDir / 'Outputs' / 'ana4Stats'
-        saveFiles = avalancheDir / 'Outputs' / ('ana4Stats_' + probConf)
-        shutil.move(outputFiles, saveFiles)
+
+        # make a plot of the contours
+        inputDir = pathlib.Path(avalancheDir, 'Outputs', 'ana4Stats')
+        outName = '%s_prob_%s_%s_lim%s' % (str(avalancheDir.stem),
+                                           probConf,
+                                           cfgProb['GENERAL']['peakVar'],
+                                           cfgProb['GENERAL']['peakLim'])
+        pathDict = {'pathResult': str(inputDir / 'plots'),
+                    'avaDir': str(avalancheDir),
+                    'plotScenario': outName
+                    }
+        oP.plotContours(contourDict,
+                        cfgProb['GENERAL']['peakVar'],
+                        cfgProb['GENERAL']['peakLim'], pathDict)
+
+    # plot probability maps
+    sP.plotProbMap(avalancheDir, inputDir, cfgProb, demPlot=True)
+
+        # # copy outputs to folder called like probability configurations
+        # outputFiles = avalancheDir / 'Outputs' / 'ana4Stats'
+        # saveFiles = avalancheDir / 'Outputs' / ('ana4Stats_' + probConf)
+        # shutil.move(outputFiles, saveFiles)
 
     return
 
