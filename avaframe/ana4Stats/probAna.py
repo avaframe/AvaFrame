@@ -97,7 +97,8 @@ def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
             releaseScenario = paramValuesD['releaseScenario']
         else:
             releaseScenario = ''
-        sP.plotSample(paramValuesD, outDir, releaseScenario=releaseScenario)
+        plotDir = avaDir / 'Outputs' / 'ana4Stats' / 'plots'
+        sP.plotSample(paramValuesD, plotDir, releaseScenario=releaseScenario)
 
     # write cfg files one for each parameter set drawn from full sample
     cfgFiles = createCfgFiles(paramValuesDList, modName, cfgProb, cfgPath=outDir,
@@ -322,7 +323,7 @@ def checkForNumberOfReferenceValues(cfgGen, varPar):
     return True
 
 
-def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
+def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf=''):
     """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
@@ -338,6 +339,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
         inputDir : str
             optional - path to directory where data that should be analysed can be found in
             a subfolder called peakFiles and configurationFiles, required if not in module results
+        probConf : str
+            name of probability configuration
 
     """
 
@@ -362,7 +365,6 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     # if matching sims found - perform analysis
     if inputDir == '':
         inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-        flagStandard = True
         peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
     else:
         inputDirPF = inputDir / 'peakFiles'
@@ -370,12 +372,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFilesDF['files'][0])
-    cellSize = header['cellsize']
     nRows = header['nrows']
     nCols = header['ncols']
-    xllcenter = header['xllcenter']
-    yllcenter = header['yllcenter']
-    noDataValue = header['noDataValue']
 
     # Initialise array for computations
     probSum = np.zeros((nRows, nCols))
@@ -417,9 +415,13 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
     # # Save to .asc file
     avaName = avaDir.name
-    outFileName = '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])
+    outFileName = '%s_prob_%s_%s_lim%s.asc' % (avaName,
+                                               probConf,
+                                               cfg['GENERAL']['peakVar'],
+                                               cfg['GENERAL']['peakLim'])
     outFile = outDir / outFileName
     IOf.writeResultToAsc(header, probMap, outFile)
+    log.info('Prob result written to %s' % outFile)
     analysisPerformed = True
 
     return analysisPerformed, contourDict
@@ -895,11 +897,11 @@ def fetchProbConfigs(cfg):
             dictionary with one key per config and a dict per key with parameter and value
     """
 
-    probConfigs = {'testAll': {}}
+    probConfigs = {'includeAll': {}}
 
-    if cfg['PROBRUN'].getint('samplingStrategy') == 2:
+    if cfg.getint('samplingStrategy') == 2:
         for par in cfg['varParList'].split('|'):
-            probConfigs['test' + par] = {'scenario': par}
+            probConfigs['include' + par] = {'scenario': par}
         log.info('Probability maps are created for full parameter variation and for %s separately' %
             cfg['varParList'])
     else:

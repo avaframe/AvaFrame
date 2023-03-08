@@ -47,10 +47,10 @@ def test_probAna(tmp_path):
 
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir='')
-    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap1.0.asc'), skiprows=6)
+    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_prob__ppr_lim1.0.asc'), skiprows=6)
 
     # Load reference solution
-    probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_probMap1.0.txt'), skiprows=6)
+    probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_prob__ppr_lim1.0.txt'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(probTest, probSol, atol=1.e-6)
@@ -63,7 +63,7 @@ def test_probAna(tmp_path):
     avaDirtmp2 = pathlib.Path(tmp_path, 'avaTest')
     avaDirtmp2.mkdir()
     pA.probAnalysis(avaDirtmp2, cfg, com1DFA, parametersDict='', inputDir=testInputDir)
-    probTest2 = np.loadtxt(os.path.join(avaDirtmp2, 'Outputs', 'ana4Stats', 'avaTest_probMap1.0.asc'), skiprows=6)
+    probTest2 = np.loadtxt(os.path.join(avaDirtmp2, 'Outputs', 'ana4Stats', 'avaTest_prob__ppr_lim1.0.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes2 = np.allclose(probTest2, probSol, atol=1.e-6)
@@ -625,15 +625,15 @@ def test_fetchProbConfigs():
     probConfigs = pA.fetchProbConfigs(cfg['PROBRUN'])
 
     assert len(probConfigs) == 3
-    assert 'testmu' in probConfigs.keys()
-    assert 'testrelTh' in probConfigs.keys()
+    assert 'includemu' in probConfigs.keys()
+    assert 'includerelTh' in probConfigs.keys()
 
     cfg['PROBRUN'] = {'samplingStrategy': '1', 'varParList': 'relTh|mu'}
 
     probConfigs = pA.fetchProbConfigs(cfg['PROBRUN'])
 
     assert len(probConfigs) == 1
-    assert 'testAll' in probConfigs.keys()
+    assert 'includeAll' in probConfigs.keys()
 
 
 def test_fetchThicknessInfo(tmp_path):

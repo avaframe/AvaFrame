@@ -244,6 +244,8 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
     # configuration settings
     cfg = cfgFull['PLOT']
 
+    avaName = pathlib.PurePath(avaDir).name
+
     if demPlot:
         demFile = gI.getDEMPath(avaDir)
         demData = IOf.readRaster(demFile, noDataToNan=True)
@@ -298,7 +300,12 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         # create figure and add title
         fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-        fullTitle = cfg['name'] + ' based on %s $>$ %s %s' % (cfgFull['GENERAL']['peakVar'], cfgFull['GENERAL']['peakLim'], cfgFull['GENERAL']['unit'])
+
+        fullTitle = '%s %s based on %s $>$ %s %s' % (avaName,
+                                                     cfg['name'],
+                                                     cfgFull['GENERAL']['peakVar'],
+                                                     cfgFull['GENERAL']['peakLim'],
+                                                     cfgFull['GENERAL']['unit'])
         suptitle = fig.suptitle(fullTitle, fontsize=14, color='0.5')
         ax1 = fig.add_subplot(121)
 
@@ -374,9 +381,11 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         # add contourlines for levels
         if multLabel:
-            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1)
+            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
+                              cmap=pU.cmapT.reversed(), linewidths=1)
         else:
-            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, colors=colorsP, linewidths=1)
+            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
+                              colors=colorsP, linewidths=1)
 
         # Get the handles for the legend elements
         handles, _ = CS2.legend_elements()
@@ -384,12 +393,11 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         ax2.set_xlabel('x [m]')
         ax2.set_ylabel('y [m]')
 
-        plt.legend(handles, labels, facecolor = 'black', framealpha = 0.04)
+        plt.legend(handles, labels, facecolor='black', framealpha=0.04)
         pU.addColorBar(im2, ax2, ticks, unit)
 
         outDir = inDir / 'plots'
-        avaName = pathlib.PurePath(avaDir).name
-        outFileName = '%s_probMap_lim%s' % (avaName, cfgFull['GENERAL']['peakLim'])
+        outFileName = 'probMap_' + data.stem
         pathDict = {'pathResult': outDir}
         pU.saveAndOrPlot(pathDict, outFileName, fig)
 
