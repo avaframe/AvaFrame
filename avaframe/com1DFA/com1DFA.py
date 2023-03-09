@@ -20,7 +20,7 @@ from functools import partial
 import platform
 if os.name == 'nt':
     from multiprocessing.pool import ThreadPool as Pool
-if platform.system() == 'Darwin':
+elif platform.system() == 'Darwin':
     from multiprocessing.pool import ThreadPool as Pool
 else:
     from multiprocessing import Pool
