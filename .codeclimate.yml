@@ -69,4 +69,5 @@ exclude_patterns:
 - "**/*.json"
 - "**/*.txt"
 - "**/*.conf"
+- "**/run*.py"
 - ".github/"

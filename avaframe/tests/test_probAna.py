@@ -47,7 +47,9 @@ def test_probAna(tmp_path):
 
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir='')
-    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_prob__ppr_lim1.0.asc'), skiprows=6)
+    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs',
+                                       'ana4Stats',
+                                       'avaParabola_prob__ppr_lim1.0.asc'), skiprows=6)
 
     # Load reference solution
     probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_prob__ppr_lim1.0.txt'), skiprows=6)
@@ -852,7 +854,6 @@ def test_checkParameterSettings():
         assert pA.checkParameterSettings(cfg, varParList)
     assert 'Only one reference value is allowed for relTh' in str(e.value)
     assert 'relThRangeVariation' in str(e.value)
-
 
 def test_checkForNumberOfReferenceValues():
     """ check if reference (base) value already has a variation set for thickness parameters"""
