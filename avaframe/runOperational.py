@@ -117,8 +117,8 @@ def runOperational(avalancheDir=''):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run Operational workflow')
-    parser.add_argument('avadir', metavar='a', type=str, nargs='+',
+    parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    runOperational(str(args.avadir[0]))
+    runOperational(str(args.avadir))

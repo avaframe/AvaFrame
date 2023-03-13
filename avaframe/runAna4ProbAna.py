@@ -39,9 +39,8 @@ def runProbAna(avalancheDir=''):
     # Load general configuration filee
     cfgMain = cfgUtils.getGeneralConfig()
 
-    # Load avalanche directory from general configuration file
-    # More information about the configuration can be found here
-    # on the Configuration page in the documentation
+    # Load avalanche directory from general configuration file, 
+    # if not provided as input argument
     cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
@@ -63,6 +62,7 @@ def runProbAna(avalancheDir=''):
 
     # create configuration files for com1DFA simulations including parameter
     # variation - defined in the probabilistic config
+    # prob4AnaCfg.ini or its local copy
     cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA, cfgFileMod='')
 
     # perform com1DFA simulations
@@ -121,8 +121,8 @@ if __name__ == '__main__':
 
 
     parser = argparse.ArgumentParser(description='Run ana4ProbAna workflow')
-    parser.add_argument('avadir', metavar='a', type=str, nargs='+',
+    parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    runProbAna(str(args.avadir[0]))
+    runProbAna(str(args.avadir))

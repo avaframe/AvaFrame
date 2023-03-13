@@ -6,3 +6,4 @@ parallel = true
 sigterm = true
 omit = */test_*
        */__init__.py
+       */run*
