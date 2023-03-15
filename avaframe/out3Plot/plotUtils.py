@@ -625,7 +625,7 @@ def putInfoBox(ax, infoText, location="lowerRight", color="black", hAlignment="r
     )
 
 
-def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
+def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, providedDEM=''):
     """constrain data array to bufferzone around min elevation of dem where there is data in data array
 
     Parameters
@@ -638,6 +638,8 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
         configuration settings for buffer zone
     extentOption: bool
         if True in meters if False in rows and cols
+    providedDEM: dict or str
+        if dict is provided this DEM is used, might be helpful if remeshed DEM was used
 
     Returns
     --------
@@ -650,7 +652,10 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
     """
 
     # load dem to identify runout area according to min elevation where peak result != 0
-    dem = gI.readDEM(avaDir)
+    if providedDEM == '':
+        dem = gI.readDEM(avaDir)
+    else:
+        dem = providedDEM
 
     # mask dem to where there is data in result file
     demCut = np.where(data > 0, dem["rasterData"], np.nan)

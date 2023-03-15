@@ -4,11 +4,9 @@
 """
 
 # load python modules
-import os
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
-import numpy.ma as ma
 import seaborn as sns
 import pandas as pd
 import pathlib
@@ -17,9 +15,9 @@ import pathlib
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import cfgHandling
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in3Utils.geoTrans as gT
 
 
 # create local logger
@@ -246,11 +244,6 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
     avaName = pathlib.PurePath(avaDir).name
 
-    if demPlot:
-        demFile = gI.getDEMPath(avaDir)
-        demData = IOf.readRaster(demFile, noDataToNan=True)
-        demField = demData['rasterData']
-
     # fetch probabiltiy map datasets in inDir
     dataFiles = list(inDir.glob('*.asc'))
     if dataFiles == []:
@@ -287,6 +280,18 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         header = IOf.readASCheader(data)
         cellSize = header['cellsize']
 
+        # load correspoding DEM check for matching cellsize
+        cfgDEM = {'GENERAL': {'avalancheDir': avaDir, 'meshCellSize': header['cellsize'],
+            'meshCellSizeThreshold': cfgFull['PLOT']['meshCellSizeThreshold']}}
+        pathDem, _, _ = gT.searchRemeshedDEM('', cfgDEM)
+        demFile = pathlib.Path(cfgDEM['GENERAL']['avalancheDir'], 'Inputs', pathDem)
+        if pathDem != '':
+            demData = IOf.readRaster(demFile, noDataToNan=True)
+            demField = demData['rasterData']
+        else:
+            log.warning('No matching DEM file found for cellSize of %s - skipping DEM plot and zoom plot' % header['cellsize'])
+            demPlot = False
+
         # Set dimensions of plots
         ny = dataPlot.shape[0]
         nx = dataPlot.shape[1]
@@ -320,7 +325,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot),
             continuous=True)
 
-        if demPlot and demData['header']['cellsize'] == cellSize:
+        if demPlot:
             # also constrain DEM to data constrained
             demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
             # add DEM hillshade with contour lines
@@ -355,46 +360,48 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         # add zoom plot of runout area
         ax2 = fig.add_subplot(122)
 
-        # determine zoom in runout area
-        dataCut, xOrigin, yOrigin = pU.constrainToMinElevation(avaDir, raster['rasterData'], cfg, cellSize,
-            extentOption=True)
+        if demPlot:
 
-        # constrain to where there is data
-        rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataCutConstrained = pU.constrainPlotsToData(dataCut,
-            cellSize, extentOption=True, constrainedData=True, buffer=cfg.getfloat('constrainBuffer'))
-        dataCutConstrained = np.ma.masked_where(dataCutConstrained == 0.0, dataCutConstrained)
+            # determine zoom in runout area
+            dataCut, xOrigin, yOrigin = pU.constrainToMinElevation(avaDir, raster['rasterData'], cfg, cellSize,
+                extentOption=True, providedDEM=demData)
 
-        # set extent of zoom Plot
-        x0 = xOrigin + colsMinPlot
-        x1 = xOrigin + colsMaxPlot
-        y0 = yOrigin + rowsMinPlot
-        y1 = yOrigin + rowsMaxPlot
+            # constrain to where there is data
+            rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataCutConstrained = pU.constrainPlotsToData(dataCut,
+                cellSize, extentOption=True, constrainedData=True, buffer=cfg.getfloat('constrainBuffer'))
+            dataCutConstrained = np.ma.masked_where(dataCutConstrained == 0.0, dataCutConstrained)
 
-        # add plot
-        im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=[x0, x1, y0, y1],
-                         origin='lower', aspect=nx/ny, norm=norm)
+            # set extent of zoom Plot
+            x0 = xOrigin + colsMinPlot
+            x1 = xOrigin + colsMaxPlot
+            y0 = yOrigin + rowsMinPlot
+            y1 = yOrigin + rowsMaxPlot
 
-        # create meshgrid for contour plot also constrained to where there is data
-        xx2 = np.arange(x0, x1, cellSize)
-        yy2 = np.arange(y0, y1, cellSize)
-        X2, Y2 = np.meshgrid(xx2, yy2)
+            # add plot
+            im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=[x0, x1, y0, y1],
+                             origin='lower', aspect=nx/ny, norm=norm)
 
-        # add contourlines for levels
-        if multLabel:
-            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
-                              cmap=pU.cmapT.reversed(), linewidths=1)
-        else:
-            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
-                              colors=colorsP, linewidths=1)
+            # create meshgrid for contour plot also constrained to where there is data
+            xx2 = np.arange(x0, x1, cellSize)
+            yy2 = np.arange(y0, y1, cellSize)
+            X2, Y2 = np.meshgrid(xx2, yy2)
 
-        # Get the handles for the legend elements
-        handles, _ = CS2.legend_elements()
+            # add contourlines for levels
+            if multLabel:
+                CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
+                                  cmap=pU.cmapT.reversed(), linewidths=1)
+            else:
+                CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels,
+                                  colors=colorsP, linewidths=1)
 
-        ax2.set_xlabel('x [m]')
-        ax2.set_ylabel('y [m]')
+            # Get the handles for the legend elements
+            handles, _ = CS2.legend_elements()
 
-        plt.legend(handles, labels, facecolor='black', framealpha=0.04)
-        pU.addColorBar(im2, ax2, ticks, unit)
+            ax2.set_xlabel('x [m]')
+            ax2.set_ylabel('y [m]')
+
+            plt.legend(handles, labels, facecolor='black', framealpha=0.04)
+            pU.addColorBar(im2, ax2, ticks, unit)
 
         outDir = inDir / 'plots'
         outFileName = 'probMap_' + data.stem
