@@ -372,6 +372,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFilesDF['files'][0])
+    refData = IOf.readRaster(peakFilesDF['files'][0])
     nRows = header['nrows']
     nCols = header['ncols']
 
@@ -392,10 +393,17 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
                 fileName = peakFilesDF['files'][m]
                 dataLim = np.zeros((nRows, nCols))
                 fileData = IOf.readRaster(fileName)
+
+                # check if extent is the same as first loaded dataset
+                # if not - remesh and print warning
+                if fileData['header']['nrows'] != nRows or fileData['header']['ncols'] != nCols:
+                    log.warning('datasets used to create probMap do not match in extent - remeshing: %s to cellSize %s' %
+                        (fileName, header['cellsize']))
+                    data, _ = gT.resizeData(fileData, refData)
                 data = np.flipud(fileData['rasterData'])
 
                 # fetch contourline info
-                xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(fileData['header'])
+                xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(refData['header'])
                 x, y = pU.fetchContourCoords(xGrid, yGrid, data, float(cfg['GENERAL']['peakLim']))
                 contourDict[fileName.stem] = {'x': x, 'y': y}
 
