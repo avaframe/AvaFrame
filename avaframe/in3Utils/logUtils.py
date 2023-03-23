@@ -24,7 +24,7 @@ def writeCfg2Log(cfg, cfgName='Unspecified'):
             log.info('\t\t%s : %s', key, cfg[section][key])
 
 
-def initiateLogger(targetDir, logName='runLog', modelInfo='AvaFrame'):
+def initiateLogger(targetDir, logName='runLog', modelInfo=''):
     """ Initiates logger object based on setup in logging.conf
 
         Parameters
@@ -33,8 +33,8 @@ def initiateLogger(targetDir, logName='runLog', modelInfo='AvaFrame'):
             folder to save log file to
         logName : str
             filename of log file; optional; defaults to runLog.log
-        addAvaFrame: bool
-            if True add AvaFrame in log
+        modelInfo: str
+            if not emtpy add info on modelInfo to log
 
         Returns
         -------
@@ -66,9 +66,9 @@ def initiateLogger(targetDir, logName='runLog', modelInfo='AvaFrame'):
 
     log.info('Started logging at: %s', dtString)
     log.info('Also logging to: %s', logFileName)
-    if modelInfo == 'AvaFrame':
-        log.info('AvaFrame Version: %s', gv.getVersion())
-    else:
-        log.info(modelInfo)
+    log.info('AvaFrame Version: %s', gv.getVersion())
+
+    if modelInfo != '':
+        log.info('Using: %s' % modelInfo)
 
     return log
