@@ -69,6 +69,6 @@ def initiateLogger(targetDir, logName='runLog', modelInfo=''):
     log.info('AvaFrame Version: %s', gv.getVersion())
 
     if modelInfo != '':
-        log.info('Using: %s' % modelInfo)
+        log.info('Used by: %s' % modelInfo)
 
     return log
