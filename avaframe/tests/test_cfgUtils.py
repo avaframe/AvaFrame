@@ -39,6 +39,47 @@ def test_getModuleConfig():
     assert cfg['GOODSECTION2']['goodKey4'] == 'False'
 
 
+def test_getGeneralConfig():
+    '''Test for module getGeneralConfig'''
+
+
+    # test with both a default and local .ini file
+    cfg = cfgUtils.getGeneralConfig()
+    sections = cfg.sections()
+
+    assert sections == ['MAIN', 'FLAGS']
+    assert cfg['MAIN']['avalancheDir'] == 'data/avaParabola'
+    assert cfg['FLAGS']['savePlot'] == 'True'
+    assert cfg.has_option('FLAGS', 'showPlot')
+    assert cfg.has_option('FLAGS', 'reportOneFile')
+    assert cfg.has_option('MAIN', 'CPUPercent')
+
+    dirPath = pathlib.Path(__file__).parents[0]
+    nameFile = dirPath / 'data' / 'testCfg.ini'
+    # test with both a default and local .ini file
+    cfg2 = cfgUtils.getGeneralConfig(nameFile=nameFile)
+    sections = cfg2.sections()
+
+    assert sections == ['MAIN', 'FLAGS']
+    assert cfg2['MAIN']['avalancheDir'] == 'data/avaHockeyChannel1'
+    assert cfg2['FLAGS']['showPlot'] == 'True'
+    assert cfg2.has_option('FLAGS', 'showPlot')
+    assert cfg2.has_option('FLAGS', 'reportOneFile')
+    assert cfg2.has_option('MAIN', 'CPUPercent')
+
+    dirPath = pathlib.Path(__file__).parents[0]
+    nameFile = dirPath / 'data' / 'test2Cfg.ini'
+    # test with both a default and local .ini file
+    cfg0 = cfgUtils.getGeneralConfig(nameFile=nameFile)
+    sections = cfg0.sections()
+
+    assert sections == ['MAIN', 'FLAGS']
+    assert cfg0['MAIN']['avalancheDir'] == 'data/avaHockey'
+    assert cfg0['FLAGS']['savePlot'] == 'False'
+    assert cfg0.has_option('FLAGS', 'showPlot')
+    assert cfg0.has_option('MAIN', 'CPUPercent')
+
+
 def test_cfgHash():
     '''Test for the uid hash generation '''
 

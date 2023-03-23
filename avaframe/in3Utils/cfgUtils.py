@@ -39,7 +39,7 @@ def getGeneralConfig(nameFile=''):
     modPath = pathlib.Path(avaf.__file__).resolve().parent
 
     if isinstance(nameFile, pathlib.Path):
-        localFile = nameFile.parents / 'local_' + nameFile.name
+        localFile = nameFile.parents[0] / ('local_' + nameFile.name)
         defaultFile = nameFile
     else:
         localFile = modPath / 'local_avaframeCfg.ini'
