@@ -26,16 +26,24 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def getGeneralConfig():
+def getGeneralConfig(nameFile=''):
     ''' Returns the general configuration for avaframe
     returns a configParser object
+
+    Parameters
+    nameFile: pathlib path
+        optional full path to file, if empty use avaframeCfg from folder one level up
     '''
 
     # get path of module
     modPath = pathlib.Path(avaf.__file__).resolve().parent
 
-    localFile = modPath / 'local_avaframeCfg.ini'
-    defaultFile = modPath / 'avaframeCfg.ini'
+    if isinstance(nameFile, pathlib.Path):
+        localFile = nameFile.parents / 'local_' + nameFile.name
+        defaultFile = nameFile
+    else:
+        localFile = modPath / 'local_avaframeCfg.ini'
+        defaultFile = modPath / 'avaframeCfg.ini'
 
     if localFile.is_file():
         iniFile = localFile
@@ -714,11 +722,11 @@ def convertToCfgList(parameterList):
 
 
 def getNumberOfProcesses(cfgMain, nSims):
-    """ Determine how many CPU cores to take for parallel tasks 
+    """ Determine how many CPU cores to take for parallel tasks
 
         Parameters
         -----------
-        cfgMain: configuration object 
+        cfgMain: configuration object
             the main avaframe configuration
         nSims: integer
             number of simulations that need to be calculated
