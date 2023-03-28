@@ -671,12 +671,11 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     ]
 
     # to determine the extent for plotting
+    yOrigin = max(0, nrowsMin - rangePlot)
+    xOrigin = max(0, ncolsMin - rangePlot)
     if extentOption:
-        yOrigin = (nrowsMin - rangePlot) * cellSize
-        xOrigin = (ncolsMin - rangePlot) * cellSize
-    else:
-        yOrigin = nrowsMin - rangePlot
-        xOrigin = ncolsMin - rangePlot
+        yOrigin = yOrigin * cellSize
+        xOrigin = xOrigin * cellSize
 
     return dataCut, xOrigin, yOrigin
 
