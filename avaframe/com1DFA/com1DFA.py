@@ -4,6 +4,7 @@
 
 import logging
 import os
+import sys
 import time
 import pathlib
 import pandas as pd
@@ -21,7 +22,6 @@ else:
 import avaframe.com1DFA.com1DFATools as com1DFATools
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.deriveParameterSet as dP
-import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.com1DFACore as com1DFACore
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
@@ -63,17 +63,23 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
 
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
+    # Get info about the current module
+    cuModule = sys.modules[__name__]
+
     # read initial configuration
     if typeCfgInfo in ['cfgFromFile', 'cfgFromDefault']:
-        cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
+        cfgStart = cfgUtils.getModuleConfig(cuModule, fileOverride=cfgInfo, toPrint=False)
+
+        # cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
     elif typeCfgInfo == 'cfgFromObject':
         cfgStart = cfgInfo
 
     # fetch input data and create work and output directories
-    inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(avalancheDir, cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
+    inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(avalancheDir,
+                                                                    cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # create dictionary with one key for each simulation that shall be performed
-    simDict = dP.createSimDict(avalancheDir, com1DFA, cfgStart, inputSimFilesAll, simNameExisting)
+    simDict = dP.createSimDict(avalancheDir, cuModule, cfgStart, inputSimFilesAll, simNameExisting)
 
     return simDict, outDir, inputSimFilesAll, simDFExisting
 

@@ -57,7 +57,6 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
         Please read this in the context of the com1DFAMain function.
     """
 
-
     simDF = pd.DataFrame()
     tCPUDF = pd.DataFrame()
 
@@ -85,7 +84,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
         cfgFinal,
         tCPU,
         particlesList,
-    ) = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
+    ) = com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
 
     simDF.at[simHash, "nPart"] = str(int(particlesList[0]["nPart"]))
 

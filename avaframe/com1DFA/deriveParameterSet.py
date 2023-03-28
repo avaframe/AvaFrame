@@ -10,7 +10,7 @@ from datetime import datetime
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFA import com1DFACore
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import geoTrans
 import avaframe.in1Data.computeFromDistribution as cP
@@ -833,7 +833,7 @@ def createSimDict(avalancheDir, com1DFA, cfgInitial, inputSimFiles, simNameExist
     # only new simulations are included in this simDict
     # key is simName and corresponds to one simulation
     simDict = {}
-    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting)
+    simDict = com1DFACore.prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting)
 
     # write full configuration (.ini file) to file
     date = datetime.today()
