@@ -25,6 +25,7 @@ import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.com1DFACore as com1DFACore
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 #######################################
 # Set flags here
@@ -137,29 +138,94 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
         startTime = time.time()
 
+        # create a few necessary output dirs:
+        outDirData = outDir / 'particles'
+        fU.makeADir(outDirData)
+        outDirPeakAll = outDir / 'peakFiles'
+        fU.makeADir(outDirPeakAll)
+        outDirPeak = outDir / 'peakFiles' / 'timeSteps'
+        fU.makeADir(outDirPeak)
+
         log.info("--- STARTING (potential) PARALLEL PART ----")
         # Get number of CPU Cores wanted
         nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(simDict))
 
-        # Supply compute task with inputs
-        com1DFACoreTaskWithInput = partial(com1DFACore.com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)
+        results = {}
+        pool = Pool(processes=nCPU)
+        start_time = time.time()
 
-        # Create parallel pool and run
-        # with multiprocessing.Pool(processes=nCPU) as pool:
-        with Pool(processes=nCPU) as pool:
-            results = pool.map(com1DFACoreTaskWithInput, simDict)
-            pool.close()
-            pool.join()
+        for keyValue in simDict.items():
+            key, myVal = keyValue
+            log.info(f'Submitting {keyValue} to worker process')
+            results[key] = pool.apply_async(com1DFACore.com1DFACoreTask, args=(keyValue,
+                                                                         inputSimFiles,
+                                                                         avalancheDir,
+                                                                         outDir))
+            # results.append(result)
 
-        # Split results to according structures
-        for result in results:
-            simDF = pd.concat([simDF, result[0]], axis=0)
-            tCPUDF = pd.concat([tCPUDF, result[1]], axis=0)
-            dem = result[2] #only last dem is used
-            reportDictList.append(result[3])
+        resultChecked = []
+        # This code block can be (re)run whenever you want to check on the progress of the pool.
+        while 1:
+            time.sleep(10)
+            running, successful, error = [], [], []
+            for key, result in results.items():
+                try:
+                    if result.successful():
+                        successful.append(key)
+                        resultChecked.append(key)
+                        res = result.get()
+                        simDF = pd.concat([simDF, res[0]], axis=0)
+                        tCPUDF = pd.concat([tCPUDF, res[1]], axis=0)
+                        dem = res[2]  # only last dem is used
+                        reportDictList.append(res[3])
+                    else:
+                        error.append(key)
+                except ValueError:
+                    running.append(key)
+            for key in successful:
+                del results[key]
+
+            log.debug(f'Running: {sorted(running)}')
+            log.info(f'Currently {len(running)} sims running, '
+                     f'{len(resultChecked)} are done, '
+                     f'{len(error)} with errors')
+            # print('Successful:', sorted(successful))
+            # print('Error:', sorted(error))
+            # print('ResultChecked:', sorted(resultChecked))
+            if len(running) < 1:
+                break
+
+        pool.close()
+        pool.join()
+
+        # for result in results:
+        #     res = result.get()
+        #     simDF = pd.concat([simDF, res[0]], axis=0)
+        #     tCPUDF = pd.concat([tCPUDF, res[1]], axis=0)
+        #     dem = res[2]  #only last dem is used
+        #     reportDictList.append(res[3])
+
+
+
+        # # Supply compute task with inputs
+        # com1DFACoreTaskWithInput = partial(com1DFACore.com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)
+
+        # # Create parallel pool and run
+        # # with multiprocessing.Pool(processes=nCPU) as pool:
+        # with Pool(processes=nCPU) as pool:
+        #     results = pool.map(com1DFACoreTaskWithInput, simDict)
+        #     pool.close()
+        #     pool.join()
+
+        # # Split results to according structures
+        # for result in results:
+        #     simDF = pd.concat([simDF, result[0]], axis=0)
+        #     tCPUDF = pd.concat([tCPUDF, result[1]], axis=0)
+        #     dem = result[2]  #only last dem is used
+        #     reportDictList.append(result[3])
 
         timeNeeded = '%.2f' % (time.time() - startTime)
-        log.info('Overall (parallel) com1DFA computation took: %s s ' %timeNeeded)
+        log.info('Overall (parallel) com1DFA computation took: %s s ' % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
 
         # postprocessing: writing report, creating plots

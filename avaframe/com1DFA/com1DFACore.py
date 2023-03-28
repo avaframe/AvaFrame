@@ -41,33 +41,37 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+import multiprocessing
 import threading
 
 #######################################
 # Set flags here
 #######################################
 # create local logger
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
+log = multiprocessing.get_logger()
+log.addHandler(logging.StreamHandler())
+log.setLevel(logging.INFO)
 cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
+def com1DFACoreTask(keyValue, inputSimFiles, avalancheDir, outDir):
     """ This is a subdivision of com1DFAMain to allow for parallel execution.
         Please read this in the context of the com1DFAMain function.
     """
-
+    cuSim, simDict = keyValue
     simDF = pd.DataFrame()
     tCPUDF = pd.DataFrame()
 
     # load configuration object for current sim
-    cfg = simDict[cuSim]["cfgSim"]
+    cfg = simDict["cfgSim"]
 
     # check configuraton for consistency
     checkCfg.checkCfgConsistency(cfg)
 
     # fetch simHash for current sim
-    simHash = simDict[cuSim]["simHash"]
+    simHash = simDict["simHash"]
 
     log.info('%s runs as process: %s, %s' % (cuSim,  os.getpid(), threading.current_thread().ident))
 
@@ -171,19 +175,16 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     tCPUDFA = '%.2f' % (time.time() - startTime)
     log.info(('cpu time DFA = %s s' % (tCPUDFA)))
 
+    outDirData = outDir / 'particles'
     cfgTrackPart = cfg['TRACKPARTICLES']
     # track particles
     if cfgTrackPart.getboolean('trackParticles'):
         particlesList, trackedPartProp, track = trackParticles(cfgTrackPart, dem, particlesList)
         if track:
-            outDirData = outDir / 'particles'
-            fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
-    outDirData = outDir / 'particles'
-    fU.makeADir(outDirData)
     savePartToPickle(particlesList, outDirData, cuSimName)
 
     # export particles properties for visulation
@@ -1621,7 +1622,6 @@ def writeMBFile(infoDict, avaDir, logName):
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
-    fU.makeADir(massDir)
     with open(massDir / ('mass_%s.txt' % logName), 'w') as mFile:
         mFile.write('time, current, entrained\n')
         for m in range(len(t)):
@@ -2233,7 +2233,6 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
             dataName = (logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory
             outDirPeak = outDir / 'peakFiles' / 'timeSteps'
-            fU.makeADir(outDirPeak)
             outFile = outDirPeak / dataName
             IOf.writeResultToAsc(
                 dem['originalHeader'], resField, outFile, flip=True)
@@ -2243,7 +2242,6 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
                 outDirPeakAll = outDir / 'peakFiles'
-                fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
                 IOf.writeResultToAsc(dem['originalHeader'], resField, outFile, flip=True)
             else:
