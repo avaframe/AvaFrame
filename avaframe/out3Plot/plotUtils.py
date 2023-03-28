@@ -666,8 +666,8 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     ncolsMin = indMin[1][0]
     rangePlot = int(cfg.getfloat("zoomBuffer") / cellSize)
     dataCut = data[
-        nrowsMin - rangePlot : nrowsMin + rangePlot,
-        ncolsMin - rangePlot : ncolsMin + rangePlot,
+        max(0, nrowsMin - rangePlot):min(data.shape[0], nrowsMin + rangePlot),
+        max(0, ncolsMin - rangePlot):min(data.shape[1], ncolsMin + rangePlot),
     ]
 
     # to determine the extent for plotting
