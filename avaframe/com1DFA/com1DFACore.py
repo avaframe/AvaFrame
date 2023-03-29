@@ -50,8 +50,8 @@ import threading
 # create local logger
 # log = logging.getLogger(__name__)
 log = multiprocessing.get_logger()
-log.addHandler(logging.StreamHandler())
-log.setLevel(logging.INFO)
+#log.addHandler(logging.StreamHandler())
+#log.setLevel(logging.INFO)
 cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
@@ -73,13 +73,13 @@ def com1DFACoreTask(keyValue, inputSimFiles, avalancheDir, outDir):
     # fetch simHash for current sim
     simHash = simDict["simHash"]
 
-    log.info('%s runs as process: %s, %s' % (cuSim,  os.getpid(), threading.current_thread().ident))
+    #log.info('%s runs as process: %s, %s' % (cuSim,  os.getpid(), threading.current_thread().ident))
 
     # append configuration to dataframe
     simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
 
     # log simulation name
-    log.info("Run simulation: %s" % cuSim)
+    #log.info("Run simulation: %s" % cuSim)
 
     # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
     (
@@ -100,7 +100,7 @@ def com1DFACoreTask(keyValue, inputSimFiles, avalancheDir, outDir):
     if simHashFinal != simHash:
         cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName="%s_butModified" % simHash)
         message = "Simulation configuration has been changed since start"
-        log.error(message)
+        #log.error(message)
         raise AssertionError(message)
 
     # return simDF, tCPUDF, simDFExisting, cfg, cfgMain, dem, reportDictList
@@ -156,7 +156,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     # set thickness values for the release area, entrainment and secondary release areas
     relName, inputSimLines, badName = prepareReleaseEntrainment(cfg, inputSimFiles['releaseScenario'], inputSimLines)
 
-    log.debug('Perform %s simulation' % cuSimName)
+    #log.debug('Perform %s simulation' % cuSimName)
 
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
@@ -173,7 +173,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     writeMBFile(infoDict, avaDir, cuSimName)
 
     tCPUDFA = '%.2f' % (time.time() - startTime)
-    log.info(('cpu time DFA = %s s' % (tCPUDFA)))
+    #log.info(('cpu time DFA = %s s' % (tCPUDFA)))
 
     outDirData = outDir / 'particles'
     cfgTrackPart = cfg['TRACKPARTICLES']
@@ -230,14 +230,14 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     badName = False
     if '_' in relName:
         badName = True
-        log.warning('Release area scenario file name includes an underscore \
-        the suffix _AF will be added for the simulation name')
+        #log.warning('Release area scenario file name includes an underscore \
+        # the suffix _AF will be added for the simulation name')
 
     # set release thickness
     if cfg['GENERAL'].getboolean('relThFromFile') is False:
         releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'relTh')
         inputSimLines['releaseLine'] = releaseLine
-    log.debug('Release area scenario: %s - perform simulations' % (relName))
+    #log.debug('Release area scenario: %s - perform simulations' % (relName))
 
     if cfg['GENERAL'].getboolean('iniStep'):
         # set release thickness for buffer
@@ -363,7 +363,7 @@ def prepareInputData(inputSimFiles, cfg):
            demOri['header']['nrows'] != relThField['header']['nrows']:
             message = ('Release thickness field read from %s does not match the number of rows and columns of the dem'
                        % inputSimFiles['relThFile'])
-            log.error(message)
+            #log.error(message)
             raise AssertionError(message)
     else:
         relThFieldData = ''
@@ -382,7 +382,7 @@ def prepareInputData(inputSimFiles, cfg):
             secondaryReleaseLine['type'] = 'Secondary release'
         else:
             message = 'No secondary release file found'
-            log.error(message)
+            #log.error(message)
             raise FileNotFoundError(message)
     else:
         secondaryReleaseLine = None
@@ -420,7 +420,7 @@ def prepareInputData(inputSimFiles, cfg):
             damLine['type'] = 'Dam'
         else:
             message = 'Take dam is set, but no dam file found, skipping it'
-            log.debug(message)
+            #log.debug(message)
             damLine = None
     else:
         damLine = None
@@ -597,9 +597,9 @@ def initializeMesh(cfg, demOri, num):
     dem = DFAtls.getAreaMesh(dem, num)
     projArea = nColsDEM * nRowsDEM * cszDEM * cszDEM
     areaRaster = dem['areaRaster']
-    log.debug('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
-    log.debug('Projected Area : %.2f' % projArea)
-    log.debug('Total Area : %.2f' % np.nansum(areaRaster))
+    #log.debug('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
+    #log.debug('Projected Area : %.2f' % projArea)
+    #log.debug('Total Area : %.2f' % np.nansum(areaRaster))
 
     return dem
 
@@ -656,11 +656,11 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
 
     # -----------------------
     # Initialize mesh
-    log.debug('Initializing Mesh')
+    #log.debug('Initializing Mesh')
     dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
 
     # ------------------------
-    log.debug('Initializing main release area')
+    #log.debug('Initializing main release area')
     # process release info to get it as a raster
     if cfg['GENERAL'].getboolean('iniStep'):
         releaseLine = inputSimLines['releaseLineBuffer']
@@ -725,9 +725,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         startTimeIni = time.time()
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
-        log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' %
-                 (np.sum(particles['m']), particles['nPart']))
-        log.debug('Time needed for ini step: %.2f s' % (tIni))
+        #log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' %
+                 # (np.sum(particles['m']), particles['nPart']))
+        #log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
     secondaryReleaseInfo, reportAreaInfo = initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo)
@@ -755,9 +755,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     fields['entrMassRaster'] = entrMassRaster
     fields['entrEnthRaster'] = entrEnthRaster
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
-    log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
+    #log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
-    log.debug('Initializing resistance area')
+    #log.debug('Initializing resistance area')
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, dem, simTypeActual, inputSimLines['resLine'],
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
@@ -811,7 +811,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     if len(relThField) == 0:
         relRaster = releaseLine['rasterData']
     else:
-        log.info('Release thickness read from relThFile')
+        #log.info('Release thickness read from relThFile')
         relRaster = relThField
     areaRaster = dem['areaRaster']
 
@@ -839,7 +839,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     if cfg.getboolean('initialiseParticlesFromFile'):
         if cfg.getboolean('iniStep'):
             message = 'If initialiseParticlesFromFile is used, iniStep cannot be performed - chose only one option'
-            log.error(message)
+            #log.error(message)
             raise AssertionError(message)
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir, releaseLine['file'].stem)
     else:
@@ -856,7 +856,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
-            log.warning('relThField!= 0, but relRaster set to relTh value (from ini)')
+            #log.warning('relThField!= 0, but relRaster set to relTh value (from ini)')
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
@@ -947,10 +947,10 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         nPPK = particles['nPart'] * math.pi * csz**2 / aTot
     particles['nPPK'] = nPPK
 
-    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
-             (particles['mTot'], particles['nPart'], relCells))
-    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
-             (particles['mTot']/particles['nPart'], partPerCell))
+    #log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
+             # (particles['mTot'], particles['nPart'], relCells))
+    #log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
+             # (particles['mTot']/particles['nPart'], partPerCell))
 
     if debugPlot:
         debPlot.plotPartIni(particles, dem)
@@ -1033,7 +1033,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
         fields['pta'] = np.zeros((nrows, ncols))
         fields['TA'] = np.zeros((nrows, ncols))
         fields['computeTA'] = True
-        log.debug('Computing Travel Angle')
+        #log.debug('Computing Travel Angle')
     else:
         fields['pta'] = np.zeros((1, 1))
         fields['TA'] = np.zeros((1, 1))
@@ -1041,7 +1041,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     if ('pke' in resTypesLast):
         fields['pke'] = np.zeros((nrows, ncols))
         fields['computeKE'] = True
-        log.debug('Computing Kinetic energy')
+        #log.debug('Computing Kinetic energy')
     else:
         fields['pke'] = np.zeros((1, 1))
         fields['computeKE'] = False
@@ -1049,7 +1049,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
         fields['P'] = np.zeros((nrows, ncols))
         fields['ppr'] = np.zeros((nrows, ncols))
         fields['computeP'] = True
-        log.debug('Computing Pressure')
+        #log.debug('Computing Pressure')
     else:
         fields['P'] = np.zeros((1, 1))
         fields['ppr'] = np.zeros((1, 1))
@@ -1131,8 +1131,8 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     """
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
-        log.info('Initializing secondary release area: %s' % secondaryReleaseInfo['fileName'])
-        log.info('Secondary release area features: %s' % (secondaryReleaseInfo['Name']))
+        #log.info('Initializing secondary release area: %s' % secondaryReleaseInfo['fileName'])
+        #log.info('Secondary release area features: %s' % (secondaryReleaseInfo['Name']))
         secondaryReleaseInfo['header'] = dem['originalHeader']
 
         # fetch secondary release areas
@@ -1192,8 +1192,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     nrows = header['nrows']
     if 'ent' in simTypeActual:
         entrainmentArea = entLine['fileName']
-        log.info('Initializing entrainment area: %s' % (entrainmentArea))
-        log.info('Entrainment area features: %s' % (entLine['Name']))
+        #log.info('Initializing entrainment area: %s' % (entrainmentArea))
+        #log.info('Entrainment area features: %s' % (entLine['Name']))
         entLine = prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine['thickness'])
         entrMassRaster = entLine['rasterData']
         # ToDo: not used in samos but implemented
@@ -1245,8 +1245,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     nrows = header['nrows']
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
-        log.info('Initializing resistance area: %s' % (resistanceArea))
-        log.info('Resistance area features: %s' % (resLine['Name']))
+        #log.info('Initializing resistance area: %s' % (resistanceArea))
+        #log.info('Resistance area features: %s' % (resLine['Name']))
         resLine = prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
@@ -1297,7 +1297,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     tEnd = cfgGen.getfloat('tEnd')
     dtSave = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], tEnd)
     sphOption = cfgGen.getint('sphOption')
-    log.debug('using sphOption %s:' % sphOption)
+    #log.debug('using sphOption %s:' % sphOption)
     # desired output fields
     resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
     # add particles to the results type if trackParticles option is activated
@@ -1313,7 +1313,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     frictModelsList = ['samosat', 'coulomb', 'voellmy', 'wetsnow']
     frictModel = cfgGen['frictModel'].lower()
     frictType = frictModelsList.index(frictModel) + 1
-    log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))
+    #log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
@@ -1326,7 +1326,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     resultsDF = setupresultsDF(resTypesLast, cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'))
 
     # TODO: add here different time stepping options
-    log.debug('Use standard time stepping')
+    #log.debug('Use standard time stepping')
     # Initialize time and counters
     nSave = 1
     tCPU['nSave'] = nSave
@@ -1334,7 +1334,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     nIter0 = 1
     particles['iterate'] = True
     t = particles['t']
-    log.debug('Saving results for time step t = %f s', t)
+    #log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
     zPartArray0 = copy.deepcopy(particles['z'])
 
@@ -1362,7 +1362,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and particles['iterate']:
         startTime = time.time()
-        log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
+        #log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
         particles, fields, zPartArray0, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU,
                                                                     frictType)
@@ -1381,7 +1381,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         massTotal.append(particles['mTot'])
         timeM.append(t)
         # print progress to terminal
-        print("time step t = %f s\r" % t, end="")
+        # print("time step t = %f s\r" % t, end="")
 
         # create range time diagram
         # determine avalanche front and flow characteristics in respective coodrinate system
@@ -1397,13 +1397,13 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         # make sure the array is not empty
         if t >= (dtSave[0] - 1.e-8):
             Tsave.append(t)
-            log.debug('Saving results for time step t = %f s', t)
-            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
-            log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
-            log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
-            log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
-            log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
-            log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
+            #log.debug('Saving results for time step t = %f s', t)
+            #log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
+            #log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
+            #log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
+            #log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
+            #log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
+            #log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
 
             # remove saving time steps that have already been saved
@@ -1428,19 +1428,19 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         tCPU['timeLoop'] = tCPU['timeLoop'] + tCPUtimeLoop
 
     tCPU['nIter'] = nIter
-    log.info('Ending computation at time t = %f s', t-dt)
-    log.debug('Saving results for time step t = %f s', t-dt)
-    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
-    log.debug('Computational performances:')
-    log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
-    log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
-    log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
-    log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
-    log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
-    log.debug(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
-    log.debug(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH']
-                                               + tCPU['timePos'] + tCPU['timeNeigh']
-                                               + tCPU['timeField']) / nIter)))
+    #log.info('Ending computation at time t = %f s', t-dt)
+    #log.debug('Saving results for time step t = %f s', t-dt)
+    #log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
+    #log.debug('Computational performances:')
+    #log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
+    #log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
+    #log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
+    #log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
+    #log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
+    #log.debug(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
+    #log.debug(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH']
+                                               # + tCPU['timePos'] + tCPU['timeNeigh']
+                                               # + tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
 
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
@@ -1661,7 +1661,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
 
     # loop version of the compute force
-    log.debug('Compute Force C')
+    #log.debug('Compute Force C')
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType)
     tCPUForce = time.time() - startTime
     tCPU['timeForce'] = tCPU['timeForce'] + tCPUForce
@@ -1673,7 +1673,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         force['forceSPHY'] = np.zeros(np.shape(force['forceY']))
         force['forceSPHZ'] = np.zeros(np.shape(force['forceZ']))
     else:
-        log.debug('Compute Force SPH C')
+        #log.debug('Compute Force SPH C')
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, cfg.getint('sphOption'), gradient=0)
     tCPUForceSPH = time.time() - startTime
     tCPU['timeForceSPH'] = tCPU['timeForceSPH'] + tCPUForceSPH
@@ -1685,7 +1685,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
-    log.debug('Update position C')
+    #log.debug('Update position C')
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force, fields, typeStop=0)
     tCPUPos = time.time() - startTime
     tCPU['timePos'] = tCPU['timePos'] + tCPUPos
@@ -1694,14 +1694,14 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if cfg.getint('splitOption') == 0:
         # split particles with too much mass
         # this only splits particles that grew because of entrainment
-        log.debug('Split particles')
+        #log.debug('Split particles')
         particles = particleTools.splitPartMass(particles, cfg)
     elif cfg.getint('splitOption') == 1:
         # split merge operation
         # first update fields (compute grid values) because we need the h of the particles to get the aPart
         # ToDo: we could skip the update field and directly do the split merge. This means we would use the old h
         startTime = time.time()
-        log.debug('update Fields C')
+        #log.debug('update Fields C')
         particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
         tcpuField = time.time() - startTime
         tCPU['timeField'] = tCPU['timeField'] + tcpuField
@@ -1715,7 +1715,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
     # get particles location (neighbours for sph)
     startTime = time.time()
-    log.debug('get Neighbours C')
+    #log.debug('get Neighbours C')
     particles = DFAfunC.getNeighborsC(particles, dem)
 
     tCPUNeigh = time.time() - startTime
@@ -1723,7 +1723,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
     # update fields (compute grid values)
     startTime = time.time()
-    log.debug('update Fields C')
+    #log.debug('update Fields C')
     if fields['computeTA']:
         particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
@@ -1782,8 +1782,8 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if thList != '':
-            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
-                     line['thicknessSource'][i]))
+            #log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
+                     # line['thicknessSource'][i]))
             Raster = polygon2Raster(dem['originalHeader'], avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(dem['originalHeader'], avapath, radius)
@@ -1799,7 +1799,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
             # if there is an overlap, raise error
             if checkOverlap:
                 message = 'Features are overlaping - this is not allowed'
-                log.error(message)
+                #log.error(message)
                 raise AssertionError(message)
             else:
                 # if there is an overlap, take average of values for the overlapping cells
@@ -1870,7 +1870,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
     if th != '':
-        log.debug('REL set from dict, %.2f' % th)
+        #log.debug('REL set from dict, %.2f' % th)
         Mask = np.where(Mask > 0, th, 0.)
     else:
         Mask = np.where(Mask > 0, 1., 0.)
@@ -1920,7 +1920,7 @@ def checkParticlesInRelease(particles, line, radius):
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
         particles = particleTools.removePart(particles, Mask, nRemove, '')
-        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
+        #log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
 
@@ -1994,12 +1994,12 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
         mask = (secRelRaster > 0) & (flowThicknessField > 0)
         if mask.any():
             # create secondary release area particles
-            log.info('Initializing secondary release area feature %s' % secRelRasterName)
+            #log.info('Initializing secondary release area feature %s' % secRelRasterName)
             secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, count)
             secRelInfo['rasterData'] = secRelRaster
             secRelParticles = initializeParticles(cfg, secRelInfo, dem)
             # release secondary release area by just appending the particles
-            log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
+            #log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
             particles = particleTools.mergeParticleDict(particles, secRelParticles)
             # save index of secRel feature
             indexRel.append(secRelRasterName)
@@ -2178,7 +2178,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         first = False
 
     if count == 0:
-        log.warning('No matching fields found in %s' % inDir)
+        #log.warning('No matching fields found in %s' % inDir)
         fieldHeader = None
         fieldsList = []
     else:
@@ -2237,8 +2237,8 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
             IOf.writeResultToAsc(
                 dem['originalHeader'], resField, outFile, flip=True)
             if countTime == numberTimes:
-                log.debug('Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' %
-                          (resType, Tsave[countTime]))
+                #log.debug('Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' %
+                          # (resType, Tsave[countTime]))
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
                 outDirPeakAll = outDir / 'peakFiles'
@@ -2364,9 +2364,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         else:
             log.warning('Simulation %s already exists, not repeating it' % simName)
 
-    # log.info('The following simulations will be performed')
+    # #log.info('The following simulations will be performed')
     # for key in simDict:
-    #     log.info('Simulation: %s' % key)
+    #     #log.info('Simulation: %s' % key)
 
     inputSimFiles.pop('demFile')
 
@@ -2415,12 +2415,12 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     if 'ent' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagEnt'] == 'No':
             message = 'No entrainment file found'
-            log.error(message)
+            #log.error(message)
             raise FileNotFoundError(message)
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
             message = 'No resistance file found'
-            log.error(message)
+            #log.error(message)
             raise FileNotFoundError(message)
     if standardCfg['GENERAL'].getboolean('secRelArea'):
         if entResInfo['flagSecondaryRelease'] == 'No':
@@ -2470,7 +2470,7 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
         simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
         if simDF is None:
             message = 'Did not find any com1DFA simulations in %s/Outputs/com1DFA/' % avalancheDir
-            log.error(message)
+            #log.error(message)
             raise FileExistsError(message)
 
     dataDF, resTypeList = fU.makeSimFromResDF(avalancheDir, 'com1DFA', inputDir='', simName='')
