@@ -7,6 +7,8 @@ import matplotlib.path as mpltPath
 import pathlib
 import shutil
 import configparser
+import pandas as pd
+import shapely as shp
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -789,3 +791,43 @@ def test_computeAlongLineDistance():
     for ind, d in enumerate(distancePoints3):
         assert d == s3[ind]
     assert distancePoints3[1] == np.sqrt(12)
+
+
+def test_snapPtsToLine():
+    """ test snapping points to closest point along a line and add these points to df """
+
+    # setup required inputs
+    dbDict = {'geom_rel_event_pt3d_epsg:31287': shp.Point(1.5, 0.2, 1.7),
+    'geom_event_pt3d_epsg:31287': shp.Point(3.,0.1, 4.5),
+    'geom_path_ln3d_epsg:31287': shp.LineString([[0,0,0], [2,0,1], [4,0,2], [6,0,5], [8., 0., 8.], [10.,0.,11]]),
+    'path_name': 'test_ava', 'event_id': 10, 'path_id': 1, 'test_1': 100.}
+    dbData = pd.DataFrame(data=dbDict, index=[0])
+    projstr = 'epsg:31287'
+
+    lineResampled = []
+    for index, row in dbData.iterrows():
+        line = row['geom_path_ln3d_epsg:31287']
+        distInt = int(np.ceil(line.length / 1.))
+        distances = np.linspace(0, line.length, distInt)
+        lineR = shp.LineString([line.interpolate(dist) for dist in distances])
+        lineResampled.append(lineR)
+    dbData.insert(0, 'geom_path_ln3d_epsg:31287_resampled', lineResampled)
+    xLine = [coord[0] for coord in lineR.coords]
+    yLine = [coord[1] for coord in lineR.coords]
+    zLine = [coord[2] for coord in lineR.coords]
+
+
+    # call function to be tested
+    dbData = geoTrans.snapPtsToLine(dbData, projstr, lineName='geom_path_ln3d', pointsList=['geom_rel_event_pt3d', 'geom_event_pt3d'])
+
+    snappedP1 = dbData['geom_rel_event_pt3d_epsg:31287_snapped'].iloc[0]
+    snappedP2 = dbData['geom_event_pt3d_epsg:31287_snapped'].iloc[0]
+    print('snapped', snappedP1.x)
+    print('xLine', xLine[1])
+
+    assert np.isclose(snappedP1.x, xLine[1])
+    assert np.isclose(snappedP1.y, yLine[1])
+    assert np.isclose(snappedP1.z, zLine[1])
+    assert np.isclose(snappedP2.x, xLine[3])
+    assert np.isclose(snappedP2.y, yLine[3])
+    assert np.isclose(snappedP2.z, zLine[3])
