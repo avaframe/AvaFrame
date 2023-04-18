@@ -10,6 +10,8 @@ import scipy.interpolate
 import shapely as shp
 import copy
 import matplotlib.pyplot as plt
+import pandas as pd
+import shapely as shp
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -1209,3 +1211,46 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
 
     xGrid, yGrid = np.meshgrid(xp, yp)
     return xGrid, yGrid
+
+
+def snapPtsToLine(dbData, projstr, lineName, pointsList):
+    """ snap points to line in dataframe only considering x, y plane!
+
+        Parameters
+        -----------
+        dbData: pandas dataframe
+            dataframe with geometry info of events
+        lineName: str
+            name of line column except projstr
+        pointsList: list
+            list with point column names except projstr
+        projstr: str
+            projection string to append to all names
+
+        Returns
+        --------
+        dbData: pandas dataframe
+            updated dataframe with ..._snapped point column
+    """
+
+    for pt in pointsList:
+        dbData[pt + '_' + projstr + '_snapped'] = np.empty(len(dbData))
+        dbData['distanceXY'] = np.empty(len(dbData))
+
+    distP = []
+    for index, row in dbData.iterrows():
+        xcoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[0]
+        ycoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[1]
+        zcoorTemp = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords
+        zcoor = np.asarray([coord[2] for coord in zcoorTemp])
+
+        xyInd = []
+        for pt in pointsList:
+            pointsDict = {'x': [dbData.loc[index, ('%s_%s' % (pt, projstr))].x],
+                'y': [dbData.loc[index, ('%s_%s' % (pt, projstr))].y]}
+
+            indSplit = findClosestPoint(xcoor, ycoor, pointsDict)
+            projPoint = shp.Point(xcoor[indSplit], ycoor[indSplit], zcoor[indSplit])
+            dbData.loc[index, (pt + '_' + projstr + '_snapped')] = projPoint
+
+    return dbData
