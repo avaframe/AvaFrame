@@ -41,7 +41,6 @@ def test_glideSnow(tmp_path):
     _, _, _, simDF = com5GlideSnow.runGlideSnow(cfgMain, glideSnowCfg)
 
     print('simDF', simDF.to_string())
-
-    assert simDF['tEnd'].iloc[0] == 5
+    assert simDF['tEnd'].iloc[0] == '5'
     assert simDF['relThFromShp'].iloc[0] == 'True'
     assert simDF['glideSnow'].iloc[0] == 1
