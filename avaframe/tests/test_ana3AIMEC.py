@@ -296,4 +296,4 @@ def test_aimecTransform():
     assert particle['lAimec'] == [-2,2] 
     assert particle['sAimec'] == [0,7]
     
-F = test_aimecTransform() 
+# F = test_aimecTransform() 
