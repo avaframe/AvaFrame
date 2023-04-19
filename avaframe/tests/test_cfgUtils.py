@@ -137,7 +137,7 @@ def test_createConfigurationInfo(tmp_path):
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
     assert simDF.loc['0dcd58fc86']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['0dcd58fc86']['mu'] == 0.155
+    assert simDF.loc['0dcd58fc86']['mu'] == '0.155'
     assert simDF.loc['3d519adab0']['releaseScenario'] == 'release2HS'
     assert simDF.loc['3d519adab0']['relTh0'] == 1.
 
@@ -183,6 +183,6 @@ def test_appendCgf2DF(tmp_path):
     simDF = cfgUtils.convertDF2numerics(simDF)
 
     assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['d10bdc1e81']['mu'] == 0.155
+    assert simDF.loc['d10bdc1e81']['mu'] == '0.155'
     assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
     assert simDF.loc['e2145362b7']['relTh0'] == 1.
