@@ -60,8 +60,8 @@ def test_getStats(tmp_path):
     parametersDict = {'relTh': 1.0}
     peakValues2 = getStats.extractMaxValues(inputDir, avaDirtmp, varPar, restrictType='', nameScenario='releaseScenario', parametersDict=parametersDict)
 
-    assert peakValues['release1_null_dfa_1000000']['varPar'] == '1.0'
-    assert peakValues['release1_null_dfa_2000000']['varPar'] == '2.0'
+    assert peakValues['release1_null_dfa_1000000']['varPar'] == 1.0
+    assert peakValues['release1_null_dfa_2000000']['varPar'] == 2.0
     assert peakValues['release1_null_dfa_1000000']['ppr']['max'] == 4.0
     assert peakValues['release1_null_dfa_1000000']['ppr']['mean'] == 2.0
     assert peakValues['release1_null_dfa_1000000']['ppr']['min'] == 1.0
