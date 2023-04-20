@@ -549,7 +549,7 @@ def findClosestPoint(xcoor, ycoor, pointsDict):
         xcoor, ycoor: np array
             x and y coordinates of line
         pointsDict: dict
-            a dictionary with coordinates of points
+            a dictionary with coordinates of points with keys x and y
 
         Returns
         --------
