@@ -139,7 +139,7 @@ def test_createConfigurationInfo(tmp_path):
     assert simDF.loc['0dcd58fc86']['releaseScenario'] == 'release1HS'
     assert simDF.loc['0dcd58fc86']['mu'] == 0.155
     assert simDF.loc['3d519adab0']['releaseScenario'] == 'release2HS'
-    assert simDF.loc['3d519adab0']['relTh0'] == 1.
+    assert simDF.loc['3d519adab0']['relTh0'] == 1.0
 
 
 def test_readAllConfigurationInfo():
@@ -185,4 +185,4 @@ def test_appendCgf2DF(tmp_path):
     assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
     assert simDF.loc['d10bdc1e81']['mu'] == 0.155
     assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
-    assert simDF.loc['e2145362b7']['relTh0'] == 1.
+    assert simDF.loc['e2145362b7']['relTh0'] == 1.0

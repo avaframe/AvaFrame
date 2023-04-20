@@ -91,7 +91,7 @@ def test_filterSims(tmp_path):
     assert testRel2 is False
     assert len(simNames) == 1
 
-    parametersDict = {'relTh': 1.}
+    parametersDict = {'relTh': 1.0}
     simNames2 = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
     simNames2 = sorted(simNames2)
     assert len(simNames2) == 2

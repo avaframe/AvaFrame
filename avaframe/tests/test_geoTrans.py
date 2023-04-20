@@ -695,3 +695,97 @@ def test_rotateRaster():
     assert np.allclose(
         rotatedRaster["rasterData"][0:-1, 2], np.array([1, 1, 0, -1]), atol=1e-6
     )
+
+
+def test_findSplitPoint():
+    """ test fetching the closest point to a line in 2D coordinates """
+
+    # setup required inputs
+    avaProfile = {'x': np.asarray([0., 2., 4., 6., 8., 10.]), 'y': np.asarray([0., 0., 0., 0., 0., 0.]),
+        'z': np.asarray([0., 1., 2., 5., 8., 11.])}
+    s = [0]
+    for p in range(len(avaProfile['x'])-1):
+        s.append(s[p] + np.sqrt((avaProfile['x'][p+1] - avaProfile['x'][p])**2 + (avaProfile['y'][p+1] - avaProfile['y'][p])**2))
+    avaProfile['s'] = np.asarray(s)
+    pointsDict = {'x': np.asarray([1.5, 1.5]), 'y': np.asarray([0.2, 1.]), 'z': np.asarray([1.7, 1.7])}
+
+    # call function
+    projPoint = geoTrans.findSplitPoint(avaProfile, pointsDict)
+    print('avaProfile s', (avaProfile['s']), 's', s)
+
+    assert projPoint['x'] == 2.
+    assert projPoint['y'] == 0.
+    assert projPoint['z'] == 1.
+    assert projPoint['s'] == 2.
+
+
+def test_findClosesPoint():
+    """ test finding ind of closest point in pointsDict to line defined by xcoor, ycoor """
+
+    # setup required inputs
+    x = np.asarray([0., 2., 4., 6., 8., 10.])
+    y = np.asarray([0., 0., 0., 0., 0., 0.])
+
+    pointsDict = {'x': np.asarray([1.5, 1.5]), 'y': np.asarray([0.2, 1.]), 'z': np.asarray([1.7, 1.7])}
+
+    # call function to be tested
+    indSplit = geoTrans.findClosestPoint(x, y, pointsDict)
+
+    assert indSplit == 1
+
+
+def test_computeAlongLineDistance():
+    """ test computing incrementally added distance along a line defined by points """
+
+    # setup required inputs
+    avaProfile = {'x': np.asarray([0., 2., 4., 6., 8., 10.]), 'y': np.asarray([0., 0., 0., 0., 0., 0.]),
+        'z': np.asarray([0., 1., 2., 5., 8., 11.])}
+    s = [0]
+    for p in range(len(avaProfile['x'])-1):
+        s.append(s[p] + np.sqrt((avaProfile['x'][p+1] - avaProfile['x'][p])**2 + (avaProfile['y'][p+1] - avaProfile['y'][p])**2))
+
+    # call function to be tested
+    distancePoints = geoTrans.computeAlongLineDistance(avaProfile)
+
+    for ind, d in enumerate(distancePoints):
+        assert d == avaProfile['x'][ind]
+
+    # angle 45°
+    avaProfile['y'] = np.asarray([0., 2., 4., 6., 8., 10.])
+
+    # call function to be tested
+    distancePoints2 = geoTrans.computeAlongLineDistance(avaProfile)
+    s2 = [0]
+    for i in range(len(avaProfile['x'])-1):
+        s2.append(s2[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2))
+
+    for ind, d in enumerate(distancePoints2):
+        assert d == s2[ind]
+
+
+    avaProfile['y'] = np.asarray([0., 2., 4., 6., 10., 14.])
+
+    # call function to be tested
+    distancePoints2 = geoTrans.computeAlongLineDistance(avaProfile)
+    s2 = [0]
+    for i in range(len(avaProfile['x'])-1):
+        s2.append(s2[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2))
+
+    print('distancePoints', distancePoints2)
+    for ind, d in enumerate(distancePoints2):
+        assert d == s2[ind]
+    assert np.isclose(np.rad2deg(np.arcsin(2./distancePoints2[1])), 45.)
+    assert np.isclose(np.rad2deg(np.arcsin(4./(distancePoints2[5]-distancePoints2[4]))), 63.435)
+
+    avaProfile['y'] = np.asarray([0., 2., 4., 6., 8., 10.])
+    avaProfile['z'] = np.asarray([0., 2., 4., 6., 8., 10.])
+
+    # call function to be tested
+    distancePoints3 = geoTrans.computeAlongLineDistance(avaProfile, dim='3D')
+    s3 = [0]
+    for i in range(len(avaProfile['x'])-1):
+        s3.append(s3[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2 + (avaProfile['z'][i+1] - avaProfile['z'][i])**2))
+    print('distancePoints3', distancePoints3)
+    for ind, d in enumerate(distancePoints3):
+        assert d == s3[ind]
+    assert distancePoints3[1] == np.sqrt(12)
