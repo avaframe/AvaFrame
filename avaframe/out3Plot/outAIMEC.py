@@ -691,7 +691,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                 'maxpfvCrossMax', 'TP', 'FN', 'FP', 'TN']
     if flagMass:
         forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']
-    forStats = set(forStats) & set(resAnalysisDF.columns)
+    forStats = list(set(forStats) & set(resAnalysisDF.columns))
     # compute some statistics
     resAnalysisStatsDF = resAnalysisDF[forStats].describe(percentiles=None)
 
