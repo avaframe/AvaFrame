@@ -41,6 +41,7 @@ import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
+import avaframe.in3Utils.geoTrans as gT
 import avaframe.out3Plot.outDebugPlots as debPlot
 import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -51,6 +52,8 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+import avaframe.out3Plot.outAIMEC as oA
+import avaframe.out3Plot.outQuickPlot as oQ
 import threading
 
 #######################################
@@ -145,6 +148,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
     log.info('The following simulations will be performed')
     for key in simDict:
         log.info('Simulation: %s' % key)
+        exportFlag = simDict[key]['cfgSim']['EXPORTS'].getboolean('exportData')
 
     # initialize reportDict list
     reportDictList = list()
@@ -185,7 +189,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
-            simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList
+            simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList, exportData=exportFlag
         )
 
         return dem, plotDict, reportDictList, simDFNew
@@ -249,7 +253,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
     return simDF, tCPUDF, dem, reportDict
 
 
-def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList):
+def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList, exportData):
     """ postprocessing of simulation results: save configuration to csv, create plots and report
 
         Parameters
@@ -267,6 +271,8 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
             dem dictionary
         reportDictList: list
             list of dictionaries for each simulation with info for report creation
+        exportData: bool
+            if True result fields are exported and plots generated
 
         Returns
         --------
@@ -300,10 +306,17 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     simDFNew = pd.concat([simDF, simDFExisting], axis=0)
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
-    # Set directory for report
+    # create plots and report
     reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
+    fU.makeADir(reportDir)
     # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    if exportData:
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    else:
+        plotDict = ''
+        # create contour line plot
+        reportDictList, _ = outCom1DFA.createContourPlot(reportDictList, avalancheDir, simDF)
+
 
     if cfgMain['FLAGS'].getboolean('createReport'):
         # write report
@@ -399,13 +412,19 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
         particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
-    # Result parameters to be exported
-    exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
-
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfg, reportAreaInfo)
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
+
+    # Result parameters to be exported
+    if cfg['EXPORTS'].getboolean('exportData'):
+        exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
+    else:
+        # fetch contourline info
+        contDictXY = outCom1DFA.fetchContCoors(dem['header'],
+            fieldsList[-1][cfg['VISUALISATION']['contourResType']], cfg['VISUALISATION'], cuSimName)
+        reportDict['contours'] = contDictXY
 
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
@@ -567,10 +586,12 @@ def prepareInputData(inputSimFiles, cfg):
     if relThFile != None:
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
+        relThFieldDataOrig = relThFieldData.copy()
         if demOri['header']['ncols'] != relThField['header']['ncols'] or \
-           demOri['header']['nrows'] != relThField['header']['nrows']:
+            demOri['header']['nrows'] != relThField['header']['nrows']:
+
             message = ('Release thickness field read from %s does not match the number of rows and columns of the dem'
-                       % inputSimFiles['relThFile'])
+                % inputSimFiles['relThFile'])
             log.error(message)
             raise AssertionError(message)
     else:
@@ -1554,6 +1575,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         # fetch initial time step too
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t,
                                                         demRT['header'], fields, mtiInfo)
+        cfgRangeTime['GENERAL']['simHash'] = simHash
 
     # add initial time step to Tsave array
     Tsave = [0]
