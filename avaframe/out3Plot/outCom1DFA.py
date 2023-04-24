@@ -1,5 +1,7 @@
 import numpy as np
+import pathlib
 import matplotlib.pyplot as plt
+import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 # Local imports
@@ -7,11 +9,15 @@ from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.out3Plot.outQuickPlot as oQ
+import avaframe.out3Plot.outAIMEC as oA
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 cfgMain = cfgUtils.getGeneralConfig()
 cfgFlags = cfgMain['FLAGS']
+# create local logger
+log = logging.getLogger(__name__)
 
 
 def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
@@ -279,3 +285,93 @@ def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False
     else:
         CS = None
     return ax, extent, cb, CS
+
+
+def createContourPlot(reportDictList, avalancheDir, simDF):
+    """ create a contour line plot of all simulations of current run
+
+        Parameters
+        -----------
+        reportDictList: list
+            list of com1DFA dictionary with info on contour dicts for each sim
+        avalancheDir: str or pathlib path
+            path to avalanche directory
+        simDF: pandas DataFrame
+            dataframe with one row per simulation performed and its parameter settings
+
+        Returns
+        -------
+        reportDictList: list
+            updated reportDictList - deleted contours dict
+    """
+
+    modName = 'com1DFA'
+    contourD = {}
+
+    # check if consistent settings throughout all sims
+    if len(np.unique(simDF['contourType'])) != 1:
+        log.warning('Contour plot type is not identical for all sims performed - so cannot create contour plot')
+        return reportDictList, False
+
+    # fetch coordinates of contour line for each sim in reportDict and create contourD
+    for cont in reportDictList:
+        contourD[list(cont['contours'].keys())[0]] = cont['contours'][list(cont['contours'].keys())[0]]
+        del cont['contours']
+
+    # create contours directory in Ouputs to save plot
+    contourPlotDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'contours')
+    fU.makeADir(contourPlotDir)
+
+    # create pathDict and fetch simName of first sim found
+    pathDict = {'pathResult': contourPlotDir, 'plotScenario': pathlib.Path(avalancheDir).stem,
+        'avaDir': avalancheDir}
+    simName1 = simDF['simName'].iloc[0]
+    # check if consistent settings throughout all sims
+    if len(np.unique(simDF['contourResType'])) != 1 or len(np.unique(simDF['thresholdValue'])) != 1:
+        log.warning('Contou result type or thresholdValue are not identical for all sims performed - so cannot create contour plot')
+        return reportDictList, False
+
+    # generate plot
+    oQ.plotContours(contourD,
+                    contourD[simName1]['contourResType'],
+                    contourD[simName1]['thresholdValue'],
+                    pathDict)
+
+    log.info('Saved contour plot of %d sims to %s' % (len(simDF), contourPlotDir))
+    log.info('Sim names are: %s' % simDF['simName'].to_list())
+
+    return reportDictList, True
+
+
+def fetchContCoors(demHeader, flowF, cfgVisu, simName):
+    """ fetch coordinates of contour line
+
+        Parameters
+        ------------
+        demHeader: dict
+            dictionary of dem nrows, ncols, cellsize
+        flowF: np.ndarray
+            field data used to compute contour line
+        cfgVisu: configparser object
+            configuration settings for visualisation, here used:
+            contourResType, thresholdValue
+        simName: str
+            simName
+
+        Rertuns
+        --------
+        contDictXY: dict
+            dictionary with simName and subDict with x, y coordinates of contour line
+            contourResType and thresholdValue
+    """
+    # create coordinate grid first
+    xGrid, yGrid, _, _ = geoTrans.makeCoordGridFromHeader(demHeader)
+
+    # fetch contour line
+    x, y = pU.fetchContourCoords(xGrid, yGrid, flowF,cfgVisu.getfloat('thresholdValue'))
+
+    # setup dict
+    contDictXY = {simName: {'x': x, 'y': y, 'contourResType': cfgVisu['contourResType'],
+        'thresholdValue': cfgVisu.getfloat('thresholdValue')}}
+
+    return contDictXY
