@@ -25,9 +25,7 @@ from avaframe.in3Utils import logUtils
 # +++++++++REQUIRED+++++++++++++
 # Which result types for comparison plots
 outputVariable = ['ppr', 'pft', 'pfv']
-# aimec settings
-aimecResType = 'ppr'
-aimecThresholdValue = '1'
+# aimec settings that are not used from default aimecCfg or aimecCfg in benchmark folders
 aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
 aimecFlagMass = 'False'
@@ -134,8 +132,7 @@ for test in testList:
         cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
     else:
         cfgAimec = cfgUtils.getDefaultModuleConfig(ana3AIMEC)
-    cfgAimec['AIMECSETUP']['resType'] = aimecResType
-    cfgAimec['AIMECSETUP']['thresholdValue'] = aimecThresholdValue
+
     cfgAimec['AIMECSETUP']['diffLim'] = aimecDiffLim
     cfgAimec['AIMECSETUP']['contourLevels'] = aimecContourLevels
     cfgAimec['FLAGS']['flagMass'] = aimecFlagMass
