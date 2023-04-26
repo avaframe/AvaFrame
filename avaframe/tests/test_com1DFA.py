@@ -1567,7 +1567,7 @@ def test_initializeSimulation(tmp_path):
         [50., 50., 50., 50., 50., 50., 50., 50., 50.]))
     assert particles['mTot'] == 450.
     assert np.sum(particles['ux']) == 0.0
-    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
+    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '4.00'
     assert reportAreaInfo['entrainment'] == 'Yes'
     assert reportAreaInfo['resistance'] == 'No'
 
@@ -1601,7 +1601,7 @@ def test_initializeSimulation(tmp_path):
     assert particles2['nPart'] == 9
     assert particles2['mTot'] == 225.
     assert np.sum(particles['ux']) == 0.0
-    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
+    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '4.00'
     assert reportAreaInfo['entrainment'] == 'Yes'
     assert reportAreaInfo['resistance'] == 'No'
     assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
