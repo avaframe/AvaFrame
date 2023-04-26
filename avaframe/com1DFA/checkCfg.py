@@ -3,6 +3,7 @@
 """
 
 import logging
+import numpy as np
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -60,5 +61,51 @@ def checkCellSizeKernelRadius(cfg):
     if sphKernelRadius == 'meshCellSize':
         cfg['GENERAL']['sphKernelRadius'] = cfg['GENERAL']['meshCellSize']
         log.info('sphKernelRadius is set to match meshCellSize of %s meters' % meshCellSize)
+
+    return cfg
+
+
+def checkCfgFrictionModel(cfg):
+    """ check which friction model is chosen and set remaining friction model
+        parameters to ''
+
+        Parameters
+        -------------
+        cfg: dict
+            configuration settings
+
+        Returns
+        --------
+        cfg: dict
+            upated configuration settings
+    """
+
+    # remove friction parameter values that are not used
+    frictModel = cfg['GENERAL']['frictModel']
+
+    frictParameters = ['musamosat', 'tau0samosat', 'Rs0samosat', 'kappasamosat', 'Rsamosat',
+    'Bsamosat', 'muvoellmy', 'xsivoellmy', 'mucoulomb', 'mu0wetsnow', 'xsiwetsnow']
+
+    for frictP in frictParameters:
+        if frictModel.lower() in frictP:
+            noF = False
+            try:
+                float(cfg['GENERAL'][frictP])
+            except ValueError:
+                noF = True
+            if noF:
+                message = 'Friction model used %s, but %s is not of valid float type' % (frictModel, cfg['GENERAL'][frictP])
+                log.error(message)
+                raise ValueError(message)
+            elif np.isnan(float(cfg['GENERAL'][frictP])):
+                message = 'Friction model used %s, but %s is nan - not valid' % (frictModel, frictP)
+                log.error(message)
+                raise ValueError(message)
+            else:
+                log.info('Fricton model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
+        else:
+            if frictP in cfg['GENERAL']:
+                cfg['GENERAL'][frictP] = np.nan
+                log.info('Friction model parameter not used: %s set to nan' % frictP)
 
     return cfg

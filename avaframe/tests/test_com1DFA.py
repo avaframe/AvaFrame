@@ -346,7 +346,8 @@ def test_createReportDict():
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}, 'secRelArea': 'No'}
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'mu': '0.15500', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
+    cfg['GENERAL'] = {'musamosat': '0.15500', 'tau0samosat': '0', 'Rs0samosat': '0.222',
+        'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
                       'rhoEnt': '100.0'}
 
     # call function to be tested
@@ -360,7 +361,7 @@ def test_createReportDict():
     assert reportST['Simulation Parameters']['Release Area Scenario'] == relName
     assert reportST['Simulation Parameters']['Entrainment'] == 'Yes'
     assert reportST['Simulation Parameters']['Resistance'] == 'Yes'
-    assert reportST['Simulation Parameters']['Mu'] == '0.15500'
+    assert reportST['Friction model']['mu'] == '0.15500'
     assert reportST['Simulation Parameters']['Density [kgm-3]'] == '200.'
     assert reportST['Simulation Parameters']['Friction model'] == 'samosAT'
     assert reportST['Release Area']['Release area scenario'] == relName
@@ -1406,7 +1407,10 @@ def test_prepareVarSimDict(tmp_path, caplog):
                               'entThDistVariation': '', 'relThDistVariation': '',
                               'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                               'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001',
-                              'sphKernelRadius': 'meshCellSize'}
+                              'sphKernelRadius': 'meshCellSize', 'frictModel': 'samosAT',
+                              'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
+                              'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
+                              'muvoellmy': '4000.', 'xsivoellmy': '4000.'}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': ''}
 
     dirName = pathlib.Path(__file__).parents[0]
@@ -1433,7 +1437,11 @@ def test_prepareVarSimDict(tmp_path, caplog):
                           'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
                           'entThDistVariation': '', 'relThDistVariation': '',
                           'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
-                          'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.'}
+                          'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.',
+                          'frictModel': 'samosAT',
+                          'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
+                          'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
+                          'muvoellmy': str(np.nan), 'xsivoellmy': str(np.nan)}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
@@ -1445,6 +1453,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
     testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relAlr',
                            'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
+
+    print('simDict', simDict)
+    print('testDict', testDict)
     for key in testDict[simName1]:
         print(simDict[simName1][key])
         assert simDict[simName1][key] == testDict[simName1][key]
@@ -1473,7 +1484,10 @@ def test_prepareVarSimDict(tmp_path, caplog):
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
                            'relThRangeVariation': '',
                            'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
-                           'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.'}
+                           'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.', 'frictModel': 'samosAT',
+                           'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
+                           'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
+                           'muvoellmy': str(np.nan), 'xsivoellmy': str(np.nan)}
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     testCfg2['GENERAL']['avalancheDir'] = str(avaDirTest)

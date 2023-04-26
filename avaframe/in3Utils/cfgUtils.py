@@ -16,6 +16,7 @@ from deepmerge import always_merger
 from copy import deepcopy
 from deepdiff import DeepDiff
 from pprint import pformat
+import numpy as np
 
 # Local imports
 import avaframe as avaf
@@ -617,6 +618,10 @@ def convertDF2numerics(simDF):
         simDFTest = simDF[name].str.replace('.', '', regex=False)
         # allow for - sign too
         simDFTest = simDFTest.replace('-', '', regex=False)
+        # check for str(np.nan) as these cannot be converted to numerics by pd.to_numeric
+        # but as friction model parameters are set to nans this is required here
+        if simDFTest.str.match('nan').any():
+            simDF = setStrnanToNan(simDF, simDFTest, name)
         # also include columns where nan is in first row - so check for any row
         if simDFTest.str.isdigit().any():
             # problem here is that it finds even if not present in | although not in ini
@@ -627,6 +632,35 @@ def convertDF2numerics(simDF):
         else:
             log.debug('Not converted to numeric: %s' % name)
 
+    return simDF
+
+
+def setStrnanToNan(simDF, simDFTest, name):
+    """ set pandas element to np.nan if it is a string nan
+
+        Parameters
+        -----------
+        simDF: pandas dataFrame
+            dataframe
+        simDFTest: pandas series
+            series of sim DF column named name
+            replaced "." with " "
+        name: str
+            name of pandas dataframe column
+
+        Returns
+        --------
+        simDF: pandas dataframe
+            updated pandas dataframe with np.nan values where string nan was
+    """
+
+    nanIndex = simDFTest.str.match('nan')
+    simIndex = simDF.index.values
+    # loop over each row and use simDF.at to avoid copy vs view warning
+    for index, nanInd in enumerate(nanIndex):
+        if nanInd:
+            simDF.at[simIndex[index], name] = np.nan
+            log.info('%s for index: %s set to numpy nan' % (name, index))
     return simDF
 
 

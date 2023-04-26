@@ -64,10 +64,11 @@ def test_writeReport(tmp_path):
                 'simulationNumber2': {'pft': plot1}}
     # Call function to be tested
     gR.writeReport(tmp_path, reportDictList, reportOneFile, plotDict=plotDict, standaloneReport=False,
-                   reportName='fullSimulationReport.md')
+                   reportName='fullSimulationReport')
 
     # Load simulation report
-    reportFile1 = pathlib.Path(tmp_path, 'fullSimulationReport.md')
+    reportFile1P = pathlib.Path(tmp_path)
+    reportFile1 = list(reportFile1P.glob('fullSimulationReport*.md'))[0]
     with open(reportFile1, 'r') as pfile:
         lines = pfile.readlines()
         lineVals = []
@@ -94,7 +95,7 @@ def test_writeReport(tmp_path):
     reportDictList = [testDict, testDict]
     reportOneFile = False
     gR.writeReport(tmp_path, reportDictList, reportOneFile, plotDict=plotDict, standaloneReport=False,
-                   reportName='simulationNumber2.md')
+                   reportName='simulationNumber2')
 
     # Load simulation report
     reportFile2 = pathlib.Path(tmp_path, 'simulationNumber2.md')
