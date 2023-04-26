@@ -52,11 +52,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   """
   # read input parameters
   cdef double enthRef = cfg.getfloat('enthRef')
-  cdef double tau0 = cfg.getfloat('tau0')
-  cdef double Rs0 = cfg.getfloat('Rs0')
-  cdef double kappa = cfg.getfloat('kappa')
-  cdef double B = cfg.getfloat('B')
-  cdef double R = cfg.getfloat('R')
+  cdef double tau0SamosAt = cfg.getfloat('tau0samosat')
+  cdef double Rs0SamosAt = cfg.getfloat('Rs0samosat')
+  cdef double kappaSamosAt = cfg.getfloat('kappasamosat')
+  cdef double BSamosAt = cfg.getfloat('Bsamosat')
+  cdef double RSamosAt = cfg.getfloat('Rsamosat')
   cdef double entEroEnergy = cfg.getfloat('entEroEnergy')
   cdef double entShearResistance = cfg.getfloat('entShearResistance')
   cdef double entDefResistance = cfg.getfloat('entDefResistance')
@@ -64,7 +64,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
-  cdef double xsi = cfg.getfloat('xsi')
+  cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
+  cdef double muVoellmy = cfg.getfloat('muvoellmy')
+  cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -78,9 +80,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef int viscOption = cfg.getint('viscOption')
   cdef double dt = particles['dt']
-  cdef double mu = cfg.getfloat('mu')
-  cdef double mu0 = cfg.getfloat('mu0WetSnow')
-  cdef double xsiWetSnow = cfg.getfloat('xsiWetSnow')
+  cdef double muSamosAt = cfg.getfloat('musamosat')
+  cdef double mu0 = cfg.getfloat('mu0wetsnow')
+  cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -241,13 +243,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
-            tau = DFAtlsC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+            tau = DFAtlsC.SamosATfric(rho, tau0SamosAt, Rs0SamosAt, muSamosAt, kappaSamosAt, BSamosAt, RSamosAt, uMag, sigmaB, h)
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
-            tau = mu * sigmaB
+            tau = muCoulomb * sigmaB
           elif frictType == 3:
             # voellmy friction type
-            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
+            tau = muVoellmy * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmy
           elif frictType == 4:
             # add enthalpy dependent mu if wetSnow is activated
             totalEnthalpy = totalEnthalpyArray[k]

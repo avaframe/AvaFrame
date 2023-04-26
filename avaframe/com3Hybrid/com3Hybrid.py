@@ -70,7 +70,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=False)
 
     # get initial mu value
-    muArray = np.array([cfgHybrid.getfloat('com1DFA_override', 'mu')])
+    muArray = np.array([cfgHybrid.getfloat('com1DFA_override', 'mucoulomb')])
     alphaArray = np.array([np.degrees(np.arctan(muArray[0]))])
 
     # prepare for iterating
@@ -82,7 +82,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # update the com1DFA mu value in configuration file
         updater = ConfigUpdater()
         updater.read(com1DFACfgFile)
-        updater['GENERAL']['mu'].value = ('%.4f' % muArray[-1])
+        updater['GENERAL']['mucoulomb'].value = ('%.4f' % muArray[-1])
         updater.update_file()
 
         log.info('Mu is set to: %f' % muArray[-1])
