@@ -925,9 +925,12 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     header = dem['header']
     csz = header['cellsize']
     relRaster = releaseLine['rasterData']
-    relRasterOnes = np.where(relRaster > 0, 1., 0.)
-    relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
-    relAreaProjected = np.sum(csz*csz*relRasterOnes)
+    # for area computation use smaller threshold to identify raster cells that lie within release line
+    # as for creating particles a bigger radius is chosen as particles that lie outside are removed afterwards
+    releaseLineArea = releaseLine.copy()
+    relAreaActualList, relAreaProjectedList, _ = gI.computeAreasFromRasterAndLine(releaseLineArea, dem)
+    relAreaProjected = np.sum(relAreaProjectedList)
+    relAreaActual = np.sum(relAreaActualList)
     reportAreaInfo = {'Release area info': {'Projected Area [m2]': '%.2f' % (relAreaProjected),
                                             'Actual Area [m2]': '%.2f' % (relAreaActual)}}
 

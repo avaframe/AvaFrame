@@ -14,10 +14,13 @@ import pytest
 import shutil
 import numpy as np
 from scipy.interpolate import interp1d
+import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-
+from avaframe.in3Utils import generateTopo
+import avaframe.com1DFA.DFAtools as DFAtls
+from avaframe.com1DFA import com1DFA
 
 def test_readDEM():
     """ test reading DEM """
@@ -384,3 +387,152 @@ def test_fetchReleaseFile(tmp_path):
     assert cfg['INPUT']['relThId'] == '0'
     assert cfg['INPUT']['relThThickness'] == '2.'
     assert cfg['INPUT']['relThCi95'] == ''
+
+
+def test_createReleaseStats(tmp_path):
+    """ test creating a release shp file info """
+
+    testPath = pathlib.Path(tmp_path, 'avaTestGeo')
+    testPathInputs = pathlib.Path(tmp_path, 'avaTestGeo', 'Inputs', 'REL')
+    fU.makeADir(testPathInputs)
+
+    cfgGenTop = cfgUtils.getModuleConfig(generateTopo)
+    cfgGenTop['TOPO']['dx'] = '1.'
+    cfgGenTop['TOPO']['demType'] = 'IP'
+    cfgGenTop['TOPO']['meanAlpha'] = '27.5'
+    cfgGenTop['TOPO']['z0'] = '2000'
+    cfgGenTop['TOPO']['xEnd'] = '5000'
+    cfgGenTop['TOPO']['yEnd'] = '1000'
+    cfgGenTop['TOPO']['channel'] = 'False'
+    cfgGenTop['DEMDATA']['xl'] = '0.'
+    cfgGenTop['DEMDATA']['yl'] = '0.'
+
+
+    [z, name_ext, outDir] = generateTopo.generateTopo(cfgGenTop, testPath)
+
+    # setup release line
+    lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
+                'y': np.asarray([100., 150., 150., 150., 100., 100., 100])}
+    fileName = pathlib.Path(testPath, 'Inputs', 'REL', 'releaseIP.shp')
+    lineName = 'release1'
+    shpConv.writeLine2SHPfile(lineDict, lineName, fileName, header='')
+
+    # Load configuration file for probabilistic run and analysis
+    cfg = cfgUtils.getModuleConfig(com1DFA)
+    relDFDict = getInput.createReleaseStats(testPath, cfg)
+
+    # compute parameter
+    zMax = 2000. - np.tan(np.deg2rad(27.5))*100.
+    zMin = 2000. - np.tan(np.deg2rad(27.5))*200.
+
+    assert relDFDict['releaseIP']['release feature'].iloc[0] == 'release1'
+    assert np.isclose(relDFDict['releaseIP']['slope [deg]'].iloc[0], 27.5)
+    assert np.isclose(relDFDict['releaseIP']['MaxZ [m]'].iloc[0], zMax)
+    assert np.isclose(relDFDict['releaseIP']['MinZ [m]'].iloc[0], zMin)
+    assert np.isclose(relDFDict['releaseIP']['projected area [ha]'].iloc[0], 0.5151)
+    assert np.isclose(relDFDict['releaseIP']['actual area [ha]'].iloc[0],0.58071)
+
+
+def test_computeAreasFromLines():
+    """ test computing areas with shapely from a lineDict """
+
+    # setup required inputs
+    # setup release line
+    lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
+                'y': np.asarray([100., 150., 150., 150., 100., 100., 100]),
+                'Start': np.asarray([0.]), 'Length': np.asarray([7]),
+                'Name': ['']}
+
+    # call function to be tested
+    projectedAreas = getInput.computeAreasFromLines(lineDict)
+
+    assert projectedAreas[0] == 5000.
+    assert len(projectedAreas) == 1
+
+
+def test_computeAreasFromRasterAndLine(tmp_path):
+    """ test computation of areas using a lineDict and a dem raster """
+
+    # setup required inputs
+    testPath = pathlib.Path(tmp_path, 'avaTestGeo2')
+    testPathInputs = pathlib.Path(tmp_path, 'avaTestGeo2', 'Inputs', 'REL')
+    fU.makeADir(testPathInputs)
+
+    cfgGenTop = cfgUtils.getModuleConfig(generateTopo)
+    cfgGenTop['TOPO']['dx'] = '1.'
+    cfgGenTop['TOPO']['demType'] = 'IP'
+    cfgGenTop['TOPO']['meanAlpha'] = '27.5'
+    cfgGenTop['TOPO']['z0'] = '2000'
+    cfgGenTop['TOPO']['xEnd'] = '5000'
+    cfgGenTop['TOPO']['yEnd'] = '1000'
+    cfgGenTop['TOPO']['channel'] = 'False'
+    cfgGenTop['DEMDATA']['xl'] = '0.'
+    cfgGenTop['DEMDATA']['yl'] = '0.'
+
+    [z, name_ext, outDir] = generateTopo.generateTopo(cfgGenTop, testPath)
+    dem = getInput.readDEM(testPath)
+
+    dem['originalHeader'] = dem['header'].copy()
+    methodMeshNormal = 1
+    # get normal vector of the grid mesh
+    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
+
+    lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
+                'y': np.asarray([100., 150., 150., 150., 100., 100., 100]),
+                'Start': np.asarray([0.]), 'Length': np.asarray([7]),
+                'Name': ['']}
+
+    # call function to be tested
+    areaActualList, areaProjectedList, line = getInput.computeAreasFromRasterAndLine(lineDict, dem)
+
+    assert np.isclose(areaActualList[0], 5807.14)
+    assert areaProjectedList[0] == 5151.00
+
+
+def test_computeRelStats(tmp_path):
+    """ test computing min, max eleavtions and other stats of a line and dem """
+
+
+    # setup required inputs
+    testPath = pathlib.Path(tmp_path, 'avaTestGeo3')
+    testPathInputs = pathlib.Path(tmp_path, 'avaTestGeo3', 'Inputs', 'REL')
+    fU.makeADir(testPathInputs)
+
+    cfgGenTop = cfgUtils.getModuleConfig(generateTopo)
+    cfgGenTop['TOPO']['dx'] = '1.'
+    cfgGenTop['TOPO']['demType'] = 'IP'
+    cfgGenTop['TOPO']['meanAlpha'] = '27.5'
+    cfgGenTop['TOPO']['z0'] = '2000'
+    cfgGenTop['TOPO']['xEnd'] = '5000'
+    cfgGenTop['TOPO']['yEnd'] = '1000'
+    cfgGenTop['TOPO']['channel'] = 'False'
+    cfgGenTop['DEMDATA']['xl'] = '0.'
+    cfgGenTop['DEMDATA']['yl'] = '0.'
+
+    [z, name_ext, outDir] = generateTopo.generateTopo(cfgGenTop, testPath)
+    dem = getInput.readDEM(testPath)
+
+    dem['originalHeader'] = dem['header'].copy()
+    methodMeshNormal = 1
+    # get normal vector of the grid mesh
+    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
+
+    lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
+                'y': np.asarray([100., 150., 150., 150., 100., 100., 100]),
+                'Start': np.asarray([0.]), 'Length': np.asarray([7]),
+                'Name': ['']}
+    lineDict = com1DFA.prepareArea(lineDict, dem, 0.01, combine=False, checkOverlap=False)
+
+    # call function to be tested
+    lineDict = getInput.computeRelStats(lineDict, dem)
+
+    # compute parameter
+    zMax = 2000. - np.tan(np.deg2rad(27.5))*100.
+    zMin = 2000. - np.tan(np.deg2rad(27.5))*200.
+
+    assert np.isclose(lineDict['zMax'][0], zMax)
+    assert np.isclose(lineDict['zMin'][0], zMin)
+    assert np.isclose(lineDict['meanSlope'][0], 27.5)
+    assert lineDict['featureNames'][0] == ''
