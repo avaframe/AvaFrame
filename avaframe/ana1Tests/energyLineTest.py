@@ -67,7 +67,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
     plotScor = energyLineTestCfg['energyLineTest'].getboolean('plotScor')
     # read physical parameters from DFA configuration
     g = com1DFACfg['GENERAL'].getfloat('gravAcc')
-    mu = com1DFACfg['GENERAL'].getfloat('mu')
+    mu = com1DFACfg['GENERAL'].getfloat('mu' + com1DFACfg['GENERAL']['frictModel'].lower())
     alphaRad = np.arctan(mu)
     alphaDeg = np.rad2deg(alphaRad)
     csz = dem['header']['cellsize']

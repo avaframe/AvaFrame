@@ -346,7 +346,8 @@ def test_createReportDict():
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}, 'secRelArea': 'No'}
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'mu': '0.15500', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
+    cfg['GENERAL'] = {'musamosat': '0.15500', 'tau0samosat': '0', 'Rs0samosat': '0.222',
+        'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
                       'rhoEnt': '100.0'}
 
     # call function to be tested
@@ -360,7 +361,7 @@ def test_createReportDict():
     assert reportST['Simulation Parameters']['Release Area Scenario'] == relName
     assert reportST['Simulation Parameters']['Entrainment'] == 'Yes'
     assert reportST['Simulation Parameters']['Resistance'] == 'Yes'
-    assert reportST['Simulation Parameters']['Mu'] == '0.15500'
+    assert reportST['Friction model']['mu'] == '0.15500'
     assert reportST['Simulation Parameters']['Density [kgm-3]'] == '200.'
     assert reportST['Simulation Parameters']['Friction model'] == 'samosAT'
     assert reportST['Release Area']['Release area scenario'] == relName

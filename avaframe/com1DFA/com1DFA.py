@@ -695,11 +695,33 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
                 'Secondary release area': secRelAreaFlag,
-                'Mu': cfgGen['mu'],
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['thickness']}}
+
+    # add frict parameters
+    if cfgGen['frictModel'].lower() == 'samosat':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'], 'tau0': cfgGen['tau0samosat'],
+            'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'], 'B' :  cfgGen['Bsamosat']}
+        # reportST['Mu'] = cfgGen['muSamosAt']
+        # reportST['tau0'] = cfgGen['tau0SamosAt']
+        # reportST['Rs0'] = cfgGen['Rs0SamosAt']
+        # reportST['kappa'] = cfgGen['kappaSamosAt']
+        # reportST['R'] = cfgGen['RSamosAt']
+        # reportST['B'] = cfgGen['BSamosAt']
+    elif cfgGen['frictModel'].lower() == 'voellmy':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'], 'xsi': cfgGen['xsivoellmy']}
+        # reportST['Mu'] = cfgGen['muVoellmy']
+        # reportST['xsi'] = cfgGen['xsiVoellmy']
+    elif cfgGen['frictModel'].lower() == 'coulomb':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'Coulomb', 'mu': cfgGen['mucoulomb']}
+        # reportST['Mu'] = cfgGen['muCoulomb']
+    elif cfgGen['frictModel'].lower() == 'wetsnow':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'wetsnow', 'mu': cfgGen['mu0wetsnow'], 'xsi':  cfgGen['mu0wetsnow']}
+        # reportST['Mu'] = cfgGen['mu0WetSnow']
+        # reportST['xsi'] = cfgGen['xsiWetSnow']
+
     # check if secondary release area
     if secRelAreaFlag == 'Yes':
         reportST['Secondary release Area'] = secRelAreaInfo
@@ -1523,6 +1545,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     frictType = frictModelsList.index(frictModel) + 1
     log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))
 
+    print('frictModel is ', frictModel, frictType)
     # Initialise Lists to save fields and add initial time step
     particlesList = []
     fieldsList = []
