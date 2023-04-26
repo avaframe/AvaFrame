@@ -113,7 +113,7 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
 
     """
     cfgGen = cfg['GENERAL']
-    mu = cfgGen.getfloat('mu')
+    mu = cfgGen.getfloat('mu' + cfgGen['frictModel'].lower())
     cfgFP = cfg['FPSOL']
     H0 = float(cfgFP['H0'])
     deltaX = float(cfgFP['deltaX'])
