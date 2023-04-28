@@ -61,7 +61,7 @@ for avaName in avaList:
         com1DFACfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPKR'
         com1DFACfg['GENERAL']['explicitFriction'] = '1'
         com1DFACfg['GENERAL']['frictModel'] = 'Coulomb'
-        com1DFACfg['GENERAL']['mu'] = '0.42'
+        com1DFACfg['GENERAL']['mucoulomb'] = '0.42'
         outDir = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath')
         fU.makeADir(outDir)
         # write configuration to file
