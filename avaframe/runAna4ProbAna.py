@@ -6,7 +6,6 @@
 
 # Load modules
 import pathlib
-import shutil
 import argparse
 
 # Local imports
@@ -118,7 +117,6 @@ def runProbAna(avalancheDir=''):
 
 
 if __name__ == '__main__':
-
 
     parser = argparse.ArgumentParser(description='Run ana4ProbAna workflow')
     parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
