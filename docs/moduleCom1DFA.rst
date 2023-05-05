@@ -170,7 +170,7 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
 
 optional outputs
 
-* pickles of particles properties for saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini``
+* pickles of particles properties (:ref:`com1DFAAlgorithm:Particle properties`.) for saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini``
 * a csv file of specified particle properties for the saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini`` and if in the VISUALISATION section writePartToCsv is set to True
 
 

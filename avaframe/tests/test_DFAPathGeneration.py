@@ -39,7 +39,7 @@ def test_getDFAPathFromPart():
     assert average == 3
     assert std == 1.5
     particlesList = [{'nPart': 5, 'm': weights, 'x': values, 'y': values, 'z': values,
-                      'travelLengthXY': values, 'travelLengthXYCor': values,
+                      'trajectoryLengthXY': values, 'trajectoryLengthXYCor': values,
                       'ux': values, 'uy': values, 'uz': values}]
     avaProfile = DFAPathGeneration.getDFAPathFromPart(particlesList, addVelocityInfo=False)
     print(avaProfile)

@@ -52,8 +52,8 @@ def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     xPartArray = particles['x']
     hPartArray = np.ones(len(xPartArray))
     particles['nPart'] = len(xPartArray)
-    particles['travelLengthXY'] = np.zeros(np.shape(xPartArray))
-    particles['travelLengthXYZ'] = np.zeros(np.shape(xPartArray))
+    particles['trajectoryLengthXY'] = np.zeros(np.shape(xPartArray))
+    particles['trajectoryLengthXYZ'] = np.zeros(np.shape(xPartArray))
     particles['idFixed'] = np.zeros(np.shape(xPartArray))
     return particles, hPartArray
 

@@ -109,8 +109,8 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     particles['ux'] = np.zeros(nPart)
     particles['uy'] = np.zeros(nPart)
     particles['uz'] = np.zeros(nPart)
-    particles['travelLengthXY'] = np.zeros(nPart)
-    particles['travelLengthXYZ'] = np.zeros(nPart)
+    particles['trajectoryLengthXY'] = np.zeros(nPart)
+    particles['trajectoryLengthXYZ'] = np.zeros(nPart)
     particles['stoppCriteria'] = False
     particles['kineticEne'] = 0.0
     particles['peakKinEne'] = 0.0

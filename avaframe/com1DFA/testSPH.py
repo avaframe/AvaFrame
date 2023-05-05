@@ -96,7 +96,7 @@ def definePart(dx, dy, Lx, Ly):
     particles['x'] = Xpart
     particles['y'] = Ypart
     particles['z'] = Zpart
-    particles['travelLengthXY'] = np.zeros(np.shape(Ypart))
+    particles['trajectoryLengthXY'] = np.zeros(np.shape(Ypart))
     particles['ux'] = 2*np.ones(np.shape(Ypart))
     particles['uy'] = np.ones(np.shape(Ypart))
     particles['uz'] = np.zeros(np.shape(Ypart))

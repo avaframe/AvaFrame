@@ -111,7 +111,7 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
     """
 
     propList = ['x', 'y', 'z', 's', 'sCor']
-    propListPart = ['x', 'y', 'z', 'travelLengthXY', 'travelLengthXYCor']
+    propListPart = ['x', 'y', 'z', 'trajectoryLengthXY', 'trajectoryLengthXYCor']
     avaProfileMass = {}
     # do we have velocity info?
     if addVelocityInfo:

@@ -401,6 +401,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
+            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
@@ -1128,9 +1129,10 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['ux'] = np.zeros(np.shape(hPartArray))
     particles['uy'] = np.zeros(np.shape(hPartArray))
     particles['uz'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXY'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXYCor'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXYZ'] = np.zeros(np.shape(hPartArray))
+    particles['uAcc'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXY'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXYCor'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXYZ'] = np.zeros(np.shape(hPartArray))
     particles['travelAngle'] = np.zeros(np.shape(hPartArray))
     particles['stoppCriteria'] = False
     mPartArray = particles['m']
