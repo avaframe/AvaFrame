@@ -9,9 +9,9 @@ Glossary
    particularly the Avalanche Modelling Atlas (AMA). Terms are organized in
    alphabetical order and the terminology builds on the UNESCO Avalanche atlas
    :cite:`DQ1981` and relates to existing guidelines provided and used by
-   Avalanche Associations and Warning Services (Canadian Avalanche Association 
-   :cite:`CAA_OGRS2016` , American Avalanche Association (AAA) 
-   :cite:`AAA_SWAG2016` or the European Avalanche Warning Services (EAWS)). 
+   Avalanche Associations and Warning Services (Canadian Avalanche Association
+   :cite:`CAA_OGRS2016` , American Avalanche Association (AAA)
+   :cite:`AAA_SWAG2016` or the European Avalanche Warning Services (EAWS)).
    The glossary has the goal to follow common conventions used in publications
    and related projects.
 
@@ -25,7 +25,7 @@ Glossary
         line connecting the release point and the alpha point and the
         horizontally projected :term:`travel length` along the :term:`thalweg`
         (see :term:`travel length` and :term:`runout angle`). The alpha angle is also
-        termed the angle of reach or the :term:`runout angle`. 
+        termed the angle of reach or the :term:`runout angle`.
 
     beta point
     beta angle
@@ -44,7 +44,7 @@ Glossary
         coordinates, e.g. between a fixed, Eularian, global coordinate system
         with east and north orientation, to an avalanche :term:`path` dependent
         coordinate system along the :term:`thalweg`, or even a Langrangian coordinate
-        system, moving along particle trajectories. 
+        system, moving along particle trajectories.
 
     projection
         The projection refers to
@@ -75,7 +75,7 @@ Glossary
         the avalanche measured in the direction of gravity.
 
     density
-        Release, :term:`entrainment`, flow, or deposition density. Important quantity 
+        Release, :term:`entrainment`, flow, or deposition density. Important quantity
         relating mass and volume, influencing impact pressure and particular friction relations.
 
     entrainment
@@ -83,7 +83,7 @@ Glossary
 
     event
         see :term:`scenario`
-    
+
     scenario
         One or multiple avalanche events or corresponding simulation scenarios
         are associated to a certain avalanche :term:`path` and have distinct criteria
@@ -134,6 +134,14 @@ Glossary
         Release, :term:`entrainment`, flow, or deposition thickness refers to the
         extent (distance) of the avalanche measured perpendicular to the slope.
 
+    trajectory length
+        Used in com1DFA particle dictionaries, where the trajectory length is computed as the
+        distance traveled by a particle from one time step to the next and then accumulated over
+        time. Three different trajectory lengths are computed (1) trajectoryLengthXY - computed in the
+        x, y plane, (2) trajectoryLengthXYZ - also taking the slope of the topography into account and
+        (3) trajectoryLengthXYCor - same as trajectoryLengthXY but corrected for the potential
+        angle difference of the slope and the normal.
+
     travel angle
     travel length
         Travel lengths are measured as horizontally projected travel length
@@ -146,7 +154,7 @@ Glossary
 
     path
         The avalanche path summarizes the total catchment and is divided into
-        different zones (zone of :term:`origin`, :term:`transition`, :term:`deposition`) 
+        different zones (zone of :term:`origin`, :term:`transition`, :term:`deposition`)
         with different criteria and characteristics. An inherent property of the avalanche path is the
         :term:`thalweg` and the associated avalanche :term:`event`.
 
@@ -166,7 +174,7 @@ Glossary
 
     release area
         Potential release areas are located in the zone of :term:`origin`. Each documented
-        :term:`event` or simulation :term:`scenario` is associated to one or more primary 
+        :term:`event` or simulation :term:`scenario` is associated to one or more primary
         and/or secondary release areas, that can further be described by the :term:`manner of starting`.
 
     runout area
@@ -204,17 +212,17 @@ Glossary
         The zone of origin delineates the area, in which typical :term:`release area` (s) are located, and an avalanche's
         appearance is characterized by the :term:`manner of starting`. The uppermost
         possible point is referred to as start of origin.
-    
+
     transition
         see :term:`zone of transition`
 
-    zone of transition    
+    zone of transition
         The zone of transition is the area between zone of :term:`origin` and
         zone of :term:`deposition` along the :term:`thalweg`. The :term:`form
         of movement` is linked to the :term:`flow variables`. The start of
         transition links the zone of :term:`origin` and transition and is usually
         associated with a slope inclination of about 28-30°.
-    
+
     deposition
         see :term:`zone of deposition`
 

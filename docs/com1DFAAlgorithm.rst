@@ -138,8 +138,33 @@ There are then different ways to place the particles in the cells. This is decid
                 The behavior in the standard case (``cohesion`` deactivated) has not been tested.
 
 
-Other particles properties velocity, cell number... are also initialized here.
-See :py:func:`com1DFA.com1DFA.initializeParticles`.
+Particle properties
+^^^^^^^^^^^^^^^^^^^^
+
+Other particles properties are also initialized here:
+    - ``x``, ``y``, ``z`` - coordinates
+
+    - ``m`` - mass of particle [kg]
+
+    - ``h`` - flow thickness [m]
+
+    - ``ux``, ``uy``, ``uz`` - velocity components [ms-1]
+
+    - ``uAcc`` - approximation for particle acceleration between each computational time step (simply computed by (velocityMagnitude_t0 - velocityMagnitude_t1) / dt)
+
+    - ``trajectoryLengthXY`` - traveled length of particle accumulated over time in xy plane
+
+    - ``trajectoryLengthXYCor`` - trajectoryLengthXY corrected with the angle difference between the slope and the normal
+
+    - ``trajectoryLengthXYZ`` - traveled length of a particle accumulated over time in xyz
+
+    - ``travelAngle`` - travel angle computed using arctan((z0-z)/trajectoryLengthXY)
+
+    - ``ID, parentID`` - particle IDs and parentID required if splitting, merging
+
+    - ``t``- corresponding time step
+
+For more details, see :py:func:`com1DFA.com1DFA.initializeParticles`.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 

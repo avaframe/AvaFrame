@@ -1074,8 +1074,8 @@ def test_initializeParticles():
     releaseLine['header']['xllcenter'] = dem['originalHeader']['xllcenter']
     releaseLine['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
-    dictKeys = ['nPart', 'x', 'y', 'travelLengthXY', 'travelLengthXYCor', 'travelLengthXYZ', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
+    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
+                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'travelAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
@@ -1623,8 +1623,8 @@ def test_runCom1DFA(tmp_path, caplog):
 
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFile)
 
-    dictKeys = ['nPart', 'x', 'y', 'travelLengthXY', 'travelLengthXYCor', 'travelLengthXYZ', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
+    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
+                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'travelAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',

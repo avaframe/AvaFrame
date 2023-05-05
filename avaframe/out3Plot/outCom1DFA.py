@@ -103,6 +103,36 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
         # ani.save("testTrackAlr1.gif", writer=writer)
 
 
+def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg):
+    """ Plot time series of tracked particles
+    Parameters
+    ----------
+    outDirData: str
+        path to output directory
+    trackedPartProp: dict
+        dictionary with time series of the wanted properties for tracked
+        particles
+    cfg : dict
+        configuration read from ini file
+
+    """
+
+
+    # do some ploting
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    fig.suptitle('Tracked particles acceleration')
+    ax1 = plt.subplot(111)
+
+    ax1.plot(trackedPartProp['time'], trackedPartProp['uAcc'])
+    ax1.set_xlabel('time step [s]')
+    ax1.set_ylabel('acceleration [ms-2]')
+
+    pathDict = {}
+    pathDict['pathResult'] = outDirData
+    outFileName = 'trackedParticles_acceleration'
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
 def updateTrackPart(particles, ax, dem):
     """Update axes with particles (tracked particles are highlighted in red)
     """
