@@ -308,11 +308,6 @@ def createContourPlot(reportDictList, avalancheDir, simDF):
     modName = 'com1DFA'
     contourD = {}
 
-    # check if consistent settings throughout all sims
-    if len(np.unique(simDF['contourType'])) != 1:
-        log.warning('Contour plot type is not identical for all sims performed - so cannot create contour plot')
-        return reportDictList, False
-
     # fetch coordinates of contour line for each sim in reportDict and create contourD
     for cont in reportDictList:
         contourD[list(cont['contours'].keys())[0]] = cont['contours'][list(cont['contours'].keys())[0]]
