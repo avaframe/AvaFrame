@@ -29,11 +29,15 @@ For this test, we simply provide two pyramid shaped topographies, where one is r
 Dambreak problem
 ------------------
 
-This test is based on a Riemann problem, where the initial condition is described by two different states that are separated by a discontinuity.
-In :cite:`FaMa2012` exact solutions are derived for this problem, based on the Savage-Hutter model to describe the granular flow.
-Here, we provide an implementation of one of the seven cases presented in :cite:`FaMa2012`.
-In Test 2, the initial velocity is zero and a granular mass is suddenly released and flows downslope.
-For further details have a look at the module :py:mod:`ana1Tests.damBreak` and the Section :ref:`moduleana1Tests:Dambreak`.
+This test is based on a Riemann problem, where the initial condition is
+described by two different states that are separated by a discontinuity. In
+:cite:`FaMa2012` exact solutions are derived for this problem, based on the
+Savage-Hutter model to describe the granular flow.
+Here, we provide an implementation of one of the seven cases presented in
+:cite:`FaMa2012`. In Test 2, the initial velocity is zero and a granular mass
+is suddenly released and flows downslope.
+For further details have a look at the module :py:mod:`ana1Tests.damBreak` and
+the Section :ref:`moduleAna1Tests:Dambreak test`.
 
 
 

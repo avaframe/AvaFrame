@@ -535,19 +535,15 @@ def prepareInputData(inputSimFiles, cfg):
     ----------
     inputSimFiles : dict
         dictionary containing
-        # relFile : str
-        # path to release area file
-        # demFile : str
-        #     path to dem file in Inputs/
-        # secondaryReleaseFile : str
-        #     path to secondaryRelease file
-        # entFiles : str
-        #     path to entrainment file
-        # resFile : str
-        #     path to resistance file
-        # entResInfo : flag dict
-        #     flag if Yes entrainment and/or resistance areas found and used for simulation
-        #     flag True if a Secondary Release file found and activated
+
+        - relFile : str, path to release area file
+        - demFile : str, path to dem file in Inputs/
+        - secondaryReleaseFile : str, path to secondaryRelease file
+        - entFiles : str, path to entrainment file
+        - resFile : str, path to resistance file
+        - entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
 
     cfg: configparser object
         configuration for simType and secondary rel
@@ -561,21 +557,17 @@ def prepareInputData(inputSimFiles, cfg):
 
     inputSimLines : dict
         dictionary containing
-        # releaseLine : dict
-        #     release line dictionary
-        # secondaryReleaseLine : dict
-        #     secondaryRelease line dictionary
-        # entLine : dict
-        #     entrainment line dictionary
-        # resLine : dict
-        #     resistance line dictionary
-        # entrainmentArea : str
-        #     entrainment file name
-        # resistanceArea : str
-        #     resistance file name
-        # entResInfo : flag dict
-        #     flag if Yes entrainment and/or resistance areas found and used for simulation
-        #     flag True if a Secondary Release file found and activated
+
+        - releaseLine : dict, release line dictionary
+        - secondaryReleaseLine : dict, secondaryRelease line dictionary
+        - entLine : dict, entrainment line dictionary
+        - resLine : dict, resistance line dictionary
+        - entrainmentArea : str, entrainment file name
+        - resistanceArea : str, resistance file name
+        - entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
+
     """
 
     # load data
@@ -1342,10 +1334,10 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     ----------
     inputSimLines : dict
         dict with
-            # entResInfo : dict
-            #     with the flagSecondaryRelease
-            # secondaryReleaseLine : dict
-            #     secondary release line dictionary
+
+        - entResInfo : dict, with the flagSecondaryRelease
+        - secondaryReleaseLine : dict, secondary release line dictionary
+
     dem: dict
         dem dictionary
     relRaster: 2D numpy array
@@ -1357,10 +1349,11 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     -------
     secondaryReleaseInfo: dict
         inputSimLines['secondaryReleaseLine'] dictionary completed with
-            # header: the dem original header
-            # rasterData: list of secondary release rasters (without the overlapping part with the release)
-            # flagSecondaryRelease:
-            #     'Yes' if a secondary release is there
+
+        - header: the dem original header
+        - rasterData: list of secondary release rasters (without the overlapping part with the release)
+        - flagSecondaryRelease: 'Yes' if a secondary release is there
+
     reportAreaInfo: dict
         updated simulation area information dictionary
 
@@ -1504,8 +1497,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
-        # secondaryReleaseParticles : list
-        #     list of secondary release area particles dictionaries at initial time step
+
+        - secondaryReleaseParticles : list, of secondary release area particles dictionaries at initial time step
+
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -1999,13 +1993,12 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     -------
     updates the line dictionary with the rasterData: Either
         contains either
-        # Raster : 2D numpy array
-        #     raster of the area (returned if relRHlist is empty OR if combine is set
-        #     to True)
-        # or
-        # RasterList : list
-        #     list of 2D numpy array rasters (returned if relRHlist is not empty AND
-        #     if combine is set to False)
+
+        -  Raster: 2D numpy array, raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+        - RasterList: list, list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to False)
+
     """
     NameRel = line['Name']
     StartRel = line['Start']

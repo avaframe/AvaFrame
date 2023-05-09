@@ -376,7 +376,7 @@ to shorter runouts then what the energy solution predicts.
 Finally, the effect of the pressure force can be studied, especially the
 effect of the computation options.
 The results of this test can also be reused for other purposes or in other
-test such as in the rotation test described below (:ref:`Rotation test`)
+test such as in the rotation test described below (:ref:`moduleAna1Tests:Rotation test`)
 
 Procedure
 ----------

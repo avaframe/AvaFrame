@@ -10,7 +10,7 @@ distanceTimeAnalysis: Visualizing the temporal evolution of flow variables
 With the functions gathered in this module, flow variables of avalanche simulation results can be
 visualized in a distance versus time diagram, the so called **thalweg-time diagram**.
 The **tt-diagram** provides a way to identify main features of the temporal evolution of
-flow variables along the :term:`avalanche path`.
+flow variables along the avalanche  :term:`path`.
 This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2020`, where
 avalanche simulation results have been transformed into the radar coordinate system to facilitate
 direct comparison, combined with the attempt to analyze simulation results in an avalanche path
@@ -91,7 +91,7 @@ Thalweg-time diagram
 ~~~~~~~~~~~~~~~~~~~~~~
 
 First, the flow variable result field is transformed into a path-following coordinate system, of
-which the centerline is the :term:`avalanche path`.
+which the centerline is the avalanche :term:`path`.
 For this step, functions from :py:mod:`ana3AIMEC` are used.
 The distance of the avalanche front to the *start of runout area point* is determined using a user
 defined threshold of the flow variable. The front positions defined with this
@@ -122,15 +122,18 @@ time step.
 Automated path generation
 --------------------------
 
-Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB`) or analysis modules like
-the Thalweg-time diagram (:ref:`moduleAna5Utils`) or Aimec (:ref:`moduleAna3AIMEC`) require
-an avalanche path and split point as input. This avalanche path and split point are usually
-created manually based on an expert opinion. The objective of this module is to automatically
-generate an avalanche path from a dense flow avalanche (DFA) simulation and placing a split point.
-The path is generated from the center of mass position of the dense material, so it is called the mass
-averaged path. It is extended towards the top of the release area and at the bottom. Therefore it covers
-the entire length of the avalanche with some buffer in the runout area.
-The split point is extracted from the parabola that is fitted on to the avalanche path profile.
+Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB:com2AB:
+Alpha Beta Model`) or analysis modules like the Thalweg-time diagram
+(:ref:`moduleAna5Utils:ana5Utils`) or Aimec (:ref:`moduleAna3AIMEC:ana3AIMEC:
+Aimec`) require an avalanche path and split point as input. This avalanche path
+and split point are usually created manually based on an expert opinion. The
+objective of this module is to automatically generate an avalanche path from a
+dense flow avalanche (DFA) simulation and placing a split point. The path is
+generated from the center of mass position of the dense material, so it is
+called the mass averaged path. It is extended towards the top of the release
+area and at the bottom. Therefore it covers the entire length of the avalanche
+with some buffer in the runout area. The split point is extracted from the
+parabola that is fitted on to the avalanche path profile.
 
 Input
 ~~~~~~~~~
@@ -192,7 +195,7 @@ Applying the mass averaging to :math:`(x, y, z)` gives the mass average path pro
 
 It is also possible to compute the mass averaged velocity squared :math:`\overline{\mathbf{u^2}}(t)`,
 kinetic energy :math:`\overline{\frac{1}{2}m\mathbf{u^2}}(t)` or travel distance :math:`s`
-(which are used in the :ref:`ana1Tests:Energy line test`).
+(which are used in the :ref:`moduleAna1Tests:Energy line test`).
 
 The path is resampled at ``nCellsResample`` x cellsize and is extended towards the release area top
 to produce meaningful results when used in the com2AB module.

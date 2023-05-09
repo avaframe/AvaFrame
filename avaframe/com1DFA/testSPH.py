@@ -1,12 +1,10 @@
 
 import numpy as np
 import time
-import os
 import math
 import matplotlib.pyplot as plt
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -183,21 +181,25 @@ def plotGrad(ax, x, xx, particles, ind, mark, count):
     return ax
 
 
-fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
+cfgPlot = cfgUtils.getModuleConfig(pU)
+figW = 2.0 * float(cfg.getfloat("figW"))
+figH = 2.0 * float(cfg.getfloat("figH"))
+
+fig1, ax1 = plt.subplots(figsize=(figW, figH))
 ax1.set_title('h(x)')
 ax1.set_xlabel('x [m]')
 ax1.set_ylabel('h [m]')
-fig2, ax2 = plt.subplots(figsize=(2*pU.figW, pU.figH))
+fig2, ax2 = plt.subplots(figsize=(figW, figH))
 ax2.set_title('h(y)')
 ax2.set_xlabel('y [m]')
 ax2.set_ylabel('h [m]')
-fig3, ax3 = plt.subplots(figsize=(2*pU.figW, pU.figH))
+fig3, ax3 = plt.subplots(figsize=(figW, figH))
 ax3.set_title('Gradh(x)')
 ax3.set_xlabel('x [m]')
 ax3.set_ylabel('Gradh []')
 ax3.set_ylim([-0.02, 0.02])
 # ax3.set_ylim([-0.016, 0.016])
-fig4, ax4 = plt.subplots(figsize=(2*pU.figW, pU.figH))
+fig4, ax4 = plt.subplots(figsize=(figW, figH))
 ax4.set_title('Gradh(y)')
 ax4.set_xlabel('y [m]')
 ax4.set_ylabel('Gradh []')

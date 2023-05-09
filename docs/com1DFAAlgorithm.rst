@@ -78,7 +78,7 @@ The mass per particle determination method can be chosen between:
   gradient. It makes the most sense to combine the MPPKR particle
   initialization method with the `splitOption` 1. In this combination, the
   particles will be merged or split to keep a constant density of particles
-  per kernel radius (:ref:`DFAnumerics:Splitting and merging`).
+  per kernel radius (:ref:`DFAnumerics:Particle splitting and merging`).
 
 
 .. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default.
