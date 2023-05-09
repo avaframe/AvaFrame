@@ -1,7 +1,8 @@
 """ functions to convert to a different coordinate system and
     produce a range-time diagram from simulation results
-    options: 1) range-time diagram from radar's field of view capped to this
-             2) thalweg-time diagram from beta point of view along avalanche path
+    options:
+    1) range-time diagram from radar's field of view capped to this
+    2) thalweg-time diagram from beta point of view along avalanche path
 """
 
 
@@ -536,33 +537,33 @@ def initializeRangeTime(modName, cfg, dem, simHash):
 
 def fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demHeader, fields, mtiInfo):
     """ determine avalanche front and average values of flow parameter along path
-        update mtiInfo dictionary with this information
+    update mtiInfo dictionary with this information
 
-        Parameters
-        -----------
-        cfgRangeTime: configparser
-            configuration settings for range-time diagram
-        cfg: configParser object
-            configuration settings of computational module
-        dtRangeTime: list
-            list of time steps where avalanche front shall be exported
-        t: float
-            actual simulation time step
-        demHeader: dict
-            dictionary with DEM header
-        fields: dict
-            dictionary with flow parameter result fields
-        mtiInfo: dict
-            info on time steps (timeList) and distance (rangeList) of avalanche front_
-            averaged values of result parameter (mti) for each range gate (rangeGates) for colorcodig
-            optional info on masks for radar field of view (rangeMasked), etc.
+    Parameters
+    -----------
+    cfgRangeTime: configparser
+        configuration settings for range-time diagram
+    cfg: configParser object
+        configuration settings of computational module
+    dtRangeTime: list
+        list of time steps where avalanche front shall be exported
+    t: float
+        actual simulation time step
+    demHeader: dict
+        dictionary with DEM header
+    fields: dict
+        dictionary with flow parameter result fields
+    mtiInfo: dict
+        info on time steps (timeList) and distance (rangeList) of avalanche front
+        averaged values of result parameter (mti) for each range gate (rangeGates) for colorcoding
+        optional info on masks for radar field of view (rangeMasked), etc.
 
-        Returns
-        --------
-        mtiInfo: dict
-            updated dictionary
-        dtRangeTime: list
-            updated list of time steps
+    Returns
+    --------
+    mtiInfo: dict
+        updated dictionary
+    dtRangeTime: list
+        updated list of time steps
     """
 
     # load result type for fields

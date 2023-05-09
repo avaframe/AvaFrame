@@ -71,12 +71,12 @@ Glossary
         the avalanche flow.
 
     depth
-        :term:`Release`, :term:`entrainment`, flow, or deposition depth refers to the extent of
+        Release, :term:`entrainment`, flow, or deposition depth refers to the extent of
         the avalanche measured in the direction of gravity.
 
     density
-        :term:`Release`, :term:`entrainment`, flow, or deposition density. Important quantity 
-        relating mass and volume, influencing :term:`impact pressure` and particular friction relations.
+        Release, :term:`entrainment`, flow, or deposition density. Important quantity 
+        relating mass and volume, influencing impact pressure and particular friction relations.
 
     entrainment
         Entrainment describes the process of mass intake during the avalanche flow.
@@ -91,7 +91,7 @@ Glossary
         or :term:`runout area`. These properties are
         morphologically connected to the different zones (:term:`origin`, :term:`transition`,
         :term:`deposition`) of an avalanche :term:`path` and allow to define other
-        associated properties, such as :term:`alpha` angles or :term:`runout` length that are
+        associated properties, such as :term:`alpha angle` or :term:`runout length` that are
         defined in combination with the avalanche :term:`thalweg`. Besides observed and
         documented avalanche events, design events of particular :term:`return period` (s)
         are of particular interest for engineering applications.
@@ -173,8 +173,8 @@ Glossary
     runout angle
     runout length
     runout point
-        Runout lengths and angles are intricately linked to the :term:`alpha` point, utilizing the
-        :term:`projection` to the :term:`thalweg`. In the same manner as :term:`travel` lengths, run out lengths
+        Runout lengths and angles are intricately linked to the :term:`alpha point`, utilizing the
+        :term:`projection` to the :term:`thalweg`. In the same manner as :term:`travel length`, run out lengths
         are measured as horizontally projected lengths along the :term:`thalweg`, from
         the uppermost point of the :term:`release area` to furthest reach of the runout
         area. The runout may refer to visible deposition (associated to dense
@@ -185,7 +185,7 @@ Glossary
 
     size
         Avalanche size refers to the magnitude or intensity of an :term:`event`, classified by destructive
-        potential, :term:`runout` length and dimension according to the EAWS size
+        potential, :term:`runout length` and dimension according to the EAWS size
         classification, which is closely related to the CAA destructive size.
 
     velocity
@@ -219,6 +219,6 @@ Glossary
         see :term:`zone of deposition`
 
     zone of deposition
-        The zone of deposition is where the :term:`runout` area of the avalanche is located and where the
+        The zone of deposition is where the :term:`runout area` of the avalanche is located and where the
         avalanche stops due to frictional energy dissipation. The boundary with
         the :term:`transition` zone (start of deposition) is often called :term:`beta point`.

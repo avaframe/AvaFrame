@@ -658,6 +658,7 @@ def getTangenVectors(nx, ny, nz, ux, uy, uz):
     If possible, e1 is in the velocity direction, if not possible,
     use the tangent vector in x direction for e1 (not that any other u vector could be provided,
     it does not need to be the velocity vector, it only needs to be in the tangent plane)
+
     Parameters
     ----------
     nx : float

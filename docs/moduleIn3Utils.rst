@@ -43,8 +43,8 @@ individual functions used to create the topographies can be found in
 :py:mod:`in3Utils.generateTopo`
 
 
-To run
-------
+To run generateTopo
+-------------------
 
 * first go to ``AvaFrame/avaframe``
 * copy ``in3Utils/generateTopoCfg.ini`` to
@@ -136,8 +136,8 @@ input parameters can be set in the respective configuration files
 Detailed information on the individual functions used to create the release
 areas can be found in :py:mod:`in3Utils.getReleaseArea`
 
-To run
-------
+To run getReleaseArea
+---------------------
 
 Following these steps, you can generate an avalanche test case including a DEM and a simple release area.
 

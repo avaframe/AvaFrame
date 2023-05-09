@@ -7,22 +7,28 @@ import avaframe.com1DFA.DFAtools as DFAtls
 
 def normL2Vect(analyticalSol, numericalSol, cellSize, cosAngle):
     """ Compute L2 and Lmax norm of the error between the analytic and numerical solution
+
         Parameters
         -----------
         analyticalSol: dictionary
-            analytic solution dictionary:
-                fx: x component of the vector
-                fy: y component of the vector
-                fz: z component of the vector
+            analytic solution dictionary
+
+            - fx: x component of the vector
+            - fy: y component of the vector
+            - fz: z component of the vector
+
         numericalSol: dictionary
-            numericalSol solution dictionary:
-                fx: x component of the vector
-                fy: y component of the vector
-                fz: z component of the vector
+            numericalSol solution dictionary
+
+            - fx: x component of the vector
+            - fy: y component of the vector
+            - fz: z component of the vector
+
         cellSize: float
             grid cell size
         cosAngle: float
             cosine of the slope angle
+
         Returns
         ---------
         errorL2: float
@@ -51,6 +57,7 @@ def normL2Vect(analyticalSol, numericalSol, cellSize, cosAngle):
 
 def normL2Scal(analyticalSol, numericalSol, cellSize, cosAngle):
     """ Compute L2 and Lmax norm of the error between the analytic and numerical solution
+
         Parameters
         -----------
         analyticalSol: numpy array
@@ -61,6 +68,7 @@ def normL2Scal(analyticalSol, numericalSol, cellSize, cosAngle):
             grid cell size
         cosAngle: float
             cosine of the slope angle
+
         Returns
         ---------
         errorL2: float
@@ -86,6 +94,7 @@ def normL2Scal(analyticalSol, numericalSol, cellSize, cosAngle):
 
 def computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle):
     """ Compute error between two functions given their norm 2
+
         Parameters
         -----------
         localError: numpy array
@@ -96,6 +105,7 @@ def computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle):
             grid cell size
         cosAngle: float
             cosine of the slope angle
+
         Returns
         ---------
         errorL2: float
@@ -131,6 +141,7 @@ def computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle):
 
 def L2Norm(norm2Array, cellSize, cosAngle):
     """ Compute L2 norm of an array
+
         Parameters
         -----------
         norm2Array: numpy array
@@ -139,6 +150,7 @@ def L2Norm(norm2Array, cellSize, cosAngle):
             grid cell size
         cosAngle: float
             cosine of the slope angle
+
         Returns
         ---------
         normL2: float

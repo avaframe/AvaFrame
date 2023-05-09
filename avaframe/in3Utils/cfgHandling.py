@@ -188,19 +188,21 @@ def removeSimsNotMatching(simDF, key, value):
 
 def orderSimulations(varParList, ascendingOrder, simDF):
     """ Order simulations datadframe using a list of parameters and a flag if in ascending or descending order
-        Parameters
-        -----------
-        varParList: str or list
-            simulation configuration parameters for ordering simulations
-        ascendingOrder: bool
-            True if simulations shall be ordered in ascending order regarding varPar
-        simDF: pandas dataFrame
-            dataFrame of simulations (one line per simultaion with fileName, ... and values for parameters in
-            varParList)
-        Returns
-        --------
-        simDF: pandas dataFrame
-            sorted dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+
+    Parameters
+    -----------
+    varParList: str or list
+        simulation configuration parameters for ordering simulations
+    ascendingOrder: bool
+        True if simulations shall be ordered in ascending order regarding varPar
+    simDF: pandas dataFrame
+        dataFrame of simulations (one line per simultaion with fileName, ... and values for parameters in
+        varParList)
+
+    Returns
+    --------
+    simDF: pandas dataFrame
+        sorted dataFrame of simulation results (fileName, ... and values for parameters in varParList)
     """
     # make sure that parameters used for ordering are provided as list
     if isinstance(varParList, str):
@@ -218,22 +220,24 @@ def orderSimulations(varParList, ascendingOrder, simDF):
 
 def fetchAndOrderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
     """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
-        Parameters
-        -----------
-        avalancheDir: str
-            path to avalanche directory
-        inputDir: str
-            path to simulation results
-        varParList: str or list
-            simulation configuration parameters for ordering simulations
-        ascendingOrder: bool
-            True if simulations shall be ordered in ascending order regarding varPar
-        specDir: str
-            path to a directory where simulation configuration files can be found - optional
-        Returns
-        --------
-        dataDF: pandas dataFrame
-            dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+
+    Parameters
+    -----------
+    avalancheDir: str
+        path to avalanche directory
+    inputDir: str
+        path to simulation results
+    varParList: str or list
+        simulation configuration parameters for ordering simulations
+    ascendingOrder: bool
+        True if simulations shall be ordered in ascending order regarding varPar
+    specDir: str
+        path to a directory where simulation configuration files can be found - optional
+
+    Returns
+    --------
+    dataDF: pandas dataFrame
+        dataFrame of simulation results (fileName, ... and values for parameters in varParList)
     """
 
     # load dataFrame for all configurations

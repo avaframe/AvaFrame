@@ -15,7 +15,8 @@ ENHANCEMENTS
   - Check for release and secondary release shapefiles
   - If only release available -> just run release
   - If both release and secondary release are available -> run with secondary release 
-    UNLESS secRelArea = False 
+  UNLESS secRelArea = False 
+
   - ALL scenarios in release get the secondary release areas!
 - Add  rotational energy line test: helps to checks eg. for numerical grid independence
 - Update ini file procedure for the energy line test and the rotation test
@@ -57,10 +58,12 @@ ENHANCEMENTS
   if they are required as output
 - Add automatic split point generation:
   - First run a DFA simulation, either using the runDFAModule flag in runComputeDFAPath.py or yourself 
-    (do not forget that you need to saves particles or FD, FM, FV for multiple time steps)
+  (do not forget that you need to saves particles or FD, FM, FV for multiple time steps)
+
   - What DFA parameters to use is not yet clear. I would use the BenMoussa time stepping and particles 
     parameters, sphOption 2, explicit friction option 1, some artificial viscosity, and maybe activate 
     curvature (with all this and a mu=0.42, I get ok results)
+
   - Then runComputeDFAPath computes the mass average path, extends it and defines a splitPoint
 
 FIX
@@ -104,9 +107,9 @@ ENHANCEMENTS
 - change the order of simHash within the result names; fixes Move simHash in filename #690
 - path finding added; see issue #610. This will be fully introduced in version 1.2, including
   automatic split point generation
-    - refactor path computation functions
-    - allow computing path from particles or fields (if *from fields*: needs the FM=FlowMass)
-    - runscript to compute a path from com1DFA results (requires that one saves some time steps)
+  - refactor path computation functions
+  - allow computing path from particles or fields (if *from fields*: needs the FM=FlowMass)
+  - runscript to compute a path from com1DFA results (requires that one saves some time steps)
 - automate the benchmark updating process
 - improve energy line plot
 - set deleteOutput to False in runOperational; addresses User Feedback (CT) #715. This means

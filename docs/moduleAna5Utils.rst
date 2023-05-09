@@ -133,7 +133,8 @@ the entire length of the avalanche with some buffer in the runout area.
 The split point is extracted from the parabola that is fitted on to the avalanche path profile.
 
 Input
-=====
+~~~~~~~~~
+
 The automatic path generation needs dense flow simulation results as input.
 These can be flow mass and flow thickness or particles for multiple time steps. com1DFA provides these already
 in the correct way.
@@ -150,13 +151,13 @@ We provide :py:mod:`runComputeDFAPath`, in which two options exist:
    com1DFA is read. ``tSteps`` are adjusted, ``resType`` and ``simTypeList`` are modified before running com1DFA.
 
 Outputs
-========
+~~~~~~~~~
 
 A mass averaged path is produced for each com1DFA simulation. The path is/are saved in
 ``avalancheDir/Outputs/DFAPath``
 
-To run
-=========
+To run automated path 
+~~~~~~~~~~~~~~~~~~~~~
 
 * go to ``AvaFrame/avaframe``
 * copy ``ana5Utils/DFAPathGenerationCfg.ini`` to ``ana5Utils/local_DFAPathGenerationCfg.ini``
@@ -166,11 +167,12 @@ To run
       python3 runScripts/runComputeDFAPath.py
 
 
-Theory
-========
+Theory automated path
+~~~~~~~~~~~~~~~~~~~~~
 
 Mass average path
-~~~~~~~~~~~~~~~~~~
+=================
+
 Any DFA simulation should be able to produce information about mass distribution for different
 time steps of the simulation (either flow thickness, mass, velocities... rasters or particles).
 This information is used to compute time dependent mass average quantities such as position
@@ -199,7 +201,7 @@ moving the starting point of the profile will shift the :math:`\alpha` upwards o
 affect the runout value.
 
 Extending path towards the top (release)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================================
 
 There are two options available to extend the mass averaged path profile in the release area
 (``extTopOption`` in the configuration file):
@@ -217,7 +219,7 @@ There are two options available to extend the mass averaged path profile in the 
    path profile.
 
 Extending path towards the bottom (runout)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================================
 
 It is also necessary to extend the profile in the runout area. This is done by finding the
 direction of the path given by the few last points in the path in (x,y) (all points at a distance
@@ -226,7 +228,7 @@ this direction for a given percentage (``factBottomExt``) of the total length of
 
 
 Split point generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================================
 
 A parabolic curve is fitted to the avalanche path profile extracted from the DFA simulation (non-extended profile),
 where the first and last point of the parabolic profile match the avalanche path profile. To find the

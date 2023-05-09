@@ -22,7 +22,8 @@ import avaframe.out3Plot.plotUtils as pU
 log = logging.getLogger(__name__)
 
 colors = ["#393955", "#8A8A9B", "#E9E940"]
-mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
+# TODO, this needs to be solved differently, this fails when generating doc
+# mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
 def writeABtoSHP(pathDict, resAB):

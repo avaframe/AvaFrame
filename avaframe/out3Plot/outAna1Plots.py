@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
 # Simi Sol plots
 def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header, outDirTest, simHash):
     """Generate plots of the comparison of DFA solution and simiSol
+
     Parameters
     -----------
     cfgMain: configparser
@@ -833,6 +834,7 @@ def addErrorTime(
 ):
     """plot error between a given com1DFA sol and the analytic sol
     function of time on ax1 and ax2
+
     Parameters
     -----------
     ax1: matplotlib axis
@@ -889,6 +891,7 @@ def plotErrorTime(
 ):
     """plot and save error between a given com1DFA sol and the analytic sol
     function of time
+
     Parameters
     -----------
     time: 1D numpy array
@@ -1257,6 +1260,7 @@ def plotPresentation(
 def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
     """plot computation time function of nParts
     function of whatever (ini parameter given in the simDF) you want
+
     Parameters
     -----------
     simDF: dataFrame
@@ -1399,6 +1403,7 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logSc
 
 def getPlotLimits(cfgSimi, fieldsList, fieldHeader):
     """Get x and y axis limits for the profile and contour plots
+
     Parameters
     -----------
     cfgSimi: configparser
@@ -1465,6 +1470,7 @@ def getLabel(start, end, dir="", vert=True):
 
 def last_nonzero(arr, axis, invalid_val=-1):
     """Get index of last non zero value
+
     Parameters
     -----------
     arr: numpy array
@@ -1484,6 +1490,7 @@ def last_nonzero(arr, axis, invalid_val=-1):
 
 def first_nonzero(arr, axis, invalid_val=-1):
     """Get index of first non zero value
+
     Parameters
     -----------
     arr: numpy array

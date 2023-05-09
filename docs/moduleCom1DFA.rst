@@ -56,34 +56,45 @@ Release-, entrainment thickness settings
 Release, entrainment and secondary release thickness can be specified in two different ways:
 
 1. Via **shape file**:
+
   - add an attribute called `thickness` for each feature
   - important: ALL features have to have a single thickness value, which can differ between features
   - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
-  - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp, secondaryRelthFromShp) to True in the configuration file (default is True)
-  - a parameter variation can be added with the `THICKNESSPercentVariation` parameter in the configuration file in the
-    form of ``+-percentage$numberOfSteps``. Provided a `+` a positive variation will be performed,
-    if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
-    Additionally, a variation can be added with the `THICKNESSRangeVariation` parameter in the configuration file in the
-    form of ``+-range$numberOfSteps``. Provided a `+` a positive variation will be performed,
-    if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
-    Furthermore, there is the option to vary the thickness in a range of +- the 95% confidence interval value, which is
-    also read from the shape file (requires an attribute called ci95). In order to use this variation,
-    set the 'THICKESSRangeFromCiVariation' to ``ci95$numberOfSteps``.
+  - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp,
+    secondaryRelthFromShp) to True in the configuration file (default is True)
+  - a parameter variation can be added with the `THICKNESSPercentVariation`
+    parameter in the configuration file in the form of
+    ``+-percentage$numberOfSteps``. Provided a `+` a positive variation will be
+    performed, if `-` is given, only a negative variation is performed. If no
+    sign is given: both directions will be used. Additionally, a variation can be
+    added with the `THICKNESSRangeVariation` parameter in the configuration file
+    in the form of ``+-range$numberOfSteps``. Provided a `+` a positive variation
+    will be performed, if `-` is given, only a negative variation is performed.
+    If no sign is given: both directions will be used. Furthermore, there is the
+    option to vary the thickness in a range of +- the 95% confidence interval
+    value, which is also read from the shape file (requires an attribute called
+    ci95). In order to use this variation, set the 'THICKESSRangeFromCiVariation'
+    to ``ci95$numberOfSteps``.
 
 2. Via **configuration file (ini)**:
+
   - set the flag 'THICKNESSFromShp' to False
   - provide your desired thickness value in the respective THICKNESS parameter (i.e. relTh, entTh or secondaryRelth)
-  - in addition to the `THICKNESSPercentVariation` and `THICKNESSRangeVariation` options (see option 1) and the standard variation options in
-    :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, ``referenceValue$+-percentage$numberOfSteps``,
-    resulting in a variation of relTh from 0.5 to 1.5m in two steps.
+  - in addition to the `THICKNESSPercentVariation` and `THICKNESSRangeVariation`
+    options (see option 1) and the standard variation options in
+    :ref:`configuration:Configuration`, you can also directly set e.g. `relTh =
+    1.$50$2`, ``referenceValue$+-percentage$numberOfSteps``, resulting in a
+    variation of relTh from 0.5 to 1.5m in two steps.
 
 Only available for release thickness:
 
 3. Via **release thickness file**:
+
   - set the flag 'relThFromShp' to False
   - set the flag 'relThFromFile' to True
-  - save a raster file with info on release thickness as .asc file in ``Inputs/RELTH``
-    the number of rows and columns must match the DEM raster with desired meshCellSize
+  - save a raster file with info on release thickness as .asc file in
+    ``Inputs/RELTH`` the number of rows and columns must match the DEM raster
+    with desired meshCellSize
 
 
 

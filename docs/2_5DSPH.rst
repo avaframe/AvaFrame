@@ -22,20 +22,20 @@ In the case of thickness integrated equations (for example SWE), a scalar functi
 .. math::
     f_{i} &= \sum\limits_{j}f_{j}A_{j}\,W_{ij}\\
     \mathbf{\nabla}f_{i} &= -\sum\limits_{j}f_{j}A_{j}\,\mathbf{\nabla}W_{ij}
-    :label: sph formulation
+    :label: sph formulation2_5
 
 Which gives for the flow thickness:
 
 .. math::
     \overline{h}_{i} &= \frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,W_{ij}\\
     \mathbf{\nabla}\overline{h}_{i} &= -\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\mathbf{\nabla}W_{ij}
-    :label: sph formulation for fd
+    :label: sph formulation for fd2_5
 
 Where :math:`W` represents the SPH-Kernel function.
 
 The computation of its gradient depends on the coordinate system used.
 
-.. _standard-method:
+.. _standard-method2_5:
 
 Standard method
 ~~~~~~~~~~~~~~~~~
@@ -68,7 +68,7 @@ In the case of the spiky kernel, :math:`W` reads (2D case):
    \end{aligned}
    \right.
    \end{aligned}
-   :label: kernel function
+   :label: kernel function2_5
 
 
 :math:`\left\Vert \mathbf{r_{ij}}\right\Vert= \left\Vert \mathbf{x_{i}}-\mathbf{x_{j}}\right\Vert`
@@ -82,7 +82,7 @@ coordinate system :math:`(x_1,x_2)` leads to:
 .. math::
    \mathbf{\nabla}W_{ij} = \frac{\partial W}{\partial r}.\mathbf{\nabla}r,
    \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{(x_{i,1}-x_{j,1})^2 + (x_{i,2}-x_{j,2})^2}
-   :label: kernel function gradient 1
+   :label: kernel function gradient 1_2_5
 
 with,
 
@@ -99,6 +99,7 @@ and
 .. math::
   \frac{\partial r}{\partial w_{i,k}} = \frac{(x_{i,k}-x_{j,k})}{\sqrt{(x_{i,1}-x_{j,1})^2 + (x_{i,2}-x_{j,2})^2}},
   \quad k=\{1,2\}
+   
 which leads to the following expression for the gradient:
 
 .. math::
@@ -108,7 +109,7 @@ which leads to the following expression for the gradient:
    & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
    \end{aligned}
    \right.
-   :label: kernel function gradient
+   :label: kernel function gradient2_5
 
 The gradient of :math:`f` is then simply:
 
@@ -116,8 +117,9 @@ The gradient of :math:`f` is then simply:
     \mathbf{\nabla}f_{i} = -\sum\limits_{j}f_{j}A_{j}\,\mathbf{\nabla}W_{ij}
     :label: sph dradient
 
-2.5D SPH method
-~~~~~~~~~~~~~~~~~
+2.5D SPH method theory
+~~~~~~~~~~~~~~~~~~~~~~
+
 We now want to express a function :math:`f` and its gradient on a potentially
 curved surface and express this gradient in the 3 dimensional Cartesian
 coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.
@@ -148,6 +150,7 @@ It is important to define :math:`f` properly:
   (x_1,x_2,x_3) &\mapsto f(x_1,x_2,x_3) = \hat{f}(x_1(v_1,v_2),x_2(v_1,v_2))
   \end{aligned}
   \right.
+
 Indeed, since :math:`(x_1,x_2,x_3)` lies in :math:`\mathcal{TP}`, :math:`x_3`
 is not independent of :math:`(x_1,x_2)`:
 
@@ -169,7 +172,7 @@ Let us call this gradient :math:`\mathbf{\nabla}_\mathcal{TP}`:
 .. math::
    \mathbf{\nabla}_\mathcal{TP}W_{ij} = \frac{\partial W}{\partial r}.\mathbf{\nabla}_\mathcal{TP}r,
    \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{v_{ij,1}^2 + v_{ij,2}^2}
-   :label: kernel function gradient TP 1
+   :label: kernel function gradient TP 1_2_5
 
 Which leads to:
 
@@ -180,9 +183,9 @@ Which leads to:
   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
   \end{aligned}
   \right.
-  :label: kernel function gradient TP 2
+  :label: kernel function gradient TP 2_2_5
 
-.. _2_5DSPH:
+.. _2_5DSPH_method:
 
 .. figure:: _static/2_5DSPH.png
         :width: 90%

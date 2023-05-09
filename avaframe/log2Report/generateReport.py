@@ -19,6 +19,7 @@ def copyPlots2ReportDir(reportDir, plotDict):
     """ copy the plots to report directory
     The plots are in a dictionary:
     plotDict = {'plot1': PurePath to plot1, 'plot2': PurePath to plot2...}
+
     Parameters
     -----------
     reportDir: pathlib path

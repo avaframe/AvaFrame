@@ -14,12 +14,14 @@ def getSphKernelRadiusTimeStep(dem, cfg):
     """ Compute the time step  given the sph kernel radius and the cMax coefficient
     This is based on the article from Ben Moussa et Vila
     DOI:10.1137/S0036142996307119
+
     Parameters
     -----------
     dem: dict
         dem dictionary (with info about sph kernel radius and mesh size)
     cfg: configparser
         the cfg cith cMax
+
     Returns
     --------
     dtStable: float

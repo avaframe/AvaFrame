@@ -461,7 +461,7 @@ The draw back is that the avalanche doesn't stop flowing before the slope inclin
 This implies that the avalanche flows to the lowest local point.
 
 Voellmy friction model
-"""""""""""""""""""""""""
+""""""""""""""""""""""
 Anton Voellmy was a Swiss engineer interested in avalanche dynamics :cite:`Vo1955`.
 He first had the idea to combine both the Mohr-Coulomb and the Chezy model by summing them up
 in order to take advantage of both. This leads to the following friction law:
