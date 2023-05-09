@@ -510,15 +510,6 @@ def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
         and draw nSample sets of parameter values
         if thickness values read from shp for comMod, convert sample values for these
 
-        paramValues is ia dictionary used to pass parameter variation values with
-
-        names: list, list of parameter names (that are varied)
-
-        values: numpy nd array, as many rows as sets of parameter values and as many rows as parameters
-
-        typeList: list, list of types of parameters (float, ...)
-
-        thFromIni: str, str of parameter names where the base value is read from shape
 
         Parameters
         ------------
@@ -536,7 +527,13 @@ def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
         --------
         paramValuesDList: list
             list of paramValuesD (multiple if multiple release area scenarios)
-    """
+
+            - names: list, list of parameter names (that are varied)
+            - values: numpy nd array, as many rows as sets of parameter values and as many rows as parameters
+            - typeList: list, list of types of parameters (float, ...)
+            - thFromIni: str, str of parameter names where the base value is read from shape
+
+   """
 
     # read initial configuration
     cfgStart = fetchStartCfg(comMod, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
@@ -578,14 +575,11 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
     --------
     paramValuesD: dict
         dictionary used to pass parameter variation values
-            names: list
-                list of parameter names (that are varied)
-            values: numpy nd array
-                as many rows as sets of parameter values and as many rows as parameters
-            typeList: list
-                list of types of parameters (float, ...)
-            thFromIni: str
-                str of parameter names where the base value is read from shape
+
+        - names: list, list of parameter names (that are varied)
+        - values: numpy nd array, as many rows as sets of parameter values and as many rows as parameters
+        - typeList: list, list of types of parameters (float, ...)
+        - thFromIni: str, str of parameter names where the base value is read from shape
 
     """
 
@@ -629,13 +623,6 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
 
         paramsValuesD dict in output list contains
 
-        names: list, list of parameter names (that are varied)
-
-        values: numpy nd array, as many rows as sets of parameter values and as many rows as parameters
-
-        typeList: list, list of types of parameters (float, ...)
-
-        thFromIni: str, str of parameter names where the base value is read from shape
 
 
         Parameters
@@ -655,6 +642,11 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
         --------
         paramValuesDList: list
             list of paramValuesD (multiple if multiple release area scenarios)
+
+            - names: list, list of parameter names (that are varied)
+            - values: numpy nd array, as many rows as sets of parameter values and as many rows as parameters
+            - typeList: list, list of types of parameters (float, ...)
+            - thFromIni: str, str of parameter names where the base value is read from shape
 
     """
 

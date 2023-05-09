@@ -30,6 +30,8 @@ avaframe/**/*.xml
 
 avaframe/**/**/Outputs
 
-avaframe/com1DFAPy/*.c
+avaframe/**/**/Inputs/DEMremeshed
 
-avaframe/com1DFAPy/*.so
+avaframe/com1DFA/*.c
+
+avaframe/com1DFA/*.so

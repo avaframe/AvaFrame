@@ -51,6 +51,11 @@ bibtex_bibfiles = ['references_all.bib']
 # missing modules on rtd
 autosummary_mock_imports = [
     'avaframe',
+    'avaframe.com1DFA.damCom1DFA',
+    'com1DFA.damCom1DFA',
+    'com1DFA.DFAfunctionsCython',
+    'com1DFA.DFAToolsCython',
+    'out3Plot.plotUtils',
     'numpy',
     'shapefile',
     'scipy',

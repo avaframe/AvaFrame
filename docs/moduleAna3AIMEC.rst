@@ -44,7 +44,7 @@ Outputs
 
 *  output figures in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/``
 *  csv file with the results in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/``
-   (a detailed list of the results is described in :ref:`moduleAna3AIMEC.analyze-results`)
+   (a detailed list of the results is described in :ref:`moduleAna3AIMEC:Analyze results`)
 
 To run
 -------
@@ -254,7 +254,7 @@ This results in the following plot:
 
 
 Analyze results
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 Calculates the different indicators described in the :ref:`moduleAna3AIMEC:Theory` section
 for a given threshold. The threshold can be based on pressure, flow thickness, ...

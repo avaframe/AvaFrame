@@ -478,7 +478,7 @@ SamosAT friction model
 """"""""""""""""""""""""
 
 SamosAT friction model is a modification of some more classical models
-such as Voellmy model :ref:`Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
+such as Voellmy model :ref:`theoryCom1DFA:Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
 is expressed as (:cite:`Sa2007`):
 
 .. math::
