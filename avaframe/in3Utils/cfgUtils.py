@@ -31,6 +31,7 @@ def getGeneralConfig(nameFile=''):
     returns a configParser object
 
     Parameters
+    ----------
     nameFile: pathlib path
         optional full path to file, if empty use avaframeCfg from folder one level up
     '''
@@ -246,8 +247,8 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
 def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     """ compare locCfg to defCfg and return a cfg object and modification dict
         Values are merged from locCfg to defCfg:
-            - parameters already in defCfg get the value from locCfg
-            - additional values in locCfg get added in the resulting Cfg
+        - parameters already in defCfg get the value from locCfg
+        - additional values in locCfg get added in the resulting Cfg
 
         Parameters
         -----------
@@ -406,8 +407,7 @@ def readCfgFile(avaDir, module='', fileName=''):
 
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
-        or a dictionary - then typeDict=True, returns a uid
-    hash
+    or a dictionary - then typeDict=True, returns a uid hash
 
     Parameters
     ----------

@@ -136,7 +136,64 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     Apply the domain tranformation to peak results
     Analyse them.
     Calculate runout, Max Peak Values, Average Peak Values...
-    Get mass and entrainement
+    Get mass and entrainment
+
+    The output resAnalysisDF contains:
+
+    -maxACrossMax: float
+        max max A (A depends on what is in resTypes)
+    -ACrossMax: 1D numpy array
+        max A in each cross section (A depends on what is in resTypes)
+    -ACrossMean: 1D numpy array
+        mean A in each cross section (A depends on what is in resTypes)
+    -xRunout: float
+        x coord of the runout point calculated from the
+        MAX peak result in each cross section (runoutResType provided in the ini file)
+    -yRunout: float
+        y coord of the runout point calculated from the
+        MAX peak result in each cross section (runoutResType provided in the ini file)
+    -sRunout: float
+        projected runout distance calculated from the
+        MAX peak result in each cross section (runoutResType provided in the ini file)
+    -xMeanRunout: float
+        x coord of the runout point calculated from the
+        MEAN peak result in each cross section (runoutResType provided in the ini file)
+    -yMeanRunout: float
+        y coord of the runout point calculated from the
+        MEAN peak result in each cross section (runoutResType provided in the ini file)
+    -sMeanRunout: float
+        projected runout distance calculated from the
+        MEAN peak result in each cross section (runoutResType provided in the ini file)
+    -elevRel: float
+        elevation of the release area (based on first point with
+        peak field > thresholdValue)
+    -deltaH: float
+        elevation fall difference between elevRel and altitude of
+        run-out point
+
+    -TP: float
+        ref = True sim2 = True
+    -FN: float
+        ref = False sim2 = True
+    -FP: float
+        ref = True sim2 = False
+    -TN: float
+        ref = False sim2 = False
+
+    if mass analysis is performed
+
+    -relMass: float
+        release mass
+    -entMass: float
+        entrained mass
+    -finalMass: float
+        final mass
+    -relativMassDiff: float
+        the final mass diff with ref (in %)
+    -growthIndex: float
+        growth index
+    -growthGrad: float
+        growth gradient
 
     Parameters
     ----------
@@ -162,63 +219,11 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     Returns
     -------
     resAnalysisDF: dataFrame
-        input DF with results from Aimec Analysis updated with results from curent simulation:
-            -maxACrossMax: float
-                    max max A (A depends on what is in resTypes)
-            -ACrossMax: 1D numpy array
-                    max A in each cross section (A depends on what is in resTypes)
-            -ACrossMean: 1D numpy array
-                    mean A in each cross section (A depends on what is in resTypes)
-            -xRunout: float
-                    x coord of the runout point calculated from the
-                    MAX peak result in each cross section (runoutResType provided in the ini file)
-            -yRunout: float
-                    y coord of the runout point calculated from the
-                    MAX peak result in each cross section (runoutResType provided in the ini file)
-            -sRunout: float
-                    projected runout distance calculated from the
-                    MAX peak result in each cross section (runoutResType provided in the ini file)
-            -xMeanRunout: float
-                    x coord of the runout point calculated from the
-                    MEAN peak result in each cross section (runoutResType provided in the ini file)
-            -yMeanRunout: float
-                    y coord of the runout point calculated from the
-                    MEAN peak result in each cross section (runoutResType provided in the ini file)
-            -sMeanRunout: float
-                    projected runout distance calculated from the
-                    MEAN peak result in each cross section (runoutResType provided in the ini file)
-            -elevRel: float
-                    elevation of the release area (based on first point with
-                    peak field > thresholdValue)
-            -deltaH: float
-                    elevation fall difference between elevRel and altitude of
-                    run-out point
-
-            -TP: float
-                    ref = True sim2 = True
-            -FN: float
-                    ref = False sim2 = True
-            -FP: float
-                    ref = True sim2 = False
-            -TN: float
-                    ref = False sim2 = False
-
-            if mass analysis is performed
-            -relMass: float
-                    release mass
-            -entMass: float
-                    entrained mass
-            -finalMass: float
-                    final mass
-            -relativMassDiff: float
-                    the final mass diff with ref (in %)
-            -growthIndex: float
-                    growth index
-            -growthGrad: float
-                    growth gradient
+        input DF with results from Aimec Analysis updated with results from current simulation
     contourDict: dict
         dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
         for thresholdValue - updated with info for current simulation
+
     """
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']

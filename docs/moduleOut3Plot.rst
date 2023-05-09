@@ -126,8 +126,8 @@ quickPlotOne
 :py:func:`out3Plot.outQuickPlot.quickPlotOne` calls :py:func:`out3Plot.outQuickPlot.generateOnePlot` to generate the plot corresponding to the
 input data. For information on the required inputs have a look at :py:func:`out3Plot.outQuickPlot.quickPlotOne`.
 
-To run
-~~~~~~~~~
+To run quickPlotOne
+~~~~~~~~~~~~~~~~~~~
 An example on how to create this plot from a given input directory or from the default one ``data/NameOfAvalanche/Work/simplePlot``,
 is provided in :py:mod:`runScript/runQuickPlotOne`
 

@@ -175,8 +175,8 @@ Comparing the results from the DFA module to the similarity solution leads to th
 
           Time evolution of the profile in and across flow direction
 
-To run
-------
+To run similarity solution
+---------------------------
 
 A workflow example is given in :py:mod:`runScripts/runSimilaritySol`, where the semi-analytical solution
 is computed and avalanche simulations are performed and both results are then compared.
@@ -393,8 +393,8 @@ and the runout angle and distance errors as well as the velocity altitude error 
     Results from the ana1EnergyLineTest for the avaParabola
 
 
-To run
--------
+To run energy line test
+-----------------------
 
 A workflow example is given in :py:mod:`runScripts.runEnergyLineTest.py`.
 
@@ -452,8 +452,8 @@ One then needs to specify the the com1DFA configuration (through the ``com1DFACf
 as well as the AIMEC configuration (through the ``ana3AIMECCfg.ini`` and its local version) and
 the path generation configuration (through the ``pathGenerationCfg.ini`` and its local version).
 
-To run
--------
+To run rotation test
+--------------------
 
 A workflow example is given in :py:mod:`runScripts.runRotationTest.py`.
 Some example input data is given in avaTripleBowl (bowl topography).

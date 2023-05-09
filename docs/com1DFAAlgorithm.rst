@@ -55,24 +55,31 @@ AND the dam input shapefile is provided, the dam is initialized and will be take
 
 Initialize particles
 ~~~~~~~~~~~~~~~~~~~~~
-Particles are initialized according to the release raster extracted from the release shapefile
-and the mass per particle determination method (``massPerParticleDeterminationMethod``) specified in the configuration.
+
+Particles are initialized according to the release raster extracted from the
+release shapefile and the mass per particle determination method
+(``massPerParticleDeterminationMethod``) specified in the configuration.
 The mass per particle determination method can be chosen between:
 
-  - MPPDIR= mass per particle direct. The ``massPerPart`` value is taken from the configuration and is the same for all
-  cells.
+- MPPDIR= mass per particle direct. The ``massPerPart`` value is taken from
+  the configuration and is the same for all cells.
 
-  - MPPDH= mass per particles through release thickness. The ``massPerPart`` value is computed
-    using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
-    the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
+- MPPDH= mass per particles through release thickness. The ``massPerPart`` value is computed
+  using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
+  the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
-  - MPPKR= mass per particles through number of particles per kernel radius. There is no ``massPerPart`` since it can
-    vary from one cell to another depending on the release thickness of the cells. The aim of this method is to ensure a
-    constant density of particles within the snow domain (``nPPK`` particles per kernel radius is the target value).
-    This is related to the SPH method used for computing the flow thickness gradient. It requires a
-    sufficient number of particles to properly approximate the flow thickness gradient. It makes the most sense to combine
-    the MPPKR particle initialization method with the `splitOption` 1. In this combination, the particles will be merged
-    or split to keep a constant density of particles per kernel radius (:ref:`DFAnumerics:Splitting and merging`).
+- MPPKR= mass per particles through number of particles per kernel radius.
+  There is no ``massPerPart`` since it can vary from one cell to another
+  depending on the release thickness of the cells. The aim of this method is
+  to ensure a constant density of particles within the snow domain (``nPPK``
+  particles per kernel radius is the target value). This is related to the
+  SPH method used for computing the flow thickness gradient. It requires a
+  sufficient number of particles to properly approximate the flow thickness
+  gradient. It makes the most sense to combine the MPPKR particle
+  initialization method with the `splitOption` 1. In this combination, the
+  particles will be merged or split to keep a constant density of particles
+  per kernel radius (:ref:`DFAnumerics:Splitting and merging`).
+
 
 .. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default.
            This is important because, when using MPPDIR, the total number of particles is independent of the cell size. Hence,
@@ -330,6 +337,7 @@ The velocity vector :math:`\mathbf{u_\text{new}^\star}` after the dam interactio
 .. math::
 
   \mathbf{u^\star_\text{new}} = (\mathbf{u_\text{new}} - 2  \left\{\mathbf{n_w^\text{filled}} \cdot \mathbf{u_\text{new}}\right\}\mathbf{n_w^\text{filled}})\alpha_\text{rest}
+
 Finally, the new velocity and position are re-projected onto the topography.
 
 Correction step:
@@ -375,8 +383,6 @@ Update fields
 
 This steps are done in :py:func:`com1DFA.DFAfunctionsCython.updateFieldsC`.
 
-Update fields
-~~~~~~~~~~~~~
 The mesh values are updated with the particles properties using
 :ref:`particles to mesh interpolation <DFAnumerics:Particles to mesh>` methods.
 This is used to compute flow thickness, flow velocity and pressure fields from the particle properties.

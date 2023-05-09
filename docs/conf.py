@@ -16,6 +16,7 @@ import sphinx_rtd_theme
 # import avaframe
 # sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../avaframe'))
+sys.path.insert(0, os.path.abspath('..'))
 # sys.path.insert(0, os.path.abspath('../avaframe'))
 
 # -- Project information -----------------------------------------------------
@@ -65,6 +66,15 @@ autosummary_mock_imports = [
     'time',
     'mpl_toolkits',
     'seaborn',
+    'shapely',
+    'configUpdater',
+    'configupdater',
+    'geopandas',
+    'tabulate',
+    'deepdiff',
+    'deepmerge',
+    'cmcrameri',
+    'pyshp',
     'make_axes_locatable',
 ]
 autosummary_generate = True

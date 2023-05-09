@@ -345,6 +345,7 @@ and
 .. math::
   \frac{\partial r}{\partial x_{k,i}} = \frac{(x_{k,i}-x_{l,i})}{\sqrt{(x_{k,1}-x_{l,1})^2 + (x_{k,2}-x_{l,2})^2}},
   \quad i=\{1,2\}
+
 which leads to the following expression for the gradient:
 
 .. math::
@@ -360,7 +361,7 @@ The gradient of :math:`f` is then simply:
 
 .. math::
     \mathbf{\nabla}f_{k} = -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
-    :label: sph gradient
+    :label: sph gradient1
 
 2.5D SPH method
 """"""""""""""""
@@ -394,6 +395,7 @@ It is important to define :math:`f` properly and the gradient that will be calcu
   (x_1,x_2,x_3) &\mapsto f(x_1,x_2,x_3) = f(x_1(v_1,v_2),x_2(v_1,v_2)) = \tilde{f}(v_1,v_2)
   \end{aligned}
   \right.
+
 Indeed, since :math:`(x_1,x_2,x_3)` lies in :math:`\mathcal{TP}`, :math:`x_3`
 is not independent of :math:`(x_1,x_2)`:
 
@@ -432,7 +434,7 @@ Which leads to:
 
 .. math::
   \mathbf{\nabla}_\mathcal{TP}\tilde{f_{k}} = -\sum\limits_{l}\tilde{f_{l}}A_{l}\,\mathbf{\nabla}W_{kl}
-  :label: sph gradient
+  :label: sph gradient2
 
 This gradient can now be expressed in the Cartesian coordinate system.
 It is clear that the change of coordinate system was not needed:
@@ -489,7 +491,7 @@ are assumed to be cylindrical, i.e the base is a circle. For particle ``k`` we h
 of the support domain of the sph kernel function is :math:`\pi r_0^2`. The aim is to keep ``nPPK`` particles within
 the kernel radius. The particles are split if the estimated number of particles per kernel radius :math:`\frac{\pi r_0^2}{A_k}`
 falls below a given value of :math:`n_{PPK}^{min} = C_{n_{PPK}}^{min}n_{PPK}`. Particles are split using the same
-method as in :ref:`DFAnumerics:Only split approach`. Similarly, particles are merged if the estimated
+method as in :ref:`DFAnumerics:Split (**default**)`. Similarly, particles are merged if the estimated
 number of particles per kernel radius exceeds a given value :math:`n_{PPK}^{max} = C_{n_{PPK}}^{max}n_{PPK}`.
 In this case particles are merged with their closest neighbor. The new position and velocity is the mass
 averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
@@ -746,6 +748,7 @@ The friction force is expressed:
 
 .. math::
   \mathbf{F}_k^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
+
 with:
 
 .. math::

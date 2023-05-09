@@ -22,7 +22,7 @@ Details on this function, as for example required inputs can be found in: :py:mo
 
 
 To run - example run scripts
--------------------------
+----------------------------
 An example on how to generate probability maps for avalanche simulations performed with :py:mod:`com1DFA`
 is given in :py:mod:`runScripts.runProbAna`, where for *avaHockeyChannel* simulations are performed with
 varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
@@ -43,7 +43,7 @@ In order to run this example:
 .. figure:: _static/avaHockeyChannel_probMap_lim1.0.png
     :width: 90%
 
-      Probability map example.
+    Probability map example.
 
 Another example is given in :py:mod:`runScripts.runProbAnaCom1DFA.py`.
 Avalanche simulations are performed with the settings defined in the configuration file of

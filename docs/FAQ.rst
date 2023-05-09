@@ -7,7 +7,7 @@ Frequently Asked Questions
 
 
 Can the spatial resolution of simulations performed with com1DFA (dense flow) be changed?
------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 The default setup of :py:mod:`com1DFA` is calibrated for medium to large dense flow snow avalanches in regards to hazard
 mapping. To provide calibrated results, new simulations with DEM cell sizes other than 5 meters are being

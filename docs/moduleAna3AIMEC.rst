@@ -215,8 +215,7 @@ if it comes from the :py:mod:`com1DFA` module (or any computational module that 
      if part of the name is given) and the first simulation found is arbitrarily taken as reference.
 
   * Based on some configuration parameter
-     one needs to provide a ``varParList`` (parameter or list of
-     parameters separated by |) in the AIMEC configuration file as well as the desired sorting order
+     one needs to provide a ``varParList`` (parameter or list of parameters separated by ``|``) in the AIMEC configuration file as well as the desired sorting order
      (``ascendingOrder``, True by default) for these parameters and optionally a ``referenceSimValue``.
      The simulations are first going to be sorted according to ``varParList`` and ``ascendingOrder``
      (this is done by the pandas function `sort_values <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.sort_values.html>`_).

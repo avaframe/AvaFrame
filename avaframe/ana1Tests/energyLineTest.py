@@ -47,6 +47,7 @@ def mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem
 
 def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaProfileMass, dem, fieldsList, simName):
     """ Make energy test analysis and plot results
+
     Parameters
     -----------
     avalancheDir: pathlib
@@ -63,6 +64,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
         field dictionary list
     simName: str
         simulation name
+
     """
     plotScor = energyLineTestCfg['energyLineTest'].getboolean('plotScor')
     # read physical parameters from DFA configuration
@@ -227,6 +229,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, com1DFACfg, avaPr
 
 def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
     """Compute the center of mass runout angle
+
     Parameters
     -----------
     avaProfileMass: dict
@@ -236,6 +239,7 @@ def getRunOutAngle(avaProfileMass, indStart=0, indEnd=-1):
         0 by default - so full mass averaged path from top
     indEnd: int
         index of the start of the mass averaged pass (to discard the bottom extension). -1 by default
+
     Returns
     --------
     runOutAngleRad: float
@@ -256,7 +260,8 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
     """Extend the  profile path and compute the intersection
     between the theoretical energy line and the path profile
     The profile is extended by a line. The line slope is computed
-    from the slope of the regression on the las points of the profile
+    from the slope of the regression on the last points of the profile
+
     Parameters
     -----------
     energyLineTestCfg: configParser
@@ -267,6 +272,7 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
         friction coefficient
     csz: float
         dem cell size
+
     Returns
     --------
     slopeExt: float
@@ -279,6 +285,7 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
         mass average path profile
     coefExt: float
         coefficient saying how long the path was extended to find the intersection
+
     """
     # get slope of the last profile points to extend the profile
     nCellsExtrapolation = energyLineTestCfg['energyLineTest'].getint('nCellsExtrapolation')
@@ -321,6 +328,7 @@ def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu, csz):
 
 def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAngleDeg, alphaDeg):
     """Compute energy dots and errors
+
     Parameters
     -----------
     avaProfileMass: dict
@@ -339,6 +347,7 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
         center of mass runout angle in radians
     runOutAngleDeg: float
         center of mass runout angle in degrees
+
     Returns
     --------
     zEne: numpy 1D array
@@ -352,6 +361,7 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
     resultEnergyTest: dict
         zEnd, sEnd, runoutAngle as well as rmseVelocityElevation, runOutSError, runOutZError, runOutAngleError
         between theoretical solution and simulation result
+
     """
     # read mass average quantities
     u2Path = avaProfileMass['u2']

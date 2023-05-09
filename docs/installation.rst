@@ -85,7 +85,7 @@ Update Avaframe to a new release
 
 
 Operationelle Installation (Deutsch)
--------------------------------
+------------------------------------
 
 Dies ist der Schnellstart für die Verwendung von AvaFrame mit QGis als Frontend. 
 
@@ -94,7 +94,7 @@ Vorraussetzungen
 
 Die Vorraussetzungen sind:
 
-* QGis: `QGis installation <https://qgis.org/de/site/forusers/download.html>`_ (Wir empfehlen die aktuellste Version zu 
+* QGis: `QGis Installation (download) <https://qgis.org/de/site/forusers/download.html>`_ (Wir empfehlen die aktuellste Version zu 
   verwenden)
 
 Setup AvaFrameConnector  

@@ -1189,6 +1189,7 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
 
 def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     """Create grid
+
     Parameters
     -----------
     xllc, yllc: float

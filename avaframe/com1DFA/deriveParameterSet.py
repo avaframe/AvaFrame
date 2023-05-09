@@ -97,21 +97,21 @@ def checkResType(fullCfg, section, key, value):
     Warns the user if some do not, removes them from the resType list and
     updates the cfg
 
-        Parameters
-        -----------
-        fullCfg: configParser object
-            full configuration potentially including variations of parameter
-        section: str
-            section name
-        key: str
-            key name
-        value: str
-            corresponding value
+    Parameters
+    -----------
+    fullCfg: configParser object
+        full configuration potentially including variations of parameter
+    section: str
+        section name
+    key: str
+        key name
+    value: str
+        corresponding value
 
-        Returns
-        --------
-        fullCfg: configParser object
-            full configuration updated with resType if this last one was modified
+    Returns
+    --------
+    fullCfg: configParser object
+        full configuration updated with resType if this last one was modified
 
     """
     # check that the resType asked actually exists

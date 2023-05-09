@@ -232,20 +232,18 @@ def extendDFAPath(cfg, avaProfile, dem, particlesIni):
     -----------
     cfg: configParser
         configuration object with:
-        extTopOption: int
-        how to extend towards the top?
-            0 for heighst point method
-            a for largest runout method
-        nCellsResample: int
-            resampling length is given by nCellsResample*demCellSize
-        nCellsMinExtend: int
-            when extending towards the bottom, take points at more than nCellsMinExtend*demCellSize
-            from last point to get the direction
-        nCellsMaxExtend: int
-            when extending towards the bottom, take points at less than nCellsMaxExtend*demCellSize
-            from last point to get the direction
-        factBottomExt: float
-            extend the profile from factBottomExt*sMax
+        extTopOption: int, how to extend towards the top? 0 for heighst point method, a for largest runout method
+
+        nCellsResample: int, resampling length is given by nCellsResample*demCellSize
+
+        nCellsMinExtend: int, when extending towards the bottom, take points at more 
+        than nCellsMinExtend*demCellSize from last point to get the direction
+
+        nCellsMaxExtend: int, when extending towards the bottom, take points 
+        at less than nCellsMaxExtend*demCellSize from last point to get the direction
+
+        factBottomExt: float, extend the profile from factBottomExt*sMax
+
     avaProfile: dict
         profile to be extended
     dem: dict
@@ -344,14 +342,12 @@ def extendProfileBottom(cfg, dem, profile):
     Parameters
     -----------
     cfg: configParser
-        nCellsMinExtend: int
-            when extending towards the bottom, take points at more than nCellsMinExtend*demCellSize
-            from last point to get the direction
-        nCellsMaxExtend: int
-            when extending towards the bottom, take points at less than nCellsMaxExtend*demCellSize
-            from last point to get the direction
-        factBottomExt: float
-            extend the profile from factBottomExt*sMax
+        nCellsMinExtend: int, when extending towards the bottom, take points 
+        at more than nCellsMinExtend*demCellSize from last point to get the direction
+
+        nCellsMaxExtend: int, when extending towards the bottom, take points at
+        less than nCellsMaxExtend*demCellSize from last point to get the direction
+        factBottomExt: float, extend the profile from factBottomExt*sMax
     dem: dict
         dem dict
     profile: dict
@@ -445,18 +441,20 @@ def getParabolicFit(cfg, avaProfile, dem):
     """fit a parabola on a set of (s, z) points
 
     first and last point match. Last constraint is given by fitOption (see below)
+
     Parameters
     -----------
     cfg: configParser
         configuration object with:
         fitOption: int
         how to optimize the fit
-            0 minimize distance between points
-            1 match the end slope
+        0 minimize distance between points
+        1 match the end slope
     avaProfile: dict
         profile to be extended
     dem: dict
         dem dict
+
     Returns
     --------
     parabolicFit: dict
@@ -495,15 +493,14 @@ def getSplitPoint(cfg, avaProfile, parabolicFit):
     -----------
     cfg: configParser
         configuration object with:
-        slopeSplitPoint: float
-            desired slope at split point (in degrees)
-        dsMin: float
-            threshold distance [m] for looking for the split point (at least dsMin meters below
-            split point angle)
+        slopeSplitPoint: float, desired slope at split point (in degrees)
+        dsMin: float, threshold distance [m] for looking for the 
+        split point (at least dsMin meters below split point angle)
     avaProfile: dict
         profile to be extended
     parabolicFit: dict
         a, b, c coeficients of the parabolic fit (y = a*a*x + b*x + c)
+
     Returns
     --------
     splitPoint: dict
@@ -539,16 +536,18 @@ def getSplitPoint(cfg, avaProfile, parabolicFit):
 def resamplePath(cfg, dem, avaProfile):
     """
     resample the path profile and keep track of indStartMassAverage and indEndMassAverage
+
     Parameters
     -----------
     cfg: configParser
         configuration object with:
-            nCellsResample: int
-                resampling length is given by nCellsResample*demCellSize
+        nCellsResample: int
+        resampling length is given by nCellsResample*demCellSize
     dem: dict
         dem dict
     avaProfile: dict
         profile to be resampled
+
     Returns
     --------
     avaProfile: dict

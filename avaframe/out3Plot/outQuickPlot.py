@@ -250,12 +250,14 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
 def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix):
     """ Plot simulation result and compare to reference solution
         (two raster datasets of identical dimension) and save to
-        Outputs/out3Plot within avalanche directoy
+        Outputs/out3Plot within avalanche directoy.
 
-        figure 1: plot raster data for dataset1, dataset2 and their difference, their difference limited to
-                  specified range, including a histogram and the cumulative density function of the differences
-        figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
-        -plots are saved to Outputs/out3Plot
+        figure 1, plot raster data for dataset1, dataset2 and their difference, their difference limited to
+        specified range, including a histogram and the cumulative density function of the differences
+
+        figure 2, plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
+
+        plots are saved to Outputs/out3Plot
 
         Parameters
         ----------

@@ -21,7 +21,8 @@ log = logging.getLogger(__name__)
 
 
 def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
-    """ Plot time series of tracked partcles
+    """ Plot time series of tracked particles
+
     Parameters
     ----------
     outDirData: str
@@ -125,6 +126,7 @@ def updateTrackPart(particles, ax, dem):
 
 def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h', colBarResType=''):
     """Update axes with particles
+
     Parameters
     ----------
     particles: dict
@@ -220,6 +222,7 @@ def addDem2Plot(ax, dem, what='slope', extent=''):
 
 def plotParticles(particlesList, cfg, dem):
     """ Plot particles on dem
+
     Parameters
     ----------
     particlesList: list

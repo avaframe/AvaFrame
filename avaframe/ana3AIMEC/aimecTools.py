@@ -550,31 +550,31 @@ def makeTransfoMat(rasterTransfo):
     Takes a Domain Boundary and finds the (x,y) coordinates of the new
     raster point (the one following the path)
 
+    input rasterTransfo contains
+
+
+
     Parameters
     ----------
     rasterTransfo: dict
-        dictionary containing:
-            domainWidth: float
-            cellSize: float
-            DBXl: 1D numpy array
-                x coord of the left boundary
-            DBXr: 1D numpy array
-                x coord of the right boundary
-            DBYl: 1D numpy array
-                y coord of the left boundary
-            DBYr: 1D numpy array
-                y coord of the right boundary
+        dictionary containing
+
+        - domainWidth: float
+        - cellSize: float
+        - DBXl: 1D numpy array, x coord of the left boundary
+        - DBXr: 1D numpy array, x coord of the right boundary
+        - DBYl: 1D numpy array, y coord of the left boundary
+        - DBYr: 1D numpy array, y coord of the right boundary
 
     Returns
     -------
     rasterTransfo: dict
         rasterTransfo dictionary updated with
-            gridx: 2D numpy array
-                x coord of the new raster points in old coord system
-            gridy: 2D numpy array
-                y coord of the new raster points in old coord system
-            l: 1D numpy array
-                new coord system in the cross direction
+
+        - gridx: 2D numpy array, x coord of the new raster points in old coord system
+        - gridy: 2D numpy array, y coord of the new raster points in old coord system
+        - l: 1D numpy array, new coord system in the cross direction
+
     """
     w = rasterTransfo['domainWidth']
     cellSize = rasterTransfo['cellSizeSL']
@@ -635,24 +635,24 @@ def getSArea(rasterTransfo, dem):
     Parameters
     ----------
     rasterTransfo: dict
-        dictionary containing:
-            domainWidth: float
-            cellSize: float
-            gridx: 2D numpy array
-                x coord of the new raster points in old coord system
-            gridy: 2D numpy array
-                y coord of the new raster points in old coord system
+        dictionary containing
+
+        - domainWidth: float
+        - cellSize: float
+        - gridx: 2D numpy array, x coord of the new raster points in old coord system
+        - gridy: 2D numpy array, y coord of the new raster points in old coord system
+
     dem: dict
-        dem dictionnary with normal and area information
+        dem dictionary with normal and area information
 
     Returns
     -------
     rasterTransfo: dict
         rasterTransfo dictionary updated with
-            s: 1D numpy array
-                new coord system in the polyline direction
-            rasterArea: 2D numpy array
-                real area of the cells of the new raster
+
+        - s: 1D numpy array, new coord system in the polyline direction
+        - rasterArea: 2D numpy array, real area of the cells of the new raster
+
     """
     xcoord = rasterTransfo['gridx']
     ycoord = rasterTransfo['gridy']
@@ -865,11 +865,11 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     rasterTransfo: dict
         transformation information
     resAnalysisDF : dataFrame
-        analysis results from aimec containing:
-        PResCrossMax: 1D numpy array
-            max of the peak result in each cross section
-        PResCrossMean: 1D numpy array
-            mean of the peak result in each cross section
+        analysis results from aimec containing
+
+        - PResCrossMax: 1D numpy array, max of the peak result in each cross section
+        - PResCrossMean: 1D numpy array, mean of the peak result in each cross section
+
     transformedRasters: dict
         dict with transformed dem and peak results
     simRowHash: str
@@ -878,35 +878,29 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     Returns
     -------
     resAnalysisDF : dataFrame
-        result dataFrame updated withfor each simulation the:
-            xRunout: float
-                x coord of the runout point
-                measured from the begining of the path. run-out
-                calculated with the MAX result in each cross section
-            yRunout: float
-                y coord of the runout point
-                measured from the begining of the path. run-out
-                calculated with the MAX result in each cross section
-            sRunout: float
-                runout distance measured from the begining of the path.
-                run-out calculated with the MAX result in each cross section
-            xMeanRunout: float
-                x coord of the runout point
-                measured from the begining of the path. run-out
-                calculated with the MEAN result in each cross section
-            yMeanRunout: float
-                y coord of the runout point
-                measured from the begining of the path. run-out
-                calculated with the MEAN result in each cross section
-            sMeanRunout: float
-                runout distance measured from the begining of the path.
-                run-out calculated with the MEAN result in each cross section
-            elevRel: float
-                elevation of the release area (based on first point with
-                peak field > thresholdValue)
-            deltaH: float
-                elevation fall difference between elevRel and altitude of
-                run-out point
+        result dataFrame updated for each simulation with
+
+        - xRunout: float, x coord of the runout point
+          measured from the begining of the path. run-out
+          calculated with the MAX result in each cross section
+        - yRunout: float, y coord of the runout point
+          measured from the begining of the path. run-out
+          calculated with the MAX result in each cross section
+        - sRunout: float, runout distance measured from the begining of the path.
+          run-out calculated with the MAX result in each cross section
+        - xMeanRunout: float, x coord of the runout point
+          measured from the begining of the path. run-out
+          calculated with the MEAN result in each cross section
+        - yMeanRunout: float, y coord of the runout point
+          measured from the begining of the path. run-out
+          calculated with the MEAN result in each cross section
+        - sMeanRunout: float, runout distance measured from the begining of the path.
+          run-out calculated with the MEAN result in each cross section
+        - elevRel: float, elevation of the release area (based on first point with
+          peak field > thresholdValue)
+        - deltaH: float, elevation fall difference between elevRel and altitude of
+          run-out point
+
     """
     # read inputs
     scoord = rasterTransfo['s']

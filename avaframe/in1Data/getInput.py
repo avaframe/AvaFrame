@@ -160,9 +160,8 @@ def getInputData(avaDir, cfg):
 
 def getInputDataCom1DFA(avaDir):
     """ Fetch input datasets required for simulation, duplicated function because
-        now fetch all available files
-        simulation type set differently in com1DFA compared to com1DFAOrig:
-        TODO: remove duplicate once it is not required anymore
+    now fetch all available files simulation type set differently in com1DFA compared 
+    to com1DFAOrig: TODO: remove duplicate once it is not required anymore
 
     Parameters
     ----------
@@ -174,20 +173,21 @@ def getInputDataCom1DFA(avaDir):
     Returns
     -------
     inputSimFiles: dict
-        dictionary with all the input files:
-        demFile : str (first element of list)
-            list of full path to DEM .asc file
-        relFiles : list
-            list of full path to release area scenario .shp files
-        secondaryReleaseFile : str
-            full path to secondary release area .shp file
-        entFile : str
-            full path to entrainment area .shp file
-        resFile : str
-            full path to resistance area .shp file
-        entResInfo : flag dict
-            flag if Yes entrainment and/or resistance areas found and used for simulation
-            flag True if a Secondary Release file found and activated
+        dictionary with all the input files
+        # demFile : str (first element of list)
+        #     list of full path to DEM .asc file
+        # relFiles : list
+        #     list of full path to release area scenario .shp files
+        # secondaryReleaseFile : str
+        #     full path to secondary release area .shp file
+        # entFile : str
+        #     full path to entrainment area .shp file
+        # resFile : str
+        #     full path to resistance area .shp file
+        # entResInfo : flag dict
+        #     flag if Yes entrainment and/or resistance areas found and used for simulation
+        #     flag True if a Secondary Release file found and activated
+
     """
 
     # Set directories for inputs, outputs and current work
