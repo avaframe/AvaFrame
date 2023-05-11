@@ -737,7 +737,7 @@ def appendShpThickness(cfg):
     return cfg
 
 
-def checkDEM(cfgSim, demFile):
+def checkDEM(cfgSim, demFile, onlySearch=False):
     """ check if cell size of DEM in Inputs/ is same as desired meshCellSize
         if not - check for remeshed DEM or remesh the DEM
 
@@ -747,6 +747,8 @@ def checkDEM(cfgSim, demFile):
             configuration settings of com module
         demFile: str or pathlib path
             path to dem in Inputs/
+        onlySearch: bool
+            if True - only searching for remeshed DEM but not remeshing if not found
 
         Returns
         --------
@@ -763,7 +765,7 @@ def checkDEM(cfgSim, demFile):
 
     # if cell size of DEM is different from desired meshCellSize - look for remeshed DEM or remesh
     if np.abs(meshCellSize - headerDEM['cellsize']) > meshCellSizeThreshold:
-        pathToDem = geoTrans.remeshDEM(demFile, cfgSim)
+        pathToDem = geoTrans.remeshDEM(demFile, cfgSim, onlySearch=onlySearch)
     else:
         log.info('DEM taken from Inputs/')
         pathToDem = demFile.name

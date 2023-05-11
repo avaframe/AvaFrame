@@ -452,13 +452,23 @@ def makeDictFromVars(cfg):
     """
 
     varParList = cfg['varParList'].split('|')
+    varParTypes = cfg['varParType'].split('|')
     varValues = cfg['variationValue'].split('|')
     varSteps = cfg['numberOfSteps'].split('|')
     varTypes = cfg['variationType'].split('|')
 
     # check if value is provided for each parameter
-    if (len(varParList) == len(varValues) == len(varSteps) == len(varTypes)) is False:
-        message = 'For every parameter in varParList a variationValue, numberOfSteps and variationType needs to be provided'
+    if cfg.getint('samplingStrategy') == 1:
+        lengthsPar = 'varParType'
+    elif cfg.getint('samplingStrategy') == 2:
+        lengthsPar = 'numberOfSteps'
+    else:
+        message = 'Chosen sampling strategy not valid: options are 1 or 2'
+        log.error(message)
+        raise AssertionError(message)
+
+    if (len(varParList) == len(varValues) == len(cfg[lengthsPar].split('|')) == len(varTypes)) is False:
+        message = ('For every parameter in varParList a variationValue, %s and variationType needs to be provided' % lengthsPar)
         log.error(message)
         raise AssertionError(message)
 
@@ -473,9 +483,10 @@ def makeDictFromVars(cfg):
         raise AssertionError(message)
 
     variationsDict = {}
-    for idx, val in enumerate(varParList):
-        variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx],
-                               'variationType': varTypes[idx]}
+    if cfg.getint('samplingStrategy') == 2:
+        for idx, val in enumerate(varParList):
+            variationsDict[val] = {'variationValue': varValues[idx], 'numberOfSteps': varSteps[idx],
+                                   'variationType': varTypes[idx]}
 
     return variationsDict
 
