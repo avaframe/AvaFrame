@@ -278,7 +278,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
     return remeshedRaster
 
 
-def remeshDEM(demFile, cfgSim):
+def remeshDEM(demFile, cfgSim, onlySearch=False):
     """ change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
 
     the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
@@ -293,6 +293,8 @@ def remeshDEM(demFile, cfgSim):
     cfgSim : configParser
         meshCellSizeThreshold : threshold under which no remeshing is done
         meshCellSize : desired cell size
+    onlySearch: bool
+        if True - only searching for remeshed DEM but not remeshing if not found
 
     Returns
     -------
@@ -302,7 +304,7 @@ def remeshDEM(demFile, cfgSim):
     """
     # first check if remeshed DEM is available
     pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
-    if DEMFound:
+    if DEMFound or onlySearch:
         return pathDem
 
     # -------- if no remeshed DEM found - remesh

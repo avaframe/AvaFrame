@@ -88,7 +88,7 @@ def test_createComModConfig(tmp_path):
     cfgProb = configparser.ConfigParser()
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'defaultSetup': 'True', 'samplingStrategy': '2',
+                          'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float',
                           'defaultComModuleCfg': 'True'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
 
@@ -203,7 +203,7 @@ def test_createComModConfig(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'range|range',
                           'variationValue': '0.2|1.2', 'numberOfSteps': '2|3',
-                          'samplingStrategy': '2',
+                          'samplingStrategy': '2', 'varParType': 'float|float|int',
                           'defaultComModuleCfg': 'True'}
 
     # call function to be tested
@@ -257,7 +257,7 @@ def test_updateCfgRange():
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                       'variationValue': '60|50', 'numberOfSteps': '2|2',
-                      'defaultSetup': 'True'}
+                      'defaultSetup': 'True', 'varParType': 'float', 'samplingStrategy': '2'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'musamosat'
@@ -311,8 +311,8 @@ def test_updateCfgRange():
     # setup inputs
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'range|range',
-                      'variationValue': '0.1|0.5', 'numberOfSteps': '5|12',
-                      'defaultSetup': 'True'}
+                      'variationValue': '0.1|0.5', 'numberOfSteps': '5|12', 'varParType': 'float|float',
+                      'defaultSetup': 'True', 'samplingStrategy': '2'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'musamosat'
@@ -345,7 +345,7 @@ def test_updateCfgRange():
     cfg.optionxform = str
     cfg['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'normaldistribution|normaldistribution',
                       'variationValue': '0.1|0.3', 'numberOfSteps': '3|12',
-                      'defaultSetup': 'True'}
+                      'defaultSetup': 'True', 'varParType': 'float|float', 'samplingStrategy': '2'}
     cfg['computeFromDistribution_override'] = {'buildType': 'ci95', 'minMaxInterval': '95',
         'defaultConfig': 'True'}
 
@@ -382,7 +382,7 @@ def test_updateCfgRange():
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|rangefromci',
                       'variationValue': '60|ci95', 'numberOfSteps': '2|2',
-                      'defaultSetup': 'True'}
+                      'defaultSetup': 'True', 'varParType': 'float|float', 'samplingStrategy': '2'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'relTh'
@@ -401,7 +401,7 @@ def test_updateCfgRange():
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|range',
                       'variationValue': '60|0.25', 'numberOfSteps': '2|8',
-                      'defaultSetup': 'True'}
+                      'defaultSetup': 'True', 'varParType': 'float|float', 'samplingStrategy': '2'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'relTh'
@@ -427,7 +427,7 @@ def test_makeDictFromVars():
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangeFromCi|range',
                           'variationValue': '60|ci95|0.15', 'numberOfSteps': '2|3|4',
                           'samplingStrategy': '2',
-                          'defaultComModuleCfg': 'True',
+                          'defaultComModuleCfg': 'True', 'varParType': 'float|float',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
 
@@ -461,7 +461,7 @@ def test_createSampleWithVariationStandardParameters():
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|range|range',
                           'variationValue': '60|0.25|0.15', 'numberOfSteps': '2|3|4',
-                          'samplingStrategy': '1',
+                          'samplingStrategy': '1', 'varParType': 'float|float|float',
                           'defaultComModuleCfg': 'True',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
@@ -758,7 +758,7 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
               'variationValue': '60|50', 'numberOfSteps': '2|3',
-              'defaultSetup': 'True', 'samplingStrategy': '2',
+              'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float',
               'defaultComModuleCfg': 'True'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
 
@@ -792,7 +792,7 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|range',
               'variationValue': '60|0.5', 'numberOfSteps': '2|3',
-              'samplingStrategy': '2',
+              'samplingStrategy': '2', 'varParType': 'float|float',
               'defaultComModuleCfg': 'False'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
 

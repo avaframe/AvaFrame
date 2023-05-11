@@ -16,6 +16,8 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgHandling
+import avaframe.in1Data.getInput as gI
+import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.geoTrans as gT
 
@@ -281,11 +283,12 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         cellSize = header['cellsize']
 
         # load correspoding DEM check for matching cellsize
+        demInputs = gI.getDEMPath(avaDir)
         cfgDEM = {'GENERAL': {'avalancheDir': avaDir, 'meshCellSize': header['cellsize'],
             'meshCellSizeThreshold': cfgFull['PLOT']['meshCellSizeThreshold']}}
-        pathDem, _, _ = gT.searchRemeshedDEM('', cfgDEM)
-        demFile = pathlib.Path(cfgDEM['GENERAL']['avalancheDir'], 'Inputs', pathDem)
+        pathDem = dP.checkDEM(cfgDEM, demInputs, onlySearch=True)
         if pathDem != '':
+            demFile = pathlib.Path(cfgDEM['GENERAL']['avalancheDir'], 'Inputs', pathDem)
             demData = IOf.readRaster(demFile, noDataToNan=True)
             demField = demData['rasterData']
         else:
@@ -336,7 +339,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             cmap.set_bad(colorBackGround)
 
         # add data plot
-        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=extent, origin='lower', aspect=nx/ny, norm=norm,
+        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=extent, origin='lower', aspect='equal', norm=norm,
             zorder=3)
 
         # create meshgrid for contour plot also constrained to where there is data
@@ -379,11 +382,11 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
             # add plot
             im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=[x0, x1, y0, y1],
-                             origin='lower', aspect=nx/ny, norm=norm)
+                             origin='lower', norm=norm, aspect='equal')
 
             # create meshgrid for contour plot also constrained to where there is data
-            xx2 = np.arange(x0, x1, cellSize)
-            yy2 = np.arange(y0, y1, cellSize)
+            xx2 = np.linspace(x0, x1, dataCutConstrained.shape[1])
+            yy2 = np.linspace(y0, y1, dataCutConstrained.shape[0])
             X2, Y2 = np.meshgrid(xx2, yy2)
 
             # add contourlines for levels
