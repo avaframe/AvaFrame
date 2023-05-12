@@ -1076,7 +1076,7 @@ def test_initializeParticles():
     releaseLine['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
     dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'travelAngle',
+                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'trajectoryAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
@@ -1351,7 +1351,7 @@ def test_initializeFields():
     particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'nPart': 3,
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
                  'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.]),
-                 'travelAngle': np.asarray([0., 0., 0.])}
+                 'trajectoryAngle': np.asarray([0., 0., 0.])}
     cfg = configparser.ConfigParser()
     cfg['REPORT'] = {'plotFields': 'ppr|pft|pfv'}
     cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2', 'resType': 'ppr|pft|pfv'}
@@ -1638,7 +1638,7 @@ def test_runCom1DFA(tmp_path, caplog):
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFile)
 
     dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'travelAngle',
+                'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'trajectoryAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',

@@ -348,7 +348,7 @@ def test_updatePositionC():
     assert particles['iterate'] == True
 
 
-def test_computeTravelAngle():
+def test_computeTrajectoryAngle():
     # first compute travel angle for each particle
     # get parent Id in order to  get the first z position
     parentID = np.array([0, 1, 2, 0])
@@ -358,9 +358,9 @@ def test_computeTravelAngle():
     s = np.array([10.0, 10.0, 0.0, 10.0])
     z = np.array([0.0, 0.0, 0.0, 1.0])
     particles = {'nPart': nPart, 'parentID': parentID, 'trajectoryLengthXY': s, 'z': z}
-    particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
-    print(particles['travelAngle'])
-    gamma = particles['travelAngle']
+    particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
+    print(particles['trajectoryAngle'])
+    gamma = particles['trajectoryAngle']
     assert gamma[2] == 0
     assert gamma[0] == 45
     assert gamma[1] == pytest.approx(41.9872125, rel=1e-6)
