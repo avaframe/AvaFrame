@@ -1019,7 +1019,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
-  cdef double[:] travelAngleArray = particles['travelAngle']
+  cdef double[:] trajectoryAngleArray = particles['trajectoryAngle']
   cdef bint computeTA = fields['computeTA']
   cdef bint computeKE = fields['computeKE']
   cdef bint computeP = fields['computeP']
@@ -1043,7 +1043,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, travelAngle
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
   cdef int k, i
   cdef int indx, indy
   cdef int ind1[4]
@@ -1070,8 +1070,8 @@ def updateFieldsC(cfg, particles, dem, fields):
     indx = <int>math.round(x / csz)
     indy = <int>math.round(y / csz)
     if computeTA:
-      travelAngle = travelAngleArray[k]
-      travelAngleField[indy, indx] = max(travelAngleField[indy, indx], travelAngle)
+      trajectoryAngle = trajectoryAngleArray[k]
+      travelAngleField[indy, indx] = max(travelAngleField[indy, indx], trajectoryAngle)
     # add the component of the points value to the 4 neighbour grid points
     # TODO : check if giving the arrays [0 1 0 1].. is faster
     for i in range(4):
@@ -1161,7 +1161,7 @@ cpdef double computePressure(double v, double rho):
   return p
 
 
-def computeTravelAngleC(particles, zPartArray0):
+def computeTrajectoryAngleC(particles, zPartArray0):
   """Compute the travel angle associated to the particles
 
   Parameters
@@ -1201,7 +1201,7 @@ def computeTravelAngleC(particles, zPartArray0):
     # get the travel angle
     gamma = math.atan(tanGamma) * 180.0 / math.pi
     gammaArray[k] = gamma
-  particles['travelAngle'] = np.asarray(gammaArray)
+  particles['trajectoryAngle'] = np.asarray(gammaArray)
   return particles
 
 

@@ -1144,7 +1144,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['trajectoryLengthXY'] = np.zeros(np.shape(hPartArray))
     particles['trajectoryLengthXYCor'] = np.zeros(np.shape(hPartArray))
     particles['trajectoryLengthXYZ'] = np.zeros(np.shape(hPartArray))
-    particles['travelAngle'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryAngle'] = np.zeros(np.shape(hPartArray))
     particles['stoppCriteria'] = False
     mPartArray = particles['m']
     kineticEne = np.sum(0.5 * mPartArray * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
@@ -1971,7 +1971,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     startTime = time.time()
     log.debug('update Fields C')
     if fields['computeTA']:
-        particles = DFAfunC.computeTravelAngleC(particles, zPartArray0)
+        particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
