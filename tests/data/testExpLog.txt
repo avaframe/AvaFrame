@@ -1,0 +1,7 @@
+NoOfSimulation,SimulationRunName,RelTh
+0  release1HS2_entres_dfa  1.000000
+1  release1HS2_null_dfa  2.000000
+2  release1HS2_null_dfa  4.000000
+3  release2HS2_entres_dfa  1.000000
+4  release2HS2_null_dfa  2.000000
+5  release2HS2_null_dfa  4.000000
