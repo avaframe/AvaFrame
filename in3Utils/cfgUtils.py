@@ -31,16 +31,25 @@ import avaframe.com1DFA as com1DFA
 log = logging.getLogger(__name__)
 
 
-def getGeneralConfig():
+def getGeneralConfig(nameFile=''):
     ''' Returns the general configuration for avaframe
     returns a configParser object
+
+    Parameters
+    ----------
+    nameFile: pathlib path
+        optional full path to file, if empty use avaframeCfg from folder one level up
     '''
 
     # get path of module
     modPath = pathlib.Path(avaf.__file__).resolve().parent
 
-    localFile = modPath / 'local_avaframeCfg.ini'
-    defaultFile = modPath / 'avaframeCfg.ini'
+    if isinstance(nameFile, pathlib.Path):
+        localFile = nameFile.parents[0] / ('local_' + nameFile.name)
+        defaultFile = nameFile
+    else:
+        localFile = modPath / 'local_avaframeCfg.ini'
+        defaultFile = modPath / 'avaframeCfg.ini'
 
     if localFile.is_file():
         iniFile = localFile
@@ -243,8 +252,8 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
 def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     """ compare locCfg to defCfg and return a cfg object and modification dict
         Values are merged from locCfg to defCfg:
-            - parameters already in defCfg get the value from locCfg
-            - additional values in locCfg get added in the resulting Cfg
+        - parameters already in defCfg get the value from locCfg
+        - additional values in locCfg get added in the resulting Cfg
 
         Parameters
         -----------
@@ -403,8 +412,7 @@ def readCfgFile(avaDir, module='', fileName=''):
 
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
-        or a dictionary - then typeDict=True, returns a uid
-    hash
+    or a dictionary - then typeDict=True, returns a uid hash
 
     Parameters
     ----------
@@ -611,19 +619,52 @@ def convertDF2numerics(simDF):
     """
 
     for name, values in simDF.items():
-        simDFTest = simDF[name].str.replace('.', '', regex=True)
+        simDFTest = simDF[name].str.replace('.', '', regex=False)
         # allow for - sign too
-        simDFTest = simDFTest.replace('-', '', regex=True)
+        simDFTest = simDFTest.replace('-', '', regex=False)
+        # check for str(np.nan) as these cannot be converted to numerics by pd.to_numeric
+        # but as friction model parameters are set to nans this is required here
+        if simDFTest.str.match('nan').any():
+            simDF = setStrnanToNan(simDF, simDFTest, name)
         # also include columns where nan is in first row - so check for any row
         if simDFTest.str.isdigit().any():
             # problem here is that it finds even if not present in | although not in ini
-            simDFTest = simDF[name].str.replace('|', '§', regex=True)
+            simDFTest = simDF[name].str.replace('|', '§', regex=False)
             if simDFTest.str.contains('§').any() == False:
                 simDF[name] = pd.to_numeric(simDF[name])
                 log.debug('Converted to numeric %s' % name)
         else:
             log.debug('Not converted to numeric: %s' % name)
 
+    return simDF
+
+
+def setStrnanToNan(simDF, simDFTest, name):
+    """ set pandas element to np.nan if it is a string nan
+
+        Parameters
+        -----------
+        simDF: pandas dataFrame
+            dataframe
+        simDFTest: pandas series
+            series of sim DF column named name
+            replaced "." with " "
+        name: str
+            name of pandas dataframe column
+
+        Returns
+        --------
+        simDF: pandas dataframe
+            updated pandas dataframe with np.nan values where string nan was
+    """
+
+    nanIndex = simDFTest.str.match('nan', flags=re.IGNORECASE)
+    simIndex = simDF.index.values
+    # loop over each row and use simDF.at to avoid copy vs view warning
+    for index, nanInd in enumerate(nanIndex):
+        if nanInd:
+            simDF.at[simIndex[index], name] = np.nan
+            log.info('%s for index: %s set to numpy nan' % (name, index))
     return simDF
 
 
@@ -719,11 +760,11 @@ def convertToCfgList(parameterList):
 
 
 def getNumberOfProcesses(cfgMain, nSims):
-    """ Determine how many CPU cores to take for parallel tasks 
+    """ Determine how many CPU cores to take for parallel tasks
 
         Parameters
         -----------
-        cfgMain: configuration object 
+        cfgMain: configuration object
             the main avaframe configuration
         nSims: integer
             number of simulations that need to be calculated
@@ -750,7 +791,7 @@ def getNumberOfProcesses(cfgMain, nSims):
     log.info("Taking %s cpu cores out of maximum of %s cores." % (nCPU, maxCPU))
 
     return nCPU
-
+    
 def getModuleConfig_ravaflow(module, fileOverride='', modInfo=False, toPrint=True):
     ''' Returns the configuration for a given module
     returns a configParser object
@@ -775,7 +816,7 @@ def getModuleConfig_ravaflow(module, fileOverride='', modInfo=False, toPrint=Tru
 
     # get path of module
     modPath = pathlib.Path(r_avaflow.__file__).resolve().parent
-    print(modPath)
+    #print(modPath)
 
     # get filename of module
     modName = "r_avaflow"
@@ -839,7 +880,7 @@ def getModuleConfig_ravaflow2(module, fileOverride='', modInfo=False, toPrint=Tr
     # Start for .ini-file transfer
     # get path of module
     modPath = pathlib.Path(com1DFA.__file__).resolve().parent
-    print(modPath)
+    #print(modPath)
     
     localFile_com1DFA = modPath / ('local_com1DFACfg.ini')
 
@@ -849,10 +890,7 @@ def getModuleConfig_ravaflow2(module, fileOverride='', modInfo=False, toPrint=Tr
     
     #Transfer .ini-file also to r_avaflow 
     src_dir = localFile_com1DFA
-    print("This is src_dir:", src_dir)
     dest_dir = modPath
-    print("This is dest_dir:", dest_dir)
-    print("This is modPath:", modPath)
     shutil.copy2(src_dir, dest_dir)  
 
     # get filename of module

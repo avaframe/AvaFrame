@@ -618,6 +618,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
 
         One line for each simulation - so all peakfiles that belong to one simulation are listed in one line
         that corresponds to that simulation
+
         Parameters
         ----------
         avaDir : str

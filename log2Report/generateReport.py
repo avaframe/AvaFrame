@@ -9,6 +9,7 @@ import pathlib
 import shutil
 import pandas as pd
 from tabulate import tabulate
+from datetime import datetime
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -19,6 +20,7 @@ def copyPlots2ReportDir(reportDir, plotDict):
     """ copy the plots to report directory
     The plots are in a dictionary:
     plotDict = {'plot1': PurePath to plot1, 'plot2': PurePath to plot2...}
+
     Parameters
     -----------
     reportDir: pathlib path
@@ -171,7 +173,7 @@ def writeReportFile(reportD, pfile):
 
 
 def writeReport(outDir, reportDictList, reportOneFile, plotDict='', standaloneReport=False,
-                reportName='fullSimulationReport.md'):
+                reportName='fullSimulationReport'):
     """ Write a report in markdown format for simulations, saved to outDir
 
         Parameters
@@ -187,13 +189,15 @@ def writeReport(outDir, reportDictList, reportOneFile, plotDict='', standaloneRe
         standaloneReport: bool
             if True copy plots to reportDir
         reportName: str
-            report file name, fullSimulationReport.md is the default value
+            report file name, fullSimulationReport is the default value
 
     """
 
     if reportOneFile:
+        now = datetime.now()
+        dtString = now.strftime("%Y%m%d_%Hh%Mm%Ss")
         # Start writing markdown style report
-        reportPath = pathlib.Path(outDir, reportName)
+        reportPath = pathlib.Path(outDir, (reportName + '_' + dtString + '.md'))
         with open(reportPath, 'w') as pfile:
 
             # Loop through all simulations

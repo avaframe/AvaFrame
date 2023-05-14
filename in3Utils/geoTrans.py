@@ -7,8 +7,11 @@ import pathlib
 import numpy as np
 import scipy as sp
 import scipy.interpolate
+import shapely as shp
 import copy
 import matplotlib.pyplot as plt
+import pandas as pd
+import shapely as shp
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -526,18 +529,11 @@ def findSplitPoint(avaProfile, Points):
         were give in input, only the closest point to the profile
         is projected)
     """
+
     xcoor = avaProfile['x']
     ycoor = avaProfile['y']
-    Dist = np.empty((0))
-    IndSplit = np.empty((0))
-    for i in range(len(Points['x'])):
-        dist = np.sqrt((xcoor - Points['x'][i]) ** 2 + (ycoor - Points['y'][i])**2)
-        indSplit = np.argmin(dist)
-        IndSplit = np.append(IndSplit, indSplit)
-        Dist = np.append(Dist, dist[indSplit])
 
-    ind = np.argmin(Dist)
-    indSplit = int(IndSplit[ind])
+    indSplit = findClosestPoint(xcoor, ycoor, Points)
     projPoint = {}
     projPoint['x'] = avaProfile['x'][indSplit]
     projPoint['y'] = avaProfile['y'][indSplit]
@@ -545,6 +541,75 @@ def findSplitPoint(avaProfile, Points):
     projPoint['s'] = avaProfile['s'][indSplit]
     projPoint['indSplit'] = indSplit
     return projPoint
+
+
+def findClosestPoint(xcoor, ycoor, pointsDict):
+    """ find closest point of pointDict along line defined by xcoor and ycoor - only xy plane!
+
+        Parameters
+        -----------
+        xcoor, ycoor: np array
+            x and y coordinates of line
+        pointsDict: dict
+            a dictionary with coordinates of points with keys x and y
+
+        Returns
+        --------
+        indSplit: int
+            index of closest point found on the line
+    """
+
+    Dist = np.empty((0))
+    IndSplit = np.empty((0))
+    for i in range(len(pointsDict['x'])):
+        dist = np.sqrt((xcoor - pointsDict['x'][i]) ** 2 + (ycoor - pointsDict['y'][i])**2)
+        indSplit = np.argmin(dist)
+        IndSplit = np.append(IndSplit, indSplit)
+        Dist = np.append(Dist, dist[indSplit])
+
+    ind = np.argmin(Dist)
+    indSplit = int(IndSplit[ind])
+
+    return indSplit
+
+
+def computeAlongLineDistance(line, dim='2D'):
+    """ compute distance along a dict of coordinates or a shapely lineString incrementally
+
+        Parameters
+        ------------
+        line: lineString shapely or dict
+            lineString object or dict with x, y, z keys and np.arrays as items
+        dim: str
+            2D only in xy, 3D in xyz
+
+        Returns
+        --------
+        distancePoints: list
+            list of starting (at zero) distance along this line
+    """
+
+    # fetch coordinates of line
+    if isinstance(line, dict):
+        x = line['x']
+        y = line['y']
+        if dim.lower() == '3d':
+            z = line['z']
+    elif isinstance(line, shp.LineString):
+        x = np.asarray([coord[0] for coord in line.coords])
+        y = np.asarray([coord[1] for coord in line.coords])
+        if dim.lower() == '3d':
+            z = np.asarray([coord[1] for coord in line.coords])
+
+    # compute distance of points along line
+    distancePoints = [0]
+    for i in range(len(x)-1):
+        if dim.lower() != '2d':
+            distancePoints.append(distancePoints[i] + np.sqrt((x[i+1]-x[i])**2 + ((y[i+1]-y[i])**2) + (z[i+1]-z[i])**2))
+        else:
+            distancePoints.append(distancePoints[i] + np.sqrt((x[i+1]-x[i])**2 + ((y[i+1]-y[i])**2)))
+
+    return distancePoints
 
 
 def checkProfile(avaProfile, projSplitPoint=None):
@@ -1124,6 +1189,7 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
 
 def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     """Create grid
+
     Parameters
     -----------
     xllc, yllc: float
@@ -1146,3 +1212,46 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
 
     xGrid, yGrid = np.meshgrid(xp, yp)
     return xGrid, yGrid
+
+
+def snapPtsToLine(dbData, projstr, lineName, pointsList):
+    """ snap points to line in dataframe only considering x, y plane!
+
+        Parameters
+        -----------
+        dbData: pandas dataframe
+            dataframe with geometry info of events
+        lineName: str
+            name of line column except projstr
+        pointsList: list
+            list with point column names except projstr
+        projstr: str
+            projection string to append to all names
+
+        Returns
+        --------
+        dbData: pandas dataframe
+            updated dataframe with ..._snapped point column
+    """
+
+    for pt in pointsList:
+        dbData[pt + '_' + projstr + '_snapped'] = np.empty(len(dbData))
+        dbData['distanceXY'] = np.empty(len(dbData))
+
+    distP = []
+    for index, row in dbData.iterrows():
+        xcoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[0]
+        ycoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[1]
+        zcoorTemp = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords
+        zcoor = np.asarray([coord[2] for coord in zcoorTemp])
+
+        xyInd = []
+        for pt in pointsList:
+            pointsDict = {'x': [dbData.loc[index, ('%s_%s' % (pt, projstr))].x],
+                'y': [dbData.loc[index, ('%s_%s' % (pt, projstr))].y]}
+
+            indSplit = findClosestPoint(xcoor, ycoor, pointsDict)
+            projPoint = shp.Point(xcoor[indSplit], ycoor[indSplit], zcoor[indSplit])
+            dbData.loc[index, (pt + '_' + projstr + '_snapped')] = projPoint
+
+    return dbData

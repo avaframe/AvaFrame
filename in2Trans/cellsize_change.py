@@ -39,22 +39,22 @@ def Cellsize_change(avaDir, cellsize):
     
     
     #2. Adapt cellsize for DEM
-    input_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
+    input_file_path_tif = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
+
+    if os.path.exists(input_file_path_tif):
+        # Adapt cellsize for release area
+        output_file_path_tif = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
+        gdal.Warp(output_file_path_tif, input_file_path_tif, xRes=cellsize, yRes=cellsize)
+        # .tif to ascii
+        input_file_path_asc = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
+        output_file_path_asc = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.asc')
     
-    if os.path.exists(input_file_path):
-    
-        output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
-        gdal.Warp(output_file_path, input_file_path, xRes=cellsize, yRes=cellsize)
-        
-         ### .tif to ascii
-        input_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
-        output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.asc')
-        
         # Generate string of process.
-        gdal_calc_str = 'gdal_translate -of AAIGrid {0} {1}'
-        gdal_calc_process = gdal_calc_str.format(input_file_path, output_file_path)
+        gdal_translate_str = 'gdal_translate -of AAIGrid {0} {1}'
+        gdal_translate_process = gdal_translate_str.format(input_file_path_asc, output_file_path_asc)
+    
         # Call process.
-        os.system(gdal_calc_process)
+        os.system(gdal_translate_process)
         
     
     #3. Adapt cellsize for secondary release area 

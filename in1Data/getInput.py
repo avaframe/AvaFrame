@@ -7,6 +7,9 @@ import os
 import glob
 import pathlib
 import logging
+import numpy as np
+import pandas as pd
+import shapely as shp
 import shutil
 
 # Local imports
@@ -14,8 +17,12 @@ from avaframe.in3Utils import cfgUtils
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.com1DFA.deriveParameterSet as dP
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.shp_to_ascii as shp_to_ascii
 import avaframe.in2Trans.cellsize_change as cellsize_change
+
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -156,9 +163,8 @@ def getInputData(avaDir, cfg):
 
 def getInputDataCom1DFA(avaDir):
     """ Fetch input datasets required for simulation, duplicated function because
-        now fetch all available files
-        simulation type set differently in com1DFA compared to com1DFAOrig:
-        TODO: remove duplicate once it is not required anymore
+    now fetch all available files simulation type set differently in com1DFA compared 
+    to com1DFAOrig: TODO: remove duplicate once it is not required anymore
 
     Parameters
     ----------
@@ -170,20 +176,17 @@ def getInputDataCom1DFA(avaDir):
     Returns
     -------
     inputSimFiles: dict
-        dictionary with all the input files:
-        demFile : str (first element of list)
-            list of full path to DEM .asc file
-        relFiles : list
-            list of full path to release area scenario .shp files
-        secondaryReleaseFile : str
-            full path to secondary release area .shp file
-        entFile : str
-            full path to entrainment area .shp file
-        resFile : str
-            full path to resistance area .shp file
-        entResInfo : flag dict
-            flag if Yes entrainment and/or resistance areas found and used for simulation
-            flag True if a Secondary Release file found and activated
+        dictionary with all the input files
+
+        - demFile : str (first element of list), list of full path to DEM .asc file
+        - relFiles : list, list of full path to release area scenario .shp files
+        - secondaryReleaseFile : str, full path to secondary release area .shp file
+        - entFile : str, full path to entrainment area .shp file
+        - resFile : str, full path to resistance area .shp file
+        - entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
+
     """
 
     # Set directories for inputs, outputs and current work
@@ -223,7 +226,7 @@ def getInputDataCom1DFA(avaDir):
                      'relThFile': relThFile}
 
     return inputSimFiles
-    
+
 def getCellsize(avaDir):
     """
     Checks the differenc cellsize settings. Currently the r.avaflow code can't
@@ -363,7 +366,6 @@ def getInputDataravaflow(avaDir, cfg):
     cellsize_change.Cellsize_change(avaDir, int(cellsize))
     
     return demFile
-
 
 def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
     """Fetch fileExt files and check if they exist and if it is not more than one
@@ -639,3 +641,185 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
             cfgSim['INPUT'].pop(scenario + '_' + 'relThCi95')
 
     return releaseScenarioPath, cfgSim
+
+
+def createReleaseStats(avaDir, cfg):
+    """ create a csv file with info on release shp file on:
+        max, mean and min elevation, slope and projected and real area
+
+        Parameters
+        -------------
+
+        Returns
+        --------
+        fPath: pathlib Path
+            file path
+    """
+
+    # fetch input data (dem and release area shp file)
+    inputData = getInputDataCom1DFA(avaDir)
+
+    # get line from release area polygon
+    relFiles = inputData['relFiles']
+
+    # initialize dem and get real area of dem
+    dem = IOf.readRaster(inputData['demFile'], noDataToNan=True)
+    dem['originalHeader'] = dem['header'].copy()
+    methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
+    # get normal vector of the grid mesh
+    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
+    header = dem['header']
+    csz = header['cellsize']
+
+    # loop over all relFiles and compute information saved to dictionary of dataframes
+    relInfo = {}
+    relPath = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'releaseInfoFiles')
+    fU.makeADir(relPath)
+    relDFDict = {}
+    # loop over all relFiles
+    for relFile in relFiles:
+        # for relF in relFiles:
+        releaseLine = {}
+        releaseLine = shpConv.readLine(relFile, 'release1', dem)
+        releaseLine['file'] = relFile
+        releaseLine['type'] = 'Release'
+        releaseLine['thicknessSource'] = ['artificial'] * len(releaseLine['id'])
+        releaseLine['thickness'] = ['1.'] * len(releaseLine['id'])
+        # convert release line to a raster with 1 set inside of the release line
+        # and compute projected and actual areas
+        areaActualList, areaProjectedList, releaseLine = computeAreasFromRasterAndLine(releaseLine, dem)
+
+        # compute max, min elevation, mean slope and save all to dict
+        relInfo = computeRelStats(releaseLine, dem)
+
+        # create dict and dataFrame
+        relD = {'release feature': relInfo['featureNames'], 'MaxZ [m]': relInfo['zMax'],
+            'MinZ [m]': relInfo['zMin'], 'slope [deg]': relInfo['meanSlope'],
+            'projected area [ha]':[areaP/10000. for areaP in areaProjectedList],
+            'actual area [ha]': [area/10000. for area in areaActualList]}
+        relDF = pd.DataFrame(data=relD, index=np.arange(len(relInfo['featureNames'])))
+        relInfo = relPath / ('%s.csv' % relFile.stem)
+        relDF.to_csv(relInfo, index=False)
+        log.info('Written relInfo file for %s to %s' % (relFile.stem, str(relPath)))
+        relDFDict[relFile.stem] = relDF
+
+    return relDFDict
+
+
+def computeAreasFromRasterAndLine(line, dem):
+    """ compute the area covered by a polygon by creating a raster from polygon
+        projected area and actual area using a dem info
+
+        Parameters
+        -----------
+        line: dict
+            dictionary with info on line
+            x, y coordinates start, end of each line feature
+        dem: dict
+            dictionary with dem data, header and areaRaster
+
+        Returns
+        --------
+        areaActual: float
+            actual area taking slope into account by using dem area
+        areaProjected: float
+            projected area in xy plane
+    """
+
+    line = com1DFA.prepareArea(line, dem, 0.01, combine=False, checkOverlap=False)
+
+    csz = dem['header']['cellsize']
+    # create dict for raster data for each feature
+    areaProjectedList = []
+    areaActualList = []
+    for index, lineRaster in enumerate(line['rasterData']):
+        lineRasterOnes = np.where(lineRaster > 0, 1., 0.)
+        areaActualList.append(np.nansum(lineRasterOnes*dem['areaRaster']))
+        areaProjectedList.append(np.sum(csz*csz*lineRasterOnes))
+
+    return areaActualList, areaProjectedList, line
+
+
+def computeRelStats(line, dem):
+    """ compute stats of a polygon and a dem
+        actual area (taking slope into account), projected area,
+        max, mean, min elevation, mean slope
+
+        Parameters
+        -----------
+        line: dict
+            dictionary with info on line (x, y, Start, Length, rasterData, ...)
+        dem: dict
+            dictionary with info on dem (header, rasterData, normals, areaRaster)
+
+        Returns
+        --------
+        lineDict: dict
+            dictionary with stats info:
+            featureNames, zMax, zMin, Slope, Area, AreaP
+    """
+
+    # compute projected areas using shapely
+    projectedAreas = computeAreasFromLines(line)
+
+    # create dict for raster data for each feature
+    lineDict = {}
+    for index, relRaster in enumerate(line['rasterData']):
+        zArray = np.where(relRaster > 0, dem['rasterData'], np.nan)
+
+        # compute slope of release area
+        _, _, NzNormed = DFAtls.normalize(dem['Nx'], dem['Ny'], dem['Nz'])
+        nzArray = np.where(relRaster > 0, NzNormed, np.nan)
+        slopeArray = np.rad2deg(np.arccos(nzArray))
+        lineDict.setdefault('meanSlope', []).append(np.nanmean(slopeArray))
+
+        # compute elevation stats
+        lineDict.setdefault('zMax', []).append(np.nanmax(zArray))
+        lineDict.setdefault('zMean', []).append(np.nanmean(zArray))
+        lineDict.setdefault('zMin', []).append(np.nanmin(zArray))
+
+        # create a dataframe
+        lineDict.setdefault('featureNames', []).append(line['Name'][index])
+
+        # print info
+        log.debug('++++ Release feature %s ++++++++++' % line['Name'][index])
+        log.debug('maximum elevation: %.2f' % np.nanmax(zArray))
+        log.debug('mean elevation: %.2f' % np.nanmean(zArray))
+        log.debug('minimum elevation: %.2f' % np.nanmin(zArray))
+        log.debug('mean slope: %.2f' % np.nanmean(slopeArray))
+
+    return lineDict
+
+
+def computeAreasFromLines(line):
+    """ compute the area of a polygon in xy using shapely
+
+        Parameters
+        -----------
+        line: dict
+            dictionary with info on line
+            x, y coordinates start, end of each line feature
+
+        Returns
+        --------
+        projectedAreas: list
+            list of projected area for each polygon in line dict
+    """
+
+    projectedAreas = []
+    name = line['Name']
+    start = line['Start']
+    Length = line['Length']
+    # fetch individual polygons
+    for i in range(len(name)):
+        end = start[i] + Length[i]
+        x = line['x'][int(start[i]):int(end)]
+        y = line['y'][int(start[i]):int(end)]
+
+        # create shapely polygon
+        for m in range(len(x)):
+            avaPoly = shp.Polygon(list(zip(x, y)))
+        projectedAreas.append(shp.area(avaPoly))
+
+    return projectedAreas

@@ -30,7 +30,7 @@ def shptoasc(avaDir):
             if file.endswith(".asc"):
                 ascFile = os.path.join(root, file)
     input_file_path = ascFile
-    output_file_path = os.path.join(avaDir, 'RRavaflow_Input', 'DEM.tif')
+    output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.tif')
     # Generate string of process.
     #gdal_str = '{0} -of GTIFF -projwin ulx uly lrx lry {1} {2}'
     gdal_str = '{0} -of GTIFF {1} {2}'
@@ -57,7 +57,6 @@ def shptoasc(avaDir):
         for file in files:
             if file.endswith(".shp"):
                 shpFile = os.path.join(root, file)
-                print("This is shpFile:", shpFile)
                 
     fn_ras = os.path.join(avaDir, 'Ravaflow_Input', 'DEM.asc')            
              
@@ -109,7 +108,7 @@ def shptoasc(avaDir):
         for n in range(ldefn.GetFieldCount()):
             fdefn = ldefn.GetFieldDefn(n)
             schema.append(fdefn.name)
-        print(schema)
+        #print(schema)
         
         if "thickness" in schema:
             #####Get thickness
@@ -118,7 +117,7 @@ def shptoasc(avaDir):
             ds = driver.Open(shapefile, 0)
             layer = ds.GetLayer()    
             thickness_value = layer[0].GetField("thickness")
-            print("This is thickness release 2", thickness_value)
+            print("This is thickness of release area 2", thickness_value)
             # Thickness value needs to transfered to the thickness value in r.avaflow
             
             ## Raster calculation, set value 255 to the thickness value
@@ -130,7 +129,7 @@ def shptoasc(avaDir):
             output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'rel_rst.tif')
             calc_expr = '"{0}*(A>=255)"'
             calc_expr_final = calc_expr.format(thickness_value)
-            print(calc_expr_final)
+            #print(calc_expr_final)
             nodata = '0'
             typeof = '"Float32"'
             
@@ -218,7 +217,7 @@ def shptoasc(avaDir):
         for n in range(ldefn.GetFieldCount()):
             fdefn = ldefn.GetFieldDefn(n)
             schema.append(fdefn.name)
-        print(schema)
+        #print(schema)
         
         if "thickness" in schema:
             #####Get thickness
@@ -227,7 +226,7 @@ def shptoasc(avaDir):
             ds = driver.Open(shapefile, 0)
             layer = ds.GetLayer()    
             thickness_value = layer[0].GetField("thickness")
-            print("This is thickness release 2", thickness_value)
+            print("This is thickness of release area 2", thickness_value)
             # Thickness value needs to transfered to the thickness value in r.avaflow
             
             ## Raster calculation, set value 255 to the thickness value
@@ -239,7 +238,7 @@ def shptoasc(avaDir):
             output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'rel2_rst.tif')
             calc_expr = '"{0}*(A>=255)"'
             calc_expr_final = calc_expr.format(thickness_value)
-            print(calc_expr_final)
+            #print(calc_expr_final)
             nodata = '0'
             typeof = '"Float32"'
             
@@ -328,7 +327,7 @@ def shptoasc(avaDir):
         for n in range(ldefn.GetFieldCount()):
             fdefn = ldefn.GetFieldDefn(n)
             schema.append(fdefn.name)
-        print(schema)
+        #print(schema)
         
         if "thickness" in schema:
             #####Get thickness
@@ -337,7 +336,7 @@ def shptoasc(avaDir):
             ds = driver.Open(shapefile, 0)
             layer = ds.GetLayer()    
             thickness_value = layer[0].GetField("thickness")
-            print("This is thickness release 3", thickness_value)
+            print("This is thickness of release area 3", thickness_value)
             # Thickness value needs to transfered to the thickness value in r.avaflow
             
             ## Raster calculation, set value 255 to the thickness value
@@ -349,7 +348,7 @@ def shptoasc(avaDir):
             output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'rel3_rst.tif')
             calc_expr = '"{0}*(A>=255)"'
             calc_expr_final = calc_expr.format(thickness_value)
-            print(calc_expr_final)
+            #print(calc_expr_final)
             nodata = '0'
             typeof = '"Float32"'
             
@@ -436,7 +435,7 @@ def shptoasc(avaDir):
         for n in range(ldefn.GetFieldCount()):
             fdefn = ldefn.GetFieldDefn(n)
             schema.append(fdefn.name)
-        print(schema)
+        #print(schema)
         
         if "thickness" in schema:
             #####Get thickness
@@ -445,7 +444,7 @@ def shptoasc(avaDir):
             ds = driver.Open(shapefile, 0)
             layer = ds.GetLayer()    
             thickness_value = layer[0].GetField("thickness")
-            print("This is thickness entrainment", thickness_value)
+            print("This is thickness of the entrainment area", thickness_value)
             # Thickness value needs to transfered to the thickness value in r.avaflow
             
             ## Raster calculation, set value 255 to the thickness value
@@ -457,7 +456,7 @@ def shptoasc(avaDir):
             output_file_path = os.path.join(avaDir, 'Ravaflow_Input', 'ent_rst.tif')
             calc_expr = '"{0}*(A>=255)"'
             calc_expr_final = calc_expr.format(thickness_value)
-            print(calc_expr_final)
+            #print(calc_expr_final)
             nodata = '0'
             typeof = '"Float32"'
             
