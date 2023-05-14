@@ -52,11 +52,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   """
   # read input parameters
   cdef double enthRef = cfg.getfloat('enthRef')
-  cdef double tau0 = cfg.getfloat('tau0')
-  cdef double Rs0 = cfg.getfloat('Rs0')
-  cdef double kappa = cfg.getfloat('kappa')
-  cdef double B = cfg.getfloat('B')
-  cdef double R = cfg.getfloat('R')
+  cdef double tau0SamosAt = cfg.getfloat('tau0samosat')
+  cdef double Rs0SamosAt = cfg.getfloat('Rs0samosat')
+  cdef double kappaSamosAt = cfg.getfloat('kappasamosat')
+  cdef double BSamosAt = cfg.getfloat('Bsamosat')
+  cdef double RSamosAt = cfg.getfloat('Rsamosat')
   cdef double entEroEnergy = cfg.getfloat('entEroEnergy')
   cdef double entShearResistance = cfg.getfloat('entShearResistance')
   cdef double entDefResistance = cfg.getfloat('entDefResistance')
@@ -64,7 +64,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
-  cdef double xsi = cfg.getfloat('xsi')
+  cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
+  cdef double muVoellmy = cfg.getfloat('muvoellmy')
+  cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -78,9 +80,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef int viscOption = cfg.getint('viscOption')
   cdef double dt = particles['dt']
-  cdef double mu = cfg.getfloat('mu')
-  cdef double mu0 = cfg.getfloat('mu0WetSnow')
-  cdef double xsiWetSnow = cfg.getfloat('xsiWetSnow')
+  cdef double muSamosAt = cfg.getfloat('musamosat')
+  cdef double mu0 = cfg.getfloat('mu0wetsnow')
+  cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -241,13 +243,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
-            tau = DFAtlsC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+            tau = DFAtlsC.SamosATfric(rho, tau0SamosAt, Rs0SamosAt, muSamosAt, kappaSamosAt, BSamosAt, RSamosAt, uMag, sigmaB, h)
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
-            tau = mu * sigmaB
+            tau = muCoulomb * sigmaB
           elif frictType == 3:
             # voellmy friction type
-            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
+            tau = muVoellmy * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmy
           elif frictType == 4:
             # add enthalpy dependent mu if wetSnow is activated
             totalEnthalpy = totalEnthalpyArray[k]
@@ -575,15 +577,16 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] idFixed = particles['idFixed']
-  cdef double[:] sArray = particles['travelLengthXY']
-  cdef double[:] sCorArray = particles['travelLengthXYCor']
-  cdef double[:] lArray = particles['travelLengthXYZ']
+  cdef double[:] sArray = particles['trajectoryLengthXY']
+  cdef double[:] sCorArray = particles['trajectoryLengthXYCor']
+  cdef double[:] lArray = particles['trajectoryLengthXYZ']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] zArray = particles['z']
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] uAccArray = particles['uAcc']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double TotkinEne = particles['kineticEne']
   cdef double TotpotEne = particles['potentialEne']
@@ -635,7 +638,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   # declare intermediate step variables
   cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
-  cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv
+  cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv, uMagt0, uMagt1
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0, dissEm = 0
   cdef int k, inter
@@ -665,6 +668,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
     # velocity magnitude
     uMag = DFAtlsC.norm(ux, uy, uz)
+    uMagt0 = DFAtlsC.norm(ux, uy, uz)
 
     # procede to time integration
     # operator splitting
@@ -832,12 +836,18 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       sCorNewArray[k] = sCorNew
       mNewArray[k] = mNew
 
+      # compute acceleration
+      uMagt1 = DFAtlsC.norm(uxNew, uyNew, uzNew)
+      uAcc = (uMagt1 - uMagt0) / dtStop
+      uAccArray[k] = uAcc
+
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
   particles['uz'] = np.asarray(uzArrayNew)
-  particles['travelLengthXYZ'] = np.asarray(lNewArray)
-  particles['travelLengthXY'] = np.asarray(sNewArray)
-  particles['travelLengthXYCor'] = np.asarray(sCorNewArray)
+  particles['uAcc'] = np.asarray(uAccArray)
+  particles['trajectoryLengthXYZ'] = np.asarray(lNewArray)
+  particles['trajectoryLengthXY'] = np.asarray(sNewArray)
+  particles['trajectoryLengthXYCor'] = np.asarray(sCorNewArray)
   particles['m'] = np.asarray(mNewArray)
   particles['mTot'] = np.sum(particles['m'])
   particles['x'] = np.asarray(xNewArray)
@@ -1169,7 +1179,7 @@ def computeTravelAngleC(particles, zPartArray0):
   cdef int[:] parentIDArray = particles['parentID'].astype('intc')
   cdef int nPart = particles['nPart']
   cdef double[:] zArray = particles['z']
-  cdef double[:] sArray = particles['travelLengthXY']
+  cdef double[:] sArray = particles['trajectoryLengthXY']
   cdef double[:] z0Array = zPartArray0
   cdef double[:] gammaArray = np.zeros(nPart)
   cdef int parentID, j

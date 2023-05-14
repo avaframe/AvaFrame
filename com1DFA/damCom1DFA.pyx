@@ -40,6 +40,7 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
   the intersection is a ratio (r value between 0 and 1) of where the lines intersect
   xIntersection = (1.0-r)*xF1 + r*xF2
   yIntersection = (1.0-r)*yF1 + r*yF2
+
   Parameters
   ----------
   xOld: float
@@ -104,6 +105,7 @@ cpdef (int, double, double, double, double, double, double, double, double, doub
     z component of the DEM raster
   FT: 2D array
     flow thickness raster
+
   Returns
   -------
   foundIntersection: int
@@ -249,6 +251,7 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
   the intersection is a ratio (r value between 0 and 1) of where the lines intersect
   xIntersection = (1.0-r)*xF1 + r*xF2
   yIntersection = (1.0-r)*yF1 + r*yF2
+
   Parameters
   ----------
   xOld: float
@@ -279,6 +282,7 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
     z comonent of the dam tangent vector (tangent to the foot line)
   nDamPoints: int
     number of points in the dam line (length of the xFoot... arrays)
+
   Returns
   -------
   intersection: int

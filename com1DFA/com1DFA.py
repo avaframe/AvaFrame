@@ -41,6 +41,7 @@ import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
+import avaframe.in3Utils.geoTrans as gT
 import avaframe.out3Plot.outDebugPlots as debPlot
 import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -51,6 +52,8 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+import avaframe.out3Plot.outAIMEC as oA
+import avaframe.out3Plot.outQuickPlot as oQ
 import threading
 
 #######################################
@@ -145,6 +148,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
     log.info('The following simulations will be performed')
     for key in simDict:
         log.info('Simulation: %s' % key)
+        exportFlag = simDict[key]['cfgSim']['EXPORTS'].getboolean('exportData')
 
     # initialize reportDict list
     reportDictList = list()
@@ -185,7 +189,7 @@ def com1DFAMain(cfgMain, cfgInfo=''):
 
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
-            simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList
+            simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList, exportData=exportFlag
         )
 
         return dem, plotDict, reportDictList, simDFNew
@@ -249,7 +253,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
     return simDF, tCPUDF, dem, reportDict
 
 
-def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList):
+def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictList, exportData):
     """ postprocessing of simulation results: save configuration to csv, create plots and report
 
         Parameters
@@ -267,6 +271,8 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
             dem dictionary
         reportDictList: list
             list of dictionaries for each simulation with info for report creation
+        exportData: bool
+            if True result fields are exported and plots generated
 
         Returns
         --------
@@ -300,10 +306,17 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     simDFNew = pd.concat([simDF, simDFExisting], axis=0)
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
-    # Set directory for report
+    # create plots and report
     reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
+    fU.makeADir(reportDir)
     # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    if exportData:
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    else:
+        plotDict = ''
+        # create contour line plot
+        reportDictList, _ = outCom1DFA.createContourPlot(reportDictList, avalancheDir, simDF)
+
 
     if cfgMain['FLAGS'].getboolean('createReport'):
         # write report
@@ -388,6 +401,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
+            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
@@ -399,13 +413,19 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
         particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
-    # Result parameters to be exported
-    exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
-
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfg, reportAreaInfo)
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
+
+    # Result parameters to be exported
+    if cfg['EXPORTS'].getboolean('exportData'):
+        exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
+    else:
+        # fetch contourline info
+        contDictXY = outCom1DFA.fetchContCoors(dem['header'],
+            fieldsList[-1][cfg['VISUALISATION']['contourResType']], cfg['VISUALISATION'], cuSimName)
+        reportDict['contours'] = contDictXY
 
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
@@ -515,19 +535,17 @@ def prepareInputData(inputSimFiles, cfg):
     Parameters
     ----------
     inputSimFiles : dict
-        relFile : str
-        path to release area file
-        demFile : str
-            path to dem file in Inputs/
-        secondaryReleaseFile : str
-            path to secondaryRelease file
-        entFiles : str
-            path to entrainment file
-        resFile : str
-            path to resistance file
-        entResInfo : flag dict
-            flag if Yes entrainment and/or resistance areas found and used for simulation
-            flag True if a Secondary Release file found and activated
+        dictionary containing
+
+        - relFile : str, path to release area file
+        - demFile : str, path to dem file in Inputs/
+        - secondaryReleaseFile : str, path to secondaryRelease file
+        - entFiles : str, path to entrainment file
+        - resFile : str, path to resistance file
+        - entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
+
     cfg: configparser object
         configuration for simType and secondary rel
 
@@ -537,22 +555,20 @@ def prepareInputData(inputSimFiles, cfg):
         dictionary with dem info (header original origin), raster data correct mesh cell size
         this dem has been remeshed/read from remeshed if chosen cell size is not equal to cell size
         of DEM in Inputs/
+
     inputSimLines : dict
-        releaseLine : dict
-            release line dictionary
-        secondaryReleaseLine : dict
-            secondaryRelease line dictionary
-        entLine : dict
-            entrainment line dictionary
-        resLine : dict
-            resistance line dictionary
-        entrainmentArea : str
-            entrainment file name
-        resistanceArea : str
-            resistance file name
-        entResInfo : flag dict
-            flag if Yes entrainment and/or resistance areas found and used for simulation
-            flag True if a Secondary Release file found and activated
+        dictionary containing
+
+        - releaseLine : dict, release line dictionary
+        - secondaryReleaseLine : dict, secondaryRelease line dictionary
+        - entLine : dict, entrainment line dictionary
+        - resLine : dict, resistance line dictionary
+        - entrainmentArea : str, entrainment file name
+        - resistanceArea : str, resistance file name
+        - entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
+        flag True if a Secondary Release file found and activated
+
     """
 
     # load data
@@ -567,10 +583,12 @@ def prepareInputData(inputSimFiles, cfg):
     if relThFile != None:
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
+        relThFieldDataOrig = relThFieldData.copy()
         if demOri['header']['ncols'] != relThField['header']['ncols'] or \
-           demOri['header']['nrows'] != relThField['header']['nrows']:
+            demOri['header']['nrows'] != relThField['header']['nrows']:
+
             message = ('Release thickness field read from %s does not match the number of rows and columns of the dem'
-                       % inputSimFiles['relThFile'])
+                % inputSimFiles['relThFile'])
             log.error(message)
             raise AssertionError(message)
     else:
@@ -695,11 +713,22 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
                 'Secondary release area': secRelAreaFlag,
-                'Mu': cfgGen['mu'],
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['thickness']}}
+
+    # add frict parameters
+    if cfgGen['frictModel'].lower() == 'samosat':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'], 'tau0': cfgGen['tau0samosat'],
+            'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'], 'B' :  cfgGen['Bsamosat']}
+    elif cfgGen['frictModel'].lower() == 'voellmy':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'], 'xsi': cfgGen['xsivoellmy']}
+    elif cfgGen['frictModel'].lower() == 'coulomb':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'Coulomb', 'mu': cfgGen['mucoulomb']}
+    elif cfgGen['frictModel'].lower() == 'wetsnow':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'wetsnow', 'mu': cfgGen['mu0wetsnow'], 'xsi':  cfgGen['mu0wetsnow']}
+
     # check if secondary release area
     if secRelAreaFlag == 'Yes':
         reportST['Secondary release Area'] = secRelAreaInfo
@@ -904,9 +933,12 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     header = dem['header']
     csz = header['cellsize']
     relRaster = releaseLine['rasterData']
-    relRasterOnes = np.where(relRaster > 0, 1., 0.)
-    relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
-    relAreaProjected = np.sum(csz*csz*relRasterOnes)
+    # for area computation use smaller threshold to identify raster cells that lie within release line
+    # as for creating particles a bigger radius is chosen as particles that lie outside are removed afterwards
+    releaseLineArea = releaseLine.copy()
+    relAreaActualList, relAreaProjectedList, _ = gI.computeAreasFromRasterAndLine(releaseLineArea, dem)
+    relAreaProjected = np.sum(relAreaProjectedList)
+    relAreaActual = np.sum(relAreaActualList)
     reportAreaInfo = {'Release area info': {'Projected Area [m2]': '%.2f' % (relAreaProjected),
                                             'Actual Area [m2]': '%.2f' % (relAreaActual)}}
 
@@ -1108,9 +1140,10 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['ux'] = np.zeros(np.shape(hPartArray))
     particles['uy'] = np.zeros(np.shape(hPartArray))
     particles['uz'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXY'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXYCor'] = np.zeros(np.shape(hPartArray))
-    particles['travelLengthXYZ'] = np.zeros(np.shape(hPartArray))
+    particles['uAcc'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXY'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXYCor'] = np.zeros(np.shape(hPartArray))
+    particles['trajectoryLengthXYZ'] = np.zeros(np.shape(hPartArray))
     particles['travelAngle'] = np.zeros(np.shape(hPartArray))
     particles['stoppCriteria'] = False
     mPartArray = particles['m']
@@ -1313,11 +1346,11 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     Parameters
     ----------
     inputSimLines : dict
-        dict with:
-            entResInfo : dict
-                with the flagSecondaryRelease
-            secondaryReleaseLine : dict
-                secondary release line dictionary
+        dict with
+
+        - entResInfo : dict, with the flagSecondaryRelease
+        - secondaryReleaseLine : dict, secondary release line dictionary
+
     dem: dict
         dem dictionary
     relRaster: 2D numpy array
@@ -1328,11 +1361,12 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     Returns
     -------
     secondaryReleaseInfo: dict
-        inputSimLines['secondaryReleaseLine'] dictionary completed with:
-            header: the dem original header
-            rasterData: list of secondary release rasters (without the overlapping part with the release)
-            flagSecondaryRelease:
-                'Yes' if a secondary release is there
+        inputSimLines['secondaryReleaseLine'] dictionary completed with
+
+        - header: the dem original header
+        - rasterData: list of secondary release rasters (without the overlapping part with the release)
+        - flagSecondaryRelease: 'Yes' if a secondary release is there
+
     reportAreaInfo: dict
         updated simulation area information dictionary
 
@@ -1476,8 +1510,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
-        secondaryReleaseParticles : list
-            list of secondary release area particles dictionaries at initial time step
+
+        - secondaryReleaseParticles : list, of secondary release area particles dictionaries at initial time step
+
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -1495,6 +1530,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         computation time dictionary
     infoDict : dict
         Dictionary of all simulations carried out
+
     """
 
     cfgGen = cfg['GENERAL']
@@ -1554,6 +1590,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
         # fetch initial time step too
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t,
                                                         demRT['header'], fields, mtiInfo)
+        cfgRangeTime['GENERAL']['simHash'] = simHash
 
     # add initial time step to Tsave array
     Tsave = [0]
@@ -1968,13 +2005,13 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     Returns
     -------
     updates the line dictionary with the rasterData: Either
-        Raster : 2D numpy array
-            raster of the area (returned if relRHlist is empty OR if combine is set
-            to True)
-        or
-        RasterList : list
-            list of 2D numpy array rasters (returned if relRHlist is not empty AND
-            if combine is set to False)
+        contains either
+
+        -  Raster: 2D numpy array, raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+        - RasterList: list, list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to False)
+
     """
     NameRel = line['Name']
     StartRel = line['Start']
@@ -2324,24 +2361,24 @@ def trackParticles(cfgTrackPart, dem, particlesList):
 def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA', timeStep='', atol=1.e-6):
     """ Read ascii files within a directory and return List of dictionaries
 
-        Parameters
-        -----------
-        inDir: str
-            path to input directory
-        resType: list
-            list of desired result types, if string converted to list
-        simName : str
-            simulation name
-        flagAvaDir: bool
-            if True inDir corresponds to an avalanche directory and pickles are
-            read from avaDir/Outputs/com1DFA/particles
-        comModule: str
-            module that computed the particles
-        timeStep: float or list of floats
-            desired time step if difference to time step of field file is smaller than atol
-            field is found - optional
-        atol: float
-            look for matching time steps with atol tolerance - default is atol=1.e-6
+    Parameters
+    -----------
+    inDir: str
+        path to input directory
+    resType: list
+        list of desired result types, if string converted to list
+    simName : str
+        simulation name
+    flagAvaDir: bool
+        if True inDir corresponds to an avalanche directory and pickles are
+        read from avaDir/Outputs/com1DFA/particles
+    comModule: str
+        module that computed the particles
+    timeStep: float or list of floats
+        desired time step if difference to time step of field file is smaller than atol
+        field is found - optional
+    atol: float
+        look for matching time steps with atol tolerance - default is atol=1.e-6
 
     Returns
     -------
@@ -2557,6 +2594,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
         # check sphKernelRadius setting
         cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
+
+        # only keep friction model parameters that are used
+        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim)
 
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)

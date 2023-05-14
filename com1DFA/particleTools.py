@@ -52,8 +52,8 @@ def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     xPartArray = particles['x']
     hPartArray = np.ones(len(xPartArray))
     particles['nPart'] = len(xPartArray)
-    particles['travelLengthXY'] = np.zeros(np.shape(xPartArray))
-    particles['travelLengthXYZ'] = np.zeros(np.shape(xPartArray))
+    particles['trajectoryLengthXY'] = np.zeros(np.shape(xPartArray))
+    particles['trajectoryLengthXYZ'] = np.zeros(np.shape(xPartArray))
     particles['idFixed'] = np.zeros(np.shape(xPartArray))
     return particles, hPartArray
 
@@ -658,6 +658,7 @@ def getTangenVectors(nx, ny, nz, ux, uy, uz):
     If possible, e1 is in the velocity direction, if not possible,
     use the tangent vector in x direction for e1 (not that any other u vector could be provided,
     it does not need to be the velocity vector, it only needs to be in the tangent plane)
+
     Parameters
     ----------
     nx : float
