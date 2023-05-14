@@ -215,6 +215,7 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
 
 def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_y):
     """Compute coefficients eq 3.2 for the function F
+
     Parameters
     -----------
     K_x: float
@@ -252,6 +253,7 @@ def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_y):
 def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y):
     """Compute the early solution for 0<t<t_1
     to avoid singularity in the Runge-Kutta integration process
+
     Parameters
     -----------
     t: numpy array
@@ -271,12 +273,13 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y):
     Returns
     ---------
     solSimi: dictionary
-        similarity solution (for early times):
-            time: time array (without dimension)
-            g_sol: g array
-            g_p_sol: first derivativ of g array
-            f_sol: f array
-            f_p_sol: first derivativ of f array
+        similarity solution (for early times)
+
+        - time: time array (without dimension)
+        - g_sol: g array
+        - g_p_sol: first derivativ of g array
+        - f_sol: f array
+        - f_p_sol: first derivativ of f array
 
     """
 
@@ -352,6 +355,7 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_y):
 
 def odeSolver(solver, dt, tEnd, solSimi):
     """Solve the ODE using a Runge-Kutta method
+
     Parameters
     -----------
     solver: `ode` instance
@@ -361,21 +365,25 @@ def odeSolver(solver, dt, tEnd, solSimi):
     tEnd: float
         end time
     solSimi: dictionary
-        similarity solution (for early times):
-            time: time array (without dimension)
-            g_sol: g array
-            g_p_sol: first derivativ of g array
-            f_sol: f array
-            f_p_sol: first derivativ of f array
+        similarity solution (for early times)
+
+        - time: time array (without dimension)
+        - g_sol: g array
+        - g_p_sol: first derivativ of g array
+        - f_sol: f array
+        - f_p_sol: first derivativ of f array
+
     Returns
     ---------
     solSimi: dictionary
-        similarity solution (copleted with all time steps):
-            time: time array (without dimension)
-            g_sol: g array
-            g_p_sol: first derivativ of g array
-            f_sol: f array
-            f_p_sol: first derivativ of f array
+        similarity solution (completed with all time steps)
+
+        - time: time array (without dimension)
+        - g_sol: g array
+        - g_p_sol: first derivativ of g array
+        - f_sol: f array
+        - f_p_sol: first derivativ of f array
+
     """
     timeAdim = solSimi["timeAdim"]
     gSol = solSimi["g_sol"]
@@ -404,6 +412,7 @@ def odeSolver(solver, dt, tEnd, solSimi):
 
 def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
     """get flow thickness from f and g solutions
+
     Parameters
     -----------
     solSimi: dictionary
@@ -441,6 +450,7 @@ def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
 
 def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
     """get flow velocity in x direction from f and g solutions
+
     Parameters
     -----------
     solSimi: dictionary
@@ -476,6 +486,7 @@ def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
 
 def computeV(solSimi, x1, y1, i, L_y, V):
     """get flow velocity in y direction from f and g solutions
+
     Parameters
     -----------
     solSimi: dictionary
@@ -495,6 +506,7 @@ def computeV(solSimi, x1, y1, i, L_y, V):
     --------
     v: numpy array
         v similarity solution at (x1, y1)
+
     """
     f_sol = solSimi["f_sol"]
     f_p_sol = solSimi["f_p_sol"]
@@ -505,6 +517,7 @@ def computeV(solSimi, x1, y1, i, L_y, V):
 
 def computeXC(solSimi, x1, y1, i, L_x, AminusC):
     """get center of mass location
+
     Parameters
     -----------
     solSimi: dictionary
@@ -724,6 +737,7 @@ def analyzeResults(
     simDFrow,
 ):
     """Compare analytical and com1DFA results
+
     Parameters
     -----------
     avalancheDir: pathlib path
@@ -733,13 +747,15 @@ def analyzeResults(
     timeList: list
         list of time steps
     solSimi: dictionary
-        similarity solution:
-            time: time array (without dimension)
-            time: time array (with dimension)
-            g_sol: g array
-            g_p_sol: first derivativ of g array
-            f_sol: f array
-            f_p_sol: first derivativ of f array
+        similarity solution
+
+        - time: time array (without dimension)
+        - time: time array (with dimension)
+        - g_sol: g array
+        - g_p_sol: first derivativ of g array
+        - f_sol: f array
+        - f_p_sol: first derivativ of f array
+
     fieldHeader: dict
         header dictionary with info about the extend and cell size
     cfgMain: dict

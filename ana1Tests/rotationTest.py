@@ -242,4 +242,4 @@ def buildRotationTestReport(avalancheDir, reportRotationTest, simDF, resAnalysis
         reportRotationTest['Rotation test AIMEC figures'].update(inPlotsDict['Aimec mass analysis'])
     # add energy line and aimec results table to report
     gR.writeReport(outDir, [reportRotationTest], True, plotDict='', standaloneReport=True,
-                   reportName='rotationTestReport.md')
+                   reportName='rotationTestReport')
