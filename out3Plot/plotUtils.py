@@ -51,17 +51,17 @@ sns.set_style(
 )
 
 # define figure dimensions
-figW = float(cfg["figW"])
-figH = float(cfg["figH"])
+figW = cfg.getfloat("figW")
+figH = cfg.getfloat("figH")
 # define lines and marker properties
 markers = cfg["markerStyle"]
-ms = float(cfg["markerSize"])
-matplotlib.rcParams["lines.linewidth"] = float(cfg["lineWidth"])
+ms = cfg.getfloat("markerSize")
+matplotlib.rcParams["lines.linewidth"] = cfg.getfloat("lineWidth")
 matplotlib.rcParams["lines.markersize"] = ms
 # font size
-fs = float(cfg["fontSize"])
+fs = cfg.getfloat("fontSize")
 matplotlib.rcParams["figure.titlesize"] = cfg["titleSize"]
-matplotlib.rcParams["figure.dpi"] = float(cfg["figResolution"])
+matplotlib.rcParams["figure.dpi"] = cfg.getfloat("figResolution")
 matplotlib.rcParams["figure.autolayout"] = True
 ls = ["-", "--", "-."]
 matplotlib.rcParams["axes.titlesize"] = cfg["axesTitleSize"]
@@ -666,17 +666,16 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     ncolsMin = indMin[1][0]
     rangePlot = int(cfg.getfloat("zoomBuffer") / cellSize)
     dataCut = data[
-        nrowsMin - rangePlot : nrowsMin + rangePlot,
-        ncolsMin - rangePlot : ncolsMin + rangePlot,
+        max(0, nrowsMin - rangePlot):min(data.shape[0], nrowsMin + rangePlot),
+        max(0, ncolsMin - rangePlot):min(data.shape[1], ncolsMin + rangePlot),
     ]
 
     # to determine the extent for plotting
+    yOrigin = max(0, nrowsMin - rangePlot)
+    xOrigin = max(0, ncolsMin - rangePlot)
     if extentOption:
-        yOrigin = (nrowsMin - rangePlot) * cellSize
-        xOrigin = (ncolsMin - rangePlot) * cellSize
-    else:
-        yOrigin = nrowsMin - rangePlot
-        xOrigin = ncolsMin - rangePlot
+        yOrigin = yOrigin * cellSize
+        xOrigin = xOrigin * cellSize
 
     return dataCut, xOrigin, yOrigin
 

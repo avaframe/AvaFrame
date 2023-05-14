@@ -138,7 +138,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             ax.set_title(title)
             ax.set_xlabel("x [m]")
             ax.set_ylabel("y [m]")
-            #pU.putAvaNameOnPlot(ax, avaDir)
+            pU.putAvaNameOnPlot(ax, avaDir)
 
             # save and or show figure
             plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName.stem, fig)
@@ -229,7 +229,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
 
         plotName = "%s" % (name)
 
-        #pU.putAvaNameOnPlot(ax, avaDir)
+        pU.putAvaNameOnPlot(ax, avaDir)
 
         # save and or show figure
         plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)

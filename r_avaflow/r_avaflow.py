@@ -55,7 +55,7 @@ def r_avaflow_Main(avalancheDir, cfgFile=''):
         demFile = getData(avalancheDir, cfgFile)
     
         dem = IOf.readRaster(demFile[0])
-    
+         
     
     #Delete unnecessary input data
     shp_to_ascii.cleandirec(avalancheDir)

@@ -160,29 +160,26 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
 
     ############################################
     # prepare for plot
-    title = ['Pressure ', 'Flow Thickness ', 'Flow Velocity ', 'Kinetic Energy ']
-    unit = ['$P(s)$ [kPa]', '$ft(s)$ [m]', '$v(s) [m.s^{-1}]$', '$ke(s)$ [kJ]' ]
-    peakList = ['ppr', 'pft', 'pfv', 'pke']
+    title = ['Pressure ', 'Flow Thickness ', 'Flow Velocity ']
+    unit = ['$P(s)$ [kPa]', '$ft(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    peakList = ['ppr', 'pft', 'pfv']
 
     ############################################
     # Figure: Pressure thickness speed
 
-    fig, axes = plt.subplots(nrows=1, ncols=4, figsize=(pU.figW*4, pU.figH))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, peak, titleVal, unitVal in zip(axes.flatten(), peakList, title, unit):
-        #ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMax'], s, '--k', label='Max Reference')
-        ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMax'], s, '--k', label='Com1DFA')
-        #ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMean'], s, '-k', label='Mean Reference')
-        #ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMax'], s, '--b', label='Max Simulation')
-        ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMax'], s, '--b', label='r.avaflow')
-        #ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
+        ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMax'], s, '--k', label='Max Reference')
+        ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMean'], s, '-k', label='Mean Reference')
+        ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMax'], s, '--b', label='Max Simulation')
+        ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
 
-        ax.set_title('Maximum '+ titleVal + 'distribution along path')
+        ax.set_title(titleVal + 'distribution along path')
         ax.legend(loc='best')
         ax.set_ylabel('s [m]')
-        #ax.set_ylim([s.min(), s.max()])
-        ax.set_ylim([s.min(), 2000])
+        ax.set_ylim([s.min(), s.max()])
         ax.set_xlim(auto=True)
         ax.set_xlabel(unitVal)
     pU.putAvaNameOnPlot(ax, projectName)
@@ -694,7 +691,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                 'maxpfvCrossMax', 'TP', 'FN', 'FP', 'TN']
     if flagMass:
         forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']
-    forStats = set(forStats) & set(resAnalysisDF.columns)
+    forStats = list(set(forStats) & set(resAnalysisDF.columns))
     # compute some statistics
     resAnalysisStatsDF = resAnalysisDF[forStats].describe(percentiles=None)
 
