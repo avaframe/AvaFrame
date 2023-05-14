@@ -1,0 +1,216 @@
+int MAXSTRLEN = 512;
+
+void chomp(char str[]) {
+  int p;
+  p=strlen(str);
+  str[p-1]="";
+}
+
+int running(char project_dir[],char sim_name[]) {
+  char status[10];
+  FILE *status_file;
+  char file_name[512];
+
+  // in .simulation_status, status is saved to folder of respective
+  // simulation: "started", "running", "finished"
+
+  sprintf(file_name,"%s/Project/Simulations/%s/.simulation_status",
+          project_dir,sim_name);
+  printf("-----------%s\n",file_name);
+  status_file=fopen(file_name,"r");
+
+  if(NULL == status_file) {
+    printf("could not open file!\n");
+    return 2;
+  }
+  //read first line of file
+  fgets(status, 10, status_file);
+
+  chomp(status);
+
+  if(strcmp("finished", status) == 0)
+    {
+      printf("finished\n");
+      fclose(status_file);
+      return 0;
+    }
+  else
+    {
+      printf("Status: %s \n",status);
+      fclose(status_file);
+      return 1;
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// postprocessing of simulation runs
+
+void export_first_time(char SimName[], char ResultDir_rep[]){
+
+		char name2[512];
+    char Sim[512];
+    char Var[512];
+    char OutFile[512];
+
+  	// Prepare for postprocessing of first and last time step of flow depth parameter
+    sprintf(name2,"Project/Simulations/%s",SimName);
+    sprintf(Sim,"Project/Simulations/%s",SimName);
+    set(Sim, "LoadFirstTimeStep", "");
+
+    //export Flow Depth
+    sprintf(Var,"Project/Simulations/%s/FlowDepth",SimName);
+    set(Var, "Active", "1");
+    sprintf(OutFile,"%s/%s_tFirst_fd.txt",ResultDir_rep, SimName);
+
+    // TODO: make sure same resolution as topo is used
+    set(Var, "ExportRasterSize", "5");
+    set(Var, "ExportFieldRasterAscii", OutFile);
+}
+
+void postprocessing(char ResultDir[], char SimName[], float Mu){
+
+    char name[512];
+    char MuString[512];
+    char ResultDir_rep[512];
+    char name2[512];
+    char Sim[512];
+    char Var[512];
+    char OutFile[512];
+
+    // Generate a full report
+    sprintf(MuString,"%.5f",Mu);
+    sprintf(ResultDir_rep,"%s/FullOutput_Mu_%s",ResultDir,MuString);
+    if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
+    printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
+    sprintf(name,"Project/Simulations/%s",SimName);
+    set(name, "set_report_directory", ResultDir_rep);
+    set(name, "generate_report", "");
+
+    // Export first time step flow depth
+    export_first_time(SimName,ResultDir_rep);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Run calls for simulations
+
+void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, float Mu, char entH)
+{
+  char ProjDir[512];
+  char Sim[512];
+  char Parameter[512];
+  char FPath[512];
+  char F2Path[512];
+  char ParFilePath[512];
+  char ResultDir[512];
+  char EntAr[512];
+  char entHString[512];
+  int Status;
+  int ExpCount;
+  float Tau0;
+  float entth;
+  FILE *ExpLog;
+  FILE *ExpLog2;
+
+  // Load project
+  sprintf(ProjDir, "%s", Com1DFAProjectDir);
+  set("", "ProjectDir", ProjDir);
+  set("", "LoadProject", ProjDir);
+
+  // Open experiment log file
+  sprintf(FPath, "%s_ExpLog.txt", ProjDir);
+  ExpLog = fopen(FPath,"w");
+  fprintf(ExpLog, "N;SimName;mu\n");
+  // Open second experiment log file for postprocessing
+  sprintf(F2Path, "%s/ExpLog.txt", ResDir);
+  ExpLog2 = fopen(F2Path,"a");
+  printf("\n[BatchCom1DFA] Full ExpLog %s\n",F2Path);
+
+
+  // Count Simulation runs
+  ExpCount = countRel;
+
+  sprintf(Sim,"Project/Simulations/%s",CuSim);
+  printf("\n[BatchCom1DFA] -------------------------\n");
+
+  //------------Set time stepping---------------------
+  // set(Sim, "EndTime", "40");
+  // set(Sim, "DeltaOut", "20");
+
+  // Friction type
+  set(Sim, "FrictionType", "samosAT_Standard");
+
+
+  // Read Mu from file
+  sprintf(Parameter,"tau0=0.0 mue=%f Rs0=0.222 kappa=0.43 R=0.05 B=4.13",Mu);
+  set(Sim, "FormulaParameters", Parameter);
+  get(Sim, "FormulaParameters", Parameter);
+
+  // Set Expcount and update log
+  ExpCount++;
+  fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,Mu);
+  fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,Mu);
+
+  // Set entrainment thickness
+  entth = atof(entH);
+  sprintf(EntAr,"%s/EntrainmentAreas",Sim);
+  sprintf(entHString,"%.5f",entth);
+  printf("\n[BatchCom1DFA] Setting in %s ent depth to %s m \n",EntAr,entHString);
+  set(EntAr, "set_depth", entHString);
+
+  //------------- start processing
+  set("", "SaveProject", "");
+  printf("[BatchCom1DFA] Computing Simulation: %s with Mu %f \n",CuSim,Mu);
+  set(Sim, "DeactivateLoadingPsaResults", "");
+  set(Sim, "LoadProject", "");
+  set(Sim, "Run", "");
+
+  //------------- postprocessing
+  postprocessing(ResDir,CuSim,Mu);
+
+  fclose(ExpLog);
+  fclose(ExpLog2);
+
+  // Save project
+  set("", "SaveProject", "");
+  set("", "Close", "");
+
+}
+
+// ################################# main #####################################
+int main()
+{
+  char Com1DFAProjectDir[512];
+  char CuSim[512];
+  char ResDir[512];
+  char countRelStr[512];
+  int countRel;
+  char MuStr[512];
+  char entH[512];
+  float Mu;
+
+  // --- Setup
+  strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
+  strcpy(ResDir, "##RESDIR##");
+  strcpy(CuSim, "##NAME##");
+  strcpy(countRelStr, "##COUNTREL##");
+  strcpy(MuStr, "##VALUE##");
+  strcpy(entH, "##ENTH##");
+
+
+  // Setup Mu
+  Mu = atof(MuStr);
+
+  // Setup total number of simulations for file naming
+  countRel = atoi(countRelStr);
+
+  printf("[BatchCom1DFA] Number of total sims now %d \n",countRel);
+
+  // --- Calls
+  RunExport(Com1DFAProjectDir, ResDir, CuSim, countRel, Mu, entH);
+
+  countRel++;
+  printf("[BatchCom1DFA] Simulation #%d done\n", countRel);
+  return 0;
+
+}
