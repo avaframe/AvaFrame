@@ -1,0 +1,111 @@
+"""
+    Check if the .ini file is consistent for com1DFA computations
+"""
+
+import logging
+import numpy as np
+
+# create local logger
+log = logging.getLogger(__name__)
+
+
+def checkCfgConsistency(cfg):
+    """ Check the provided configuration for necessary consistency/relation between
+        parameters for com1DFA.
+
+    Parameters
+    -----------
+    cfg : configuration object
+        com1DFA configuration
+    Returns
+    --------
+    True if checks are passed, otherwise error is thrown
+    """
+
+    # Check if Ata Parameters are consistent
+    sphOption = float(cfg['GENERAL']['sphOption'])
+    viscOption = float(cfg['GENERAL']['viscOption'])
+
+    if viscOption == 2:
+        if sphOption != 2:
+            # raise an error
+            message = ('If viscOption is set to 2 (Ata viscosity), sphOption = 2 is needed '
+                       '(or implement the Ata viscosity for other sphOption values)')
+            log.error(message)
+            raise AssertionError(message)
+        else:
+            log.debug('Ata parameters are consistent')
+
+    return True
+
+
+def checkCellSizeKernelRadius(cfg):
+    """ Check if sphKernelRadius is set to match the meshCellSize if so adapt sphKernelRadius value
+
+    Parameters
+    -----------
+    cfg : dict
+        configuration settings here used: sphKernelRadius, meshCellSize
+
+    Returns
+    --------
+    cfg : dict
+        updated configuration settings here used: sphKernelRadius
+
+    """
+
+    # Check if Ata Parameters are consistent
+    sphKernelRadius = cfg['GENERAL']['sphKernelRadius']
+    meshCellSize = cfg['GENERAL']['meshCellSize']
+
+    if sphKernelRadius == 'meshCellSize':
+        cfg['GENERAL']['sphKernelRadius'] = cfg['GENERAL']['meshCellSize']
+        log.info('sphKernelRadius is set to match meshCellSize of %s meters' % meshCellSize)
+
+    return cfg
+
+
+def checkCfgFrictionModel(cfg):
+    """ check which friction model is chosen and set remaining friction model
+        parameters to numpy.nan
+
+        Parameters
+        -------------
+        cfg: dict
+            configuration settings
+
+        Returns
+        --------
+        cfg: dict
+            upated configuration settings
+    """
+
+    # remove friction parameter values that are not used
+    frictModel = cfg['GENERAL']['frictModel']
+
+    frictParameters = ['musamosat', 'tau0samosat', 'Rs0samosat', 'kappasamosat', 'Rsamosat',
+    'Bsamosat', 'muvoellmy', 'xsivoellmy', 'mucoulomb', 'mu0wetsnow', 'xsiwetsnow']
+
+    for frictP in frictParameters:
+        if frictModel.lower() in frictP:
+            noF = False
+            try:
+                float(cfg['GENERAL'][frictP])
+            except ValueError:
+                noF = True
+            if noF:
+                message = 'Friction model used %s, but %s is not of valid float type' % (frictModel, cfg['GENERAL'][frictP])
+                log.error(message)
+                raise ValueError(message)
+            elif np.isnan(float(cfg['GENERAL'][frictP])):
+                message = 'Friction model used %s, but %s is nan - not valid' % (frictModel, frictP)
+                log.error(message)
+                raise ValueError(message)
+            else:
+                log.info('Fricton model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
+        else:
+            if frictP in cfg['GENERAL']:
+                cfg['GENERAL'][frictP] = np.nan
+                log.info('Friction model parameter not used: %s set to nan' % frictP)
+
+    return cfg
