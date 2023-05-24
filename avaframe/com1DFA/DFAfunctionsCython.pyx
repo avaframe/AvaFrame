@@ -52,11 +52,24 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   """
   # read input parameters
   cdef double enthRef = cfg.getfloat('enthRef')
+  cdef double muSamosAt = cfg.getfloat('musamosat')
   cdef double tau0SamosAt = cfg.getfloat('tau0samosat')
   cdef double Rs0SamosAt = cfg.getfloat('Rs0samosat')
   cdef double kappaSamosAt = cfg.getfloat('kappasamosat')
   cdef double BSamosAt = cfg.getfloat('Bsamosat')
   cdef double RSamosAt = cfg.getfloat('Rsamosat')
+  cdef double muSamosAtSmall = cfg.getfloat('musamosatsmall')
+  cdef double tau0SamosAtSmall = cfg.getfloat('tau0samosatsmall')
+  cdef double Rs0SamosAtSmall = cfg.getfloat('Rs0samosatsmall')
+  cdef double kappaSamosAtSmall = cfg.getfloat('kappasamosatsmall')
+  cdef double BSamosAtSmall = cfg.getfloat('Bsamosatsmall')
+  cdef double RSamosAtSmall = cfg.getfloat('Rsamosatsmall')
+  cdef double muSamosAtMedium = cfg.getfloat('musamosatmedium')
+  cdef double tau0SamosAtMedium = cfg.getfloat('tau0samosatmedium')
+  cdef double Rs0SamosAtMedium = cfg.getfloat('Rs0samosatmedium')
+  cdef double kappaSamosAtMedium = cfg.getfloat('kappasamosatmedium')
+  cdef double BSamosAtMedium = cfg.getfloat('Bsamosatmedium')
+  cdef double RSamosAtMedium = cfg.getfloat('Rsamosatmedium')
   cdef double entEroEnergy = cfg.getfloat('entEroEnergy')
   cdef double entShearResistance = cfg.getfloat('entShearResistance')
   cdef double entDefResistance = cfg.getfloat('entDefResistance')
@@ -80,7 +93,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef int viscOption = cfg.getint('viscOption')
   cdef double dt = particles['dt']
-  cdef double muSamosAt = cfg.getfloat('musamosat')
   cdef double mu0 = cfg.getfloat('mu0wetsnow')
   cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
   cdef int nPart = particles['nPart']
@@ -256,6 +268,12 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
             enthalpy = totalEnthalpy - gravAcc * z - 0.5 * uMag * uMag
             mu = mu0 * math.exp(-enthalpy / enthRef)
             tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsiWetSnow
+          elif frictType == 5:
+            # SamosAT friction type (bottom shear stress) - for small ava calibration parameters
+            tau = DFAtlsC.SamosATfric(rho, tau0SamosAtSmall, Rs0SamosAtSmall, muSamosAtSmall, kappaSamosAtSmall, BSamosAtSmall, RSamosAtSmall, uMag, sigmaB, h)
+          elif frictType == 6:
+            # SamosAT friction type (bottom shear stress) - for medium ava calibration parameters
+            tau = DFAtlsC.SamosATfric(rho, tau0SamosAtMedium, Rs0SamosAtMedium, muSamosAtMedium, kappaSamosAtMedium, BSamosAtMedium, RSamosAtMedium, uMag, sigmaB, h)
           else:
             tau = 0.0
 

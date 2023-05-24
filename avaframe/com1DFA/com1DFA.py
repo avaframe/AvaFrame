@@ -722,6 +722,12 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
     if cfgGen['frictModel'].lower() == 'samosat':
         reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'], 'tau0': cfgGen['tau0samosat'],
             'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'], 'B' :  cfgGen['Bsamosat']}
+    elif cfgGen['frictModel'].lower() == 'samosatsmall':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATSmall', 'mu': cfgGen['musamosatsmall'], 'tau0': cfgGen['tau0samosatsmall'],
+            'Rs0': cfgGen['Rs0samosatsmall'], 'kappa': cfgGen['kappasamosatsmall'], 'R':  cfgGen['Rsamosatsmall'], 'B' :  cfgGen['Bsamosatsmall']}
+    elif cfgGen['frictModel'].lower() == 'samosatmedium':
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATMedium', 'mu': cfgGen['musamosatmedium'], 'tau0': cfgGen['tau0samosatmedium'],
+            'Rs0': cfgGen['Rs0samosatmedium'], 'kappa': cfgGen['kappasamosatmedium'], 'R':  cfgGen['Rsamosatmedium'], 'B' :  cfgGen['Bsamosatmedium']}
     elif cfgGen['frictModel'].lower() == 'voellmy':
         reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'], 'xsi': cfgGen['xsivoellmy']}
     elif cfgGen['frictModel'].lower() == 'coulomb':
@@ -1554,7 +1560,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     resTypesLast = list(set(resTypes + resTypesReport + ['particles']))
     # derive friction type
     # turn friction model into integer
-    frictModelsList = ['samosat', 'coulomb', 'voellmy', 'wetsnow']
+    frictModelsList = ['samosat', 'coulomb', 'voellmy', 'wetsnow', 'samosatsmall', 'samosatmedium']
     frictModel = cfgGen['frictModel'].lower()
     frictType = frictModelsList.index(frictModel) + 1
     log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))

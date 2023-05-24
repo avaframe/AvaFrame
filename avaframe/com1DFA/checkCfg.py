@@ -84,10 +84,22 @@ def checkCfgFrictionModel(cfg):
     frictModel = cfg['GENERAL']['frictModel']
 
     frictParameters = ['musamosat', 'tau0samosat', 'Rs0samosat', 'kappasamosat', 'Rsamosat',
-    'Bsamosat', 'muvoellmy', 'xsivoellmy', 'mucoulomb', 'mu0wetsnow', 'xsiwetsnow']
+    'Bsamosat',
+    'muvoellmy', 'xsivoellmy',
+    'mucoulomb',
+    'mu0wetsnow', 'xsiwetsnow',
+    'musamosatsmall', 'tau0samosatsmall', 'Rs0samosatsmall', 'kappasamosatsmall', 'Rsamosatsmall',
+    'Bsamosatsmall',
+    'musamosatmedium', 'tau0samosatmedium', 'Rs0samosatmedium', 'kappasamosatmedium', 'Rsamosatmedium',
+    'Bsamosatmedium']
 
-    for frictP in frictParameters:
-        if frictModel.lower() in frictP:
+    if frictModel.lower() == 'samosat':
+        frictParameterIn = [frictModel.lower() in frictP and 'small' not in frictP and 'medium' not in frictP for frictP in frictParameters]
+    else:
+        frictParameterIn = [frictModel.lower() in frictP for frictP in frictParameters]
+
+    for indexP, frictP in enumerate(frictParameters):
+        if frictParameterIn[indexP]:
             noF = False
             try:
                 float(cfg['GENERAL'][frictP])
