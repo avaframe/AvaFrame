@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import configparser
 import pathlib
+import pytest
 import pandas as pd
 
 # Local imports
@@ -267,3 +268,42 @@ def test_savePartToCsv(tmp_path):
     assert np.array_equal(DF2['velocityMagnitude'],
                           np.asarray([velMag, velMag, velMag]))
     assert DF2['time'][0] == 2.0
+
+
+def test_reshapeParticlesDicts():
+    """ test reshaping particle dicts from one dict per time step to time series per particle prop """
+
+    # setup required input
+    partDict1 = {'velMag': np.asarray([1.,2., 4., 5.]),'uX': np.asarray([10.,20., 40., 50.]),
+        'uAcc': np.asarray([4., 5., 6., 7.]), 'ID': np.asarray([0, 1, 2, 3]), 't': 0., 'nPart': 4}
+    partDict2 = {'velMag': np.asarray([5., 6., 7., 8.]), 'uX': np.asarray([10.,20., 40., 50.]),
+        'uAcc': np.asarray([4., 5., 7., 7.]), 'ID': np.asarray([0, 1, 2, 3]), 't': 1., 'nPart': 4}
+    partDict3 = {'velMag': np.asarray([9., 10., 11., 12.]), 'uX': np.asarray([10.,20., 40., 50.]),
+        'uAcc': np.asarray([40., 50., 60., 70.]), 'ID': np.asarray([0, 1, 2, 3]), 't': 2., 'nPart': 4}
+    particlesList = [partDict1, partDict2, partDict3]
+
+    # call function to be tested
+    particlesTimeArrays = particleTools.reshapeParticlesDicts(particlesList, ['velMag', 'uAcc', 't', 'ID'])
+
+    test = np.asarray([[1., 2., 4., 5.], [5., 6., 7., 8.], [9., 10., 11., 12.]])
+
+    # TODO: check if particles are removed during flow so not available for all time steps
+    assert np.array_equal(particlesTimeArrays['t'], np.asarray([0., 1., 2.]))
+    assert np.array_equal(particlesTimeArrays['ID'], np.asarray([[0., 1., 2., 3.], [0., 1., 2., 3.], [0., 1., 2., 3.]]))
+    assert np.array_equal(particlesTimeArrays['velMag'], test)
+    assert np.array_equal(particlesTimeArrays['uAcc'], np.asarray([[4., 5., 6., 7.], [4., 5., 7., 7.], [40., 50., 60., 70.]]))
+
+
+    # setup required input
+    partDict1 = {'velMag': np.asarray([1.,2., 4., 5.]),'uX': np.asarray([10.,20., 40., 50.]),
+        'uAcc': np.asarray([4., 5., 6., 7.]), 'ID': np.asarray([0, 1, 2, 3]), 't': 0., 'nPart': 4}
+    partDict2 = {'velMag': np.asarray([5., 6., 7., 8.]), 'uX': np.asarray([10.,20., 40., 50.]),
+        'uAcc': np.asarray([4., 5., 7., 7.]), 'ID': np.asarray([0, 1, 2, 3]), 't': 1., 'nPart': 4}
+    partDict3 = {'velMag': np.asarray([9., 10., 11., 12., 13.]), 'uX': np.asarray([10.,20., 40., 50., 60.]),
+        'uAcc': np.asarray([40., 50., 60., 70., 80.]), 'ID': np.asarray([1, 2, 3, 4, 5]), 't': 2., 'nPart': 5}
+    particlesList = [partDict1, partDict2, partDict3]
+
+    with pytest.raises(AssertionError) as e:
+        # call function to be tested
+        particlesTimeArrays = particleTools.reshapeParticlesDicts(particlesList, ['velMag', 'uAcc', 't', 'ID'])
+    assert str(e.value) == ("Number of particles changed throughout simulation")

@@ -12,6 +12,7 @@ import copy
 import matplotlib.pyplot as plt
 import pandas as pd
 import shapely as shp
+from scipy.interpolate import splprep, splev
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -417,7 +418,7 @@ def computeS(avaPath):
 
 def prepareLine(dem, avapath, distance=10, Point=None):
     """Resample and project line on dem
-    1- Resample the avapath line with a max intervall of distance=10m
+    1- Resample the avapath line with an interval of approximately distance in meters
     between points (projected distance on the horizontal plane).
     2- Make avalanche profile out of the path (affect a z value using the dem)
     3- Get projection of points on the profil (closest point)
@@ -443,32 +444,45 @@ def prepareLine(dem, avapath, distance=10, Point=None):
         is projected)
     """
 
-    xcoor = avapath['x']
-    ycoor = avapath['y']
-    xcoornew = np.array([xcoor[0]])
-    ycoornew = np.array([ycoor[0]])
-    s = np.array([0])  # curvilinear coordinate allong the path
-    # loop on the points of the avapath
-    for i in range(np.shape(xcoor)[0] - 1):
-        Vx = xcoor[i + 1] - xcoor[i]
-        Vy = ycoor[i + 1] - ycoor[i]
-        D = np.sqrt(Vx**2 + Vy**2)
-        nd = int(np.floor(D / distance) + 1)
-        # Resample each segment
-        S0 = s[-1]
-        for j in range(1, nd + 1):
-            xn = j / (nd) * Vx + xcoor[i]
-            yn = j / (nd) * Vy + ycoor[i]
-            xcoornew = np.append(xcoornew, xn)
-            ycoornew = np.append(ycoornew, yn)
-            s = np.append(s, S0 + D * j / nd)
+    # fetch x, y coors from avapath
+    x = avapath['x']
+    y = avapath['y']
+
+    # check if duplicate points in avapath cooridnates
+    indexNonDup = np.where(np.abs(np.diff(x)) + np.abs(np.diff(y)) > 0)
+    xcoor = x[indexNonDup]
+    xNew = np.append(xcoor, x[-1])
+    ycoor = y[indexNonDup]
+    yNew = np.append(ycoor, y[-1])
+
+    # create a B-spline with scipy for given x, y line
+    if len(xNew) <= 3:
+        tck, u = splprep([xNew, yNew], k=len(xNew)-1)
+        log.warning('Path is defined by only %d points - degree of spline is set to %d' %
+            (len(xNew), len(xNew)-1))
+    else:
+        tck, u = splprep([xNew, yNew])
+
+    # compute accumulated distance along spline of x, y
+    s = computeLengthOfLine2D(xNew, yNew)
+    # compute number of desired points along spline of x, y as a function of
+    # length of the spline and the desired resample distance of the line
+    nPoints = np.ceil(s[-1]/distance) + 1
+    # evaluate spline for nPoints
+    uPoints = np.linspace(0, 1, int(nPoints))
+    xcoornew, ycoornew = splev(uPoints, tck)
+    # compute accumulated distance along spline of xcoornew, ycoornew
+    sNew = computeLengthOfLine2D(xcoornew, ycoornew)
+    # start with 0
+    sNew = np.append([0], sNew)
 
     resampAvaPath = avapath
     resampAvaPath['x'] = xcoornew
     resampAvaPath['y'] = ycoornew
     resampAvaPath, _ = projectOnRaster(dem, resampAvaPath)
-    resampAvaPath['s'] = s
+    resampAvaPath['s'] = sNew
     avaProfile = resampAvaPath
+
     # find split point by computing the distance to the line
     if Point:
         projPoint = findSplitPoint(avaProfile, Point)
@@ -477,82 +491,27 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
     return avaProfile, projPoint
 
-def prepareLineNewVersion(dem, avapath, distance=5, Point=None):
-        """
+
+def computeLengthOfLine2D(x, y):
+    """ compute distance along a line in 2D
 
         Parameters
-        -----------
-        dem: dict
-            dem dictionary
-        avapath: dict
-            line dictionary
-        distance: float
-            resampling distance
-        Point: dict
-            a point dictionary (optional, can contain several point)
+        ------------
+        x, y: np array
+            x, y coordinates of line
 
         Returns
-        -------
-        avaProfile: dict
-            the resampled avapath with the z coordinate
-        projPoint: dict
-            point dictionary projected on the profile (if several points
-            were give in input, only the closest point to the profile
-            is projected)
-        """
-        
-        from scipy.interpolate import splprep, splev
-        
-        xcoor = avapath['x']
-        ycoor = avapath['y']
-        okay = np.where(np.abs(np.diff(xcoor)) + np.abs(np.diff(ycoor)) > 0)
-        xcoorNew = xcoor[okay]
-        xcoor = np.append(xcoorNew, xcoor[-1])
-        ycoorNew = ycoor[okay]
-        ycoor = np.append(ycoorNew, ycoor[-1])
+        ---------
+        s: np array
+            accumulated distance measured along line from point to point
 
-        (tck, u), fp, ier, msg = splprep([xcoor,ycoor], s=0, u=None, per=0, k=2, full_output=True) #s = optional parameter (default used here)
-        
-        uNew = np.linspace(0,1,1000)
-        xcoornew, ycoornew = splev(uNew, tck, der=0)
-        dx = np.diff(xcoornew)
-        dy = np.diff(ycoornew)
-        s = np.sqrt(dx**2 + dy**2)
-        s = s.cumsum()
-        nelements = np.ceil(s[-1]/distance) +1
-        
-        uNew = np.linspace(0,1, int(nelements))
-        xcoornew, ycoornew = splev(uNew, tck, der=0)
-        
-        dx = np.diff(xcoornew)
-        dy = np.diff(ycoornew)
-        s = np.sqrt(dx**2 + dy**2)
-        s = s.cumsum()
-        s = np.append([0], s)
-        
-        
-        #xcoornew = np.arange(xcoor[0], xcoor[-1], distance)
-        #xcoornew[-1] = len(xcoornew)*distance 
-        plt.scatter(xcoor,ycoor,c='k')
-        plt.plot(xcoornew, ycoornew, 'o', markersize=1)
-        plt.axis('equal')
-        plt.show() 
-        #ycoornew = f(xcoornew) 
-        
-        resampAvaPath = avapath
-        resampAvaPath['x'] = xcoornew
-        resampAvaPath['y'] = ycoornew
-        resampAvaPath, _ = projectOnRaster(dem, resampAvaPath)
-        resampAvaPath['s'] = s
-        avaProfile = resampAvaPath
-        
-        # find split point by computing the distance to the line
-        if Point:
-            projPoint = findSplitPoint(avaProfile, Point)
-        else:
-            projPoint = None
-        
-        return avaProfile, projPoint
+    """
+    dx = np.diff(x)
+    dy = np.diff(y)
+    s = np.sqrt(dx**2 + dy**2)
+    s = s.cumsum()
+
+    return s
 
 
 def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):

@@ -364,7 +364,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
         # check if filter criteria are met by thickness parameters for the sim in simDFrow
         for val in value:
             validationString = fetchValidationString(val, thIdList, thNames, simDFrow)
-            # if we set new column value to True 
+            # if we set new column value to True
             if validationString:
                 simDF.loc[simHash, 'toBeAdded'] = True
 
@@ -449,6 +449,8 @@ def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModVal
     overrideParameters = cfgWithOverrideParameters['%s_override' % modName]
     overrideKeys = [item for item in overrideParameters]
     overrideKeys.remove('defaultConfig')
+    message = 'duplicate parameter names appearing in override section'
+    errorDuplicateListEntry(overrideKeys, message)
 
     # loop through sections of the configuration of the module
     foundKeys = []
@@ -473,4 +475,25 @@ def applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, module, addModVal
         if item != 'defaultConfig':
             log.warning('Additional Key [\'%s\'] in section %s_override is ignored.' % (item, modName))
 
+    # if an override key has been found in multiple sections - throw error
+    message = 'duplicate parameter name appearing in sections of module config where override should be applied'
+    errorDuplicateListEntry(foundKeys, message)
+
     return cfgToOverride, cfgWithOverrideParameters
+
+
+def errorDuplicateListEntry(listKeys, message):
+    """ check if duplicate entries appear in a list and raise Assertion error using
+        message
+
+        Parameters
+        -----------
+        listKeys: list
+            list with keys
+        message: str
+            message of error
+    """
+
+    if len(listKeys) != len(list(set(listKeys))):
+        log.error(message)
+        raise AssertionError

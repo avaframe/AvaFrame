@@ -796,15 +796,16 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     trackedPartProp : dict
         dictionary with 2D numpy arrays corresponding to the time series of the
         properties for the tracked particles (for example if
-        properties = ['x', 'y'], the dictionary will have the keys 'time',
+        properties = ['x', 'y'], the dictionary will have the keys 't',
         'x' and 'y'. trackedPartProp['x'] will be a 2D numpy array, each line
         corresponds to the 'x' time series of a tracked particle)
     '''
     # buid time series for desired properties of tracked particles
     nTimeSteps = len(particlesList)
     trackedPartProp = {}
-    trackedPartProp['time'] = np.zeros(nTimeSteps)
+    trackedPartProp['t'] = np.zeros(nTimeSteps)
     newProperties = []
+
     # initialize
     for key in properties:
         if key in particlesList[0]:
@@ -817,7 +818,7 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     trackedPartID = []
     for particles, nTime in zip(particlesList, range(nTimeSteps)):
         trackedParticles = particles['trackedParticles']
-        trackedPartProp['time'][nTime] = particles['t']
+        trackedPartProp['t'][nTime] = particles['t']
         index = np.where(trackedParticles == 1)
         for ind, id in zip(index[0], particles['ID'][index]):
             if id not in trackedPartID:
@@ -918,3 +919,43 @@ def savePartToCsv(particleProperties, dictList, outDir):
         particlesData = pd.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
+
+
+def reshapeParticlesDicts(particlesList, propertyList):
+    """ reshape particlesList from one dict per time step with all particle properties for each particle,
+        to one dict with an array of property values for all time steps for each particle
+        shape: nx x ny; nx time steps, ny number of particles
+
+        Parameters
+        -----------
+        particlesList: list
+            list of particle dicts, one dict per time step
+        propertyList: list
+            list of property names that shall be reshaped and saved to particlesTimeArrays
+
+        Returns
+        --------
+        particlesTimeArrays: dict
+            dict with time series of properties of particles
+            key: property, item: timeSteps x particlesID array of property values
+    """
+
+    # create particlesTimeArrays
+    particlesTimeArrays = {}
+
+    idParticles = [p['nPart'] for p in particlesList]
+    if len(list(set(idParticles))) > 1:
+        message = 'Number of particles changed throughout simulation'
+        log.error(message)
+        raise AssertionError(message)
+
+    for props in propertyList:
+        if isinstance(particlesList[0][props], int) or isinstance(particlesList[0][props], float):
+            particlesTimeArrays[props] = np.zeros(len(particlesList))
+            particlesTimeArrays[props][:] = np.asarray([p[props] for p in particlesList])
+        else:
+            particlesTimeArrays[props] = np.zeros((len(particlesList), particlesList[0]['nPart']))
+            for idx in particlesList[0]['ID']:
+                particlesTimeArrays[props][:,idx] = np.asarray([p[props][idx] for p in particlesList])
+
+    return particlesTimeArrays

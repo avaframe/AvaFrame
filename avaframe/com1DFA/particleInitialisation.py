@@ -109,6 +109,8 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     particles['ux'] = np.zeros(nPart)
     particles['uy'] = np.zeros(nPart)
     particles['uz'] = np.zeros(nPart)
+    particles['uAcc'] = np.zeros(nPart)
+    particles['velocityMag'] = np.zeros(nPart)
     particles['trajectoryLengthXY'] = np.zeros(nPart)
     particles['trajectoryLengthXYZ'] = np.zeros(nPart)
     particles['stoppCriteria'] = False
@@ -136,7 +138,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     if cfg['GENERAL'].getboolean('saveParticlesIni'):
         avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
         outDir = avaDir / 'Outputs' / 'com1DFA' / 'particlesIni'
-        particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+        particleTools.savePartToCsv(cfg['VISUALISATION']['visuParticleProperties'], particlesList, outDir)
 
     return particles, fields
 
