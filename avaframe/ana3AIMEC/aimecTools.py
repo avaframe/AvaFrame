@@ -324,7 +324,7 @@ def checkMultipleSimFound(refSimRowHash, inputsDF, error=False):
     return refSimRowHash, refSimName
 
 
-def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
+def checkAIMECinputs(cfgSetup, pathDict):
     """ Check inputs before running AIMEC postprocessing
 
     Make sure that the available data satisfies what is required in the ini file
@@ -333,8 +333,6 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
     ----------
     cfgSetup : configParser
         aimec configuration
-    inputsDF: dataFrame
-        simulation dataFrame
     pathDict: dict
         aimec input dictionary (path to inputs and refSimName and hash)
 
@@ -454,6 +452,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     rasterTransfo['cellSizeSL'] = cellSizeSL
     # read avaPath
     avaPath, splitPoint = setAvaPath(pathDict, dem)
+    rasterTransfo['avaPath'] = avaPath
 
     # Get new Domain Boundaries DB
     # input: ava path

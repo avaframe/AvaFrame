@@ -87,6 +87,35 @@ def getDEMPath(avaDir):
     return demFile[0]
 
 
+def getDEMFromConfig(avaDir, fileName=''):
+    """ get dem file path in avaDir/Inputs or if fileName in avaDir/Inputs/fileName
+
+        Parameters
+        -----------
+        avaDir: str or pathlib path
+            path to avalancheDir
+        fileName: pathlib path
+            path to dem file with filename in avaDir/Inputs
+
+        Returns
+        --------
+        demFile: pathlib path
+            path to dem file
+    """
+
+    if fileName == '':
+        demFilePath = getDEMPath(avaDir)
+    else:
+        inputDir = pathlib.Path(avaDir, 'Inputs')
+        demFile = inputDir / fileName
+        if demFile.is_file() is False:
+            message = 'Dem file: %s does not exist' % (str(demFile))
+            log.error(message)
+            raise FileNotFoundError(message)
+
+    return demFile
+
+
 def getInputData(avaDir, cfg):
     """ Fetch input datasets required for simulation, duplicated function because
         simulation type set differently in com1DFAOrig compared to com1DFA:

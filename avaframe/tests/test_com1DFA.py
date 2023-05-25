@@ -1082,7 +1082,7 @@ def test_initializeParticles():
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate', 'idFixed',
-                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy']
+                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy', 'velocityMag']
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
@@ -1643,7 +1643,7 @@ def test_runCom1DFA(tmp_path, caplog):
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
-                'partInCell', 'secondaryReleaseInfo', 'iterate',
+                'partInCell', 'secondaryReleaseInfo', 'iterate', 'velocityMag',
                 'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni', 'gEff', 'curvAcc',
                 'totalEnthalpy']
 

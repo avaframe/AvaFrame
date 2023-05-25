@@ -196,8 +196,10 @@ def test_QGISAB(capfd):
         nameRefpath = pathlib.Path(dirname, '..', '..', 'benchmarks', avaName + 'ABPytest',
                                    nameRef)
         data = np.loadtxt(nameRefpath, skiprows=4, delimiter=',')
-        tolDist = 10
-        tolAngle = 0.12
+
+        #TODO: check if this test still useful now that prepareLine is using splines for resample
+        tolDist = 12.5 # increased from 10.
+        tolAngle = 0.19 # increased from 0.12 to 0.19
         assert (alpha == pytest.approx(data[0, 4], abs=tolAngle)) and (
                 beta == pytest.approx(data[1, 4], rel=tolAngle)) and (
                 alphaSD[1] == pytest.approx(data[2, 4], rel=tolAngle)) and (

@@ -235,9 +235,9 @@ def extendDFAPath(cfg, avaProfile, dem, particlesIni):
 
         - extTopOption: int, how to extend towards the top? 0 for heighst point method, a for largest runout method
         - nCellsResample: int, resampling length is given by nCellsResample*demCellSize
-        - nCellsMinExtend: int, when extending towards the bottom, take points at more 
+        - nCellsMinExtend: int, when extending towards the bottom, take points at more
         than nCellsMinExtend*demCellSize from last point to get the direction
-        - nCellsMaxExtend: int, when extending towards the bottom, take points 
+        - nCellsMaxExtend: int, when extending towards the bottom, take points
         at less than nCellsMaxExtend*demCellSize from last point to get the direction
         - factBottomExt: float, extend the profile from factBottomExt*sMax
 
@@ -255,7 +255,7 @@ def extendDFAPath(cfg, avaProfile, dem, particlesIni):
     """
     # resample the profile
     resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
-    avaProfile, _ = gT.prepareLineNewVersion(dem, avaProfile, distance=resampleDistance, Point=None)
+    avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
     avaProfile = extendProfileTop(cfg.getint('extTopOption'), particlesIni, avaProfile)
     avaProfile = extendProfileBottom(cfg, dem, avaProfile)
     return avaProfile
@@ -339,7 +339,7 @@ def extendProfileBottom(cfg, dem, profile):
     Parameters
     -----------
     cfg: configParser
-        nCellsMinExtend: int, when extending towards the bottom, take points 
+        nCellsMinExtend: int, when extending towards the bottom, take points
         at more than nCellsMinExtend*demCellSize from last point to get the direction
 
         nCellsMaxExtend: int, when extending towards the bottom, take points at
@@ -370,64 +370,71 @@ def extendProfileBottom(cfg, dem, profile):
     pointsOfInterestLast = np.where((r < extendMaxDistance) & (r > extendMinDistance))[0]
     xInterest = profile['x'][pointsOfInterestLast]
     yInterest = profile['y'][pointsOfInterestLast]
-    # find the direction in which we need to extend the path
-    vDirX = xLast - xInterest
-    vDirY = yLast - yInterest
-    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), 0*np.array([vDirY]))
-    vDirX = np.sum(vDirX)
-    vDirY = np.sum(vDirY)
-    vDirZ = np.sum(vDirZ)
-    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
-    # extend in this direction
-    factExt = cfg.getfloat('factBottomExt')
-    gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
-    xExtBottom = np.array([xLast + gamma * vDirX])
-    yExtBottom = np.array([yLast + gamma * vDirY])
-    # project on DEM
-    zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
-    # Dicothomie method to find the last point on the extention and on the dem
-    if np.isnan(zExtBottom):
-        factExt = factExt/2
-        stepSize = factExt
-        isOut = True
-    else:
-        isOut = False
-        stepSize = 0
-    count = 0
-    # remember last point found inside
-    factLast = 0
-    while count < cfg.getint('maxIterationExtBot') and stepSize * sLast > cfg.getint('nBottomExtPrecision')*csz:
-        count = count + 1
+
+    # check if points are found to compute direction of extension
+    if len(xInterest) > 0:
+        # find the direction in which we need to extend the path
+        vDirX = xLast - xInterest
+        vDirY = yLast - yInterest
+        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), 0*np.array([vDirY]))
+        vDirX = np.sum(vDirX)
+        vDirY = np.sum(vDirY)
+        vDirZ = np.sum(vDirZ)
+        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+        # extend in this direction
+        factExt = cfg.getfloat('factBottomExt')
         gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
         xExtBottom = np.array([xLast + gamma * vDirX])
         yExtBottom = np.array([yLast + gamma * vDirY])
         # project on DEM
         zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
-        stepSize = stepSize/2
+        # Dicothomie method to find the last point on the extention and on the dem
         if np.isnan(zExtBottom):
-            factExt = factExt - stepSize
+            factExt = factExt/2
+            stepSize = factExt
             isOut = True
         else:
-            # remember last point found inside
-            factLast = factExt
-            factExt = factExt + stepSize
             isOut = False
+            stepSize = 0
+        count = 0
+        # remember last point found inside
+        factLast = 0
+        while count < cfg.getint('maxIterationExtBot') and stepSize * sLast > cfg.getint('nBottomExtPrecision')*csz:
+            count = count + 1
+            gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
+            xExtBottom = np.array([xLast + gamma * vDirX])
+            yExtBottom = np.array([yLast + gamma * vDirY])
+            # project on DEM
+            zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
+            stepSize = stepSize/2
+            if np.isnan(zExtBottom):
+                factExt = factExt - stepSize
+                isOut = True
+            else:
+                # remember last point found inside
+                factLast = factExt
+                factExt = factExt + stepSize
+                isOut = False
 
-    if isOut:
-        # the last iteration is not in the domain, fall back to last point in domain
-        factExt = factLast
-        gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
-        xExtBottom = np.array([xLast + gamma * vDirX])
-        yExtBottom = np.array([yLast + gamma * vDirY])
-        # project on DEM
-        zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
-    log.info('found extention after %d iterations, precision is %.2f m' % (count, stepSize * sLast))
+        if isOut:
+            # the last iteration is not in the domain, fall back to last point in domain
+            factExt = factLast
+            gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
+            xExtBottom = np.array([xLast + gamma * vDirX])
+            yExtBottom = np.array([yLast + gamma * vDirY])
+            # project on DEM
+            zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
+        log.info('found extention after %d iterations, precision is %.2f m' % (count, stepSize * sLast))
 
-    # extend profile
-    profile['x'] = np.append(profile['x'], xExtBottom)
-    profile['y'] = np.append(profile['y'], yExtBottom)
-    profile['z'] = np.append(profile['z'], zExtBottom)
-    profile['s'] = np.append(profile['s'], sLast + np.sqrt((xLast-xExtBottom)**2 + (yLast-yExtBottom)**2))
+        # extend profile
+        profile['x'] = np.append(profile['x'], xExtBottom)
+        profile['y'] = np.append(profile['y'], yExtBottom)
+        profile['z'] = np.append(profile['z'], zExtBottom)
+        profile['s'] = np.append(profile['s'], sLast + np.sqrt((xLast-xExtBottom)**2 + (yLast-yExtBottom)**2))
+
+    else:
+        log.warning('Path not extended at bottom as no point of interest for computing direction \
+            of where to extend path is found')
 
     if debugPlot:
         debPlot.plotPathExtBot(profile, xInterest, yInterest, 0*yInterest, xLast, yLast)
@@ -492,7 +499,7 @@ def getSplitPoint(cfg, avaProfile, parabolicFit):
         configuration object with
 
         - slopeSplitPoint: float, desired slope at split point (in degrees)
-        - dsMin: float, threshold distance [m] for looking for the 
+        - dsMin: float, threshold distance [m] for looking for the
         - split point (at least dsMin meters below split point angle)
 
     avaProfile: dict
@@ -553,16 +560,15 @@ def resamplePath(cfg, dem, avaProfile):
     avaProfile: dict
         resampled path profile
     """
-    #resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
-    resampleDistance = 5 
+    resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
     indFirst = avaProfile['indStartMassAverage']
     indEnd = avaProfile['indEndMassAverage']
     s0 = avaProfile['s'][indFirst]
     sEnd = avaProfile['s'][indEnd]
-    avaProfile, _ = gT.prepareLineNewVersion(dem, avaProfile, distance=resampleDistance, Point=None)
+    avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
     # make sure we get the good start and end point... prepareLine might make a small error on the s coord
     indFirst = np.argwhere(avaProfile['s'] >= s0 - resampleDistance/3)[0][0]
-    # look for the first point in the extension and take the one before 
+    # look for the first point in the extension and take the one before
     indEnd = np.argwhere(avaProfile['s'] >= sEnd + resampleDistance/3)[0][0]-1
     avaProfile['indStartMassAverage'] = indFirst
     avaProfile['indEndMassAverage'] = indEnd

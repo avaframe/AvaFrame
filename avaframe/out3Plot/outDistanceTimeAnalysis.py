@@ -32,6 +32,35 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
 
     """
 
+    # create plot
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    ax = fig.add_subplot(1, 1, 1)
+    plt.title(mtiInfo["plotTitle"])
+
+    # add plot to axes
+    ax, rangeTimeResType = addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax)
+
+    # set path for saving figure
+    outDir = pathlib.Path(cfgRangeTime["GENERAL"]["avalancheDir"], "Outputs", "ana5Utils")
+    outFileName = mtiInfo["type"] + "_" + rangeTimeResType + "_" + cfgRangeTime["GENERAL"]["simHash"]
+    plotPath = pU.saveAndOrPlot({"pathResult": outDir}, outFileName, fig)
+
+
+def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
+    """add plot range-time diagram with avalanche front and colorcoded average values of result parameter
+
+    Parameters
+    -----------
+    mtiInfo: dict
+        dictionary with average values for range to reference point (mti), timeStep list,
+        list with distance to reference point of avalanche front (rangeList)
+    cfgRangeTime: configparser object
+        configuration settings for range time diagram - here used avalancheDir, rangeTimeResType,
+        simHash, and from plots width, height, lw, ..
+    ax: matplotlib axes object
+        axes where plot shall be added to 
+
+    """
     # fetch required input info
     mti = mtiInfo["mti"]
     rangeGates = mtiInfo["rangeGates"]
@@ -51,34 +80,16 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     lw = cfgRangeTime["PLOTS"].getfloat("lw")
     textsize = cfgRangeTime["PLOTS"].getfloat("textsize")
 
-    # create plot
-    fig = plt.figure(figsize=(pU.figW, pU.figH))
-    ax = fig.add_subplot(1, 1, 1)
-    plt.title(mtiInfo["plotTitle"])
+
     pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
-    plt.plot(timeList, rangeList, ".", color="black", markersize=4, label="avalanche front")
-    plt.xlabel("Time [s]")
+    ax.plot(timeList, rangeList, ".", color="black", markersize=4, label="avalanche front")
+    ax.set_xlabel("Time [s]")
     # add y label axis
     if mtiInfo["type"] == "thalwegTime":
         sTypeCapital = mtiInfo["sType"][0].upper() + mtiInfo["sType"][1:]
-        plt.ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
+        ax.set_ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
     else:
-        plt.ylabel("Distance to %s [m]" % mtiInfo["referencePointName"])
-
-    # from oscar +++++++
-    plt.ylabel('$S_{xy}$')
-
-    xMin = cfgRangeTime['ANIMATE'].getfloat('xMin')
-    xMax = cfgRangeTime['ANIMATE'].getfloat('xMax')
-    yMax = cfgRangeTime['ANIMATE'].getfloat('yMax')
-    yMin = cfgRangeTime['ANIMATE'].getfloat('yMin')
-
-    # set limits for plot (depends on final time step)
-    ax.set_ylim([yMin, yMax])
-    ax.set_xlim([xMin, xMax])
-
-    #+++++++++++++
-
+        ax.set_ylabel("Distance to %s [m]" % mtiInfo["referencePointName"])
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils["unit" + rangeTimeResType]
@@ -98,7 +109,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     # cbar.ax.axhline(y=maxVel, color='r', lw=1, label='max velocity')
 
     # add info on avalanche front in legend
-    plt.legend(facecolor="grey", framealpha=0.2, loc="lower right", fontsize=8)
+    ax.legend(facecolor="grey", framealpha=0.2, loc="lower right", fontsize=8)
 
     # if tt-diagram add beta point info
     if mtiInfo["type"] == "thalwegTime":
@@ -113,10 +124,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
             label="beta point: %.1f°" % mtiInfo["betaPointAngle"],
         )
 
-    # set path for saving figure
-    outDir = pathlib.Path(cfgRangeTime["GENERAL"]["avalancheDir"], "Outputs", "ana5Utils")
-    outFileName = mtiInfo["type"] + "_" + rangeTimeResType + "_" + cfgRangeTime["GENERAL"]["simHash"]
-    plotPath = pU.saveAndOrPlot({"pathResult": outDir}, outFileName, fig)
+    return ax, rangeTimeResType
 
 
 def radarFieldOfViewPlot(radarFov, radarRange, cfgRangeTime, rangeGates, dem):
