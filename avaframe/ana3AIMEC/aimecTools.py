@@ -324,7 +324,7 @@ def checkMultipleSimFound(refSimRowHash, inputsDF, error=False):
     return refSimRowHash, refSimName
 
 
-def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
+def checkAIMECinputs(cfgSetup, pathDict):
     """ Check inputs before running AIMEC postprocessing
 
     Make sure that the available data satisfies what is required in the ini file
@@ -333,8 +333,6 @@ def checkAIMECinputs(cfgSetup, inputsDF, pathDict):
     ----------
     cfgSetup : configParser
         aimec configuration
-    inputsDF: dataFrame
-        simulation dataFrame
     pathDict: dict
         aimec input dictionary (path to inputs and refSimName and hash)
 
@@ -454,6 +452,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     rasterTransfo['cellSizeSL'] = cellSizeSL
     # read avaPath
     avaPath, splitPoint = setAvaPath(pathDict, dem)
+    rasterTransfo['avaPath'] = avaPath
 
     # Get new Domain Boundaries DB
     # input: ava path
@@ -988,13 +987,12 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
 
     # Max Mean in each Cross-Section for each field
-    maxaCrossMax, aCrossMax, aCrossMean, aCrossMin= getMaxMeanValues(transformedRaster, rasterArea)
+    maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(transformedRaster, rasterArea)
     log.debug('{: <10} {:<10.4f}'.format(*[simRowHash, maxaCrossMax]))
 
     resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMax'] = maxaCrossMax
     resAnalysisDF.at[simRowHash, dataType + 'CrossMax'] = aCrossMax
     resAnalysisDF.at[simRowHash, dataType + 'CrossMean'] = aCrossMean
-    resAnalysisDF.at[simRowHash, dataType + 'CrossMin'] = aCrossMin
 
     return resAnalysisDF
 
@@ -1210,11 +1208,10 @@ def getMaxMeanValues(rasterdataA, rasterArea):
     aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/areaSum
     # aCrossMean = np.nanmean(rasterdataA, axis=1)
     aCrossMax = np.nanmax(rasterdataA, 1)
-    aCrossMin = np.nanmin(rasterdataA, 1)
     # maximum of field a
     maxaCrossMax = np.nanmax(aCrossMax)
 
-    return maxaCrossMax, aCrossMax, aCrossMean, aCrossMin
+    return maxaCrossMax, aCrossMax, aCrossMean
 
 
 def setAvaPath(pathDict, dem):

@@ -86,51 +86,15 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         # make sure to remove the Outputs folder if you want to regenerate the plot
         # this enables to append simulations to an already existing output without regenerating all plots
         if not plotName.is_file():
-            # Load data
-            raster = IOf.readRaster(fileName, noDataToNan=True)
-            data = raster["rasterData"]
-
-            # constrain data to where there is data
-            cellSize = peakFilesDF["cellSize"][m]
-            rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-            dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
-            demConstrained = demField[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
-
-            data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-            unit = pU.cfgPlotUtils["unit%s" % resType]
-
-            # Set extent of peak file
-            ny = data.shape[0]
-            nx = data.shape[1]
-            Ly = ny * cellSize
-            Lx = nx * cellSize
 
             # Figure  shows the result parameter data
             fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-            # choose colormap
-            cmap, col, ticks, norm = pU.makeColorMap(
-                pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap
-            )
-            cmap.set_bad(alpha=0)
-            # uncomment this to set the under value for discrete cmap transparent
-            # cmap.set_under(alpha=0)
-            # add origin of data to extent and cellssize to rows and columns
-            xllcenter = raster["header"]["xllcenter"]
-            yllcenter = raster["header"]["yllcenter"]
-            rowsMinPlot = rowsMin * cellSize + yllcenter
-            rowsMaxPlot = (rowsMax + 1) * cellSize + yllcenter
-            colsMinPlot = colsMin * cellSize + xllcenter
-            colsMaxPlot = (colsMax + 1) * cellSize + xllcenter
-            extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
 
-            # add DEM hillshade with contour lines
-            ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
+            # fetch cellSize of peak field
+            cellSize = peakFilesDF["cellSize"][m]
 
-            # add peak field data
-            im1 = ax.imshow(
-                data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4
-            )
-            pU.addColorBar(im1, ax, ticks, unit)
+            # add peak field data now
+            ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
 
             # add title, labels and ava Info
             title = str("%s" % name)
@@ -144,6 +108,85 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             plotDict[peakFilesDF["simName"][m]].update({peakFilesDF["resType"][m]: plotPath})
 
     return plotDict
+
+
+def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0, setLimits=False):
+    """ find fileName data, constrain data and demField to where there is data,
+        create colormap, define extent, add hillshade contours, add to axes
+        and add colorbar
+
+        Parameters
+        -----------
+        fileName: pathlib path
+            path to data
+        resType: str
+            name of result variable type
+        demField: numpy ndarray
+            array of dem data
+        ax: matplotlib axes object
+            axes where to add data plot to
+        cellSize: float
+            cellSize of data
+        alpha: float
+            from 0 transparent to 1 opaque for plot of constrained data
+        setLimits: bool
+            if True set limits of constrained data to plot
+            
+        Return
+        --------
+        ax: matplotlib axes object
+            axes updated
+    """
+
+    # Load data
+    raster = IOf.readRaster(fileName, noDataToNan=True)
+    data = raster["rasterData"]
+
+    # constrain data to where there is data
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
+    dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+    demConstrained = demField[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+
+    data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+    unit = pU.cfgPlotUtils["unit%s" % resType]
+
+    # Set extent of peak file
+    ny = data.shape[0]
+    nx = data.shape[1]
+    Ly = ny * cellSize
+    Lx = nx * cellSize
+
+    # choose colormap
+    cmap, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap
+    )
+    cmap.set_bad(alpha=0)
+    # uncomment this to set the under value for discrete cmap transparent
+    # cmap.set_under(alpha=0)
+    # add origin of data to extent and cellssize to rows and columns
+    xllcenter = raster["header"]["xllcenter"]
+    yllcenter = raster["header"]["yllcenter"]
+    rowsMinPlot = rowsMin * cellSize + yllcenter
+    rowsMaxPlot = (rowsMax + 1) * cellSize + yllcenter
+    colsMinPlot = colsMin * cellSize + xllcenter
+    colsMaxPlot = (colsMax + 1) * cellSize + xllcenter
+    extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
+
+    # add DEM hillshade with contour lines
+    ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
+
+    # add peak field data
+    im1 = ax.imshow(
+        data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
+        alpha=alpha,
+    )
+    pU.addColorBar(im1, ax, ticks, unit)
+
+    if setLimits:
+        ax.set_xlim([colsMinPlot, colsMaxPlot])
+        ax.set_ylim([rowsMinPlot, rowsMaxPlot])
+
+    return ax, rowsMinPlot, colsMinPlot
 
 
 def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):

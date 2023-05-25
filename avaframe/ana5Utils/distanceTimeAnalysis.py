@@ -14,6 +14,7 @@ import pathlib
 # Local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.geoTrans as gT
+import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -22,6 +23,69 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def createThalwegTimeInfoFromSimResults(avalancheDir, cfgRangeTime, modName, index, simDF, dem):
+    """ top level function to create mtiInfo dict from com Module simulation results
+        required are flow variable fields for different time steps
+
+        Parameters
+        -----------
+        avalancheDir: str or pathlib path
+            path to avalanche directory
+        cfgRangeTime: configparser object
+            configuration settings for range time diagram
+        modName: str
+            name of computational module that has been used to create ava sim
+        index: str
+            index of current sim in simDF
+        simDF: dataFrame
+            dataframe with info on sim configuration
+        dem: dict
+            dictionary with simulation dem
+
+        Returns
+        --------
+        cfgRangeTime: configparser object
+            configuration settings for range time
+        mtiInfo: dict
+            dictionary with info for creating range time plots
+
+    """
+
+
+    log.info('Perform range-time diagram for simulation: %s' % index)
+
+    # add simHash info
+    cfgRangeTime['GENERAL']['simHash'] = index
+
+    # setup required data
+    mtiInfo = setupThalwegTimeDiagram(dem, cfgRangeTime)
+    mtiInfo['plotTitle'] = 'thalweg-time diagram %s' % index
+    mtiInfo['textbox'] = 'beta point: %.2f, %.2f' % (mtiInfo['betaPoint'][0],
+                                                     mtiInfo['betaPoint'][1])
+
+    # fetch all flow parameter result fields
+    flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'peakFiles', 'timeSteps')
+    simNameSuffix = simDF['simName'].loc[index] + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
+    flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
+
+    if len(flowFields) == 0:
+        fU.fileNotFoundMessage(('No flow variable results found in %s - consider first running avalanche simulations' %
+                                flowFieldsDir))
+
+    for flowField in flowFields:
+
+        # read flow field data
+        flowFieldDict = IOf.readRaster(flowField)
+        flowF = flowFieldDict['rasterData']
+
+        # extract avalanche front distance to radar and average values of range gates for mti plot
+        mtiInfo = extractFrontAndMeanValuesTT(cfgRangeTime, flowF, dem['header'], mtiInfo)
+        timeStep, _ = fetchTimeStepFromName(flowField)
+        mtiInfo['timeList'].append(timeStep[0])
+
+    return cfgRangeTime, mtiInfo
 
 
 def getRadarLocation(cfg):
@@ -434,7 +498,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     # fetch raster area and compute mean, max values for each cross-profile
     # TODO: average over cells – weighted with cell area (aimec function)
     rasterArea = rasterTransfo['rasterArea']
-    maxaCrossMax, aCrossMax, aCrossMean, aCrossMin = aT.getMaxMeanValues(slRaster, rasterArea)
+    maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
     # use the max or the mean of each cross section
     if cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
         aCross = aCrossMax

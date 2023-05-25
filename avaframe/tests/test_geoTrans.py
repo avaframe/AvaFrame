@@ -831,3 +831,65 @@ def test_snapPtsToLine():
     assert np.isclose(snappedP2.x, xLine[3])
     assert np.isclose(snappedP2.y, yLine[3])
     assert np.isclose(snappedP2.z, zLine[3])
+
+
+def test_prepareLine():
+    """ testing preparing line """
+
+
+    # TODO if k=3 for spline needs at least 4 pointsin path
+    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
+        'z': np.array([40, 30, 20, 0])}
+
+    dem = {'header': {'xllcenter': 0, 'yllcenter': 0, 'cellsize': 2, 'nrows': 10, 'ncols': 11},
+           'rasterData': np.array([[50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0]])}
+
+    avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=2, Point=None)
+
+    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
+    indXY = np.where(diffXY > 2.)[0]
+    assert len(indXY) == 0
+    assert np.isclose(avaProfile['x'][0], 1.)
+    assert np.isclose(avaProfile['x'][-1], 8.)
+    assert np.isclose(avaProfile['y'][0], 1.)
+    assert np.isclose(avaProfile['y'][-1], 8.)
+    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))
+
+    # TODO if k=3 for spline needs at least 4 pointsin path
+    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
+        'z': np.array([40, 30, 20, 0])}
+
+    avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=4, Point=None)
+
+    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
+    indXY = np.where(diffXY > 4.)[0]
+    assert len(indXY) == 0
+    assert np.isclose(avaProfile['x'][0], 1.)
+    assert np.isclose(avaProfile['x'][-1], 8.)
+    assert np.isclose(avaProfile['y'][0], 1.)
+    assert np.isclose(avaProfile['y'][-1], 8.)
+    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))
+
+    # TODO if k=3 for spline needs at least 4 pointsin path
+    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
+        'z': np.array([40, 30, 20, 0])}
+
+    avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=20, Point=None)
+
+    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
+    indXY = np.where(diffXY > 20.)[0]
+    assert len(indXY) == 0
+    assert np.isclose(avaProfile['x'][0], 1.)
+    assert np.isclose(avaProfile['x'][-1], 8.)
+    assert np.isclose(avaProfile['y'][0], 1.)
+    assert np.isclose(avaProfile['y'][-1], 8.)
+    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))

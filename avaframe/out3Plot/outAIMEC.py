@@ -967,8 +967,9 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             if np.amax(contourDict[simName][key]['y'])> yMax:
                 yMax = np.amax(contourDict[simName][key]['y'])
 
-    sMax = np.where(s >= yMax)[0][0]
-    ax1.set_ylim([s[0], s[sMax]])
+    # tolerance needed because of rounding and saving issues
+    sMax = np.where(s >= (yMax-1.e-8))[0]
+    ax1.set_ylim([s[0], s[sMax[0]]])
     if colorOrdering:
         cbar = ax1.figure.colorbar(cmap)
         cbar.outline.set_visible(False)
@@ -1004,7 +1005,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             else:
                 ax2.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'], c=cmap.to_rgba(cmapVal))
 
-    ax2.set_ylim([s[indStartOfRunout], s[sMax]])
+    ax2.set_ylim([s[indStartOfRunout], s[sMax[0]]])
     ax2.legend()
 
     # save and or plot fig

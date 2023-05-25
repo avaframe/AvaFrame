@@ -29,14 +29,9 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 def runAna3AIMECTransform(avalancheDir, particlesProperties, cfg):
     """ run script for AIMEC analysis
     proceeds to AIMEC analysis and add projected r and l to the particles dictionary
-<<<<<<< HEAD
-    """
-
-=======
     Also adds the angle beta and the s of the beta point to the particle file
     """
 
->>>>>>> 9405b6d4 (Oscar Dick code related to AvaNode/Particle plotting /tracking)
     cfgSetup = cfg['AIMECSETUP']
     anaMod = cfgSetup['anaMod']
 
@@ -48,7 +43,7 @@ def runAna3AIMECTransform(avalancheDir, particlesProperties, cfg):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
+    pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
@@ -73,15 +68,15 @@ def runAna3AIMECTransform(avalancheDir, particlesProperties, cfg):
     particlesListDict  = copy.copy(particleList)
 
     # Prepare output direction
-    outDir = pathlib.Path(avalancheDir, 'Outputs','Aimec','ParticlesProjected')
+    outDir = pathlib.Path(avalancheDir, 'Outputs', 'Aimec')
     outDirPicData = outDir / 'particles'
     fU.makeADir(outDirPicData)
 
     log.info('Perform particles projection')
     for particle in particlesListDict:
-        particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+        particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem['header'])
         particle['sBetaPoint'] = rasterTransfo['s'][rasterTransfo['indStartOfRunout']]
-        particle['beta'] = rasterTransfo['startOfRunoutAreaAngle'] 
+        particle['beta'] = rasterTransfo['startOfRunoutAreaAngle']
         simName = particle['simName']
         # save pickle file
         log.info('Saving pickle file')
