@@ -10,16 +10,26 @@ The present script has been used to produce the plots in my master thesis as wel
 
 Last change: 10/05/2023
 
+modified by AvaFrame
+
 """
 # Python imports
 import pathlib
+import logging
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.com1DFA import particleTools
+from avaframe.ana3AIMEC import ana3AIMEC
 from avaframe.Tools import PostProcessingTools
-# from avaframe.Tools import NodeTools
 from avaframe.Tools import PlotFunctions
+from avaframe.com1DFA import com1DFA
+import avaframe.in1Data.getInput as gI
+import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
+
 
 ###############################################################################################################################################################################################################################################################################################################################################################################
 ##### README ##################################################################################################################################################################################################################################################################################################################################################################
@@ -34,10 +44,6 @@ from avaframe.Tools import PlotFunctions
 #   * Thalweg-Altitude energy line, peak flow quantities and thalweg time diagram: PlotFunctions.plotPeakQuantThalTimeEnergyLine
 #   * Comparative plots (vel,acc,s_{xyz}..): PlotFunctions.plotPeakQuantTrackedPartVel
 
-# For Michi: NodeTools.produceAvaNodesDict(avalancheDir) (line 95) produces a dictionary containing all the relevant information on the
-# AvaNodes (velocity, trajectory in the same coordinate system than the simulations...). And PlotFunctions.plotPeakQuantTrackedPartVel
-# (line 205) produces the 7 comparative plots (vel,acc,s_{xyz}..) you are interested in, even though it is  not finished unfortunately...
-
 #%%############################################################################################################################################################################################################################################################################################################################################################################
 ##### SECTION TO PREPARE THE DATA FOR THE PLOTS ###############################################################################################################################################################################################################################################################################################################################
 ###############################################################################################################################################################################################################################################################################################################################################################################
@@ -45,177 +51,111 @@ from avaframe.Tools import PlotFunctions
 
 
 # TO run this script:
-# run com1DFA with particles, trackParticles and thalwegTimeDiagram
-# run runAna3AIMECTransform.py to add thalweg coordinate system to particlesDict from com1DFA sim
+# run com1DFA with particles
+
+# create local logger
+log = logging.getLogger(__name__)
+
+# -----------Required settings-----------------
+# log file name; leave empty to use default runLog.log
+logName = 'runFrictionTest'
+resTypePlots = ['ppr', 'pfv', 'pft']
+pfvMinThreshold = 1
+pftMinThreshold = 0.1
+pprMinThreshold = 10
+# -----------------------
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Load configuration info of all com1DFA simulations and extract the different avalanche simulations of the output file
-print('Extracting the different avalanche simulations from the ini file')
-Sim, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
+log.info('Extracting the different avalanche simulations from the ini file')
+SimDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
 # Some general and useful parameters
-number_ava = len(Sim.index)
+number_ava = len(SimDF.index)
 avaDir = pathlib.Path(avalancheDir)
 modName = 'com1DFA'
 
-# Creating a dictionary containing information on each avalanche
-avaDict = {}      # creating a dictionary containing information on the different avalanche simulations
-trackedPartProp = {}      # creating a dictionary containing information on the tracked particles for the different simulations
-for i in range(0, len(Sim.index)):
-    # log simulation number
-    print('Avalanche found in the output file: %s' % Sim.index[i])
-    # filling the avalanches dictionary with information on avalanche Sim.index[i]
-    avaDict[i], _ = particleTools.readPartFromPickle(
-        avalancheDir, simName=Sim.index[i], flagAvaDir=True, comModule='Aimec')
-    # filling the tracked particles dictionary with information on avalanche Sim.index[i]
-    print('Extracting information on the tracked particles for simulation %s' % Sim.index[i])
-    pathFile = avalancheDir + '/Outputs/' + modName + '/configurationFiles/' + Sim.simName[i] +'.ini'
-    cfgParticles = cfgUtils.readCfgFile(avaDir, module='', fileName=pathFile)
-    trackedPartProp[i] = PostProcessingTools.trackedParticlesDictionary(cfgParticles,avaDict[i])
+# get the configuration of aimec
+cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
+# fetch anaMod from aimec settings
+# TODO: shall we reset to modName or only use anaMod as modName - however run script targeted towards com1DFA
+anaMod = cfgAimec['AIMECSETUP']['anaMod']
 
+# set input directory to load particles dicts from sims
+inputDir = pathlib.Path(avalancheDir,'Outputs', modName, 'particles')
 
-# Running Aimec post processing
-print('Running Aimec post processing...')
-rasterTransfo, resAnalysisDF, plotDict, newRasters = PostProcessingTools.aimecPostProcess(avalancheDir)
+# loop over all sims
+for i, simIndex in enumerate(SimDF.index):
 
-# Calculating the velocity envelope of the simulations (time, max, min, mean, median)
-print('Calculating velocity time envelopes...')
-dictVelEnvelope = PostProcessingTools.velocityEnvelope(avaDict)
+    # first reset all dicts, lists,.. that are created for each sim in SimDF
+    dictVelEnvelope = ''
+    dictVelAltThalweg = ''
+    dictVelAltThalwegPart = ''
+    trackedPartProp = ''
+    trackedPartPropAdapted = ''
+    dictRaster = ''
+    particlesTimeArrays = ''
+    rasterTransfo = ''
+    particlesList = ''
+    demSim = ''
 
-# Extracting experiments data
-dictNodes ={}
+    # fetch name of simulation
+    simName = SimDF['simName'].loc[simIndex]
 
-# Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope)
-print('Calculating velocity altitude thalweg envelopes...')
-dictVelAltThalweg = PostProcessingTools.velocityEnvelopeThalweg(avaDict)
+    # fetch particle dicts from sim
+    particlesList, _ = particleTools.readPartFromPickle(inputDir,
+        simName=SimDF['simName'].loc[simIndex], flagAvaDir=False, comModule=modName)
+    #
+    # add aimec (thalweg) s, l coordinates to particle dicts and save to pickle
+    particlesList, rasterTransfo, demSim = ana3AIMEC.addSLToParticles(avalancheDir,
+        cfgAimec, SimDF['DEM'].loc[simIndex], particlesList, saveToPickle=True)
 
-# Calculating the velocity-altitude-thalweg information for the particles
-print('Calculating velocity altitude thalweg envelopes for the tracked numerical particles...')
-# Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope) for the tracked particles
-# changing the dictionary structure to make it similar to the particles dictionary
-trackedPartPropAdapted = PostProcessingTools.dictChangeTrackedPart(trackedPartProp)
-# calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in the projected xy plan)
-trackedPartPropAdapted = PostProcessingTools.sAimeclAimecCalculation(trackedPartPropAdapted,avalancheDir)
-# calculating and adding for each particle s (trajectory length in the xyz plan)
-trackedPartPropAdapted = PostProcessingTools.sCalculation(trackedPartPropAdapted)
-# calculating the envelope along the thalweg
-#sAimecPart,maxSxyzPart,minSxyzPart, sSortedDeduplicatedPart, sBetaPointPart, simVelThalwegPart, simMeanVelThalwegPart, simMedianVelThalwegPart, simMinVelThalwegPart, simMaxVelThalwegPart, simAltitudeThalwegPart,  simMaxAltThalwegPart, simMinAltThalwegPart, maxAccPart, minAccPart =   PostProcessingTools.velocityEnvelopeThalweg(trackedPartPropAdapted)
-dictVelAltThalwegPart = PostProcessingTools.velocityEnvelopeThalweg(trackedPartPropAdapted)
+    # recreate the tracked particles dictionary using the particles
+    # and config info of each SimDF.index[i]
+    log.info('Extracting information on the tracked particles for simulation %s' % simIndex)
+    # create path of sim config file and create config object for that sim
+    simConfigFile = avaDir / 'Outputs' / modName / 'configurationFiles' / (SimDF['simName'].loc[simIndex] + '.ini')
+    cfgParticles = cfgUtils.readCfgFile(avaDir, module='', fileName=simConfigFile)
+    cfgParticles['TRACKPARTICLES']['particleProperties'] = 'ID|x|y|z|ux|uy|uz|m|h|uAcc|velocityMag|trajectoryLengthXY|trajectoryLengthXYZ'
+    # reinitialize tracked particles using sim config
+    _, trackedPartProp, _ = com1DFA.trackParticles(cfgParticles['TRACKPARTICLES'], demSim, particlesList)
 
-# Calculating the max and min pfv pft and ppr envelopes
-print('Calculating the max and min peak flow quantities...')
-# Choose your simulation
-simNum = 0
-# The thresholds pfvMinThreshold pftMinThreshold pprMinThreshold are used to define the masked array
-dictRaster = PostProcessingTools.rasterVelField(simNum,avalancheDir,pfvMinThreshold=1,pftMinThreshold=0.1,pprMinThreshold=10)
+    # reshape particle dicts from one dict per time step to time series for each particle property
+    particlesTimeArrays = PostProcessingTools.reshapeParticlesDicts(particlesList,
+        ['ux', 'uy', 'uz', 'uAcc', 'velocityMag', 'trajectoryLengthXY', 'trajectoryLengthXYZ',
+        'x', 'y', 'z', 'm', 't', 'sAimec', 'sBetaPoint', 'beta'])
 
-#%%############################################################################################################################################################################################################################################################################################################################################################################
-##### PLOTS ###################################################################################################################################################################################################################################################################################################################################################################
-###############################################################################################################################################################################################################################################################################################################################################################################
+    # Calculating the velocity envelope of the simulations (time, max, min, mean, median)
+    log.info('Calculating velocity time envelope...')
+    dictVelEnvelope = PostProcessingTools.velocityEnvelope(particlesTimeArrays)
 
-AvaNodes = False
-# %% Plotting velocity altitude thalweg diagram
-# Choose your simulation
-simu_number = 0
-# # Save the plot the Velocity Altitude Thalweg diagram
-# PlotFunctions.plotVelocityAltitudeThalweg(simu_number,dictVelAltThalweg,dictNodes,avaDict,avaDir,rasterTransfo,dictRaster,Title=False,Save=True,AvaNodes=AvaNodes,TrackedPart=True,Raster=False,EnergyLine=False,modName='com1DFA')
+    # Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope)
+    log.info('Calculating velocity altitude thalweg envelopes...')
+    dictVelAltThalweg = PostProcessingTools.velocityEnvelopeThalweg(particlesTimeArrays)
 
+    # Calculating the velocity-altitude-thalweg information for the tracked particles
+    log.info('Calculating velocity altitude thalweg envelopes for the tracked numerical particles...')
+    # calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in the projected xy plan)
+    trackedPartPropAdapted = ana3AIMEC.aimecTransform(rasterTransfo, trackedPartProp, rasterTransfo['demHeader'], timeSeries=True)
+    # Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope) for the tracked particles
+    dictVelAltThalwegPart = PostProcessingTools.velocityEnvelopeThalweg(trackedPartPropAdapted)
 
-# %% Plotting thalweg time diagram for each particle
-# Choose your simulation
-# simu_number = 0
-# # Save the plot of the Thalweg time diagram for each particle
-# PlotFunctions.plotThalwegTimeParticles(simu_number,dictVelEnvelope,dictVelAltThalweg,avaDict,avaDir,Save=True,Show=False,modName='com1DFA')
+    # The thresholds pfvMinThreshold pftMinThreshold pprMinThreshold are used to define the masked array
+    cfgAimec['FILTER'] = {'simName': SimDF['simName'].loc[simIndex]}
+    log.info('Filter for: simName %s' % SimDF['simName'].loc[simIndex])
+    dictRaster = PostProcessingTools.rasterVelField(i, avalancheDir, cfgAimec,
+        pfvMinThreshold=pfvMinThreshold, pftMinThreshold=pftMinThreshold,
+        pprMinThreshold=pprMinThreshold)
 
-# # %% Plotting velocity time envelopes for all the simulations in the outputs file
-# PlotFunctions.plotVelocityTimeEnvelope(number_ava,dictVelEnvelope,dictNodes,Sim,avaDir,AvaNodes=AvaNodes,Show=False,modName='com1DFA')
+    # %% Plotting peak flow quantities and the velocity thalweg diagram
+    PlotFunctions.plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, SimDF, rasterTransfo,
+        dictVelAltThalweg, resTypePlots, anaMod, demData=demSim)
 
+    PlotFunctions.plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, SimDF,
+        rasterTransfo, dictRaster, modName, demSim)
 
-# %% Plotting range time diagram with peak flow velocity and the velocity time envelope
-# if avalancheDir == 'data/avaSeilbahn':
-#     PlotFunctions.plotRangeTimePeakVelVelTimeEnvelope(Sim,avalancheDir,number_ava,dictVelEnvelope,dictNodes,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-# OK
-# %% Plotting peak flow quantities and the velocity thalweg diagram
-PlotFunctions.plotPeakVelVelThalwegEnvelope(Sim, avalancheDir, number_ava, rasterTransfo,
-    dictVelAltThalweg, Save=True, modName='com1DFA')
-
-
-# # %% Plotting peak flow quantities and velocity time envelope
-# PlotFunctions.plotPeakVelVelEnvelope(Sim,avalancheDir,number_ava,dictNodes,dictVelEnvelope,Save=True,AvaNodes=False,Show=False,modName='com1DFA')
-# # PlotFunctions.plotBoxplot(avalancheDir,Sim,number_ava,dictNodes,dictVelEnvelope,TrackedPart=False,Save=True,Show=False,modName='com1DFA')
-
-
-# %% Plotting velocity time envelopes for all the simulations in the outputs file
-# PlotFunctions.plotVelocityTimeEnvelope(number_ava,dictVelEnvelope,dictNodes,Sim,avaDir,AvaNodes=AvaNodes,Show=False,modName='com1DFA')
-
-
-# %% Plotting range time diagram with peak flow velocity and the velocity time envelope
-# PlotFunctions.plotRangeTimePeakVelVelTimeEnvelope(Sim,avalancheDir,number_ava,dictVelEnvelope,dictNodes,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-# OK
-# %% Plotting peak flow quantities and the velocity thalweg diagram
-# PlotFunctions.plotPeakVelVelThalwegEnvelope(Sim,avalancheDir,number_ava,dictNodes,rasterTransfo,dictVelAltThalweg,Save=True,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-# %% Plotting peak flow quantities and velocity time envelope
-# PlotFunctions.plotPeakVelVelEnvelope(Sim,avalancheDir,number_ava,dictNodes,dictVelEnvelope,Save=True,AvaNodes=AvaNodes,Show=False,modName='com1DFA')
-
-
-# # %%Plotting velocity altitude thalweg diagram for the tracked particles
-# # Choose your simulation
-# simu_number = 0
-# PlotFunctions.plotVelocityAltitudeThalweg(simu_number,dictVelAltThalwegPart,dictNodes,avaDict,avaDir,rasterTransfo,dictRaster,Title=False,Save=True,AvaNodes=AvaNodes,TrackedPart=True,Raster=False,EnergyLine=False,modName='com1DFA')
-#
-#
-# # %% Plotting velocity-altitude-thalweg envelope of the whole avalanche flow for all the different friction parameters
-# PlotFunctions.plotVelocityAltitudeThalwegAllSim(dictVelAltThalweg,Sim,dictNodes,avaDir,number_ava,TrackedPart=False,Title=False,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-# %% Plotting velocity-altitude-thalweg envelope of the tracked numerical particles for all the different friction parameters
-# PlotFunctions.plotVelocityAltitudeThalwegAllSim(dictVelAltThalwegPart,Sim,dictNodes,avaDir,number_ava,TrackedPart=True,Title=False,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-#PlotFunctions.plotVelocityAltitudeThalweg(simu_number,dictVelAltThalwegPart,dictNodes,avaDict,avaDir,rasterTransfo,dictRaster,Title=False,Save=True,AvaNodes=AvaNodes,TrackedPart=True,Raster=False,EnergyLine=False,modName='com1DFA')
-
-
-# %% Plotting velocity-altitude-thalweg envelope of the whole avalanche flow for all the different friction parameters
-# PlotFunctions.plotVelocityAltitudeThalwegAllSim(dictVelAltThalweg,Sim,dictNodes,avaDir,number_ava,TrackedPart=False,Title=False,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-# %% Plotting velocity-altitude-thalweg envelope of the tracked numerical particles for all the different friction parameters
-# PlotFunctions.plotVelocityAltitudeThalwegAllSim(dictVelAltThalwegPart,Sim,dictNodes,avaDir,number_ava,TrackedPart=True,Title=False,Save=True,Show=False,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-# %%Plotting velocity altitude thalweg diagram for the whole avalanche flow with the raster data and the energy line
-# Choose your simulation
-# simu_number = 0
-# PlotFunctions.plotVelocityAltitudeThalweg(simu_number,dictVelAltThalweg,dictNodes,avaDict,avaDir,rasterTransfo,dictRaster,Title=False,Save=True,AvaNodes=AvaNodes,TrackedPart=False,Raster=True,EnergyLine=True,modName='com1DFA')
-
-
-# %% Plot the energy line
-# Choose your simulation
-# simu_number = 0
-# PlotFunctions.plotEnergyLine(avalancheDir,avaDict,simu_number,Sim,dictVelAltThalweg,rasterTransfo,dictRaster,Show=False,Save=True,modName='com1DFA')
-
-
-# %% Plotting velocity altitude thalweg and thalweg time diagram
-# Choose your simulation
-# simu_number = 0
-# PlotFunctions.plotVelAltThalTimeDiag(avalancheDir,number_ava,simu_number,avaDict,Sim,dictVelAltThalweg,rasterTransfo,dictNodes,Show=False,Save=True,AvaNodes=AvaNodes,modName='com1DFA')
-
-
-# OK
-# %% Plotting peak flow velocity, thalweg time diagram and energy line
-from avaframe.Tools import PlotFunctions
-PlotFunctions.plotPeakQuantThalTimeEnergyLine(avalancheDir, number_ava, Sim, plotDict,
-    rasterTransfo, dictRaster, Save=True, Show=False, modName='com1DFA')
-
-# OK
-# %% Plotting peak flow quantities with tracked particles and velocities
-PlotFunctions.plotPeakQuantTrackedPartVel(avalancheDir, number_ava, Sim, avaDict, dictVelAltThalweg,
-    dictVelAltThalwegPart, trackedPartProp, trackedPartPropAdapted, dictVelEnvelope,
-    Save=True, Show=False, modName='com1DFA')
+    PlotFunctions.plotPeakQuantTrackedPartVel(avalancheDir, simName, dictVelAltThalweg,
+        dictVelAltThalwegPart, trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo)

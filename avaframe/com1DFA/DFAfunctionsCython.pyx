@@ -80,6 +80,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
   cdef double muVoellmy = cfg.getfloat('muvoellmy')
+  cdef double xsiVoellmyUpgraded = cfg.getfloat('xsivoellmyupgraded')
+  cdef double muVoellmyUpgraded = cfg.getfloat('muvoellmyupgraded')
+  cdef double tau0VoellmyUpgraded = cfg.getfloat('tau0voellmyupgraded')
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
@@ -277,7 +280,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
             tau = DFAtlsC.SamosATfric(rho, tau0SamosAtMedium, Rs0SamosAtMedium, muSamosAtMedium, kappaSamosAtMedium, BSamosAtMedium, RSamosAtMedium, uMag, sigmaB, h)
           elif frictType == 7:
             # voellmy upgraded friction type
-            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi + tau0
+            tau = muVoellmyUpgraded * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyUpgraded + tau0VoellmyUpgraded
           else:
             tau = 0.0
 
@@ -608,6 +611,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] velocityMagArray = particles['velocityMag']
   cdef double[:] uAccArray = particles['uAcc']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double TotkinEne = particles['kineticEne']
@@ -656,6 +660,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] uxArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef double[:] uyArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] velocityMagArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
   cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
@@ -862,10 +867,12 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       uMagt1 = DFAtlsC.norm(uxNew, uyNew, uzNew)
       uAcc = (uMagt1 - uMagt0) / dtStop
       uAccArray[k] = uAcc
+      velocityMagArrayNew[k] = uMagt1
 
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
   particles['uz'] = np.asarray(uzArrayNew)
+  particles['velocityMag'] = np.asarray(velocityMagArrayNew)
   particles['uAcc'] = np.asarray(uAccArray)
   particles['trajectoryLengthXYZ'] = np.asarray(lNewArray)
   particles['trajectoryLengthXY'] = np.asarray(sNewArray)

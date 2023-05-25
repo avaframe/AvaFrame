@@ -424,8 +424,10 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         if track:
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
-            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
-            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg)
+            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName)
+            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName)
+            outCom1DFA.plotAllPartAcc(outDirData, particlesList, cfg, Tsave, cuSimName)
+
 
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
@@ -1147,6 +1149,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['uy'] = np.zeros(np.shape(hPartArray))
     particles['uz'] = np.zeros(np.shape(hPartArray))
     particles['uAcc'] = np.zeros(np.shape(hPartArray))
+    particles['velocityMag'] = np.zeros(np.shape(hPartArray))
     particles['trajectoryLengthXY'] = np.zeros(np.shape(hPartArray))
     particles['trajectoryLengthXYCor'] = np.zeros(np.shape(hPartArray))
     particles['trajectoryLengthXYZ'] = np.zeros(np.shape(hPartArray))
@@ -2277,6 +2280,7 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
 
 def savePartToPickle(dictList, outDir, logName):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
+        Note: particle coordinates are still in com1DFA reference system with origin 0,0
 
         Parameters
         ---------

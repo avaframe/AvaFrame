@@ -20,7 +20,7 @@ cfgFlags = cfgMain['FLAGS']
 log = logging.getLogger(__name__)
 
 
-def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
+def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName):
     """ Plot time series of tracked particles
 
     Parameters
@@ -36,6 +36,8 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
         configuration read from ini file
     dem: dict
         dem dictionary with normal information
+    cuSimName: str
+        name of current sim
 
     """
     cfgTrackPart = cfg['TRACKPARTICLES']
@@ -45,7 +47,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
     center = {'x': np.array([float(centerList[0])]),
               'y': np.array([float(centerList[1])])}
     center, _ = geoTrans.projectOnRaster(dem, center, interp='bilinear')
-    time = trackedPartProp['time']
+    time = trackedPartProp['t']
 
     # do some ploting
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -108,7 +110,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
-    outFileName = 'trackedParticles'
+    outFileName = 'trackedParticles_%s' % cuSimName
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     if cfgFlags.getboolean('showPlot'):
@@ -130,7 +132,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
         # ani.save("testTrackAlr1.gif", writer=writer)
 
 
-def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg):
+def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
     """ Plot time series of tracked particles
     Parameters
     ----------
@@ -141,6 +143,8 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg):
         particles
     cfg : dict
         configuration read from ini file
+    cuSimName: str
+        name of current sim
 
     """
 
@@ -149,14 +153,53 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg):
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     fig.suptitle('Tracked particles acceleration')
     ax1 = plt.subplot(111)
+    # trackedPartAcc = trackedPartProp['uAcc'].copy()
+    # trackedPartAcc[np.isnan(trackedPartAcc)] = 0
 
-    ax1.plot(trackedPartProp['time'], trackedPartProp['uAcc'])
+    ax1.plot(trackedPartProp['t'], trackedPartProp['uAcc'])
+    # ax1.plot(trackedPartProp['t'], trackedPartAcc)
     ax1.set_xlabel('time step [s]')
     ax1.set_ylabel('acceleration [ms-2]')
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
-    outFileName = 'trackedParticles_acceleration'
+    outFileName = 'trackedParticles_acceleration_%s' % cuSimName
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def plotAllPartAcc(outDirData,particlesList, cfg, Tsave, cuSimName):
+    """ Plot time series of tracked particles
+    Parameters
+    ----------
+    outDirData: str
+        path to output directory
+    particlesList: list
+        list with dictionary of all particles time steps
+        particles
+    cfg : dict
+        configuration read from ini file
+    cuSimName: str
+        name of current sim
+    """
+
+
+    # do some ploting
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    fig.suptitle('Tracked particles acceleration')
+    ax1 = plt.subplot(111)
+
+
+    uAcc = np.zeros((len(particlesList), particlesList[0]['nPart']))
+    timeStep = np.asarray([p['t'] for p in particlesList])
+    for idx in particlesList[0]['ID']:
+        uAcc[:,idx] = np.asarray([p['uAcc'][idx] for p in particlesList])
+        ax1.plot(Tsave, uAcc[:,idx])
+    ax1.set_xlabel('time step [s]')
+    ax1.set_ylabel('acceleration [ms-2]')
+
+    pathDict = {}
+    pathDict['pathResult'] = outDirData
+    outFileName = 'Allparticles_acceleration_%s' % cuSimName
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 

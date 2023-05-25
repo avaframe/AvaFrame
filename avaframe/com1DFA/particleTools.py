@@ -793,15 +793,16 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     trackedPartProp : dict
         dictionary with 2D numpy arrays corresponding to the time series of the
         properties for the tracked particles (for example if
-        properties = ['x', 'y'], the dictionary will have the keys 'time',
+        properties = ['x', 'y'], the dictionary will have the keys 't',
         'x' and 'y'. trackedPartProp['x'] will be a 2D numpy array, each line
         corresponds to the 'x' time series of a tracked particle)
     '''
     # buid time series for desired properties of tracked particles
     nTimeSteps = len(particlesList)
     trackedPartProp = {}
-    trackedPartProp['time'] = np.zeros(nTimeSteps)
+    trackedPartProp['t'] = np.zeros(nTimeSteps)
     newProperties = []
+
     # initialize
     for key in properties:
         if key in particlesList[0]:
@@ -814,7 +815,7 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     trackedPartID = []
     for particles, nTime in zip(particlesList, range(nTimeSteps)):
         trackedParticles = particles['trackedParticles']
-        trackedPartProp['time'][nTime] = particles['t']
+        trackedPartProp['t'][nTime] = particles['t']
         index = np.where(trackedParticles == 1)
         for ind, id in zip(index[0], particles['ID'][index]):
             if id not in trackedPartID:

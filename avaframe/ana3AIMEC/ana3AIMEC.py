@@ -10,6 +10,10 @@ import pathlib
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
+import avaframe.in1Data.getInput as gI
+from avaframe.com1DFA import com1DFA
+import avaframe.in3Utils.fileHandlerUtils as fU
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -325,28 +329,142 @@ def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):
     return reportD, benchD
 
 
-def aimecTransform(rasterTransfo, particle, dem):
-    """ Adding s projected and l projected to the particle dictionary
-    Parameters
-    ----------
-    rasterTransfo: dict
-        domain transformation information
-    Returns
-    -------
-    particle: dict
-        particle dictionary with s grid and l grid added
+def aimecTransform(rasterTransfo, particle, demHeader, timeSeries=False):
+    """ Adding s projected and l projected in thalweg/aimec coordinate system to the particle dictionary
+
+        Parameters
+        ----------
+        rasterTransfo: dict
+            domain transformation information
+        particle: dict
+            dictionary with particle properties
+        demHeader: dict
+            dict with info on dem cellSize, xllcenter, ..
+
+        Returns
+        -------
+        particle: dict
+            particle dictionary with s grid and l grid added
     """
+
+    xllcenter = demHeader['xllcenter']
+    yllcenter = demHeader['yllcenter']
+
+    if timeSeries:
+        particle['lAimec'] = np.zeros((particle['x'].shape[0],particle['x'].shape[1]))
+        particle['sAimec'] = np.zeros((particle['x'].shape[0],particle['x'].shape[1]))
+        for timeInd in range(particle['x'].shape[0]):
+            sList, lList = computeSLParticles(rasterTransfo, demHeader,
+                particle['x'][timeInd,:], particle['y'][timeInd,:])
+
+            #TODO: consider renaming to ana3AIMEC_s, ana3AIMEC_l
+            particle['lAimec'][timeInd, :] = lList
+            particle['sAimec'][timeInd, :] = sList
+            particle['sBetaPoint'] = rasterTransfo['s'][rasterTransfo['indStartOfRunout']]
+            particle['beta'] = rasterTransfo['startOfRunoutAreaAngle']
+    else:
+        sList, lList = computeSLParticles(rasterTransfo, demHeader,
+            particle['x'], particle['y'])
+
+        #TODO: consider renaming to ana3AIMEC_s, ana3AIMEC_l
+        particle['lAimec'] = lList
+        particle['sAimec'] = sList
+
+    return(particle)
+
+
+def computeSLParticles(rasterTransfo, demHeader, particlesX, particlesY):
+    """ find the closest s, l coordinates in the aimec/thalweg coordinate system to a particles x,y location
+
+        Parameters
+        -----------
+        rasterTransfo: dict
+            info on rasterTransformation, here gridx, gridy coordinates
+        particlesX: np array
+            x coordinates of particles location for one time step but all particles
+        particlesY: np array
+            Y coordinates of particles location for one time step but all particles
+
+        Returns
+        --------
+        sList, lList: list
+            list of s, l coordinates for respective particle
+    """
+
+    xllcenter = demHeader['xllcenter']
+    yllcenter = demHeader['yllcenter']
+    sList = []
     lList = []
-    sList  = []
-    xllcenter = dem['header']['xllcenter']
-    yllcenter = dem['header']['yllcenter']
-    for x, y in zip(particle['x'], particle['y']):
+
+    # loop over all particles
+    for x, y in zip(particlesX, particlesY):
         # calculating the distance between the particle position and the grid points
         distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2)
         # Finding the coordinates of the grid point which minimizes the difference
         (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
         lList.append(rasterTransfo['l'][lIndex])
         sList.append(rasterTransfo['s'][sIndex])
-    particle['lAimec'] = lList
-    particle['sAimec'] = sList
-    return(particle)
+
+    return sList, lList
+
+
+def addSLToParticles(avaDir, cfgAimec, demFileName, particlesList, saveToPickle=False):
+    """ add aimec (thalweg) s,l coordinates to particle dicts
+        use dem from sim corresponding to particle dicts by providing demFileName
+        if demFileName='' standard dem in avaDir/Inputs is used
+
+        Parameters
+        ------------
+        avaDir: pathlib path
+            path to avalanche directory
+        cfgAimec: configparser object
+            configuration settings of aimec
+        demFileName: str
+            path including fileName and extension to demFile located in avaDir/Inputs
+        particlesList: list
+            list of particles dicts of sim
+        saveToPickle: bool
+            if updated particle dicts shall be saved to pickle
+
+        Returns
+        --------
+        particlesList: list
+            list of particles dicts updated with s,l
+        rasterTransfo: dict
+            dictionary with info on rasterTransformation
+
+    """
+
+    # create path dict
+    pathDict = {}
+    pathDict = aT.readAIMECinputs(avaDir, pathDict,
+        dirName=cfgAimec['AIMECSETUP']['anaMod'])
+
+    # fetch dem of sim
+    demFilePath = gI.getDEMFromConfig(avaDir, fileName=demFileName)
+    dem = IOf.readRaster(demFilePath)
+    dem['originalHeader'] = dem['header']
+
+    # create rasterTransfo info
+    # use cell size of dem, as dem has to match cellsize of sim results if fetched using getDEMFromConfig
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, dem['header']['cellsize'],
+        cfgAimec['AIMECSETUP'])
+
+    for particleDict in particlesList:
+        particleDict = aimecTransform(rasterTransfo, particleDict, dem['header'], timeSeries=False)
+        particleDict['sBetaPoint'] = rasterTransfo['s'][rasterTransfo['indStartOfRunout']]
+        particleDict['beta'] = rasterTransfo['startOfRunoutAreaAngle']
+        simName = particleDict['simName']
+        if saveToPickle:
+            # save pickle file
+            outDir = pathlib.Path(avaDir, 'Outputs', 'ana3AIMEC', 'particles')
+            fU.makeADir(outDir)
+            com1DFA.savePartToPickle(particleDict, outDir, simName)
+
+    if saveToPickle:
+        log.info('Saving particles updated with s,l to directory: %s' % outDir)
+
+    # add header of dem that is used in rasterTransfo to dict
+    rasterTransfo['demHeader'] = dem['header']
+
+    return particlesList, rasterTransfo, dem

@@ -33,11 +33,11 @@ def runAna3AIMEC(avalancheDir, cfg):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
+    pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
-    rasterTransfo, resAnalysisDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+    rasterTransfo, resAnalysisDF, plotDict, _ = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
     return pathDict, rasterTransfo, resAnalysisDF, plotDict
 
 

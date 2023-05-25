@@ -4,11 +4,11 @@ Created on Mon Wed 12 2022
 
 @author: dicko
 
-Tools to extract information on the avalanche simulations run in the Output files  
+Tools to extract information on the avalanche simulations run in the Output files
 
 """
 
-# Python imports 
+# Python imports
 import numpy as np
 import matplotlib.pyplot as plt
 from cmcrameri import cm
@@ -18,7 +18,7 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import configparser
 
-# Local imports 
+# Local imports
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 import avaframe.in2Trans.ascUtils as IOf
@@ -34,7 +34,7 @@ from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.geoTrans as gT
 
 
-#%% function to plot peak flow velocity 
+#%% function to plot peak flow velocity
 
 def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
     """ Prepare the data for the plot of peak file number simNum and return dictionary with data for the plot
@@ -45,9 +45,9 @@ def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
         avaDir : str
             path to avalanche directoy
         peakFilesDF : dict
-            dictionary containing info on the peak files 
+            dictionary containing info on the peak files
         simNum : int
-            simulation number 
+            simulation number
         demData: dictionary
             optional - if not the dem in the avaDir/Inputs folder has been used but a different one
 
@@ -57,7 +57,7 @@ def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
             dictionary with info for the plot
         """
 
-    # getting the dem data 
+    # getting the dem data
     if demData == '':
         demFile = gI.getDEMPath(avaDir)
         demData = IOf.readRaster(demFile, noDataToNan=True)
@@ -70,7 +70,7 @@ def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
     # Load names and paths of peakFiles
     print(peakFilesDF['avaName'][simNum])
     name = peakFilesDF['names'][simNum]
-    fileName = peakFilesDF['files'][simNum] 
+    fileName = peakFilesDF['files'][simNum]
     avaName = peakFilesDF['avaName'][simNum]
     resType = peakFilesDF['resType'][simNum]
 
@@ -87,10 +87,10 @@ def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
     data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
     dataNotConstrained = np.ma.masked_where(data != 0.0, data)
     unit = pU.cfgPlotUtils['unit%s' % resType]
-    
-    # Preparing output dictionary 
+
+    # Preparing output dictionary
     plotDict = {}
-    plotDict['resType'] = resType 
+    plotDict['resType'] = resType
     plotDict['data'] = data
     plotDict['dataNotConstrained'] = dataNotConstrained
     plotDict['raster'] = raster
@@ -103,7 +103,7 @@ def PeakFields(avaDir, peakFilesDF, simNum, demData=''):
     plotDict['dem'] = demField
     plotDict['unit'] = unit
     plotDict['name'] = name
-    
+
     return  plotDict
 
 
@@ -127,7 +127,7 @@ def RangeTimeDiagram(avalancheDir, index,simDF):
 
     # fetch info on available simulations
     #simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
-    
+
     #for index, simDFrow in simDF.iterrows():
 
     # add simHash info
@@ -195,7 +195,7 @@ def ThalwegTimeDiagram(avalancheDir, index, simDF):
 
     # fetch info on available simulations
     #simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
-    
+
     #for index, simDFrow in simDF.iterrows():
 
     # add simHash info
@@ -241,48 +241,48 @@ def ThalwegTimeDiagram(avalancheDir, index, simDF):
         # create plot
         #dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime, F, index )
     return(mtiInfo,cfgRangeTime)
-    
 
-#%% function to generate the data for particles plot on the dem 
+
+#%% function to generate the data for particles plot on the dem
 
 def demParticles(simu_number):
-    
+
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
     avalancheDir = cfgMain['MAIN']['avalancheDir']
-    
+
     avaDir = pathlib.Path(avalancheDir)
     modName = 'com1DFA'
-    
+
     # Load all infos from the peak files
     inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     plotDict = PeakFields(avalancheDir, peakFilesDF, simu_number, demData='')
-    
-    return plotDict 
+
+    return plotDict
 
 
 
 #%% function to generate the correct title for the plot
 
-def titleFrictParam(Sim,simu_number):
+def titleFrictParam(Sim,simIndex):
     friction_model = Sim.frictModel[0]
     if friction_model == 'Coulomb':
-        title="$\mu$ ="+str(Sim.mu[simu_number])
+        title="$\mu$ ="+str(Sim['mucoulomb'].loc[simIndex])
     elif friction_model == 'Voellmy':
-        title = "$\mu$ ="+str(Sim.mu[simu_number]) +r", $\xi$="+str(Sim.xsi[simu_number])
+        title = "$\mu$ ="+str(Sim['muvoellmy'].loc[simIndex]) +r", $\xi$="+str(Sim['xsivoellmy'].loc[simIndex])
     elif friction_model == 'samosAT':
-        title = "$\mu$ ="+str(Sim.mu[simu_number]) +r", $\tau_0$="+str(Sim.tau0[simu_number]) 
+        title = "$\mu$ ="+str(Sim['musamosat'].loc[simIndex]) +r", $\tau_0$="+str(Sim['tau0samosat'].loc[simIndex])
     elif friction_model == 'VoellmyUpgraded':
-        title = "$\mu$ ="+str(Sim.mu[simu_number])+r", $\tau_0$="+str(
-            Sim.tau0[simu_number])+r", $\xi$="+str(Sim.xsi[simu_number])
+        title = "$\mu$ ="+str(Sim['muvoellmyupgraded'].loc[simIndex])+r", $\tau_0$="+str(
+            Sim['tau0voellmyupgraded'].loc[simIndex])+r", $\xi$="+str(Sim['xsivoellmyupgraded'].loc[simIndex])
     else:
         title = "No friction model found!"
-    return title 
+    return title
 
 
-#%% function to generate the correct labels for the boxplots 
+#%% function to generate the correct labels for the boxplots
 
 def labelFrictParamBoxplot(Sim,simu_number):
     friction_model = Sim.frictModel[0]
@@ -291,16 +291,16 @@ def labelFrictParamBoxplot(Sim,simu_number):
     elif friction_model == 'Voellmy':
         title = "$\mu$ ="+str(Sim.mu[simu_number])+"\n"+r"$\xi$="+str(Sim.xsi[simu_number])
     elif friction_model == 'samosAT':
-        title = "$\mu$ ="+str(Sim.mu[simu_number])+"\n"+r"$\tau_0$="+str(Sim.tau0[simu_number]) 
+        title = "$\mu$ ="+str(Sim.mu[simu_number])+"\n"+r"$\tau_0$="+str(Sim.tau0[simu_number])
     elif friction_model == 'VoellmyUpgraded':
         title = "$\mu$ ="+str(Sim.mu[simu_number])+"\n"+r"$\tau_0$="+str(
             Sim.tau0[simu_number])+"\n"+r"$\xi$="+str(Sim.xsi[simu_number])
     else:
         title = "No friction model found!"
-    return title 
+    return title
 
 
-#%% function to prepare the subplots depending on the number of simulations  
+#%% function to prepare the subplots depending on the number of simulations
 
 def subplot(number_ava):
     if number_ava == 1:
@@ -342,5 +342,3 @@ def subplot(number_ava):
     else:
         print('Too many simulations for one plot!')
     return (nrow,ncol,fig,ax)
-
-

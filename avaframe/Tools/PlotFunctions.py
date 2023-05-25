@@ -21,6 +21,12 @@ from matplotlib.ticker import FormatStrFormatter
 from scipy.interpolate import interp1d
 import pandas as pd
 import math
+import seaborn as sns
+import logging
+import matplotlib.patheffects as pe
+
+log = logging.getLogger(__name__)
+
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -37,6 +43,7 @@ from avaframe.Tools import PostProcessingTools
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.geoTrans as gT
 from avaframe.Tools import PlotTools
+import avaframe.out1Peak.outPlotAllPeak as oP
 
 
 
@@ -573,112 +580,82 @@ def plotRangeTimePeakVelVelTimeEnvelope(Sim,avalancheDir,number_ava,dictVelEnvel
 
 #%% Function to plot the peak flow quantities and the velocity thalweg envelope
 
-def plotPeakVelVelThalwegEnvelope(Sim, avalancheDir, number_ava, rasterTransfo, dictVelAltThalweg, Save, modName):
+def plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg,
+    resTypePlots, modName, demData=''):
+    """ plot peak flow fields and velocity thalweg envelope
 
-    for simu_number in range(0, number_ava):
+        Parameters
+        ------------
+        avalancheDir: pathlib path or str
+            path to avalanche directory
+        simIndex: str
+            index of current simulation
+        rasterTransfo: dict
+            info on domain transformation from xy to sl thalweg
+        dictVelAltThalweg: dict
+            info on velocity and altitude of particles along thalweg s
+        modName: str
+            name of com module used to perform sims
+    """
 
-        # Load all infos from the peak files
-        avaDir = pathlib.Path(avalancheDir)
-        inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    # Load all infos from the peak files
+    avaDir = pathlib.Path(avalancheDir)
+    # fetch name of simulation
+    simName = simDF['simName'].loc[simIndex]
 
-        sim = Sim.index[simu_number]
-        simu_numb = np.where(peakFilesDF.simID == sim)
+    # create a plot for result variables in resTypePlots
+    for resType in resTypePlots:
 
-        for k in range(0, 3):
+        fig, ax = plt.subplots(1, 2, figsize=(pU.figW+10, pU.figH+3))
 
-            fig, ax = plt.subplots(1, 2, figsize=(pU.figW+10, pU.figH+3))
+        # ax[0]
+        # add peak field
+        ax[0], rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax[0], alpha=1.0)
+        ax[0].plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
+        ax[0].legend(loc='upper right')
 
-            # ax[0]
-            # Generate data for the simulation peakFile
-            plotDict = PlotTools.PeakFields(
-                avalancheDir, peakFilesDF, simu_numb[0][3+k], demData='')
-            # choose colormap
-            cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[plotDict['resType']], np.amin(
-                plotDict['data']), np.amax(plotDict['data']), continuous=pU.contCmap)
-            cmap.set_bad(alpha=0)
-            # uncomment this to set the under value for discrete cmap transparent
-            # cmap.set_under(alpha=0)
-            xllcenter = plotDict['raster']['header']['xllcenter']
-            yllcenter = plotDict['raster']['header']['yllcenter']
-            rowsMinPlot = plotDict['rowsMin']*plotDict['cellSize'] + yllcenter
-            rowsMaxPlot = (plotDict['rowsMax']+1)*plotDict['cellSize'] + yllcenter
-            colsMinPlot = plotDict['colsMin']*plotDict['cellSize'] + xllcenter
-            colsMaxPlot = (plotDict['colsMax']+1)*plotDict['cellSize'] + xllcenter
+        # ax[1]
+        # plot the thalweg diagram
+        # First Y axis
+        cmap = cm.vik  # colormap
+        ax[1].plot(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['maxVelocity'], color=cmap(
+            0.01), label='Max and min velocity')  # max
+        ax[1].plot(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minVelocity'], color=cmap(0.01))  # min
+        ax[1].plot(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['meanVelocity'], linestyle='dashed',
+                 color=cmap(0.7), markersize=0.5, label='Mean velocity', linewidth=0.5)  # mean
+        ax[1].plot(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['medianVelocity'], linestyle='dotted',
+                 color=cmap(1.0), markersize=0.7, label='Median velocity', linewidth=0.7)  # median
+        # filling the space between the max and min
+        ax[1].fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minVelocity'],
+                         dictVelAltThalweg['maxVelocity'], color=cmap(0.2), alpha=0.2, zorder=1)
 
-            extent = [0, colsMaxPlot-colsMinPlot, 0, rowsMaxPlot-rowsMinPlot]
+        # y label
+        ax[1].set_ylabel("Velocity [m/s]", fontsize=22)
+        ax[1].tick_params(axis='both', labelsize=15)
 
-            # add DEM hillshade with contour lines
-            ls, CS = pU.addHillShadeContours(
-                ax[0], plotDict['demConstrained'], plotDict['cellSize'], extent)
+        # Second Y axis
+        ax2 = ax[1].twinx()
+        # Plotting the altitude envelope - dashed lines
+        ax2.plot(dictVelAltThalweg['sXYThalweg'],  dictVelAltThalweg['maxZ'], color='red',
+                 linestyle='dashed', linewidth=0.4,label='Max and min altitude')
+        ax2.plot(dictVelAltThalweg['sXYThalweg'],  dictVelAltThalweg['minZ'], color='red',
+                 linestyle='dashed', linewidth=0.4)
+        ax2.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minZ'], dictVelAltThalweg['maxZ'],hatch='|||||||', facecolor='black')
+        # X and Y labels
+        ax[1].set_xlabel('$s_{xy}$[m]\n\n', fontsize=22)
+        ax[1].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+        ax2.set_ylabel('Altitude [m]', fontsize=22)
+        ax2.tick_params(axis='both', labelsize=15)
 
-            # add peak field data
-            im1 = ax[0].imshow(plotDict['data'], cmap=cmap, norm=norm,
-                               extent=extent, origin='lower', aspect='equal', zorder=2)
-            pU.addColorBar(im1, ax[0], ticks, plotDict['unit'])
+        # add legend
+        fig.legend(loc='lower center', ncol=4, fancybox=True, shadow=True, fontsize=15)
 
-            # add center of mass path
-            ax[0].plot(rasterTransfo['x']-colsMinPlot, rasterTransfo['y']-rowsMinPlot, '-y.', zorder=20, linewidth=0.3, markersize=2.5, label='Avalanche thalweg')
-
-            # labels and ticks
-            ax[0].set_xlabel('x [m] \n\n', fontsize=22)
-            ax[0].set_ylabel('y [m]', fontsize=22)
-            ax[0].tick_params(axis='both', labelsize=13)
-
-            # ax[1]
-            # plot the thalweg diagram
-            # First Y axis
-            cmap = cm.vik  # colormap
-            ax[1].plot(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['maxVelocity'][simu_number], color=cmap(
-                0.01), label='Max and min velocity')  # max
-            ax[1].plot(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['minVelocity'][simu_number], color=cmap(0.01))  # min
-            ax[1].plot(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['meanVelocity'][simu_number], linestyle='dashed',
-                     color=cmap(0.7), markersize=0.5, label='Mean velocity', linewidth=0.5)  # mean
-            ax[1].plot(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['medianVelocity'][simu_number], linestyle='dotted',
-                     color=cmap(1.0), markersize=0.7, label='Median velocity', linewidth=0.7)  # median
-            # filling the space between the max and min
-            ax[1].fill_between(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['minVelocity'][simu_number],
-                             dictVelAltThalweg['maxVelocity'][simu_number], color=cmap(0.2), alpha=0.2, zorder=1)
-
-            # y label
-            ax[1].set_ylabel("Velocity [m/s]", fontsize=22)
-            ax[1].tick_params(axis='both', labelsize=15)
-
-            # Second Y axis
-            ax2 = ax[1].twinx()
-            # Plotting the altitude boxplot
-            #medianprops = {}
-            #medianprops['linewidth'] = 0.7
-            #ax2.boxplot(x=listZsorted[simu_number], positions=sSortedDeduplicated[simu_number],
-            #           showfliers=False, medianprops=medianprops, widths=2.8)
-            # Plotting the altitude envelope - dashed lines
-            ax2.plot(dictVelAltThalweg['sXYThalweg'][simu_number],  dictVelAltThalweg['maxZ'][simu_number], color='red',
-                     linestyle='dashed', linewidth=0.4,label='Max and min altitude')
-            ax2.plot(dictVelAltThalweg['sXYThalweg'][simu_number],  dictVelAltThalweg['minZ'][simu_number], color='red',
-                     linestyle='dashed', linewidth=0.4)
-            ax2.fill_between(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['minZ'][simu_number], dictVelAltThalweg['maxZ'][simu_number],hatch='|||||||', facecolor='black')
-            # X and Y labels
-            ax[1].set_xlabel('$s_{xy}$[m]\n\n', fontsize=22)
-            ax[1].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
-            ax2.set_ylabel('Altitude [m]', fontsize=22)
-            ax2.tick_params(axis='both', labelsize=15)
-
-            # add legend
-            fig.legend(loc='lower center', ncol=4, fancybox=True, shadow=True, fontsize=15)
-
-            # title
-            PlotTools.titleFrictParam(Sim, simu_number)
-
-            # saving the plot
-            if Save:
-                outDir = avaDir / 'Outputs' / modName / 'Plots'/'Peak flow quantities and Velocity altitude thalweg'
-                fU.makeADir(outDir)
-                name = 'PfVelAltThalweg_'+'_'+peakFilesDF['resType'][7*simu_number+k+3]
-                plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
-                fig.savefig(plotName)
-                plotPath = pathlib.Path.cwd() / plotName
-                print("Plot for "+str(name)+" successfully saved at"+str(plotPath))
-
+        # save and or plot
+        outDir = avaDir / 'Outputs' / modName / 'Plots'/'Peak flow quantities and Velocity altitude thalweg'
+        fU.makeADir(outDir)
+        name = 'PfVelAltThalweg_'+'_'+resType
+        plotName = ('%s_%s' % (name, simIndex))
+        plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
 
 #%% Function to plot the peak flow quantities and the velocity time envelope
 
@@ -956,70 +933,6 @@ def plotVelocityAltitudeThalwegAllSim(dictVelAltThalweg,Sim,dictNodes,avaDir,num
         plt.show()
 
 
-
-
-# %% Function to generate the boxplot of the difference between the mean simulation flow velocity and the average velocity
-# of the three AvaNodes along the thalweg
-
-def plotBoxplotThalweg(avalancheDir,number_ava,Sim,dictNodes,dictVelAltThalweg,TrackedPart,Save,modName):
-
-    # Calculating the average velocity of the nodes
-    NumberNodes = [7, 9, 10]  # Numbers of the nodes you want to average
-    meanNodeVelocity = NodeTools.averageNodesVelocity(NumberNodes,avalancheDir)
-
-    # Calculating the difference between the mean avaframe velocity and the mean sensor velocity
-    boxplot_data = [None]*number_ava
-    for i in range(0, number_ava):
-        # interpolating the node velocity
-        f = interp1d(dictNodes['thalwegDomain']['sC09AfterBlasting'], meanNodeVelocity)
-        if max(dictVelAltThalweg['sXYThalweg'][i]) > max(dictNodes['thalwegDomain']['sC09AfterBlasting']) or min(dictVelAltThalweg['sXYThalweg'][i]) < min(dictNodes['thalwegDomain']['sC09AfterBlasting']):
-            indexMin = 0
-            indexMax = len(dictVelAltThalweg['sXYThalweg'][i])-1
-            if min(dictVelAltThalweg['sXYThalweg'][i]) < min(dictNodes['thalwegDomain']['sC09AfterBlasting']):
-                indexMin = dictVelAltThalweg['sXYThalweg'][i].index(
-                    next((j for j in dictVelAltThalweg['sXYThalweg'][i] if int(j) > min(dictNodes['thalwegDomain']['sC09AfterBlasting'])), None))
-            if max(dictVelAltThalweg['sXYThalweg'][i]) > max(dictNodes['thalwegDomain']['sC09AfterBlasting']):
-                indexMax = dictVelAltThalweg['sXYThalweg'][i].index(
-                    next((j for j in dictVelAltThalweg['sXYThalweg'][i] if int(j) > max(dictNodes['thalwegDomain']['sC09AfterBlasting'])), None))
-            vel_experimental_interpolated = f(dictVelAltThalweg['sXYThalweg'][i][indexMin:indexMax-1])
-            boxplot_data[i] = dictVelAltThalweg['meanVelocity'][i][indexMin:indexMax-1] - vel_experimental_interpolated
-
-        else:
-            vel_experimental_interpolated = f(dictVelAltThalweg['sXYThalweg'][i])
-            boxplot_data[i] = dictVelAltThalweg['meanVelocity'][i] - vel_experimental_interpolated
-
-    # figure
-    fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
-    ax = fig.add_subplot(111)
-    # boxplot
-    plt.boxplot(boxplot_data, whis=200, zorder=2)
-    # add a horizontal line at y=0
-    ax.axhline(y=0, color='black', linestyle='dashed', linewidth=0.8, zorder=0)
-    # title and x labels
-    fig.suptitle('Velocity difference between the mean avaframe velocity and the Node velocity along the thalweg')
-    labels = [ PlotTools.labelFrictParamBoxplot(Sim, i) for i in range(0, number_ava) ]
-    # tick labels
-    ax.set_xticklabels(labels, color='black', fontsize=15)
-    ax.set_ylabel("Velocity difference [m/s]", color='black', fontsize=22)
-    ax.tick_params(axis='both',colors='black', labelsize=15)
-
-    plt.show()
-
-    # saving the plot
-    if Save:
-        avaDir = pathlib.Path(avalancheDir)
-        if TrackedPart==False:
-            outDir = avaDir / 'Outputs' / modName / 'Plots' / 'Comparison Plots'/'Boxplot'/'Along the thalweg'/'Whole avalanche'
-        else:
-            outDir = avaDir / 'Outputs' / modName / 'Plots' / 'Comparison Plots'/'Boxplot'/'Along the thalweg'/'Tracked particles'
-        fU.makeADir(outDir)
-        name = 'Boxplot_Thalweg'
-        plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
-        fig.savefig(plotName)
-        plotPath = pathlib.Path.cwd() / plotName
-        print("Plot for "+str(name)+" successfully saved at"+str(plotPath))
-
-
 # %% Plot the energy line
 
 def plotEnergyLine(avalancheDir,avaDict,simu_number,Sim,dictVelAltThalweg,rasterTransfo,dictRaster,Show,Save,modName):
@@ -1212,423 +1125,309 @@ def plotVelAltThalTimeDiag(avalancheDir,number_ava,simu_number,avaDict,Sim,dictV
 
 
 # %% Plot the peak flow velocity, thalweg time diagram and energy line
+def plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, simDF, rasterTransfo,
+    dictRaster, modName, demSim):
+    """ Create plot showing the resType peak field with thalweg,
+        thalweg vs altitude with max peak field values along thalweg derived from peak fields
+        and the tt-diagram
 
-def plotPeakQuantThalTimeEnergyLine(avalancheDir, number_ava, Sim, plotDict, rasterTransfo,
-    dictRaster, Save, Show, modName):
+        Parameters
+        -----------
+        avalancheDir: str or pathlib path
+            path to avalanche directory
+        simIndex: str
+            index of current sim in simDF
+        simDF: dataFrame
+            dataframe with one row per simulation, and all model config parameters
+        rasterTransfo: dict
+            dict with info on transformation from cartesian to thalweg coordinate system
+        dictRaster: dict
+            dict with info on peak fields
+        modName: str
+            name of com module used to perform sims
+        demSim: dict
+            dict with info on dem used for sims
+    """
 
+    # Load all infos from the peak files
+    avaDir = pathlib.Path(avalancheDir)
+    # fetch name of simulation
+    simName = simDF['simName'].loc[simIndex]
 
-    # preparing simulation data
-    simDF = cfgUtils.createConfigurationInfo(
-        avalancheDir, standardCfg='', writeCSV=False, specDir='')
+    # preparing range time data for the simulation
+    mtiInfo, cfgRangeTime = PlotTools.ThalwegTimeDiagram(avalancheDir, simIndex, simDF)
 
-    for simu_number in range(0, number_ava):
+    # initialize figure
+    fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
+    gs = fig.add_gridspec(2,2)
+    ax1 = fig.add_subplot(gs[0, 1])
+    ax2 = fig.add_subplot(gs[:, 0])
+    ax3 = fig.add_subplot(gs[1, 1])
 
-        # Load all infos from the peak files
-        avaDir = pathlib.Path(avalancheDir)
-        inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    # ax1 Energy line
 
-        sim = Sim.index[simu_number]
-        simu_numb = np.where(peakFilesDF.simID == sim)
-
-        # preparing range time data for the simulation
-        mtiInfo, cfgRangeTime = PlotTools.ThalwegTimeDiagram(avalancheDir, sim, simDF)
-        # preparing the beta point data
-        x = mtiInfo['betaPoint'][0]
-        y = mtiInfo['betaPoint'][1]
-
-        for k in range(0, 3):
-
-                #fig, ax = plt.subplots(1, 2, figsize=(pU.figW+10, pU.figH+3))
-                fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
-                gs = fig.add_gridspec(2,2)
-                ax1 = fig.add_subplot(gs[0, 1])
-                ax2 = fig.add_subplot(gs[:, 0])
-                ax3 = fig.add_subplot(gs[1, 1])
-
-                # ax1 Energy line
-
-                # TO MAKE A PLOT SIMILAR TO MATTHIAS WORK, WITH VELOCITY PER CENTRES OF MASS
-                # plot mass averaged center of mass
-                # energyLineDict = PostProcessingTools.energyLinePostProcessing()
-                # avaProfileMass = energyLineDict['avaProfileMass']
-                # particlesIni = energyLineDict['particlesIni']
-                # coefExt = energyLineDict['coefExt']
-                # slopeExt = energyLineDict['slopeExt']
-                # zEne = energyLineDict['zEne']
-                # runOutAngleDeg = energyLineDict['runOutAngleDeg']
-                # u2Path = energyLineDict['u2Path']
-                # sGeomL = energyLineDict['sGeomL']
-                # zGeomL = energyLineDict['zGeomL']
-                # alphaDeg = energyLineDict['alphaDeg']
-                # energyLineTestCfg = energyLineDict['energyLineTestCfg']
-                # mu = energyLineDict['mu']
-                # sIntersection = energyLineDict['sIntersection']
-                # zIntersection = energyLineDict['zIntersection']
-                # ax1.plot(avaProfileMass['s'], avaProfileMass['z'], '-y.', label='Center of mass altitude',
-                #         lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
-                # extend this curve towards the bottom using a linear regression on the last x points
-                # ax1.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
-                #         slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k',
-                #         label='Center of mass altitude extrapolation')
-                # add center of mass velocity points and runout line
-                # ax1.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]], '-r', label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
-                # scat = ax1.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
-                #                   label='Center of mass velocity altitude')
-                # ax.plot(rasterTransfo['s'],pd.Series(maxPeakFlowVelocity).values[0], color=cmap(0.3))
-
-                # Generate data for the simulation peakFile
-                plotDict = PlotTools.PeakFields(
-                    avalancheDir, peakFilesDF, simu_numb[0][3+k], demData='')
-                # choose colormap
-                cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[plotDict['resType']], np.amin(
-                    plotDict['data']), np.amax(plotDict['data']), continuous=pU.contCmap)
-                cmap.set_bad(alpha=0)
-
-                g = 9.8 # gravitation constant
-                EnergyLineRaster = rasterTransfo['z'] + pd.Series(dictRaster['maxPeakFlowVelocity']).values[0]**2 / (2*g) # energy line
-                velocity = pd.Series(dictRaster['maxPeakFlowVelocity']).values[0]
-                scat = ax1.scatter(rasterTransfo['s'], EnergyLineRaster, marker='s', cmap=pU.cmapRangeTime, s=8*pU.ms, c=velocity)
-                ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y.', zorder=20, linewidth=0.1, markersize=0.8,label='Thalweg altitude')
-
-                cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
-                cbar2.ax.set_title('[m/s]', pad=10)
-                cbar2.ax.set_ylabel('Max peak flow velocity')
-
-                # draw the horizontal and vertical bars
-                zLim = ax1.get_ylim()
-                sLim = ax1.get_xlim()
-                ax1.vlines(x=rasterTransfo['s'][0], ymin=rasterTransfo['z'][-1], ymax=rasterTransfo['z'][0],
-                           color='r', linestyle='--')
-                #ax1.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection, linestyle='--')
-                ax1.hlines(y=rasterTransfo['z'][-1], xmin=0, xmax=rasterTransfo['s'][-1],
-                           color='r', linestyle='--')
-                deltaz = rasterTransfo['z'][0] - rasterTransfo['z'][-1]
-                deltas = rasterTransfo['s'][-1] - rasterTransfo['s'][0]
-                alpha = np.arctan(deltaz/deltas)*(180/math.pi)
-                ax1.text(750,800,'$\Delta z$='+str(round(deltaz,1))+'m', fontsize=10)
-                ax1.text(750,750,'$\Delta s_{xy}$='+str(round(deltas,1))+'m', fontsize=10)
-                ax1.text(750,700,r'$\alpha$='+str(round(alpha,2))+'°', fontsize=10)
-                X = [0,rasterTransfo['s'][-1]]
-                Y = [rasterTransfo['z'][0],rasterTransfo['z'][-1]]
-                ax1.plot(X,Y,color='black', linestyle='dashdot', linewidth=0.8)
-                #ax1.hlines(y=zIntersection, color='b', xmin=0, xmax=sIntersection, linestyle='--')
-
-                # Labels
-                ax1.set_xlabel('$s_{xy}$ [m]', fontsize = 20)
-                ax1.set_ylabel('z [m]', fontsize = 20)
-                ax2.tick_params(axis='both', labelsize=15)
-                ax1.set_xlim(sLim)
-                ax1.set_ylim(zLim)
-                ax1.legend(loc='upper right', fontsize = 10)
-                ax1.set_title('Thalweg-Altitude')
+    # TO MAKE A PLOT SIMILAR TO MATTHIAS WORK, WITH VELOCITY PER CENTRES OF MASS
+    # plot mass averaged center of mass
+    # energyLineDict = PostProcessingTools.energyLinePostProcessing()
+    # avaProfileMass = energyLineDict['avaProfileMass']
+    # particlesIni = energyLineDict['particlesIni']
+    # coefExt = energyLineDict['coefExt']
+    # slopeExt = energyLineDict['slopeExt']
+    # zEne = energyLineDict['zEne']
+    # runOutAngleDeg = energyLineDict['runOutAngleDeg']
+    # u2Path = energyLineDict['u2Path']
+    # sGeomL = energyLineDict['sGeomL']
+    # zGeomL = energyLineDict['zGeomL']
+    # alphaDeg = energyLineDict['alphaDeg']
+    # energyLineTestCfg = energyLineDict['energyLineTestCfg']
+    # mu = energyLineDict['mu']
+    # sIntersection = energyLineDict['sIntersection']
+    # zIntersection = energyLineDict['zIntersection']
+    # ax1.plot(avaProfileMass['s'], avaProfileMass['z'], '-y.', label='Center of mass altitude',
+    #         lw=1, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
+    # extend this curve towards the bottom using a linear regression on the last x points
+    # ax1.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
+    #         slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k',
+    #         label='Center of mass altitude extrapolation')
+    # add center of mass velocity points and runout line
+    # ax1.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]], '-r', label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
+    # scat = ax1.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
+    #                   label='Center of mass velocity altitude')
+    # ax.plot(rasterTransfo['s'],pd.Series(maxPeakFlowVelocity).values[0], color=cmap(0.3))
 
 
-                # ax2 Peak flow velocity
-                # choose colormap
-                cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[plotDict['resType']], np.amin(
-                    plotDict['data']), np.amax(plotDict['data']), continuous=pU.contCmap)
-                cmap.set_bad(alpha=0)
-                # uncomment this to set the under value for discrete cmap transparent
-                # cmap.set_under(alpha=0)
-                xllcenter = plotDict['raster']['header']['xllcenter']
-                yllcenter = plotDict['raster']['header']['yllcenter']
-                rowsMinPlot = plotDict['rowsMin']*plotDict['cellSize'] + yllcenter
-                rowsMaxPlot = (plotDict['rowsMax']+1)*plotDict['cellSize'] + yllcenter
-                colsMinPlot = plotDict['colsMin']*plotDict['cellSize'] + xllcenter
-                colsMaxPlot = (plotDict['colsMax']+1)*plotDict['cellSize'] + xllcenter
+    # fetch energy line info for plot
+    # TODO: shall we leave g definition here?
+    g = 9.81 # gravitation constant
+    EnergyLineRaster = rasterTransfo['z'] + pd.Series(dictRaster['maxPeakFlowVelocity']).values[0]**2 / (2*g) # energy line
+    velocity = pd.Series(dictRaster['maxPeakFlowVelocity']).values[0]
+    scat = ax1.scatter(rasterTransfo['s'], EnergyLineRaster, marker='s', cmap=pU.cmapRangeTime, s=8*pU.ms, c=velocity)
+    ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y.', zorder=20, linewidth=0.1, markersize=0.8,label='Thalweg altitude')
 
-                #extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
-                extent = [0, colsMaxPlot-colsMinPlot, 0, rowsMaxPlot-rowsMinPlot]
+    # add colorbar
+    cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
+    cbar2.ax.set_title('[m/s]', pad=10)
+    cbar2.ax.set_ylabel('Max peak flow velocity')
 
-                # add DEM hillshade with contour lines
-                ls, CS = pU.addHillShadeContours(
-                    ax2, plotDict['demConstrained'], plotDict['cellSize'], extent)
+    # draw the horizontal and vertical bars
+    zLim = ax1.get_ylim()
+    sLim = ax1.get_xlim()
+    ax1.vlines(x=rasterTransfo['s'][0], ymin=rasterTransfo['z'][-1], ymax=rasterTransfo['z'][0],
+               color='r', linestyle='--')
+    ax1.hlines(y=rasterTransfo['z'][-1], xmin=0, xmax=rasterTransfo['s'][-1],
+               color='r', linestyle='--')
+    deltaz = rasterTransfo['z'][0] - rasterTransfo['z'][-1]
+    deltas = rasterTransfo['s'][-1] - rasterTransfo['s'][0]
+    alpha = np.arctan(deltaz/deltas)*(180/math.pi)
+    # add textbox with angles, delta values
+    textString = ('$\Delta z$=%s m\n$\Delta s_{xy}$=%s m\n' % (str(round(deltaz,1)), str(round(deltas,1)))) + r'$\alpha$=' + str(round(alpha,2)) + '°'
+    ax1.text(0.98,0.9, textString, horizontalalignment='right',
+        verticalalignment='top', fontsize=10, transform=ax1.transAxes, multialignment='left')
+    X = [0,rasterTransfo['s'][-1]]
+    Y = [rasterTransfo['z'][0],rasterTransfo['z'][-1]]
+    ax1.plot(X,Y,color='black', linestyle='dashdot', linewidth=0.8)
 
-                # add peak field data
-                im1 = ax2.imshow(plotDict['data'], cmap=cmap, norm=norm,
-                                   extent=extent, origin='lower', aspect='equal', zorder=2)
-                pU.addColorBar(im1, ax2, ticks, plotDict['unit'])
-                # add the thalweg
-                ax2.plot(rasterTransfo['x']-colsMinPlot, rasterTransfo['y']-rowsMinPlot, '-y.', zorder=20, linewidth=0.1, markersize=0.8, label='Avalanche thalweg')
-                #ax2.set_xlim(0, colsMaxPlot-colsMinPlot)
-                #ax2.set_ylim(0, rowsMaxPlot-rowsMinPlot)
+    # Labels
+    ax1.set_xlabel('$s_{xy}$ [m]', fontsize = 20)
+    ax1.set_ylabel('z [m]', fontsize = 20)
+    ax2.tick_params(axis='both', labelsize=15)
+    ax1.set_xlim(sLim)
+    ax1.set_ylim(zLim)
+    ax1.legend(loc='upper right', fontsize = 10)
+    ax1.set_title('Thalweg-Altitude')
 
-                # # add labels
-                ax2.set_xlabel('x [m] \n\n', fontsize=20)
-                ax2.set_ylabel('y [m] \n\n', fontsize=20)
-                ax2.tick_params(axis='both', labelsize=15)
+    # ax2
+    # add peak file plot
+    ax2, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax2, alpha=1.0)
+    # add the thalweg
+    ax2.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
 
+    # # add labels
+    ax2.set_xlabel('x [m] \n\n', fontsize=20)
+    ax2.set_ylabel('y [m] \n\n', fontsize=20)
+    ax2.tick_params(axis='both', labelsize=15)
 
-                # ax3 thalweg time diagram
-                # Generate data for the simulation peakFile
-                plotDict = PlotTools.PeakFields(avalancheDir, peakFilesDF, simu_numb[0][3+k], demData='')
-                xllcenter = plotDict['raster']['header']['xllcenter']
-                yllcenter = plotDict['raster']['header']['yllcenter']
-                distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2)
-                sbetaPoint,lbetaPoint = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
-                # fetch required input info
-                mti = mtiInfo['mti']
-                rangeGates = mtiInfo['rangeGates'] + sbetaPoint
-                timeList = mtiInfo['timeList']
-                rangeList = mtiInfo['rangeList']
-                rangeTimeResType = cfgRangeTime['GENERAL']['rangeTimeResType']
-                maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
-                # in case time steps are not ordered - the colormesh x and y need to be ordered
-                timeIndex = np.argsort(np.array(timeList))
-                timeListNew = np.array(timeList)[timeIndex]
-                mti = mti[:, timeIndex]
-                # fetch velocity legend style info
-                width = cfgRangeTime['PLOTS'].getfloat('width')
-                height = cfgRangeTime['PLOTS'].getfloat('height')
-                lw = cfgRangeTime['PLOTS'].getfloat('lw')
-                textsize = cfgRangeTime['PLOTS'].getfloat('textsize')
+    # ax3 thalweg time diagram
+    ax3, rangeTimeResType = dtAnaPlots.addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax3)
 
-                # plotting
-                pc = ax3.pcolormesh(timeListNew, rangeGates,
-                                      mti, cmap=pU.cmapRangeTime)
-                ax3.plot(timeList, rangeList+sbetaPoint, '.', color='black',
-                            markersize=4, label='avalanche front')
-                ax3.set_xlabel('Time [s]\n\n', fontsize=20)
-                ax3.set_title('Thalweg-Time')
-                # add y label axis
-                mtiInfo['type'] == 'thalwegTime'
-                ax3.set_ylabel('$s_{xy}$ [m]', fontsize=20)
-
-                # add colorbar and infobox
-                unit = pU.cfgPlotUtils['unit' + rangeTimeResType]
-                if mtiInfo['type'] == 'thalwegTime' and cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
-                    avgType = 'max'
-                else:
-                    avgType = 'avg.'
-                cName = '%s ' % avgType + pU.cfgPlotUtils['name' + rangeTimeResType]
-                pU.addColorBar(pc, ax3, None, unit, title=cName)
-                pU.putAvaNameOnPlot(ax3, cfgRangeTime['GENERAL']['avalancheDir'])
-                # add range time velocity legend
-                dtAnaPlots.rangeTimeVelocityLegend(
-                    ax3, maxVel, width, height, lw, textsize)
-
-                # add max velocity location
-                ax3.plot(timeVel, rangeVel+sbetaPoint, 'r*', label='max velocity location')
-
-                # add info on avalanche front in legend
-                ax3.legend(facecolor='grey', framealpha=0.2,
-                              loc='lower right', fontsize=8)
-
-                # if tt-diagram add beta point info
-                #if mtiInfo['type'] == 'thalwegTime':
-                # invert y axis as ava flow starts from minus distance to beta point
-                ax3.invert_yaxis()
-                ax3.axhline(y=0.0, color='gray', linestyle='--', linewidth=1, alpha=0.5)
-                ax3.set_ylim(500)
-                ax3.set_xlim(0,80)
-                ax3.tick_params(axis='both', labelsize=15)
-
-                # title
-                PlotTools.titleFrictParam(Sim, simu_number)
-
-                # save data
-                if Save:
-                    avaDir = pathlib.Path(avalancheDir)
-                    outDir = avaDir / 'Outputs' / modName / 'Plots' / 'Energy line, Peak flow velocity and Thalweg time diagram'
-                    fU.makeADir(outDir)
-                    name = 'EnVelAltTT_'+peakFilesDF['resType'][7*simu_number+k+3]
-                    plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
-                    fig.savefig(plotName)
-                    plotPath = pathlib.Path.cwd() / plotName
-                    print("Plot for "+str(name)+" successfully saved at"+str(plotPath))
-
-                if Show:
-                    plt.show()
+    # save and or plot
+    avaDir = pathlib.Path(avalancheDir)
+    outDir = avaDir / 'Outputs' / modName / 'Plots'/ 'Energy line, Peak flow velocity and Thalweg time diagram'
+    fU.makeADir(outDir)
+    plotName = ('EnVelAltTT_%s' % (simName))
+    plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
+    log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
 
 
 # %% Plot the peak flow quantities with tracked particles and velocities
+def plotPeakQuantTrackedPartVel(avalancheDir, simName, dictVelAltThalweg,
+    dictVelAltThalwegPart, trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo):
+    """ Create plot showing particle properties over time and along avalanche thalweg
+        in light blue envelope for all particles (filled between min and max values)
+        in dark blue the values for tracked particles
 
-def plotPeakQuantTrackedPartVel(avalancheDir, number_ava, Sim, avaDict, dictVelAltThalweg,
-    dictVelAltThalwegPart, trackedPartProp, trackedPartPropAdapted, dictVelEnvelope,
-    Save, Show, modName):
+        panel 1: map view of flow variable peak field
+        panel 2: particle trajectoryLengthXYZ vs time
+        panel 3: particle velocityMagnitude vs time
+        panel 4: particle acceleration vs time
+        panel 5: particle trajectoryLengthXYZ vs thalweg Sxy
+        panel 6: particle velocity vs thalweg Sxy
+        panel 7: particle acceleration vs thalweg Sxy
 
-    for simu_number in range(0, number_ava):
+        Parameters
+        -----------
+        avalancheDir: pathlib path or str
+            path to avalanche directory
+        simName: str
+            name of simulation
+        dictVelAltThalweg: dict
+            dict with velocity and altitude envelope info for all particles
+        dictVelAltThalwegPart: dict
+            dict with velocity and altitude envelope info for tracked particles
+        trackedPartProp: dict
+            dict with time series of tracked particle properties
+        dictVelEnvelope: dict
+            dict with velocity envelope info
+        demSim: dict
+            dict with sim dem info
+        modName: str
+            name of computational module that has been used to produce the sims
+    """
 
-        # Load all infos from the peak files
-        avaDir = pathlib.Path(avalancheDir)
-        inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    # create pathlib path
+    avaDir = pathlib.Path(avalancheDir)
 
-        sim = Sim.index[simu_number]
-        simu_numb = np.where(peakFilesDF.simID == sim)
+    # setup figure with subplots 7 panels
+    fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
+    gs = fig.add_gridspec(3,3)
+    ax1 = fig.add_subplot(gs[0:2, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, 1])
+    ax4 = fig.add_subplot(gs[2, 1])
+    ax5 = fig.add_subplot(gs[0, 2])
+    ax6 = fig.add_subplot(gs[1, 2])
+    ax7 = fig.add_subplot(gs[2, 2])
+    ax8 = fig.add_subplot(gs[2, 0])
 
+    # ax1
+    # add peak file plot
+    ax1, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax1, alpha=0.5)
 
-        #fig, ax = plt.subplots(1, 2, figsize=(pU.figW+10, pU.figH+3))
-        fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
-        gs = fig.add_gridspec(3,3)
-        ax1 = fig.add_subplot(gs[:, 0])
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax3 = fig.add_subplot(gs[1, 1])
-        ax4 = fig.add_subplot(gs[2, 1])
-        ax5 = fig.add_subplot(gs[0, 2])
-        ax6 = fig.add_subplot(gs[1, 2])
-        ax7 = fig.add_subplot(gs[2, 2])
+    # add tracked particles locations over time
+    xllcenter = demSim['header']['xllcenter']
+    yllcenter = demSim['header']['yllcenter']
+    cmap = cm.vik
+    ax1.plot(trackedPartProp['x'][:,0]+xllcenter,trackedPartProp['y'][:,0]+yllcenter, zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
+    # ax1.plot(trackedPartProp['x']+xllcenter,trackedPartProp['y']+yllcenter, '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
+    ax1.plot(trackedPartProp['x']+xllcenter,trackedPartProp['y']+yllcenter, zorder=2, linewidth=1.0, color=cmap(0.25))
 
-        # ax1
-        # Generate data for the simulation peakFile
-        plotDict = PlotTools.PeakFields(
-            avalancheDir, peakFilesDF, simu_numb[0][3], demData='')
-        # choose colormap
-        cmap, col, ticks, norm = pU.makeColorMap(pU.colorMaps[plotDict['resType']], np.amin(
-            plotDict['data']), np.amax(plotDict['data']), continuous=pU.contCmap)
-        cmap.set_bad(alpha=0)
-        # uncomment this to set the under value for discrete cmap transparent
-        cmap.set_under(alpha=0)
-        xllcenter = plotDict['raster']['header']['xllcenter']
-        yllcenter = plotDict['raster']['header']['yllcenter']
-        rowsMinPlot = plotDict['rowsMin']*plotDict['cellSize'] + yllcenter
-        rowsMaxPlot = (plotDict['rowsMax']+1)*plotDict['cellSize'] + yllcenter
-        colsMinPlot = plotDict['colsMin']*plotDict['cellSize'] + xllcenter
-        colsMaxPlot = (plotDict['colsMax']+1)*plotDict['cellSize'] + xllcenter
+    # labels and ticks
+    ax1.set_xlabel('x [m] \n\n', fontsize=22)
+    ax1.set_ylabel('y [m]', fontsize=22)
+    ax1.tick_params(axis='both', labelsize=13)
+    ax1.legend(loc='upper right')
 
-        extent = [0, colsMaxPlot-colsMinPlot, 0, rowsMaxPlot-rowsMinPlot]
+    # ax8
+    ax8, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax8, alpha=0.5)
+    ax8.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
+    # labels and ticks
+    ax8.set_xlabel('x [m] \n\n', fontsize=22)
+    ax8.set_ylabel('y [m]', fontsize=22)
+    ax8.tick_params(axis='both', labelsize=13)
+    ax8.legend(loc='upper right')
 
-        # add DEM hillshade with contour lines
-        ls, CS = pU.addHillShadeContours(
-            ax1, plotDict['demConstrained'], plotDict['cellSize'], extent)
+    # ax2
+    # # plot the trajectoryLengthXYZ vs time
+    ax2.plot(trackedPartProp['t'], trackedPartProp['trajectoryLengthXYZ'], zorder=2, linewidth=1.0, color=cmap(0.25))
+    ax2.plot(trackedPartProp['t'][:], trackedPartProp['trajectoryLengthXYZ'][:,0], zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
+    ax2.fill_between(dictVelEnvelope['Time'], dictVelEnvelope['SxyzMin'],
+                    dictVelEnvelope['SxyzMax'], color=cmap(0.2), alpha=0.2, zorder=0)
+    # labels and ticks
+    ax2.set_xlabel('Time [s] \n\n', fontsize=15)
+    ax2.set_ylabel('$trajectory_{XYZ}$ [m]', fontsize=15)
+    ax2.tick_params(axis='both', labelsize=13)
 
-        # add peak field data
-        import matplotlib.colors as colors
-        im1 = ax1.imshow(plotDict['data'], cmap='Blues',
-                          extent=extent, origin='lower', aspect='equal', norm= colors.Normalize(vmin=-1, vmax=0.1),
-                          zorder=10, alpha=0.15)
-        #pU.addColorBar(im1, ax1, ticks, plotDict['unit'])
+    # ax3
+    # plot velocity Magnitude of particles vs time
+    cmap = cm.vik
+    ax3.plot(trackedPartProp['t'], trackedPartProp['velocityMag'], zorder=2, linewidth=1.0, color=cmap(0.25), alpha=0.5)
+    ax3.fill_between(dictVelEnvelope['Time'], dictVelEnvelope['Min'],
+                    dictVelEnvelope['Max'], color=cmap(0.2), alpha=0.2, zorder=0)
+    # labels and ticks
+    ax3.set_xlabel('Time [s] \n\n', fontsize=15)
+    ax3.set_ylabel('Velocity [m/s]', fontsize=15)
+    ax3.tick_params(axis='both', labelsize=13)
 
-        # add center of mass path
-        cmap = cm.vik  # colormap
+    # ax4
+    # plot acceleration of particles vs time
+    ax4.fill_between(dictVelEnvelope['Time'], np.nanmin(dictVelEnvelope['Acc'], axis=1),
+            np.nanmax(dictVelEnvelope['Acc'], axis=1), color=cmap(0.2), alpha=0.2, zorder=0, label='all particles')
+    ax4.plot(trackedPartProp['t'][:], trackedPartProp['uAcc'][:,0], zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
+    ax4.plot(trackedPartProp['t'], trackedPartProp['uAcc'], zorder=1, linewidth=1.0, color=cmap(0.25))
+    # labels and ticks
+    ax4.set_xlabel('Time [s] \n\n', fontsize=15)
+    ax4.set_ylabel('Acceleration [m/s²]', fontsize=15)
+    ax4.tick_params(axis='both', labelsize=13)
 
-        xParts1 = trackedPartProp[0]['x'][:,0]+xllcenter-colsMinPlot
-        xParts2 = trackedPartProp[0]['x']+xllcenter-colsMinPlot
-        yParts1 = trackedPartProp[0]['y'][:,0]+yllcenter-rowsMinPlot
-        yParts2 = trackedPartProp[0]['y']+yllcenter-rowsMinPlot
+    # add legend
+    ax4.legend(loc='upper left', bbox_to_anchor=(0., -0.3), ncol=4, fancybox=True, shadow=True, fontsize=13)
 
-        #ax[0].plot(rasterTransfo['x']-colsMinPlot, rasterTransfo['y']-rowsMinPlot, '-y.', zorder=20, linewidth=0.3, markersize=2.5, label='Avalanche thalweg')
-        ax1.plot(trackedPartProp[0]['x'][:,0]+xllcenter-colsMinPlot,trackedPartProp[0]['y'][:,0]+yllcenter-rowsMinPlot, color=cmap(0.25), zorder=0, linewidth=1.0, label='tracked particles')
-        ax1.plot(trackedPartProp[0]['x']+xllcenter-colsMinPlot,trackedPartProp[0]['y']+yllcenter-rowsMinPlot, color=cmap(0.25), zorder=20, linewidth=1.0)
-        # labels and ticks
-        ax1.set_xlabel('x [m] \n\n', fontsize=22)
-        ax1.set_ylabel('y [m]', fontsize=22)
-        ax1.tick_params(axis='both', labelsize=13)
-        fig.legend(loc='lower center', ncol=4, fancybox=True, shadow=True, fontsize=13)
+    # ax5
+    # plot travel length along thalweg
+    ax5.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minSxyz'],
+                     dictVelAltThalweg['maxSxyz'], color=cmap(0.2), alpha=0.2, zorder=0)
+    ax5.plot(trackedPartProp['sAimec'], trackedPartProp['trajectoryLengthXYZ'], color=cmap(0.25), zorder=1)
+    # labels and ticks
+    ax5.set_xlabel('$S_{xy}$ (thalweg) [m]', fontsize=15)
+    ax5.set_ylabel('$trajectory_{XYZ}$ [m]', fontsize=15)
+    ax5.tick_params(axis='both', labelsize=13)
 
-        #ax[0].set_xlim(200,300)
-        #ax[0].set_ylim(500,600)
+    # ax6
+    # plot velocity along thalweg
+    l2 = ax6.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minVelocity'],
+                     dictVelAltThalweg['maxVelocity'], color=cmap(0.2), alpha=0.2, zorder=0, label='all particles')
+    ax6.plot(trackedPartProp['sAimec'], trackedPartProp['velocityMag'], color=cmap(0.25), zorder=1)
+    # labels and ticks
+    ax6.set_xlabel('$S_{xy}$ [m]', fontsize=15)
+    ax6.set_ylabel('Velocity [m/s]', fontsize=15)
+    ax6.tick_params(axis='both', labelsize=13)
 
+    # ax7
+    # plot acceleration along the thalweg
+    ax7.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['maxAcc'],
+                     dictVelAltThalweg['minAcc'], color=cmap(0.2), alpha=0.2, zorder=0)
+    ax7.plot(trackedPartProp['sAimec'], trackedPartProp['uAcc'], color=cmap(0.25), zorder=1)  # max
+    # labels and ticks
+    ax7.set_xlabel('$S_{xy}$ [m]', fontsize=15)
+    ax7.set_ylabel('Acceleration [m/s²]', fontsize=15)
+    ax7.tick_params(axis='both', labelsize=13)
 
-        # ax2
-        # plot the travel length
-        cols = len(trackedPartPropAdapted[0][1]['s'])
-        rows = len(dictVelEnvelope['Time'][0])
-        partTravelLength = np.array([[0 for i in range(cols)] for j in range(rows)])
-        for i in range(1,len(dictVelEnvelope['Time'][0])):
-            partTravelLength[i,:] = trackedPartPropAdapted[0][i]['s']
-
-        ax2.plot(trackedPartProp[0]['time'],partTravelLength, zorder=1, linewidth=1.0, color=cmap(0.25))
-        ax2.fill_between(dictVelEnvelope['Time'][0], dictVelEnvelope['SxyzMin'][0],
-                        dictVelEnvelope['SxyzMax'][0], color=cmap(0.2), alpha=0.2, zorder=0)
-
-        # labels and ticks
-        ax2.set_xlabel('Time [s] \n\n', fontsize=15)
-        ax2.set_ylabel('$S_{xyz}$ particles [m]', fontsize=15)
-        ax2.tick_params(axis='both', labelsize=13)
-
-
-        # ax3
-        # plot velocities
-        cmap = cm.vik  # colormap
-        VelMagnitudePart = np.sqrt(trackedPartProp[0]['ux']**2 + trackedPartProp[0]['uy']**2 + trackedPartProp[0]['uz']**2)
-        ax3.plot(trackedPartProp[0]['time'],VelMagnitudePart, zorder=1, linewidth=1.0, color=cmap(0.25))
-        ax3.fill_between(dictVelEnvelope['Time'][0], dictVelEnvelope['Min'][0],
-                        dictVelEnvelope['Max'][0], color=cmap(0.2), alpha=0.2, zorder=0)
-        # labels and ticks
-        ax3.set_xlabel('Time [s] \n\n', fontsize=15)
-        ax3.set_ylabel('Velocity [m/s]', fontsize=15)
-        ax3.tick_params(axis='both', labelsize=13)
-
-        # add legend
-        #fig.legend(loc='lower center', ncol=4, fancybox=True, shadow=True, fontsize=15)
-
-        # ax4
-        # plot acceleration
-        rowsPart = np.shape(VelMagnitudePart)[0]
-        colsPart = np.shape(VelMagnitudePart)[1]
-        rows = np.shape(dictVelEnvelope['Velocity'])[1]
-        cols = np.shape(dictVelEnvelope['Velocity'])[2]
-        AccMagnitudePart = np.array([[0 for i in range(colsPart)] for j in range(rowsPart)])
-        simAcc = np.array([[0 for i in range(cols)] for j in range(rows)])
-        #simMinAcc = np.array([0 for i in range(len(simTime[0]))])
-        #AccMagnitudePart = np.array(AccMagnitudePart)
-        for i in range(len(VelMagnitudePart)-1):
-            AccMagnitudePart[i+1] = (VelMagnitudePart[i+1] - VelMagnitudePart[i]) / (trackedPartProp[0]['time'][i+1] - trackedPartProp[0]['time'][i])
-        for i in range(len(dictVelEnvelope['Time'][0])-1):
-            simAcc[i+1] = (dictVelEnvelope['Velocity'][0][i+1] - dictVelEnvelope['Velocity'][0][i]) / (dictVelEnvelope['Time'][0][i+1] - dictVelEnvelope['Time'][0][i])
-        #accelaration = [0]*np.shape(VelMagnitudePart)
-        #acceleration[j] = AccMagnitudePart[i+1]
-        ax4.plot(trackedPartProp[0]['time'], AccMagnitudePart, zorder=1, linewidth=1.0, color=cmap(0.25))
-        ax4.fill_between(dictVelEnvelope['Time'][0], np.min(simAcc, axis=1),
-                np.max(simAcc, axis=1), color=cmap(0.2), alpha=0.2, zorder=0)
-        # labels and ticks
-        ax4.set_xlabel('Time [s] \n\n', fontsize=15)
-        ax4.set_ylabel('Acceleration [m/s²]', fontsize=15)
-        ax4.tick_params(axis='both', labelsize=13)
-
-
-        # ax5
-        # plot travel length along thalweg
-        sPlot = [0]*len(avaDict[0])
-        sAimecPlot = [0]*len(avaDict[0])
-        for l in range(len(avaDict[0])):
-            sPlot[l] = avaDict[0][l]['s'][:]
-            sAimecPlot[l] = avaDict[0][l]['sAimec'][:]
-        #ax5.plot(sPlot,sAimecPlot, zorder=1, linewidth=1.0, color=cmap(0.25))
-        ax5.fill_between(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['minSxyz'][simu_number],
-                         dictVelAltThalweg['maxSxyz'][simu_number], color=cmap(0.2), alpha=0.2, zorder=0)
-        ax5.plot(dictVelAltThalwegPart['sXYThalweg'][simu_number], dictVelAltThalwegPart['maxSxyz'][simu_number], color=cmap(0.01))  # max
-        ax5.plot(dictVelAltThalwegPart['sXYThalweg'][simu_number], dictVelAltThalwegPart['minSxyz'][simu_number], color=cmap(0.01))  # min
-
-        # labels and ticks
-        ax5.set_xlabel('$S_{xy}$ (thalweg) [m]', fontsize=15)
-        ax5.set_ylabel('$S_{xyz}$ particles [m]', fontsize=15)
-        ax5.tick_params(axis='both', labelsize=13)
+    # save and or plot
+    outDir = avaDir / 'Outputs' / modName / 'Plots'/'Peak flow quantities and Velocity of tracked particles'
+    fU.makeADir(outDir)
+    plotName = ('PfVelTrackedParticles_%s' % (simName))
+    plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
+    log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
 
 
-        # ax6
-        # plot velocity along thalweg
-        ax6.fill_between(dictVelAltThalweg['sXYThalweg'][simu_number], dictVelAltThalweg['minVelocity'][simu_number],
-                         dictVelAltThalweg['maxVelocity'][simu_number], color=cmap(0.2), alpha=0.2, zorder=0)
-        ax6.plot(dictVelAltThalwegPart['sXYThalweg'][simu_number], dictVelAltThalwegPart['maxVelocity'][simu_number], color=cmap(0.01))  # max
-        ax6.plot(dictVelAltThalwegPart['sXYThalweg'][simu_number], dictVelAltThalwegPart['minVelocity'][simu_number], color=cmap(0.01))  # min
-        # labels and ticks
-        ax6.set_xlabel('$S_{xy}$ [m]', fontsize=15)
-        ax6.set_ylabel('Velocity [m/s]', fontsize=15)
-        ax6.tick_params(axis='both', labelsize=13)
+def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alpha):
 
-        # ax7
-        # plot acceleration along the thalweg
-        # labels and ticks
-        ax7.set_xlabel('$S_{xy}$ [m]', fontsize=15)
-        ax7.set_ylabel('Acceleration [m/s²]', fontsize=15)
-        ax7.tick_params(axis='both', labelsize=13)
+    demField = np.where(
+        demData["rasterData"] == demData["header"]["noDataValue"], np.nan, demData["rasterData"]
+    )
 
+    # set input dir
+    inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
 
-        # title
-        PlotTools.titleFrictParam(Sim, simu_number)
+    # fetch all sims in inputDir with info on result files
+    simResDF, resTypeList = fU.makeSimFromResDF(avaDir, modName, inputDir=inputDir)
 
-        # saving the plot
-        if Save:
-            outDir = avaDir / 'Outputs' / modName / 'Plots'/'Peak flow quantities and Velocity of tracked particles'
-            fU.makeADir(outDir)
-            name = 'PfVelTrackedParticles_'+'_'+avaDict[simu_number][0]['simName']
-            plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
-            fig.savefig(plotName)
-            plotPath = pathlib.Path.cwd() / plotName
-            print("Plot for "+str(name)+" successfully saved at"+str(plotPath))
+    # find peakFile for resType
+    peakFilePath = simResDF[resType].loc[simResDF['simName']==simName].values[0]
 
-        if Show:
-            plt.show()
+    # fetch cell size
+    cellSize = simResDF['cellSize'].loc[simResDF['simName']==simName].values[0]
+
+    ax = oP.addConstrainedDataField(peakFilePath, resType, demField, ax, cellSize, alpha=alpha,
+        setLimits=True)
+    return ax
