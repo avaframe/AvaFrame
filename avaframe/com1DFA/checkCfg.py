@@ -118,6 +118,6 @@ def checkCfgFrictionModel(cfg):
         else:
             if frictP in cfg['GENERAL']:
                 cfg['GENERAL'][frictP] = np.nan
-                log.info('Friction model parameter not used: %s set to nan' % frictP)
+                log.debug('Friction model parameter not used: %s set to nan' % frictP)
 
     return cfg

@@ -510,6 +510,9 @@ avalanche flow stop already at steeper slopes :math:`\alpha`, than
 without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`).
 
+The default configuration also provides two additional calibrations for small-
+(< 25.000 :math:`m^3` release volume) and medium-sized (< 60.000 :math:`m^3` release volume)
+avalanches. A further constraint is the altitude of runout below 1500m msl for both.
 
 Wet snow friction type
 """"""""""""""""""""""""
