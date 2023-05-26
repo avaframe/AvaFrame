@@ -14,6 +14,14 @@ entrainment and/or resistance areas, and is controlled via a configuration file.
 The configration can be modified in order to change any of the default settings and also allows
 to perform simulations for varying parameters all at once.
 
+.. Note::
+   The configuration provided with com1DFA is well-tested and applied for
+   hazard mapping (in Austria). If you change configuration parameters, be aware that
+   unwanted/unexpected/spurious side-effects might appear. This is especially
+   true if you switch to something far outside the intended range (i.e.
+   changing density from snow to something like rock). Furthermore, be aware
+   that the parameters are calibrated in connection, so
+   changing one might necessitate also changing other connected parameters!
 
 Input
 ---------
