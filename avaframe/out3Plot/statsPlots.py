@@ -161,7 +161,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir,
     outDir = cfg['outDir']
     plotName = 'Scatterkde_%s_vs_%s_dist%s_%s' % (resType1, resType2, cfg['distType'], cfg['scenario'])
     # save and or show figure
-    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName, fig1)
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, plotName, fig1.figure)
 
 
 def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
