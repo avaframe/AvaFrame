@@ -8,14 +8,15 @@ probAna
 ==========================
 
 probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
-These maps show for each point in space the probability for a chosen parameter to exceed a given threshold.
-For example, it is possible to compute the probability map of an avalanche to exceed a
-peak pressure of 1kPa, but it is also possible to chose other result variables and threshold values.
+These maps show for each point in space the fraction of simulations where a chosen parameter has exceeded a given threshold.
+For example, it is possible to compute the probability map for an avalanche with respect to a
+peak pressure threshold of 1kPa, but it is also possible to chose other result variables and threshold values.
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with :py:mod:`com1DFA`
 using a parameter variation, different release-, entrainment- or resistance scenarios.
-:py:mod:`runScripts.runProbAna` gives an example: avalanche simulations for the hockey topography
-are performed with varying release thickness. A probability map based on peak pressure is generated.
+An example run script is given by :py:mod:`runAna4ProbAna`: where firstly, :py:mod:`com1DFA` is used to
+perform avalanche simulations varying parameters set in the ``ana4Stats/probAnaCfg.ini`` file.
+Using these simulations, a probability map is generated.
 The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
 in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
 Details on this function, as for example required inputs can be found in: :py:mod:`ana4Stats.probAna`.
@@ -23,7 +24,31 @@ Details on this function, as for example required inputs can be found in: :py:mo
 
 To run - example run scripts
 ----------------------------
-An example on how to generate probability maps for avalanche simulations performed with :py:mod:`com1DFA`
+In :py:mod:`runProbAnaCom1DFA.py`, avalanche simulations are performed with the settings defined in the configuration file of
+:py:mod:`com1DFA` and in addition a parameter variation is performed according to the parameters
+set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN.
+The parameters to be varied are set in **varParList**, the type of variation in **variationType**
+(options are: percent, range, rangefromci) and the value of the variation in **variationValue**.
+Then there are two sampling strategies to choose from, for performing the parameter variation:
+(1) a latin hypercube sample of all the parameters to be varied (provided in varParList)
+is generated and simulations are performed using sets of parameters drawn from this sample.
+Using sampling strategy (2) all the parameters set in *PROBRUN* are varied on at a time, i.e.
+simulations are performed for the standard settings of all parameters,
+except the one parameter to be varied, subsequently the other variations are performed.
+One probability map is created for all the different simulations and in case of sampling strategy (2),
+also one map per parameter that is varied once at a time, is created in addition.
+In order to run this example:
+
+* first go to ``AvaFrame/avaframe``
+* copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalancheDir
+* copy ``ana4Stats/probAnaCfg.ini`` to ``ana4Stats/local_probAnaCfg.ini`` and optionally adjust variation settings
+* uncomment ``'FILTER'`` section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
+* run::
+
+      python3 runAna4ProbAna.py
+
+
+Another example on how to generate probability maps for avalanche simulations performed with :py:mod:`com1DFA`
 is given in :py:mod:`runScripts.runProbAna`, where for *avaHockeyChannel* simulations are performed with
 varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
 The resulting simulations are then used to generate the probability map with :py:func:`out3Plot.statsPlots.plotProbMap`. There is also the option
@@ -45,20 +70,6 @@ In order to run this example:
 
     Probability map example.
 
-Another example is given in :py:mod:`runScripts.runProbAnaCom1DFA.py`.
-Avalanche simulations are performed with the settings defined in the configuration file of
-:py:mod:`com1DFA` and in addition a parameter variation is performed according to the parameters
-set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN.
-The parameters to be varied are set in **varParList**, the type of variation in **variationType**
-(options are: percent, range, rangefromci) and the value of the variation in **variationValue**.
-Then there are two sampling strategies to choose from, for performing the parameter variation:
-(1) a latin hypercube sample of all the parameters to be varied (provided in varParList)
-is generated and simulations are performed using sets of parameters drawn from this sample.
-Using sampling strategy (2) all the parameters set in *PROBRUN* are varied on at a time, i.e.
-simulations are performed for the standard settings of all parameters,
-except the one parameter to be varied, subsequently the other variations are performed.
-One probability map is created for all the different simulations and in case of sampling strategy (2),
-also one map per parameter that is varied once at a time, is created in addition.
 
 .. _Theory:
 

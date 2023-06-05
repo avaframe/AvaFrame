@@ -35,14 +35,16 @@ cfgMain = cfgUtils.getGeneralConfig()
 flagShow = cfgMain['FLAGS'].getboolean('showPlot')
 
 avaDir = 'data/avaHockeyChannel'
+cfgMain['MAIN']['avalancheDir'] = avaDir
 cfgStats = cfgUtils.getModuleConfig(getStats)
 cfg = cfgStats['GENERAL']
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
 # set output directory, first ava in list
-outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
-cfgStats['GENERAL']['outDir'] = outDir
+avaDir = pathlib.Path(avaDir)
+outDir = avaDir / 'Outputs' / 'ana4Stats'
+cfgStats['GENERAL']['outDir'] = str(outDir)
 # Specify where you want the results to be stored
 fU.makeADir(outDir)
 
@@ -50,18 +52,19 @@ fU.makeADir(outDir)
 log = logUtils.initiateLogger(outDir, logName)
 
 # --- run Com1DFA -----
-avaName = os.path.basename(avaDir)
+avaName = avaDir.name
 avaNameTest = avaName + 'StatsTest'
-statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_com1DFACfg.ini' % (avaName))
+statsSimCfg = pathlib.Path('..', 'benchmarks', avaNameTest, '%sStats_com1DFACfg.ini' % (avaName))
 
-# Run Standalone DFA
-dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgFile=statsSimCfg)
+# perform com1DFA simulations
+outDir = pathlib.Path(avaDir, 'Outputs')
+dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=statsSimCfg)
 
 if cfg.getboolean('aimec'):
 
     initProj.cleanModuleFiles(avaDir, ana3AIMEC)
     # run aimec
-    statsAimecCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_ana3AIMECCfg.ini' % (avaName))
+    statsAimecCfg = pathlib.Path('..', 'benchmarks', avaNameTest, '%sStats_ana3AIMECCfg.ini' % (avaName))
     cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC, statsAimecCfg)
     cfgAimecSetup = cfgAIMEC['AIMECSETUP']
 
@@ -82,7 +85,7 @@ if cfg.getboolean('aimec'):
 
 # ----- determine max values of peak fields
 # set directory of peak files
-inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
+inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
 
 # provide optional filter criteria for simulations
 parametersDict = fU.getFilterDict(cfgStats, 'FILTER')

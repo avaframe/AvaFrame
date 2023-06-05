@@ -160,7 +160,7 @@ def getInputData(avaDir, cfg):
 
 def getInputDataCom1DFA(avaDir):
     """ Fetch input datasets required for simulation, duplicated function because
-    now fetch all available files simulation type set differently in com1DFA compared 
+    now fetch all available files simulation type set differently in com1DFA compared
     to com1DFAOrig: TODO: remove duplicate once it is not required anymore
 
     Parameters
@@ -382,10 +382,11 @@ def updateThicknessCfg(inputSimFiles, avaDir, modName, cfgInitial):
     if cfgInitial['INPUT']['releaseScenario'] == '':
         cfgInitial['INPUT']['releaseScenario'] = releaseScenarioName
     else:
-        if cfgInitial['INPUT']['releaseScenario'] not in releaseScenarioList:
-            message = ('Chosen release scenario: %s not available' % cfgInitial['INPUT']['releaseScenario'])
-            log.error(message)
-            raise FileNotFoundError(message)
+        for relIniFileName in cfgInitial['INPUT']['releaseScenario'].split('|'):
+            if relIniFileName not in releaseScenarioList:
+                message = ('Chosen release scenario: %s not available' % relIniFileName)
+                log.error(message)
+                raise FileNotFoundError(message)
         else:
             log.info('Chosen release scenarios: %s' % cfgInitial['INPUT']['releaseScenario'])
 

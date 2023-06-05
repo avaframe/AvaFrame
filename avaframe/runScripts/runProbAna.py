@@ -10,7 +10,7 @@ import pathlib
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.out3Plot import statsPlots as sP
-from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.out3Plot import outQuickPlot as oP
 from avaframe.ana4Stats import probAna
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
@@ -34,27 +34,65 @@ for avaDir in avalancheDirectories:
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avaDir)
+    cfgMain['MAIN']['avalancheDir'] = avaDir
 
     # Load input parameters from configuration file
     # write config to log file
     avaDir = pathlib.Path(avaDir)
     avaName = avaDir.name
     probSimCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_com1DFACfg.ini' % avaName)
+    probAnaCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_probAnaCfg.ini' % avaName)
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
-    # Run Standalone DFA
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=probSimCfg)
+    # Load configuration file for probabilistic run and analysis
+    cfgProb = cfgUtils.getModuleConfig(probAna, probAnaCfg)
 
-    # Load input parameters from configuration file
-    cfgProb = cfgUtils.getModuleConfig(probAna)
+    # create configuration files for com1DFA simulations including parameter
+    # variation - defined in the probabilistic config
+    # prob4AnaCfg.ini or its local copy
+    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=probSimCfg)
 
-    # provide optional filter criteria for simulations
-    parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
+    # perform com1DFA simulations
+    outDir = pathlib.Path(avaDir, 'Outputs')
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
 
-    # perform probability analysis
-    probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
+    # check if sampling strategy is from full sample - then only one configuration is possible
+    probabilityConfigurations = probAna.fetchProbConfigs(cfgProb['PROBRUN'])
 
-    # make a plot of the map
-    inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
-    sP.plotProbMap(avaDir, inputDir, cfgProb)
+    # perform pobability analysis
+    for probConf in probabilityConfigurations:
+
+        # filter simulations according to probability configurations
+        cfgProb['FILTER'] = probabilityConfigurations[probConf]
+        log.info('Perform proba analysis for configuration: %s' % probConf)
+        # provide optional filter criteria for simulations
+        parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
+
+        # perform probability analysis
+        anaPerformed, contourDict = probAna.probAnalysis(avaDir,
+                                                         cfgProb,
+                                                         com1DFA,
+                                                         parametersDict=parametersDict,
+                                                         probConf=probConf
+                                                         )
+        if anaPerformed is False:
+            log.warning('No files found for configuration: %s' % probConf)
+
+
+        # make a plot of the contours
+        inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
+        outName = '%s_prob_%s_%s_lim%s' % (str(avaDir.stem),
+                                           probConf,
+                                           cfgProb['GENERAL']['peakVar'],
+                                           cfgProb['GENERAL']['peakLim'])
+        pathDict = {'pathResult': str(inputDir / 'plots'),
+                    'avaDir': str(avaDir),
+                    'plotScenario': outName
+                    }
+        oP.plotContours(contourDict,
+                        cfgProb['GENERAL']['peakVar'],
+                        cfgProb['GENERAL']['peakLim'], pathDict)
+
+    # plot probability maps
+    sP.plotProbMap(avaDir, inputDir, cfgProb, demPlot=True)
