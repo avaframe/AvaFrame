@@ -38,7 +38,7 @@ def runProbAna(avalancheDir=''):
     # Load general configuration filee
     cfgMain = cfgUtils.getGeneralConfig()
 
-    # Load avalanche directory from general configuration file, 
+    # Load avalanche directory from general configuration file,
     # if not provided as input argument
     cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
@@ -54,7 +54,7 @@ def runProbAna(avalancheDir=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
