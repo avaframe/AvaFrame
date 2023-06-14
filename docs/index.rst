@@ -50,7 +50,7 @@ Computational modules
     * :doc:`moduleCom1DFAOrig`
     * :doc:`moduleCom2AB`
     * :doc:`moduleCom3Hybrid`
-    * :doc:`moduleCom5GlideSnow`
+    * :doc:`moduleCom5SnowSlide`
 
 .. toctree::
    :maxdepth: 3
@@ -61,7 +61,7 @@ Computational modules
    moduleCom1DFAOrig.rst
    moduleCom2AB.rst
    moduleCom3Hybrid.rst
-   moduleCom5GlideSnow.rst
+   moduleCom5SnowSlide.rst
 
 Input/transformation modules
 ============================
