@@ -1,8 +1,8 @@
-com5GlideSnow: Glide snow 
+com5SnowSlide: Snow slide
 =========================
 
-The com5GlideSnow computational module provides the option to add an elastic cohesion force between particles  
-based on com1DFA. This can be used for example to simulate small glide snow avalanches. 
+The com5SnowSlide computational module provides the option to add an elastic cohesion force between particles  
+based on com1DFA. This can be used for example to simulate small snow slides. 
 
 The cohesion between particles is modeled using elastic bonds with maximum strain rate.
 This means that the cohesion force :math:`\mathbf{F}_{lk}` exerted by :math:`l` on :math:`k` is expressed by:
@@ -40,11 +40,11 @@ Input
 
 The standard inputs required to perform a simulation run using :py:mod:`com1DFA` 
 can be found here: :ref:`moduleCom1DFA:Input`.
-There is a run script to perform a glide snow com1DFA run: :py:mod:`runCom5GlideSnow.py`,
-and the configuration settings can be found in ``com5GlideSnow/com5GlideSnowCfg.ini``.
-The glide snow tool-specific parameters are:
+There is a run script to perform a snow slide com1DFA run: :py:mod:`runCom5SnowSlide.py`,
+and the configuration settings can be found in ``com5SnowSlide/com5SnowSlideCfg.ini``.
+The snow slide-specific parameters are:
 
-  * glideSnow is activated by setting ``glideSnow`` to 1
+  * snowSlide is activated by setting ``snowSlide`` to 1
 
   * the maximum strain before breaking of the bond ``cohesionMaxStrain``
 
@@ -52,12 +52,26 @@ The glide snow tool-specific parameters are:
 
 However, also several other parameters, for example the particle initialization method,
 friction model and parameters, are changed compared to the default configuration of :py:mod:`com1DFA` and listed
-in the ``com5GlideSnow/com5GlideSnowCfg.ini`` in the com1DFA_override section.
+in the ``com5SnowSlide/com5SnowSlideCfg.ini`` in the com1DFA_override section.
+
+Please note that the provided default setup for snow slide calculation is defined with the following 
+premises:
+
+  * slope gradient in the release area from approx. 28° to approx. 50°.
+
+  * a return level for hazard mapping of 150-yr of snow depth as the initial value.
+
+  * movement as an intact unit without turbulence
+    
+  * height difference from approx. 30 m to max. 60-80 m
+
+  * valid for altitude levels > 500 m and < 1,500 m sea level
+
 
 Initialization of bonds
 -------------------------
 
-If the elastic cohesion (``glideSnow`` set to 1) is activated, the bonds between particles are initialized.
+If the elastic cohesion (``snowSlide`` set to 1) is activated, the bonds between particles are initialized.
 The construction of the bonds is done by building a triangular mesh on the particles
 (used as a point cloud) and the Delaunay `triangulation function <https://matplotlib.org/stable/api/tri_api.html#matplotlib-tri>`_
 from matplotlib.
@@ -74,10 +88,10 @@ To run
 * first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
-* copy ``com5GlideSnow/com5GlideSnowCfg.ini`` to ``com5GlideSnow/local_com5GlideSnowCfg.ini`` and if desired change configuration settings
+* copy ``com5SnowSlide/com5SnowSlideCfg.ini`` to ``com5SnowSlide/local_com5SnowSlideCfg.ini`` and if desired change configuration settings
 * if you are on a develop installation, make sure you have an updated compilation, see
   :ref:`installation:Setup AvaFrame`
 * run:
   ::
 
-    python3 runCom5GlideSnow.py
+    python3 runCom5SnowSlide.py

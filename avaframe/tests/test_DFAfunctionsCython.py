@@ -187,7 +187,7 @@ def test_updatePositionC():
                       'uFlowingThreshold': '0.1', 'gravAcc': '9.81', 'velMagMin': '1.e-6',  'rho': '100.',
                       'interpOption': '2',   'explicitFriction': '0', 'centeredPosition': '1',
                       'reprojMethodPosition': '2', 'reprojectionIterations': '5', 'thresholdProjection': '0.001',
-                      'dissDam': '1', 'glideSnow': '1', 'wetSnow': '1'}
+                      'dissDam': '1', 'snowSlide': '1', 'wetSnow': '1'}
 
     particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'trajectoryLengthXY': np.asarray([0., 0., 0.]),
                   'trajectoryLengthXYCor': np.asarray([0., 0., 0.]), 'trajectoryLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),

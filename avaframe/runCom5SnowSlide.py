@@ -1,5 +1,5 @@
 """
-Run the glide snow tool of com1DFA
+Run the snow slide tool of com1DFA
 """
 
 import pathlib
@@ -15,11 +15,11 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 
 # import computation modules
-from avaframe.com5GlideSnow import com5GlideSnow
+from avaframe.com5SnowSlide import com5SnowSlide
 
 
-def runGlideSnow(avalancheDir=''):
-    """ Run com1DFA with glide snow parameters with only an
+def runSnowSlide(avalancheDir=''):
+    """ Run com1DFA with snow slide parameters with only an
     avalanche directory as input
 
     Parameters
@@ -36,7 +36,7 @@ def runGlideSnow(avalancheDir=''):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = 'runCom5GlideSnow'
+    logName = 'runCom5SnowSlide'
 
     # Load avalanche directory from general configuration file
     # More information about the configuration can be found here
@@ -56,11 +56,11 @@ def runGlideSnow(avalancheDir=''):
     # Clean input directory(ies) of old work files
     initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
-    # load glide snow tool config
-    glideSnowCfg = cfgUtils.getModuleConfig(com5GlideSnow)
+    # load snow slide tool config
+    snowSlideCfg = cfgUtils.getModuleConfig(com5SnowSlide)
 
-    # perform com1DFA simulation with glide snow settings
-    _, plotDict, reportDictList, _ = com5GlideSnow.runGlideSnow(cfgMain, glideSnowCfg)
+    # perform com1DFA simulation with snow slide settings
+    _, plotDict, reportDictList, _ = com5SnowSlide.runSnowSlide(cfgMain, snowSlideCfg)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
@@ -87,9 +87,9 @@ def runGlideSnow(avalancheDir=''):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Run glide snow workflow')
+    parser = argparse.ArgumentParser(description='Run snow slide workflow')
     parser.add_argument('avadir', metavar='avadir', type=str, nargs='+',
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    runGlideSnow(str(args.avadir[0]))
+    runSnowSlide(str(args.avadir[0]))

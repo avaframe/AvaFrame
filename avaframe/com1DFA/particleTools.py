@@ -194,7 +194,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg, r
     return xPart, yPart, mPart, n, aPart
 
 
-def removePart(particles, mask, nRemove, reasonString='', glideSnow=0):
+def removePart(particles, mask, nRemove, reasonString='', snowSlide=0):
     """ remove given particles
 
     Parameters
@@ -216,8 +216,8 @@ def removePart(particles, mask, nRemove, reasonString='', glideSnow=0):
     if reasonString != '':
         log.debug('removed %s particles %s' % (nRemove, reasonString))
     nPart = particles['nPart']
-    if glideSnow == 1:
-        # if glideSnow is activated, we need to remove the particles as well as the bonds accordingly
+    if snowSlide == 1:
+        # if snowSlide is activated, we need to remove the particles as well as the bonds accordingly
         # we do this first befor nPart changes
         nBondRemove = DFAfunC.countRemovedBonds(particles, mask, nRemove)
         particles = DFAfunC.removedBonds(particles, mask, nRemove, nBondRemove)

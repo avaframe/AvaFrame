@@ -1234,7 +1234,7 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
 
 def initializeFields(cfg, dem, particles, releaseLine):
-    """Initialize fields and update particles flow thickness. Eventually build bond array if glideSnow is activated
+    """Initialize fields and update particles flow thickness. Eventually build bond array if snowSlide is activated
 
     Parameters
     ----------
@@ -1305,8 +1305,8 @@ def initializeFields(cfg, dem, particles, releaseLine):
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
 
-    if cfgGen.getint('glideSnow') == 1:
-        # Initialize the bonds between particles if the glideSnow is activated
+    if cfgGen.getint('snowSlide') == 1:
+        # Initialize the bonds between particles if the snowSlide is activated
         # get particles
         x = particles['x']
         y = particles['y']
@@ -1342,7 +1342,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
         particles = DFAfunC.initializeBondsC(particles, triangles)
         # debugg plot
         if debugPlot:
-            debPlot.plotBondsGlideSnowFinal(cfg, particles, dem)
+            debPlot.plotBondsSnowSlideFinal(cfg, particles, dem)
     return particles, fields
 
 
@@ -1662,7 +1662,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
 
             # debugg plot
             if debugPlot:
-                debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
+                debPlot.plotBondsSnowSlideFinal(cfg, particles, dem, inputSimLines)
 
         # derive time step
         if cfgGen.getboolean('sphKernelRadiusTimeStepping'):
@@ -1697,7 +1697,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
     # debugg plot
     if debugPlot:
-        debPlot.plotBondsGlideSnowFinal(cfg, particles, dem, inputSimLines)
+        debPlot.plotBondsSnowSlideFinal(cfg, particles, dem, inputSimLines)
 
     # create infoDict for report and mass log file
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'tCPU': tCPU,
@@ -1930,8 +1930,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPUForceSPH = time.time() - startTime
     tCPU['timeForceSPH'] = tCPU['timeForceSPH'] + tCPUForceSPH
 
-    # add bonding force if required (if glideSnow is activated)
-    if cfg.getint('glideSnow') == 1:
+    # add bonding force if required (if snowSlide is activated)
+    if cfg.getint('snowSlide') == 1:
         force, particles = DFAfunC.computeCohesionForceC(cfg, particles, force)
 
     # update velocity and particle position

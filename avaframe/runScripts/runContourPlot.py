@@ -1,23 +1,15 @@
 """
-Run the glide snow tool of com1DFA
+Run the contour plots of com1DFA
 """
 
 import pathlib
-import matplotlib.pyplot as plt
 
 # Local imports
 # import config and init tools
 from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
-from avaframe.in3Utils import geoTrans as gT
-import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in2Trans import shpConversion as shpConv
-from avaframe.in2Trans import ascUtils as iOf
 from avaframe.out3Plot import outContours as oC
-from avaframe.out3Plot import plotUtils as pU
 # import computation modules
-from avaframe.com1DFA import com1DFA
-from avaframe.com1DFA import glideSnow
 
 # +++++++++REQUIRED+++++++++++++
 # log file name; leave empty to use default runLog.log

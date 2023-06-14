@@ -133,7 +133,7 @@ There are then different ways to place the particles in the cells. This is decid
       significant differences in the mass of the particles. The same comment applies if multiple release features are used.
       Finally, this method only works for constant release thickness.
 
-      .. Note:: This initialization option is meant to be used when the glide snow option is activated
+      .. Note:: This initialization option is meant to be used when the snow slide option is activated
                 (``cohesion`` activated).
                 The behavior in the standard case (``cohesion`` deactivated) has not been tested.
 
