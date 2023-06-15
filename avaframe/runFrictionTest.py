@@ -29,6 +29,7 @@ from avaframe.com1DFA import com1DFA
 import avaframe.in1Data.getInput as gI
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 
 
 ###############################################################################################################################################################################################################################################################################################################################################################################
@@ -150,12 +151,20 @@ for i, simIndex in enumerate(SimDF.index):
         pfvMinThreshold=pfvMinThreshold, pftMinThreshold=pftMinThreshold,
         pprMinThreshold=pprMinThreshold)
 
+    # create mtiInfo dicts for tt-diagram
+    cfgRangeTime = cfgUtils.getModuleConfig(dtAna)
+    cfgRangeTime['GENERAL']['avalancheDir'] = avalancheDir
+    cfgRangeTime, mtiInfo = dtAna.createThalwegTimeInfoFromSimResults(avalancheDir,
+        cfgRangeTime, 'com1DFA', simIndex, SimDF, demSim)
+
+
+    # PLOTTING
     # %% Plotting peak flow quantities and the velocity thalweg diagram
     PlotFunctions.plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, SimDF, rasterTransfo,
-        dictVelAltThalweg, resTypePlots, anaMod, demData=demSim)
+        dictVelAltThalweg, resTypePlots, anaMod, demSim)
 
     PlotFunctions.plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, SimDF,
-        rasterTransfo, dictRaster, modName, demSim)
+        rasterTransfo, dictRaster, modName, demSim, mtiInfo, cfgRangeTime)
 
     PlotFunctions.plotPeakQuantTrackedPartVel(avalancheDir, simName, dictVelAltThalweg,
         dictVelAltThalwegPart, trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo)

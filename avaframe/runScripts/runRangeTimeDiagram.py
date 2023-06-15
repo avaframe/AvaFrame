@@ -70,8 +70,6 @@ if preProcessedData:
             # create plot
             dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
 else:
-    # fetch dem data
-    demInputs = gI.readDEM(avalancheDir)
 
     # fetch all flow parameter result fields
     configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
@@ -85,16 +83,13 @@ else:
 
         log.info('Perform range-time diagram for simulation: %s' % index)
 
+        # fetch simulation dem
+        # get dem dictionary - already read DEM with correct mesh cell size
+        dem = gI.initializeDEM(avalancheDir, demPath=simDF['DEM'].loc[index])
+        dem['originalHeader'] = dem['header'].copy()
+
         # add simHash info
         cfgRangeTime['GENERAL']['simHash'] = index
-
-        # check if DEM in Inputs has been used, if not lead simulation DEM
-        if 'DEMremeshed' in simDFrow['DEM']:
-            # get dem dictionary - already read DEM with correct mesh cell size
-            dem = gI.initializeDEM(simDFrow['avalancheDir'], simDFrow['DEM'])
-            log.info('Remeshed DEM read from: %s/%s' % (simDFrow['avalancheDir'], simDFrow['DEM']))
-        else:
-            dem = demInputs.copy()
 
         # setup required data
         mtiInfo = dtAna.setupRangeTimeDiagram(dem, cfgRangeTime)

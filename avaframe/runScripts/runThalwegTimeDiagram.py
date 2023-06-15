@@ -70,8 +70,6 @@ if preProcessedData:
             dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)
 
 else:
-    # fetch dem data
-    demInputs = gI.readDEM(avalancheDir)
 
     # fetch all flow parameter result fields
     configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
@@ -81,47 +79,18 @@ else:
 
     # fetch info on available simulations
     simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
-    for index, simDFrow in simDF.iterrows():
 
-        log.info('Perform range-time diagram for simulation: %s' % index)
+    # loop over all sims found in simDF
+    for index in simDF.index:
 
-        # add simHash info
-        cfgRangeTime['GENERAL']['simHash'] = index
-
-        # check if DEM in Inputs has been used, if not lead simulation DEM
-        if 'DEMremeshed' in simDFrow['DEM']:
-            # get dem dictionary - already read DEM with correct mesh cell size
-            dem = gI.initializeDEM(simDFrow['avalancheDir'], simDFrow['DEM'])
-            log.info('Remeshed DEM read from: %s/%s' % (simDFrow['avalancheDir'], simDFrow['DEM']))
-        else:
-            dem = demInputs.copy()
+        # fetch simulation dem
+        # get dem dictionary - already read DEM with correct mesh cell size
+        dem = gI.initializeDEM(avalancheDir, demPath=simDF['DEM'].loc[index])
         dem['originalHeader'] = dem['header'].copy()
 
-        # setup required data
-        mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
-        mtiInfo['plotTitle'] = 'thalweg-time diagram %s' % index
-        mtiInfo['textbox'] = 'beta point: %.2f, %.2f' % (mtiInfo['betaPoint'][0],
-                                                         mtiInfo['betaPoint'][1])
-
-        # fetch all flow parameter result fields
-        flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
-        simNameSuffix = simDFrow['simName'] + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
-        flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
-
-        if len(flowFields) == 0:
-            fU.fileNotFoundMessage(('No flow variable results found in %s - consider first running avalanche simulations' %
-                                    flowFieldsDir))
-
-        for flowField in flowFields:
-
-            # read flow field data
-            flowFieldDict = IOf.readRaster(flowField)
-            flowF = flowFieldDict['rasterData']
-
-            # extract avalanche front distance to radar and average values of range gates for mti plot
-            mtiInfo = dtAna.extractFrontAndMeanValuesTT(cfgRangeTime, flowF, dem['header'], mtiInfo)
-            timeStep, _ = dtAna.fetchTimeStepFromName(flowField)
-            mtiInfo['timeList'].append(timeStep[0])
+        # create mtiInfo dict
+        cfgRangeTime, mtiInfo = dtAna.createThalwegTimeInfoFromSimResults(avalancheDir,
+            cfgRangeTime, 'com1DFA', index, simDF, dem)
 
         # create plot
         dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime)

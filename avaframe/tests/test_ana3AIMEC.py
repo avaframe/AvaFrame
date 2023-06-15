@@ -263,7 +263,7 @@ def test_mainAIMEC(tmp_path):
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
 
-    rasterTransfo, inputsDF, plotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+    rasterTransfo, inputsDF, plotDict, newRasters = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
 
     assert rasterTransfo['gridx'][-1, 0] == 60
     assert rasterTransfo['gridx'][-1, -1] == 220
@@ -293,7 +293,7 @@ def test_aimecTransform():
     particle['y'] = [0.6, 5.0]
 
     # run aimecTransform and test the output
-    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem['header'])
     assert particle['lAimec'] == [-2,2]
     assert particle['sAimec'] == [0,7]
 
@@ -328,6 +328,6 @@ def test_aimecTransform():
     particle['y'] = np.linspace(0, 50, 100)
 
     # run aimecTransform and test the output
-    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem)
+    particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem['header'])
     assert particle['lAimec'] != []
     assert particle['sAimec'] != []

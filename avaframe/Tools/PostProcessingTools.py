@@ -6,12 +6,13 @@ Created on Mon Wed 12 2022
 
 Tools to extract information on the avalanche simulations run in the Output files
 
+modified by AvaFrame
+
 """
 # Python imports
 import numpy as np
 import statistics as stat
 import pathlib
-from matplotlib import pyplot as plt
 
 # Local imports
 from avaframe.com1DFA import com1DFA
@@ -19,27 +20,6 @@ from avaframe.in3Utils import cfgUtils
 import avaframe.in1Data.getInput as gI
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.Tools import PlotTools
-
-
-#%% function to generate the tracked particles dictionary
-
-def trackedParticlesDictionary(cfg, particlesList, dem):
-
-    # Load avalanche directory from general configuration file
-    cfgMain = cfgUtils.getGeneralConfig()
-    avalancheDir = cfgMain['MAIN']['avalancheDir']
-
-    # fetch dem data
-    dem = gI.readDEM(avalancheDir)
-    dem['originalHeader'] = {}
-    dem['originalHeader']['xllcenter'] = dem['header']['xllcenter']
-    dem['originalHeader']['yllcenter'] = dem['header']['yllcenter']
-
-    # fetch tracked particles
-    cfgTrackPart = cfg['TRACKPARTICLES']
-    particlesList, trackedPartProp, track = com1DFA.trackParticles(cfgTrackPart, dem, particlesList)
-
-    return trackedPartProp
 
 
 def reshapeParticlesDicts(particlesList, propertyList):
@@ -123,8 +103,21 @@ def velocityEnvelope(particlesTimeArrays):
 
 
 #%% function to generate the velocity envelope along the thalweg from simulated flows
-
 def velocityEnvelopeThalweg(particlesTimeArrays):
+    """ function to generate the velocity envelope along the thalweg from simulated flows
+
+        Parameters
+        -----------
+        particlesTimeArrays: dict
+            dict with time series of particle properties
+
+        Returns
+        --------
+        dictVelAltThalweg: dict
+            dict with min, max, mean, ... values of particles elevation, velocity and acceleration
+            for each thalweg coordinate
+
+    """
 
     time = particlesTimeArrays['t']
     sBetaPoint = particlesTimeArrays['sBetaPoint']
@@ -193,9 +186,9 @@ def velocityEnvelopeThalweg(particlesTimeArrays):
 
 
 #%% function to do the post process of Aimec results
-
 def aimecPostProcess(avalancheDir, cfg):
 
+    # TODO: this could be reduced by calling individual functions
 
     cfgSetup = cfg['AIMECSETUP']
     anaMod = cfgSetup['anaMod']
@@ -216,71 +209,7 @@ def aimecPostProcess(avalancheDir, cfg):
     return rasterTransfo, resAnalysisDF, plotDict, newRasters
 
 
-#%% function to gather the information for the energy line test plot
-
-# from avaframe.ana1Tests import energyLineTest
-# # import analysis modules
-# import avaframe.ana5Utils.DFAPathGeneration as DFAPath
-#
-# def energyLinePostProcessing():
-#
-#     # Load avalanche directory from general configuration file
-#     cfgMain = cfgUtils.getGeneralConfig()
-#     avalancheDir = cfgMain['MAIN']['avalancheDir']
-#     energyLineTestCfg = cfgUtils.getModuleConfig(energyLineTest)
-#     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-#                                           onlyDefault=energyLineTestCfg['com1DFA_override']['defaultConfig'])
-#
-#     # Load configuration info of all com1DFA simulations
-#     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
-#     simName = simDF.index[0]
-#
-#     # dem
-#     dem = gI.readDEM(avalancheDir)
-#
-#     pathFromPart = energyLineTestCfg['energyLineTest'].getboolean('pathFromPart')
-#     avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem,
-#                                                                addVelocityInfo=True)
-#
-#     # extend path profile and find intersection between the alpha line and the profile
-#     mu = com1DFACfg['GENERAL'].getfloat('mu')
-#     csz = dem['header']['cellsize']
-#     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass,
-#                                                                                   mu, csz)
-#     # compute errors on runout and veloctity altitude
-#     g = com1DFACfg['GENERAL'].getfloat('gravAcc')
-#     alphaRad = np.arctan(mu)
-#     alphaDeg = np.rad2deg(alphaRad)
-#     # compute simulation run out angle
-#     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
-#     zEne, u2Path, sGeomL, zGeomL, resultEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
-#                                                                    runOutAngleDeg, alphaDeg)
-#
-#     energyLineDict = {}
-#     energyLineDict['avaProfileMass'] = avaProfileMass
-#     energyLineDict['particlesIni'] = particlesIni
-#     energyLineDict['zEne'] = zEne
-#     energyLineDict['runOutAngleDeg'] = runOutAngleDeg
-#     energyLineDict['u2Path'] = u2Path
-#     energyLineDict['sGeomL'] = sGeomL
-#     energyLineDict['zGeomL'] = zGeomL
-#     energyLineDict['alphaDeg'] = alphaDeg
-#     energyLineDict['energyLineTestCfg'] = energyLineTestCfg
-#     energyLineDict['mu'] = mu
-#
-#     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass,
-#                                                                                   mu, csz)
-#
-#     energyLineDict['coefExt'] = coefExt
-#     energyLineDict['slopeExt'] = slopeExt
-#     energyLineDict['sIntersection'] = sIntersection
-#     energyLineDict['zIntersection'] = zIntersection
-#
-#     return energyLineDict
-
-
 # %% Calculating the max and min pfv pft and ppr envelopes from the raster files
-
 def rasterVelField(simNum,avalancheDir,cfgAimec,pfvMinThreshold=1,pftMinThreshold=0.1,pprMinThreshold=10):
 
     # Aimec post processing
@@ -288,13 +217,10 @@ def rasterVelField(simNum,avalancheDir,cfgAimec,pfvMinThreshold=1,pftMinThreshol
 
     # getting the max peak flow velocity
     maxPeakFlowVelocity = resAnalysisDF['pfvCrossMax']
-    #minPeakFlowVelocity = resAnalysisDF['pfvCrossMin']
     meanPeakFlowVelocity = resAnalysisDF['pfvCrossMean']
     maxPeakFlowThickness = resAnalysisDF['pftCrossMax']
-    #minPeakFlowThickness = resAnalysisDF['pftCrossMin']
     meanPeakFlowThickness = resAnalysisDF['pftCrossMean']
     maxPeakFlowPressure = resAnalysisDF['pprCrossMax']
-    #minPeakFlowPressure = resAnalysisDF['pprCrossMin']
     meanPeakFlowPressure = resAnalysisDF['pprCrossMean']
 
     # Calculating the masked arraw and extracting the max, min and mean of altitude as well as the min of peak flow thickness

@@ -12,12 +12,12 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.outQuickPlot as oQ
 import avaframe.out3Plot.outAIMEC as oA
 import avaframe.in3Utils.fileHandlerUtils as fU
-from avaframe.Tools import PlotTools
 
 cfgMain = cfgUtils.getGeneralConfig()
 cfgFlags = cfgMain['FLAGS']
 # create local logger
 log = logging.getLogger(__name__)
+
 
 
 def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName):
@@ -36,8 +36,6 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSi
         configuration read from ini file
     dem: dict
         dem dictionary with normal information
-    cuSimName: str
-        name of current sim
 
     """
     cfgTrackPart = cfg['TRACKPARTICLES']
@@ -51,62 +49,35 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSi
 
     # do some ploting
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
+    fig.suptitle('Tracked particles')
+    ax1 = plt.subplot(221)
+    ax1 = addDem2Plot(ax1, dem, what='slope')
+    circle1 = plt.Circle((center['x'], center['y']), radius, color='r')
+    ax1.plot(trackedPartProp['x'], trackedPartProp['y'])
+    ax1.add_patch(circle1)
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('y [m]')
+    ax1.set_title('Trajectory')
 
-    # ax1 : particle trajectory
-    #fig.suptitle('Tracked particles')
-    ax1 = plt.subplot(121)
-    #ax1 = addDem2Plot(ax1, dem, what='slope')
+    ax2 = plt.subplot(222)
+    ax2.plot(time, trackedPartProp['m'])
+    ax2.set_xlabel('t [s]')
+    ax2.set_ylabel('m [kg]')
+    ax2.set_title('Mass')
 
-    simu_number = 0
-    plotDict = PlotTools.demParticles(simu_number)
-    # uncomment this to set the under value for discrete cmap transparent
-    # cmap.set_under(alpha=0)
-    xllcenter = plotDict['raster']['header']['xllcenter']
-    yllcenter = plotDict['raster']['header']['yllcenter']
-    rowsMinPlot = plotDict['rowsMin']*plotDict['cellSize']  + yllcenter
-    rowsMaxPlot = (plotDict['rowsMax']+1)*plotDict['cellSize']  + yllcenter
-    colsMinPlot = plotDict['colsMin']*plotDict['cellSize']  + xllcenter
-    colsMaxPlot = (plotDict['colsMax']+1)*plotDict['cellSize']  + xllcenter
-
-    #extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
-    extent = [0, colsMaxPlot-colsMinPlot, 0, rowsMaxPlot-rowsMinPlot]
-
-    # add DEM hillshade with contour lines
-    ls, CS = pU.addHillShadeContours(ax1, plotDict['demConstrained'], plotDict['cellSize'], extent)
-
-    # add the particles
-    ax1.plot(trackedPartProp['x']+xllcenter-colsMinPlot, trackedPartProp['y']+yllcenter-rowsMinPlot)
-    #circle1 = plt.Circle((center['x'], center['y']), radius, color='r')
-    #ax1.add_patch(circle1)
-
-    ax1.set_xlabel("x [m]", fontsize=22)
-    ax1.set_ylabel("y [m]", fontsize=22)
-    ax1.tick_params(axis='both', labelsize=15)
-    #ax1.set_title('Trajectory')
-
-    # ax2 = plt.subplot(222)
-    # ax2.plot(time, trackedPartProp['m'])
-    # ax2.set_xlabel('t [s]')
-    # ax2.set_ylabel('m [kg]')
-    # ax2.set_title('Mass')
-
-    ax2 = plt.subplot(122)
+    ax3 = plt.subplot(223)
     velocity = DFAtls.norm(trackedPartProp['ux'], trackedPartProp['uy'],
                            trackedPartProp['uz'])
-    ax2.plot(time, velocity)
+    ax3.plot(time, velocity)
+    ax3.set_xlabel('t [s]')
+    ax3.set_ylabel('v [m/s]')
+    ax3.set_title('Velocity')
 
-    ax2.set_xlabel("Time [s]\n\n", fontsize=22)
-    ax2.set_ylabel("Velocity [m/s]", fontsize=22)
-    ax2.tick_params(axis='both', labelsize=15)
-    # add AvaNode legend
-    #ax2.legend(loc='lower right', ncol=1, fancybox=False, shadow=False)
-    fig.legend(loc='lower center', ncol=3, fancybox=True, shadow=True, fontsize=14)
-
-    # ax4 = plt.subplot(224)
-    # ax4.plot(time, trackedPartProp['h'])
-    # ax4.set_xlabel('t [s]')
-    # ax4.set_ylabel('h [m]')
-    # ax4.set_title('Flow thickness')
+    ax4 = plt.subplot(224)
+    ax4.plot(time, trackedPartProp['h'])
+    ax4.set_xlabel('t [s]')
+    ax4.set_ylabel('h [m]')
+    ax4.set_title('Flow thickness')
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
@@ -143,8 +114,6 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
         particles
     cfg : dict
         configuration read from ini file
-    cuSimName: str
-        name of current sim
 
     """
 
@@ -153,17 +122,14 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     fig.suptitle('Tracked particles acceleration')
     ax1 = plt.subplot(111)
-    # trackedPartAcc = trackedPartProp['uAcc'].copy()
-    # trackedPartAcc[np.isnan(trackedPartAcc)] = 0
 
     ax1.plot(trackedPartProp['t'], trackedPartProp['uAcc'])
-    # ax1.plot(trackedPartProp['t'], trackedPartAcc)
     ax1.set_xlabel('time step [s]')
     ax1.set_ylabel('acceleration [ms-2]')
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
-    outFileName = 'trackedParticles_acceleration_%s' % cuSimName
+    outFileName = 'trackedParticles_acceleration_ %s' % cuSimName
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
