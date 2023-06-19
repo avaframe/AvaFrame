@@ -2,37 +2,109 @@
     Run script for module com2AB
 """
 
+# importing general python modules
+import time
+import argparse
+import pathlib
+
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3Plot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
+# Import the avaframe modules you want to use. This list will
+# grow as you use more avaframe modules. You can refer to the different
+# computational modules documentation to know which imports are required
 
-# log file name; leave empty to use default runLog.log
-logName = 'runCom2AB'
+# first import the always useful tools
+from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import initializeProject as initProj
 
-# Load avalanche directory from general configuration file
-cfgMain = cfgUtils.getGeneralConfig()
-avalancheDir = cfgMain['MAIN']['avalancheDir']
+# then depending on which computational module you want to use
+from avaframe.com2AB import com2AB
+from avaframe.out3Plot import outAB
+from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.log2Report import generateReport as gR
 
-# Start logging
-log = logUtils.initiateLogger(avalancheDir, logName)
-log.info('MAIN SCRIPT')
-log.info('Current avalanche: %s', avalancheDir)
 
-# Load all input Parameters from config file
-# get the configuration of an already imported module
-# write config to log file
-cfg = cfgUtils.getModuleConfig(com2AB)
+def runCom2AB(avalancheDir=''):
+    """ Run com2AB in the default configuration with only an
+    avalanche directory as input
 
-# Calculate ALPHABETA
-pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
-abShpFile = outAB.writeABtoSHP(pathDict, resAB)
+    Parameters
+    ----------
+    avalancheDir: str
+        path to avalanche directory (setup eg. with init scipts)
 
-# Analyse/ plot/ write results #
-reportDictList = []
-_, plotFile, writeFile = outAB.writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDictList)
+    Returns
+    -------
+    abShpFile: str
+        path to com2AB results as shapefile
+    """
+    # Time the whole routine
+    startTime = time.time()
 
-log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
-log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
+    # log file name; leave empty to use default runLog.log
+    logName = 'runCom2AB'
+
+    # Load avalanche directory from general configuration file
+    # More information about the configuration can be found here
+    # on the Configuration page in the documentation
+    cfgMain = cfgUtils.getGeneralConfig()
+    if avalancheDir != '':
+        cfgMain['MAIN']['avalancheDir'] = avalancheDir
+    else:
+        avalancheDir = cfgMain['MAIN']['avalancheDir']
+
+    # Start logging
+    log = logUtils.initiateLogger(avalancheDir, logName)
+    log.info('MAIN SCRIPT')
+    log.info('Current avalanche: %s', avalancheDir)
+
+    # ----------------
+    # Clean input directory(ies) of old work and output files
+    # If you just created the ``avalancheDir`` this one should be clean but if you
+    # already did some calculations you might want to clean it::
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+
+    # read AB inputs
+    com2AB.readABinputs(avalancheDir)
+
+    cfgAB = cfgUtils.getModuleConfig(com2AB)
+    pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+    abShpFile = outAB.writeABtoSHP(pathDict, resAB)
+
+    # Analyse/ plot/ write results #
+    reportDictList = []
+    reportDictList, plotFile, writeFile = outAB.writeABpostOut(pathDict, dem, splitPoint, 
+                                                               eqParams, resAB,
+                                                               cfgMain, reportDictList)
+
+    log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
+    log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
+
+    # Set directory for report
+    avaDir = pathlib.Path(avalancheDir)
+    reportDir = avaDir / 'Outputs' / 'com2AB' / 'report'
+    fU.makeADir(reportDir)
+    # write report and copy plots to report dir
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'].getboolean('reportOneFile'), plotDict='',
+                   standaloneReport=True)
+
+    # Print time needed
+    endTime = time.time()
+    log.info('Took %6.1f seconds to calculate.' % (endTime - startTime))
+
+    return str(abShpFile)
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Run com2AB workflow')
+    parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
+                        help='the avalanche directory')
+
+    args = parser.parse_args()
+    runCom2AB(str(args.avadir))

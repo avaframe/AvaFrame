@@ -86,7 +86,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     Clean a single avalanche directory of the work and output directories
     Expects a avalanche directory name as string
     and optional:
-    a log name to keep (and not delete)
+    a log name to keep (and not delete) -> only if deleteOutput is True
     Boolean to be able to avoid deletion of Outputs (true by default)
     '''
 
@@ -103,21 +103,22 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     if deleteOutput:
         _checkForFolderAndDelete(avaDir, 'Outputs')
 
+        # check for *.log files, go to remove only if exists
+        allFiles = os.listdir(avaDir)
+        logFiles = [fi for fi in allFiles if fi.endswith(".log")]
+
+        # keep the log file specified in keep
+        if keep:
+            logFiles = [item for item in logFiles if keep not in item]
+
+        for fi in logFiles:
+            filePath = os.path.join(avaDir, fi)
+            os.remove(filePath)
+
+
     # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
     # does not exist
     _checkForFolderAndDelete(avaDir, 'Work')
-
-    # check for *.log files, go to remove only if exists
-    allFiles = os.listdir(avaDir)
-    logFiles = [fi for fi in allFiles if fi.endswith(".log")]
-
-    # keep the log file specified in keep
-    if keep:
-        logFiles = [item for item in logFiles if keep not in item]
-
-    for fi in logFiles:
-        filePath = os.path.join(avaDir, fi)
-        os.remove(filePath)
 
     log.debug("Directory is squeaky clean")
     return 'Cleaned directory'
