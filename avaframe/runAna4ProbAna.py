@@ -54,7 +54,7 @@ def runProbAna(avalancheDir=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
@@ -67,6 +67,9 @@ def runProbAna(avalancheDir=''):
     # perform com1DFA simulations
     outDir = pathlib.Path(avalancheDir, 'Outputs')
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
+    # fetch simDF of only sims that were created in above call to com1DFAMain - do not include sims
+    # that were run previously and are still located in outDir
+    simDFActual, _ = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='', configCsvName='latestSims')
 
     # check if sampling strategy is from full sample - then only one configuration is possible
     probabilityConfigurations = probAna.fetchProbConfigs(cfgProb['PROBRUN'])
@@ -85,7 +88,8 @@ def runProbAna(avalancheDir=''):
                                                          cfgProb,
                                                          com1DFA,
                                                          parametersDict=parametersDict,
-                                                         probConf=probConf
+                                                         probConf=probConf,
+                                                         simDFActual=simDFActual
                                                          )
         if anaPerformed is False:
             log.warning('No files found for configuration: %s' % probConf)

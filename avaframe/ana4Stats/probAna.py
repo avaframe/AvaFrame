@@ -323,7 +323,7 @@ def checkForNumberOfReferenceValues(cfgGen, varPar):
     return True
 
 
-def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf=''):
+def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='', simDFActual=''):
     """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
@@ -341,6 +341,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
             a subfolder called peakFiles and configurationFiles, required if not in module results
         probConf : str
             name of probability configuration
+        simDFActual: pandas dataFrame
+            dataframe of simulation configurations that shall be used for prob analysis
 
     """
 
@@ -353,7 +355,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
     fU.makeADir(outDir)
 
     # fetch all result files and filter simulations according to parametersDict
-    simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir=inputDir)
+    simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir=inputDir, simDF=simDFActual)
 
     # initialize flag if analysis has been performed or e.g. no matching files found
     analysisPerformed = False
