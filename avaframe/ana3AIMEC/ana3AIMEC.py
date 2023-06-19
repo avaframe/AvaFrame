@@ -8,6 +8,8 @@ import pathlib
 
 # Local imports
 import avaframe.ana3AIMEC.aimecTools as aT
+from avaframe.ana3AIMEC import aimecTools
+from avaframe.ana3AIMEC import dfa2Aimec
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.in1Data.getInput as gI
@@ -17,6 +19,51 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 
 # create local logger
 log = logging.getLogger(__name__)
+
+
+def fullAimecAnalysis(avalancheDir, cfg):
+    """ fetch all data required to run aimec analysis, setup pathDict and reference sim,
+        read the inputs, perform checks if all required data is available, run main aimec
+
+        Parameters
+        ------------
+        avalancheDir: str or pathlib path
+            path to avalanche directory
+        cfg: configparser object
+            main aimec configuration settings
+
+        Returns
+        --------
+        rasterTransfo: dict
+            domain transformation information
+        resAnalysisDF: dataFrame
+            results of ana3AIMEC analysis
+        plotDict: dict
+            dictionary for report
+        newRasters: dict
+            dictionary containing pressure, velocity and flow thickness rasters after
+            transformation for the reference and the current simulation
+
+    """
+
+    cfgSetup = cfg['AIMECSETUP']
+    anaMod = cfgSetup['anaMod']
+
+    # Setup input from computational module
+    inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
+    # define reference simulation
+    refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
+                                                                                         cfg)
+    pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
+                'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
+    pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
+    log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
+             pathDict['demSource'], pathDict['profileLayer'])
+    # Run AIMEC postprocessing
+    rasterTransfo, resAnalysisDF, plotDict, newRasters = mainAIMEC(pathDict, inputsDF, cfg)
+
+    return rasterTransfo, resAnalysisDF, plotDict, newRasters, pathDict
 
 
 def mainAIMEC(pathDict, inputsDF, cfg):

@@ -22,22 +22,9 @@ def runAna3AIMEC(avalancheDir, cfg):
     """ run script for AIMEC analysis
     proceeds to AIMEC analysis and produces plots and reports
     """
-    cfgSetup = cfg['AIMECSETUP']
-    anaMod = cfgSetup['anaMod']
 
-    # Setup input from computational module
-    inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
-    # define reference simulation
-    refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
-                                                                                         cfg)
-    pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
-                'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
-    log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
-             pathDict['demSource'], pathDict['profileLayer'])
-    # Run AIMEC postprocessing
-    rasterTransfo, resAnalysisDF, plotDict, _ = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+    rasterTransfo, resAnalysisDF, plotDict, _, pathDict = ana3AIMEC.fullAimecAnalysis(avalancheDir, cfg)
+
     return pathDict, rasterTransfo, resAnalysisDF, plotDict
 
 

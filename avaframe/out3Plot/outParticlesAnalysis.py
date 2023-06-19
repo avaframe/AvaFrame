@@ -33,10 +33,8 @@ import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in1Data.getInput as gI
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
-from avaframe.Tools import PostProcessingTools
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.geoTrans as gT
-from avaframe.Tools import PlotTools
 import avaframe.out1Peak.outPlotAllPeak as oP
 
 log = logging.getLogger(__name__)
@@ -420,3 +418,176 @@ def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alph
         setLimits=True)
 
     return ax
+
+
+def velocityEnvelope(particlesTimeArrays):
+    """ compute the velocity envelope from particle values
+
+        Parameters
+        -----------
+        particlesTimeArrays: dict
+            dict with time series for particle properties
+
+        Returns
+        --------
+        dictVelEnvelope: dict
+            max, mean, min values of velocity over all particles for each time step
+            velocity, acceleration, min and max of trajectoryLengthXYZ of particles for each time step
+    """
+
+    # Preparing time, maximum values, minimum values, mean, median
+    Max = np.zeros(len(particlesTimeArrays['t']))
+    Min = np.zeros(len(particlesTimeArrays['t']))
+    Mean = np.zeros(len(particlesTimeArrays['t']))
+    Median = np.zeros(len(particlesTimeArrays['t']))
+    SxyzMax = np.zeros(len(particlesTimeArrays['t']))
+    SxyzMin = np.zeros(len(particlesTimeArrays['t']))
+
+    # loop over time steps and compute max, min, ...
+    for j in range(len(particlesTimeArrays['t'])):
+        Max[j] = np.amax(particlesTimeArrays['velocityMag'][j,:])
+        Min[j] = np.amin(particlesTimeArrays['velocityMag'][j,:])
+        Mean[j] = np.mean(particlesTimeArrays['velocityMag'][j,:])
+        Median[j] = np.median(particlesTimeArrays['velocityMag'][j,:])
+        SxyzMax[j] = np.nanmax(particlesTimeArrays['trajectoryLengthXYZ'][j,:])
+        SxyzMin[j] = np.nanmin(particlesTimeArrays['trajectoryLengthXYZ'][j,:])
+
+    dictVelEnvelope = {}
+    dictVelEnvelope['Velocity'] = particlesTimeArrays['velocityMag']
+    dictVelEnvelope['Acc'] = particlesTimeArrays['uAcc']
+    dictVelEnvelope['Mean'] = Mean
+    dictVelEnvelope['Median'] = Median
+    dictVelEnvelope['Min'] = Min
+    dictVelEnvelope['Max'] = Max
+    dictVelEnvelope['Time'] = particlesTimeArrays['t']
+    dictVelEnvelope['SxyzMax'] = SxyzMax
+    dictVelEnvelope['SxyzMin'] = SxyzMin
+
+    return dictVelEnvelope
+
+
+#%% function to generate the velocity envelope along the thalweg from simulated flows
+def velocityEnvelopeThalweg(particlesTimeArrays):
+    """ function to generate the velocity envelope along the thalweg from simulated flows
+
+        Parameters
+        -----------
+        particlesTimeArrays: dict
+            dict with time series of particle properties
+
+        Returns
+        --------
+        dictVelAltThalweg: dict
+            dict with min, max, mean, ... values of particles elevation, velocity and acceleration
+            for each thalweg coordinate
+
+    """
+
+    time = particlesTimeArrays['t']
+    sBetaPoint = particlesTimeArrays['sBetaPoint']
+
+    elevation = particlesTimeArrays['z'].flatten()
+    sXY = particlesTimeArrays['sAimec'].flatten()
+
+    velocityMag = particlesTimeArrays['velocityMag'].flatten()
+    uAcc = particlesTimeArrays['uAcc'].flatten()
+    trajectoryLengthXYZ = particlesTimeArrays['trajectoryLengthXYZ'].flatten()
+
+    # sort particle coordinates in thalweg system and only keep unique values
+    sXYSorted = np.unique(sXY)
+
+    # get max, min, mean, median values of elevation, velocity mag and trajectorylengthXYZ along thalweg
+    maxVelocity = np.zeros(len(sXYSorted))
+    minVelocity = np.zeros(len(sXYSorted))
+    medianVelocity = np.zeros(len(sXYSorted))
+    meanVelocity = np.zeros(len(sXYSorted))
+    maxAcc = np.zeros(len(sXYSorted))
+    minAcc = np.zeros(len(sXYSorted))
+    medianAcc = np.zeros(len(sXYSorted))
+    meanAcc = np.zeros(len(sXYSorted))
+    maxZ = np.zeros(len(sXYSorted))
+    minZ = np.zeros(len(sXYSorted))
+    maxSxyz = np.zeros(len(sXYSorted))
+    minSxyz = np.zeros(len(sXYSorted))
+
+    # create array of properties along S_xy (thalweg/aimec) coordinate
+    for indS, sXYCoor in enumerate(sXYSorted):
+        sXYInd = np.where(sXY == sXYCoor)
+        V = velocityMag[sXYInd[0]]
+        A = uAcc[sXYInd[0]]
+        S = trajectoryLengthXYZ[sXYInd[0]]
+        maxVelocity[indS] = np.nanmax(velocityMag[sXYInd[0]])
+        minVelocity[indS] = np.nanmin(velocityMag[sXYInd[0]])
+        meanVelocity[indS] = np.nanmean(velocityMag[sXYInd[0]])
+        medianVelocity[indS] = np.nanmedian(velocityMag[sXYInd[0]])
+        maxZ[indS] = np.nanmax(elevation[sXYInd[0]])
+        minZ[indS] = np.nanmin(elevation[sXYInd[0]])
+        maxSxyz[indS] = np.nanmax(trajectoryLengthXYZ[sXYInd[0]])
+        minSxyz[indS] = np.nanmin(trajectoryLengthXYZ[sXYInd[0]])
+        maxAcc[indS] = np.nanmax(uAcc[sXYInd[0]])
+        minAcc[indS] = np.nanmin(uAcc[sXYInd[0]])
+        meanAcc[indS] = np.nanmean(uAcc[sXYInd[0]])
+        medianAcc[indS] = np.nanmedian(uAcc[sXYInd[0]])
+
+    dictVelAltThalweg = {}
+    dictVelAltThalweg['sXYPart'] = particlesTimeArrays['sAimec']
+    dictVelAltThalweg['maxSxyz'] = maxSxyz
+    dictVelAltThalweg['minSxyz'] = minSxyz
+    dictVelAltThalweg['sXYThalweg'] = sXYSorted
+    dictVelAltThalweg['sBetaPoint'] = sBetaPoint
+    dictVelAltThalweg['meanVelocity'] = meanVelocity
+    dictVelAltThalweg['medianVelocity'] = medianVelocity
+    dictVelAltThalweg['minVelocity'] = minVelocity
+    dictVelAltThalweg['maxVelocity'] = maxVelocity
+    dictVelAltThalweg['minZ'] = minZ
+    dictVelAltThalweg['maxZ'] = maxZ
+    dictVelAltThalweg['meanAcc'] = meanAcc
+    dictVelAltThalweg['medianAcc'] = medianAcc
+    dictVelAltThalweg['minAcc'] = minAcc
+    dictVelAltThalweg['maxAcc'] = maxAcc
+
+    return dictVelAltThalweg
+
+
+
+
+# %% Calculating the max and min pfv pft and ppr envelopes from the raster files
+def rasterVelField(resAnalysisDF, newRasters, pfvMinThreshold=1,pftMinThreshold=0.1,pprMinThreshold=10):
+
+    # getting the max peak flow velocity
+    maxPeakFlowVelocity = resAnalysisDF['pfvCrossMax']
+    meanPeakFlowVelocity = resAnalysisDF['pfvCrossMean']
+    maxPeakFlowThickness = resAnalysisDF['pftCrossMax']
+    meanPeakFlowThickness = resAnalysisDF['pftCrossMean']
+    maxPeakFlowPressure = resAnalysisDF['pprCrossMax']
+    meanPeakFlowPressure = resAnalysisDF['pprCrossMean']
+
+    # Calculating the masked arraw and extracting the max, min and mean of altitude as well as the min of peak flow thickness
+    # peak flow velocity and peak flow pressure
+    demMasked = np.ma.masked_where(newRasters['newRasterPFV'] == 0.0, newRasters['newRasterDEM'])
+    pfvMasked = np.ma.masked_less(newRasters['newRasterPFV'],pfvMinThreshold)
+    pftMasked = np.ma.masked_less(newRasters['newRasterPFT'],pftMinThreshold)
+    pprMasked = np.ma.masked_less(newRasters['newRasterPPR'],pprMinThreshold)
+    AltitudeCrossMax = np.nanmax(demMasked, 1)
+    AltitudeCrossMin = np.nanmin(demMasked, 1)
+    AltitudeCrossMean = np.nanmean(demMasked, 1)
+    minPeakFlowVelocity = np.nanmin(pfvMasked,1)
+    minPeakFlowThickness = np.nanmin(pftMasked,1)
+    minPeakFlowPressure = np.nanmin(pprMasked,1)
+
+    # preparing the output dictionary
+    dictRaster = {}
+    dictRaster['maxPeakFlowVelocity'] = maxPeakFlowVelocity
+    dictRaster['minPeakFlowVelocity'] = minPeakFlowVelocity
+    dictRaster['meanPeakFlowVelocity'] = meanPeakFlowVelocity
+    dictRaster['maxPeakFlowThickness'] = maxPeakFlowThickness
+    dictRaster['minPeakFlowThickness'] = minPeakFlowThickness
+    dictRaster['meanPeakFlowThickness'] = meanPeakFlowThickness
+    dictRaster['maxPeakFlowPressure'] = maxPeakFlowPressure
+    dictRaster['minPeakFlowPressure'] = minPeakFlowPressure
+    dictRaster['meanPeakFlowPressure'] = meanPeakFlowPressure
+    dictRaster['AltitudeCrossMax'] = AltitudeCrossMax
+    dictRaster['AltitudeCrossMin'] = AltitudeCrossMin
+    dictRaster['AltitudeCrossMean'] = AltitudeCrossMean
+
+    return dictRaster

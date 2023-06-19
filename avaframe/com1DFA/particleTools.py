@@ -916,3 +916,37 @@ def savePartToCsv(particleProperties, dictList, outDir):
         particlesData = pd.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
+
+
+def reshapeParticlesDicts(particlesList, propertyList):
+    """ reshape particlesList from one dict per time step with all particle properties for each particle,
+        to one dict with an array of property values for all time steps for each particle
+        shape: nx x ny; nx time steps, ny number of particles
+
+        Parameters
+        -----------
+        particlesList: list
+            list of particle dicts, one dict per time step
+        propertyList: list
+            list of property names that shall be reshaped and saved to particlesTimeArrays
+
+        Returns
+        --------
+        particlesTimeArrays: dict
+            dict with time series of properties of particles
+            key: property, item: timeSteps x particlesID array of property values
+    """
+
+    # create particlesTimeArrays
+    particlesTimeArrays = {}
+
+    for props in propertyList:
+        if isinstance(particlesList[0][props], int) or isinstance(particlesList[0][props], float):
+            particlesTimeArrays[props] = np.zeros(len(particlesList))
+            particlesTimeArrays[props][:] = np.asarray([p[props] for p in particlesList])
+        else:
+            particlesTimeArrays[props] = np.zeros((len(particlesList), particlesList[0]['nPart']))
+            for idx in particlesList[0]['ID']:
+                particlesTimeArrays[props][:,idx] = np.asarray([p[props][idx] for p in particlesList])
+
+    return particlesTimeArrays
