@@ -57,6 +57,8 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
     cfgRangeTime: configparser object
         configuration settings for range time diagram - here used avalancheDir, rangeTimeResType,
         simHash, and from plots width, height, lw, ..
+    ax: matplotlib axes object
+        axes where plot shall be added to 
 
     """
     # fetch required input info

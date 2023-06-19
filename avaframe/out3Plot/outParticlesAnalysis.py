@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Wed 12 2022
-
-@author: dicko
 
 Tools to extract information on the avalanche simulations run in the Output files
 
-modified by AvaFrame
 """
 
 # Python imports
@@ -40,7 +36,6 @@ import avaframe.out1Peak.outPlotAllPeak as oP
 log = logging.getLogger(__name__)
 
 
-#%% Function to plot the peak flow quantities and the velocity thalweg envelope
 def plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg,
     resTypePlots, modName, demData):
     """ plot peak flow fields and velocity thalweg envelope
@@ -124,7 +119,6 @@ def plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, 
         plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
 
 
-# %% Plot the peak flow velocity, thalweg time diagram and energy line
 def plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, simDF, rasterTransfo,
     dictRaster, modName, demSim, mtiInfo, cfgRangeTime):
     """ Create plot showing the resType peak field with thalweg,
@@ -225,7 +219,6 @@ def plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, simDF, rasterTransfo
     log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
 
 
-# %% Plot the peak flow quantities with tracked particles and velocities
 def plotPeakQuantTrackedPartVel(avalancheDir, simName, dictVelAltThalweg,
     dictVelAltThalwegPart, trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo):
     """ Create plot showing particle properties over time and along avalanche thalweg

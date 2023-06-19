@@ -387,6 +387,9 @@ def aimecTransform(rasterTransfo, particle, demHeader, timeSeries=False):
             dictionary with particle properties
         demHeader: dict
             dict with info on dem cellSize, xllcenter, ..
+        timeSeries: bool
+            if timeSeries consider that particles dict is provided as time series
+            if False particles dict is provided for one time step only
 
         Returns
         -------
@@ -427,6 +430,8 @@ def computeSLParticles(rasterTransfo, demHeader, particlesX, particlesY):
         -----------
         rasterTransfo: dict
             info on rasterTransformation, here gridx, gridy coordinates
+        demHeader: dict
+            dict with info on dem xllcenter, yllcenter
         particlesX: np array
             x coordinates of particles location for one time step but all particles
         particlesY: np array

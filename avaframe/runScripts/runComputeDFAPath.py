@@ -90,7 +90,7 @@ for avaName in avaList:
         resampleDistance = DFAPathCfg['PATH'].getfloat('nCellsResample') * dem['header']['cellsize']
         # get the mass average path
         avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem)
-        avaProfileMass, _ = gT.prepareLineNewVersion(dem, avaProfileMass, distance=resampleDistance, Point=None)
+        avaProfileMass, _ = gT.prepareLine(dem, avaProfileMass, distance=resampleDistance, Point=None)
         avaProfileMass['indStartMassAverage'] = 1
         avaProfileMass['indEndMassAverage'] = np.size(avaProfileMass['x'])
         # make the parabolic fit

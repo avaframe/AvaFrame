@@ -125,8 +125,13 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             array of dem data
         ax: matplotlib axes object
             axes where to add data plot to
-        cellSize:
-
+        cellSize: float
+            cellSize of data
+        alpha: float
+            from 0 transparent to 1 opaque for plot of constrained data
+        setLimits: bool
+            if True set limits of constrained data to plot
+            
         Return
         --------
         ax: matplotlib axes object

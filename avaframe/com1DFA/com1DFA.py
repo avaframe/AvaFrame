@@ -401,7 +401,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
 
     # export particles properties for visulation
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-        particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+        particleTools.savePartToCsv(cfg['VISUALISATION']['visuParticleProperties'], particlesList, outDir)
 
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfg, reportAreaInfo)

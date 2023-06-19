@@ -36,6 +36,8 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSi
         configuration read from ini file
     dem: dict
         dem dictionary with normal information
+    cuSimName: str
+        name of current simulation
 
     """
     cfgTrackPart = cfg['TRACKPARTICLES']
@@ -114,6 +116,8 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
         particles
     cfg : dict
         configuration read from ini file
+    cuSimName: str
+        name of simulation
 
     """
 
@@ -144,6 +148,8 @@ def plotAllPartAcc(outDirData,particlesList, cfg, Tsave, cuSimName):
         particles
     cfg : dict
         configuration read from ini file
+    Tsave: list
+        list of saving time step info 
     cuSimName: str
         name of current sim
     """

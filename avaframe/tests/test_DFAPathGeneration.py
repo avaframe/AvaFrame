@@ -62,13 +62,17 @@ def test_extendDFAPath():
     """"""
     # setup required inputs
     cfg = configparser.ConfigParser()
-    cfg['PATH'] = {'nCellsResample': '5', 'extTopOption': '1', 'nCellsMinExtend': '1',
-                   'nCellsMaxExtend': '2', 'factBottomExt': 0.2, 'maxIterationExtBot': 10, 'nBottomExtPrecision': 10}
-    avaProfile = {'x': np.array([10, 20, 30]), 'y': np.array([10, 20, 30]), 'z': np.array([40, 30, 20]),
-                  's': np.array([0, math.sqrt(200), math.sqrt(800)])}
-    particlesIni = {'x': np.array([7, 6.9]),
-                    'y': np.array([10, 20])}
-    dem = {'header': {'xllcenter': 0, 'yllcenter': 0, 'cellsize': 10, 'nrows': 10, 'ncols': 11},
+    cfg['PATH'] = {'nCellsResample': '1', 'extTopOption': '1', 'nCellsMinExtend': '1',
+                   'nCellsMaxExtend': '2', 'factBottomExt': 0.2,
+                   'maxIterationExtBot': 10, 'nBottomExtPrecision': 10,
+                   'uInterval': '1000'}
+
+    # TODO if k=3 for spline needs at least 4 pointsin path
+    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]), 'z': np.array([40, 30, 20, 0])
+                  }#'s': np.array([0, np.sqrt(4), np.sqrt(8), np.sqrt(98)])}
+    particlesIni = {'x': np.array([0.7, 0.69]),
+                    'y': np.array([1, 2])}
+    dem = {'header': {'xllcenter': 0, 'yllcenter': 0, 'cellsize': 2, 'nrows': 10, 'ncols': 11},
            'rasterData': np.array([[50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
                                    [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
                                    [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
@@ -86,28 +90,34 @@ def test_extendDFAPath():
     avaProfileExt = DFAPathGeneration.extendDFAPath(cfg['PATH'], avaProfile, dem, particlesIni)
     print(avaProfileExt)
     atol = 1e-10
-    assert avaProfileExt['x'][0] == 7.0
-    assert avaProfileExt['x'][-1] == pytest.approx(34.42426406871193, abs=1e-6)
-    assert avaProfileExt['y'][0] == 10
-    assert avaProfileExt['y'][-1] == pytest.approx(34.42426406871193, abs=1e-6)
-    assert avaProfileExt['z'][0] == pytest.approx(43, abs=1e-6)
-    assert avaProfileExt['z'][-1] == pytest.approx(15.575735931288072, abs=1e-6)
+    assert avaProfileExt['x'][0] == 0.7
+    assert avaProfileExt['x'][-1] == pytest.approx(9.44242641, abs=1e-6)
+    assert avaProfileExt['y'][0] == 1.
+    assert avaProfileExt['y'][-1] == pytest.approx(9.44242641, abs=1e-6)
+    assert avaProfileExt['z'][0] == pytest.approx(46.5, abs=1e-6)
+    assert avaProfileExt['z'][-1] == pytest.approx(2.78786797, abs=1e-6)
 
     # now use the highest point method
     cfg = configparser.ConfigParser()
-    cfg['PATH'] = {'nCellsResample': '5', 'extTopOption': '0', 'nCellsMinExtend': '2',
-                   'nCellsMaxExtend': '30', 'factBottomExt': 0.2, 'maxIterationExtBot': 10, 'nBottomExtPrecision': 10}
+    cfg['PATH'] = {'nCellsResample': '5', 'extTopOption': '0', 'nCellsMinExtend': '1',
+                   'nCellsMaxExtend': '2', 'factBottomExt': 0.2, 'maxIterationExtBot': 10, 'nBottomExtPrecision': 10}
     avaProfile = {'x': np.array([10, 20, 30]), 'y': np.array([10, 20, 30]), 'z': np.array([40, 30, 20])}
+    particlesIni = {'x': np.array([7., 6.9]),
+                    'y': np.array([10, 20])}
+    dem['header']['cellsize'] = 10.
+
+    particlesIni, _ = gT.projectOnRaster(dem, particlesIni, interp='bilinear')
+
 
     avaProfileExt = DFAPathGeneration.extendDFAPath(cfg['PATH'], avaProfile, dem, particlesIni)
     print(avaProfileExt)
     atol = 1e-10
     assert np.allclose(avaProfileExt['x'][0], 6.9, atol=atol)
-    assert avaProfileExt['x'][-1] == pytest.approx(36.41019804034152, abs=1e-6)
+    assert avaProfileExt['x'][-1] == pytest.approx(30., abs=1e-6)
     assert np.allclose(avaProfileExt['y'][0], 20.0, atol=atol)
-    assert avaProfileExt['y'][-1] == pytest.approx(34.35700456911144, abs=1e-6)
+    assert avaProfileExt['y'][-1] == pytest.approx(30., abs=1e-6)
     assert avaProfileExt['z'][0] == pytest.approx(43.09999999999, abs=1e-6)
-    assert avaProfileExt['z'][-1] == pytest.approx(13.589801959658478, abs=1e-6)
+    assert avaProfileExt['z'][-1] == pytest.approx(20., abs=1e-6)
 
     # now If we extend too 1
     cfg = configparser.ConfigParser()
@@ -119,9 +129,9 @@ def test_extendDFAPath():
     print(avaProfileExt)
     atol = 1e-10
     assert np.allclose(avaProfileExt['x'][0], 6.9, atol=atol)
-    assert avaProfileExt['x'][-1] == pytest.approx(87.23446227804479, abs=1e-6)
+    assert avaProfileExt['x'][-1] == pytest.approx(87.48555023, abs=1e-6)
     assert np.allclose(avaProfileExt['y'][0], 20.0, atol=atol)
-    assert avaProfileExt['y'][-1] == pytest.approx(86.45811453, abs=1e-6)
+    assert avaProfileExt['y'][-1] == pytest.approx(86.19110116, abs=1e-6)
     assert avaProfileExt['z'][0] == pytest.approx(43.09999999999, abs=1e-6)
     assert avaProfileExt['z'][-1] == pytest.approx(0, abs=1e-6)
 
@@ -130,7 +140,7 @@ def test_resamplePath():
     """"""
     # setup required inputs
     cfg = configparser.ConfigParser()
-    cfg['PATH'] = {'nCellsResample': '1'}
+    cfg['PATH'] = {'nCellsResample': '1', 'uInterval': '1000'}
     avaProfile = {'x': np.array([5, 15, 20, 25, 30, 35]), 'y': np.array([5, 15, 20, 25, 30, 35]),
                   'z': np.array([40, 30, 20, 10, 0, 0]),
                   's': np.array([0, math.sqrt(200), math.sqrt(450), math.sqrt(800), math.sqrt(1250), math.sqrt(1800)]),
@@ -151,7 +161,7 @@ def test_resamplePath():
     avaProfile = DFAPathGeneration.resamplePath(cfg['PATH'], dem, avaProfile)
     print(avaProfile)
     assert avaProfile['indStartMassAverage'] == 3
-    assert avaProfile['indEndMassAverage'] == 9
+    assert avaProfile['indEndMassAverage'] == 7
 
 
 def test_getParabolicFit():

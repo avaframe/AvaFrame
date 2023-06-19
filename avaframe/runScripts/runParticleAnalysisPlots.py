@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Oct Mon 12 2022
-
-@author: Oscar Dick
 
 Plot velocity envelopes and several comparison tools for different simulations.
 One specific simulation can also be investigated.
 The present script has been used to produce the plots in my master thesis as well.
 
-Last change: 10/05/2023
-
-modified by AvaFrame
 
 """
 # Python imports
@@ -33,9 +27,8 @@ import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 from avaframe.in3Utils import cfgHandling
 
 
-###############################################################################################################################################################################################################################################################################################################################################################################
-##### README ##################################################################################################################################################################################################################################################################################################################################################################
-###############################################################################################################################################################################################################################################################################################################################################################################
+##### README #######
+
 # The present script calls each of the plot functions made so far.
 
 # The plotting functions are in PlotFunctions. Useful tools for the plotting are in PlotTools. Useful tools to post-process the
@@ -46,9 +39,7 @@ from avaframe.in3Utils import cfgHandling
 #   * Thalweg-Altitude energy line, peak flow quantities and thalweg time diagram: PlotFunctions.plotPeakQuantThalTimeEnergyLine
 #   * Comparative plots (vel,acc,s_{xyz}..): PlotFunctions.plotPeakQuantTrackedPartVel
 
-#%%############################################################################################################################################################################################################################################################################################################################################################################
-##### SECTION TO PREPARE THE DATA FOR THE PLOTS ###############################################################################################################################################################################################################################################################################################################################
-###############################################################################################################################################################################################################################################################################################################################################################################
+##### SECTION TO PREPARE THE DATA FOR THE PLOTS ######
 # WARNING: THE BELOW SECTON IS SPECIFICALLY DEDICATED TO EXTRACT POST-PROCESSING INFORMATION. IT IS LIKELY TO BE IMPROVED
 
 # -----------Required settings-----------------
@@ -115,7 +106,7 @@ for i, simIndex in enumerate(SimDF.index):
     particlesList = ''
     demSim = ''
     resAnalysisDF = ''
-    newRasters = ''    
+    newRasters = ''
 
     # fetch name of simulation
     simName = SimDF['simName'].loc[simIndex]
