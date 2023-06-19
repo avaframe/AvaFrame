@@ -664,7 +664,7 @@ def setStrnanToNan(simDF, simDFTest, name):
     return simDF
 
 
-def readAllConfigurationInfo(avaDir, specDir=''):
+def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations'):
     """ Read allConfigurations.csv file as dataFrame from directory
 
         Parameters
@@ -673,6 +673,8 @@ def readAllConfigurationInfo(avaDir, specDir=''):
             path to avalanche directory
         specDir: str
             path to a directory where simulation configuration files can be found - optional
+        configCsvName: str
+            name of configuration csv file
 
         Returns
         --------
@@ -687,7 +689,7 @@ def readAllConfigurationInfo(avaDir, specDir=''):
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
-    configFiles = inDir / 'allConfigurations.csv'
+    configFiles = inDir / ('%s.csv' % configCsvName)
 
     if configFiles.is_file():
         with open(configFiles, 'rb') as file:
