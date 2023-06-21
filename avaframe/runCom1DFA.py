@@ -55,7 +55,7 @@ def runCom1DFA(avalancheDir=''):
     # Clean input directory(ies) of old work and output files
     # If you just created the ``avalancheDir`` this one should be clean but if you
     # already did some calculations you might want to clean it::
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
     # ----------------
     # Run dense flow

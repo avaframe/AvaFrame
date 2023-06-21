@@ -45,7 +45,7 @@ def runRelInfo(avalancheDir=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
     # Load configuration file for com1DFA module
     cfg = cfgUtils.getModuleConfig(com1DFA)
