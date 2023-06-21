@@ -1527,11 +1527,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
     standardCfg['INPUT']['DEM'] = 'avaAlr.asc'
     standardCfg['GENERAL']['avalancheDir'] = str(avaDirTest)
     relPath = pathlib.Path(avaDir, 'Inputs', 'REL', 'relAlr.shp')
-    print('avaDIIIIR', relPath)
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
     variationDict = {'rho': np.asarray([200., 150.]), 'releaseScenario': ['relAlr']}
-
 
     # call function to be tested
     simDict = com1DFA.prepareVarSimDict(
@@ -1555,14 +1553,11 @@ def test_prepareVarSimDict(tmp_path, caplog):
     testCfg['GENERAL']['avalancheDir'] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
-    print(simHash)
     simName1 = 'relAlr_' + simHash + '_C_entres_dfa'
     testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relAlr',
                            'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
 
-    print('simDict', simDict)
-    print('testDict', testDict)
     for key in testDict[simName1]:
         print(simDict[simName1][key])
         assert simDict[simName1][key] == testDict[simName1][key]

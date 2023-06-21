@@ -201,8 +201,6 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                 pfile.write(' \n')
 
         pfile.write(' \n')
-        pfile.write('------------------------------------------------------------------------- \n')
-        pfile.write(' \n')
         pfile.write(' \n')
 
     log.info('Standard tests performed - Report saved to: %s ' % reportFile)

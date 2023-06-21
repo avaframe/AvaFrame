@@ -53,7 +53,7 @@ def insertIntoSimName(name, keys, values, index):
         log.error(msg)
         raise IndexError(msg)
 
-    return(newName)
+    return newName
 
 
 def addInfoToSimName(avalancheDir, csvString=''):
@@ -88,7 +88,7 @@ def addInfoToSimName(avalancheDir, csvString=''):
     vars.append('simName')
     vars.append('newName')
 
-    return(simDF[vars])
+    return simDF[vars]
 
 
 def filterSims(avalancheDir, parametersDict, specDir='', simDF=''):

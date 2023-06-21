@@ -545,7 +545,8 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
-    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'isDefault': [], 'simName': [],
+    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'isDefault': [],
+            'frictCalib': [], 'simName': [],
             'modelType': [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
@@ -576,15 +577,24 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         indiStr = ['_C_', '_D_']
         if any(x in name for x in indiStr):
             data['isDefault'].append(infoParts[1])
-            data['simType'].append(infoParts[2])
-            data['modelType'].append(infoParts[3])
-            data['resType'].append(infoParts[4])
-            data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:4])))
+            # now check for friction calibration info
+            frictIndi = ['_S_', '_M_']
+            if any(x in name for x in frictIndi):
+                data['frictCalib'].append(infoParts[2])
+                j = 1  # j indicates whether there's an additional info
+            else:
+                data['frictCalib'].append(None)
+                j = 0
+
+            data['simType'].append(infoParts[2+j])
+            data['modelType'].append(infoParts[3+j])
+            data['resType'].append(infoParts[4+j])
+            data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:(4+j)])))
 
             header = IOf.readASCheader(datafiles[m])
             data['cellSize'].append(header['cellsize'])
-            if len(infoParts) == 6:
-                data['timeStep'].append(infoParts[5])
+            if len(infoParts) == (6+j):
+                data['timeStep'].append(infoParts[5+j])
             else:
                 data['timeStep'].append('')
 
@@ -592,6 +602,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         # This can be removed at one point
         else:
             data['isDefault'].append(None)
+            data['frictCalib'].append(None)
             data['simType'].append(infoParts[1])
             data['modelType'].append(infoParts[2])
             data['resType'].append(infoParts[3])

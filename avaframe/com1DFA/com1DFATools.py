@@ -69,6 +69,34 @@ def getPartInitMethod(cfg, csz, relThForPart):
     return massPerPart, nPPK
 
 
+def setFrictTypeIndicator(simCfg):
+    """ Sets the friction type indicator for the simname
+        Default is empty, otherwise M for samosATMedium, S for samosATSmall
+
+        Parameters
+        -----------
+        simCfg: dict
+            simulation configuration
+
+        Returns
+        --------
+        frictTypeIdentifier: str
+            None if default,  S for samosATSmall, M for samosATMedium
+
+    """
+
+    frictTypeIdentifier = None
+
+    if simCfg['GENERAL']['frictModel'].lower() == 'samosatsmall':
+        frictTypeIdentifier = 'S'
+    if simCfg['GENERAL']['frictModel'].lower() == 'samosatmedium':
+        frictTypeIdentifier = 'M'
+
+    return frictTypeIdentifier
+
+
+
+
 def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     """ Compares the given simulation configuration (as dict) to the default
         com1DFA configuration. Disregards values like avalancheDir that are expected to
@@ -98,10 +126,16 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     # Which changes to ignore (in the case of com1DFA). These are expected
     # to change...
     excludeItems = ["root['GENERAL']['avalancheDir']",
-                   "root['GENERAL']['secRelArea']",
-                   "root['GENERAL']['simTypeList']",
-                   "root['INPUT']['releaseScenario']",
+                    "root['GENERAL']['secRelArea']",
+                    "root['GENERAL']['simTypeList']",
+                    "root['INPUT']['releaseScenario']",
                    ]
+
+    # sphKernelSize is set during runtime, make sure it is not reported
+    # as changed if default is set to meshCellSize
+    if defCfg['GENERAL']['sphKernelRadius'] == 'meshCellSize':
+        if simCfg['GENERAL']['sphKernelRadius'] == simCfg['GENERAL']['meshCellSize']:
+            excludeItems.append("root['GENERAL']['sphKernelRadius']")
 
     # do the diff and analyse
     diff = DeepDiff(defCfg, simCfg, exclude_paths=excludeItems)
@@ -240,11 +274,14 @@ def checkCfgInfoType(cfgInfo):
         cfgInfoPath = pathlib.Path(cfgInfo)
         if cfgInfoPath.is_dir():
             typeCfgInfo = 'cfgFromDir'
+            log.info('----- CFG override from directory is used -----')
         elif cfgInfo.is_file():
             typeCfgInfo = 'cfgFromFile'
+            log.info('----- CFG override from file is used ----')
 
     elif isinstance(cfgInfo, configparser.ConfigParser):
         typeCfgInfo = 'cfgFromObject'
+        log.info('---- CFG override object is used ----')
 
     else:
         message = ('cfgInfo is not of valid format, needs to be a path to a cfg file, \

@@ -2623,12 +2623,17 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # only keep friction model parameters that are used
         cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, relVolume=relVolume)
 
+        # set frictModelIndicator, this needs to happen AFTER checkCfgFrictModel
+        frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
+
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
 
-        simName = '_'.join([relNameSim, simHash, defID, row._asdict()['simTypeList'], cfgSim['GENERAL']['modelType']])
+        simName = '_'.join(filter(None, [relNameSim, simHash,
+                            defID, frictIndi, row._asdict()['simTypeList'],
+                            cfgSim['GENERAL']['modelType']]))
 
         # check if simulation exists. If yes do not append it
         if simName not in simNameExisting:
@@ -2639,10 +2644,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgUtils.writeCfgFile(cfgSimObject['GENERAL']['avalancheDir'], com1DFA, cfgSimObject, fileName=simName)
         else:
             log.warning('Simulation %s already exists, not repeating it' % simName)
-
-    # log.info('The following simulations will be performed')
-    # for key in simDict:
-    #     log.info('Simulation: %s' % key)
 
     inputSimFiles.pop('demFile')
 
