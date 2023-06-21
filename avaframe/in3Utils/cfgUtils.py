@@ -269,7 +269,6 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
 
     """
 
-
     log.info('Comparing two configs')
 
     # initialize modInfo and printOutInfo

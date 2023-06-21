@@ -69,6 +69,7 @@ def runCom2AB(avalancheDir=''):
     # already did some calculations you might want to clean it::
     initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
+    # Call the main com2AB functions
     cfgAB = cfgUtils.getModuleConfig(com2AB)
     pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
     abShpFile = outAB.writeABtoSHP(pathDict, resAB)

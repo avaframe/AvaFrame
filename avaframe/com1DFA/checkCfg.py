@@ -130,6 +130,6 @@ def checkCfgFrictionModel(cfg, relVolume=''):
                 log.error(message)
                 raise ValueError(message)
             else:
-                log.info('Fricton model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
+                log.info('Friction model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
 
     return cfg
