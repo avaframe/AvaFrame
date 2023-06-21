@@ -54,7 +54,7 @@ def runProbAna(avalancheDir=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)

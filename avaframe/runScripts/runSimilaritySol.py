@@ -32,7 +32,7 @@ avalancheDir = 'data/avaSimilaritySol'
 cfgMain['MAIN']['avalancheDir'] = avalancheDir
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -61,4 +61,4 @@ for sphKernelRadius in [5, 3]:
     # (may be multiple sims)
     _, _, _, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=simiSolCfg)
     # Clean input directory(ies) of old work 
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)

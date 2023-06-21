@@ -81,13 +81,15 @@ def cleanModuleFiles(avaDir, module, alternativeName='', deleteOutput=True):
     return 'SUCCESS'
 
 
-def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
-    '''
-    Clean a single avalanche directory of the work and output directories
-    Expects a avalanche directory name as string
-    and optional:
-    a log name to keep (and not delete) -> only if deleteOutput is True
-    Boolean to be able to avoid deletion of Outputs (true by default)
+def cleanSingleAvaDir(avaDir, deleteOutput=True):
+    ''' Clean a single avalanche directory of the work and output directories
+
+    Parameters
+    ----------
+    avaDir : path/string
+        Avalanche directory path
+    deleteOutput : boolean
+        If True (default), directory output and the log files are deleted 
     '''
 
     # check for empty or non string variable
@@ -104,17 +106,11 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
         _checkForFolderAndDelete(avaDir, 'Outputs')
 
         # check for *.log files, go to remove only if exists
-        allFiles = os.listdir(avaDir)
-        logFiles = [fi for fi in allFiles if fi.endswith(".log")]
-
-        # keep the log file specified in keep
-        if keep:
-            logFiles = [item for item in logFiles if keep not in item]
+        dirToClean = pathlib.Path(avaDir)
+        logFiles = list(dirToClean.glob('*.log'))
 
         for fi in logFiles:
-            filePath = os.path.join(avaDir, fi)
-            os.remove(filePath)
-
+            os.remove(fi)
 
     # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
     # does not exist

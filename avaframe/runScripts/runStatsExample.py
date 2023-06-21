@@ -39,7 +39,7 @@ cfgMain['MAIN']['avalancheDir'] = avaDir
 cfgStats = cfgUtils.getModuleConfig(getStats)
 cfg = cfgStats['GENERAL']
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avaDir, keep=logName)
+initProj.cleanSingleAvaDir(avaDir)
 
 # set output directory, first ava in list
 avaDir = pathlib.Path(avaDir)

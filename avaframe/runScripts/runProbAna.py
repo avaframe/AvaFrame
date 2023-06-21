@@ -42,7 +42,7 @@ for avaDir in avalancheDirectories:
     avaName = avaDir.name
     probAnaCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_probAnaCfg.ini' % avaName)
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir, keep=logName)
+    initProj.cleanSingleAvaDir(avaDir)
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna, fileOverride=probAnaCfg)

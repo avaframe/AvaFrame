@@ -54,7 +54,7 @@ def runSnowSlide(avalancheDir=''):
 
     # ----------------
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
     # load snow slide tool config
     snowSlideCfg = cfgUtils.getModuleConfig(com5SnowSlide)

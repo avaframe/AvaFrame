@@ -78,14 +78,9 @@ def test_cleanSingleAvaDir(tmp_path):
     assert keepLog.read_text() == content
 
     # check with keep and deleteOutput false
-    initProj.cleanSingleAvaDir(str(avaDir), keep='keep', deleteOutput=False)
-    # 3 items should be left (Inputs, keep.log, Outputs)
-    assert len(list(avaDir.iterdir())) == 3
-
-    # check with keep
-    initProj.cleanSingleAvaDir(str(avaDir), keep='keep')
-    # 2 items should be left (inputs, keep.log)
-    assert len(list(avaDir.iterdir())) == 2
+    initProj.cleanSingleAvaDir(str(avaDir), deleteOutput=False)
+    # 3 items should be left (Inputs, keep.log, fake.log, Outputs)
+    assert len(list(avaDir.iterdir())) == 4
 
     # check with no optional parameter
     initProj.cleanSingleAvaDir(str(avaDir))

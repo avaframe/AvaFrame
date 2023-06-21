@@ -77,7 +77,7 @@ for test in testList:
     rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir, keep=logName)
+    initProj.cleanSingleAvaDir(avaDir)
 
     # Load input parameters from configuration file for standard tests
     # write config to log file

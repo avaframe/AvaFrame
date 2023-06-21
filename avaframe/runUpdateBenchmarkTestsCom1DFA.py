@@ -58,7 +58,7 @@ for test in testList:
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir, keep=logName)
+    initProj.cleanSingleAvaDir(avaDir)
 
     # RunCom1DFA
     # Load input parameters from configuration file for standard tests

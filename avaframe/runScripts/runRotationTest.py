@@ -37,7 +37,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # ----------------
 # Clean input directory(ies) of old work and output files
-iP.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+iP.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 workPath = pathlib.Path(avalancheDir, 'Work', 'energyLineTest')
 fU.makeADir(workPath)
 rotationTestCfg = cfgUtils.getModuleConfig(rotationTest)

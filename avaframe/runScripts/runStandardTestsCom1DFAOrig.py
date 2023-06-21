@@ -77,7 +77,7 @@ for test in testList:
     rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir, keep=logName)
+    initProj.cleanSingleAvaDir(avaDir)
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFAOrig)

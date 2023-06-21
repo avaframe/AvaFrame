@@ -67,10 +67,7 @@ def runCom2AB(avalancheDir=''):
     # Clean input directory(ies) of old work and output files
     # If you just created the ``avalancheDir`` this one should be clean but if you
     # already did some calculations you might want to clean it::
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
-
-    # read AB inputs
-    com2AB.readABinputs(avalancheDir)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
     cfgAB = cfgUtils.getModuleConfig(com2AB)
     pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
