@@ -153,4 +153,4 @@ def test_quickPlotOne(tmp_path):
     # to test
     plotDictNew = oP.quickPlotOne(avaDir, data1File, cfg, locVal, axis, resType='')
 
-    assert plotDictNew['plots'] == [avaDir / 'out3Plot' / 'Profiles_release1HS_entres_ref_0.15500_pft.png']
+    assert plotDictNew['plots'] == [avaDir / 'Outputs' / 'out3Plot' / 'Profiles_release1HS_entres_ref_0.15500_pft.png']
