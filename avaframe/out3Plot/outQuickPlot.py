@@ -411,7 +411,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     """
 
     avaDir = fU.checkPathlib(avaDir)
-    outDir = avaDir / 'out3Plot'
+    outDir = avaDir / 'Outputs' / 'out3Plot'
     fU.makeADir(outDir)
 
     datafile = fU.checkPathlib(datafile)

@@ -133,7 +133,7 @@ is provided in :py:mod:`runScript/runQuickPlotOne`
 
 * first go to ``AvaFrame/avaframe``
 *  copy ``avaframeCfg.ini``  to ``local_avaframeCfg.ini``  and set your avalanche directory and the flag ``showPlot``
-*  copy ``out3Plot/outQuickPlotCfg`` to ``out3Plot/outQuickPlotCfg`` and optionally specify input directory
+*  copy ``out3Plot/outQuickPlotCfg.ini`` to ``out3Plot/local_outQuickPlotCfg.ini`` and optionally specify input directory
 *  run::
 
     python3 runScripts/runQuickPlotOne.py
