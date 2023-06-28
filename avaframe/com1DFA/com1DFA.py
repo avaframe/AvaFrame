@@ -2598,11 +2598,18 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check differences to default and add indicator to name
         defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
 
+        # if frictModel is samosATAuto compute release vol
+        if cfgSim['GENERAL']['frictModel'].lower() == 'samosatauto':
+            pathToDemFull = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem)
+            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull)
+        else:
+            relVolume = ''
+
         # check sphKernelRadius setting
         cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
 
         # only keep friction model parameters that are used
-        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim)
+        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, relVolume=relVolume)
 
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
@@ -2733,3 +2740,80 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
     dataDF, resTypeList = fU.makeSimFromResDF(avalancheDir, 'com1DFA', inputDir='', simName='')
     simDF = simDF.reset_index().merge(dataDF, on='simName').set_index('index')
     return dem, simDF, resTypeList
+
+
+def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
+    """ compute release area volume using release line and thickness info and dem
+
+        Parameters
+        -----------
+        releaseFile: pathlib path
+            path to release area shp file
+        cfg: dict
+            config settings of current sim
+        pathToDem: pathlib path
+            path to dem file used for current sim
+        radius : float
+            include all cells which center is in the release line or close enough
+
+        Returns
+        ---------
+        relVolume: float
+            volume of release area in m3
+
+
+    """
+
+    # convert back to configParser object
+    cfg = cfgUtils.convertDictToConfigParser(cfg)
+
+    # read simulation dem
+    demVol = IOf.readRaster(pathToDem, noDataToNan=True)
+    demVol['originalHeader'] = demVol['header'].copy()
+    methodMeshNormal = cfg['GENERAL'].getfloat('methodMeshNormal')
+    # get normal vector of the grid mesh
+    demVol = DFAtls.getNormalMesh(demVol, methodMeshNormal)
+    demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
+
+    # create release line
+    releaseLine = {}
+    releaseLine = shpConv.readLine(releaseFile, 'release1', demVol)
+    # check if release features overlap between features
+    thresholdPointInPoly = cfg['GENERAL'].getfloat('thresholdPointInPoly')
+    prepareArea(releaseLine, demVol, thresholdPointInPoly, combine=True, checkOverlap=True)
+    releaseLine['type'] = 'Release'
+
+    # check if release thickness provided as field or constant value
+    if cfg['GENERAL']['relThFromFile'] == 'True':
+
+        # read relThField from file
+        relThFilePath = pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Inputs', cfg['INPUT']['relThFile'])
+        relThFieldFull = IOf.readRaster(relThFilePath)
+        relThField = relThFieldFull['rasterData']
+
+        # create raster from polygon
+        releaseLine = prepareArea(releaseLine, demVol, radius, combine=True, checkOverlap=False)
+
+        # mask the relThField with raster from polygon
+        releaseLineMask = np.ma.masked_where(releaseLine['rasterData']==0., releaseLine['rasterData'])
+        releaseLineField = np.ma.masked_where(np.ma.getmask(releaseLineMask),relThField)
+        relVolumeField = np.ma.masked_where(np.ma.getmask(releaseLineMask),relThField) * demVol['areaRaster']
+        relVolume = np.nansum(relVolumeField)
+
+        if debugPlot:
+            debPlot.plotVolumeRelease(releaseLine, relThField, releaseLineField)
+    else:
+        relThField = ''
+
+        # set thickness values on releaseLine
+        releaseLine = setThickness(cfg, releaseLine, 'relTh')
+        # when creating raster from polygon apply release thickness
+        releaseLine = prepareArea(releaseLine, demVol, radius, thList=releaseLine['thickness'],
+            combine=True, checkOverlap=False)
+
+        # compute release volume using raster and dem area
+        relVolume = np.nansum(releaseLine['rasterData'] * demVol['areaRaster'])
+
+    log.info('release volume is: %.2f m3' % relVolume)
+
+    return relVolume

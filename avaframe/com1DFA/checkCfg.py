@@ -65,7 +65,7 @@ def checkCellSizeKernelRadius(cfg):
     return cfg
 
 
-def checkCfgFrictionModel(cfg):
+def checkCfgFrictionModel(cfg, relVolume=''):
     """ check which friction model is chosen and set remaining friction model
         parameters to numpy.nan
 
@@ -73,15 +73,14 @@ def checkCfgFrictionModel(cfg):
         -------------
         cfg: dict
             configuration settings
+        relVolume: float
+            The release volume; optional - only needed if samosATAuto is set
 
         Returns
         --------
         cfg: dict
             upated configuration settings
     """
-
-    # remove friction parameter values that are not used
-    frictModel = cfg['GENERAL']['frictModel']
 
     frictParameters = ['musamosat', 'tau0samosat', 'Rs0samosat', 'kappasamosat', 'Rsamosat',
     'Bsamosat',
@@ -93,6 +92,19 @@ def checkCfgFrictionModel(cfg):
     'musamosatmedium', 'tau0samosatmedium', 'Rs0samosatmedium', 'kappasamosatmedium', 'Rsamosatmedium',
     'Bsamosatmedium']
 
+    # if samosATAuto check for release volume and volume class to determine which parameter setup
+    if cfg['GENERAL']['frictModel'].lower() == 'samosatauto':
+        if relVolume < float(cfg['GENERAL']['volClassSmall']):
+            cfg['GENERAL']['frictModel'] = 'samosATSmall'
+        elif float(cfg['GENERAL']['volClassSmall']) <= relVolume < float(cfg['GENERAL']['volClassMedium']):
+            cfg['GENERAL']['frictModel'] = 'samosATMedium'
+        elif relVolume > float(cfg['GENERAL']['volClassMedium']):
+            cfg['GENERAL']['frictModel'] = 'samosAT'
+        log.info('samosATAuto - release volume is %.2f and hence friction model: %s is chosen' % (relVolume, cfg['GENERAL']['frictModel']))
+
+    # fetch friction model
+    frictModel = cfg['GENERAL']['frictModel']
+    # remove friction parameter values that are not used
     if frictModel.lower() == 'samosat':
         frictParameterIn = [frictModel.lower() in frictP and 'small' not in frictP and 'medium' not in frictP for frictP in frictParameters]
     else:

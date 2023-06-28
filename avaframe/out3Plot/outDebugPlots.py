@@ -358,3 +358,19 @@ def plotProfile(s, z, idsBetaPoint):
                 linewidth=1, linestyle='-.')
     plt.show()
     plt.close()
+
+def plotVolumeRelease(releaseLine, relThField, releaseLineField):
+    """ create a plot of the release line raster, the relThField for release thickness,
+        releaseLineField - combination of relThField and release line raster mask """
+        
+    fig = plt.figure()
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
+    im0 = ax1.imshow(releaseLine['rasterData'])
+    im1 = ax2.imshow(relThField)
+    im2 = ax3.imshow(releaseLineField)
+    fig.colorbar(im0 , ax=ax1)
+    fig.colorbar(im1, ax=ax2)
+    fig.colorbar(im2, ax=ax3)
+    plt.show()
