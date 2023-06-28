@@ -15,6 +15,7 @@ import shutil
 
 from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 
@@ -1707,3 +1708,62 @@ def test_runOrLoadCom1DFA(tmp_path, caplog):
     assert 'ppr' in resTypeList
     assert 'release1HS_0dcd58fc86_ent_dfa' in simDF['simName'].to_list()
     assert 'release2HS_3d519adab0_ent_dfa' in simDF['simName'].to_list()
+
+def test_fetchRelVolume(tmp_path):
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / 'data' / 'avaTestRel'
+    avaDir = pathlib.Path(tmp_path, 'avaTest1')
+    shutil.copytree(inputDir, avaDir)
+
+    # get path to release shp file
+    rel1 = avaDir / 'rel1.shp'
+
+    # create DEM
+    dem = {'header': {'xllcenter': 0.0, 'yllcenter': 0., 'cellsize': 1., 'nrows': 10, 'ncols': 20,
+        'noDataValue': -9999}}
+    dem['rasterData'] = np.ones((10,20))
+    demPath = pathlib.Path(avaDir, 'Inputs', 'testDem.asc')
+    fU.makeADir(pathlib.Path(avaDir, 'Inputs'))
+    IOf.writeResultToAsc(dem['header'], dem['rasterData'], demPath, flip=False)
+
+    # write relThField
+    relThF = {'header': {'xllcenter': 0.0, 'yllcenter': 0., 'cellsize': 1., 'nrows': 10, 'ncols': 20,
+        'noDataValue': -9999}}
+    relThF['rasterData'] = np.zeros((10,20))
+    for k in range(10):
+        relThF['rasterData'][k,:] = k*1
+    relThField1 = pathlib.Path(avaDir, 'Inputs', 'RELTH', 'relThField1.asc')
+    fU.makeADir(pathlib.Path(avaDir, 'Inputs', 'RELTH'))
+    IOf.writeResultToAsc(relThF['header'], relThF['rasterData'], relThField1, flip=False)
+
+    cfg = {}
+    # relTh read from shp
+    cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
+        'relTh': '', 'relThFromShp': True, 'relThFromFile': False, 'relTh0': 2.0, 'relTh1': 4.0}
+    cfg['INPUT'] = {'relThFile': '', 'relThId': '0|1', 'relThThickness': '2.|4.', 'thFromIni': ''}
+
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+
+    assert relVolume == 34.
+
+    cfg = {}
+    # relTh read from cfg
+    cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
+        'relTh': 5., 'relThFromShp': False, 'relThFromFile': False}
+    cfg['INPUT'] = {'relThFile': '', 'thFromIni': True}
+
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+
+    # call function
+    assert relVolume == 65.
+
+    cfg = {}
+    # relTh read from relThField
+    cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
+        'relTh': '', 'relThFromShp': False, 'relThFromFile': True}
+    cfg['INPUT'] = {'relThFile': 'RELTH/relThField1.asc', 'thFromIni': False}
+
+    # call function
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+
+    assert relVolume == 38.
