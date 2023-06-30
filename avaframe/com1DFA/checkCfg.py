@@ -66,8 +66,12 @@ def checkCellSizeKernelRadius(cfg):
 
 
 def checkCfgFrictionModel(cfg, relVolume=''):
-    """ check which friction model is chosen and set remaining friction model
-        parameters to numpy.nan
+    """ check which friction model is chosen and if friction model parameters are of valid type
+        if samosATAuto - check if
+
+        relVolume < volClassSmall - set frictModel=samosATSmall
+        volClassSmall <= relVolume < volClassMedium - set frictModel= samosAtMedium
+        relVolume >= volClassMedium - set frictModel=samosAT
 
         Parameters
         -------------
@@ -127,9 +131,5 @@ def checkCfgFrictionModel(cfg, relVolume=''):
                 raise ValueError(message)
             else:
                 log.info('Fricton model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
-        else:
-            if frictP in cfg['GENERAL']:
-                cfg['GENERAL'][frictP] = np.nan
-                log.debug('Friction model parameter not used: %s set to nan' % frictP)
 
     return cfg
