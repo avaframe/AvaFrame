@@ -63,13 +63,13 @@ def test_checkCfgFrictionModel():
     cfg = checkCfg.checkCfgFrictionModel(cfg)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
-    assert cfg['GENERAL']['musamosat'] == '0.155'
-    assert cfg['GENERAL']['tau0samosat'] == '0'
-    assert cfg['GENERAL']['kappasamosat'] == '0.43'
-    assert cfg['GENERAL']['Rsamosat'] == '0.05'
-    assert cfg['GENERAL']['Bsamosat'] == '4.13'
-    assert np.isnan(cfg['GENERAL']['muvoellmy'])
-    assert np.isnan(cfg['GENERAL']['xsivoellmy'])
+    assert float(cfg['GENERAL']['musamosat']) == 0.155
+    assert float(cfg['GENERAL']['tau0samosat']) == 0.
+    assert float(cfg['GENERAL']['kappasamosat']) == 0.43
+    assert float(cfg['GENERAL']['Rsamosat']) == 0.05
+    assert float(cfg['GENERAL']['Bsamosat']) == 4.13
+    assert float(cfg['GENERAL']['muvoellmy']) == 4000.
+    assert float(cfg['GENERAL']['xsivoellmy']) == 4000.
 
 
     cfg = {'GENERAL': {'frictModel': 'samosAT', 'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
@@ -79,13 +79,13 @@ def test_checkCfgFrictionModel():
     cfg = checkCfg.checkCfgFrictionModel(cfg)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
-    assert cfg['GENERAL']['musamosat'] == '0.155'
-    assert cfg['GENERAL']['tau0samosat'] == '0'
-    assert cfg['GENERAL']['kappasamosat'] == '0.43'
-    assert cfg['GENERAL']['Rsamosat'] == '0.05'
-    assert cfg['GENERAL']['Bsamosat'] == '9.13'
-    assert np.isnan(cfg['GENERAL']['muvoellmy'])
-    assert np.isnan(cfg['GENERAL']['xsivoellmy'])
+    assert float(cfg['GENERAL']['musamosat']) == 0.155
+    assert float(cfg['GENERAL']['tau0samosat']) == 0
+    assert float(cfg['GENERAL']['kappasamosat']) == 0.43
+    assert float(cfg['GENERAL']['Rsamosat']) == 0.05
+    assert float(cfg['GENERAL']['Bsamosat']) == 9.13
+    assert float(cfg['GENERAL']['muvoellmy']) == 4000.
+    assert np.isnan(float(cfg['GENERAL']['xsivoellmy']))
 
     cfg = {'GENERAL': {'frictModel': 'samosAT', 'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
         'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': 'nan',
@@ -117,14 +117,14 @@ def test_checkCfgFrictionModel():
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=24999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosATSmall'
-    assert cfg['GENERAL']['musamosatsmall'] == '0.22'
-    assert cfg['GENERAL']['tau0samosatsmall'] == '0'
-    assert cfg['GENERAL']['Rs0samosatsmall'] == '0.222'
-    assert cfg['GENERAL']['kappasamosatsmall'] == '0.43'
-    assert cfg['GENERAL']['Rsamosatsmall'] == '0.05'
-    assert cfg['GENERAL']['Bsamosatsmall'] == '4.13'
-    assert np.isnan(cfg['GENERAL']['muvoellmy'])
-    assert np.isnan(cfg['GENERAL']['xsivoellmy'])
+    assert float(cfg['GENERAL']['musamosatsmall']) == 0.22
+    assert float(cfg['GENERAL']['tau0samosatsmall']) == 0
+    assert float(cfg['GENERAL']['Rs0samosatsmall']) == 0.222
+    assert float(cfg['GENERAL']['kappasamosatsmall']) == 0.43
+    assert float(cfg['GENERAL']['Rsamosatsmall']) == 0.05
+    assert float(cfg['GENERAL']['Bsamosatsmall']) == 4.13
+    assert float(cfg['GENERAL']['muvoellmy']) == 4000.
+    assert np.isnan(float(cfg['GENERAL']['xsivoellmy']))
 
     cfg = {'GENERAL': {'frictModel': 'samosATAuto', 'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
         'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '9.13',
@@ -137,14 +137,14 @@ def test_checkCfgFrictionModel():
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=26999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosATMedium'
-    assert cfg['GENERAL']['musamosatmedium'] == '0.17'
-    assert cfg['GENERAL']['tau0samosatmedium'] == '0.9'
-    assert cfg['GENERAL']['Rs0samosatmedium'] == '1.222'
-    assert cfg['GENERAL']['kappasamosatmedium'] == '2.43'
-    assert cfg['GENERAL']['Rsamosatmedium'] == '0.75'
-    assert cfg['GENERAL']['Bsamosatmedium'] == '4.23'
-    assert np.isnan(cfg['GENERAL']['muvoellmy'])
-    assert np.isnan(cfg['GENERAL']['xsivoellmy'])
+    assert float(cfg['GENERAL']['musamosatmedium']) == 0.17
+    assert float(cfg['GENERAL']['tau0samosatmedium']) == 0.9
+    assert float(cfg['GENERAL']['Rs0samosatmedium']) == 1.222
+    assert float(cfg['GENERAL']['kappasamosatmedium']) == 2.43
+    assert float(cfg['GENERAL']['Rsamosatmedium']) == 0.75
+    assert float(cfg['GENERAL']['Bsamosatmedium']) == 4.23
+    assert float(cfg['GENERAL']['muvoellmy']) == 4000.
+    assert np.isnan(float(cfg['GENERAL']['xsivoellmy']))
 
     cfg = {'GENERAL': {'frictModel': 'samosATAuto', 'musamosat': '0.155', 'tau0samosat': '0.8', 'Rs0samosat': '0.2227',
         'kappasamosat': '1.43', 'Rsamosat': '1.05', 'Bsamosat': '9.13',
@@ -157,11 +157,11 @@ def test_checkCfgFrictionModel():
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=74999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
-    assert cfg['GENERAL']['musamosat'] == '0.155'
-    assert cfg['GENERAL']['tau0samosat'] == '0.8'
-    assert cfg['GENERAL']['Rs0samosat'] == '0.2227'
-    assert cfg['GENERAL']['kappasamosat'] == '1.43'
-    assert cfg['GENERAL']['Rsamosat'] == '1.05'
-    assert cfg['GENERAL']['Bsamosat'] == '9.13'
-    assert np.isnan(cfg['GENERAL']['muvoellmy'])
-    assert np.isnan(cfg['GENERAL']['xsivoellmy'])
+    assert float(cfg['GENERAL']['musamosat']) == 0.155
+    assert float(cfg['GENERAL']['tau0samosat']) == 0.8
+    assert float(cfg['GENERAL']['Rs0samosat']) == 0.2227
+    assert float(cfg['GENERAL']['kappasamosat']) == 1.43
+    assert float(cfg['GENERAL']['Rsamosat']) == 1.05
+    assert float(cfg['GENERAL']['Bsamosat']) == 9.13
+    assert float(cfg['GENERAL']['muvoellmy']) == 4000.
+    assert np.isnan(float(cfg['GENERAL']['xsivoellmy']))

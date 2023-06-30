@@ -1442,7 +1442,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                           'frictModel': 'samosAT',
                           'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
                           'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
-                          'muvoellmy': str(np.nan), 'xsivoellmy': str(np.nan)}
+                          'muvoellmy': '4000.', 'xsivoellmy': '4000.'}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg['INPUT']['DEM'] = 'avaAlr.asc'
@@ -1488,7 +1488,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                            'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.', 'frictModel': 'samosAT',
                            'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
                            'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
-                           'muvoellmy': str(np.nan), 'xsivoellmy': str(np.nan)}
+                           'muvoellmy': '4000.', 'xsivoellmy': '4000.'}
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0', 'entThCi95': 'None', 'releaseScenario': 'relAlr'}
     testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     testCfg2['GENERAL']['avalancheDir'] = str(avaDirTest)
