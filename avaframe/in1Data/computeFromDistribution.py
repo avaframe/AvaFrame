@@ -162,8 +162,8 @@ def extractNormalDist(cfg):
 
     # compute min and max values of range derived from 99% confidence interval
     # Note: final sample includes these min and max values
-    min = norm.interval(alpha=(minMaxInterval/100.), loc=mean, scale=std)[0]
-    max = norm.interval(alpha=(minMaxInterval/100.), loc=mean, scale=std)[1]
+    min = norm.interval(confidence=(minMaxInterval/100.), loc=mean, scale=std)[0]
+    max = norm.interval(confidence=(minMaxInterval/100.), loc=mean, scale=std)[1]
 
     # derive normal distribution (pdf and cdf) for range from min to max values
     x = np.linspace(min, max, int(cfg['support']))

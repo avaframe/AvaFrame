@@ -154,13 +154,21 @@ def test_createComModConfig(tmp_path):
 
     print('cfgFiles', cfgFiles)
 
+    for cfgF in cfgFiles:
+        cfgTest = configparser.ConfigParser()
+        cfgTest.read(cfgF)
+        print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+            cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
+
+        assert cfgTest['GENERAL']['relThFromShp'] == 'False'
+        assert cfgTest['GENERAL'].getfloat('relTh') <= 3.
+        assert cfgTest['GENERAL'].getfloat('relTh') >= 1.
+        assert cfgTest['GENERAL'].getfloat('musamosat') <= 0.248
+        assert cfgTest['GENERAL'].getfloat('musamosat') >= 0.062
+
     cfgTest = configparser.ConfigParser()
     cfgTest.read(cfgFiles[0])
-    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
-        cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
-
-    assert cfgTest['GENERAL']['relThFromShp'] == 'False'
-    assert cfgTest['GENERAL']['relTh'] == '1.6341620830145123'
+    assert cfgTest['GENERAL']['relTh'] == '2.2719559079879'
     assert len(cfgFiles) == 40
 
     cfgProb = configparser.ConfigParser()
@@ -712,7 +720,7 @@ def test_cfgFilesGlobalApproach(tmp_path):
         cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
 
     assert cfgTest['GENERAL']['relThFromShp'] == 'False'
-    assert cfgTest['GENERAL']['relTh'] == '1.6341620830145123'
+    assert cfgTest['GENERAL']['relTh'] == '2.2719559079879'
     assert len(cfgFiles) == 40
 
 
