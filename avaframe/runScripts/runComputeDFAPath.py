@@ -22,7 +22,7 @@ import avaframe.in3Utils.geoTrans as gT
 from avaframe.out3Plot import outCom3Plots
 
 # set to true if you want to run com1DFA first to create the DFA input needed for the path generation
-runDFAModule = False
+runDFAModule = True
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
