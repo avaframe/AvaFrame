@@ -498,7 +498,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     # fetch raster area and compute mean, max values for each cross-profile
     # TODO: average over cells – weighted with cell area (aimec function)
     rasterArea = rasterTransfo['rasterArea']
-    maxaCrossMax, aCrossMax, aCrossMean, aCrossMin = aT.getMaxMeanValues(slRaster, rasterArea)
+    maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
     # use the max or the mean of each cross section
     if cfgRangeTime['GENERAL']['maxOrMean'].lower() == 'max':
         aCross = aCrossMax
