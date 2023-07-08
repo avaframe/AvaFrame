@@ -44,7 +44,7 @@ from avaframe.in3Utils import cfgHandling
 
 # -----------Required settings-----------------
 # log file name; leave empty to use default runLog.log
-logName = 'runFrictionTest'
+logName = 'runAnalyzeParicleProps'
 modName = 'com1DFA'
 # -----------------------
 

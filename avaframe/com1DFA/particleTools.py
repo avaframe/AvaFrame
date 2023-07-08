@@ -940,6 +940,12 @@ def reshapeParticlesDicts(particlesList, propertyList):
     # create particlesTimeArrays
     particlesTimeArrays = {}
 
+    idParticles = [p['nPart'] for p in particlesList]
+    if len(list(set(idParticles))) > 1:
+        message = 'Number of particles changed throughout simulation'
+        log.error(message)
+        raise AssertionError(message)
+
     for props in propertyList:
         if isinstance(particlesList[0][props], int) or isinstance(particlesList[0][props], float):
             particlesTimeArrays[props] = np.zeros(len(particlesList))

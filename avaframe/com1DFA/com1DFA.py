@@ -425,9 +425,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName)
-            outCom1DFA.plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName)
-            outCom1DFA.plotAllPartAcc(outDirData, particlesList, cfg, Tsave, cuSimName)
-
 
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
