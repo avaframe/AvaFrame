@@ -138,7 +138,7 @@ def plotPathAngle(dbData, cfgMain, nameEvent, tickOrigin='orig-transit'):
         ax21.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         # save figure
-        outFile = ('%s_%s_analysis_%s' % (row['path_name'], row['event_id'], projstr))
+        outFile = ('%s_%s_analysis' % (row['path_name'], row['event_id']))
         plotPath = pU.saveAndOrPlot({'pathResult': avalancheDir}, outFile, fig)
 
 
