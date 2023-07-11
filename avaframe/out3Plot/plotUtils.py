@@ -834,7 +834,7 @@ def addHillShadeContours(ax, data, cellSize, extent, colors=["gray"], onlyContou
     return ls, CS
 
 
-def fetchContourCoords(xGrid, yGrid, data, level, multipleLines=True):
+def fetchContourCoords(xGrid, yGrid, data, level):
     """fetch contour line coordinates
 
     Parameters
@@ -845,8 +845,6 @@ def fetchContourCoords(xGrid, yGrid, data, level, multipleLines=True):
         field data
     level: float
         level of contour line
-    multipleLines: bool
-        if True if one contour level has multiple lines (not one continuous line) use all
 
     Returns
     ---------
@@ -856,14 +854,9 @@ def fetchContourCoords(xGrid, yGrid, data, level, multipleLines=True):
 
     # create contour lines and extract coordinates and write to dict
     contourP = plt.contour(xGrid, yGrid, data, levels=[level])
-    if multipleLines:
-        x = np.array([])
-        y = np.array([])
-        for i in range(len(contourP.allsegs[0])):
-            x = np.append(x, contourP.allsegs[0][i][:, 0])
-            y = np.append(y, contourP.allsegs[0][i][:, 1])
-    else:
-        x = contourP.allsegs[0][0][:, 0]
-        y = contourP.allsegs[0][0][:, 1]
 
-    return x, y
+    contourDictXY = {}
+    for i in range(len(contourP.allsegs[0])):
+        contourDictXY['line%s_%d' %(level, i)] = {'x': contourP.allsegs[0][i][:, 0], 'y':contourP.allsegs[0][i][:, 1]}
+
+    return contourDictXY

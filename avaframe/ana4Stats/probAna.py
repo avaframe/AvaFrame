@@ -27,7 +27,7 @@ from avaframe.in1Data import getInput as gI
 log = logging.getLogger(__name__)
 
 
-def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
+def createComModConfig(cfgProb, avaDir, modName):
     """ create configuration file for performing sims with modName com module
 
         Parameters
@@ -38,8 +38,6 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
             path to avalanche directory
         modName: module
             computational module
-        cfgFileMod: str
-            path to cfgFile for computational module name - optional
 
         Returns
         -------
@@ -58,15 +56,15 @@ def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
 
     if cfgProb['PROBRUN'].getint('samplingStrategy') == 2:
         log.info('Probability run performed by varying one parameter at a time - local approach.')
-        cfgFiles = cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod)
+        cfgFiles = cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir)
     else:
         log.info('Probability run perfromed drawing parameter set from full sample.')
-        cfgFiles = cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod)
+        cfgFiles = cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir)
 
     return cfgFiles, outDir
 
 
-def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
+def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir):
     """ create configuration files with all parameter variations - drawn from full sample
         for performing sims with modName comModule
 
@@ -78,8 +76,6 @@ def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
             path to avalanche directory
         modName: module
             computational module
-        cfgFileMod: str
-            path to cfgFile for computational module - optional
 
         Returns
         -------
@@ -89,7 +85,7 @@ def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
     """
 
     # create sample of all parameter variations
-    paramValuesDList = createSampleFromConfig(avaDir, cfgProb, modName, fileOverride=cfgFileMod)
+    paramValuesDList = createSampleFromConfig(avaDir, cfgProb, modName)
 
     # create plot of parameter sample if variation of two parameters
     for paramValuesD in paramValuesDList:
@@ -98,16 +94,20 @@ def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir, cfgFileMod):
         else:
             releaseScenario = ''
         plotDir = avaDir / 'Outputs' / 'ana4Stats' / 'plots'
-        sP.plotSample(paramValuesD, plotDir, releaseScenario=releaseScenario)
+        if len(paramValuesD['names']) == 2:
+            sP.plotSample(paramValuesD, plotDir, releaseScenario=releaseScenario)
+        elif len(paramValuesD['varParNamesInitial']) == 2:
+            sP.plotThSampleFromVals(paramValuesD, plotDir)
+        else:
+            log.debug('More or less than two parameters have been varied - no plot of sample available')
 
     # write cfg files one for each parameter set drawn from full sample
-    cfgFiles = createCfgFiles(paramValuesDList, modName, cfgProb, cfgPath=outDir,
-                              fileOverride=cfgFileMod)
+    cfgFiles = createCfgFiles(paramValuesDList, modName, cfgProb, cfgPath=outDir)
 
     return cfgFiles
 
 
-def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod):
+def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir):
     """ create configuration file for performing sims with modName com module
 
         Parameters
@@ -120,8 +120,6 @@ def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod):
             path to avalanche directory
         modName: module
             computational module
-        cfgFileMod: str
-            path to cfgFile for computational module name - optional
 
         Returns
         -------
@@ -138,7 +136,7 @@ def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir, cfgFileMod):
         cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
 
         # use cfgFile, local com module settings or default settings if local not available
-        modCfg = fetchStartCfg(modName, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), cfgFileMod)
+        modCfg = fetchStartCfg(modName, cfgProb)
         modCfg = updateCfgRange(modCfg, cfgProb, varName, variationsDict[varName])
 
         with open(cfgFile, 'w') as configfile:
@@ -406,8 +404,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
 
                 # fetch contourline info
                 xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(refData['header'])
-                x, y = pU.fetchContourCoords(xGrid, yGrid, data, float(cfg['GENERAL']['peakLim']))
-                contourDict[fileName.stem] = {'x': x, 'y': y}
+                contourDictXY = pU.fetchContourCoords(xGrid, yGrid, data, float(cfg['GENERAL']['peakLim']))
+                contourDict[fileName.stem] = contourDictXY
 
                 log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
 
@@ -518,7 +516,7 @@ def fetchThicknessInfo(avaDir):
     return inputSimFilesAll
 
 
-def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
+def createSampleFromConfig(avaDir, cfgProb, comMod):
     """ Create a sample of parameters for a desired parameter variation,
         and draw nSample sets of parameter values
         if thickness values read from shp for comMod, convert sample values for these
@@ -532,9 +530,6 @@ def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
             configuration settings for parameter variation
         comMod: computational module
             module to perform then sims for parameter variation
-        fileOverride: pathlib path
-            optional - path to configuration file for comMod settings
-            (for all parameters except those to be varied)
 
         Returns
         --------
@@ -549,7 +544,7 @@ def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
    """
 
     # read initial configuration
-    cfgStart = fetchStartCfg(comMod, cfgProb['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
+    cfgStart = fetchStartCfg(comMod, cfgProb)
 
     # fetch parameter names for parameter variation and variation value and variation type
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
@@ -560,7 +555,7 @@ def createSampleFromConfig(avaDir, cfgProb, comMod, fileOverride=''):
 
     # create sets of parameters values for parameter variation
     if len(thReadFromShp) > 0:
-         paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType)
+         paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp)
     else:
         paramValuesD = createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, valVariationValue, varType)
         paramValuesDList = [paramValuesD]
@@ -629,7 +624,7 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
     return paramValuesD
 
 
-def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType):
+def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp):
     """ Create a sample of parameters for a desired parameter variation,
         and fetch thickness values from shp file and perform variation for each feature within
         shapefile but treating the features of one shapefile as not-independent
@@ -676,7 +671,7 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
         thValues = np.asarray([])
         ciValues = np.asarray([])
         for idx1, varPar in enumerate(varParList):
-            if varPar in ['relTh', 'entTh', 'secondaryRelTh']:
+            if varPar in thReadFromShp:
                 ciRequired = varType[idx1].lower() == 'rangefromci'
                 thV, ciV, thFeatureNames = fetchThThicknessLists(varPar, inputSimFiles, relF, ciRequired=ciRequired)
                 # add to list all the parameter names
@@ -736,6 +731,8 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
                         'values': fullSample,
                         'typeList': cfgProb['PROBRUN']['varParType'].split('|'),
                         'thFromIni': thFromIni,
+                        'thVariationBasedOnFromShp': thReadFromShp,
+                        'varParNamesInitial': varParList,
                         'releaseScenario': relF.stem}
 
         paramValuesDList.append(paramValuesD)
@@ -818,7 +815,7 @@ def fetchThThicknessLists(varPar, inputSimFiles, releaseFile, ciRequired=False):
     return thValues, ciValues, thicknessFeatureNames
 
 
-def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath='', fileOverride=''):
+def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
     """ create all config files required to run com Module from parameter variations using paramValues
 
         Parameters
@@ -832,8 +829,6 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath='', fileOverride=''):
             configuration settings
         cfgPath: str
             path where cfg files should be saved to
-        fileOverride: pathlib path
-            if config of comMod should be overwritten provide file path
 
         Returns
         --------
@@ -850,7 +845,7 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath='', fileOverride=''):
     countS = 0
     for paramValuesD in paramValuesDList:
         # read initial configuration
-        cfgStart = fetchStartCfg(comMod, cfg['PROBRUN'].getboolean('defaultComModuleCfg'), fileOverride)
+        cfgStart = fetchStartCfg(comMod, cfg)
         for count1, pVal in enumerate(paramValuesD['values']):
             for index, par in enumerate(paramValuesD['names']):
                 cfgStart['GENERAL'][par] = str(pVal[index])
@@ -868,32 +863,31 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath='', fileOverride=''):
     return cfgFiles
 
 
-def fetchStartCfg(comMod, onlyDefault, fileOverride):
+def fetchStartCfg(comMod, cfgProb):
     """ fetch start configuration of comMod
-        if onlyDefault True and fileOverride path provided throw error
+        if onlyDefault use default comModCfg.ini and if false check if there is a local_comModCfg.ini
 
         Parameters
         -----------
         comMod: computational module
             module where configuration is read from
-        onlyDefault: bool
-            if True - read default config and not local
-        fileOverride: pathlib path
-            path to optional override configuration file
+        cfgProb: configparser object
+            configuration settings of probAna with comMod_override section
 
         Returns
         --------
         cfgStart: configparser object
             configuration object of comMod
     """
+    # get filename of module
+    modName = str(pathlib.Path(comMod.__file__).stem)
 
-    if fileOverride != '' and onlyDefault:
-        message = 'fileOverride provided AND defaultComModuleCfg set to True, only one is allowed'
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        cfgStart = cfgUtils.getModuleConfig(comMod, fileOverride=fileOverride, toPrint=False,
-                                            onlyDefault=onlyDefault)
+    # fetch comMod config
+    cfgStart = cfgUtils.getModuleConfig(comMod, fileOverride='', toPrint=False,
+        onlyDefault=cfgProb['%s_override' % modName].getboolean('defaultConfig'))
+
+    # override with parameters set in in the cfgProb comMod_override section
+    cfgStart, cfgProb = cfgHandling.applyCfgOverride(cfgStart, cfgProb, comMod, addModValues=False)
 
     return cfgStart
 

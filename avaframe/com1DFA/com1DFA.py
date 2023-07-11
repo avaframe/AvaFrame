@@ -2668,6 +2668,15 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     # read entrainment resistance info
     entResInfo = inputSimFiles['entResInfo']
 
+    # check if set simType is a valid option
+    validSimTypesStr = 'available|null|ent|entres|res'
+    validSimTypes = validSimTypesStr.split('|')
+    validArray = [True if item in validSimTypes else False for item in simTypeList]
+    if False in validArray:
+        message = 'A non-valid entry found in simType, valid Types are %s' % validSimTypesStr
+        log.error(message)
+        raise AssertionError(message)
+
     # define simulation type
     if 'available' in simTypeList:
         if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':

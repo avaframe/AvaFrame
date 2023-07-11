@@ -396,10 +396,11 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     xGrid, yGrid, _, _ = geoTrans.makeCoordGridFromHeader(demHeader)
 
     # fetch contour line
-    x, y = pU.fetchContourCoords(xGrid, yGrid, flowF,cfgVisu.getfloat('thresholdValue'))
+    contourDictXYLines = pU.fetchContourCoords(xGrid, yGrid, flowF,cfgVisu.getfloat('thresholdValue'))
 
     # setup dict
-    contDictXY = {simName: {'x': x, 'y': y, 'contourResType': cfgVisu['contourResType'],
-        'thresholdValue': cfgVisu.getfloat('thresholdValue')}}
+    contDictXY = {simName: contourDictXYLines}
+    contDictXY[simName]['contourResType'] = cfgVisu['contourResType']
+    contDictXY[simName]['thresholdValue'] = cfgVisu.getfloat('thresholdValue')
 
     return contDictXY
