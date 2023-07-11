@@ -881,7 +881,7 @@ def fetchContourLines(rasterTransfo, inputs, level, contourDict):
         Returns
         ---------
         contourDict: dict
-            updat. dictionary with x, y coordinates for each sim contour line -> added info
+            updat. dictionary with name of contour line: x, y coordinates for each sim contour line -> added info
             of current simulation
     """
 
@@ -894,9 +894,9 @@ def fetchContourLines(rasterTransfo, inputs, level, contourDict):
     gridL, gridS = np.meshgrid(l, s)
 
     # create contour lines and extract coordinates and write to dict
-    x, y = pU.fetchContourCoords(gridL, gridS, compData, level)
+    contourDictXY = pU.fetchContourCoords(gridL, gridS, compData, level)
     # add to dict
-    contourDict[simName] = {'x': x, 'y': y}
+    contourDict[simName] = contourDictXY
 
     return contourDict
 
@@ -959,13 +959,13 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
         else:
             cmapVal = index / len(contourDict)
-        if simName == pathDict['refSimName']:
-            ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k', label='reference',
-                zorder=len(contourDict))
-        else:
-            ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
-        if np.amax(contourDict[simName]['y'])> yMax:
-            yMax = np.amax(contourDict[simName]['y'])
+        for key in contourDict[simName]:
+            if simName == pathDict['refSimName']:
+                addLinePlot(contourDict[simName][key], 'k', 'reference', ax1, key, zorder=len(contourDict))
+            else:
+                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'], c=cmap.to_rgba(cmapVal))
+            if np.amax(contourDict[simName][key]['y'])> yMax:
+                yMax = np.amax(contourDict[simName][key]['y'])
 
     sMax = np.where(s > yMax)[0][0]
     ax1.set_ylim([s[0], s[sMax]])
@@ -992,16 +992,17 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
         else:
             cmapVal = index / len(contourDict)
-        if simName == pathDict['refSimName']:
-            # define label for reference sim, if info on what it is based is available
-            if pathDict['valRef'] == '':
-                labelReference = 'reference'
+        for key in contourDict[simName]:
+            if simName == pathDict['refSimName']:
+                # define label for reference sim, if info on what it is based is available
+                if pathDict['valRef'] == '':
+                    labelReference = 'reference'
+                else:
+                    labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
+                # add contour lines
+                addLinePlot(contourDict[simName][key], 'k', labelReference, ax2, key, zorder=len(contourDict))
             else:
-                labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
-            ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c='k',
-                label=labelReference, zorder=len(contourDict))
-        else:
-            ax2.plot(contourDict[simName]['x'], contourDict[simName]['y'], c=cmap.to_rgba(cmapVal))
+                ax2.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'], c=cmap.to_rgba(cmapVal))
 
     ax2.set_ylim([s[indStartOfRunout], s[sMax]])
     ax2.legend()
@@ -1009,3 +1010,29 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
     # save and or plot fig
     outFileName = pathDict['projectName'] + '_ContourLinesAll'
     pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder=''):
+    """ add a contour line with label only for line that has  _0 in name
+
+        Parameters
+        -----------
+        contourDict: dict
+            dict with x, y info of contourline coordinates
+        colorStr: str
+            color of line
+        labelStr: str
+            name of legend entry for line
+        ax: matplotlib axes object
+            axes where to add the lines too
+        key: str
+            name of the contour line
+        zorder: int
+            order of line on plot
+    """
+
+    if '_0' in key:
+        ax.plot(contourDict['x'], contourDict['y'], c=colorStr, label=labelStr,
+            zorder=zorder)
+    else:
+        ax.plot(contourDict['x'], contourDict['y'], c=colorStr, zorder=zorder)

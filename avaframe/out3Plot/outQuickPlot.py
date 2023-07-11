@@ -9,6 +9,8 @@ import numpy as np
 import numpy.ma as ma
 import pathlib
 import logging
+from cmcrameri import cm as cmapCrameri
+import matplotlib as mpl
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -553,9 +555,25 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
     ax1.set_xlabel('y [m]')
     pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
 
-    # loop over all sims
-    for simName in contourDict:
-        ax1.plot(contourDict[simName]['x'], contourDict[simName]['y'])
+    # create color map
+    nSims = len(contourDict)
+    norm = mpl.colors.Normalize(vmin=0, vmax=nSims)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cmapCrameri.hawaii)
+    cmap.set_array([])
 
+    # loop over all sims
+    for ind, simName in enumerate(contourDict):
+        keyLabel = list(contourDict[simName])[0]
+        for key in contourDict[simName]:
+            if key == keyLabel and 'line' in key:
+                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
+                    c=cmap.to_rgba(ind), label=simName)
+            elif 'line' in key:
+                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
+                    c=cmap.to_rgba(ind))
+
+    ax1.legend()
+
+    # save and or plot
     outFileName = pathDict['plotScenario'] + '_ContourLines'
     pU.saveAndOrPlot(pathDict, outFileName, fig)

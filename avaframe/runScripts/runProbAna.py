@@ -40,18 +40,17 @@ for avaDir in avalancheDirectories:
     # write config to log file
     avaDir = pathlib.Path(avaDir)
     avaName = avaDir.name
-    probSimCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_com1DFACfg.ini' % avaName)
     probAnaCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_probAnaCfg.ini' % avaName)
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Load configuration file for probabilistic run and analysis
-    cfgProb = cfgUtils.getModuleConfig(probAna, probAnaCfg)
+    cfgProb = cfgUtils.getModuleConfig(probAna, fileOverride=probAnaCfg)
 
     # create configuration files for com1DFA simulations including parameter
     # variation - defined in the probabilistic config
     # prob4AnaCfg.ini or its local copy
-    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=probSimCfg)
+    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avaDir, com1DFA)
 
     # perform com1DFA simulations
     outDir = pathlib.Path(avaDir, 'Outputs')

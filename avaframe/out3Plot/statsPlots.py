@@ -530,17 +530,114 @@ def plotSample(paramValuesD, outDir, releaseScenario=''):
         outDir: pathlib path
             path where to save the plot
     """
-    if len(paramValuesD['names']) == 2:
-        # Figure
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        plt.title('Parameter sample')
-        plt.plot(paramValuesD['values'][:,0], paramValuesD['values'][:,1], 'b*')
-        plt.xlabel(paramValuesD['names'][0])
-        plt.ylabel(paramValuesD['names'][1])
 
+    # Figure
+    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+    plt.title('Parameter sample')
+    plt.plot(paramValuesD['values'][:,0], paramValuesD['values'][:,1], 'b*')
+    plt.xlabel(paramValuesD['names'][0])
+    plt.ylabel(paramValuesD['names'][1])
+
+    # put ava name on plot and save figure
+    outFileName = 'ParameterSample_%s' % releaseScenario
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
+
+
+def plotThSample(simDF, name1, thName, outDir):
+    """ plot the parameter sample if generated for th thickness values read from shp file
+        one plot for each release Scenario using simDF
+
+        Parameters
+        ------------
+        simDF: pandas DataFrame
+            dataframe with one row per sim and info on sim configuration
+        name1: str
+            name of parameter that is varied for x-axis
+        thName: str
+            name of the thickness parameter (relTh, entTh, secondaryRelTh)
+        outDir: pathlib path
+            path to folder where to save plot
+
+    """
+
+    # fetch all release scenarios
+    releaseScenario = simDF['releaseScenario'].values
+    relSc = list(set(releaseScenario))
+
+    # create one plot per release scenario
+    for count, rel in enumerate(relSc):
+        simDFPlot = simDF[simDF['releaseScenario'] == rel]
+        # create names of release features
+        thIds = (simDFPlot[thName + 'Id'].iloc[0]).split('|')
+        thFeatures = [thName + id for id in thIds]
+
+        # check if empty strings - possible if multiple scenarios and not all have same thId features
+        # replace empty string with nans to create numpy array of type float and not string
+        # required for the twinx to work properly
+        simDF2 = simDFPlot.copy()
+        for thF in thFeatures:
+            simDF2[thF] = simDFPlot[thF].replace('', np.nan).astype(float)
+
+        # setup figure
+        fig, ax = plt.subplots(figsize=(pU.figW*1.5, pU.figH))
+        fig.suptitle('Parameter sample of %s vs %s for %s' % (name1, thName, rel))
+        # scatterplot for first th feature vs name1
+        dist = sns.scatterplot(data=simDF2, x=name1, y= thFeatures[0], ax=ax, hue='releaseScenario')
+        # position of twin axes
+        distPosition = 1.
+
+        # loop over all the other th features and add axes for them
+        for count1, thFeat in enumerate(thFeatures[1:]):
+            axNew = ax.twinx()
+            axNew.spines["right"].set_position(("axes", distPosition))
+            dist = sns.scatterplot(data=simDF2, x=name1, y=thFeat, ax=axNew, hue='releaseScenario')
+            distPosition = distPosition + 0.25
+
+        plt.show()
         # put ava name on plot and save figure
-        outFileName = 'ParameterSample_%s' % releaseScenario
+        outFileName = 'ParameterSample_%s' % rel
         plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
-    else:
-        log.debug('More or less than two parameters have been varied - no plot of sample available')
+
+def plotThSampleFromVals(paramValuesD, outDir):
+    """ plot the parameter sample if generated for thickness values read from shp file
+        one plot for each release Scenario - hence paramValuesD should be for one release scenario only
+
+        Parameters
+        ------------
+        paramValuesD: dict
+            dict with info on parameter variation and initial values of parameters
+        outDir: pathlib path
+            path to folder for saving plot
+
+    """
+
+    # if only two parameters are varied but one is read from shp then create a sample plot
+    # fetch parameters that are varied and thickness feature names
+    name1 = list(set(paramValuesD['varParNamesInitial']).symmetric_difference(set(paramValuesD['thVariationBasedOnFromShp'])))[0]
+    thName = paramValuesD['thVariationBasedOnFromShp'][0]
+    thFeatures = [th for th in paramValuesD['names'] if thName in th]
+    name1Index = paramValuesD['names'].index(name1)
+
+    # setup figure
+    fig, ax = plt.subplots(figsize=(pU.figW*1.5, pU.figH))
+    fig.suptitle('Parameter sample of %s vs %s' % (name1, thName))
+    # scatterplot for first th feature vs name1
+    thIndex = paramValuesD['names'].index(thFeatures[0])
+    plt.plot(paramValuesD['values'][:, name1Index], paramValuesD['values'][:, thIndex], 'o')
+    ax.set_ylabel('%s' % thFeatures[0])
+    # position of twin axes
+    distPosition = 1.
+
+    # loop over all the other th features and add axes for them
+    for count1, thFeat in enumerate(thFeatures[1:]):
+        axNew = ax.twinx()
+        axNew.spines["right"].set_position(("axes", distPosition))
+        axNew.set_ylabel('%s' % thFeat)
+        thIndex = paramValuesD['names'].index(thFeat)
+        plt.plot(paramValuesD['values'][:, name1Index], paramValuesD['values'][:, thIndex], 'o')
+        distPosition = distPosition + 0.25
+
+    # put ava name on plot and save figure
+    outFileName = 'ParameterSample_%s' % paramValuesD['releaseScenario']
+    plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)

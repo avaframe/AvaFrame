@@ -17,6 +17,7 @@ import matplotlib as mpl
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out3Plot import statsPlots as sPlot
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import ascUtils as iOf
@@ -84,10 +85,8 @@ def createRasterContourDict(inFile, levels):
     simData = iOf.readRaster(inFile)
     xGrid, yGrid,_ ,_ = gT.makeCoordGridFromHeader(simData['header'])
     for level in levels:
-        contourDict['pft_m_' + str(level)] = {}
-        x, y = pU.fetchContourCoords(xGrid, yGrid, simData['rasterData'], level, multipleLines=True)
-        contourDict['pft_m_' + str(level)]['x'] = x
-        contourDict['pft_m_' + str(level)]['y'] = y
+        contourDictXY = pU.fetchContourCoords(xGrid, yGrid, simData['rasterData'], level)
+        contourDict['pft_m_' + str(level)] = contourDictXY
         contourDict['pft_m_' + str(level)]['contourLevel'] = level
 
     return contourDict
@@ -138,10 +137,15 @@ def plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multi
                     ax1.set_ylabel('x')
                     ax1.set_xlabel('y')
                     ax1.plot(contourDictRef[name]['x'], contourDictRef[name]['y'], 'k.', label='ref')
-                    ax1.plot(contourDictSim[nameSim]['x'], contourDictSim[nameSim]['y'], 'r.', label='sim')
+                    for key in contourDictSim[nameSim]:
+                        if '_0' in key and 'line' in key:
+                            ax1.plot(contourDictSim[nameSim][key]['x'], contourDictSim[nameSim][key]['y'], 'r-', label='sim')
+                        elif 'line' in key:
+                            ax1.plot(contourDictSim[nameSim][key]['x'], contourDictSim[nameSim][key]['y'], 'r-')
                     ax1.legend()
                     pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
-                    outFileName = 'contourLine_%s' % name
+                    nameStr = name.replace('/', '-')
+                    outFileName = 'contourLine_%s' % nameStr
                     pU.saveAndOrPlot(pathDict, outFileName, fig)
                 else:
                     ax1.plot(contourDictRef[name]['x'], contourDictRef[name]['y'], 'b.')
@@ -157,5 +161,6 @@ def plotContoursFromDict(contourDictRef, contourDictSim, pathDict, levels, multi
         cbar.ax.set_title('[' + pathDict['unit'] + ']', pad=10)
         cbar.set_label(pathDict['parameter'])
         pU.putAvaNameOnPlot(ax1, pathDict['avaDir'])
+        fU.makeADir(pathDict['pathResult'])
         outFileName = 'contourLines_allLevels'
         pU.saveAndOrPlot(pathDict, outFileName, fig)

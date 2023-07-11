@@ -83,17 +83,16 @@ def test_createComModConfig(tmp_path):
     inputDir = dirPath / 'data' / avaName
     avaDir = pathlib.Path(tmp_path, avaName)
     shutil.copytree(inputDir, avaDir)
-    cfgFile = dirPath / 'data' / 'testCom1DFA' / 'probA_com1DFACfg.ini'
 
     cfgProb = configparser.ConfigParser()
+    cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float',
-                          'defaultComModuleCfg': 'True'}
+                          'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
-
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'frictModel': 'samosAT'}
     # call function to be tested
-    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     print('cfgFiles', cfgFiles)
 
@@ -116,9 +115,9 @@ def test_createComModConfig(tmp_path):
     assert cfgMu['GENERAL']['relThFromShp'] == 'True'
     assert cfgRelTh.has_option('GENERAL', 'addStandardConfig') == False
 
-    cfgProb['PROBRUN']['defaultComModuleCfg'] = 'False'
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'relThFromShp': False, 'relTh': 2., 'musamosat': 0.155, 'frictModel': 'samosAT'}
     # call function to be tested
-    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
+    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     # load cfg from file
     cfgMu = configparser.ConfigParser()
@@ -130,9 +129,9 @@ def test_createComModConfig(tmp_path):
     print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'], cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
-    assert cfgMu['GENERAL']['relTh'] == '2.'
+    assert np.isclose(cfgMu['GENERAL'].getfloat('relTh'), 2.)
     assert cfgRelTh['GENERAL']['musamosat'] == '0.155'
-    assert cfgRelTh['GENERAL']['relTh'] == '2.'
+    assert np.isclose(cfgRelTh['GENERAL'].getfloat('relTh'), 2.)
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'
@@ -144,13 +143,12 @@ def test_createComModConfig(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
-                          'defaultComModuleCfg': 'False',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
-
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'relThFromShp': False, 'relTh': 2., 'musamosat': 0.155, 'frictModel': 'samosAT'}
 
     # call function to be tested
-    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
+    cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     print('cfgFiles', cfgFiles)
 
@@ -175,13 +173,13 @@ def test_createComModConfig(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
-                          'defaultSetup': 'True', 'samplingStrategy': '1', 'defaultComModuleCfg': 'True',
+                          'defaultSetup': 'True', 'samplingStrategy': '1',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
-
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'frictModel': 'samosAT'}
 
     # call function to be tested
-    cfgFiles2, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+    cfgFiles2, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     print('cfgFiles', cfgFiles2)
 
@@ -211,11 +209,11 @@ def test_createComModConfig(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'range|range',
                           'variationValue': '0.2|1.2', 'numberOfSteps': '2|3',
-                          'samplingStrategy': '2', 'varParType': 'float|float|int',
-                          'defaultComModuleCfg': 'True'}
+                          'samplingStrategy': '2', 'varParType': 'float|float|int'}
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'frictModel': 'samosAT'}
 
     # call function to be tested
-    cfgFiles3, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+    cfgFiles3, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     print('cfgFiles', cfgFiles3)
 
@@ -233,13 +231,12 @@ def test_createComModConfig(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangefromci|range',
                           'variationValue': '60|ci95|0.15', 'numberOfSteps': '2|3|4',
                           'samplingStrategy': '1',
-                          'defaultComModuleCfg': 'True',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
-
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'frictModel': 'samosAT'}
 
     # call function to be tested
-    cfgFiles4, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
+    cfgFiles4, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
     print('cfgFiles', cfgFiles)
 
@@ -435,7 +432,7 @@ def test_makeDictFromVars():
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangeFromCi|range',
                           'variationValue': '60|ci95|0.15', 'numberOfSteps': '2|3|4',
                           'samplingStrategy': '2',
-                          'defaultComModuleCfg': 'True', 'varParType': 'float|float',
+                          'varParType': 'float|float',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
 
@@ -470,7 +467,6 @@ def test_createSampleWithVariationStandardParameters():
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|range|range',
                           'variationValue': '60|0.25|0.15', 'numberOfSteps': '2|3|4',
                           'samplingStrategy': '1', 'varParType': 'float|float|float',
-                          'defaultComModuleCfg': 'True',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
 
@@ -511,7 +507,6 @@ def test_createSampleWithVariationForThParameters(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangefromci|range',
                           'variationValue': '60|ci95|0.15', 'numberOfSteps': '2|3|4',
                           'samplingStrategy': '1',
-                          'defaultComModuleCfg': 'True',
                           'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
 
@@ -522,7 +517,9 @@ def test_createSampleWithVariationForThParameters(tmp_path):
     # read initial configuration
     cfgStart = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
 
-    paramValuesDList = pA.createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType)
+    thReadFromShp = ['relTh', 'entTh']
+
+    paramValuesDList = pA.createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp)
     paramValuesD = paramValuesDList[0]
 
     assert len(paramValuesD['values']) == 30
@@ -539,6 +536,69 @@ def test_createSampleWithVariationForThParameters(tmp_path):
     assert np.amax(paramValuesD['values'][:,3]) <= 0.45
     assert np.amin(paramValuesD['values'][:,3]) >= 0.15
 
+    cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangefromci|rangefromci',
+                          'variationValue': '60|ci95|ci95', 'numberOfSteps': '2|3|4',
+                          'samplingStrategy': '1',
+                          'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
+                          'sampleMethod': 'latin'}
+
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    valVariationValue = cfgProb['PROBRUN']['variationValue'].split('|')
+    varType = cfgProb['PROBRUN']['variationType'].split('|')
+
+    # read initial configuration
+    cfgStart = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
+
+    thReadFromShp = ['relTh', 'entTh']
+
+    paramValuesDList = pA.createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp)
+    paramValuesD = paramValuesDList[0]
+    assert len(paramValuesD['values']) == 30
+    assert paramValuesD['names'] == ['musamosat', 'relTh0', 'relTh1', 'entTh0']
+    assert len(paramValuesD['thFromIni'].split('|')) == 2
+    assert 'relTh' in paramValuesD['thFromIni']
+    assert 'entTh' in paramValuesD['thFromIni']
+    assert np.amax(paramValuesD['values'][:,1]) <= 1.75
+    assert np.amin(paramValuesD['values'][:,1]) >= 1.25
+    assert np.amax(paramValuesD['values'][:,2]) <= 1.4
+    assert np.amin(paramValuesD['values'][:,2]) >= 1.0
+    assert np.amax(paramValuesD['values'][:,0]) <= 0.248
+    assert np.amin(paramValuesD['values'][:,0]) >= 0.062
+    assert np.amax(paramValuesD['values'][:,3]) <= 0.4
+    assert np.amin(paramValuesD['values'][:,3]) >= 0.1
+
+
+    cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh|entTh', 'variationType': 'percent|rangefromci|percent',
+                          'variationValue': '60|ci95|5', 'numberOfSteps': '2|3|4',
+                          'samplingStrategy': '1',
+                          'varParType': 'float|float|float', 'nSample': '30', 'sampleSeed': '12345',
+                          'sampleMethod': 'latin'}
+
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    valVariationValue = cfgProb['PROBRUN']['variationValue'].split('|')
+    varType = cfgProb['PROBRUN']['variationType'].split('|')
+
+    # read initial configuration
+    cfgStart = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
+    cfgStart['GENERAL']['entTh'] = '0.5'
+    cfgStart['GENERAL']['entThFromShp'] = 'False'
+    thReadFromShp = ['relTh']
+
+    paramValuesDList = pA.createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp)
+    paramValuesD = paramValuesDList[0]
+    assert len(paramValuesD['values']) == 30
+    assert paramValuesD['names'] == ['musamosat', 'relTh0', 'relTh1', 'entTh']
+    assert len(paramValuesD['thFromIni'].split('|')) == 1
+    assert 'relTh' in paramValuesD['thFromIni']
+    assert np.amax(paramValuesD['values'][:,1]) <= 1.75
+    assert np.amin(paramValuesD['values'][:,1]) >= 1.25
+    assert np.amax(paramValuesD['values'][:,2]) <= 1.4
+    assert np.amin(paramValuesD['values'][:,2]) >= 1.0
+    assert np.amax(paramValuesD['values'][:,0]) <= 0.248
+    assert np.amin(paramValuesD['values'][:,0]) >= 0.062
+    assert np.amax(paramValuesD['values'][:,3]) <= 0.525
+    assert np.amin(paramValuesD['values'][:,3]) >= 0.475
+
 
 def test_createCfgFiles(tmp_path):
     """ test writing of cfg files """
@@ -546,23 +606,12 @@ def test_createCfgFiles(tmp_path):
     paramValuesD = {'names': ['relTh', 'musamosat'], 'values': np.asarray([[1.2, 0.1], [1.4, 0.12], [1.6, 0.14]]),
         'thFromIni': ''}
 
-    cfg = configparser.ConfigParser()
-    cfg.optionxform = str
-    cfg['GENERAL'] = {'relTh': '', 'musamosat': 0.2}
-    cfg['INPUT'] = {'thFromIni': False}
-    cfg['VISUALISATION'] = {}
-
-    pathToFile = pathlib.Path(tmp_path, 'test.ini')
-
-    # write file
-    with open(pathToFile, 'w') as conf:
-        cfg.write(conf)
-
     cfgProb = configparser.ConfigParser()
     cfgProb.optionxform = str
-    cfgProb['PROBRUN'] = {'defaultComModuleCfg': 'False'}
+    cfgProb['PROBRUN'] = {}
+    cfgProb['com1DFA_override'] = {'defaultConfig': True, 'relTh': '', 'musamosat': 0.2, 'thFromIni': False}
 
-    cfgFiles = pA.createCfgFiles([paramValuesD], com1DFA, cfgProb, cfgPath='', fileOverride=pathToFile)
+    cfgFiles = pA.createCfgFiles([paramValuesD], com1DFA, cfgProb, cfgPath='')
 
     print(cfgFiles)
 
@@ -587,12 +636,8 @@ def test_createCfgFiles(tmp_path):
     assert cfgTest3['INPUT']['thFromIni'] == ''
     assert cfgTest3['VISUALISATION']['scenario'] == '2'
 
-    cfgProb['PROBRUN'] = {'defaultComModuleCfg': 'True'}
-
-    message = ('fileOverride provided AND defaultComModuleCfg set to True, only one is allowed')
-    with pytest.raises(AssertionError) as e:
-        assert pA.createCfgFiles([paramValuesD], com1DFA, cfgProb, cfgPath='', fileOverride=pathToFile)
-    assert message in str(e.value)
+    cfgProb['PROBRUN'] = {}
+    cfgProb['com1DFA_override'] = {'defaultConfig': True}
 
 
 def test_fetchStartCfg(tmp_path):
@@ -600,29 +645,18 @@ def test_fetchStartCfg(tmp_path):
 
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
-    cfg['GENERAL'] = {'relTh': '', 'musamosat': 0.2}
-    cfg['INPUT'] = {'thFromIni': False}
-    cfg['VISUALISATION'] = {}
+    cfg['com1DFA_override'] = {'defaultConfig': True, 'musamosat': 0.2}
 
-    pathToFile = pathlib.Path(tmp_path, 'test.ini')
-    # write file
-    with open(pathToFile, 'w') as conf:
-        cfg.write(conf)
-
-    cfgStart = pA.fetchStartCfg(com1DFA, False, pathToFile)
+    cfgStart = pA.fetchStartCfg(com1DFA, cfg)
 
     assert cfgStart.has_option('GENERAL', 'entTh') is True
     assert cfgStart['GENERAL'].getfloat('musamosat') == 0.2
 
-    cfgStart = pA.fetchStartCfg(com1DFA, True, '')
+    cfg['com1DFA_override'] = {'defaultConfig': True}
+    cfgStart = pA.fetchStartCfg(com1DFA, cfg)
 
     assert cfgStart.has_option('GENERAL', 'entTh') is True
     assert cfgStart['GENERAL'].getfloat('musamosat') == 0.155
-
-    message = ('fileOverride provided AND defaultComModuleCfg set to True, only one is allowed')
-    with pytest.raises(AssertionError) as e:
-        assert pA.fetchStartCfg(com1DFA, True, pathToFile)
-    assert message in str(e.value)
 
 
 def test_fetchProbConfigs():
@@ -704,13 +738,12 @@ def test_cfgFilesGlobalApproach(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
-                          'defaultComModuleCfg': 'False',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
-
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'relThFromShp': False, 'relTh': 2., 'musamosat': 0.155, 'frictModel': 'samosAT'}
 
     # call function to be tested
-    cfgFiles = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir, cfgFile)
+    cfgFiles = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir)
 
     print('cfgFiles', cfgFiles)
 
@@ -729,13 +762,13 @@ def test_cfgFilesGlobalApproach(tmp_path):
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
                           'variationValue': '60|50', 'numberOfSteps': '2|3',
                           'defaultSetup': 'True', 'samplingStrategy': '1',
-                          'defaultComModuleCfg': 'True',
                           'varParType': 'float|float', 'nSample': '40', 'sampleSeed': '12345',
                           'sampleMethod': 'latin'}
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True'}
 
 
     # call function to be tested
-    cfgFiles2 = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir, '')
+    cfgFiles2 = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir)
 
     print('cfgFiles', cfgFiles)
 
@@ -766,15 +799,15 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|percent',
               'variationValue': '60|50', 'numberOfSteps': '2|3',
-              'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float',
-              'defaultComModuleCfg': 'True'}
+              'defaultSetup': 'True', 'samplingStrategy': '2', 'varParType': 'float|float'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True'}
 
     # check variation settings
     variationsDict = pA.makeDictFromVars(cfgProb['PROBRUN'])
 
     # call function to be tested
-    cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir, '')
+    cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir)
 
     print('cfgFiles', cfgFiles)
 
@@ -800,15 +833,15 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgProb.optionxform = str
     cfgProb['PROBRUN'] = {'varParList': 'musamosat|relTh', 'variationType': 'percent|range',
               'variationValue': '60|0.5', 'numberOfSteps': '2|3',
-              'samplingStrategy': '2', 'varParType': 'float|float',
-              'defaultComModuleCfg': 'False'}
+              'samplingStrategy': '2', 'varParType': 'float|float'}
     cfgProb['sampling_override'] = {'defaultConfig': 'True'}
+    cfgProb['com1DFA_override'] = {'defaultConfig': 'True', 'relThFromShp': False, 'relTh': 2., 'musamosat': 0.155, 'frictModel': 'samosAT'}
 
     # check variation settings
     variationsDict = pA.makeDictFromVars(cfgProb['PROBRUN'])
 
     # call function to be tested
-    cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir, cfgFile)
+    cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir)
 
     print('cfgFiles', cfgFiles)
 
@@ -822,9 +855,9 @@ def test_cfgFilesLocalApproach(tmp_path):
     print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'], cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
-    assert cfgMu['GENERAL']['relTh'] == '2.'
+    assert np.isclose(cfgMu['GENERAL'].getfloat('relTh'), 2.)
     assert cfgRelTh['GENERAL']['musamosat'] == '0.155'
-    assert cfgRelTh['GENERAL']['relTh'] == '2.'
+    assert np.isclose(cfgRelTh['GENERAL'].getfloat('relTh'), 2.)
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'
     assert cfgRelTh['GENERAL']['relThRangeVariation'] == '0.5$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'False'

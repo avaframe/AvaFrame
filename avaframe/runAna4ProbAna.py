@@ -62,7 +62,7 @@ def runProbAna(avalancheDir=''):
     # create configuration files for com1DFA simulations including parameter
     # variation - defined in the probabilistic config
     # prob4AnaCfg.ini or its local copy
-    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA, cfgFileMod='')
+    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA)
 
     # perform com1DFA simulations
     outDir = pathlib.Path(avalancheDir, 'Outputs')
