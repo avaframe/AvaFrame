@@ -594,6 +594,10 @@ def prepareInputData(inputSimFiles, cfg):
                 % inputSimFiles['relThFile'])
             log.error(message)
             raise AssertionError(message)
+        elif np.isnan(relThFieldData).any() == True:
+            message = ('Release thickness field contains nans - not allowed no release thickness must be set to 0')
+            log.error(message)
+            raise AssertionError(message)
     else:
         relThFieldData = ''
 
