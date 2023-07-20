@@ -485,7 +485,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
             elif varType == 'RangeFromCi':
                 message = ('Variation using RangeFromCi is only allowed if thFromShp is set to True')
                 log.error(message)
-                raise AssertionError
+                raise AssertionError(message)
             elif varType == 'Percent':
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
             elif varType == 'Dist':
