@@ -366,7 +366,12 @@ def updateThicknessCfg(inputSimFiles, avaDir, modName, cfgInitial):
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, 'relTh')
         if cfgInitial['GENERAL'].getboolean('relThFromFile'):
-            cfgInitial['INPUT']['relThFile'] = str(pathlib.Path('RELTH', inputSimFiles['relThFile'].name))
+            if inputSimFiles['relThFile'] == None:
+                message = 'relThFromFile set to True but no relTh file found'
+                log.error(message)
+                raise FileNotFoundError(message)
+            else:
+                cfgInitial['INPUT']['relThFile'] = str(pathlib.Path('RELTH', inputSimFiles['relThFile'].name))
 
     # add entrainment and secondary release thickness in input data info and in cfg object
     if inputSimFiles['entFile'] != None and 'entFile' in thTypeList:

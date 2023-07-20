@@ -580,7 +580,7 @@ def prepareInputData(inputSimFiles, cfg):
     demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], demPath=cfg['INPUT']['DEM'])
 
     # read data from relThFile
-    if relThFile != None:
+    if relThFile != None and cfg['GENERAL'].getboolean('relThFromFile'):
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
         relThFieldDataOrig = relThFieldData.copy()
