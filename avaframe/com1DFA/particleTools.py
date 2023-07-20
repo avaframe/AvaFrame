@@ -215,6 +215,8 @@ def removePart(particles, mask, nRemove, reasonString='', snowSlide=0):
     """
     if reasonString != '':
         log.debug('removed %s particles %s' % (nRemove, reasonString))
+    if reasonString == 'because they exited the domain':
+        particles['nExitedParticles'] = particles['nExitedParticles'] + nRemove
     nPart = particles['nPart']
     if snowSlide == 1:
         # if snowSlide is activated, we need to remove the particles as well as the bonds accordingly
@@ -230,6 +232,7 @@ def removePart(particles, mask, nRemove, reasonString='', snowSlide=0):
                 particles[key] = np.extract(mask, particles[key])
 
     particles['mTot'] = np.sum(particles['m'])
+
     return particles
 
 

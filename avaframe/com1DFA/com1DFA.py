@@ -427,6 +427,9 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
             fieldsList[-1][cfg['VISUALISATION']['contourResType']], cfg['VISUALISATION'], cuSimName)
         reportDict['contours'] = contDictXY
 
+    if particlesList[-1]['nExitedParticles'] != 0.:
+        log.warning('%d particles have been removed during simulation because they exited the domain' %  particlesList[-1]['nExitedParticles'])
+
     return dem, reportDict, cfg, infoDict['tCPU'], particlesList
 
 
@@ -1163,6 +1166,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['simName'] = logName
     particles['xllcenter'] = dem['originalHeader']['xllcenter']
     particles['yllcenter'] = dem['originalHeader']['yllcenter']
+    particles['nExitedParticles'] = 0.
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean('iniStep') and not cfg.getboolean('initialiseParticlesFromFile'):
