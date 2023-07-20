@@ -75,6 +75,28 @@ def test_prepareInputData(tmp_path):
     assert inputSimLines['resLine']['Length'] == np.asarray([5.])
     assert inputSimLines['resLine']['Name'] == ['']
 
+    # call function to be tested
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'Yes', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaParabola'
+    relFile = avaDir / 'Inputs' / 'REL' / 'release1PF.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
+    inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
+    inputSimFiles['relThFile'] = dirName / 'data' / 'relThFieldTestFile.asc'
+    cfg['GENERAL']['simTypeActual'] = 'res'
+    cfg['GENERAL']['relThFromFile'] = 'False'
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+
+    assert demOri['header']['ncols'] == 1001
+    assert demOri['header']['nrows'] == 401
+    assert inputSimLines['releaseLine']['thickness'] == ['1.0']
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine']['Start'] == np.asarray([0.])
+    assert inputSimLines['resLine']['Length'] == np.asarray([5.])
+    assert inputSimLines['resLine']['Name'] == ['']
+    assert inputSimLines['relThField'] == ''
 
     # call function to be tested
     inputSimFiles = {'entResInfo': {'flagEnt': 'No',
@@ -87,6 +109,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
     inputSimFiles['relThFile'] = dirName / 'data' / 'relThFieldTestFile.asc'
     cfg['GENERAL']['simTypeActual'] = 'res'
+    cfg['GENERAL']['relThFromFile'] = 'True'
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     print('inputSimLines', inputSimLines)
@@ -114,6 +137,7 @@ def test_prepareInputData(tmp_path):
     IOf.writeResultToAsc(testHeader, testField, testFile, flip=True)
     inputSimFiles['relThFile'] = testFile
     cfg['GENERAL']['simTypeActual'] = 'res'
+    cfg['GENERAL']['relThFromFile'] = 'True'
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -1082,7 +1106,8 @@ def test_initializeParticles():
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate', 'idFixed',
-                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy']
+                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy',
+                'nExitedParticles']
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
@@ -1645,7 +1670,7 @@ def test_runCom1DFA(tmp_path, caplog):
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate',
                 'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni', 'gEff', 'curvAcc',
-                'totalEnthalpy']
+                'totalEnthalpy', 'nExitedParticles']
 
     # read one particles dictionary
     inDir = avaDir / 'Outputs' / 'com1DFA' / 'particles'
