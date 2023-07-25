@@ -16,9 +16,10 @@ If the friction model is SamosAT, compares plots for different mu and tau0.
 import numpy as np
 import os 
 
+
 # Local imports 
-from avaframe.data.avaSeilbahn.AvaNode_data import gps_imu_tools as git
-from avaframe.data.avaSeilbahn.AvaNode_data import GPS_Class 
+from classes.AvaNode_GNSS_Class import AvaNode_GNSS 
+
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
@@ -38,14 +39,9 @@ def produceAvaNodesDict(avalancheDir):
             print("Not all experimental data have been found!")
         
         #Changing nodes data coordinates
-        e07, n07, z07, e09, n09, z09, e10, n10, z10 = changeNodeCoordinate()
+        e10, n10, z10 = changeNodeCoordinate()
         dictNodes['Coordinates'] = {}
-        dictNodes['Coordinates']['e07'] = e07 
-        dictNodes['Coordinates']['n07'] = n07 
-        dictNodes['Coordinates']['z07'] = z07 
-        dictNodes['Coordinates']['e09'] = e09 
-        dictNodes['Coordinates']['n09'] = n09 
-        dictNodes['Coordinates']['z09'] = z09
+
         dictNodes['Coordinates']['e10'] = e10 
         dictNodes['Coordinates']['n10'] = n10 
         dictNodes['Coordinates']['z10'] = z10
@@ -189,10 +185,9 @@ def findNodeThalweg(NumberNodes,avalancheDir):
     # Preparing the output Dictionary
     DictNodThalweg = {}
     
-    X07, Y07, Z07, X09, Y09, Z09, X10, Y10, Z10 = changeNodeCoordinate()
+    X10, Y10, Z10 = changeNodeCoordinate()
     
-    sC07 = np.array(X07)
-    sC09 = np.array(X09)
+
     sC10 = np.array(X10)
     
     #cfgSetup
@@ -221,16 +216,7 @@ def findNodeThalweg(NumberNodes,avalancheDir):
     
     rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
         
-    
-    for i in range(0,np.shape(X07)[0]):
-        distance = np.sqrt((X07[i]-rasterTransfo['gridx'])**2 + (Y07[i]-rasterTransfo['gridy'])**2)
-        (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
-        sC07[i] = rasterTransfo['s'][sIndex]
-    
-    for i in range(0,np.shape(X09)[0]):
-        distance = np.sqrt((X09[i]-rasterTransfo['gridx'])**2 + (Y09[i]-rasterTransfo['gridy'])**2)
-        (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
-        sC09[i] = rasterTransfo['s'][sIndex]
+
         
     for i in range(0,np.shape(X10)[0]):
         distance = np.sqrt((X10[i]-rasterTransfo['gridx'])**2 + (Y10[i]-rasterTransfo['gridy'])**2)
@@ -244,12 +230,9 @@ def findNodeThalweg(NumberNodes,avalancheDir):
         
     DictNodVel = findNodeVelocity(NumberNodes,avalancheDir)
             
-    DictNodThalweg['sC07AfterBlasting'] = sC07[DictNodVel['C07']['index']:]
-    DictNodThalweg['sC09AfterBlasting'] = sC09[DictNodVel['C09']['index']:]
+
     DictNodThalweg['sC10AfterBlasting'] = sC10[DictNodVel['C10']['index']:]
     
-    DictNodThalweg['sC07'] = sC07
-    DictNodThalweg['sC09'] = sC09
     DictNodThalweg['sC10'] = sC10
     
     return DictNodThalweg
@@ -260,19 +243,19 @@ def findNodeThalweg(NumberNodes,avalancheDir):
 
 def changeNodeCoordinate():
     # Load information on AvAnodes data and changing coordinate system
-    gps_c10 = GPS_Class.GPSData() 
-    gps_c09 = GPS_Class.GPSData() 
-    gps_c07 = GPS_Class.GPSData() 
-    gps_c10.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C10_avalanche_GPS.txt"
-    gps_c09.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C09_avalanche_GPS.txt"
-    gps_c07.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C07_avalanche_GPS.txt"
+    gps_c10 = AvaNode_GNSS()
+    #gps_c09 = GPS_Class.GPSData() 
+    #gps_c07 = GPS_Class.GPSData() 
+    gps_c10.path = r"C:\git_rep\AvaFrame\avaframe\data\avaSeilbahnrinne\Inputs\NODES\2022-02-22_Nordkette_avalanche\C10\GPS/220222_C10_avalanche_GPS.txt"
+    #gps_c09.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C09_avalanche_GPS.txt"
+    #gps_c07.path = "/home/dick/Documents/AvaFrame/avaframe/data/avaSeilbahn/AvaNode_data/220222_C07_avalanche_GPS.txt"
     gps_c10.read_data() 
-    gps_c09.read_data() 
-    gps_c07.read_data() 
-    n10,e10,z10 = git.gps_to_mercator(gps_c10) 
-    n09,e09,z09 = git.gps_to_mercator(gps_c09)
-    n07,e07,z07 = git.gps_to_mercator(gps_c07)
-    return e07, n07, z07, e09, n09, z09, e10, n10, z10 
+    #gps_c09.read_data() 
+    #gps_c07.read_data() 
+    n10,e10,z10 = gps_c10.gnss_to_mercator()
+    #n09,e09,z09 = git.gps_to_mercator(gps_c09)
+    #n07,e07,z07 = git.gps_to_mercator(gps_c07)
+    return e10, n10, z10 
 
     
 #%% function to calculate the average velocity of different nodes 
@@ -313,35 +296,28 @@ def averageNodesVelocity(NumberNodes,avalancheDir):
 
 def travelNodesXYZ(dictNodes):
     
-    sC07xyz =  dictNodes['Coordinates']['e07'].copy()
-    sC07xyz[0] = 0 
-    sC09xyz =  dictNodes['Coordinates']['e09'].copy()
-    sC09xyz[0] = 0 
+
     sC10xyz =  dictNodes['Coordinates']['e10'].copy()
     sC10xyz[0] = 0 
 
-    for i in range(0,len(dictNodes['Coordinates']['e07'])-1):
-        sC07xyz[i+1] = sC07xyz[i] + sqrt( (dictNodes['Coordinates']['e07'][i+1] - dictNodes['Coordinates']['e07'][i])**2 + (dictNodes['Coordinates']['n07'][i+1] - dictNodes['Coordinates']['n07'][i])**2 +(dictNodes['Coordinates']['z07'][i+1] - dictNodes['Coordinates']['z07'][i])**2 )     
-    
-    for i in range(0,len(dictNodes['Coordinates']['e09'])-1):
-        sC09xyz[i+1] = sC09xyz[i] + sqrt( (dictNodes['Coordinates']['e09'][i+1] - dictNodes['Coordinates']['e09'][i])**2 + (dictNodes['Coordinates']['n09'][i+1] - dictNodes['Coordinates']['n09'][i])**2 +(dictNodes['Coordinates']['z09'][i+1] - dictNodes['Coordinates']['z09'][i])**2 )     
-        
+  
     for i in range(0,len(dictNodes['Coordinates']['e10'])-1):
-           sC10xyz[i+1] = sC10xyz[i] + sqrt( (dictNodes['Coordinates']['e10'][i+1] - dictNodes['Coordinates']['e10'][i])**2 + (dictNodes['Coordinates']['n10'][i+1] - dictNodes['Coordinates']['n10'][i])**2 +(dictNodes['Coordinates']['z10'][i+1] - dictNodes['Coordinates']['z10'][i])**2 )     
+           sC10xyz[i+1] = sC10xyz[i] + np.sqrt( (dictNodes['Coordinates']['e10'][i+1] - dictNodes['Coordinates']['e10'][i])**2 + (dictNodes['Coordinates']['n10'][i+1] - dictNodes['Coordinates']['n10'][i])**2 +(dictNodes['Coordinates']['z10'][i+1] - dictNodes['Coordinates']['z10'][i])**2 )     
         
-    sC07xyz[-1] =  sC07xyz[len(dictNodes['Coordinates']['e07'])-1]
-    sC09xyz[-1] =  sC09xyz[len(dictNodes['Coordinates']['e09'])-1]
+
     sC10xyz[-1] =  sC10xyz[len(dictNodes['Coordinates']['e10'])-1]
     
-    dictNodes['thalwegDomain']['sC07xyz'] = sC07xyz
-    dictNodes['thalwegDomain']['sC09xyz'] = sC09xyz
+
     dictNodes['thalwegDomain']['sC10xyz'] = sC10xyz
 
     # After blasting
-    dictNodes['thalwegDomain']['sC07xyzAfterBlasting'] = sC07xyz[dictNodes['temporalDomain']['C07']['index']:]
-    dictNodes['thalwegDomain']['sC09xyzAfterBlasting']= sC09xyz[dictNodes['temporalDomain']['C09']['index']:]
+
     dictNodes['thalwegDomain']['sC10xyzAfterBlasting'] = sC10xyz[dictNodes['temporalDomain']['C10']['index']:]
     
     return dictNodes
+
+if __name__ == "__main__":
+    # Example usage of this script
+   produceAvaNodesDict('data/avaSeilbahn')
 
 
