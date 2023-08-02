@@ -240,3 +240,14 @@ the default one (``fitOption``= 0) minimises the distance between the parabolic 
 profile. The second option (``fitOption``= 1) matches the end slope of the parabola to the profile.
 This parabolic fit determines the split point location. It is the first point for which the slope is
 lower than the ``slopeSplitPoint`` angle. This point is then projected on the avalanche path profile.
+
+Resampling
+========================================
+
+To automatically generate the avalanche thalweg, the center of the avalanche mass is calculated at every time step of the simulation computation and a curve linking these points is interpolated using a spline with polynomials of order k. However, depending on the velocity of the flow between two steps, the points can be more or less close to each other. 
+
+Especially in the release and runout area, the extracted centers of mass are close to each other, which results sometimes in grid lines drawn perpendicularly to the thalweg overlapping over the width of the domain. In order to reduce these overlaps, we can resample the mass averaged path, as long as the distance between two points remains lower or equal to the spatial resolution of the topography DEM.
+
+
+
+
