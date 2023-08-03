@@ -938,6 +938,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         cUpperm = 0
         cLowerm = 0
     resAnalysisDF.loc[simRowHash, 'sRunout'] = scoord[cLower]
+    resAnalysisDF.loc[simRowHash, 'sRelease'] = scoord[cUpper]
     resAnalysisDF.loc[simRowHash, 'deltaSXY'] = scoord[cLower] - scoord[cUpper]
     resAnalysisDF.loc[simRowHash, 'zRelease'] = transformedDEMRasters[cUpper, n]
     resAnalysisDF.loc[simRowHash, 'zRunout'] = transformedDEMRasters[cLower, n]
