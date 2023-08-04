@@ -7,7 +7,6 @@ import numpy as np
 import pathlib
 
 # Local imports
-import avaframe.ana3AIMEC.aimecTools as aT
 from avaframe.ana3AIMEC import aimecTools
 from avaframe.ana3AIMEC import dfa2Aimec
 import avaframe.in2Trans.ascUtils as IOf
@@ -117,15 +116,15 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # Make domain transformation
     log.debug("Creating new deskewed raster and preparing new raster assignment function")
     log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
-    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
+    rasterTransfo = aimecTools.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
 
     # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
+    slRaster = aimecTools.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
     log.debug("Assigning dem data to deskewed raster")
-    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
+    newRasters['newRasterDEM'] = aimecTools.transform(dem, demSource, rasterTransfo, interpMethod)
 
     inputData = {}
     inputData['slRaster'] = slRaster
@@ -291,7 +290,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         inputFiles = resAnalysisDF.loc[simRowHash, resType]
         if isinstance(inputFiles, pathlib.PurePath):
             rasterData = IOf.readRaster(inputFiles)
-            newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
+            newRaster = aimecTools.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
             newRasters['newRaster' + resType.upper()] = newRaster
             if simRowHash == refSimRowHash:
                 newRasters['newRefRaster' + resType.upper()] = newRaster
@@ -309,14 +308,14 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
             resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(rasterData['rasterData'])
 
             # analyze all fields
-            resAnalysisDF = aT.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
+            resAnalysisDF = aimecTools.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
 
     # compute runout based on runoutResType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)
+    resAnalysisDF = aimecTools.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)
     if flagMass:
         # perform mass analysis
         fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
-        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
+        resAnalysisDF, timeMass = aimecTools.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
 
         if simRowHash != refSimRowHash:
             massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
@@ -324,7 +323,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath, contourDict = aT.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
+    resAnalysisDF, compPlotPath, contourDict = aimecTools.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
                                                  pathDict, contourDict)
 
     resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
@@ -384,7 +383,7 @@ def aimecTransform(rasterTransfo, particle, demHeader, timeSeries=False):
         rasterTransfo: dict
             domain transformation information
         particle: dict
-            dictionary with particle properties
+            dictionary with particle properties, particles x,y coordinate origin is 0,0
         demHeader: dict
             dict with info on dem cellSize, xllcenter, ..
         timeSeries: bool
@@ -433,9 +432,9 @@ def computeSLParticles(rasterTransfo, demHeader, particlesX, particlesY):
         demHeader: dict
             dict with info on dem xllcenter, yllcenter
         particlesX: np array
-            x coordinates of particles location for one time step but all particles
+            x coordinates of particles location for one time step but all particles (origin 0,0)
         particlesY: np array
-            Y coordinates of particles location for one time step but all particles
+            Y coordinates of particles location for one time step but all particles (origin 0,0)
 
         Returns
         --------
@@ -454,8 +453,13 @@ def computeSLParticles(rasterTransfo, demHeader, particlesX, particlesY):
         distance = np.sqrt((x+xllcenter-rasterTransfo['gridx'])**2 + (y+yllcenter-rasterTransfo['gridy'])**2)
         # Finding the coordinates of the grid point which minimizes the difference
         (sIndex, lIndex) = np.unravel_index(np.argmin(distance, axis=None), distance.shape)
-        lList.append(rasterTransfo['l'][lIndex])
-        sList.append(rasterTransfo['s'][sIndex])
+        if np.isnan(x) or np.isnan(y):
+            lList.append(np.nan)
+            sList.append(np.nan)
+        else:
+            lList.append(rasterTransfo['l'][lIndex])
+            sList.append(rasterTransfo['s'][sIndex])
+
 
     return sList, lList
 
@@ -489,7 +493,7 @@ def addSLToParticles(avaDir, cfgAimec, demFileName, particlesList, saveToPickle=
 
     # create path dict
     pathDict = {}
-    pathDict = aT.readAIMECinputs(avaDir, pathDict,
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict,
         dirName=cfgAimec['AIMECSETUP']['anaMod'])
 
     # fetch dem of sim
@@ -499,7 +503,7 @@ def addSLToParticles(avaDir, cfgAimec, demFileName, particlesList, saveToPickle=
 
     # create rasterTransfo info
     # use cell size of dem, as dem has to match cellsize of sim results if fetched using getDEMFromConfig
-    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, dem['header']['cellsize'],
+    rasterTransfo = aimecTools.makeDomainTransfo(pathDict, dem, dem['header']['cellsize'],
         cfgAimec['AIMECSETUP'])
 
     for particleDict in particlesList:

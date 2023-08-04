@@ -434,7 +434,10 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     if cfgRangeTime['GENERAL']['sType'].lower() == 'parallel':
         rangeGates = rasterTransfo['sParallel'][:] - rasterTransfo['sParallel'][indStartOfRunout]
     elif cfgRangeTime['GENERAL']['sType'].lower() == 'projected':
-        rangeGates = rasterTransfo['s'][:] - rasterTransfo['s'][indStartOfRunout]
+        if cfgRangeTime['GENERAL'].getboolean('originStart'):
+            rangeGates = rasterTransfo['s'][:]
+        else:
+            rangeGates = rasterTransfo['s'][:] - rasterTransfo['s'][indStartOfRunout]
     else:
         message = ('sType for tt-diagram is invalid, valid options are: projected and parallel' %
             cfgRangeTime['GENERAL']['sType'])
@@ -522,7 +525,10 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
         if mtiInfo['sType'].lower() == 'parallel':
             rangeValue = rasterTransfo['sParallel'][cLower] - rasterTransfo['sParallel'][indStartOfRunout]
         elif mtiInfo['sType'].lower() == 'projected':
-            rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
+            if cfgRangeTime['GENERAL'].getboolean('originStart'):
+                rangeValue = rasterTransfo['s'][cLower]
+            else:
+                rangeValue = rasterTransfo['s'][cLower] - rasterTransfo['s'][indStartOfRunout]
         else:
             message = ('sType for tt-diagram is invalid, valid options are: projected and parallel' %
                 cfgRangeTime['GENERAL']['sType'])

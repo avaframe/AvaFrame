@@ -475,7 +475,7 @@ friction term :math:`\xi` is used instead of :math:`c_{\text{dyn}}`.
 
 Voellmy upgraded friction model
 """""""""""""""""""""""""""""""
-In order to increase the friction force and make the avalanche flow stop on steeper slopes than with the Voellmy friction relation, a minimum shear stress can be added to the Voellmy friction relation. This minimum value defines a shear stress under which the snowpack doesn’t move, and induces a strong flow deceleration. This expression of the basal layer friction model also reminds the one used in the swiss RAMMS model, where the Voellmy model is modified by adding a yield stress supposed to account for the snow cohesion (https://ramms.slf.ch/en/modules/debrisflow/theory/friction-parameters.html). 
+In order to increase the friction force and make the avalanche flow stop on steeper slopes than with the Voellmy friction relation, a minimum shear stress can be added to the Voellmy friction relation. This minimum value defines a shear stress under which the snowpack doesn’t move, and induces a strong flow deceleration. This expression of the basal layer friction model also resembles the one used in the swiss RAMMS model, where the Voellmy model is modified by adding a yield stress supposed to account for the snow cohesion (https://ramms.slf.ch/en/modules/debrisflow/theory/friction-parameters.html).
 
 .. math::
  \tau^{(b)} = \tau_0 + \tan{\delta}\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2

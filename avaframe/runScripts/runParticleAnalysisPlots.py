@@ -12,6 +12,7 @@ import pathlib
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -51,14 +52,13 @@ modName = 'com1DFA'
 # load configuration of particle analysis using com1DFA as computational module
 cfgPartAna = cfgUtils.getModuleConfig(oPartAna)
 resTypePlots = fU.splitIniValueToArraySteps(cfgPartAna['GENERAL']['resTypePlots'])
-pfvMinThreshold = cfgPartAna['GENERAL'].getfloat('pfvMinThreshold')
-pftMinThreshold = cfgPartAna['GENERAL'].getfloat('pftMinThreshold')
-pprMinThreshold = cfgPartAna['GENERAL'].getfloat('pprMinThreshold')
-
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 avaDir = pathlib.Path(avalancheDir)
+# create outDir
+outDir = avaDir / 'Outputs' / 'out3Plot' / 'particleAnalysis'
+fU.makeADir(outDir)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -91,6 +91,11 @@ anaMod = cfgAimec['AIMECSETUP']['anaMod']
 # set input directory to load particles dicts from sims
 inputDir = pathlib.Path(avalancheDir,'Outputs', modName, 'particles')
 
+#++++++++++INCLUDE MEASURED ++++++++++++++++
+# TODO: this has to be moved to the loop as it needs the sim dem - can be called here if particle from com1DFA origin is changed
+#if cfgPartAna['GENERAL'].getboolean('includeMeasurements'):
+#    readMeasuredParticleData(avaDir, demHeader, pData='')
+
 # loop over all sims
 for i, simIndex in enumerate(SimDF.index):
 
@@ -107,6 +112,7 @@ for i, simIndex in enumerate(SimDF.index):
     demSim = ''
     resAnalysisDF = ''
     newRasters = ''
+    measuredDataAdapted = ''
 
     # fetch name of simulation
     simName = SimDF['simName'].loc[simIndex]
@@ -149,16 +155,20 @@ for i, simIndex in enumerate(SimDF.index):
     # Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope) for the tracked particles
     dictVelAltThalwegPart = oPartAna.velocityEnvelopeThalweg(trackedPartPropAdapted)
 
+    # ++++++++++INCLUDE MEASURED++++++++++++++++
+    if cfgPartAna['GENERAL'].getboolean('includeMeasurements'):
+        mParticles = oPartAna.readMeasuredParticleData(avaDir, demSim['originalHeader'], pData='')
+        measuredData = mParticles
+
+        # calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in the projected xy plan)
+        measuredDataAdapted = ana3AIMEC.aimecTransform(rasterTransfo, measuredData, rasterTransfo['demHeader'], timeSeries=True)
+
     # The thresholds pfvMinThreshold pftMinThreshold pprMinThreshold are used to define the masked array
     cfgAimec['FILTER'] = {'simName': SimDF['simName'].loc[simIndex]}
     log.info('Filter for: simName %s' % SimDF['simName'].loc[simIndex])
 
     # call full aimec analysis to get resAnalysisDF and newRasters of result fields
     _, resAnalysisDF, _, newRasters, _ = ana3AIMEC.fullAimecAnalysis(avalancheDir, cfgAimec)
-    # create dicRaster
-    dictRaster = oPartAna.rasterVelField(resAnalysisDF, newRasters,
-        pfvMinThreshold=pfvMinThreshold, pftMinThreshold=pftMinThreshold,
-        pprMinThreshold=pprMinThreshold)
 
     # create mtiInfo dicts for tt-diagram
     cfgRangeTime = cfgUtils.getModuleConfig(dtAna, fileOverride='', modInfo=False, toPrint=False,
@@ -168,14 +178,22 @@ for i, simIndex in enumerate(SimDF.index):
     cfgRangeTime, mtiInfo = dtAna.createThalwegTimeInfoFromSimResults(avalancheDir,
         cfgRangeTime, 'com1DFA', simIndex, SimDF, demSim)
 
+    # export particle/measured data info to pickle
+    allPartPath = outDir / ("allParticles_%s.pickle" % (simIndex))
+    particleTools.savePartDictToPickle(particlesTimeArrays, allPartPath)
+    trackedPartPath = outDir / ("trackedParticles_%s.pickle" % (simIndex))
+    particleTools.savePartDictToPickle(trackedPartPropAdapted, trackedPartPath)
+    if cfgPartAna['GENERAL'].getboolean('includeMeasurements'):
+        measuredPartPath = outDir / ("measuredParticles_%s.pickle" % (simIndex))
+        particleTools.savePartDictToPickle(measuredDataAdapted, measuredPartPath)
 
     # PLOTTING
     # %% Plotting peak flow quantities and the velocity thalweg diagram
-    oPartAna.plotPeakVelVelThalwegEnvelope(avalancheDir, simIndex, SimDF, rasterTransfo,
+    oPartAna.plotPeakVelAltThalwegEnvelope(avalancheDir, simIndex, SimDF, rasterTransfo,
         dictVelAltThalweg, resTypePlots, anaMod, demSim)
 
-    oPartAna.plotPeakQuantThalTimeEnergyLine(avalancheDir, simIndex, SimDF,
-        rasterTransfo, dictRaster, modName, demSim, mtiInfo, cfgRangeTime)
+    oPartAna.plotVelAltitudeTTDiagram(avalancheDir, simIndex, SimDF,
+        rasterTransfo, resAnalysisDF['pfvCrossMax'], modName, demSim, mtiInfo, cfgRangeTime, measuredData=measuredDataAdapted)
 
-    oPartAna.plotPeakQuantTrackedPartVel(avalancheDir, simName, dictVelAltThalweg,
-        dictVelAltThalwegPart, trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo)
+    oPartAna.plotParticleProperties(avalancheDir, simName, dictVelAltThalweg,
+        trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo, measuredData=measuredDataAdapted)

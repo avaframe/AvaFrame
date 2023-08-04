@@ -143,7 +143,7 @@ def test_prepareInputData(tmp_path):
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
     assert str(e.value) == ("Release thickness field read from %s does not match the number of rows and columns of the dem" % inputSimFiles['relThFile'])
 
-    # setup requuired input data
+    # setup required input data
     inputSimFiles = {'entResInfo': {'flagEnt': 'No',
                                     'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
     dirName = pathlib.Path(__file__).parents[0]
@@ -1186,7 +1186,7 @@ def test_initializeParticles():
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate', 'idFixed',
-                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy',
+                'peakForceSPH', 'forceSPHIni', 'totalEnthalpy', 'velocityMag',
                 'nExitedParticles']
 
 
