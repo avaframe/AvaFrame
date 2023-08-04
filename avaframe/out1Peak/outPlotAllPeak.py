@@ -110,7 +110,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     return plotDict
 
 
-def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0, setLimits=False):
+def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0, setLimits=False, oneColor=''):
     """ find fileName data, constrain data and demField to where there is data,
         create colormap, define extent, add hillshade contours, add to axes
         and add colorbar
@@ -131,6 +131,8 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             from 0 transparent to 1 opaque for plot of constrained data
         setLimits: bool
             if True set limits of constrained data to plot
+        oneColor: str
+            optional to add a color for a single color for field
             
         Return
         --------
@@ -159,7 +161,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
         pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap
-    )
+        )
     cmap.set_bad(alpha=0)
     # uncomment this to set the under value for discrete cmap transparent
     # cmap.set_under(alpha=0)
@@ -176,11 +178,14 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
     ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
 
     # add peak field data
-    im1 = ax.imshow(
-        data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
-        alpha=alpha,
-    )
-    pU.addColorBar(im1, ax, ticks, unit)
+    if oneColor != '':
+        dataOneColor = np.where(data > 0.0, np.amax(data)*0.25,np.nan)
+        im1 = ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
+                        alpha=alpha)
+    else:
+        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
+            alpha=alpha)
+        pU.addColorBar(im1, ax, ticks, unit)
 
     if setLimits:
         ax.set_xlim([colsMinPlot, colsMaxPlot])

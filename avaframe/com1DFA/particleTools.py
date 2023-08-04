@@ -959,3 +959,19 @@ def reshapeParticlesDicts(particlesList, propertyList):
                 particlesTimeArrays[props][:,idx] = np.asarray([p[props][idx] for p in particlesList])
 
     return particlesTimeArrays
+
+
+def savePartDictToPickle(partDict, fName):
+    """ save a single dict to a pickle
+
+        Parameters
+        -----------
+        partDict: dict
+            dict with info
+        fName: pathlib path
+            path to saving location
+    """
+
+    fi = open(fName, "wb")
+    pickle.dump(partDict, fi)
+    fi.close()

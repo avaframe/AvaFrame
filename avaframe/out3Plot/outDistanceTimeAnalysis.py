@@ -6,7 +6,6 @@ import logging
 import pathlib
 from cmcrameri import cm
 from matplotlib.colors import LightSource
-from matplotlib.ticker import FormatStrFormatter
 import pandas as pd
 
 # Local imports
@@ -87,7 +86,10 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
     # add y label axis
     if mtiInfo["type"] == "thalwegTime":
         sTypeCapital = mtiInfo["sType"][0].upper() + mtiInfo["sType"][1:]
-        ax.set_ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
+        if cfgRangeTime['GENERAL'].getboolean('originStart'):
+            ax.set_ylabel("$S_{XY}$ [m]")
+        else:
+            ax.set_ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
     else:
         ax.set_ylabel("Distance to %s [m]" % mtiInfo["referencePointName"])
 

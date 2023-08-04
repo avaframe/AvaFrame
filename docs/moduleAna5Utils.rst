@@ -244,9 +244,12 @@ lower than the ``slopeSplitPoint`` angle. This point is then projected on the av
 Resampling
 ========================================
 
-To automatically generate the avalanche thalweg, the center of the avalanche mass is calculated at every time step of the simulation computation and a curve linking these points is interpolated using a spline with polynomials of order k. However, depending on the velocity of the flow between two steps, the points can be more or less close to each other. 
-
-Especially in the release and runout area, the extracted centers of mass are close to each other, which results sometimes in grid lines drawn perpendicularly to the thalweg overlapping over the width of the domain. In order to reduce these overlaps, we can resample the mass averaged path, as long as the distance between two points remains lower or equal to the spatial resolution of the topography DEM.
+If the center of mass positions are derived in an equal time interval from the simulations,
+derived points will not be spaced equally due to variations in flow velocity.
+Especially in the release and runout area, lower velocites result in a denser spacing of extracted centers of mass,
+which can cause a crossing of grid lines that are drawn perpendicularly to the thalweg over the width of the domain.
+In order to reduce these overlaps, a the resampling function :py:func:`in3Utils.geoTrans.prepareLine` can be used, 
+where the thalweg is generated based on a spline of degree k `scipy splprep <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.splrep.html>`_ and a user defined approximate distance between points along the spline. 
 
 
 

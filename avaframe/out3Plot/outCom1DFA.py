@@ -171,7 +171,7 @@ def plotAllPartAcc(outDirData,particlesList, cfg, Tsave, cuSimName):
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
-    outFileName = 'Allparticles_acceleration_%s' % cuSimName
+    outFileName = 'allparticles_acceleration_%s' % cuSimName
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
