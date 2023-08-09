@@ -153,7 +153,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
     inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel2.asc'
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir)}
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir), 'relThFromFile': 'True'}
     cfg['INPUT'] = {'DEM': 'testDEM.asc'}
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -183,9 +183,39 @@ def test_prepareInputData(tmp_path):
     relFile = avaDir / 'Inputs' / 'REL' / 'rel1.shp'
     inputSimFiles['releaseScenario'] = relFile
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
+    inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel2.asc'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir),
+                      'relThFromFile': 'False', 'relThFromShp': 'False', 'relTh': '1.1'}
+    cfg['INPUT'] = {'DEM': 'testDEM.asc'}
+
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+
+    print('inputSimLines', inputSimLines)
+
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine'] == None
+    assert inputSimLines['relThField'] == ''
+    assert demOri['header']['ncols'] == 20
+    assert demOri['header']['nrows'] == 22
+    assert inputSimLines['releaseLine']['thickness'] == ['1.5', '0.7']
+    assert np.array_equal(inputSimLines['releaseLine']['Start'], np.asarray([0., 9.]))
+    assert np.array_equal(inputSimLines['releaseLine']['Length'], np.asarray([9., 5.]))
+    assert inputSimLines['releaseLine']['Name'] == ['releaseNew1', 'releaseNew2']
+    assert inputSimLines['releaseLine']['ci95'] == ['0.4', '0.1']
+
+    # setup requuired input data
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / 'data' / 'avaTestRelTh'
+    relFile = avaDir / 'Inputs' / 'REL' / 'rel1.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
     inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel.asc'
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir)}
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir),
+                      'relThFromFile': 'True'}
     cfg['INPUT'] = {'DEM': 'testDEM.asc'}
 
 
