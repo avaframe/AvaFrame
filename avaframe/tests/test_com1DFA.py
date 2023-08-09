@@ -143,6 +143,86 @@ def test_prepareInputData(tmp_path):
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
     assert str(e.value) == ("Release thickness field read from %s does not match the number of rows and columns of the dem" % inputSimFiles['relThFile'])
 
+    # setup requuired input data
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / 'data' / 'avaTestRelTh'
+    relFile = avaDir / 'Inputs' / 'REL' / 'rel1.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
+    inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel2.asc'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir), 'relThFromFile': 'True'}
+    cfg['INPUT'] = {'DEM': 'testDEM.asc'}
+
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+
+    print('inputSimLines', inputSimLines)
+
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine'] == None
+    assert inputSimLines['relThField'].shape[0] == 22
+    assert inputSimLines['relThField'].shape[1] == 20
+    assert np.amax(inputSimLines['relThField']) == 2.
+    assert np.isclose(np.mean(inputSimLines['relThField']), 0.0590909)
+    assert np.amin(inputSimLines['relThField']) == 0.
+    assert demOri['header']['ncols'] == 20
+    assert demOri['header']['nrows'] == 22
+    assert inputSimLines['releaseLine']['thickness'] == ['1.5', '0.7']
+    assert np.array_equal(inputSimLines['releaseLine']['Start'], np.asarray([0., 9.]))
+    assert np.array_equal(inputSimLines['releaseLine']['Length'], np.asarray([9., 5.]))
+    assert inputSimLines['releaseLine']['Name'] == ['releaseNew1', 'releaseNew2']
+    assert inputSimLines['releaseLine']['ci95'] == ['0.4', '0.1']
+
+    # setup requuired input data
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / 'data' / 'avaTestRelTh'
+    relFile = avaDir / 'Inputs' / 'REL' / 'rel1.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
+    inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel2.asc'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir),
+                      'relThFromFile': 'False', 'relThFromShp': 'False', 'relTh': '1.1'}
+    cfg['INPUT'] = {'DEM': 'testDEM.asc'}
+
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+
+    print('inputSimLines', inputSimLines)
+
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine'] == None
+    assert inputSimLines['relThField'] == ''
+    assert demOri['header']['ncols'] == 20
+    assert demOri['header']['nrows'] == 22
+    assert inputSimLines['releaseLine']['thickness'] == ['1.5', '0.7']
+    assert np.array_equal(inputSimLines['releaseLine']['Start'], np.asarray([0., 9.]))
+    assert np.array_equal(inputSimLines['releaseLine']['Length'], np.asarray([9., 5.]))
+    assert inputSimLines['releaseLine']['Name'] == ['releaseNew1', 'releaseNew2']
+    assert inputSimLines['releaseLine']['ci95'] == ['0.4', '0.1']
+
+    # setup requuired input data
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / 'data' / 'avaTestRelTh'
+    relFile = avaDir / 'Inputs' / 'REL' / 'rel1.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
+    inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel.asc'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir),
+                      'relThFromFile': 'True'}
+    cfg['INPUT'] = {'DEM': 'testDEM.asc'}
+
+
+    with pytest.raises(AssertionError) as e:
+        assert com1DFA.prepareInputData(inputSimFiles, cfg)
+    assert str(e.value) == ("Release thickness field contains nans - not allowed no release thickness must be set to 0")
+
 
 def test_prepareReleaseEntrainment(tmp_path):
     """ test preparing release areas """
