@@ -687,3 +687,36 @@ def computeAreasFromLines(line):
         projectedAreas.append(shp.area(avaPoly))
 
     return projectedAreas
+
+
+def getInputPaths(avaDir):
+    """ Fetch paths to dem and first release area shp file found
+
+    Parameters
+    ----------
+    avaDir : str or pathlib object
+        path to avalanche directory
+
+
+    Returns
+    -------
+    inputSimFiles: dict
+        dictionary with all the input files
+
+        - demFile : full path to DEM .asc file
+        - relFiles : full path to release area scenario .shp files
+    """
+
+    # Set directories for inputs, outputs and current work
+    inputDir = pathlib.Path(avaDir, 'Inputs')
+
+
+    releaseDir = 'REL'
+    releaseDir = inputDir / 'REL'
+    relFiles = sorted(list(releaseDir.glob('*.shp')))
+    log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
+
+    # Initialise DEM
+    demFile = getDEMPath(avaDir)
+
+    return demFile, relFiles[0]
