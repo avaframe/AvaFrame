@@ -700,11 +700,10 @@ def getInputPaths(avaDir):
 
     Returns
     -------
-    inputSimFiles: dict
-        dictionary with all the input files
-
-        - demFile : full path to DEM .asc file
-        - relFiles : full path to release area scenario .shp files
+    demFile : pathlib path
+        full path to DEM .asc file
+    relFiles : list
+        list of full paths to release area scenario .shp files found in avaDir/Inputs/REL
     """
 
     # Set directories for inputs, outputs and current work
@@ -719,4 +718,4 @@ def getInputPaths(avaDir):
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
-    return demFile, relFiles[0]
+    return demFile, relFiles
