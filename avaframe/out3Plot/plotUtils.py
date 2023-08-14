@@ -517,6 +517,7 @@ def addColorBar(
     extend="neither",
     pad=0.05,
     tickLabelsList="",
+    cax=None,
 ):
     """
     Adds, styles and labels a colorbar to the given image and axes
@@ -529,6 +530,7 @@ def addColorBar(
         extend=extend,
         pad=pad,
         shrink=0.9,
+        cax=cax,
     )
     cbar.outline.set_visible(False)
     # make sure the cbar title does not overlap with the cbar itself

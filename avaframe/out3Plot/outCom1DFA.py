@@ -238,7 +238,7 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h', colBarResType=''
     return ax, cb
 
 
-def addDem2Plot(ax, dem, what='slope', extent=''):
+def addDem2Plot(ax, dem, what='slope', extent='', origHeader=False):
     """ Add dem to the background of a plot
 
     Parameters
@@ -250,8 +250,13 @@ def addDem2Plot(ax, dem, what='slope', extent=''):
         what information about the dem will be plotted?
         slope: use the dem slope (computed from the normals) to color the plot
         z : use the elevation to color the plot
+    origHeader: bool
+        if True use originalHeader and not header
     """
-    header = dem['header']
+    if origHeader:
+        header = dem['originalHeader']
+    else:
+        header = dem['header']
     ncols = header['ncols']
     nrows = header['nrows']
     xllc = header['xllcenter']
@@ -446,3 +451,58 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     contDictXY[simName]['thresholdValue'] = cfgVisu.getfloat('thresholdValue')
 
     return contDictXY
+
+
+def plotReleaseScenarioView(avaDir, releaseLine, dem, titleFig, cuSimName):
+    """ plot release polygon, area with thickness on dem hillshade
+        saved to avaDir/Outputs/com1DFA/reports
+
+        Parameters
+        ------------
+        avaDir: str
+            path to ava directory
+        dem: dict
+            dict with dem header and data
+        releaseLine: dict
+            dict with raster of release line and x,y coors
+        titleFig: str
+            title of figure
+        cuSimName: str
+            name of simulation
+
+    """
+
+    ny = releaseLine['rasterData'].shape[0]
+    nx = releaseLine['rasterData'].shape[1]
+    Ly = ny * dem['originalHeader']['cellsize']
+    Lx = nx * dem['originalHeader']['cellsize']
+    xL = dem['originalHeader']['xllcenter']
+    yL = dem['originalHeader']['yllcenter']
+    originCells = dem['header']['cellsize'] * 0.5
+    rField = np.ma.masked_where(releaseLine['rasterData'] == 0.0, releaseLine['rasterData'])
+
+    # choose colormap
+    cmap1, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps['pft'], np.amin(releaseLine['rasterData']), np.amax(releaseLine['rasterData']),
+        continuous=pU.contCmap)
+    cmap1.set_bad(alpha=0.)
+    extentCells = [xL - originCells, xL + Lx - originCells, yL + Ly - originCells, yL - originCells]
+    extentDem = [xL, xL + Lx, yL + Ly, yL]
+
+    # create figure
+    fig, ax = plt.subplots()
+    addDem2Plot(ax, dem, what='hillshade', extent=extentDem, origHeader=True)
+    im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
+    ax.plot(releaseLine['x'], releaseLine['y'], 'b-', label='release polygon')
+    ax.set_aspect('equal')
+    cax = ax.inset_axes([1.04, 0.0, 0.05, 1.])
+    pU.addColorBar(im1, ax, ticks, 'm', cax=cax)
+    plt.legend(fontsize=8)
+    plt.title(titleFig)
+    pU.putAvaNameOnPlot(ax, avaDir)
+
+    # save and or plot
+    plotName = 'releaseScenario_%s' % cuSimName
+    outDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'reports')
+    fU.makeADir(outDir)
+    pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)

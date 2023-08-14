@@ -941,6 +941,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
 
+    # plot release area scenario
+    outCom1DFA.plotReleaseScenarioView(cfgGen['avalancheDir'], releaseLine, dem,
+                                       ('Release Scenario %s' % inputSimLines['releaseLine']['file'].stem), logName)
     # compute release area
     header = dem['header']
     csz = header['cellsize']
