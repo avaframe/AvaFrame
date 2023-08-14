@@ -38,7 +38,7 @@ import avaframe.out1Peak.outPlotAllPeak as oP
 log = logging.getLogger(__name__)
 
 
-def plotPeakVelAltThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg,
+def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg,
     resTypePlots, modName, demData):
     """ plot peak flow fields and velocity thalweg envelope
 
@@ -76,6 +76,8 @@ def plotPeakVelAltThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, 
         ax[0], rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax[0], alpha=1.0)
         ax[0].plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
         ax[0].legend(loc='upper right')
+        ax[0].set_xlabel("x [m]")
+        ax[0].set_ylabel("y [m]")
 
         # ax[1]
         # plot the thalweg diagram
@@ -116,12 +118,12 @@ def plotPeakVelAltThalwegEnvelope(avalancheDir, simIndex, simDF, rasterTransfo, 
         # save and or plot
         outDir = avaDir / 'Outputs' / 'out3Plot' / 'particleAnalysis'
         fU.makeADir(outDir)
-        name = 'particleThalwegVelocity'
+        name = 'particleThalwegAltitudeVelocity'
         plotName = ('%s_%s_%s' % (name, simName, resType))
         plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
 
 
-def plotVelAltitudeTTDiagram(avalancheDir, simIndex, simDF, rasterTransfo,
+def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     pfvCrossMax, modName, demSim, mtiInfo, cfgRangeTime, measuredData=''):
     """ Create plot showing the resType peak field with thalweg,
         thalweg vs altitude with max peak field values along thalweg derived from peak fields
@@ -256,12 +258,12 @@ def plotVelAltitudeTTDiagram(avalancheDir, simIndex, simDF, rasterTransfo,
     avaDir = pathlib.Path(avalancheDir)
     outDir = avaDir / 'Outputs' / 'out3Plot' / 'particleAnalysis'
     fU.makeADir(outDir)
-    plotName = ('velocityAltitudeTT_%s' % (simName))
+    plotName = ('thalwegTimeAltitudes_%s' % (simName))
     plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
     log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
 
 
-def plotParticleProperties(avalancheDir, simName, dictVelAltThalweg,
+def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo, measuredData=''):
     """ Create plot showing particle properties over time and along avalanche thalweg
         in light blue envelope for all particles (filled between min and max values)
@@ -424,7 +426,7 @@ def plotParticleProperties(avalancheDir, simName, dictVelAltThalweg,
     # save and or plot
     outDir = avaDir / 'Outputs' / 'out3Plot' / 'particleAnalysis'
     fU.makeADir(outDir)
-    plotName = ('particleProperties_%s' % (simName))
+    plotName = ('particleMotionTracking_%s' % (simName))
     plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
     log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
     
