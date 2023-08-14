@@ -530,7 +530,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     return plotDict
 
 
-def plotContours(contourDict, resType, thresholdValue, pathDict):
+def plotContours(contourDict, resType, thresholdValue, pathDict, addLegend=True):
     """ plot contour lines of all transformed fields
 
         Parameters
@@ -543,6 +543,8 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
             value for contour level
         pathDict: dict
             dictionary with info on project name, ...
+        addLegend: bool
+            if True add legend to plot
     """
 
     unit = pU.cfgPlotUtils['unit' + resType]
@@ -572,7 +574,8 @@ def plotContours(contourDict, resType, thresholdValue, pathDict):
                 ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
                     c=cmap.to_rgba(ind))
 
-    ax1.legend()
+    if addLegend:
+        ax1.legend()
 
     # save and or plot
     outFileName = pathDict['plotScenario'] + '_ContourLines'
