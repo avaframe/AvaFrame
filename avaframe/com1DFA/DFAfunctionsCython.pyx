@@ -80,9 +80,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
   cdef double muVoellmy = cfg.getfloat('muvoellmy')
-  cdef double xsiVoellmyUpgraded = cfg.getfloat('xsivoellmyupgraded')
-  cdef double muVoellmyUpgraded = cfg.getfloat('muvoellmyupgraded')
-  cdef double tau0VoellmyUpgraded = cfg.getfloat('tau0voellmyupgraded')
+  cdef double xsiVoellmyMinShear = cfg.getfloat('xsivoellmyminshear')
+  cdef double muVoellmyMinShear = cfg.getfloat('muvoellmyminshear')
+  cdef double tau0VoellmyMinShear = cfg.getfloat('tau0voellmyminshear')
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
@@ -279,8 +279,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
             # SamosAT friction type (bottom shear stress) - for medium ava calibration parameters
             tau = DFAtlsC.SamosATfric(rho, tau0SamosAtMedium, Rs0SamosAtMedium, muSamosAtMedium, kappaSamosAtMedium, BSamosAtMedium, RSamosAtMedium, uMag, sigmaB, h)
           elif frictType == 7:
-            # voellmy upgraded friction type
-            tau = muVoellmyUpgraded * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyUpgraded + tau0VoellmyUpgraded
+            # voellmy MinShear friction type
+            tau = muVoellmyMinShear * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyMinShear + tau0VoellmyMinShear
           else:
             tau = 0.0
 

@@ -189,11 +189,11 @@ for i, simIndex in enumerate(SimDF.index):
 
     # PLOTTING
     # %% Plotting peak flow quantities and the velocity thalweg diagram
-    oPartAna.plotPeakVelAltThalwegEnvelope(avalancheDir, simIndex, SimDF, rasterTransfo,
+    oPartAna.plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, SimDF, rasterTransfo,
         dictVelAltThalweg, resTypePlots, anaMod, demSim)
 
-    oPartAna.plotVelAltitudeTTDiagram(avalancheDir, simIndex, SimDF,
+    oPartAna.plotThalwegTimeAltitudes(avalancheDir, simIndex, SimDF,
         rasterTransfo, resAnalysisDF['pfvCrossMax'], modName, demSim, mtiInfo, cfgRangeTime, measuredData=measuredDataAdapted)
 
-    oPartAna.plotParticleProperties(avalancheDir, simName, dictVelAltThalweg,
+    oPartAna.plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
         trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo, measuredData=measuredDataAdapted)
