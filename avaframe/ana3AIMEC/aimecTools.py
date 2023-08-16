@@ -88,7 +88,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     return pathDict
 
 
-def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
+def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
     """ Define reference simulation used for aimec analysis.
 
         if the configuration files are available and a varParList is provided, the simulations
@@ -108,6 +108,9 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
             computational module used to produce the results to analyze
         cfg: configParser object
             configuration for aimec - referenceSimValue, varParList used here
+        inputDir: str or pathlib path
+            optional- directory where peak files are located, if '',
+            avaDir/Outputs/comMod/peakFiles is set
 
         Returns
         --------
@@ -126,7 +129,10 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg):
     """
 
     cfgSetup = cfg['AIMECSETUP']
-    inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
+    if inputDir != '':
+        inputDir = pathlib.Path(inputDir)
+    else:
+        inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
     if not inputDir.is_dir():
         message = 'Input directory %s does not exist - check anaMod' % inputDir
         log.error(message)
