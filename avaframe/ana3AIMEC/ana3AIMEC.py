@@ -320,9 +320,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
         resAnalysisDF, timeMass = aimecTools.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
 
-        if simRowHash != refSimRowHash:
-            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
-            resAnalysisDF.loc[simRowHash, 'massPlotName'] = massPlotName
+        massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
+        resAnalysisDF.loc[simRowHash, 'massPlotName'] = massPlotName
     else:
         timeMass = None
 
