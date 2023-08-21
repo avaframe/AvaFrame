@@ -56,6 +56,7 @@ To run
 
       python3 runScripts/runAna3AIMEC.py
 
+.. Note:: In the default configuration, the analysis is performed on the simulation result files located in ``NameOfAvalanche/Outputs/anaMod/peakFiles``, where anaMod is specified in the aimecCfg.ini. There is also the option to directly provide a path to an input directory to the :py:func:`ana3AIMEC.ana3AIMEC.fullAimecAnalysis`.
 
 Theory
 -----------
