@@ -56,8 +56,13 @@ To run
 
       python3 runScripts/runAna3AIMEC.py
 
-.. Note:: In the default configuration, the analysis is performed on the simulation result files located in ``NameOfAvalanche/Outputs/anaMod/peakFiles``, where anaMod is specified in the aimecCfg.ini. There is also the option to directly provide a path to an input directory to the :py:func:`ana3AIMEC.ana3AIMEC.fullAimecAnalysis`. However, the peak field file names need to have a specific format: *A_B_C_D_E.asc*, where: * A - *releaseAreaScenario*: refers to the name of the release shape file * B - *simType*: refers to null (no entrainment, no resistance) * C - *simulationID*: needs to be unique for the respective simulation and include the model name * D - *modelType*: can be any descriptive string of the employed model (here dfa for dense flow  avalanche) * E - *result type*: is pft (peak flow thickness) and pfv (peak flow velocity)
-
+.. Note:: 
+   In the default configuration, the analysis is performed on the simulation result files located in ``NameOfAvalanche/Outputs/anaMod/peakFiles``, where anaMod is specified in the aimecCfg.ini. There is also the option to directly provide a path to an input directory to the :py:func:`ana3AIMEC.ana3AIMEC.fullAimecAnalysis`. However, the peak field file names need to have a specific format: *A_B_C_D_E.asc*, where:
+   
+   - A - *releaseAreaScenario*: refers to the name of the release shape file 
+   - B - *simType*: refers to null (no entrainment, no resistance) 
+   - C - *simulationID*: needs to be unique for the respective simulation and include the model name 
+   - D - *modelType*: can be any descriptive string of the employed model (here dfa for dense flow  avalanche) * E - *result type*: is pft (peak flow thickness) and pfv (peak flow velocity)
 
 Theory
 -----------
