@@ -18,12 +18,12 @@ logName = 'runAna3AIMEC'
 # ---------------------------------------------
 
 
-def runAna3AIMEC(avalancheDir, cfg):
+def runAna3AIMEC(avalancheDir, cfg, inputDir=''):
     """ run script for AIMEC analysis
     proceeds to AIMEC analysis and produces plots and reports
     """
 
-    rasterTransfo, resAnalysisDF, plotDict, _, pathDict = ana3AIMEC.fullAimecAnalysis(avalancheDir, cfg)
+    rasterTransfo, resAnalysisDF, plotDict, _, pathDict = ana3AIMEC.fullAimecAnalysis(avalancheDir, cfg, inputDir=inputDir)
 
     return pathDict, rasterTransfo, resAnalysisDF, plotDict
 

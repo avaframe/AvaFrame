@@ -20,7 +20,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def fullAimecAnalysis(avalancheDir, cfg):
+def fullAimecAnalysis(avalancheDir, cfg, inputDir=''):
     """ fetch all data required to run aimec analysis, setup pathDict and reference sim,
         read the inputs, perform checks if all required data is available, run main aimec
 
@@ -30,6 +30,9 @@ def fullAimecAnalysis(avalancheDir, cfg):
             path to avalanche directory
         cfg: configparser object
             main aimec configuration settings
+        inputDir: str or pathlib path
+            optional- directory where peak files are located, if '',
+            avaDir/Outputs/comMod/peakFiles is set
 
         Returns
         --------
@@ -49,10 +52,10 @@ def fullAimecAnalysis(avalancheDir, cfg):
     anaMod = cfgSetup['anaMod']
 
     # Setup input from computational module
-    inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
+    inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg, inputDir=inputDir)
     # define reference simulation
     refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
-                                                                                         cfg)
+                                                                                         cfg, inputDir=inputDir)
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
@@ -317,9 +320,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
         resAnalysisDF, timeMass = aimecTools.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
 
-        if simRowHash != refSimRowHash:
-            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
-            resAnalysisDF.loc[simRowHash, 'massPlotName'] = massPlotName
+        massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass)
+        resAnalysisDF.loc[simRowHash, 'massPlotName'] = massPlotName
     else:
         timeMass = None
 

@@ -353,30 +353,33 @@ def visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass):
     for ax, field, title, unit in zip(axes.flatten(), fieldList, Title, Unit):
         refArray = resAnalysisDF.loc[refSimRowHash, field]
         simArray = resAnalysisDF.loc[simRowHash, field]
+        if refSimRowHash != simRowHash:
+            ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
         ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimName)
-        ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
 
         ax.set_title(title + ' function of time')
         ax.legend(loc=1)
         ax.set_xlabel('t [s]')
         ax.set_ylabel(unit)
 
-    ax2 = axes.flatten()[1].twinx()
-    ax2.spines['right'].set_color('r')
-    ax2.tick_params(axis='y', colors='r')
-    ax2.plot(timeMass, (simArray-refArray) / refArray*100, 'r', label='total mass')
+    if refSimRowHash != simRowHash:
+        ax2 = axes.flatten()[1].twinx()
+        ax2.spines['right'].set_color('r')
+        ax2.tick_params(axis='y', colors='r')
+        # after loop this refers o the totalMassArray field as final item in fieldList
+        ax2.plot(timeMass, (simArray-refArray) / refArray*100, 'r--', label='total mass')
 
-    if np.any(entMass):
-        axes.flatten()[1].text(timeMass[-1]/4, (np.nanmin(refArray) + np.nanmax(refArray))/2,
-                               'Entrained Mass Difference : %.2f kg \n Relative to total mass : %.2f %% ' %
-                               ((entMassRef-entMass), (entMassRef-entMass)/finalMassRef*100),
-                               bbox=dict(boxstyle="square", ec='white', fc='white'),
-                               horizontalalignment='left', verticalalignment='bottom')
+        if np.any(entMass):
+            axes.flatten()[1].text(timeMass[-1]/4, (np.nanmin(refArray) + np.nanmax(refArray))/2,
+                                   'Entrained Mass Difference : %.2f kg \n Relative to total mass : %.2f %% ' %
+                                   ((entMassRef-entMass), (entMassRef-entMass)/finalMassRef*100),
+                                   bbox=dict(boxstyle="square", ec='white', fc='white'),
+                                   horizontalalignment='left', verticalalignment='bottom')
 
-    ax2.set_ylabel('Entrained Mass Difference relative to total mass[%]', color='r')
+        ax2.set_ylabel('Total Mass Difference [%]', color='r')
 
     outFileName = '_'.join([projectName, str(simName), 'massAnalysis'])
-    pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
+    pU.putAvaNameOnPlot(ax, pathDict['projectName'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath

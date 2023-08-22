@@ -262,7 +262,7 @@ def getCompDirs(avaDir, cfgSetup):
     return inputDirRef, inputDirComp, pathDict
 
 
-def mainDfa2Aimec(avaDir, comModule, cfg):
+def mainDfa2Aimec(avaDir, comModule, cfg, inputDir=''):
     """ Fetch available raster results path from comModule to be used by Aimec
 
         Parameters
@@ -273,6 +273,9 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             computational module name that has been used to produce simulation results
         cfg: configParser object
             configuration for aimec
+        inputDir: str or pathlib path
+            optional- directory where peak files are located, if '',
+            avaDir/Outputs/comMod/peakFiles is set
 
         Returns
         --------
@@ -281,7 +284,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
     """
 
     # create data frame that lists all available simulations and path to their result type result files
-    inputsDF, resTypeList = fU.makeSimFromResDF(avaDir, comModule)
+    inputsDF, resTypeList = fU.makeSimFromResDF(avaDir, comModule, inputDir=inputDir)
 
     # check if mass analysis shall be performed
     if cfg['FLAGS'].getboolean('flagMass'):

@@ -733,18 +733,28 @@ def getInputPaths(avaDir):
         full path to DEM .asc file
     relFiles : list
         list of full paths to release area scenario .shp files found in avaDir/Inputs/REL
+    relFieldFiles : list
+        list of full paths to release area thickness .asc files found in avaDir/Inputs/RELTH
+
     """
 
     # Set directories for inputs, outputs and current work
     inputDir = pathlib.Path(avaDir, 'Inputs')
 
-
-    releaseDir = 'REL'
-    releaseDir = inputDir / 'REL'
-    relFiles = sorted(list(releaseDir.glob('*.shp')))
+    # fetch release area shp files
+    releaseShpDir = inputDir / 'REL'
+    relFiles = sorted(list(releaseShpDir.glob('*.shp')))
     log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
+
+    # fetch release thickness fields
+    releaseFieldDir = inputDir / 'RELTH'
+    relFieldFiles = sorted(list(releaseFieldDir.glob('*.asc')))
+    if len(relFieldFiles) > 0:
+        log.info('Release area files are: %s' % [str(relFFilestr) for relFFilestr in relFieldFiles])
+    else:
+        relFieldFiles = None
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
-    return demFile, relFiles
+    return demFile, relFiles, relFieldFiles
