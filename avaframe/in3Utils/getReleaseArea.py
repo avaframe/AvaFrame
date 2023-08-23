@@ -172,7 +172,8 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     w.poly([[xy[3], xy[2], xy[1], xy[0]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
-    w.record('1', 'Rel_Example')
+    w.field('thickness', 'N', decimal=4)
+    w.record('1', 'Rel_Example', relH)
     w.close()
 
 
