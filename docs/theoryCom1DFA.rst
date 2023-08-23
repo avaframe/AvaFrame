@@ -142,7 +142,7 @@ Entrainment:
 """""""""""""
 
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
-at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed as a function of the
+at the bottom. The entrainment rate at the front :math:`\dot{q}^{\text{plo}}` can be expressed as a function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow thickness :math:`h_{\text{ent}}`), the velocity of the avalanche at the
 front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
@@ -150,16 +150,16 @@ to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens o
 the avalanche:
 
 .. math::
-   \oint\limits_{\partial V(t)} q^{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q^{\text{plo}}\,
+   \oint\limits_{\partial V(t)} \dot{q}^{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s \dot{q}^{\text{plo}}\,
    \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: ploughing
 
-The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed as a function of the
+The entrainment rate at the bottom :math:`\dot{q}^{\text{ero}}` can be expressed as a function of the
 bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
 the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`:
 
 .. math::
-    \oint\limits_{\partial V(t)} q^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q^{\text{ero}}\,
+    \oint\limits_{\partial V(t)} \dot{q}^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} \dot{q}^{\text{ero}}\,
     \mathrm{d}A = A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
     :label: erosion
 
@@ -179,8 +179,11 @@ breaking energy per fracture surface unit :math:`e_s`
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow thickness
 (:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
 
-.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)
+.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d),
 
+where :math:`q^{\text{ent}}` refers to the entrainable mass per surface area (:math:`kg.m^{-2}`)
+defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depending on whether entrainment is due to ploughing
+or erision, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively :math:`\dot{q}^{\text{ero}}`, over time. 
 
 Resistance:
 """""""""""""
