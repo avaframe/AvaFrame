@@ -179,8 +179,10 @@ breaking energy per fracture surface unit :math:`e_s`
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow thickness
 (:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
 
-.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d),
-
+.. math:: 
+   F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d),
+   :label: entrainmentForce 
+      
 where :math:`q^{\text{ent}}` refers to the entrainable mass per surface area (:math:`kg.m^{-2}`)
 defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depending on whether entrainment is due to ploughing
 or erision, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively :math:`\dot{q}^{\text{ero}}`, over time. 
