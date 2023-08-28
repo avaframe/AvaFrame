@@ -183,6 +183,7 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     velAltField = rasterTransfo['z'] + (pfvCM**2.) / (2.*g)
     scat = ax1.scatter(rasterTransfo['s'], velAltField, marker='s', cmap=pU.cmapRangeTime, s=8*pU.ms, c=pfvCM)
     ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y', path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], zorder=20, linewidth=1, markersize=0.8,label='Thalweg altitude')
+    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
     indVelStart = np.where(pfvCM > 0.)[0][0]
     indVelZero = np.where(pfvCM == 0.)[0][indVelStart]
 
@@ -198,20 +199,20 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     cbar2.ax.set_ylabel('Max peak flow velocity')
 
     # draw the horizontal and vertical lines for angle computation
-    ax1.vlines(x=rasterTransfo['s'][0], ymin=velAltField[indVelZero], ymax=velAltField[0],
+    ax1.vlines(x=rasterTransfo['s'][indVelStart], ymin=velAltField[indVelZero], ymax=velAltField[indVelStart],
                color='grey', linestyle='--')
-    ax1.hlines(y=rasterTransfo['z'][indVelZero], xmin=0, xmax=rasterTransfo['s'][indVelZero],
+    ax1.hlines(y=rasterTransfo['z'][indVelZero], xmin=rasterTransfo['s'][indVelStart], xmax=rasterTransfo['s'][indVelZero],
                color='grey', linestyle='--')
     # compute alpha angle based on pfvCM field
-    deltaz = rasterTransfo['z'][0] - rasterTransfo['z'][indVelZero]
-    deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][0]
+    deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
+    deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
     alpha = np.arctan(deltaz/deltas)*(180/math.pi)
     # add textbox with angles, delta values
     textString = ('$\Delta z$=%s m\n$\Delta s_{xy}$=%s m\n' % (str(round(deltaz,1)), str(round(deltas,1)))) + r'$\alpha$=' + str(round(alpha,2)) + '°'
     ax1.text(0.98,0.9, textString, horizontalalignment='right',
         verticalalignment='top', fontsize=10, transform=ax1.transAxes, multialignment='left')
-    X = [0, rasterTransfo['s'][indVelZero]]
-    Y = [rasterTransfo['z'][0], rasterTransfo['z'][indVelZero]]
+    X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
+    Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
     ax1.plot(X, Y, color='grey', linestyle='--', linewidth=0.8)
 
     # Labels
