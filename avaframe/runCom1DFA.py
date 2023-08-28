@@ -27,7 +27,7 @@ def runCom1DFA(avalancheDir='', calibration=''):
     avalancheDir: str
         path to avalanche directory (setup eg. with init scipts)
     calibration: str
-        which friction calibration to use: large, medium, default
+        which friction calibration to use: large, medium, small, auto, ini
 
     Returns
     -------
@@ -73,7 +73,7 @@ def runCom1DFA(avalancheDir='', calibration=''):
     elif calibration.lower() == 'auto':
         cfgCom1DFA['GENERAL']['frictModel'] = 'samosATAuto'
     else:
-        log.info('no friction calibration override given') 
+        log.info('no friction calibration override given - using ini')
 
     # ----------------
     # Run dense flow
@@ -96,9 +96,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run com1DFA workflow')
     parser.add_argument('avadir', metavar='avalanceDir', type=str, nargs='?', default='',
                         help='the avalanche directory')
-    parser.add_argument('-fc', '--friction_calibration', choices=['auto', 'large', 'medium', 'small'],
-                        type=str, default='auto',
-                        help='friction calibration override, possible values are large, medium , small.' +
+    parser.add_argument('-fc', '--friction_calibration', choices=['auto', 'large', 'medium', 'small', 'ini'],
+                        type=str, default='ini',
+                        help='friction calibration override, possible values are large, medium , small, auto and ini.' +
                              'Overrides default AND local configs')
 
     args = parser.parse_args()
