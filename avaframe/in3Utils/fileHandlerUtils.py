@@ -695,7 +695,11 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             dataDF.loc[simName, 'releaseArea'] = relNameSim
             dataDF.loc[simName, 'simHash'] = infoParts[0]
             # TODO: remove once all simNames are updated to include C or D as simModified
-            if len(infoParts) == 5:
+            if len(infoParts) == 6: #this is the _C_M_ etc variant
+                dataDF.loc[simName, 'simModified'] = infoParts[1]
+                dataDF.loc[simName, 'simType'] = infoParts[3]
+                dataDF.loc[simName, 'modelType'] = infoParts[4]
+            elif len(infoParts) == 5:
                 dataDF.loc[simName, 'simModified'] = infoParts[1]
                 dataDF.loc[simName, 'simType'] = infoParts[2]
                 dataDF.loc[simName, 'modelType'] = infoParts[3]
