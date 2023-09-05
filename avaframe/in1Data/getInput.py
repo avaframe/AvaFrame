@@ -593,7 +593,7 @@ def createReleaseStats(avaDir, cfg):
             'actual area [ha]': [area/10000. for area in areaActualList]}
         relDF = pd.DataFrame(data=relD, index=np.arange(len(relInfo['featureNames'])))
         relInfo = relPath / ('%s.csv' % relFile.stem)
-        relDF.to_csv(relInfo, index=False)
+        relDF.to_csv(relInfo, index=False, sep=';', float_format='%.2f')
         log.info('Written relInfo file for %s to %s' % (relFile.stem, str(relPath)))
         relDFDict[relFile.stem] = relDF
 
@@ -758,3 +758,4 @@ def getInputPaths(avaDir):
     demFile = getDEMPath(avaDir)
 
     return demFile, relFiles, relFieldFiles
+
