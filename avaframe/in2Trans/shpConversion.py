@@ -467,7 +467,11 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     fileName = str(fileName)
     w = shapefile.Writer(fileName)
     w.field('name', 'C')
-    w.point(pointDict['x'], pointDict['y'])
+    if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
+        message = 'Length of pointDict is not allowed to exceed one'
+        log.erro(message)
+        raise AssertionError(message)
+    w.point(pointDict['x'][0], pointDict['y'][0])
     w.record(pointName)
     w.close()
     return fileName

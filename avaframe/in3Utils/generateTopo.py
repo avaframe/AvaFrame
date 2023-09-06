@@ -12,6 +12,7 @@ from scipy.interpolate import griddata
 import pathlib
 
 from avaframe.in3Utils import geoTrans
+import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -622,17 +623,10 @@ def writeDEM(cfg, z, outDir):
     demName = cfg['DEMDATA']['demName']
 
     # Save elevation data to .asc file and add header lines
-    z_mat = np.matrix(z)
     demFile = outDir / ('%s_%s_Topo.asc' % (demName, nameExt))
-    with open(demFile, 'w') as f:
-        f.write('nCols  %d\n' % (nCols))
-        f.write('nRows  %d\n' % (nRows))
-        f.write('xllcenter  %.02f\n' % (xllcenter))
-        f.write('yllcenter %.02f\n' % (yllcenter))
-        f.write('cellsize  %.02f\n' % (cellsize))
-        f.write('nodata_value %.02f\n' % (noDATA))
-        for line in z_mat:
-            np.savetxt(f, line, fmt='%f')
+    demHeader = {'ncols': nCols, 'nrows': nRows, 'xllcenter': xllcenter, 'yllcenter': yllcenter, 'cellsize': cellsize,
+                 'nodata_value': noDATA}
+    IOf.writeResultToAsc(demHeader, z, demFile, flip=False)
 
     # Log info here
     log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, demName, nameExt))

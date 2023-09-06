@@ -12,9 +12,9 @@ import avaframe.com1DFA.DFAtools as DFAtls
 def test_normalizeC(capfd):
     '''test DFAfunctions tools
     norm, norm2, normalize, crossProd and scalProd'''
-    x = np.array([1.])
-    y = np.array([1.])
-    z = np.array([1.])
+    x = 1.
+    y = 1.
+    z = 1.
     norme = DFAfunC.norm(x, y, z)
     norme2 = DFAfunC.norm2(x, y, z)
     xn, yn, zn = DFAfunC.normalize(x, y, z)
@@ -27,50 +27,50 @@ def test_normalizeC(capfd):
     assert yn == 1/np.sqrt(3.)
     assert zn == 1/np.sqrt(3.)
 
-    x = np.array([0.])
-    y = np.array([0.])
-    z = np.array([1e-18])
+    x = 0.
+    y = 0.
+    z = 1e-18
     xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
 
-    x = np.array([0.])
-    y = np.array([0.])
-    z = np.array([0.])
+    x = 0.
+    y = 0.
+    z = 0.
     xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(0, rel=atol)
 
-    x = np.array([1.])
-    y = np.array([2.])
-    z = np.array([3.])
+    x = 1.
+    y = 2.
+    z = 3.
     xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
 
-    x = np.array([1.])
-    y = np.array([0.])
-    z = np.array([1.])
+    x = 1.
+    y = 0.
+    z = 1.
     xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
     assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
     assert yn == pytest.approx(0, rel=atol)
     assert zn == pytest.approx(1/np.sqrt(2.), rel=atol)
 
-    x = np.array([1.])
-    y = np.array([2.])
-    z = np.array([3.])
-    x1 = np.array([4.])
-    y1 = np.array([5.])
-    z1 = np.array([6.])
+    x = 1.
+    y = 2.
+    z = 3.
+    x1 = 4.
+    y1 = 5.
+    z1 = 6.
     xn, yn, zn = DFAfunC.crossProd(x, y, z, x1, y1, z1)
     assert xn == -3
     assert yn == 6
     assert zn == -3
 
-    x = np.array([1.])
-    y = np.array([2.])
-    z = np.array([3.])
-    x1 = np.array([4.])
-    y1 = np.array([5.])
-    z1 = np.array([6.])
+    x = 1.
+    y = 2.
+    z = 3.
+    x1 = 4.
+    y1 = 5.
+    z1 = 6.
     scal = DFAfunC.scalProd(x, y, z, x1, y1, z1)
     assert scal == 32
 
