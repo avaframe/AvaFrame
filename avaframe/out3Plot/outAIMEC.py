@@ -15,6 +15,8 @@ import matplotlib
 from matplotlib import cm
 from cmcrameri import cm as cmapCrameri
 import matplotlib as mpl
+import matplotlib.patheffects as pe
+import pathlib
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -813,7 +815,6 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, max(sPath) + 50])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
-
     if not plotDensity:
         sc = ax1.scatter(resAnalysisDF['sRunout'], data, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
                          label='runout points')
@@ -1040,3 +1041,102 @@ def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder=''):
             zorder=zorder)
     else:
         ax.plot(contourDict['x'], contourDict['y'], c=colorStr, zorder=zorder)
+
+
+def plotThalwegAltitude(pathDict, rasterTransfo, pfvCrossMax, simName):
+    """ create thalweg-altitude plot
+        the thalweg z profile and the mpfv²/2g (velocity-altitude) colorcoded using the mpfv values
+        the mpfv values come from the cross max values along the thalweg coordinate system (aimec)
+        plot is saved to avaDir/Outputs/out3Plot/thalwegAltSimname
+
+        Parameters
+        ------------
+        avaDir: pathlib path
+            path to avalanche directory
+        rasterTransfo: dict
+            dict with info on transformation from cartesian to thalweg coordinate system
+        pfvCrossMax: pandas dataFrame series
+            cross profile max values of peak flow velocity transformed into thalweg coordinate system
+        simName: str
+            simulation name
+    """
+
+    # initialize figure
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    ax1 = fig.add_subplot(1, 1, 1)
+
+    # add thalweg-altitude plot to axes
+    ax1 = addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax)
+
+    # save and or plot
+    plotName = ('thalwegAlt%s' % (simName))
+    plotPath = pU.saveAndOrPlot(pathDict, plotName, fig)
+
+
+def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
+    """ add thalweg-altitude plot to axes
+        the thalweg z profile and the mpfv²/2g (velocity-altitude) colorcoded using the mpfv values
+        the mpfv values come from the cross max values along the thalweg coordinate system (aimec)
+
+        Parameters
+        ------------
+        rasterTransfo: dict
+            dict with info on transformation from cartesian to thalweg coordinate system
+        pfvCrossMax: pandas dataFrame series
+            cross profile max values of peak flow velocity transformed into thalweg coordinate system
+        zMaxM: float
+            optional - value to define max limit of y -axis
+    """
+
+    # compute velocity-Altitude-Field
+    g = 9.81  # gravitation constant
+    pfvCM = pfvCrossMax.to_numpy()[0]
+    velAltField = rasterTransfo['z'] + (pfvCM ** 2.) / (2. * g)
+
+    # add scatter plot of velocity-Altitude field colocoded with max peak flow velocity
+    scat = ax1.scatter(rasterTransfo['s'], velAltField, marker='s', cmap=pU.cmapRangeTime, s=8 * pU.ms, c=pfvCM)
+    ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y',
+             path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], zorder=20, linewidth=1, markersize=0.8,
+             label='Thalweg altitude')
+    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
+    indVelStart = np.where(pfvCM > 0.)[0][0]
+    indVelZero = np.where(pfvCM == 0.)[0][indVelStart]
+
+    # add colorbar
+    cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
+    cbar2.ax.set_title('[m/s]', pad=10)
+    cbar2.ax.set_ylabel('Max peak flow velocity (mpfv)')
+
+    # draw the horizontal and vertical lines for angle computation
+    ax1.vlines(x=rasterTransfo['s'][indVelStart], ymin=velAltField[indVelZero], ymax=velAltField[indVelStart],
+               color='grey', linestyle='--')
+    ax1.hlines(y=rasterTransfo['z'][indVelZero], xmin=rasterTransfo['s'][indVelStart],
+               xmax=rasterTransfo['s'][indVelZero],
+               color='grey', linestyle='--')
+    # compute alpha angle based on pfvCM field
+    deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
+    deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
+    alpha = np.rad2deg(np.arctan(deltaz / deltas))
+
+    # add textbox with angles, delta values
+    textString = (r'$\Delta z$=%s m\n$\Delta s_{xy}$=%s m\n' % (
+        str(round(deltaz, 1)), str(round(deltas, 1)))) + r'$\alpha$=' + str(round(alpha, 2)) + '°'
+    ax1.text(0.98, 0.9, textString, horizontalalignment='right',
+             verticalalignment='top', fontsize=10, transform=ax1.transAxes, multialignment='left')
+    X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
+    Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
+    ax1.plot(X, Y, color='grey', linestyle='--', linewidth=0.8)
+
+    # Labels
+    ax1.set_xlabel('$s_{xy}$ [m]', fontsize=20)
+    ax1.set_ylabel('$z + mpfv²/2g$ [m]', fontsize=20)
+
+    # limit axes extent to where there is data with buffer
+    sExt = rasterTransfo['s'][indVelZero] * 0.1
+    zMax = np.nanmax([zMaxM, np.nanmax(velAltField)])
+    zExt = (zMax - velAltField[indVelZero]) * 0.1
+    ax1.set_xlim([rasterTransfo['s'][0] - sExt, rasterTransfo['s'][indVelZero] + sExt])
+    ax1.set_ylim([velAltField[indVelZero] - zExt, zMax + zExt])
+    ax1.set_title('Thalweg-Altitude')
+
+    return ax1

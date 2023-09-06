@@ -131,8 +131,8 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     ioob = itot - iinb
 
     # find coordinates of the 4 nearest cornes on the raster
-    Lx0 = np.floor(Lx).astype('int')
-    Ly0 = np.floor(Ly).astype('int')
+    Lx0 = np.floor(Lx)
+    Ly0 = np.floor(Ly)
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation(do not take out of bound into account)
@@ -143,10 +143,10 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     elif interp == 'bilinear':
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
-        f11[mask] = Z[Ly0[mask], Lx0[mask]]
-        f12[mask] = Z[Ly1[mask], Lx0[mask]]
-        f21[mask] = Z[Ly0[mask], Lx1[mask]]
-        f22[mask] = Z[Ly1[mask], Lx1[mask]]
+        f11[mask] = Z[Ly0[mask].astype('int'), Lx0[mask].astype('int')]
+        f12[mask] = Z[Ly1[mask].astype('int'), Lx0[mask].astype('int')]
+        f21[mask] = Z[Ly0[mask].astype('int'), Lx1[mask].astype('int')]
+        f22[mask] = Z[Ly1[mask].astype('int'), Lx1[mask].astype('int')]
         # using bilinear interpolation on the cell
         z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
@@ -204,7 +204,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
     cellSize : float
         mesh size of new mesh
     remeshOption: str
-        method used to remesh ('griddata', 'interp2d' or 'RectBivariateSpline')
+        method used to remesh ('griddata' or 'RectBivariateSpline')
         Check the scipy documentation for more details
         default is 'griddata'
     interpMethod: str
@@ -238,13 +238,6 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         z = zCopy[mask]
         zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod,
                                        fill_value=header['noDataValue'])
-    elif remeshOption == 'interp2d':
-        if np.isnan(z).any():
-            message = 'Data to remesh contains NaNs. Can not interpole with "interp2d".'
-            log.error(message)
-            raise ValueError(message)
-        I2D = sp.interpolate.interp2d(xGrid[0, :], yGrid[:, 0], z, kind=interpMethod, fill_value=header['noDataValue'])
-        zNew = I2D(xGridNew[0, :], yGridNew[:, 0])
     elif remeshOption == 'RectBivariateSpline':
         if np.isnan(z).any():
             message = 'Data to remesh contains NaNs. Can not interpole with "RectBivariateSpline".'
@@ -1170,8 +1163,8 @@ def rotate(locationPoints, theta, deg=True):
     vectorRot = np.dot(rotationMatrix, vector)
 
     # create rotated line as list of start and end point
-    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])],  # x
-                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])]  # y
+    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0][0])],  # x
+                   [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1][0])]  # y
                    ]
 
     return rotatedLine

@@ -314,27 +314,6 @@ def test_remeshData(tmp_path):
     assert testRes
 
     dataNew = geoTrans.remeshData(
-        rasterDict, 2.0, remeshOption="interp2d", interpMethod="cubic", larger=False
-    )
-    dataRaster = dataNew["rasterData"]
-    indNoData = np.where(dataRaster == -9999)
-    headerNew = dataNew["header"]
-    xExtent = (headerNew["ncols"] - 1) * headerNew["cellsize"]
-    yExtent = (headerNew["nrows"] - 1) * headerNew["cellsize"]
-
-    # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew["cellsize"])
-
-    # compare solution to result from function
-    testRes = np.allclose(dataRaster, dataSol, atol=atol)
-
-    assert dataNew["rasterData"].shape[0] == 11
-    assert dataNew["rasterData"].shape[1] == 8
-    assert len(indNoData[0]) == 0
-    assert np.isclose(dataNew["rasterData"][0, 0], 10.0)
-    assert testRes
-
-    dataNew = geoTrans.remeshData(
         rasterDict,
         2.0,
         remeshOption="RectBivariateSpline",

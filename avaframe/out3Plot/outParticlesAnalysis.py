@@ -34,6 +34,7 @@ import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.geoTrans as gT
 import avaframe.out1Peak.outPlotAllPeak as oP
+from avaframe.out3Plot import outAIMEC
 
 log = logging.getLogger(__name__)
 
@@ -175,58 +176,14 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     ax2 = fig.add_subplot(gs[:, 0])
     ax3 = fig.add_subplot(gs[1, 1])
 
-    # ax1 Energy line
-    # fetch energy line info for plot
-    # TODO: shall we leave g definition here?
-    g = 9.81 # gravitation constant
-    pfvCM = pfvCrossMax.to_numpy()[0]
-    velAltField = rasterTransfo['z'] + (pfvCM**2.) / (2.*g)
-    scat = ax1.scatter(rasterTransfo['s'], velAltField, marker='s', cmap=pU.cmapRangeTime, s=8*pU.ms, c=pfvCM)
-    ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y', path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], zorder=20, linewidth=1, markersize=0.8,label='Thalweg altitude')
-    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
-    indVelStart = np.where(pfvCM > 0.)[0][0]
-    indVelZero = np.where(pfvCM == 0.)[0][indVelStart]
-
+    # add thalweg-altitude plot to axes
+    ax1 = outAIMEC.addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=zMaxM)
     # optionally add measurements
     if mDataAvailable:
+        g = 9.81
         measuredData['velAlt'] = measuredData['z'] + (measuredData['velocityMag']**2.) / (2. * g)
         addTrOrMe(ax1, measuredData, 'sAimec', 'velAlt', cmapData, label=False, lineStyle='--')
         addTrOrMe(ax1, measuredData, 'sAimec', 'z', cmapData, label=False)
-
-    # add colorbar
-    cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
-    cbar2.ax.set_title('[m/s]', pad=10)
-    cbar2.ax.set_ylabel('Max peak flow velocity')
-
-    # draw the horizontal and vertical lines for angle computation
-    ax1.vlines(x=rasterTransfo['s'][indVelStart], ymin=velAltField[indVelZero], ymax=velAltField[indVelStart],
-               color='grey', linestyle='--')
-    ax1.hlines(y=rasterTransfo['z'][indVelZero], xmin=rasterTransfo['s'][indVelStart], xmax=rasterTransfo['s'][indVelZero],
-               color='grey', linestyle='--')
-    # compute alpha angle based on pfvCM field
-    deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
-    deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
-    alpha = np.arctan(deltaz/deltas)*(180/math.pi)
-    # add textbox with angles, delta values
-    textString = ('$\Delta z$=%s m\n$\Delta s_{xy}$=%s m\n' % (str(round(deltaz,1)), str(round(deltas,1)))) + r'$\alpha$=' + str(round(alpha,2)) + '°'
-    ax1.text(0.98,0.9, textString, horizontalalignment='right',
-        verticalalignment='top', fontsize=10, transform=ax1.transAxes, multialignment='left')
-    X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
-    Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
-    ax1.plot(X, Y, color='grey', linestyle='--', linewidth=0.8)
-
-    # Labels
-    ax1.set_xlabel('$s_{xy}$ [m]', fontsize = 20)
-    ax1.set_ylabel('$z + z_{vel}$ [m]', fontsize = 20)
-    ax2.tick_params(axis='both', labelsize=15)
-
-    # limit axes extent to where there is data with buffer
-    sExt = rasterTransfo['s'][indVelZero]*0.1
-    zMax = max(zMaxM, np.nanmax(velAltField))
-    zExt = (zMax - velAltField[indVelZero]) * 0.1
-    ax1.set_xlim([rasterTransfo['s'][0]-sExt, rasterTransfo['s'][indVelZero]+sExt])
-    ax1.set_ylim([velAltField[indVelZero]-zExt, zMax+zExt])
-    ax1.set_title('Thalweg-Altitude')
 
     # ax2
     # add peak file plot

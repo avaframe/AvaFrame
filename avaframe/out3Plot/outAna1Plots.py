@@ -88,9 +88,8 @@ def saveSimiSolProfile(cfgMain, cfgSimi, fields, limits, simiDict, tSave, header
 
 def makeContourSimiPlot(avalancheDir, simHash, fieldFT, limits, simiDict, fieldHeader, tSave, outDirTest):
     """ """
-    fig, ax1 = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW * 4, pU.figH * 2))
+    fig, ax1 = plt.subplots(sharex=True, figsize=(pU.figW * 4, pU.figH * 2))
     # make flow momentum comparison plot
-    ax1 = plt.subplot2grid((1, 1), (0, 0))
     ax1 = addContour2Plot(ax1, fieldFT, simiDict, fieldHeader, limits, nLevels=16)
 
     ax1.set_title(pU.cfgPlotUtils["nameFT"] + " contours at t = %.2f s" % tSave)
