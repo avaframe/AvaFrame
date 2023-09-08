@@ -20,7 +20,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def fullAimecAnalysis(avalancheDir, cfg, inputDir=''):
+def fullAimecAnalysis(avalancheDir, cfg, inputDir='', demFileName=''):
     """ fetch all data required to run aimec analysis, setup pathDict and reference sim,
         read the inputs, perform checks if all required data is available, run main aimec
 
@@ -33,6 +33,8 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir=''):
         inputDir: str or pathlib path
             optional- directory where peak files are located, if '',
             avaDir/Outputs/comMod/peakFiles is set
+        demFileName: pathlib path
+            path to dem file
 
         Returns
         --------
@@ -57,7 +59,8 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir=''):
     refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
                                                                                          cfg, inputDir=inputDir)
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
-                'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
+                'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef,
+                'demFileName': demFileName}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
@@ -158,11 +161,11 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
     if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
         outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
-    if len(resAnalysisDF.index) == 2:
-        if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
+    if len(resAnalysisDF.index) == 2 and sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
             plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
         plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
+
     areaDict = {('area comparison plot ' + resAnalysisDF.loc[k, 'simName']):
                 v for k, v in resAnalysisDF['areasPlot'].to_dict().items()}
     plotDict['areasPlot'] = {'Aimec area analysis': areaDict}
