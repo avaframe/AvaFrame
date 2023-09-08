@@ -69,14 +69,23 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     pathDict['splitPointSource'] = splitPointLayer[0]
 
     refDir = pathlib.Path(avalancheDir, 'Inputs')
-    demSource = list(refDir.glob('*.asc'))
+    # check for DEM
+    if 'demFileName' not in pathDict.keys():
+        demSource = list(refDir.glob('*.asc'))
+    elif pathDict['demFileName'] == '':
+        demSource = list(refDir.glob('*.asc'))
+    else:
+        demSource = list(refDir.glob(pathDict['demFileName']))
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
     except AssertionError:
         raise
     pathDict['demSource'] = demSource[0]
 
-    pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
+    if dirName != '':
+        pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
+    else:
+        pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC')
     pathDict['pathResult'] = pathResult
 
     projectName = pathlib.Path(avalancheDir).stem
