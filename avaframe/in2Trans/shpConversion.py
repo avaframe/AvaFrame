@@ -469,8 +469,8 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     w.field('name', 'C')
     if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
         message = 'Length of pointDict is not allowed to exceed one'
-        log.erro(message)
-        raise AssertionError(message)
+        log.error(message)
+        raise ValueError(message)
     w.point(pointDict['x'][0], pointDict['y'][0])
     w.record(pointName)
     w.close()

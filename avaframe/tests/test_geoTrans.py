@@ -286,7 +286,7 @@ def test_remeshData(tmp_path):
     headerInfo["nrows"] = 5
     headerInfo["xllcenter"] = 0
     headerInfo["yllcenter"] = 0
-    headerInfo["noDataValue"] = -9999
+    headerInfo["nodata_value"] = -9999
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
@@ -348,7 +348,7 @@ def test_remeshDEM(tmp_path):
     headerInfo["nrows"] = 5
     headerInfo["xllcenter"] = 0
     headerInfo["yllcenter"] = 0
-    headerInfo["noDataValue"] = -9999
+    headerInfo["nodata_value"] = -9999
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)

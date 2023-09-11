@@ -237,7 +237,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         yGrid = yGrid[mask]
         z = zCopy[mask]
         zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod,
-                                       fill_value=header['noDataValue'])
+                                       fill_value=header['nodata_value'])
     elif remeshOption == 'RectBivariateSpline':
         if np.isnan(z).any():
             message = 'Data to remesh contains NaNs. Can not interpole with "RectBivariateSpline".'
@@ -262,7 +262,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
     headerRemeshed = {}
     headerRemeshed['xllcenter'] = header['xllcenter']
     headerRemeshed['yllcenter'] = header['yllcenter']
-    headerRemeshed['noDataValue'] = header['noDataValue']
+    headerRemeshed['nodata_value'] = header['nodata_value']
     headerRemeshed['cellsize'] = cellSizeNew
     headerRemeshed['ncols'] = ncolsNew
     headerRemeshed['nrows'] = nrowsNew
@@ -1180,7 +1180,7 @@ def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
         Parameters
         -----------
         rasterHeader: dict
-            ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, noDataValue
+            ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, nodata_value
         cellSizeNew: float
             If not None, use cellSizeNew as cell size
         larger: boolean

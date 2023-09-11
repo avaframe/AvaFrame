@@ -1089,7 +1089,7 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
     """
 
     # compute velocity-Altitude-Field
-    g = 9.81  # gravitation constant
+    g = pU.gravityAcc # gravitation constant
     pfvCM = pfvCrossMax.to_numpy()[0]
     velAltField = rasterTransfo['z'] + (pfvCM ** 2.) / (2. * g)
 

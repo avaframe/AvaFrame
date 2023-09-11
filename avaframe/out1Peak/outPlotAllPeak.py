@@ -51,9 +51,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         demData = IOf.readRaster(demFile, noDataToNan=True)
         demDataField = demData["rasterData"]
     else:
-        # check if noDataValue is found and if replace with nans for plotting
+        # check if nodata_value is found and if replace with nans for plotting
         demDataField = np.where(
-            demData["rasterData"] == demData["header"]["noDataValue"], np.nan, demData["rasterData"]
+            demData["rasterData"] == demData["header"]["nodata_value"], np.nan, demData["rasterData"]
         )
     demField = demDataField
 

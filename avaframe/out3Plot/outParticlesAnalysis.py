@@ -180,7 +180,7 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     ax1 = outAIMEC.addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=zMaxM)
     # optionally add measurements
     if mDataAvailable:
-        g = 9.81
+        g = pU.gravityAcc
         measuredData['velAlt'] = measuredData['z'] + (measuredData['velocityMag']**2.) / (2. * g)
         addTrOrMe(ax1, measuredData, 'sAimec', 'velAlt', cmapData, label=False, lineStyle='--')
         addTrOrMe(ax1, measuredData, 'sAimec', 'z', cmapData, label=False)
@@ -446,7 +446,7 @@ def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alph
     """
 
     # prepare dem data
-    demField = np.where(demData["rasterData"] == demData["header"]["noDataValue"], np.nan,
+    demField = np.where(demData["rasterData"] == demData["header"]["nodata_value"], np.nan,
         demData["rasterData"])
 
     # set input dir

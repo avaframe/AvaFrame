@@ -23,7 +23,7 @@ def readASCheader(fname):
     Returns
     --------
     headerInfo: class
-        information that is stored in header (ncols, nrows, xllcenter, yllcenter, noDataValue)
+        information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
     """
 
     headerInfo = {}
@@ -73,9 +73,9 @@ def readASCheader(fname):
                 raise ValueError(message)
         elif ln == 5:
             if 'nodata' in item[0].lower():
-                headerInfo['noDataValue'] = float(item[1])
+                headerInfo['nodata_value'] = float(item[1])
             else:
-                message = ('DEM header is not in correct format - check line 6: should be noDataValue')
+                message = ('DEM header is not in correct format - check line 6: should be nodata_value')
                 log.error(message)
                 raise ValueError(message)
         ln += 1
@@ -139,13 +139,13 @@ def readRaster(fname, noDataToNan=True):
     fname: str or pathlib object
         path to ascii file
     noDataToNan: bool
-        if True convert noDataValues to nan and set noDataValue to nan
+        if True convert nodata_values to nan and set nodata_value to nan
 
     Returns
     --------
     data: dict
         -headerInfo: class
-            information that is stored in header (ncols, nrows, xllcenter, yllcenter, noDataValue)
+            information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
         -rasterdata : 2D numpy array
                 2D numpy array of ascii matrix
     """
@@ -157,8 +157,8 @@ def readRaster(fname, noDataToNan=True):
     data = {}
     data['header'] = header
     if noDataToNan:
-        rasterdata[rasterdata == header['noDataValue']] = np.NaN
-        data['header']['noDataValue'] = np.nan
+        rasterdata[rasterdata == header['nodata_value']] = np.NaN
+        data['header']['nodata_value'] = np.nan
     data['rasterData'] = np.flipud(rasterdata)
 
     return data
@@ -171,7 +171,7 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
         ----------
         header : class
             class with methods that give cellsize, nrows, ncols, xllcenter
-            yllcenter, noDataValue
+            yllcenter, nodata_value
         resultArray : 2D numpy array
             2D numpy array of values that shall be written to file
         outFileName : str
@@ -189,7 +189,7 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
         outFile.write("xllcenter %.2f\n" % header['xllcenter'])
         outFile.write("yllcenter %.2f\n" % header['yllcenter'])
         outFile.write("cellsize %.2f\n" % header['cellsize'])
-        outFile.write("noDataValue %.2f\n" % header['noDataValue'])
+        outFile.write("nodata_value %.2f\n" % header['nodata_value'])
 
         M = resultArray.shape[0]
         for m in range(M):
