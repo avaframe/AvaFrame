@@ -50,7 +50,7 @@ def test_plotAllPeakFields(tmp_path):
     # initialise DEM
     demData1 = np.loadtxt(demFile, skiprows=6)
     demData = {}
-    demData['header'] = {'noDataValue': -9999}
+    demData['header'] = {'nodata_value': -9999}
     demData['rasterData'] = demData1
 
     # initialise configparser

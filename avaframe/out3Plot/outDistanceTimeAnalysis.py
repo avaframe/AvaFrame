@@ -720,9 +720,9 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # +++++++++++++++PANEL 1++++++++++++++++++
     # result field in x,y with s,l domain on top
     ax1 = fig.add_subplot(131)
-    # check if noDataValue is found and if replace with nans for plotting
+    # check if nodata_value is found and if replace with nans for plotting
     demField = np.where(
-        demData["rasterData"] == demData["header"]["noDataValue"], np.nan, demData["rasterData"]
+        demData["rasterData"] == demData["header"]["nodata_value"], np.nan, demData["rasterData"]
     )
     # initialize x, y vectors of result field domain
     xllc = demData["header"]["xllcenter"]

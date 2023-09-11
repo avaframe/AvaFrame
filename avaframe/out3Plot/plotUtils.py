@@ -37,6 +37,7 @@ cfgFlags = cfgMain["FLAGS"]
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(plotUtils)
 cfgPlotUtils = cfg["UNITS"]
+cfgConstants = cfg['CONSTANTS']
 cfg = cfg["MAIN"]
 
 # define seaborn style and color maps
@@ -93,6 +94,9 @@ matplotlib.rc("text.latex", preamble=r"\usepackage{cmbright}")
 matplotlib.rcParams["grid.color"] = "whitesmoke"
 matplotlib.rcParams["grid.linestyle"] = ":"
 matplotlib.rcParams["grid.linewidth"] = 0.3
+
+# load constants
+gravityAcc = cfgConstants['gravityAcc']
 
 # for hillshade
 azimuthDegree = cfg.getfloat("azimuthDegree")

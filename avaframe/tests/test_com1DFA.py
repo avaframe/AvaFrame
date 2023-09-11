@@ -133,7 +133,7 @@ def test_prepareInputData(tmp_path):
     testField = np.zeros((10, 10))
     testFile = pathlib.Path(tmp_path, 'testFile2.asc')
     testHeader = {'ncols': 10, 'nrows': 10, 'cellsize': 5, 'xllcenter': 0.0, 'yllcenter': 0.0,
-        'noDataValue': 0.0}
+        'nodata_value': 0.0}
     IOf.writeResultToAsc(testHeader, testField, testFile, flip=True)
     inputSimFiles['relThFile'] = testFile
     cfg['GENERAL']['simTypeActual'] = 'res'
@@ -508,7 +508,7 @@ def test_prepareArea():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 5.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 7
     demHeader['ncols'] = 7
     dem = {'header': demHeader}
@@ -602,7 +602,7 @@ def test_checkParticlesInRelease():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 5
     demHeader['ncols'] = 5
     releaseLine['header'] = demHeader
@@ -672,7 +672,7 @@ def test_initializeMassEnt():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = nrows
     demHeader['ncols'] = ncols
     dem = {'header': demHeader}
@@ -733,7 +733,7 @@ def test_initializeResistance():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     dem = {'header': demHeader}
     dem['rasterData'] = np.ones((nrows, ncols))
 
@@ -785,7 +785,7 @@ def test_initializeMesh():
     demHeader['xllcenter'] = 101.23
     demHeader['yllcenter'] = 24.54
     demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 5
     demHeader['ncols'] = 5
 
@@ -807,7 +807,7 @@ def test_initializeMesh():
     demNewHeader['xllcenter'] = 0.
     demNewHeader['yllcenter'] = 0.
     demNewHeader['cellsize'] = 1.0
-    demNewHeader['noDataValue'] = -9999
+    demNewHeader['nodata_value'] = -9999
     demNewHeader['nrows'] = 5
     demNewHeader['ncols'] = 5
     demTest = {'header': demNewHeader}
@@ -1382,7 +1382,7 @@ def test_exportFields(tmp_path):
     demHeader['nrows'] = 10
     demHeader['xllcenter'] = 0
     demHeader['yllcenter'] = 0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     areaRaster = np.ones((5, 5))
     dem = {'originalHeader': demHeader, 'areaRaster': areaRaster}
     outDir = pathlib.Path(tmp_path, 'testDir')
@@ -1637,7 +1637,7 @@ def test_initializeSimulation(tmp_path):
     demHeader['xllcenter'] = 1.0
     demHeader['yllcenter'] = 2.0
     demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 12
     demHeader['ncols'] = 12
     demData = np.ones((12, 12))
@@ -1823,7 +1823,7 @@ def test_fetchRelVolume(tmp_path):
 
     # create DEM
     dem = {'header': {'xllcenter': 0.0, 'yllcenter': 0., 'cellsize': 1., 'nrows': 10, 'ncols': 20,
-        'noDataValue': -9999}}
+        'nodata_value': -9999}}
     dem['rasterData'] = np.ones((10,20))
     demPath = pathlib.Path(avaDir, 'Inputs', 'testDem.asc')
     fU.makeADir(pathlib.Path(avaDir, 'Inputs'))
@@ -1831,7 +1831,7 @@ def test_fetchRelVolume(tmp_path):
 
     # write relThField
     relThF = {'header': {'xllcenter': 0.0, 'yllcenter': 0., 'cellsize': 1., 'nrows': 10, 'ncols': 20,
-        'noDataValue': -9999}}
+        'nodata_value': -9999}}
     relThF['rasterData'] = np.zeros((10,20))
     for k in range(10):
         relThF['rasterData'][k,:] = k*1

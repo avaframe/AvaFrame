@@ -58,7 +58,7 @@ def test_animationPlot(tmp_path):
     avaDir = pathlib.Path(tmp_path)
     mti = np.ones((543, 12))
     demData = {'rasterData': np.ones((401, 1001)), 'header': {'cellsize': 5., 'xllcenter': 0.0,
-        'yllcenter': 0.0, 'noDataValue': 9999, 'nrows': 401, 'ncols': 1001}}
+        'yllcenter': 0.0, 'nodata_value': 9999, 'nrows': 401, 'ncols': 1001}}
     data = np.ones((401, 1001))
     mtiInfo = {'mti': mti, 'rangeList': np.arange(12), 'timeList': np.arange(12),
         'rangeGates': np.arange(543) -25., 'plotTitle': 'testTitle', 'referencePointName': 'betaPoint',

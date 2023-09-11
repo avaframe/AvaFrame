@@ -202,7 +202,7 @@ def test_updatePositionC():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 5.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 10
     demHeader['ncols'] = 10
     dem = {'header': demHeader}

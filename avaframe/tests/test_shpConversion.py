@@ -282,3 +282,9 @@ def test_writePoint2SHPfile(tmp_path):
     print(fileName)
     print(temp)
     assert str(points[0]) == str(pointpath)
+
+    pointDict = {'x': np.array([0, 10.]), 'y': np.array([1, 20.])}
+
+    with pytest.raises(ValueError) as e:
+        assert shpConv.writePoint2SHPfile(pointDict, 'myPoint', pointpath)
+    assert str(e.value) == "Length of pointDict is not allowed to exceed one"
