@@ -1,0 +1,255 @@
+[33mcommit 8859b383c99b2a8c8f493399ba88d565bbe90ee9[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Mon Jan 9 12:21:04 2023 +0100
+
+    Fix bug simName modelType, add sphKernelRadius setting option
+    
+            - update checking of simName
+
+[33mcommit 7d2f3d992db92fe2a24e537991b5facbf39d4ddc[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Tue Jan 3 11:48:06 2023 +0100
+
+    Move wetsnow to own frictType; add wetsnow test cases
+
+[33mcommit 1d44ed538837e3dc935b0f5f1df6eb544ebac2bf[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Fri Dec 16 10:33:33 2022 +0100
+
+    Add wet snow friction type to com1DFA
+    
+            - only update entrainment enthalpy if entrainedMass bigger 0
+            - move ent computation also for entrEnth into if
+            - remove Fidff dqdt and update pytests
+
+[33mcommit f1cd915963956706482d7b4a38797fa2b9032c07[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Thu Jan 5 12:13:55 2023 +0100
+
+    Allow not saving plots but generating report [General]
+    
+        - flag to turn of report completely
+
+[33mcommit 401945dc870fe1e5d0bc948ca8ac972f30002f76[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Thu Jan 5 21:37:46 2023 +0100
+
+    Remove unused location option in addColorBar [out3Plot]
+
+[33mcommit 419ebb7e6b61ae66ab109cde1a9721a204efddda[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Tue Jan 3 10:11:39 2023 +0100
+
+    add docu paragraph for wetSnow
+
+[33mcommit df3d630f1ec0f6c6d14fa0cc17d35ba6160b0d00[m
+Author: Stefan Blumentrath <stefan.blumentrath@gmx.de>
+Date:   Thu Jan 5 10:03:01 2023 +0100
+
+    fix unexpected keyword error
+    
+    With Python 3.8.10 (default, Nov 14 2022, 12:59:47) and Matlplotlib 3.3.4 I get an "unexpected keyword error"
+    The brackets should fix issue. See also:
+    https://stackoverflow.com/questions/37280557/can-i-place-a-vertical-colorbar-to-the-left-of-the-plot-in-matplotlib#comment112236764_61090677
+
+[33mcommit 93c5113511f9223a65008fbdf8a6d41225a866e3[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Wed Dec 28 10:39:28 2022 +0100
+
+    Line length adjustment on flake and black
+
+[33mcommit dcbc3e9363a4377786837cec5f9facf72f4927fc[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Thu Dec 22 14:40:19 2022 +0100
+
+    Handle two deprecated warnings; test black formatter
+
+[33mcommit eb19f7e5087fe63050bfe64a856b7801273d78c0[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Thu Dec 22 09:45:22 2022 +0100
+
+    Fix dimension error in scipy ode solver call (simiSol)
+
+[33mcommit c51524c54a89476edeed81b2681f046ba0fcb812[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Thu Dec 22 08:29:50 2022 +0100
+
+    Update versions for github workflow, drop py 3.6
+
+[33mcommit bea1392b510a2602d49c472c7eaa9b90f32cd54b[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Fri Nov 25 08:25:08 2022 +0100
+
+    Add triangular particle init [com1DFA]
+
+[33mcommit 60cf9cdc6fd10591705f6dc87c0520b65ec5a518[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Wed Nov 16 13:32:08 2022 +0100
+
+    Add glide snow tool [com1DFA]
+
+[33mcommit 1357f3d18dfb92564c2987b4f7be28bfe4eb1c03[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Mon Dec 19 09:30:26 2022 +0100
+
+    add optional outputs in docu
+    update links in algorithm
+
+[33mcommit b6548bd42356aa270b0b110e62f2e3115b7072e5[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Mon Dec 12 16:09:15 2022 +0100
+
+    Add log prints to cfgUtils to avoid confusions
+    
+            - Remove redundant report items
+            - valRef fix
+
+[33mcommit 56a433038e7bb6f6e6821d241d7012f2bfea9a85[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Fri Nov 11 12:33:32 2022 +0100
+
+    Add indicator of default/changed to simulationname and report
+    
+            - Add function to compare simcfg to default cfg for com1DFA; adresses #762
+            - Add changed parameter values to report; fixes #750 #715
+            - Add handling of old filenames; pytests
+
+[33mcommit a6c3375397c3f1140c6eb0ad262d4504bd5f0823[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Mon Dec 12 17:24:08 2022 +0100
+
+    add valref
+
+[33mcommit 388770222244ee330c92a28d30fb8af85014dd03[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Wed Nov 30 21:47:33 2022 +0100
+
+    Rewrite reading and comparison of cfgs
+            - add deepdiff and deepmerge dependency
+
+[33mcommit 9bf5234a54dd6117775eed5edec757297bd71b93[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Thu Nov 24 10:09:30 2022 +0100
+
+    Change call to com1DFAMain to ask for cfgInfo instead of cfgFile
+    
+            - rename simDFOld, simNameOld to simDFExisting, simNameExisting
+
+[33mcommit 0a949fbcc3d07d100a82e8278b4bdbbcfdaf1777[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Fri Oct 28 11:08:21 2022 +0200
+
+    Restructure com1DFA workflow
+    
+            - add required import of configparser to check type
+
+[33mcommit cc14e4450cb3ffe4a82ea89fa9f7ed41a7d9ea5e[m
+Author: oscar-dick <oskar.dick@bfw.gv.at>
+Date:   Wed Dec 7 13:28:21 2022 +0100
+
+     A better way to test the coordinate transformation
+
+[33mcommit ca9ebdea910327c2e470405579a55116c3a9f33f[m
+Author: oscar-dick <oskar.dick@bfw.gv.at>
+Date:   Mon Dec 5 15:42:41 2022 +0100
+
+    Add  avalanche coordinate system to particles properties
+    
+     - adding Aimec changes
+     - Adding a test to test_ana3Aimec
+
+[33mcommit db0f46f043ca516182c63f33ced0848c2d3eab54[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Mon Nov 21 11:19:38 2022 +0100
+
+    Update com1DFA dam documentation
+    
+      -Add direction clarification for dam docu
+      -Distribute dam documentation to appropriate sections
+
+[33mcommit 7cfdf8cddfdb306f2dd90eca0d07792e78d007aa[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Wed Nov 23 12:47:36 2022 +0100
+
+    Fix bug in approavhVel for rangeTime; fixes #782
+    
+      - update pytest and change check of type so it also works for int
+
+[33mcommit 600b2b0c808effcf3662d5646b6fea1b8a7c8a4a[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Wed Nov 23 11:21:25 2022 +0100
+
+    Add reference simulation to contour plot
+
+[33mcommit 06135d1a5edbec2c09439ae5178572fbebf13b97[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Thu Nov 17 12:19:09 2022 +0100
+
+    new dam method and tests
+
+[33mcommit 643681d8e0e1903831cb24e592bb5ae77bca70f2[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Tue Aug 9 11:55:06 2022 +0200
+
+    Add dam to com1DFAorig
+    
+      - Getting Walllines to work from cint
+      - Reproduce samos results for dam
+
+[33mcommit 1fdd8d460732387e90595ba6c3a8f72a5ad770d3[m
+Author: matthiasto <matthias.tonnel@bfw.gv.at>
+Date:   Thu Jul 14 15:06:46 2022 +0200
+
+    Adds dam pyx
+    
+      - include dam tool
+      - comments and tests
+      - clean ini file
+
+[33mcommit e9e5ca3e1a83b34ac5223ed9c53596a4e890a8c9[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Thu Nov 3 11:54:00 2022 +0100
+
+    Add contour outline plot to aimec and probrun
+    
+     - add colorbar info
+     - add parameter to pytest
+
+[33mcommit a7f0aa94884f9d1cfbaaa21002c05749bae8838d[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Thu Nov 3 11:14:25 2022 +0100
+
+    add filtering for greater or smaller than
+
+[33mcommit c0be868b527924adb8a9e6a851aa33e34b9f560a[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Fri Oct 21 16:25:49 2022 +0200
+
+    make sure closest time step is chosen
+
+[33mcommit a79ed7581f3b9c6de5346b96646c3961656a9024[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Fri Oct 21 15:42:50 2022 +0200
+
+    update version to 3.2.0
+
+[33mcommit 8ba16c1656fd539f18fc9de7f35ae92b20e9aa28[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Fri Oct 21 09:51:40 2022 +0200
+
+    list name of optional input
+
+[33mcommit a253c75a98e71e3c362c195e5a5c007945f6da77[m
+Author: Anna Wirbel <anna@avaframe.org>
+Date:   Fri Oct 21 08:25:29 2022 +0200
+
+    allow for string
+
+[33mcommit 1e78e33a975df0de86c4fcba7cf4d828ab5b2bf1[m
+Author: Felix Oesterle <felix@avaframe.org>
+Date:   Tue Oct 18 09:37:42 2022 +0200
+
+    Update github actions (new versions)
+      - clean runStandardTestsCom1DFA
+
+[
