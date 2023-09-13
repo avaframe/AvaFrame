@@ -30,8 +30,8 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA   # Plot tracectory plot
 
 
 ####   ----------------------------------------------------------------------------   ###
-#                                           4                                           #
-#      Geschwindigkeitsdichte (Unterschiede Simulation und AvaNode herausarbeiten)      #
+#                                           1                                           #
+#                                    velocity density                                   #
 #                                                                                       #
 ####   ----------------------------------------------------------------------------   ###
 
@@ -193,16 +193,14 @@ def CompareHistogram2d(particleList,property='umag',nBins=50,plotStats=False,Lat
 
 
 ####   ----------------------------------------------------------------------------   ###
-#                                           5                                           #
-#     Max Geschwindigkeit im Auslösegebiet gegenüber der absoluten Fallhöhe stellen     #
-#                Linker Plot Geschw. <-> Rechter Plot absolute Fallhöhe                 #
+#                                           2                                           #
+#                            Particle results in defined area                           #
 #                                                                                       #
 ####   ----------------------------------------------------------------------------   ###
 
 
-def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
-    """ Compare relativ distance of the particles to the centre of mass in the release area
-    to the relativ distance of the particles to the centre of mass in the final area
+def PlotPartRR(particleList,property,LatexExport=False,**kwargs):
+    """ Plot the particle results in the release and the runout area
 
     Parameters
     ----------
@@ -212,6 +210,7 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
         property for the result visualisation
     LatexExport: bool
         Decide whether the graphics should be exported for use in Latex
+
     **kwargs:
         SimName: str
             Name of the simulation
@@ -234,7 +233,7 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
 
     Tri = True
     statAusw = False
-    # Linien entsprechend der Ergebnisse einfärben
+    # Color lines according to results
     match property:
         case 'umag':
             maxValues = True
@@ -310,7 +309,6 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
 
 
 
-
     # Add AvaRange Results
     if 'AvaNodes' in kwargs:
         statAusw = True
@@ -339,10 +337,7 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
                 axs[0].scatter(x1,y1,c=z[i],cmap=colormap,s=3,vmin=min_z,vmax=max_z)
                 axs[0].scatter(x1,y1,color=color,s=1)
 
-                if property=='sAimec':
-                    #axs[1].scatter(x2,y2,color=color,s=size)
-                    print('test')
-                else:
+                if not property=='sAimec':
                     circle = plt.Circle((x2,y2),10,alpha=alpha,color=scat1.cmap(j))
                     axs[1].add_patch(circle)
                     axs[1].scatter(x2,y2,c=z[i],cmap=colormap,s=3,vmin=min_z,vmax=max_z)
@@ -362,9 +357,9 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
                     arrowstyle="->"),fontsize=4)
 
 
-    # Maximalwerte der Avanodes:
+    # maximum values of the AvaNodes:
     # max([max([step['umag'] for step in p]) for p in kwargs['AvaNodes']])
-    # Postion im Auslösegebiet:
+    # Area in Releasearea im Auslösegebiet:
     # ARposition = [(p[0]['sAimec'],p[0]['lAimec']) for p in kwargs['AvaNodes']]
 
 
@@ -434,7 +429,6 @@ def CompareTrajectory(particleList,property,LatexExport=False,**kwargs):
         d_part = abs(de_part)-abs(ds_part)
         # Median
         median_part = np.quantile(d_part,0.5)
-
         nKleiner = zaehle_negative_elemente(d_part)
 
         # Berechnung des Korrelationskoeffizienten
@@ -465,7 +459,7 @@ def zaehle_negative_elemente(liste):
 
 
 ####   ----------------------------------------------------------------------------   ###
-#                                           6                                           #
+#                                           3                                           #
 #                                     Sankey Chart                                      #
 #                                                                                       #
 ####   ----------------------------------------------------------------------------   ###
@@ -644,7 +638,7 @@ def SankeyChart(particleList,property='umag',colorscheme='max',LatexExport=False
 
 
 
-def ThalwegTime(particleList,property='umag',colorscheme='max',LatexExport=False,**kwargs):
+def ThalwegTime(particleList,property='umag',LatexExport=False,**kwargs):
     """ Create Thalweg-Time diagramm for visualising particle flow
     
     Parameter
@@ -653,10 +647,9 @@ def ThalwegTime(particleList,property='umag',colorscheme='max',LatexExport=False
         list of particle dictionaries
     property: str
         property for the result visualisation
-    colorscheme: str
-        'max',
     LatexExport: bool
         Decide whether the graphics should be exported for use in Latex
+
     **kwargs:
         ProjectName: str
             Name of the project
@@ -797,7 +790,7 @@ def ThalwegTime(particleList,property='umag',colorscheme='max',LatexExport=False
 
 
 ####   ----------------------------------------------------------------------------   ###
-#                                           7                                           #
+#                                           4                                           #
 #                                   Plot Particles xy                                   #
 #                                                                                       #
 ####   ----------------------------------------------------------------------------   ###
@@ -876,7 +869,7 @@ def plotParticles(particleList,AvaNodes,**kwargs):
 
 
 ####   ----------------------------------------------------------------------------   ###
-#                                           8                                           #
+#                                           5                                           #
 #                                  Plot distance to CoM                                 #
 #                                                                                       #
 ####   ----------------------------------------------------------------------------   ###

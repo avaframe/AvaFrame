@@ -78,10 +78,10 @@ AvaRangeDir = r'C:\Users\frede\Documents\Programmdateien\AvaFrame\Simulationen_M
 
 ## Choose relevant particles
 TrackMethod = 1
-# Method 1: Koordinates + Radius
+# Method 1: Koordinates + Radius (AvaRange results)
 radius = 5
 # Method 2: Explicit particle choice
-PartID = [1,2,3,12718, 3831, 12717, 12999]
+PartID = [1,2,3]
 
 
 # Do the particle files contain the transformed coordinates?
@@ -97,11 +97,11 @@ LatexExport = True
 
 
 # Decide which plots should be generated
-plots = [5]
+plots = [2]
 
 # Select the property to plot
-# prop = 'umag'
-prop = 'sAimec'
+prop = 'umag'
+# prop = 'sAimec'
 # prop = 'dsCoM'
 
 
@@ -307,22 +307,19 @@ for p in particlesList:
 for p in plots:
     match p:     
         ##########     Auswertung der Geschwindigkeitsgrößen     ##########
-        case 4:         # 4. Geschwindigkeitsdichte (Vergleich mit AvaNodes -> Statistische Auswertung, wie groß ist die Abweichung der Nodes zu der Verteilung der Simulation)
-            # Relativer Abstand zum Schwerpunkt (Trajektorale Entfernung) -> Dichteplot im s/l-Koordinatensystem
-            #ppt.CompareHistogram2d(fullparticlesList,'umag',LatexExport=LatexExport,ProjectName=FileName,AvaDir=avalancheDir)
-            # ppt.CompareHistogram2d(fullparticlesList,'umag',SimName=SimNames[SimNumber],ProjectName=FileName)
+        case 1:         # 1. Velocity density
             if AvaRange:
                 ppt.CompareHistogram2d(fullparticlesList,'umag',LatexExport=LatexExport,ProjectName=FileName,AvaDir=avalancheDir,AvaNodes=AvaNodesList)
             else:
                 ppt.CompareHistogram2d(fullparticlesList,'umag',LatexExport=LatexExport,plotStats=True,ProjectName=FileName,AvaDir=avalancheDir)
 
-        case 5:         # 5. Ergebnisse im Anbruch- und Ablagerungsgebiet gegenüber stellen
+        case 2:         # 2. PLot particle results in release and runout area
             if AvaRange:
-                ppt.CompareTrajectory(fullparticlesList,property=prop,ProjectName=FileName,AvaDir=avalancheDir,LatexExport=LatexExport,AvaNodes=AvaNodesList,radius=radius)
+                ppt.PlotPartRR(fullparticlesList,property=prop,ProjectName=FileName,AvaDir=avalancheDir,LatexExport=LatexExport,AvaNodes=AvaNodesList,radius=radius)
             else:
-                ppt.CompareTrajectory(fullparticlesList,property=prop,ProjectName=FileName,AvaDir=avalancheDir,LatexExport = LatexExport)
+                ppt.PlotPartRR(fullparticlesList,property=prop,ProjectName=FileName,AvaDir=avalancheDir,LatexExport = LatexExport)
 
-        case 6:         # 6. Sankey Diagramm erstellen, zur Visualisierung der Partikelströme
+        case 3:         # 3. Upgraded TT-diagram
             if AvaRange:
                 if prop=='dsCoM':
                     ppt.ThalwegTime(fullparticlesList,property=prop,colorscheme='explicit',LatexExport=False,AvaDir=avalancheDir,ProjectName=FileName,AvaNodes=AvaNodesList)
@@ -338,7 +335,7 @@ for p in plots:
                         # ppt.SankeyChart(fullparticlesList,property=prop,colorscheme='explicit',LatexExport=False,AvaDir=avalancheDir,ProjectName=FileName)
                         ppt.ThalwegTime(fullparticlesList,property=prop,colorscheme='explicit',LatexExport=False,AvaDir=avalancheDir,ProjectName=FileName)
 
-        case 7:         # Stelle AvaNodes im Anburchgebiet dar
+        case 4:         # Stelle AvaNodes im Anburchgebiet dar
             if AvaRange:
                 ppt.plotParticles(fullparticlesList,AvaNodesList,ProjectName=FileName,radius=radius,AvaDir=avalancheDir)        #dem=dem,
 

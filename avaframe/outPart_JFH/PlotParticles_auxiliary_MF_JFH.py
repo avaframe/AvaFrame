@@ -88,9 +88,6 @@ def Quantiles(Data,quantiles):
         Data Set every list stands for a Quantile
     """
     Quant = [np.quantile(Data[i],quantiles) for i in range(len(Data))]
-
-    # Evtl. Polynom erstellen, dass durch die Punkte verläuft bzw. sich diesen annähert?
-
     return Quant
 
 
@@ -201,7 +198,7 @@ def CentreOfMass(particleList,coords=['x','y']):
 
 def ARCentreOfMass(particles,Simulation):
     """ Calculate Centre Of Mass in every time step of the measurement
-    
+
     
     """
     t=[]
@@ -270,7 +267,8 @@ def transformSL(particleList,avalancheDir,dem,AvaNode=False):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
         'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
+    # pathDict = aimecTools.checkAIMECinputs(cfgSetup, inputsDF, pathDict)
+    pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
 
     # read reference file and raster and config
     refResultSource = inputsDF.loc[refSimRowHash, cfgSetup['runoutResType']]
@@ -390,8 +388,8 @@ def readDEM(avaDir,demName):
     """
     # get dem file name
     demSource = pathlib.Path(avaDir, 'Inputs', demName)
-
     dem = IOf.readRaster(demSource)
+
     return(dem)
 
 
@@ -424,6 +422,7 @@ def GetPointOnDEM(Point,dem):
                         - dem['header']['xllcenter'])
     PointOnDEM['y'] = (PointOnDEM['y']
                         - dem['header']['yllcenter'])
+    
     return PointOnDEM
 
 

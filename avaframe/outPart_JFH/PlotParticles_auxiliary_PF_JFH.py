@@ -708,42 +708,6 @@ def PlotText(ax,text,loc='upper left'):
 
         # at.set_bbox_to_anchor((1.1, 0.5))
         axis.add_artist(at)
-        
-
-
-
-"""
-
-
-HIER WETER!!!
-
-"""
-def Zoom(ax,XMinMax,YMinMax):
-    """ Zoom to relvant X- or Y-Limits
-
-    Parameters
-    ----------
-    ax: ax
-        axis handle
-    XMinMax, YMinMax: lst
-        List of min and max values of the plotted data set
-    """
-    XMin = math.floor(min(XMinMax)*0.005)/0.005
-    XMax = math.ceil(max(XMinMax)*0.005)/0.005
-    Xdelta = XMax-XMin
-
-    YMin = math.floor(min(YMinMax)*0.005)/0.005
-    YMax = math.ceil(max(YMinMax)*0.005)/0.005
-    Ydelta = YMax-YMin
-
-    if Xdelta > Ydelta:
-        ax.set_xlim(XMin,XMax)
-        YMid = (YMin+YMax)/2
-        ax.set_ylim(YMid-Xdelta/2,YMid+Xdelta/2)
-    else:
-        ax.set_ylim(YMin,YMax)
-        XMid = (XMin+XMax)/2
-        ax.set_xlim(XMid-Ydelta/2,XMid+Ydelta/2)
 
 
 
