@@ -912,7 +912,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
           run-out calculated with the MEAN result in each cross section
         - elevRel: float, elevation of the release area (based on first point with
           peak field > thresholdValue)
-        - deltaH: float, elevation fall difference between elevRel and altitude of
+        - deltaZ: float, elevation fall difference between elevRel and altitude of
           run-out point
 
     """
@@ -957,13 +957,16 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     resAnalysisDF.loc[simRowHash, 'xRunout'] = gridx[cLower, index]
     resAnalysisDF.loc[simRowHash, 'yRunout'] = gridy[cLower, index]
     resAnalysisDF.loc[simRowHash, 'deltaSXY'] = scoord[cLower] - scoord[cUpper]
+    resAnalysisDF.loc[simRowHash, 'runoutAngle'] = np.rad2deg(np.arctan((transformedDEMRasters[cUpper, n] -
+                                                                         transformedDEMRasters[cLower, n]) /
+                                                                        (scoord[cLower] - scoord[cUpper])))
     resAnalysisDF.loc[simRowHash, 'zRelease'] = transformedDEMRasters[cUpper, n]
     resAnalysisDF.loc[simRowHash, 'zRunout'] = transformedDEMRasters[cLower, n]
     resAnalysisDF.loc[simRowHash, 'sMeanRunout'] = scoord[cLowerm]
     resAnalysisDF.loc[simRowHash, 'xMeanRunout'] = x[cLowerm]
     resAnalysisDF.loc[simRowHash, 'yMeanRunout'] = y[cLowerm]
     resAnalysisDF.loc[simRowHash, 'elevRel'] = transformedDEMRasters[cUpper, n]
-    resAnalysisDF.loc[simRowHash, 'deltaH'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
+    resAnalysisDF.loc[simRowHash, 'deltaZ'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
 
     return resAnalysisDF
 
@@ -1015,7 +1018,7 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     return resAnalysisDF
 
 
-def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, pathDict, contourDict):
+def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathDict, contourDict):
     """Compare area results to reference.
 
     Compute True positive, False negative... areas.
@@ -1030,7 +1033,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
         simulation dataframe hash
     newRasters: dict
         dict with tranformed raster for reference and curent simulation
-    cfgSetup: confiParser
+    cfg: confiParser
         numerical value of the limit to use for the runout computation
         as well as the levels for the contour line plot
     pathDict: dict
@@ -1055,6 +1058,9 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
         dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
         for thresholdValue - updated
     """
+
+    cfgSetup = cfg['AIMECSETUP']
+    cfgPlots = cfg['PLOTS']
     runoutResType = cfgSetup['runoutResType']
     refSimRowHash = pathDict['refSimRowHash']
     cellarea = rasterTransfo['rasterArea']
@@ -1125,7 +1131,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup, 
     inputs['simName'] = simName
 
     compPlotPath = None
-    if simRowHash != refSimRowHash:
+    if simRowHash != refSimRowHash and cfgPlots.getboolean('extraPlots'):
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
     # add contourlines to contourDict
