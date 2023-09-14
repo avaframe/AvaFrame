@@ -12,10 +12,10 @@ def test_readASCheader(capfd):
     assert((header['ncols'] == 419) and (header['nrows'] == 201) and
            (header['cellsize'] == 5))
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(ValueError) as e:
         DGMSource = dirname /'data'/'testReadAsc.asc'
         assert IOf.readASCheader(DGMSource)
-    assert str(e.value) == 'DEM header is not in correct format - check line 4: should be yllcenter or yllcorner'
+    assert str(e.value) == ("DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value")
 
 
 def test_isEqualASCheader(capfd):
