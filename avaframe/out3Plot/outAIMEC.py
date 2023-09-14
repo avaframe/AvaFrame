@@ -17,6 +17,8 @@ from cmcrameri import cm as cmapCrameri
 import matplotlib as mpl
 import matplotlib.patheffects as pe
 import pathlib
+from matplotlib.cm import ScalarMappable
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -1140,3 +1142,163 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
     ax1.set_title('Thalweg-Altitude')
 
     return ax1
+
+
+def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
+    """plot result type name1 vs name 2 and colorcode scenarios using hue
+
+        Parameters
+        -----------
+        resultsDF: pandas dataFrame
+            dataframe with one row per simulation with info on parameters and aimec analysis results
+        name1: str
+            name of result type one
+        name2: str
+            name of result type two
+        hue: str
+            name of parameter used for colorcoding
+    """
+
+    availableoptions = ['pfvFieldMax', 'pfvFieldMin', 'pfvFieldMean', 'maxpfvCrossMax',
+                 'pftFieldMax', 'pftFieldMin', 'pftFieldMean', 'maxpftCrossMax',
+                 'pprFieldMax', 'pprFieldMin', 'pprFieldMean', 'maxpprCrossMax',
+                 'sRunout', 'deltaSXY', 'zRelease', 'zRunout', 'deltaZ', 'relMass',
+                 'finalMass', 'entMass', 'runoutAngle']
+    units = ['ms-1', 'ms-1', 'ms-1', 'ms-1', 'm', 'm','m','m', 'kPa', 'kPa', 'kPa', 'kPa', 'm', 'm', 'm', 'm', 'm',
+             'kg', 'kg', 'kg', '°']
+
+    if name1 not in availableoptions:
+        message = 'compResType1: %s not in available options' % name1
+        log.error(message)
+        raise ValueError(message)
+    elif name2 not in availableoptions:
+        message = 'compResType2: %s not in available options' % name2
+        log.error(message)
+        raise ValueError(message)
+
+    if hue == '':
+        hue = None
+    elif hue not in resultsDF.cloumns.values.tolist():
+        message = 'Scenario name for comparison plot not valid name %s not using for colorcoding' % hue
+        log.warning(message)
+
+    name1Index = availableoptions.index(name1)
+    name2Index = availableoptions.index(name2)
+    fig = sns.jointplot(data=resultsDF, x=name1, y=name2, hue=hue)
+
+     # add label names with units
+    fig.ax_joint.set_xlabel('%s [%s]' % (availableoptions[name1Index], units[name1Index]))
+    fig.ax_joint.set_ylabel('%s [%s]' % (availableoptions[name2Index], units[name2Index]))
+    pU.putAvaNameOnPlot(fig.ax_joint, pathDict['avalancheDir'])
+
+    outFileName = pathDict['projectName'] + ('_%svs%s' % (name1, name2))
+    pU.saveAndOrPlot(pathDict, outFileName, fig.figure)
+
+
+def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, barInterval, simName):
+    """ plot the velocity and thickness cross max values along the thalweg, with pft x10
+        only plot every barInt value
+
+        Parameters
+        -----------
+        pathDict: dict
+            info on avalancheDir
+        rasterTransfo: dict
+            info on domain transformation
+        pftCrossMax: numpy nd array
+            peak flow thickness max values along cross profiles of thalweg coordinate system
+        pfvCrossMax: numpy nd array
+            peak flow velocity max values along cross profiles of thalweg coordinate system
+        barInterval: float
+            width to compute the values that should be used for plotting
+        simName: str
+            simulation name
+
+    """
+
+    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
+    indVelStart = np.where(pfvCrossMax > 0.)[0][0]
+    indVelZero = np.where(pfvCrossMax == 0.)[0][indVelStart]
+    # compute alpha angle based on pfvCM field
+    deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
+    deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
+    alpha = np.rad2deg(np.arctan(deltaz / deltas))
+    # compute every barInt value to take from arrays for plotting
+    barInt = int(np.floor(len(rasterTransfo['s']) / (rasterTransfo['s'][-1] / barInterval)))
+    # get thalweg coordinates
+    sXY = rasterTransfo['s']
+    z = rasterTransfo['z']
+    # setup a colorbar for pft and pfv cross max values
+    pftColors = [val / np.nanmax(pftCrossMax[::barInt]) if val != 0. else 0.0 for val in pftCrossMax[::barInt]]
+    pfvColors = [val / np.nanmax(pfvCrossMax[::barInt]) if val != 0. else 0.0 for val in pfvCrossMax[::barInt]]
+    # ind max pfvCrossMax and max pftCrossMax
+    indMPFV = np.argmax(pfvCrossMax)
+    indMPFT = np.argmax(pftCrossMax)
+
+    # initialize figure
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax2 = ax1.twinx()
+    # add scatter plot of velocity-Altitude field colocoded with max peak flow velocity
+    ax1.bar(rasterTransfo['s'][::barInt], pftCrossMax[::barInt]*10.+z[::barInt], width=40.,
+            color=cmapCrameri.batlow.reversed()(pfvColors))
+    ax1.bar(rasterTransfo['s'][::barInt], rasterTransfo['z'][::barInt], width=40., color='white')
+    ax2.plot(rasterTransfo['s'], rasterTransfo['z'], '-y', zorder=100,
+             path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], linewidth=1, markersize=0.8,
+             label='thalweg')
+    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
+    ax2.set_ylim([np.nanmin(z)-np.nanmax(z)*0.01, np.nanmax(z)+np.nanmax(z)*0.01])
+    ax1.set_ylim([np.nanmin(z) - np.nanmax(z) * 0.01, np.nanmax(z) + np.nanmax(z) * 0.01])
+
+
+    # draw the horizontal and vertical lines for angle computation
+    ax2.vlines(x=sXY[indVelStart], ymin=z[indVelZero], ymax=z[indVelStart],
+               color='silver', linestyle='--', linewidth=1.5, label=(r'$\Delta s_{xy} = %.1f$$m$' % deltas))
+    ax2.hlines(y=z[indVelZero], xmin=sXY[indVelStart],
+               xmax=sXY[indVelZero],
+               color='grey', linestyle='--', linewidth=1.5, label=(r'$\Delta z = %.1f$$m$' % deltaz))
+
+    X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
+    Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
+    ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5, label= (r'$\alpha$=%.1f°' % (alpha)))
+    ax2.plot(rasterTransfo['s'][indMPFV], rasterTransfo['z'][indMPFV], color='darkred', marker='.', linestyle='',
+             label=(r'$maxpfv$ = %.1f$ms^{-1}$' % pfvCrossMax[indMPFV]), zorder=200)
+    ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
+             label=(r'$maxpft$ = %.1f$m$' % pftCrossMax[indMPFT]), zorder=201)
+
+    print('max pfv', rasterTransfo['s'][indMPFV], pfvCrossMax[indMPFV])
+    print('max pft', rasterTransfo['s'][indMPFT], pfvCrossMax[indMPFT])
+
+    # add colorbar for pft bars using pfv for colors
+    sm2 = ScalarMappable(cmap=cmapCrameri.batlow.reversed(),
+                        norm=plt.Normalize(np.nanmin(pfvCrossMax[::barInt]), np.nanmax(pfvCrossMax[::barInt])))
+    sm2.set_array([])
+    cax = ax1.inset_axes([1.04, 0.0, 0.025, 0.99])
+    cbar2 = plt.colorbar(sm2, shrink=0.5, ax=ax1, cax=cax)
+    cbar2.set_label(r'pfv [m/s]', rotation=270, labelpad=25)
+
+    # add bar for scale reference
+    asb = AnchoredSizeBar(ax1.transData,
+                          40,
+                          r"5 m",
+                          loc='lower left',
+                          color='grey',
+                          pad=0.1, borderpad=0.5, sep=5,
+                          size_vertical = 50,
+                          frameon=False)
+    ax1.add_artist(asb)
+
+    # set axes labels and title
+    ax1.set_yticks([])
+    ax1.set_yticklabels([])
+    ax2.yaxis.tick_left()
+    ax2.yaxis.set_label_position("left")
+    ax2.xaxis.set_label_position("bottom")
+    ax2.set_ylabel('altitude [m] (pft x 10)')
+    ax1.set_xlabel('$S_{xy}$ [m]')
+    plt.title('Max peak flow thickness (bars) along thalweg colored with max peak flow velocity')
+    plt.legend()
+
+    # save and or plot
+    outFileName = pathDict['projectName'] + ('_%s_thalweAltitude' % (simName))
+    pU.saveAndOrPlot(pathDict, outFileName, fig.figure)

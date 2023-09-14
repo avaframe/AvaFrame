@@ -103,6 +103,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
+    cfgPlots = cfg['PLOTS']
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-processing')
@@ -159,7 +160,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # plot the contour lines of all sims for the thresholdValue of runoutResType
     outAimec.plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup)
 
-    if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
+    if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']) and cfgPlots.getboolean('extraPlots'):
         outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2 and sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
             plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
@@ -174,7 +175,8 @@ def mainAIMEC(pathDict, inputsDF, cfg):
                     v for k, v in resAnalysisDF['massPlotName'].to_dict().items()}
         plotDict['massAnalysisPlot'] = {'Aimec mass analysis': massDict}
 
-    outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
+    if cfgPlots.getboolean('extraPlots'):
+        outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
 
     plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': {'AIMEC '
                                                                                      + cfgSetup['runoutResType']
@@ -182,6 +184,14 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
+
+    # create comparison plots of two scalar result variables or derived quantities
+    if len(resAnalysisDF.index) > 1:
+        compResTypes1 = cfgPlots['compResType1'].split('|')
+        compResTypes2 = cfgPlots['compResType2'].split('|')
+        for indRes, compResType in enumerate(compResTypes1):
+            outAimec.plotMaxValuesComp(pathDict, resAnalysisDF, compResType, compResTypes2[indRes],
+                                       hue=cfgPlots['scenarioName'])
 
     return rasterTransfo, resAnalysisDF, plotDict, newRasters
 
@@ -283,6 +293,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     """
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
+    cfgPlots = cfg['PLOTS']
     interpMethod = cfgSetup['interpMethod']
     flagMass = cfgFlags.getboolean('flagMass')
     refSimRowHash = pathDict['refSimRowHash']
@@ -328,10 +339,15 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     else:
         timeMass = None
 
-    resAnalysisDF, compPlotPath, contourDict = aimecTools.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfgSetup,
+    resAnalysisDF, compPlotPath, contourDict = aimecTools.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg,
                                                  pathDict, contourDict)
 
     resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
+
+    outAimec.plotVelThAlongThalweg(pathDict, rasterTransfo, resAnalysisDF['pftCrossMax'].loc[simRowHash],
+                                   resAnalysisDF['pfvCrossMax'].loc[simRowHash], cfgPlots.getfloat('barInterval'),
+                                   resAnalysisDF['simName'].loc[simRowHash])
+
     return resAnalysisDF, newRasters, timeMass, contourDict
 
 
