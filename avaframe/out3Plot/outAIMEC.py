@@ -1218,7 +1218,10 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
 
     # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
     indVelStart = np.where(pfvCrossMax > 0.)[0][0]
-    indVelZero = np.where(pfvCrossMax == 0.)[0][indVelStart]
+    if len(np.where(pfvCrossMax == 0.)[0]) == 0:
+        indVelZero = len(pfvCrossMax) - 1
+    else:
+        indVelZero = np.where(pfvCrossMax == 0.)[0][indVelStart]
     # compute alpha angle based on pfvCM field
     deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
     deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
@@ -1266,9 +1269,6 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
     ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
              label=(r'$maxpft$ = %.1f$m$' % pftCrossMax[indMPFT]), zorder=201)
 
-    print('max pfv', rasterTransfo['s'][indMPFV], pfvCrossMax[indMPFV])
-    print('max pft', rasterTransfo['s'][indMPFT], pfvCrossMax[indMPFT])
-
     # add colorbar for pft bars using pfv for colors
     sm2 = ScalarMappable(cmap=cmapCrameri.batlow.reversed(),
                         norm=plt.Normalize(np.nanmin(pfvCrossMax[::barInt]), np.nanmax(pfvCrossMax[::barInt])))
@@ -1300,5 +1300,5 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
     plt.legend()
 
     # save and or plot
-    outFileName = pathDict['projectName'] + ('_%s_thalweAltitude' % (simName))
-    pU.saveAndOrPlot(pathDict, outFileName, fig.figure)
+    outFileName = pathDict['projectName'] + ('_%s_thalwegAltitude' % (simName))
+    pU.saveAndOrPlot(pathDict, outFileName, fig)

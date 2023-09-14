@@ -39,7 +39,7 @@ def readASCheader(fname):
                  break
             rowCount = rowCount + 1
 
-    if 'xllcenter' not in headerInfo:
+    if ('xllcenter' not in headerInfo and 'xllcorner' in headerInfo) and ('yllcenter' not in headerInfo and 'yllcorner' in headerInfo):
         headerInfo['xllcenter'] = headerInfo['xllcorner'] + headerInfo['cellsize'] / 2
         headerInfo['yllcenter'] = headerInfo['yllcorner'] + headerInfo['cellsize'] / 2
         # remove xllcorner, yllcorner
@@ -52,8 +52,7 @@ def readASCheader(fname):
 
     headerItems = [item.lower() for item in list(headerInfo.keys())]
     if sorted(headerItems) != sorted(['cellsize', 'nrows', 'ncols', 'xllcenter', 'yllcenter', 'nodata_value']):
-        message = (
-            'DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value')
+        message = ('DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value')
         log.error(message)
         raise ValueError(message)
 

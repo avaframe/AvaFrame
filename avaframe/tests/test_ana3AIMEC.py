@@ -75,6 +75,7 @@ def test_analyzeArea(tmp_path):
     gridy, gridx = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
     rasterTransfo['x'] = rasterTransfo['s']
     rasterTransfo['y'] = 50*np.ones(np.shape(rasterTransfo['s']))
+    rasterTransfo['z'] = 50 * np.ones(np.shape(rasterTransfo['s']))
     rasterTransfo['gridx'] = gridx
     rasterTransfo['gridy'] = gridy
     rasterTransfo['rasterArea'] = np.ones((500, 100))
