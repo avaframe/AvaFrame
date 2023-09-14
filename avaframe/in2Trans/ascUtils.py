@@ -26,68 +26,37 @@ def readASCheader(fname):
         information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
     """
 
-    headerInfo = {}
-    infile = open(fname, "r")
-    i = 0
-    ln = 0
-    for aline in infile:
-        item = aline.split()
-        if ln == 0:
-            if item[0].lower() == 'ncols':
-                headerInfo['ncols'] = int(item[1])
+    # read header
+    headerRows = 6 # six rows for header information
+    headerInfo = {} # store header information including ncols, nrows, xllcorner, yllcorner, cellsize, nodata_value
+    rowCount = 1
+    with open(fname, 'rt') as fileH:
+         for line in fileH:
+            if rowCount <= headerRows:
+                 line = line.split(" ", 1)
+                 headerInfo[line[0].lower()] = float(line[1])
             else:
-                message = 'DEM header is not in correct format - check line 1: should be ncols'
-                log.error(message)
-                raise ValueError(message)
-        elif ln == 1:
-            if item[0].lower() == 'nrows':
-                headerInfo['nrows'] = int(item[1])
-            else:
-                message = ('DEM header is not in correct format - check line 2: should be nrows')
-                log.error(message)
-                raise ValueError(message)
-        elif ln == 2:
-            if item[0].lower() == "xllcorner":
-                headerInfo['xllcorner'] = float(item[1])
-            elif item[0].lower() == "xllcenter":
-                headerInfo['xllcenter'] = float(item[1])
-            else:
-                message = ('DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
-                log.error(message)
-                raise ValueError(message)
-        elif ln == 3:
-            if item[0].lower() == "yllcorner":
-                headerInfo['yllcorner'] = float(item[1])
-            elif item[0].lower() == "yllcenter":
-                headerInfo['yllcenter'] = float(item[1])
-            else:
-                message = ('DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
-                log.error(message)
-                raise ValueError(message)
-        elif ln == 4:
-            if item[0].lower() == 'cellsize':
-                headerInfo['cellsize'] = float(item[1])
-            else:
-                message = ('DEM header is not in correct format - check line 5: should be cellsize')
-                log.error(message)
-                raise ValueError(message)
-        elif ln == 5:
-            if 'nodata' in item[0].lower():
-                headerInfo['nodata_value'] = float(item[1])
-            else:
-                message = ('DEM header is not in correct format - check line 6: should be nodata_value')
-                log.error(message)
-                raise ValueError(message)
-        ln += 1
+                 break
+            rowCount = rowCount + 1
 
-    if 'xllcenter' not in headerInfo:
+    if ('xllcenter' not in headerInfo and 'xllcorner' in headerInfo) and ('yllcenter' not in headerInfo and 'yllcorner' in headerInfo):
         headerInfo['xllcenter'] = headerInfo['xllcorner'] + headerInfo['cellsize'] / 2
         headerInfo['yllcenter'] = headerInfo['yllcorner'] + headerInfo['cellsize'] / 2
         # remove xllcorner, yllcorner
         headerInfo.pop('xllcorner')
         headerInfo.pop('yllcorner')
 
-    infile.close()
+    # convert ncols and nrows to int
+    headerInfo['ncols'] = int(headerInfo['ncols'])
+    headerInfo['nrows'] = int(headerInfo['nrows'])
+
+    headerItems = [item.lower() for item in list(headerInfo.keys())]
+    if sorted(headerItems) != sorted(['cellsize', 'nrows', 'ncols', 'xllcenter', 'yllcenter', 'nodata_value']):
+        message = ('DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value')
+        log.error(message)
+        raise ValueError(message)
+
+    fileH.close()
 
     return headerInfo
 
