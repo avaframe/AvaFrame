@@ -9,9 +9,15 @@ It is also possible to adapt the model parameters for other regions.
 Input
 -----
 
-* raster of the DEM (.asc file)
-* set of avalanche paths (shapefile), there can be multiple paths in the shapefile
-* Split point (shapefile), there can be multiple split points in the shapefile
+Please be aware that all input data have to be provided in the same projection.
+
+* digital elevation model as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+* set of avalanche paths as (multi-) line shapefile. I.e there can be multiple paths in the shapefile
+
+  - recommended attribute *name*
+
+* Split points as (multi-) point shapefile. I.e. there can be multiple split points in the shapefile. For each
+  profile/path the closest split point is considered.
 
 Outputs
 --------

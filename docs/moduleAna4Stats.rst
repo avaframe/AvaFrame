@@ -4,7 +4,7 @@ ana4Stats: Statistical analysis tools
 ######################################
 
 
-probAna
+probAna - Probability maps
 ==========================
 
 probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
@@ -20,6 +20,19 @@ Using these simulations, a probability map is generated.
 The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
 in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
 Details on this function, as for example required inputs can be found in: :py:mod:`ana4Stats.probAna`.
+
+To run - via QGis Connector
+---------------------------
+
+Since version 1.6 it is possible to generate probability maps via the QGis connector. This is provided in the
+experimental folder of the QGis processing plugin via **Probability run**. A standard setup is used in which mu and
+release thickness are varied.
+
+The input requirements are the same as for :py:mod:`com1DFA` with one important difference: an additional *ci95*
+attribute is needed for the release shapes.
+This describes the confidence intervall for the release thickness, using the same units. I.e. if you are using a
+release thickness of 1.5m, you need to provide the ci in [m] as well, for example ci=0.3m. The release thickness is
+then automatically varied within the release thickness plus/minus the confidence interval.
 
 
 To run - example run scripts
