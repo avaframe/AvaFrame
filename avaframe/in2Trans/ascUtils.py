@@ -27,17 +27,17 @@ def readASCheader(fname):
     """
 
     # read header
-    header_rows = 6 # six rows for header information
+    headerRows = 6 # six rows for header information
     headerInfo = {} # store header information including ncols, nrows, xllcorner, yllcorner, cellsize, nodata_value
-    row_ite = 1
-    with open(fname, 'rt') as file_h:
-         for line in file_h:
-            if row_ite <= header_rows:
+    rowCount = 1
+    with open(fname, 'rt') as fileH:
+         for line in fileH:
+            if rowCount <= headerRows:
                  line = line.split(" ", 1)
                  headerInfo[line[0].lower()] = float(line[1])
             else:
                  break
-            row_ite = row_ite+1
+            rowCount = rowCount + 1
 
     if 'xllcenter' not in headerInfo:
         headerInfo['xllcenter'] = headerInfo['xllcorner'] + headerInfo['cellsize'] / 2
@@ -46,6 +46,10 @@ def readASCheader(fname):
         headerInfo.pop('xllcorner')
         headerInfo.pop('yllcorner')
 
+    # convert ncols and nrows to int
+    headerInfo['ncols'] = int(headerInfo['ncols'])
+    headerInfo['nrows'] = int(headerInfo['nrows'])
+
     headerItems = [item.lower() for item in list(headerInfo.keys())]
     if sorted(headerItems) != sorted(['cellsize', 'nrows', 'ncols', 'xllcenter', 'yllcenter', 'nodata_value']):
         message = (
@@ -53,7 +57,7 @@ def readASCheader(fname):
         log.error(message)
         raise ValueError(message)
 
-    file_h.close()
+    fileH.close()
 
     return headerInfo
 
