@@ -45,18 +45,39 @@ folder structure described below.
       Work/
 
 
-In the directory ``Inputs``, the following files are required:
+In the directory ``Inputs``, the following files are required. Be aware that ALL inputs have to be provided in the same
+projection:
 
-* digital elevation model as .asc file
-  -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
-* release area scenario as shapefile (in Inputs/REL); multiple features are possible
-  -> the release area name should not contain an underscore, if so '_AF' is added
+* digital elevation model as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+
+* release area scenario as (multi-) polygon shapefile (in Inputs/REL; multiple features are possible)
+
+  - the release area name should not contain an underscore, if so '_AF' is added.
+  - recommended attributes are *name*, *thickness* (see :ref:`moduleCom1DFA:Release-, entrainment thickness settings`)
+    and *ci95* (see :ref:`moduleAna4Stats:probAna - Probability maps`)
+  - ALL features within one shapefile are released at the same time (and interact), this is what we refer to as *scenario*
+  - if you want to simulate different scenarios with the same features, you have to copy them to separate shapefiles
+
 
 and the following files are optional:
 
-* entrainment area as shapefile (in Inputs/ENT)
-* resistance area as shapefile (in Inputs/RES)
-* secondary release area as shapefile (in Inputs/SECREL)
+* one entrainment area as (multi-) polygon shapefile (in Inputs/ENT)
+
+  - marks the (multiple) areas where entrainment can occur.
+  - attribute *thickness* (see :ref:`moduleCom1DFA:Release-, entrainment thickness settings`)
+
+
+* one resistance area as (multi-) polygon shapefile (in Inputs/RES)
+
+  - marks the (multiple) areas where resistance is considered
+
+
+* secondary release area as (multi-) polygon shapefile (in Inputs/SECREL)
+
+  - same setup as the release area scenario (see above)
+  - features will release as soon as at least one particle enters its area
+
+
 
 Release-, entrainment thickness settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
