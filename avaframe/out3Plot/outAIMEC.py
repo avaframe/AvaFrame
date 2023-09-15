@@ -1249,6 +1249,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = fig.add_subplot(1, 1, 1)
     ax2 = ax1.twinx()
+
     # add scatter plot of velocity-Altitude field colocoded with max peak flow velocity
     ax1.bar(rasterTransfo['s'][::barInt], pftCrossMax[::barInt]*10.+z[::barInt], width=40.,
             color=cmapCrameri.batlow.reversed()(pfvColors))
