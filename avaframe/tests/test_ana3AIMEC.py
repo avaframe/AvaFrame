@@ -226,6 +226,7 @@ def test_mainAIMEC(tmp_path):
 
     demSource = list(dirname.glob('*.asc'))
     pathDict['demSource'] = demSource[0]
+    pathDict['avalancheDir'] = dirname
 
     d = {}
     d['simName'] = ['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4']

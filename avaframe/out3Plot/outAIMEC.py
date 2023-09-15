@@ -1195,7 +1195,7 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
     pU.saveAndOrPlot(pathDict, outFileName, fig.figure)
 
 
-def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, barInterval, simName):
+def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfgPlots, simName):
     """ plot the velocity and thickness cross max values along the thalweg, with pft x10
         only plot every barInt value
 
@@ -1209,8 +1209,10 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
             peak flow thickness max values along cross profiles of thalweg coordinate system
         pfvCrossMax: numpy nd array
             peak flow velocity max values along cross profiles of thalweg coordinate system
-        barInterval: float
-            width to compute the values that should be used for plotting
+        cfgPlots: configparser object
+            used: barInterval: width to compute the values that should be used for plotting
+            velocityTreshold: threshold for computation of alpha angle where to identify stop of
+            avalanche
         simName: str
             simulation name
 
@@ -1218,15 +1220,20 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
 
     # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
     indVelStart = np.where(pfvCrossMax > 0.)[0][0]
-    if len(np.where(pfvCrossMax == 0.)[0]) == 0:
-        indVelZero = len(pfvCrossMax) - 1
+    if len(np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0]) == 0:
+        if len(np.where(np.isnan(pfvCrossMax))[0]) > 1:
+            indVelZero = np.where(np.isnan(pfvCrossMax))[0][indVelStart]
+        else:
+            indVelZero = len(pfvCrossMax) - 1
     else:
-        indVelZero = np.where(pfvCrossMax == 0.)[0][indVelStart]
+        indVelZero = np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0][indVelStart]
+
     # compute alpha angle based on pfvCM field
     deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
     deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
     alpha = np.rad2deg(np.arctan(deltaz / deltas))
     # compute every barInt value to take from arrays for plotting
+    barInterval = cfgPlots.getfloat('barInterval')
     barInt = int(np.floor(len(rasterTransfo['s']) / (rasterTransfo['s'][-1] / barInterval)))
     # get thalweg coordinates
     sXY = rasterTransfo['s']
@@ -1235,8 +1242,8 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
     pftColors = [val / np.nanmax(pftCrossMax[::barInt]) if val != 0. else 0.0 for val in pftCrossMax[::barInt]]
     pfvColors = [val / np.nanmax(pfvCrossMax[::barInt]) if val != 0. else 0.0 for val in pfvCrossMax[::barInt]]
     # ind max pfvCrossMax and max pftCrossMax
-    indMPFV = np.argmax(pfvCrossMax)
-    indMPFT = np.argmax(pftCrossMax)
+    indMPFV = np.nanargmax(pfvCrossMax)
+    indMPFT = np.nanargmax(pftCrossMax)
 
     # initialize figure
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
@@ -1250,8 +1257,8 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
              path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], linewidth=1, markersize=0.8,
              label='thalweg')
     # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
-    ax2.set_ylim([np.nanmin(z)-np.nanmax(z)*0.01, np.nanmax(z)+np.nanmax(z)*0.01])
-    ax1.set_ylim([np.nanmin(z) - np.nanmax(z) * 0.01, np.nanmax(z) + np.nanmax(z) * 0.01])
+    ax2.set_ylim([np.nanmin(z)-np.nanmax(z)*0.05, np.nanmax(z)+np.nanmax(z)*0.01])
+    ax1.set_ylim([np.nanmin(z) - np.nanmax(z) * 0.05, np.nanmax(z) + np.nanmax(z) * 0.01])
 
 
     # draw the horizontal and vertical lines for angle computation
@@ -1278,15 +1285,16 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
     cbar2.set_label(r'pfv [m/s]', rotation=270, labelpad=25)
 
     # add bar for scale reference
-    asb = AnchoredSizeBar(ax1.transData,
-                          40,
-                          r"5 m",
-                          loc='lower left',
-                          color='grey',
-                          pad=0.1, borderpad=0.5, sep=5,
-                          size_vertical = 50,
-                          frameon=False)
-    ax1.add_artist(asb)
+    if len(np.where(rasterTransfo['z']>0)[0]) > 1:
+        asb = AnchoredSizeBar(ax1.transData,
+                              40,
+                              r"5 m",
+                              loc='lower left',
+                              color='grey',
+                              pad=0.5, borderpad=0.5, sep=5,
+                              size_vertical = 50,
+                              frameon=False)
+        ax1.add_artist(asb)
 
     # set axes labels and title
     ax1.set_yticks([])
@@ -1300,5 +1308,6 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, bar
     plt.legend()
 
     # save and or plot
+    pU.putAvaNameOnPlot(ax2, simName, date=True, color='grey', fontsize=8)
     outFileName = pathDict['projectName'] + ('_%s_thalwegAltitude' % (simName))
     pU.saveAndOrPlot(pathDict, outFileName, fig)
