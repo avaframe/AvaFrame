@@ -33,7 +33,7 @@ def readASCheader(fname):
     with open(fname, 'rt') as fileH:
          for line in fileH:
             if rowCount <= headerRows:
-                 line = line.split(" ", 1)
+                 line = line.split()
                  headerInfo[line[0].lower()] = float(line[1])
             else:
                  break
