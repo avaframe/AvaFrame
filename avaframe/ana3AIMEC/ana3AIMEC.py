@@ -346,7 +346,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
 
     if 'pftCrossMax' in resAnalysisDF.columns and 'pfvCrossMax' in resAnalysisDF.columns:
         outAimec.plotVelThAlongThalweg(pathDict, rasterTransfo, resAnalysisDF['pftCrossMax'].loc[simRowHash],
-                                       resAnalysisDF['pfvCrossMax'].loc[simRowHash], cfgPlots.getfloat('barInterval'),
+                                       resAnalysisDF['pfvCrossMax'].loc[simRowHash], cfgPlots,
                                        resAnalysisDF['simName'].loc[simRowHash])
 
     return resAnalysisDF, newRasters, timeMass, contourDict

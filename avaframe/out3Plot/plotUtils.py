@@ -551,10 +551,23 @@ def addColorBar(
     return cbar
 
 
-def putAvaNameOnPlot(ax, avaDir, date=True):
+def putAvaNameOnPlot(ax, avaDir, date=True, color='k', fontsize=None):
     """
     Puts the date and avalanche name (or a list of ava names) in the lower left corner of the given
     matplotlib axes, if date=False only avalanche name is put
+
+    Parameters
+    ------------
+    ax: matplotlib axes
+        axes where to draw the text
+    avaDir: str or pathlin path
+        path to avalanche directory, or a string
+    date: bool
+        if True add data to text
+    color: str
+        color for text
+    fontsize: float
+        font size
     """
 
     # if avaDir is just a single avaDir or a list of avaDirs
@@ -577,6 +590,8 @@ def putAvaNameOnPlot(ax, avaDir, date=True):
     ax.annotate(
         infoText,
         xy=(0.01, 0.01),
+        color=color,
+        fontsize=fontsize,
         xycoords="axes fraction",
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5),
     )
