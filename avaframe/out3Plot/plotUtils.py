@@ -38,7 +38,7 @@ cfgFlags = cfgMain["FLAGS"]
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(plotUtils)
 cfgPlotUtils = cfg["UNITS"]
-cfgConstants = cfg['CONSTANTS']
+cfgConstants = cfg["CONSTANTS"]
 cfg = cfg["MAIN"]
 
 # define seaborn style and color maps
@@ -97,7 +97,7 @@ matplotlib.rcParams["grid.linestyle"] = ":"
 matplotlib.rcParams["grid.linewidth"] = 0.3
 
 # load constants
-gravityAcc = cfgConstants['gravityAcc']
+gravityAcc = cfgConstants["gravityAcc"]
 
 # for hillshade
 azimuthDegree = cfg.getfloat("azimuthDegree")
@@ -131,7 +131,7 @@ cmapViridis.set_bad(color="k")
 # divergent color map
 cmapdiv = copy.copy(cmapCrameri.broc)
 
-# custom colomaps
+# custom colormaps
 # cmap based on avaframe logo colors
 colorAvaframe = [
     "#0EF8EA",
@@ -210,36 +210,17 @@ cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
 # replace it with the wanted colormap
 contCmap = cfg.getboolean("contCmap")
 # for pressure
-cmapPres = {}
-cmapPres["cmap"] = cmapP
-cmapPres["colors"] = colorsP
-cmapPres["levels"] = levP
+cmapPres = {"cmap": cmapP, "colors": colorsP, "levels": levP}
 
+cmapThickness = {"cmap": cmapT, "colors": colorsT, "levels": levT}
 
-cmapThickness = {}
-cmapThickness["cmap"] = cmapT
-cmapThickness["colors"] = colorsT
-cmapThickness["levels"] = levT
+cmapSpeed = {"cmap": cmapS, "colors": colorsS, "levels": levS}
 
-cmapSpeed = {}
-cmapSpeed["cmap"] = cmapS
-cmapSpeed["colors"] = colorsS
-cmapSpeed["levels"] = levS
+cmapTravelAngle = {"cmap": cmapTA, "colors": colorsTA}
 
-cmapTravelAngle = {}
-cmapTravelAngle["cmap"] = cmapTA
-cmapTravelAngle["colors"] = colorsTA
-cmapTravelAngle["levels"] = levTA
+cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 
-cmapProb = {}
-cmapProb["cmap"] = cmapProbmap
-cmapProb["colors"] = colorsProb
-cmapProb["levels"] = levProb
-
-cmapEnergy = {}
-cmapEnergy["cmap"] = cmapE
-cmapEnergy["colors"] = colorsE
-cmapEnergy["levels"] = levE
+cmapEnergy = {"cmap": cmapE, "colors": colorsE, "levels": levE}
 
 colorMaps = {
     "ppr": cmapPres,
@@ -261,20 +242,13 @@ colorMaps = {
 
 cmapDEM = cmapGreys
 
-cmapDEM2 = {}
-cmapDEM2["cmap"] = cmapGreys
-cmapDEM2["colors"] = colorsS
-cmapDEM2["levels"] = None
+cmapDEM2 = {"cmap": cmapGreys, "colors": colorsS, "levels": None}
 
 cmapAimec = cmapAvaframe
 
-cmapVar = {}
-# cmapVar['cmap'] = cmapAvaframeCont
-cmapVar["colors"] = colorAvaframe
-cmapVar["levels"] = None
+cmapVar = {"colors": colorAvaframe, "levels": None}
 
-cmapGreys1 = {}
-cmapGreys1["cmap"] = cmapGreys
+cmapGreys1 = {"cmap": cmapGreys}
 
 
 def makeColorMap(colormapDict, levMin, levMax, continuous=False):
@@ -417,7 +391,7 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
 def saveAndOrPlot(pathDict, outFileName, fig):
     """
     Receive a plot handle and config and check whether to save and or plot
-    closes it afterwards.
+    closes it afterward.
     If saved, the plot will be saved in pathDict['pathResult']/outFileName.extension and the path will be returned
 
     Parameters
@@ -647,7 +621,7 @@ def putInfoBox(ax, infoText, location="lowerRight", color="black", hAlignment="r
     )
 
 
-def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, providedDEM=''):
+def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, providedDEM=""):
     """constrain data array to bufferzone around min elevation of dem where there is data in data array
 
     Parameters
@@ -668,13 +642,13 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     dataCut : numpy array
         data constrained to a bufferzone
     xOrigin: float
-        origin of x axis
+        origin of x-axis
     yOrigin: float
-        origin of y axis
+        origin of y-axis
     """
 
     # load dem to identify runout area according to min elevation where peak result != 0
-    if providedDEM == '':
+    if providedDEM == "":
         dem = gI.readDEM(avaDir)
     else:
         dem = providedDEM
@@ -688,8 +662,8 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     ncolsMin = indMin[1][0]
     rangePlot = int(cfg.getfloat("zoomBuffer") / cellSize)
     dataCut = data[
-        max(0, nrowsMin - rangePlot):min(data.shape[0], nrowsMin + rangePlot),
-        max(0, ncolsMin - rangePlot):min(data.shape[1], ncolsMin + rangePlot),
+        max(0, nrowsMin - rangePlot) : min(data.shape[0], nrowsMin + rangePlot),
+        max(0, ncolsMin - rangePlot) : min(data.shape[1], ncolsMin + rangePlot),
     ]
 
     # to determine the extent for plotting
@@ -815,7 +789,7 @@ def addHillShadeContours(ax, data, cellSize, extent, colors=["gray"], onlyContou
         ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
 
         # add hillshade to axes
-        im0 = ax.imshow(
+        ax.imshow(
             ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1], dy=data.shape[0]),
             cmap="gray",
             extent=extent,
