@@ -880,6 +880,7 @@ def fetchContourCoords(xGrid, yGrid, data, level):
     contourDictXY = {}
     # loop over all segments of the contour line of the required level
     # check matplotlib version to fetch coordinates of line
+    # as allsegs will be deprecated and get_paths is not available < 3.8
     mVersionStr = (matplotlib.__version__).split('.')[0:2]
     mVersion = float(mVersionStr[0] + mVersionStr[1])
     if mVersion < 3.8:
