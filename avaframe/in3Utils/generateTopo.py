@@ -676,6 +676,11 @@ def generateTopo(cfg, avalancheDir):
     # If a drop shall be introduced
     if cfg['TOPO'].getboolean('drop'):
         z = addDrop(cfg, x, y, z)
+    
+    # moves topo in z direction 
+    if cfg['DEMDATA']['zEdit'] != '':
+    	z = z+cfg['DEMDATA'].getfloat('zEdit')
+    	log.info('Changed topo elevation by zEdit')
 
     # Write DEM to file
     writeDEM(cfg, z, outDir)
