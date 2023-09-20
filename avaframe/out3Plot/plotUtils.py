@@ -17,6 +17,7 @@ from matplotlib import colors as mplCol
 import logging
 from cmcrameri import cm as cmapCrameri
 from matplotlib.colors import LightSource
+import matplotlib.contour as mpc
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -877,7 +878,16 @@ def fetchContourCoords(xGrid, yGrid, data, level):
     contourP = plt.contour(xGrid, yGrid, data, levels=[level])
 
     contourDictXY = {}
-    for i in range(len(contourP.allsegs[0])):
-        contourDictXY['line%s_%d' %(level, i)] = {'x': contourP.allsegs[0][i][:, 0], 'y':contourP.allsegs[0][i][:, 1]}
+    # loop over all segments of the contour line of the required level
+    # use codes of path
+    labelID = 0
+    for ind, val in enumerate(contourP.get_paths()[0].codes):
+        if val == 1:
+            labelID = labelID + 1
+            contourDictXY['line%s_%d' % (level, labelID)] = {'x': [contourP.get_paths()[0].vertices[ind, 0]],
+                                                             'y': [contourP.get_paths()[0].vertices[ind, 1]]}
+        else:
+            contourDictXY['line%s_%d' % (level, labelID)]['x'].append(contourP.get_paths()[0].vertices[ind, 0])
+            contourDictXY['line%s_%d' % (level, labelID)]['y'].append(contourP.get_paths()[0].vertices[ind, 1])
 
     return contourDictXY
