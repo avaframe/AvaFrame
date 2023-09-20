@@ -1218,8 +1218,8 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     """
 
-    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
-    indVelStart = np.where(pfvCrossMax > 0.)[0][0]
+    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold) and where velocity is again back to < velocityThreshold
+    indVelStart = np.where(pfvCrossMax > cfgPlots.getfloat('velocityThreshold'))[0][0]
     if len(np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0]) == 0:
         if len(np.where(np.isnan(pfvCrossMax))[0]) > 1:
             indVelZero = np.where(np.isnan(pfvCrossMax))[0][indVelStart]
@@ -1250,7 +1250,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     ax1 = fig.add_subplot(1, 1, 1)
     ax2 = ax1.twinx()
 
-    # add scatter plot of velocity-Altitude field colocoded with max peak flow velocity
+    # add scatter plot of velocity-Altitude field colorcoded with max peak flow velocity
     ax1.bar(rasterTransfo['s'][::barInt], pftCrossMax[::barInt]*10.+z[::barInt], width=40.,
             color=cmapCrameri.batlow.reversed()(pfvColors))
     ax1.bar(rasterTransfo['s'][::barInt], rasterTransfo['z'][::barInt], width=40., color='white')
@@ -1271,7 +1271,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
     Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
-    ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5, label= (r'$\alpha$=%.1f°' % (alpha)))
+    ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5, label= (r'$\alpha$=%.1f° (pfv > %s)' % (alpha, cfgPlots['velocityThreshold'])))
     ax2.plot(rasterTransfo['s'][indMPFV], rasterTransfo['z'][indMPFV], color='darkred', marker='.', linestyle='',
              label=(r'$maxpfv$ = %.1f$ms^{-1}$' % pfvCrossMax[indMPFV]), zorder=200)
     ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
