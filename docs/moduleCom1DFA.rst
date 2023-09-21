@@ -61,19 +61,20 @@ projection:
 
 and the following files are optional:
 
-* one entrainment area as (multi-) polygon shapefile (in Inputs/ENT)
+* one entrainment area (multi-) polygon shapefile (in Inputs/ENT)
 
   - marks the (multiple) areas where entrainment can occur.
   - attribute *thickness* (see :ref:`moduleCom1DFA:Release-, entrainment thickness settings`)
 
 
-* one resistance area as (multi-) polygon shapefile (in Inputs/RES)
+* one resistance area (multi-) polygon shapefile (in Inputs/RES)
 
   - marks the (multiple) areas where resistance is considered
 
 
-* secondary release area as (multi-) polygon shapefile (in Inputs/SECREL)
+* one secondary release area (multi-) polygon shapefile (in Inputs/SECREL)
 
+  - can have multiple release areas, each as one feature
   - same setup as the release area scenario (see above)
   - features will release as soon as at least one particle enters its area
 

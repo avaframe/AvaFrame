@@ -26,7 +26,7 @@ To run - via QGis Connector
 
 Since version 1.6 it is possible to generate probability maps via the QGis connector. This is provided in the
 experimental folder of the QGis processing plugin via **Probability run**. A standard setup is used in which mu and
-release thickness are varied.
+release thickness are varied. Please note: *samosAT* friction is used instead of the default *samosATAuto* one.
 
 The input requirements are the same as for :py:mod:`com1DFA` with one important difference: an additional *ci95*
 attribute is needed for the release shapes.
