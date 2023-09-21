@@ -679,8 +679,8 @@ def generateTopo(cfg, avalancheDir):
     
     # moves topo in z direction 
     if cfg['DEMDATA']['zEdit'] != '':
-    	z = z+cfg['DEMDATA'].getfloat('zEdit')
-    	log.info('Changed topo elevation by zEdit')
+        z = z+cfg['DEMDATA'].getfloat('zEdit')
+        log.info('Changed topo elevation by %.2f' % cfg['DEMDATA'].getfloat('zEdit'))
 
     # Write DEM to file
     writeDEM(cfg, z, outDir)
