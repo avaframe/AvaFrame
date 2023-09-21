@@ -36,6 +36,9 @@ AF-STYLE-4: No dead code
   reading the source code. Old code is available in the source history if
   it is needed.
 
+AF-STYLE-5: Use spaces for indentation
+  Use 4 spaces as indentation throughout the python code.
+
 --------------------------
 
 Our suggested git workflow
