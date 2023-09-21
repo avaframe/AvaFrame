@@ -882,7 +882,7 @@ def fetchContourCoords(xGrid, yGrid, data, level):
     # check matplotlib version to fetch coordinates of line
     # as allsegs will be deprecated and get_paths is not available < 3.8
     mVersionStr = (matplotlib.__version__).split('.')[0:2]
-    mVersion = float(mVersionStr[0] + mVersionStr[1])
+    mVersion = float(mVersionStr[0] + mVersionStr[1]) / 10.
     if mVersion < 3.8:
         for i in range(len(contourP.allsegs[0])):
             contourDictXY['line%s_%d' %(level, i)] = {'x': contourP.allsegs[0][i][:, 0], 'y':contourP.allsegs[0][i][:, 1]}
