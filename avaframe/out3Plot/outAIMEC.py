@@ -1232,15 +1232,27 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
     deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
     alpha = np.rad2deg(np.arctan(deltaz / deltas))
-    # compute every barInt value to take from arrays for plotting
+    # compute average of every barInt values to take from arrays for plotting
     barInterval = cfgPlots.getfloat('barInterval')
     barInt = int(np.floor(len(rasterTransfo['s']) / (rasterTransfo['s'][-1] / barInterval)))
+    barIntStart = int(np.round(np.floor(barInt*0.5)))
+    # need to append nans to make array long enough to reshape in barInt intervals
+    fullInt = len(pftCrossMax) / barInt
+    nansAdd = int(np.round((np.ceil(fullInt) - fullInt) * barInt))
+    pftCrossMaxNans = np.concatenate((pftCrossMax, np.zeros(nansAdd)*np.nan))
+    pfvCrossMaxNans = np.concatenate((pfvCrossMax, np.zeros(nansAdd) * np.nan))
+    # compute average values for barInt intervals
+    pftCrossMaxInt = np.average(pftCrossMaxNans.reshape(-1, barInt), axis=1)
+    pfvCrossMaxInt = np.average(pfvCrossMaxNans.reshape(-1, barInt), axis=1)
+    # check if arrays are of same length still - if not remove last value where nans are included
+    if len(rasterTransfo['s'][barIntStart::barInt]) != len(pfvCrossMaxInt):
+        pfvCrossMaxInt = pfvCrossMaxInt[:-1]
+        pftCrossMaxInt = pftCrossMaxInt[:-1]
     # get thalweg coordinates
     sXY = rasterTransfo['s']
     z = rasterTransfo['z']
-    # setup a colorbar for pft and pfv cross max values
-    pftColors = [val / np.nanmax(pftCrossMax[::barInt]) if val != 0. else 0.0 for val in pftCrossMax[::barInt]]
-    pfvColors = [val / np.nanmax(pfvCrossMax[::barInt]) if val != 0. else 0.0 for val in pfvCrossMax[::barInt]]
+    # setup a colorbar for pfv cross max values
+    pfvColors = [val / np.nanmax(pfvCrossMaxInt) if val != 0. else 0.0 for val in pfvCrossMaxInt]
     # ind max pfvCrossMax and max pftCrossMax
     indMPFV = np.nanargmax(pfvCrossMax)
     indMPFT = np.nanargmax(pftCrossMax)
@@ -1251,9 +1263,9 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     ax2 = ax1.twinx()
 
     # add scatter plot of velocity-Altitude field colorcoded with max peak flow velocity
-    ax1.bar(rasterTransfo['s'][::barInt], pftCrossMax[::barInt]*10.+z[::barInt], width=40.,
+    ax1.bar(rasterTransfo['s'][barIntStart::barInt], pftCrossMaxInt * 10. + z[barIntStart::barInt], width=40.,
             color=cmapCrameri.batlow.reversed()(pfvColors))
-    ax1.bar(rasterTransfo['s'][::barInt], rasterTransfo['z'][::barInt], width=40., color='white')
+    ax1.bar(rasterTransfo['s'][barIntStart::barInt], rasterTransfo['z'][barIntStart::barInt], width=40., color='white')
     ax2.plot(rasterTransfo['s'], rasterTransfo['z'], '-y', zorder=100,
              path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], linewidth=1, markersize=0.8,
              label='thalweg')
@@ -1279,7 +1291,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     # add colorbar for pft bars using pfv for colors
     sm2 = ScalarMappable(cmap=cmapCrameri.batlow.reversed(),
-                        norm=plt.Normalize(np.nanmin(pfvCrossMax[::barInt]), np.nanmax(pfvCrossMax[::barInt])))
+                        norm=plt.Normalize(np.nanmin(pfvCrossMax[barIntStart::barInt]), np.nanmax(pfvCrossMax[barIntStart::barInt])))
     sm2.set_array([])
     cax = ax1.inset_axes([1.04, 0.0, 0.025, 0.99])
     cbar2 = plt.colorbar(sm2, shrink=0.5, ax=ax1, cax=cax)

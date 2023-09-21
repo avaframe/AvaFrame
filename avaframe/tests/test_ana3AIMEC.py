@@ -60,6 +60,7 @@ def test_analyzeArea(tmp_path):
     cfgSetup['contourLevels'] = '0.1|0.5|1'
     cfgSetup['domainWidth'] = '600'
     cfgSetup['startOfRunoutAreaAngle'] = '10'
+    cfg['PLOTS']['velocityThreshold'] = '0.0001'
 
     avalData = np.array(([None] * 2))
     data = IOf.readRaster(dataRef)
@@ -186,6 +187,7 @@ def test_makeDomainTransfo(tmp_path):
     newRasterDEM = aT.transform(dem, pathDict['demSource'], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM
     contourDict = {}
+    cfg['PLOTS']['velocityThreshold'] = '0.0001'
 
     # Analyze data
     # postprocess reference
@@ -264,6 +266,7 @@ def test_mainAIMEC(tmp_path):
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
+    cfg['PLOTS']['velocityThreshold'] = '0.0001'
 
     rasterTransfo, inputsDF, plotDict, newRasters = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
 
