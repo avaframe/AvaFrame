@@ -977,7 +977,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
     sMax = np.where(s >= (yMax-1.e-8))[0]
     ax1.set_ylim([s[0], s[sMax[0]]])
     if colorOrdering:
-        cbar = ax1.figure.colorbar(cmap)
+        cbar = ax1.figure.colorbar(cmap, ax=ax1)
         cbar.outline.set_visible(False)
         cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
