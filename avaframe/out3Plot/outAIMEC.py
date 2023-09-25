@@ -291,7 +291,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
     ax1.set_xlim([xMin, xMax])
     ax1.set_ylim([yMin, yMax])
-    ax1.set_title('Peak Pressure 2D plot for the reference')
+    ax1.set_title('%s 2D plot for the reference' % name)
     ax1.legend(loc=4)
     pU.putAvaNameOnPlot(ax1, projectName)
 
