@@ -89,7 +89,8 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
         if cfgRangeTime['GENERAL'].getboolean('originStart'):
             ax.set_ylabel("$S_{XY}$ [m]")
         else:
-            ax.set_ylabel("%s distance to %s [m]" % (sTypeCapital, mtiInfo["referencePointName"]))
+            labelY = r'$\beta_{%.1f°}$' % mtiInfo['betaPointAngle']
+            ax.set_ylabel("%s distance to %s [m]" % (sTypeCapital, labelY))
     else:
         ax.set_ylabel("Distance to %s [m]" % mtiInfo["referencePointName"])
 

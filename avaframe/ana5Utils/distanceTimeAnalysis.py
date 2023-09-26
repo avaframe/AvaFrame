@@ -417,7 +417,7 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
 
     # fetch info on avalanche path, split point, path to dem
     pathDict = {}
-    pathDict = aT.readAIMECinputs(avaDir, pathDict, dirName='com1DFA')
+    pathDict = aT.readAIMECinputs(avaDir, pathDict, cfgSetup.getboolean('defineRunoutArea'), dirName='com1DFA')
 
     # generate data required to perform domain tranformation
     rasterTransfo = aT.makeDomainTransfo(pathDict, dem, dem['header']['cellsize'], cfgSetup)

@@ -77,7 +77,8 @@ if cfg.getboolean('aimec'):
     pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgAIMEC)
 
     # Extract input file locations
-    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=cfgAimecSetup['anaMod'])
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, cfgAimecSetup.getboolean('defineRunoutArea'),
+                                          dirName=cfgAimecSetup['anaMod'])
 
     # Run AIMEC postprocessing
     ana3AIMEC.mainAIMEC(pathDict, cfgAIMEC)

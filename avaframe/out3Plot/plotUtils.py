@@ -97,7 +97,7 @@ matplotlib.rcParams["grid.linestyle"] = ":"
 matplotlib.rcParams["grid.linewidth"] = 0.3
 
 # load constants
-gravityAcc = cfgConstants["gravityAcc"]
+gravityAcc = cfgConstants.getfloat("gravityAcc")
 
 # for hillshade
 azimuthDegree = cfg.getfloat("azimuthDegree")
@@ -517,7 +517,7 @@ def addColorBar(
         pad = 25
     else:
         pad = 10
-    if myUnit != None:
+    if myUnit != None and myUnit != '':
         cbar.ax.set_title("[" + myUnit + "]", pad=pad)
     if title != "":
         cbar.set_label(title)

@@ -62,7 +62,8 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # Extract input file locations
     cfgSetup = cfg['AIMECSETUP']
     comModules = cfgSetup['comModules'].split('|')
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=(comModules[0] + '_' + comModules[1]))
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'),
+                                          dirName=(comModules[0] + '_' + comModules[1]))
 
     startTime = time.time()
     

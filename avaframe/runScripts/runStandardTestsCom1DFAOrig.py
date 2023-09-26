@@ -149,7 +149,8 @@ for test in testList:
     log.info('reference file comes from: %s' % pathDict['refSimulation'])
 
     # Extract input file locations
-    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=simNameComp)
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, cfgAimec['AIMECSETUP'].getboolean('defineRunoutArea'),
+                                          dirName=simNameComp)
 
     # perform analysis
     rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfgAimec)
