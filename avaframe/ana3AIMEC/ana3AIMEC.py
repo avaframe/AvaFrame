@@ -61,7 +61,7 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir='', demFileName=''):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef,
                 'demFileName': demFileName}
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'), dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
@@ -153,7 +153,6 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
     # -----------------------------------------------------------
     # result visualisation + report
-    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
@@ -164,8 +163,8 @@ def mainAIMEC(pathDict, inputsDF, cfg):
         outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2 and sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']):
             plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
-    else:
-        plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
+
+    plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
     areaDict = {('area comparison plot ' + resAnalysisDF.loc[k, 'simName']):
                 v for k, v in resAnalysisDF['areasPlot'].to_dict().items()}
@@ -515,7 +514,7 @@ def addSLToParticles(avaDir, cfgAimec, demFileName, particlesList, saveToPickle=
 
     # create path dict
     pathDict = {}
-    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict,
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, cfgAimec['AIMECSETUP'].getboolean('defineRunoutArea'),
         dirName=cfgAimec['AIMECSETUP']['anaMod'])
 
     # fetch dem of sim

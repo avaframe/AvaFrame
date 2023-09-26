@@ -28,11 +28,12 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 
 
-def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
+def readAIMECinputs(avalancheDir, pathDict, defineRunoutArea, dirName='com1DFA'):
     """ Read inputs for AIMEC postprocessing
 
     Reads the required geometry files location for AIMEC postpocessing
-    given an avalanche directory; avalanche path, split point and DEM
+    given an avalanche directory; avalanche path, DEM
+    - optional requirement: splitPoint if start of runout area is defined according to startOfRunoutAreaAngle
 
     Parameters
     ----------
@@ -40,6 +41,8 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
         path to directory of avalanche to analyze
     pathDict: dict
         dictionary with info required e.g. reference sim name, comparison type, color variation info
+    defineRunoutArea: bool
+        if True also splitPoint is fetched
     dirName: str
         name of desired results directory (avalancheDir/Outputs/dirName)
 
@@ -59,14 +62,17 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
         raise
     pathDict['profileLayer'] = profileLayer[0]
 
-    refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
-    splitPointLayer = list(refDir.glob('*.shp'))
-    try:
-        message = 'There should be exactly one .shp file containing the split point in %s/Inputs/POINTS/' % avalancheDir
-        assert len(splitPointLayer) == 1, message
-    except AssertionError:
-        raise
-    pathDict['splitPointSource'] = splitPointLayer[0]
+    if defineRunoutArea:
+        refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
+        splitPointLayer = list(refDir.glob('*.shp'))
+        try:
+            message = 'There should be exactly one .shp file containing the split point in %s/Inputs/POINTS/' % avalancheDir
+            assert len(splitPointLayer) == 1, message
+        except AssertionError:
+            raise
+        pathDict['splitPointSource'] = splitPointLayer[0]
+    else:
+        pathDict['splitPointSource'] = None
 
     refDir = pathlib.Path(avalancheDir, 'Inputs')
     # check for DEM
@@ -252,6 +258,9 @@ def defineRefOnSimValue(referenceSimValue, varParList, inputsDF):
             indexRef = sortingValues.index(typeCP(referenceSimValue.lower()))
             valRef = sortingParameter[indexRef]
         elif typeCP in [float, int]:
+            # check if thicknessValue read from shp
+            if np.isnan(sortingParameter).any() and varParList[0] in ['relTh', 'entTh', 'secondaryRelTh']:
+                sortingParameter = inputsDF[(varParList[0] + '0')].to_list() + sortingParameter
             colorValues = np.asarray(sortingParameter)
             # look for closest value
             indexRef = np.nanargmin(np.abs(colorValues - typeCP(referenceSimValue)))
@@ -457,6 +466,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
                 real area of the cells of the new raster
             indStartOfRunout: int
                 index for start of the runout area (in s)
+                if defineRunoutArea is False - indStartOfRunout=0 (start of thalweg)
     """
     w = cfgSetup.getfloat('domainWidth')
     # get the cell size for the (s, l) raster
@@ -468,6 +478,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     # read avaPath
     avaPath, splitPoint = setAvaPath(pathDict, dem)
     rasterTransfo['avaPath'] = avaPath
+    rasterTransfo['splitPoint'] = splitPoint
 
     # Get new Domain Boundaries DB
     # input: ava path
@@ -919,6 +930,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     # read inputs
     scoord = rasterTransfo['s']
     lcoord = rasterTransfo['l']
+    zThalweg = rasterTransfo['z']
     n = np.shape(lcoord)[0]
     n = int(np.floor(n/2)+1)
     x = rasterTransfo['x']
@@ -957,16 +969,15 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     resAnalysisDF.loc[simRowHash, 'xRunout'] = gridx[cLower, index]
     resAnalysisDF.loc[simRowHash, 'yRunout'] = gridy[cLower, index]
     resAnalysisDF.loc[simRowHash, 'deltaSXY'] = scoord[cLower] - scoord[cUpper]
-    resAnalysisDF.loc[simRowHash, 'runoutAngle'] = np.rad2deg(np.arctan((transformedDEMRasters[cUpper, n] -
-                                                                         transformedDEMRasters[cLower, n]) /
+    resAnalysisDF.loc[simRowHash, 'runoutAngle'] = np.rad2deg(np.arctan((zThalweg[cUpper] - zThalweg[cLower]) /
                                                                         (scoord[cLower] - scoord[cUpper])))
-    resAnalysisDF.loc[simRowHash, 'zRelease'] = transformedDEMRasters[cUpper, n]
-    resAnalysisDF.loc[simRowHash, 'zRunout'] = transformedDEMRasters[cLower, n]
+    resAnalysisDF.loc[simRowHash, 'zRelease'] = zThalweg[cUpper]
+    resAnalysisDF.loc[simRowHash, 'zRunout'] = zThalweg[cLower]
     resAnalysisDF.loc[simRowHash, 'sMeanRunout'] = scoord[cLowerm]
     resAnalysisDF.loc[simRowHash, 'xMeanRunout'] = x[cLowerm]
     resAnalysisDF.loc[simRowHash, 'yMeanRunout'] = y[cLowerm]
-    resAnalysisDF.loc[simRowHash, 'elevRel'] = transformedDEMRasters[cUpper, n]
-    resAnalysisDF.loc[simRowHash, 'deltaZ'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
+    resAnalysisDF.loc[simRowHash, 'elevRel'] = zThalweg[cUpper]
+    resAnalysisDF.loc[simRowHash, 'deltaZ'] = zThalweg[cUpper] - zThalweg[cLower]
 
     return resAnalysisDF
 
@@ -1265,7 +1276,10 @@ def setAvaPath(pathDict, dem):
     # read avaPath
     avaPath = shpConv.readLine(profileLayer, defaultName, dem)
     # read split point
-    splitPoint = shpConv.readPoints(splitPointSource, dem)
+    if splitPointSource != None:
+        splitPoint = shpConv.readPoints(splitPointSource, dem)
+    else:
+        splitPoint = None
     # add 'z' coordinate to the avaPath
     avaPath, _ = geoTrans.projectOnRaster(dem, avaPath)
     # reverse avaPath if necessary
@@ -1333,6 +1347,8 @@ def addSurfaceParalleCoord(rasterTransfo):
 def findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint):
     """ find start of runout area point using splitPoint
         add info on x, y coordinates of point, angle, index
+        - if defineRunoutArea=False - start of runout area is equal to the start of the thalweg
+        -> in this case the entire SL domain represents the runout area
 
         Parameters
         -----------
@@ -1352,27 +1368,36 @@ def findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint):
 
     """
 
-    # fetch input parameters from config
-    startOfRunoutAreaAngle = cfgSetup.getfloat('startOfRunoutAreaAngle')
+    if splitPoint != None:
+        # fetch input parameters from config
+        startOfRunoutAreaAngle = cfgSetup.getfloat('startOfRunoutAreaAngle')
 
-    # add 'z' coordinate to the centerline
-    rasterTransfo, _ = geoTrans.projectOnRaster(dem, rasterTransfo)
+        # add 'z' coordinate to the centerline
+        rasterTransfo, _ = geoTrans.projectOnRaster(dem, rasterTransfo)
 
-    # find projection of split point on the centerline
-    projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
-    rasterTransfo['indSplit'] = projPoint['indSplit']
+        # find projection of split point on the centerline
+        projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
+        rasterTransfo['indSplit'] = projPoint['indSplit']
+        rasterTransfo['projSplitPoint'] = projPoint
 
-    # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
+        # prepare find start of runout area points
+        angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
 
-    # find the runout point: first point under startOfRunoutAreaAngle
-    indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
+        # find the runout point: first point under startOfRunoutAreaAngle
+        indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
+        rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
+        rasterTransfo['labelRunout'] = ('start of runout area: ' + (r'$\beta_{%.1f °}$' %
+                                                                    rasterTransfo['startOfRunoutAreaAngle']))
+    else:
+        log.info('DefineRunoutArea is set to False - start of runout area set to start of thalweg')
+        indStartOfRunout = 0
+        rasterTransfo['startOfRunoutAreaAngle'] = np.nan
+        rasterTransfo['labelRunout'] = 'start of runout area'
 
     # add info to rasterTransfo dict
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
-    rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
 
     log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
              (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))

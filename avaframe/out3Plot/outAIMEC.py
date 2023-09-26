@@ -6,9 +6,7 @@
 
 import os
 import logging
-import math
 import numpy as np
-import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib
@@ -16,9 +14,10 @@ from matplotlib import cm
 from cmcrameri import cm as cmapCrameri
 import matplotlib as mpl
 import matplotlib.patheffects as pe
-import pathlib
 from matplotlib.cm import ScalarMappable
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -95,37 +94,43 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
         maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
     cmap.set_under(color='w')
 
+    labelRunout = rasterTransfo['labelRunout']
+
     ############################################
     # Figure: Raster transformation
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-
-    ax1 = plt.subplot(121)
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH))
+    gs = gridspec.GridSpec(1, 3)
+    ax1 = fig.add_subplot(gs[0, 0])
 
     ref0, im = pU.NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                             extent=[x.min(), x.max(), y.min(), y.max()],
                             cmap=cmap, norm=norm)
-    plt.plot(xx, yy, 'k+', label='start of run-out area point : %.1f °' %
-             rasterTransfo['startOfRunoutAreaAngle'])
+    plt.plot(xx, yy, 'r*', markersize=8, label=labelRunout, zorder=10)
     plt.plot(xPath, yPath, 'k--', label='flow path')
     plt.plot(DBXl, DBYl, 'k-', label='domain')
     plt.plot(DBXr, DBYr, 'k-')
     plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
+    if cfgSetup.getboolean('defineRunoutArea'):
+        plt.plot(rasterTransfo['projSplitPoint']['x'], rasterTransfo['projSplitPoint']['y'], 'k*', label='split point')
 
     ax1.set_title('XY Domain')
-    ax1.legend(loc=4)
+    ax1.legend(loc='best')
+    ax1.set_aspect('equal')
     pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
 
-    ax2 = plt.subplot(122)
+    ax2 = fig.add_subplot(gs[0, 1:])
 
-    ref0, im = pU.NonUnifIm(ax2, l, s, maskedArraySL, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), s.min(), s.max()],
+    maskedArraySLTransposed = np.transpose(maskedArraySL)
+
+    ref0, im = pU.NonUnifIm(ax2, s, l, maskedArraySLTransposed, '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
+                            extent=[s.min(), s.max(), l.min(), l.max()],
                             cmap=cmap, norm=norm)
-    ax2.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
+    ax2.axvline(x=s[indStartOfRunout], color='k', linestyle='--',
+                label=labelRunout)
 
-    ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
+    ax2.set_title('SL Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    pU.addColorBar(im, ax2, ticks, unit)
+    pU.addColorBar(im, ax2, ticks, unit, title=runoutResType)
 
     outFileName = '_'.join([projectName, 'DomainTransformation'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -165,27 +170,27 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     ############################################
     # prepare for plot
     title = ['Pressure ', 'Flow Thickness ', 'Flow Velocity ']
-    unit = ['$P(s)$ [kPa]', '$ft(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    unit = ['$ppr_{CrossMax}$ [kPa]', '$pft_{CrossMax}$ [m]', '$pfv_{CrossMax}$ $[ms^{-1}]$']
     peakList = ['ppr', 'pft', 'pfv']
 
     ############################################
     # Figure: Pressure thickness speed
 
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(pU.figW, pU.figH*3))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, peak, titleVal, unitVal in zip(axes.flatten(), peakList, title, unit):
-        ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMax'], s, '--k', label='Max Reference')
-        ax.plot(resAnalysisDF.loc[refSimRowHash, peak + 'CrossMean'], s, '-k', label='Mean Reference')
-        ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMax'], s, '--b', label='Max Simulation')
-        ax.plot(resAnalysisDF.loc[simRowHash, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
+        ax.plot(s, resAnalysisDF.loc[refSimRowHash, peak + 'CrossMax'], '--k', label='Max Reference')
+        ax.plot(s, resAnalysisDF.loc[refSimRowHash, peak + 'CrossMean'], '-k', label='Mean Reference')
+        ax.plot(s, resAnalysisDF.loc[simRowHash, peak + 'CrossMax'], '--b', label='Max Simulation')
+        ax.plot(s, resAnalysisDF.loc[simRowHash, peak + 'CrossMean'], '-b', label='Mean Simulation')
 
-        ax.set_title(titleVal + 'distribution along path')
+        ax.set_title(titleVal + 'distribution along thalweg')
         ax.legend(loc='best')
-        ax.set_ylabel('s [m]')
-        ax.set_ylim([s.min(), s.max()])
-        ax.set_xlim(auto=True)
-        ax.set_xlabel(unitVal)
+        ax.set_xlabel('$S_{XY}$ (thalweg) [m]')
+        ax.set_xlim([s.min(), s.max()])
+        ax.set_ylim(auto=True)
+        ax.set_ylabel(unitVal)
     pU.putAvaNameOnPlot(ax, projectName)
 
     outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'), 'slComparison'])
@@ -196,8 +201,10 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
 
 def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict):
     """
-    Plot and save the Peak field  distribution after coord transfo
-    used when more then 2 simulations are compared
+    Panel1 reference peak field with runout points of all sims and distribution of runout SXY
+    Panel 2 crossMax values of peak field along thalweg for all sims
+    Panel 3 mean, median and envelope of cross max values for all sims
+
 
     Parameters
     ----------
@@ -217,6 +224,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     pathDict : dict
         dictionary with path to data to analyze
     """
+
     ####################################
     # Get input data
     varParList = cfgSetup['varParList'].split('|')
@@ -236,81 +244,127 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     runout = resAnalysisDF['sRunout'].to_numpy()
     pprCrossMax = np.stack(resAnalysisDF[runoutResType.lower() + 'CrossMax'].to_numpy())
     ############################################
-    # prepare for plot
+    # compute mean, median and percenti. of peak field cross max values and mask array with threshold
     pMean = np.mean(pprCrossMax, axis=0)
     pMedian = np.median(pprCrossMax, axis=0)
     pPercentile = np.percentile(pprCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
     maskedArray = np.ma.masked_where(rasterdataPres <= float(thresholdValue), rasterdataPres)
+    # transpose array for plot
+    maskedArrayTransposed = np.transpose(maskedArray)
 
     # get plots limits
-    indYMin = max(0, indStartOfRunout-5)
-    yMin = s[indYMin]
-    yMax = max(runout) + 25
-    indXMin = max(0, np.min(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])-5)
-    xMin = l[indXMin]
-    indXMax = min(np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])+5, len(l)-1)
-    xMax = l[indXMax]
+    indXMin = max(0, indStartOfRunout-5)
+    xMin = s[indXMin]
+    xMax = max(runout) + 25
+    indYMin = max(0, np.min(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])-5)
+    yMin = l[indYMin]
+    indYMax = min(np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])+5, len(l)-1)
+    yMax = l[indYMax]
 
     # get colormap for raster plot
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
-        maskedArray[indYMin:, indXMin:indXMax]), np.nanmax(maskedArray[indYMin:, indXMin:indXMax]),
+        maskedArrayTransposed[indYMin:indYMax, indXMin:]), np.nanmax(maskedArrayTransposed[indYMin:indYMax, indXMin:]),
         continuous=pU.contCmap)
     cmap.set_bad('w', 1.)
 
-    # Get colors for scatter
+    # Get colors for colorcoding runout points and crossMax values along thalweg for all sims
     unitSC = cfgSetup['unit']
     nSamples = np.size(runout)
+    colorFlag = False
     if 'colorParameter' in pathDict:
         if pathDict['colorParameter'] is False:
             values = None
+            minVal = 0
+            maxVal = 1
         else:
             values = inputsDF[varParList[0]].to_list()
+            minVal = np.nanmin(values)
+            maxVal = np.nanmax(values)
+            colorFlag = True
     else:
         values = None
+        minVal = 0
+        maxVal = 1
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
                                                                                                 unitSC)
 
     ############################################
     # Figure: Analysis runout
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-    ax1 = plt.subplot(121)
+    fig, (ax1, ax3, ax2) = plt.subplots(nrows=3, ncols=1, figsize=(pU.figW * 2, pU.figH * 3.5))
 
-    ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max %.0f m' % np.max(runout))
-    ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean %.0f m' % np.mean(runout))
-    ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min %.0f m' % np.min(runout))
+    ax1.axvline(x=np.max(runout), color='k', linestyle='-.', label='runout max %.0f m' % np.max(runout))
+    ax1.axvline(x=np.average(runout), color='k', linestyle='-', label='runout mean %.0f m' % np.mean(runout))
+    ax1.axvline(x=np.min(runout), color='k', linestyle=':', label='runout min %.0f m' % np.min(runout))
 
-    ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
+    ax1.axvline(x=s[indStartOfRunout], color='k', linestyle='--',
+                label=rasterTransfo['labelRunout'])
+                #label=('start of runout area: '+ r'$\beta_{%.1f °}$' % (rasterTransfo['startOfRunoutAreaAngle'])))
+    ref5, im = pU.NonUnifIm(ax1, s, l, maskedArrayTransposed, '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
                             extent=[xMin, xMax, yMin, yMax],
                             cmap=cmap, norm=norm)
-    sc = ax1.scatter(resAnalysisDF['lRunout'], resAnalysisDF['sRunout'],
-                     c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0], label='runout points')
+    sc = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['lRunout'],
+                     c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
+                     label=('runout points (%s<%.1f%s)' % (runoutResType, cfgSetup.getfloat('thresholdValue'), unit)))
 
     if displayColorBar:
         pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
     ax1.set_xlim([xMin, xMax])
     ax1.set_ylim([yMin, yMax])
-    ax1.set_title('%s 2D plot for the reference' % name)
-    ax1.legend(loc=4)
+    ax1.set_title('%s field (reference) for (%s>%.1f%s)' % (name, runoutResType, cfgSetup.getfloat('thresholdValue'), unit))
+    ax1.legend(loc='upper left')
+    ax1.set_aspect('equal')
     pU.putAvaNameOnPlot(ax1, projectName)
 
     pU.addColorBar(im, ax1, ticks, unit)
 
-    ax2 = plt.subplot(122)
-
-    ax2.fill_betweenx(s, pPercentile[2], pPercentile[0], facecolor=[.8, .8, .8], alpha=0.5,
+    ax2.fill_between(s, pPercentile[2], pPercentile[0], facecolor=[.8, .8, .8], alpha=0.5,
                       label=('[%.2f, %.2f]%% interval' % (percentile/2, 100-percentile/2)))
     matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ax2.plot(pMedian, s, color='r', label='median')
-    ax2.plot(pMean, s, color='b', label='mean')
+    ax2.plot(s, pMedian, color='r', label='median')
+    ax2.plot(s, pMean, color='b', label='mean')
 
-    ax2.set_title('%s distribution along the path between runs' % name)
+    ax2.set_title('%s distribution along thalweg for all sims' % name)
     ax2.legend(loc='upper right')
-    ax2.set_ylabel('s [m]')
-    ax2.set_ylim([s.min(), s.max()])
-    ax2.set_xlim(auto=True)
-    ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
+    ax2.set_xlabel('$S_{xy}$ (thalweg) [m]')
+    ax2.set_xlim([s.min(), s.max()])
+    ax2.set_ylim(auto=True)
+    ax2.set_ylabel('$%s_{CrossMax}$ [%s]' % (runoutResType, unit))
+
+    # add all runResultType crossMax values along thalweg using colorcoding if available
+    # setup colorbar
+    norm = mpl.colors.Normalize(vmin=minVal, vmax=maxVal)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=pU.cmapAvaframeCont)
+    cmap.set_array([])
+
+    # loop over all sims and compute colorbar value and add line plot
+    countSim = 1
+    for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
+        if colorFlag:
+            cmapVal = resAnalysisRow[varParList[0]]
+            if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
+                cmapVal = resAnalysisRow[(paraVar+'0')]
+        else:
+            cmapVal = countSim / nSamples
+        if resAnalysisRow['simName'] == pathDict['refSimName']:
+            ax3.plot(s, resAnalysisRow[runoutResType.lower() + 'CrossMax'], c='k', label='reference', zorder=nSamples+1)
+        else:
+            ax3.plot(s, resAnalysisRow[runoutResType.lower() + 'CrossMax'], c=cmap.to_rgba(cmapVal))
+        countSim = countSim + 1
+
+    # add colorbar
+    if colorFlag:
+        cbar = ax3.figure.colorbar(cmap, ax=ax3)
+        cbar.outline.set_visible(False)
+        if cfgSetup['unit'] != '':
+            cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
+        cbar.set_label(paraVar)
+    # add labels title
+    ax3.set_title('%s along thalweg for all sims' % name)
+    ax3.legend(loc='upper right')
+    ax3.set_xlabel('$S_{xy}$ (thalweg) [m]')
+    ax3.set_xlim([s.min(), s.max()])
+    ax3.set_ylim(auto=True)
+    ax3.set_ylabel('$%s_{CrossMax}$ [%s]' % (runoutResType, unit))
 
     outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
                            'slComparisonStat'])
@@ -358,8 +412,8 @@ def visuMass(resAnalysisDF, pathDict, simRowHash, refSimRowHash, timeMass):
         refArray = resAnalysisDF.loc[refSimRowHash, field]
         simArray = resAnalysisDF.loc[simRowHash, field]
         if refSimRowHash != simRowHash:
-            ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
-        ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimName)
+            ax.plot(timeMass, simArray, '-b', label='Simulation: %s ' % simName)
+        ax.plot(timeMass, refArray, '-k', label='Reference: %s ' % refSimName)
 
         ax.set_title(title + ' function of time')
         ax.legend(loc=1)
@@ -425,7 +479,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     ############################################
     # prepare for plot
     Cmap = [pU.cmapPres, pU.cmapThickness, pU.cmapSpeed]
-    Title = ['Peak Pressure', 'Peak Flow Thickness', 'Peak Speed']
+    Title = ['peak pressure', 'peak flow thickness', 'peak flow velocity']
     Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpft'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
@@ -435,20 +489,22 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     ############################################
     # Figure: Pressure thickness speed
 
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(pU.figW*2, pU.figH*3))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         maskedArray = np.ma.masked_where(data == 0, data)
+        maskedArrayTranspose = np.transpose(maskedArray)
         cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(maskedArray), np.nanmax(maskedArray),
                                                continuous=pU.contCmap)
         cmap.set_bad('w', 1.)
-        ax.axhline(y=runout, color='k', linestyle='-', label='runout')
+        ax.axvline(x=runout, color='k', linestyle='-',
+                   label='runout (%s < %.1f %s)' % (runoutResType, cfgSetup.getfloat('thresholdValue'),
+                                                    pU.cfgPlotUtils['unit' + runoutResType]))
 
-        ax.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                   label='Start or run-out point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-        ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
-                                extent=[l.min(), l.max(), s.min(), s.max()],
+        ax.axvline(x=s[indStartOfRunout], color='k', linestyle='--', label=rasterTransfo['labelRunout'])
+        ref3, im = pU.NonUnifIm(ax, s, l, maskedArrayTranspose, '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
+                                extent=[s.min(), s.max(), l.min(), l.max()],
                                 cmap=cmap, norm=norm)
 
         ax.set_title(title)
@@ -464,7 +520,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
 def visuComparison(rasterTransfo, inputs, pathDict):
     """
     Plot and save the comparison between current simulation and Reference
-    in the run-out area
+    in the runout area
 
     Parameters
     ----------
@@ -501,79 +557,36 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
 
-    yLimRef = s[np.max(np.nonzero(np.any(refData > 0, axis=1))[0])] + 20
-    yLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
-              np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))] + 20
-    ############################################
-    # Figure: Raster comparison (mask for the pThreshold given in the ini file)
-    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
-    ax1 = plt.subplot2grid((1, 2), (0, 0))
-
-    # get color map
-    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
+    cmapTF, _, ticks, normTF = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
         (refData)), np.nanmax((refData)), continuous=pU.contCmap)
-    cmap.set_bad(color='w')
-    refDataPlot = np.ma.masked_where(refData == 0.0, refData)
-    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), 0, yLimRef],
-                            cmap=cmap, norm=norm)
-    ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    ax1.set_title('Reference %s in the RunOut area' % name
-                  + '\n' + '%s threshold: %.1f %s' % (name, thresholdValue, unit))
-    pU.addColorBar(im, ax1, ticks, unit)
+    cmapTF.set_bad(color='w')
 
-    ax1.set_ylim([0, yLimRef])
-    ax1.legend(loc='lower right')
-    pU.putAvaNameOnPlot(ax1, projectName)
+    cmapTF.set_under(color='b')
+    cmapTF.set_over(color='r')
+    cmapTF.set_bad(alpha=0)
+    dataTF = compRasterMask - refRasterMask
+    dataTF = np.ma.masked_where(dataTF == 0.0, dataTF)
 
-    ax2 = plt.subplot2grid((1, 2), (0, 1))
-    cmap.set_under(color='b')
-    cmap.set_over(color='r')
-    cmap.set_bad(alpha=0)
-    data = compRasterMask-refRasterMask
-    data = np.ma.masked_where(data == 0.0, data)
-    if compRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
-        ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
-                                 extent=[l.min(), l.max(), s[indStartOfRunout], yLim], cmap=cmap)
-        im1.set_clim(vmin=-0.5, vmax=0.5)
-        ax2.set_ylim([s[indStartOfRunout], yLim])
+    xLimRef = s[np.max(np.nonzero(np.any(refData > 0, axis=1))[0])] + 20
+    xLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
+              np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))] + 20
+
+    # define figure extent
+    xExtent = xLim - s[indStartOfRunout]
+    ratio = (xExtent / np.nanmax(rasterTransfo['l']))
+    if ratio > 1:
+        figHM = 2 * (6/4)
+        figWM = ratio*2
+        ncolLegend = 4
     else:
-        ax2.text(.5, .5, 'No data in the run out area!', fontsize=18, color='red',
-                 bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
-    if pathDict['compType'][0] == 'comModules':
-        namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
-        pU.putAvaNameOnPlot(ax2, namePrint)
-    else:
-        namePrint = 'ref:' + str(refSimName) + '_' + 'sim:' + str(simName)
-        pU.putAvaNameOnPlot(ax2, namePrint)
-
-    ax2.set_title('Difference %s current - reference in runout area' % runoutResType + '\n' + 'Blue = FN, Red = FP')
-
-    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
-                           str(simName), 'AreaComparisonToReference'])
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
-
+        figHM = ((1 + (1-ratio))*2) * (6/4)
+        figWM = 2
+        ncolLegend = 2
     ############################################
     # Figure: Raster comparison
     # , constrained_layout=True)
-    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
-    ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=3)
-    # get color map
-    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
-        (refData)), np.nanmax((refData)), continuous=pU.contCmap)
-    cmap.set_bad(color='w')
-    refDataPlot = np.ma.masked_where(refData == 0.0, refData)
-    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), 0, yLimRef],
-                            cmap=cmap, norm=norm)
-    ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    ax1.set_title('Reference %s' % name)
-    pU.addColorBar(im, ax1, ticks, unit)
-    ax1.set_ylim([0, yLimRef])
-    ax1.legend(loc='lower right')
-    pU.putAvaNameOnPlot(ax1, projectName)
+    fig = plt.figure(figsize=(pU.figW*figWM, pU.figH*figHM), layout='tight')
+    gs = gridspec.GridSpec(4, 2, hspace=1.5)
 
     compData = compData[indStartOfRunout:, :]
     refData = refData[indStartOfRunout:, :]
@@ -583,78 +596,95 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     dataDiffPlot = dataDiffPlot[~np.isnan(dataDiffPlot)]
 
     if dataDiffPlot.size:
-        # only add the second axis if one of the two avalanches reached the run out area
+        # only add the second axis if one of the two avalanches reached the runout area
         indDiff = np.abs(dataDiffPlot) > 0
 
         if indDiff.any():
             # only plot hist and CDF if there is a difference in the data
-            ax2 = plt.subplot2grid((3, 3), (0, 1), rowspan=2, colspan=2)
+            ax2 = fig.add_subplot(gs[0:5, 1])
+            ax1 = fig.add_subplot(gs[0:5, 0])
         else:
-            ax2 = plt.subplot2grid((3, 3), (0, 1), rowspan=3, colspan=3)
+            ax2 = fig.add_subplot(gs[:, 1])
+            ax1 = fig.add_subplot(gs[:, 0])
 
         cmap = pU.cmapdiv
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
-        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
-                                 extent=[l.min(), l.max(), s[indStartOfRunout], yLim], cmap=cmap)
+        ref0, im3 = pU.NonUnifIm(ax2, s[indStartOfRunout:], l, np.transpose(dataDiff), '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
+                                 extent=[s[indStartOfRunout], xLim, l.min(), l.max()], cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
 
-        # print contour lines only if the thre threshold is reached
-        L, S = np.meshgrid(l, s[indStartOfRunout:])
+        # print contour lines only if the threshold is reached
+        S, L = np.meshgrid(s[indStartOfRunout:], l)
         colorsP = pU.colorMaps['pft']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
-            contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
+            contourRef = ax2.contour(S, L, np.transpose(refData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             # generate corresponding labels
             labels = [str(level) for level in thresholdArray[:-1]]
             labels = labels[0:len(contourRef.collections)]
             # add legend associated to the contour plot
             handles, _ = contourRef.legend_elements()
-            legend2 = ax2.legend(title=name + '\ncontour lines\n[' + unit + ']', handles=handles, labels=labels)
-            plt.setp(legend2.get_title(), multialignment='center')
+            legend2 = ax2.legend(title=runoutResType + ' contour lines [' + unit + ']', handles=handles, labels=labels,
+                                 ncol=ncolLegend, loc='lower left')
         else:
-            log.warning('Reference %s did not reach the run out area!' % refSimName)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %s did not reach the run out area!' % refSimName,
+            log.warning('Reference %s did not reach the runout area!' % refSimName)
+            ax2.text((s[indStartOfRunout] + xLim)/2, 0, 'Reference %s did not reach the runout area!' % refSimName,
                      fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
         if (np.where(compData > thresholdArray[-1], True, False)).any():
             contourComp = ax2.contour(
-                L, S, compData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
+                S, L, np.transpose(compData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
         else:
-            log.warning('Simulation %s did not reach the run out area!' % simName)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %s did not reach the run out area!' % simName,
+            log.warning('Simulation %s did not reach the runout area!' % simName)
+            ax2.text((s[indStartOfRunout] + xLim)/2, 0, 'Simulation %s did not reach the runout area!' % simName,
                      fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
-        if pathDict['compType'][0] == 'comModules':
-            namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
-            pU.putAvaNameOnPlot(ax2, namePrint)
+        #if compRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
+        if dataTF.any():
+            ref1, im1 = pU.NonUnifIm(ax1, s, l, np.transpose(dataTF), '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
+                                     extent=[s[indStartOfRunout], xLim, l.min(), l.max()], cmap=cmapTF)
+            im1.set_clim(vmin=-0.5, vmax=0.5)
+            ax1.set_xlim([s[indStartOfRunout], xLim])
         else:
-            namePrint = 'ref:' + str(refSimName) + '_' + 'sim:' + str(simName)
-            pU.putAvaNameOnPlot(ax2, namePrint)
+            ax1.text(.5, .5, 'No difference in runout area', fontsize=18, color='red',
+                     bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
+        if pathDict['compType'][0] == 'comModules':
+            namePrint = 'refMod:' + pathDict['compType'][1] + '\n' + 'compMod:' + pathDict['compType'][2]
+            pU.putAvaNameOnPlot(ax1, namePrint)
+        else:
+            namePrint = 'ref:' + str(refSimName) + '\n' + 'sim:' + str(simName)
+            pU.putAvaNameOnPlot(ax1, namePrint)
+
+        ax1.set_title('%s difference (sim - reference) in runout area' % runoutResType + '\n' + 'blue = FN, red = FP')
 
         if indDiff.any():
             # only plot hist and CDF if there is a difference in the data
-            ax3 = plt.subplot2grid((3, 3), (2, 1))
-            ax4 = plt.subplot2grid((3, 3), (2, 2))
-            # there is data to compare in the run out area
-            _ = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
-                                      '%s diff CDF (95%% and 99%% centiles)' % name])
+            ax3 = fig.add_subplot(gs[3, 0])
+            ax4 = fig.add_subplot(gs[3, 1])
+            # there is data to compare in the runout area
+            _ = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % runoutResType,
+                                      '%s diff CDF (95%% and 99%% centiles)' % runoutResType])
 
-        ax2.set_ylim([s[indStartOfRunout], yLim])
-        pU.addColorBar(im3, ax2, None, unit, title=name, extend='both')
+        ax2.set_xlim([s[indStartOfRunout], xLim])
+        divider = make_axes_locatable(ax2)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        pU.addColorBar(im3, ax2, None, None, title=runoutResType+(' [%s]'% unit), extend='both', cax=cax)
+        ax2.set_aspect('equal')
+        ax1.set_aspect('equal')
     else:
-        # if no avalanche reached the run out area print a warning on the second plot
-        ax2 = plt.subplot2grid((3, 3), (0, 1), rowspan=3, colspan=3)
-        log.warning('No data in the run out area!')
-        ax2.text(.5, .5, 'No data in the run out area!', fontsize=24, color='red',
+        # if no avalanche reached the runout area print a warning on the second plot
+        ax2 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=3)
+        log.warning('No data in runout area')
+        ax2.text(.5, .5, 'No difference in runout area', fontsize=24, color='red',
                  bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
     if pathDict['compType'][0] == 'comModules':
-        ax2.set_title('%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
+        ax2.set_title('%s difference and contour lines' % runoutResType + '\n' + 'refMod = full, compMod = dashed line')
     else:
-        ax2.set_title('%s difference and contour lines' % name + '\n' + 'ref = full, sim = dashed line')
+        ax2.set_title('%s difference and contour lines' % runoutResType + '\n' + 'ref = full, sim = dashed line')
 
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    #fig.subplots_adjust(hspace=0.13, wspace=0.3)
     outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
                            str(simName), 'ContourComparisonToReference'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -687,7 +717,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     startOfRunoutAreaAngle = rasterTransfo['startOfRunoutAreaAngle']
     areaSum = resAnalysisDF.loc[refSimRowHash, 'TP'] + resAnalysisDF.loc[refSimRowHash, 'FN']
     if areaSum == 0:
-        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the runout area. Not normalizing area indicators')
     else:
         resAnalysisDF['TP'] = resAnalysisDF['TP'] / areaSum
         resAnalysisDF['FN'] = resAnalysisDF['FN'] / areaSum
@@ -706,7 +736,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                       'path: ', pathName, '\n',
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
-                      'run out based on ', name, ' results\n',
+                      'runout based on ', name, ' results\n',
                       name, ' limit: ', str(thresholdValue), unit, '\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
@@ -732,7 +762,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
 
 def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
     """
-    Visualize results in a nice way
+    plot the normalized area difference between reference and other simulations
     """
     ####################################
     # Get input data
@@ -743,34 +773,18 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     name = pU.cfgPlotUtils['name' + runoutResType]
     nSim = len(resAnalysisDF.index)
     refSimRowHash = pathDict['refSimRowHash']
-    maxMaxDPPRRef = resAnalysisDF.loc[refSimRowHash, 'max' + runoutResType.lower() + 'CrossMax']
-    maxMaxDPPR = resAnalysisDF['max' + runoutResType.lower() + 'CrossMax'].to_numpy()
-
     thresholdValue = cfgSetup['thresholdValue']
-
-    flag = float(cfgFlags['typeFlag'])
-
-    zPath = rasterTransfo['z']
-    sPath = rasterTransfo['s']
 
     runout = resAnalysisDF['sRunout'].to_numpy()
     runoutRef = resAnalysisDF.loc[refSimRowHash, 'sRunout']
     areaSum = resAnalysisDF.loc[refSimRowHash, 'TP'] + resAnalysisDF.loc[refSimRowHash, 'FN']
     if areaSum == 0:
-        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the runout area. Not normalizing area indicators')
         areaSum = 1
     rTP = resAnalysisDF['TP'].to_numpy() / areaSum
     rFP = resAnalysisDF['FP'].to_numpy() / areaSum
     rTPRef = resAnalysisDF.loc[refSimRowHash, 'TP'] / areaSum
     rFPRef = resAnalysisDF.loc[refSimRowHash, 'FP'] / areaSum
-
-    title = 'Visualizing max ' + name + ' data'
-    tipo = 'relMax' + runoutResType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
-    data = maxMaxDPPR / maxMaxDPPRRef
-    dataRef = maxMaxDPPRRef / maxMaxDPPRRef
-    yaxis_label = 'relative max ' + name + ' [-]'
-
-    log.info(title)
 
     # If more than 100 files are provided, add a density plot
     plotDensity = 0
@@ -788,50 +802,6 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
         values = None
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
                                                                                                 unitSC)
-    #######################################
-    # Final result diagram - z_profile+data
-
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-
-    # show flow path
-    ax1 = fig.add_subplot(111)
-    ax1.set_title(title)
-    ax1.set_ylabel(yaxis_label, color=pU.cmapVar['colors'][-1])
-    ax1.spines['left'].set_color(pU.cmapVar['colors'][-1])
-    ax1.tick_params(axis='y', colors=pU.cmapVar['colors'][-1])
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue), ' kPa threshold']))
-    pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
-    if plotDensity:  # estimate 2D histogram --> create pcolormesh
-        nbins = 10
-        H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
-        H = np.flipud(np.rot90(H))
-        Hmasked = np.ma.masked_where(H == 0, H)
-        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
-        cbar = plt.colorbar(dataDensity, orientation='horizontal')
-        cbar.ax.set_ylabel('Counts')
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('z [m]')
-    ax2.spines['left'].set_color(pU.cmapVar['colors'][-1])
-    ax2.tick_params(axis='y', colors='k')
-    ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
-    plt.xlim([0, max(sPath) + 50])
-    plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
-    if not plotDensity:
-        sc = ax1.scatter(resAnalysisDF['sRunout'], data, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
-                         label='runout points')
-
-        if displayColorBar:
-            pU.addColorBar(sc, ax2, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
-
-        ax1.plot(runoutRef, dataRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
-        ax1.legend(loc=4)
-
-    ax1.grid('on')
-
-    outFileName = '_'.join([pathDict['projectName'], tipo])
-
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     ############################################
     # Final result diagram - roc-plots
@@ -851,7 +821,9 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     else:
-        sc = ax1.scatter(rFP, rTP, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0], label='runout points')
+        sc = ax1.scatter(rFP, rTP, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
+                         label=('runout points (%s<%.1f%s)' % (runoutResType, cfgSetup.getfloat('thresholdValue'),
+                                                                  pU.cfgPlotUtils['unit' + runoutResType])))
 
         if displayColorBar:
             pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
@@ -938,88 +910,122 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
         varParList = cfgSetup['varParList'].split('|')
         paraVar = varParList[0]
         values = simDF[varParList[0]].to_list()
+        # if varPar is thickness and possibly read from shp
+        if np.isnan(values).any() and varParList[0] in ['relTh', 'entTh', 'secondaryRelTh']:
+            values = simDF[(varParList[0]+'0')].to_list() + values
 
         if isinstance(values[0], str) is False:
-            minVal = np.amin(values)
-            maxVal = np.amax(values)
+            minVal = np.nanmin(values)
+            maxVal = np.nanmax(values)
             colorOrdering = True
 
-    # intialize fig
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    # define figure extent
+    # first find max SXY value of contour lines to define max extent on SXY
+    xMax = 0
+    for index, simName in enumerate(contourDict):
+            for key in contourDict[simName]:
+                if np.amax(contourDict[simName][key]['y']) > xMax:
+                    xMax = np.amax(contourDict[simName][key]['y'])
+    sMax = np.where(s >= (xMax - 1.e-8))[0]
+    # compute the ratio of LXY to SXY to get figure width and height
+    xExtent = s[sMax[0]] - s[indStartOfRunout]
+    ratio = (xExtent / np.nanmax(rasterTransfo['l']))
+    if ratio > 1:
+        figHM = 1
+        figWM = ratio
+    else:
+        figHM = ((1 + (1 - ratio)))
+        figWM = 1
+
+    # intialize fig - if start of runout area at 0 thalweg - only one panel in plot
+    if indStartOfRunout == 0:
+        fig = plt.figure(figsize=(pU.figW * figWM, pU.figH * figHM))
+        gs = gridspec.GridSpec(1, 2)
+    else:
+        fig = plt.figure(figsize=(pU.figW * (2*figWM), pU.figH * figHM))
+        gs = gridspec.GridSpec(1, 3)
 
     # PANEL 1 show contour lines of all sims in contourDict for thresholdValue runoutResType
-    ax1 = fig.add_subplot(121)
+    ax1 = fig.add_subplot(gs[0, 0:2])
     ax1.set_title('%s %s %s contour lines' % (cfgSetup['runoutResType'], cfgSetup['thresholdValue'],
         unit))
-    ax1.set_ylabel('along path [m]')
-    ax1.set_xlabel('across path [m]')
+    ax1.set_xlabel('$S_{XY}$ (thalweg) [m]')
+    ax1.set_ylabel('$L_{XY}$ (thalweg) [m]')
     pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
 
     norm = mpl.colors.Normalize(vmin=minVal, vmax=maxVal)
     cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cmapCrameri.hawaii)
     cmap.set_array([])
     # limit extent to avalanche extent
-    yMax = 0
     for index, simName in enumerate(contourDict):
         if colorOrdering:
-            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
+            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar].values[0]
+            if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
+                cmapVal = simDF.loc[simDF['simName'] == simName, (paraVar+'0')].values[0]
         else:
             cmapVal = index / len(contourDict)
         for key in contourDict[simName]:
             if simName == pathDict['refSimName']:
-                addLinePlot(contourDict[simName][key], 'k', 'reference', ax1, key, zorder=len(contourDict))
+                addLinePlot(contourDict[simName][key], 'k', 'reference', ax1, key, zorder=len(contourDict),
+                            linestyle='solid', alpha=0.7)
             else:
-                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'], c=cmap.to_rgba(cmapVal))
-            if np.amax(contourDict[simName][key]['y'])> yMax:
-                yMax = np.amax(contourDict[simName][key]['y'])
+                ax1.plot(contourDict[simName][key]['y'], contourDict[simName][key]['x'], c=cmap.to_rgba(cmapVal))
 
     # tolerance needed because of rounding and saving issues
-    sMax = np.where(s >= (yMax-1.e-8))[0]
-    ax1.set_ylim([s[0], s[sMax[0]]])
+    sMax = np.where(s >= (xMax-1.e-8))[0]
+    ax1.set_xlim([s[0], s[sMax[0]]])
     if colorOrdering:
         cbar = ax1.figure.colorbar(cmap, ax=ax1)
         cbar.outline.set_visible(False)
-        cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
+        if cfgSetup['unit'] != '':
+            cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
     else:
         log.warning('ordering for contour line plot not available for parameter of type string')
 
     # add indication for runout area
-    ax1.axhline(s[indStartOfRunout], color='k', linestyle='--', label='runout area')
-    ax1.legend(loc='lower right')
+    ax1.axvline(s[indStartOfRunout], color='gray', linestyle='--',
+                label=rasterTransfo['labelRunout'])
+                #label=('start of runout area: '+ r'$\beta_{%.1f °}$' % (rasterTransfo['startOfRunoutAreaAngle'])))
+    ax1.legend(loc='upper left')
 
-    # PANEL 2 zoom into runout area
-    ax2 = fig.add_subplot(122)
-    ax2.set_title('zoom into runout area')
-    ax2.set_ylabel('along path [m]')
-    ax2.set_xlabel('across path [m]')
-    pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
-    for index, simName in enumerate(contourDict):
-        if colorOrdering:
-            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar]
-        else:
-            cmapVal = index / len(contourDict)
-        for key in contourDict[simName]:
-            if simName == pathDict['refSimName']:
-                # define label for reference sim, if info on what it is based is available
-                if pathDict['valRef'] == '':
-                    labelReference = 'reference'
-                else:
-                    labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
-                # add contour lines
-                addLinePlot(contourDict[simName][key], 'k', labelReference, ax2, key, zorder=len(contourDict))
+    if indStartOfRunout != 0:
+        # PANEL 2 zoom into runout area
+        ax2 = fig.add_subplot(gs[0, 2])
+        ax2.set_title('zoom into runout area, equal axes')
+        ax2.set_xlabel('$S_{XY}$ (thalweg) [m]')
+        ax2.set_ylabel('$L_{XY}$ (thalweg) [m]')
+        pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
+        for index, simName in enumerate(contourDict):
+            if colorOrdering:
+                cmapVal = simDF.loc[simDF['simName'] == simName, paraVar].values[0]
+                if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
+                    cmapVal = simDF.loc[simDF['simName'] == simName, (paraVar+'0')].values[0]
             else:
-                ax2.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'], c=cmap.to_rgba(cmapVal))
+                cmapVal = index / len(contourDict)
+            for key in contourDict[simName]:
+                if simName == pathDict['refSimName']:
+                    # define label for reference sim, if info on what it is based is available
+                    if pathDict['valRef'] == '':
+                        labelReference = 'reference'
+                    else:
+                        labelReference ='reference: %s = %s' % (cfgSetup['varParList'].split('|')[0], pathDict['valRef'])
+                    # add contour lines
+                    addLinePlot(contourDict[simName][key], 'k', labelReference, ax2, key, zorder=len(contourDict),
+                                linestyle='solid', alpha=0.7)
+                else:
+                    ax2.plot(contourDict[simName][key]['y'], contourDict[simName][key]['x'], c=cmap.to_rgba(cmapVal))
 
-    ax2.set_ylim([s[indStartOfRunout], s[sMax[0]]])
-    ax2.legend()
+        ax2.set_xlim([s[indStartOfRunout], s[sMax[0]]])
+        ax2.legend()
+        ax2.set_aspect('equal')
 
     # save and or plot fig
     outFileName = pathDict['projectName'] + '_ContourLinesAll'
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder=''):
+def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder='', linestyle='solid', alpha=1.):
     """ add a contour line with label only for line that has  _0 in name
 
         Parameters
@@ -1036,13 +1042,17 @@ def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder=''):
             name of the contour line
         zorder: int
             order of line on plot
+        linestyle: str
+            style of line plot: dashed, solid, dotted,..
+        alpha: float
+            between 0 and 1 to define how opaque the line
     """
 
-    if '_0' in key:
-        ax.plot(contourDict['x'], contourDict['y'], c=colorStr, label=labelStr,
-            zorder=zorder)
+    if key.split('.')[1] == '0_1':
+        ax.plot(contourDict['y'], contourDict['x'], c=colorStr, label=labelStr,
+            zorder=zorder, linestyle=linestyle, alpha=alpha)
     else:
-        ax.plot(contourDict['x'], contourDict['y'], c=colorStr, zorder=zorder)
+        ax.plot(contourDict['y'], contourDict['x'], c=colorStr, zorder=zorder, linestyle=linestyle, alpha=alpha)
 
 
 def plotThalwegAltitude(pathDict, rasterTransfo, pfvCrossMax, simName):
@@ -1146,6 +1156,7 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
 
 def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
     """plot result type name1 vs name 2 and colorcode scenarios using hue
+       add reference sim value with label
 
         Parameters
         -----------
@@ -1159,6 +1170,10 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
             name of parameter used for colorcoding
     """
 
+    # get dataFrame values for reference
+    valDF = resultsDF[resultsDF['simName'] == pathDict['refSimName']]
+
+    # define units for available analysis parameters
     availableoptions = ['pfvFieldMax', 'pfvFieldMin', 'pfvFieldMean', 'maxpfvCrossMax',
                  'pftFieldMax', 'pftFieldMin', 'pftFieldMean', 'maxpftCrossMax',
                  'pprFieldMax', 'pprFieldMin', 'pprFieldMean', 'maxpprCrossMax',
@@ -1176,15 +1191,24 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
         log.error(message)
         raise ValueError(message)
 
+    labelRef = 'reference'
     if hue == '':
         hue = None
-    elif hue not in resultsDF.cloumns.values.tolist():
+    elif hue not in resultsDF.columns.values.tolist():
         message = 'Scenario name for comparison plot not valid name %s not using for colorcoding' % hue
         log.warning(message)
+    elif isinstance(resultsDF[hue].iloc[0], str) == False and np.isnan(resultsDF[hue].to_numpy()).any():
+        message = 'Not all sims have a value for %s - no scenario used for plot' % hue
+        log.warning(message)
+        hue = None
+    else:
+        labelRef = 'reference (%s)' % valDF[hue].values[0]
 
     name1Index = availableoptions.index(name1)
     name2Index = availableoptions.index(name2)
     fig = sns.jointplot(data=resultsDF, x=name1, y=name2, hue=hue)
+    fig.ax_joint.scatter(valDF[name1], valDF[name2], color='k', label=labelRef)
+    fig.ax_joint.legend()
 
      # add label names with units
     fig.ax_joint.set_xlabel('%s [%s]' % (availableoptions[name1Index], units[name1Index]))
@@ -1218,7 +1242,9 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     """
 
-    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold) and where velocity is again back to < velocityThreshold
+
+    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
+    # and where velocity is again back to < velocityThreshold
     indVelStart = np.where(pfvCrossMax > cfgPlots.getfloat('velocityThreshold'))[0][0]
     if len(np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0]) == 0:
         if len(np.where(np.isnan(pfvCrossMax))[0]) > 1:
@@ -1227,11 +1253,15 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
             indVelZero = len(pfvCrossMax) - 1
     else:
         indVelZero = np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0][indVelStart]
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
 
     # compute alpha angle based on pfvCM field
     deltaz = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indVelZero]
     deltas = rasterTransfo['s'][indVelZero] - rasterTransfo['s'][indVelStart]
     alpha = np.rad2deg(np.arctan(deltaz / deltas))
+    deltazBeta = rasterTransfo['z'][indVelStart] - rasterTransfo['z'][indStartOfRunout]
+    deltasBeta = rasterTransfo['s'][indStartOfRunout] - rasterTransfo['s'][indVelStart]
+    beta = np.rad2deg(np.arctan(deltazBeta /  deltasBeta))
     # compute average of every barInt values to take from arrays for plotting
     barInterval = cfgPlots.getfloat('barInterval')
     barInt = int(np.floor(len(rasterTransfo['s']) / (rasterTransfo['s'][-1] / barInterval)))
@@ -1283,11 +1313,26 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
     Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
-    ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5, label= (r'$\alpha$=%.1f° (pfv > %s)' % (alpha, cfgPlots['velocityThreshold'])))
+    ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5,
+             label= (r'$\alpha$=%.1f° (pfv>%s%s)' % (alpha, cfgPlots['velocityThreshold'], pU.cfgPlotUtils['unitpfv'])))
     ax2.plot(rasterTransfo['s'][indMPFV], rasterTransfo['z'][indMPFV], color='darkred', marker='.', linestyle='',
              label=(r'$maxpfv$ = %.1f$ms^{-1}$' % pfvCrossMax[indMPFV]), zorder=200)
     ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
              label=(r'$maxpft$ = %.1f$m$' % pftCrossMax[indMPFT]), zorder=201)
+
+    # add info on start of runout area
+    #ax2.axvline(x=sXY[indStartOfRunout], color='lightskyblue', linestyle='--', linewidth=1.5, alpha=0.5,
+    #           label=('start of runout area ' + (r'$\beta_{%.1f °}$' % rasterTransfo['startOfRunoutAreaAngle']) +
+    #                  '\n' + r'$\beta_{angle}$=%.1f° (pfv>%s%s)' % (beta, cfgPlots['velocityThreshold'], pU.cfgPlotUtils['unitpfv'])), zorder=0)
+
+    if np.isnan(rasterTransfo['startOfRunoutAreaAngle']):
+        labelBeta = ('runout area')
+    else:
+        labelBeta = ('runout area ' +(r'$\beta_{%.1f °}$' % rasterTransfo['startOfRunoutAreaAngle']) +
+                      '\n' + r'$\beta_{angle}$=%.1f° (pfv>%s%s)' % (beta, cfgPlots['velocityThreshold'], pU.cfgPlotUtils['unitpfv']))
+    ax2.fill_between(sXY[indStartOfRunout:], np.nanmin(z), np.nanmax(z),
+                     facecolor=[.9, .9, .9], alpha=0.4,
+                     label=labelBeta)
 
     # add colorbar for pft bars using pfv for colors
     sm2 = ScalarMappable(cmap=cmapCrameri.batlow.reversed(),
@@ -1318,7 +1363,9 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     ax2.set_ylabel('altitude [m] (pft x 10)')
     ax1.set_xlabel('$S_{xy}$ [m]')
     plt.title('Max peak flow thickness (bars) along thalweg colored with max peak flow velocity')
-    plt.legend()
+    leg = plt.legend()
+    textLeg = leg.get_texts()[6]
+    textLeg.set_fontsize(8)
 
     # save and or plot
     pU.putAvaNameOnPlot(ax2, simName, date=True, color='grey', fontsize=8)

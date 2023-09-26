@@ -277,7 +277,7 @@ def test_setupThalwegTimeDiagram():
     dem = IOf.readRaster(demPath)
 
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 40., 'avalancheDir': avaDir,
+    cfgRangeTime['GENERAL'] = {'defineRunoutArea': True, 'startOfRunoutAreaAngle': 40., 'avalancheDir': avaDir,
         'rangeTimeResType': 'FT', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
         'dsMin': 30, 'sType': 'projected'}
 

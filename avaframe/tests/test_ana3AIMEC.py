@@ -2,8 +2,10 @@
 import numpy as np
 import pandas as pd
 import pathlib
+import shutil
 
 # Local imports
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
@@ -17,7 +19,7 @@ def test_getAimecInputs(capfd):
 
     avalancheDir = pathlib.Path(dirname, '..', 'data', 'avaParabola')
     pathDict = {}
-    pathDict = aT.readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA')
+    pathDict = aT.readAIMECinputs(avalancheDir, pathDict, True, dirName='com1DFA')
     print(pathDict)
     assert 'avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp' in str(pathDict['profileLayer'])
     assert 'avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp' in str(pathDict['splitPointSource'])
@@ -259,7 +261,7 @@ def test_mainAIMEC(tmp_path):
     pathDict['resTypeList'] = ['ppr', 'pft', 'pfv']
     pathDict['colorParameter'] = False
 
-    cfg = cfgUtils.getModuleConfig(ana3AIMEC)
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC, onlyDefault=True)
     cfgSetup = cfg['AIMECSETUP']
     cfgSetup['startOfRunoutAreaAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
@@ -336,3 +338,64 @@ def test_aimecTransform():
     particle = ana3AIMEC.aimecTransform(rasterTransfo, particle, dem['header'])
     assert particle['lAimec'] != []
     assert particle['sAimec'] != []
+
+
+def test_fullAimecAnalysis(tmp_path):
+    # setup a case where the result peak fields don't have same extent and origin
+    # to test whether the transformation is still working correctly
+    avaDir = pathlib.Path(tmp_path, 'avaAimecTest')
+    testDir = avaDir / 'testOutputs'
+    fU.makeADir(testDir)
+    dir = pathlib.Path(__file__).parents[0]
+    lineDir = dir / 'data' / 'aimecInput' / 'LINES'
+    aimecInput = avaDir / 'Inputs' / 'LINES'
+    shutil.copytree(lineDir, aimecInput)
+    cellSize = 5.
+    nRows = 10
+    nCols = 12
+    nodata_value = np.nan
+    xllcenter = 0.
+    yllcenter = 0.
+    demHeader = {'cellsize': cellSize, 'nrows': nRows, 'ncols': nCols, 'nodata_value': nodata_value,
+                 'xllcenter': xllcenter, 'yllcenter': yllcenter}
+    demData = np.tile(np.flip(np.arange(12)), (10,1))
+    demName = avaDir / 'Inputs' / 'testDEM.asc'
+    IOf.writeResultToAsc(demHeader, demData, demName, flip=True)
+
+    res1 = np.zeros((nRows, nCols))
+    res1[3:7, 3:8] = 10.
+    res1[3:7, 7:10] = 7.
+    res1File = avaDir / 'testOutputs' / 'test1_01T_null_fullDEM_pft.asc'
+    IOf.writeResultToAsc(demHeader, res1, res1File, flip=True)
+
+    xllcenter = 5.
+    yllcenter = 10.
+    nRows = 8
+    nCols = 10
+    demHeader2 = {'cellsize': cellSize, 'nrows': nRows, 'ncols': nCols, 'nodata_value': nodata_value,
+                  'xllcenter': xllcenter, 'yllcenter': yllcenter}
+    res2 = np.zeros((nRows, nCols))
+    res2[1:5, 2:7] = 10.
+    res2[1:5, 6:9] = 7.
+    resFile2 = avaDir / 'testOutputs' / 'test1_01T_null_partDEM_pft.asc'
+    IOf.writeResultToAsc(demHeader2, res2, resFile2, flip=True)
+
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC, onlyDefault=True)
+    cfgSetup = cfg['AIMECSETUP']
+    cfgSetup['defineRunoutArea'] = 'False'
+    cfgSetup['resType'] = 'pft'
+    cfgSetup['thresholdValue'] = '7.5'
+    cfg['FLAGS']['flagMass'] = 'False'
+    cfgSetup['runoutResType'] = 'pft'
+    cfgSetup['resTypes'] = 'pft'
+    cfg['PLOTS']['compResType1'] = 'deltaSXY'
+    cfg['PLOTS']['compResType2'] = 'runoutAngle'
+
+    rasterTransfo, resAnalysisDF, plotDict, newRasters, pathDict = ana3AIMEC.fullAimecAnalysis(avaDir, cfg,
+                                                                                               inputDir=testDir,
+                                                                                               demFileName='')
+
+    assert resAnalysisDF['pftFieldMax'].iloc[0] == resAnalysisDF['pftFieldMax'].iloc[1]
+    assert resAnalysisDF['sRunout'].iloc[0] == resAnalysisDF['sRunout'].iloc[1]
+    assert resAnalysisDF['lRunout'].iloc[0] == resAnalysisDF['lRunout'].iloc[1]
+    assert resAnalysisDF['simName'].iloc[0] != resAnalysisDF['simName'].iloc[1]
