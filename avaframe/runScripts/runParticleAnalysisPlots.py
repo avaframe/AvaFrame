@@ -32,16 +32,15 @@ from avaframe.in3Utils import cfgHandling
 
 # The present script calls each of the plot functions made so far.
 
-# The plotting functions are in PlotFunctions. Useful tools for the plotting are in PlotTools. Useful tools to post-process the
-# data and prepare them for the plots are in PostProcessingTools. NodeTools contain useful tools to process the AvaNodes data
-
 # For all: the three most interesting plots are produced by:
 #   * Peak flow quantities and thalweg-altitude diagram: PlotFunctions.plotPeakVelVelThalwegEnvelope
-#   * Thalweg-Altitude energy line, peak flow quantities and thalweg time diagram: PlotFunctions.plotPeakQuantThalTimeEnergyLine
+#   * Thalweg-Altitude energy line, peak flow quantities and thalweg time diagram:
+#     PlotFunctions.plotPeakQuantThalTimeEnergyLine
 #   * Comparative plots (vel,acc,s_{xyz}..): PlotFunctions.plotPeakQuantTrackedPartVel
 
 ##### SECTION TO PREPARE THE DATA FOR THE PLOTS ######
-# WARNING: THE BELOW SECTON IS SPECIFICALLY DEDICATED TO EXTRACT POST-PROCESSING INFORMATION. IT IS LIKELY TO BE IMPROVED
+# WARNING: THE BELOW SECTON IS SPECIFICALLY DEDICATED TO EXTRACT POST-PROCESSING INFORMATION. IT IS LIKELY TO
+# BE IMPROVED
 
 # -----------Required settings-----------------
 # log file name; leave empty to use default runLog.log
@@ -76,7 +75,7 @@ if cfgPartAna['GENERAL'].getboolean('runCom1DFA'):
     # call com1DFA and perform simulations
     _, _, _, SimDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgCom1DFA)
 else:
-    # Load configuration info of all com1DFA simulations and extract the different avalanche simulations of the output file
+    # Load configuration info of all com1DFA simulations and extract different avalanche simulations of the output file
     log.info('Fetching the different avalanche simulations from %s' % str(avalancheDir))
     SimDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
@@ -89,9 +88,9 @@ cfgAimec, cfgPartAna = cfgHandling.applyCfgOverride(cfgAimec, cfgPartAna, ana3AI
 anaMod = cfgAimec['AIMECSETUP']['anaMod']
 
 # set input directory to load particles dicts from sims
-inputDir = pathlib.Path(avalancheDir,'Outputs', modName, 'particles')
+inputDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'particles')
 
-#++++++++++INCLUDE MEASURED ++++++++++++++++
+# ++++++++++INCLUDE MEASURED ++++++++++++++++
 # TODO: this has to be moved to the loop as it needs the sim dem - can be called here if particle from com1DFA origin is changed
 #if cfgPartAna['GENERAL'].getboolean('includeMeasurements'):
 #    readMeasuredParticleData(avaDir, demHeader, pData='')
@@ -151,8 +150,9 @@ for i, simIndex in enumerate(SimDF.index):
     # Calculating the velocity-altitude-thalweg information for the tracked particles
     log.info('Calculating velocity altitude thalweg envelopes for the tracked numerical particles...')
     # calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in the projected xy plan)
-    trackedPartPropAdapted = ana3AIMEC.aimecTransform(rasterTransfo, trackedPartProp, rasterTransfo['demHeader'], timeSeries=True)
-    # Calculating the velocity envelope in the thalweg coordinate system (velocity-altitude-thalweg envelope) for the tracked particles
+    trackedPartPropAdapted = ana3AIMEC.aimecTransform(rasterTransfo, trackedPartProp, rasterTransfo['demHeader'],
+                                                      timeSeries=True)
+    # Calculating velocity envelope in thalweg coordinate system (velocity-altitude-thalweg envelope) for tracked part.
     dictVelAltThalwegPart = oPartAna.velocityEnvelopeThalweg(trackedPartPropAdapted)
 
     # ++++++++++INCLUDE MEASURED++++++++++++++++
@@ -160,8 +160,9 @@ for i, simIndex in enumerate(SimDF.index):
         mParticles = oPartAna.readMeasuredParticleData(avaDir, demSim['originalHeader'], pData='')
         measuredData = mParticles
 
-        # calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in the projected xy plan)
-        measuredDataAdapted = ana3AIMEC.aimecTransform(rasterTransfo, measuredData, rasterTransfo['demHeader'], timeSeries=True)
+        # calculating and adding for each particle sAimec and lAimec (s and l along the thalweg in projected xy plan)
+        measuredDataAdapted = ana3AIMEC.aimecTransform(rasterTransfo, measuredData, rasterTransfo['demHeader'],
+                                                       timeSeries=True)
 
     # The thresholds pfvMinThreshold pftMinThreshold pprMinThreshold are used to define the masked array
     cfgAimec['FILTER'] = {'simName': SimDF['simName'].loc[simIndex]}
@@ -193,7 +194,8 @@ for i, simIndex in enumerate(SimDF.index):
         dictVelAltThalweg, resTypePlots, anaMod, demSim)
 
     oPartAna.plotThalwegTimeAltitudes(avalancheDir, simIndex, SimDF,
-        rasterTransfo, resAnalysisDF['pfvCrossMax'], modName, demSim, mtiInfo, cfgRangeTime, measuredData=measuredDataAdapted)
+        rasterTransfo, resAnalysisDF['pfvCrossMax'], modName, demSim, mtiInfo, cfgRangeTime,
+        cfgAimec['PLOTS'].getfloat('velocityThreshold'), measuredData=measuredDataAdapted)
 
     oPartAna.plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
         trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo, measuredData=measuredDataAdapted)

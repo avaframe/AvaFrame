@@ -186,3 +186,60 @@ plotHistCDFDiff
 .. figure:: _static/avaAlr_plotHistCDFDiff.png
 
           Output plot from plotHistCDFDiff on peak pressure results from two simulations of avaAlr
+          
+          
+       
+particle analysis plots
+=========================
+:py:mod:`out3Plot.particleAnalysisPlots` can be used to create plots of particle properties for a :py:mod:`com1DFA` simulation, 
+where particles refer to two-dimensional numerical columns (see :ref:`DFAnumerics:Discretization`). 
+The particle properties can be analyzed over time or transformed into a thalweg following coordinate system using :py:mod:`ana3AIMEC`.
+Additional functions to compute velocity envelopes, i.e. the min and max values of the particle properties over time but also along the thalweg are used
+(see :py:func:`out3Plot.outParticleAnalysis.velocityEnvelope` and :py:func:`out3Plot.outParticleAnalysis.velocityEnvelopeThalweg`).
+The provided run script ``runScripts/runParticleAnalysis.py``, provides an example of calling :py:mod:`com1DFA` to perform 
+an avalanche simulation and then perform the respective particle analysis including a coordinate transformation and producing the final plots,
+which are examplary shown here:
+
+.. figure:: _static/particleMotionTracking_relAlr_2da46cb47c_C_M_null_dfa.png
+
+         Particle properties summary plot showing a map view of the affected area (by all particles) based on the peak flow velocity field, the tracked particles trajectories in dark blue
+         with the superimposed thalweg line. The panels in the middle row show the evolution of particles' trajectory lengths, velocity and acceleration over time.
+         In the rightmost panels, the particle data has been transformed into a thalweg following coordinate system and particle properties are shown along the thalweg coordinate :math:`S_{XY}`.
+         The light blue area extends from the min value found for all particles to the max value and the blue solid lines indicate the values of the tracked particles.
+         
+         
+.. figure:: _static/thalwegTimeAltitudes_relAlr_2da46cb47c_C_M_null_dfa.png
+
+         The left panel shows a map view of the peak flow velocity field for the avalanche simulation with superimposed thalweg line. 
+         The top right plot shows the thalweg profile and the 'velocity altitude', 
+         i.e. the thalweg elevation plus the peak flow velocity cross max values along the thalweg to the power of two divided by two times the gravity acceleration, these values are then colored using the 
+         peak flow velocity cross max values. In the legend, the runout length :math:`\Delta {S_{xy}}`, altitude difference :math:`\Delta z` and corresponding runout anlge :math:`\alpha`,
+         measured using the peak flow velocity field and a threhsold of 1 :math:`ms^{-1}` (default setting) are provided.
+         The lower right panel shows the thalweg-time diagram for the respective simulation. 
+         
+         
+.. figure:: _static/particleThalwegAltitudeVelocity_relAlr_2da46cb47c_C_M_null_dfa_pfv.png
+
+         The left panel shows a map view of the peak flow velocity field for the avalanche simulation with superimposed thalweg line. The right panel shows the velocity envelope for all particles, 
+         the mean and median particle velocity and the spread of altitudes covered by the particle positions along the thalweg coordinate.
+         
+.. Note::
+   In order to create the presented plots, in addtion to the particle data also result fields of peak flow velocity are required. 
+   
+   
+To run
+--------
+
+* first go to ``AvaFrame/avaframe``
+* copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
+* create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
+* in ``AvaFrame/avaframe/out3Plot``, copy ``outParticleAnalysisCfg.ini`` to ``local_outParticleAnalysisCfg.ini`` and set your desired configuration for the analysis, the
+  avalanche simulation run in com1DFA_override, the aimec analysis in ana3AIMEC_override and the range time diagram in distanceTimeAnalysis_override section
+* run:
+  ::
+
+    python3 runScripts/runParticleAnalysis.py
+
+
+
+
