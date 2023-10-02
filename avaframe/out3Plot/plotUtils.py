@@ -475,13 +475,13 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
         colsMinPlot = colsMin * cellSize
         colsMaxPlot = (colsMax + 1) * cellSize
         if constrainedData:
-            dataConstrained = inputData[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+            dataConstrained = inputData[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
             return rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained
         else:
             return rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot
     else:
         if constrainedData:
-            dataConstrained = inputData[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+            dataConstrained = inputData[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
             return rowsMin, rowsMax, colsMin, colsMax, dataConstrained
         else:
             return rowsMin, rowsMax, colsMin, colsMax
@@ -662,8 +662,8 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
     ncolsMin = indMin[1][0]
     rangePlot = int(cfg.getfloat("zoomBuffer") / cellSize)
     dataCut = data[
-        max(0, nrowsMin - rangePlot) : min(data.shape[0], nrowsMin + rangePlot),
-        max(0, ncolsMin - rangePlot) : min(data.shape[1], ncolsMin + rangePlot),
+        max(0, nrowsMin - rangePlot): min(data.shape[0], nrowsMin + rangePlot),
+        max(0, ncolsMin - rangePlot): min(data.shape[1], ncolsMin + rangePlot),
     ]
 
     # to determine the extent for plotting
@@ -859,7 +859,8 @@ def fetchContourCoords(xGrid, yGrid, data, level):
     mVersion = float(mVersionStr[0] + mVersionStr[1]) / 10.
     if mVersion < 3.8:
         for i in range(len(contourP.allsegs[0])):
-            contourDictXY['line%s_%d' %(level, i)] = {'x': contourP.allsegs[0][i][:, 0], 'y':contourP.allsegs[0][i][:, 1]}
+            contourDictXY['line%s_%d' % (level, i)] = {'x': contourP.allsegs[0][i][:, 0],
+                                                       'y': contourP.allsegs[0][i][:, 1]}
     else:
         # use codes of path
         labelID = 0

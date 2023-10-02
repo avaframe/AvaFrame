@@ -39,8 +39,8 @@ from avaframe.out3Plot import outAIMEC
 log = logging.getLogger(__name__)
 
 
-def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg,
-    resTypePlots, modName, demData):
+def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTransfo, dictVelAltThalweg, resTypePlots,
+                                        modName, demData):
     """ plot peak flow fields and velocity thalweg envelope
 
         Parameters
@@ -74,8 +74,10 @@ def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTra
 
         # ax[0]
         # add peak field and thalweg
-        ax[0], rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax[0], alpha=1.0)
-        ax[0].plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
+        ax[0], rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax[0],
+                                                                  alpha=1.0)
+        ax[0].plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0,
+                   path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
         ax[0].legend(loc='upper right')
         ax[0].set_xlabel("x [m]")
         ax[0].set_ylabel("y [m]")
@@ -103,10 +105,11 @@ def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTra
         ax2 = ax[1].twinx()
         # Plotting the altitude envelope - dashed lines
         ax2.plot(dictVelAltThalweg['sXYThalweg'],  dictVelAltThalweg['maxZ'], color='red',
-                 linestyle='dashed', linewidth=0.4,label='Max and min altitude')
+                 linestyle='dashed', linewidth=0.4, label='Max and min altitude')
         ax2.plot(dictVelAltThalweg['sXYThalweg'],  dictVelAltThalweg['minZ'], color='red',
                  linestyle='dashed', linewidth=0.4)
-        ax2.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minZ'], dictVelAltThalweg['maxZ'],hatch='|||||||', facecolor='black')
+        ax2.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minZ'], dictVelAltThalweg['maxZ'],
+                         hatch='|||||||', facecolor='black')
         # X and Y labels
         ax[1].set_xlabel('$s_{xy}$[m]\n\n', fontsize=22)
         ax[1].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
@@ -124,8 +127,8 @@ def plotParticleThalwegAltitudeVelocity(avalancheDir, simIndex, simDF, rasterTra
         plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
 
 
-def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
-    pfvCrossMax, modName, demSim, mtiInfo, cfgRangeTime, measuredData=''):
+def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo, pfvCrossMax, modName, demSim, mtiInfo,
+                             cfgRangeTime, velocityThreshold, measuredData=''):
     """ Create plot showing the resType peak field with thalweg,
         thalweg vs altitude with max peak field values along thalweg derived from peak fields
         and the tt-diagram
@@ -171,13 +174,13 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
 
     # initialize figure
     fig = plt.figure(figsize=(pU.figW+10, pU.figH+3))
-    gs = fig.add_gridspec(2,2)
+    gs = fig.add_gridspec(2, 2)
     ax1 = fig.add_subplot(gs[0, 1])
     ax2 = fig.add_subplot(gs[:, 0])
     ax3 = fig.add_subplot(gs[1, 1])
 
     # add thalweg-altitude plot to axes
-    ax1 = outAIMEC.addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=zMaxM)
+    ax1 = outAIMEC.addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, velocityThreshold, zMaxM=zMaxM)
     # optionally add measurements
     if mDataAvailable:
         g = pU.gravityAcc
@@ -189,7 +192,8 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     # add peak file plot
     ax2, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax2, alpha=1.0)
     # add the thalweg
-    ax2.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
+    ax2.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0,
+             path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
     # optional add measurements
     if mDataAvailable:
         addTrOrMe(ax2, measuredData, 'xOrig', 'yOrig', cmapData, label=True, zorder=22)
@@ -208,7 +212,7 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
         maxY = max(maxY, np.nanmax(measuredData['sAimec']))
 
     # set limits of axes to data extent
-    ax3.set_ylim([maxY*1.1,0])
+    ax3.set_ylim([maxY*1.1, 0])
     xExt = max(tExt, np.nanmax(mtiInfo["timeList"]))
     ax3.set_xlim([0-2, xExt*1.1])
 
@@ -221,8 +225,8 @@ def plotThalwegTimeAltitudes(avalancheDir, simIndex, simDF, rasterTransfo,
     log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
 
 
-def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
-    trackedPartProp, dictVelEnvelope, demSim, modName, rasterTransfo, measuredData=''):
+def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg, trackedPartProp, dictVelEnvelope, demSim,
+                               modName, rasterTransfo, measuredData=''):
     """ Create plot showing particle properties over time and along avalanche thalweg
         in light blue envelope for all particles (filled between min and max values)
         in dark blue the values for tracked particles
@@ -269,7 +273,7 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
 
     # setup figure with subplots 7 panels
     fig = plt.figure(figsize=(pU.figW+15, pU.figH+3))
-    gs = fig.add_gridspec(3,3)
+    gs = fig.add_gridspec(3, 3)
     ax1 = fig.add_subplot(gs[0:3, 0])
     ax2 = fig.add_subplot(gs[0, 1])
     ax3 = fig.add_subplot(gs[1, 1])
@@ -277,20 +281,21 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     ax5 = fig.add_subplot(gs[0, 2])
     ax6 = fig.add_subplot(gs[1, 2])
     ax7 = fig.add_subplot(gs[2, 2])
-    #ax8 = fig.add_subplot(gs[2, 0])
 
     # ax1
     # add peak file plot
-    ax1, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax1, alpha=0.2, oneColor=cm.vik)
+    ax1, rowsMinPlot, colsMinPlot = addPeakFieldConstrained(avaDir, modName, simName, 'pfv', demSim, ax1,
+                                                            alpha=0.2, oneColor=cm.vik)
 
     # add tracked particles locations over time
     xllcenter = demSim['header']['xllcenter']
     yllcenter = demSim['header']['yllcenter']
     cmap = cm.vik
-    ax1.plot(trackedPartProp['x'][:,0]+xllcenter, trackedPartProp['y'][:,0]+yllcenter, zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
-    # ax1.plot(trackedPartProp['x']+xllcenter,trackedPartProp['y']+yllcenter, '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()])
+    ax1.plot(trackedPartProp['x'][:, 0]+xllcenter, trackedPartProp['y'][:, 0]+yllcenter, zorder=1, linewidth=1.0,
+             color=cmap(0.25), label='tracked particles')
     ax1.plot(trackedPartProp['x']+xllcenter, trackedPartProp['y']+yllcenter, zorder=2, linewidth=1.0, color=cmap(0.25))
-    ax1.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0, path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
+    ax1.plot(rasterTransfo['avaPath']['x'], rasterTransfo['avaPath']['y'], '-y', zorder=20, linewidth=1.0,
+             path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], label='thalweg')
     if mDataAvailable:
         addTrOrMe(ax1, measuredData, 'xOrig', 'yOrig', cmapData, label=True, zorder=4)
 
@@ -308,7 +313,8 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     # ax2
     # # plot the trajectoryLengthXYZ vs time
     ax2.plot(trackedPartProp['t'], trackedPartProp['trajectoryLengthXYZ'], zorder=2, linewidth=1.0, color=cmap(0.25))
-    ax2.plot(trackedPartProp['t'][:], trackedPartProp['trajectoryLengthXYZ'][:,0], zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
+    ax2.plot(trackedPartProp['t'][:], trackedPartProp['trajectoryLengthXYZ'][:, 0], zorder=1, linewidth=1.0,
+             color=cmap(0.25), label='tracked particles')
     if mDataAvailable:
         addTrOrMe(ax2, measuredData, 't', 'trajectoryLengthXYZ', cmapData, label=False)
     ax2.fill_between(dictVelEnvelope['Time'], dictVelEnvelope['SxyzMin'],
@@ -335,7 +341,8 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     # plot acceleration of particles vs time
     ax4.fill_between(dictVelEnvelope['Time'], np.nanmin(dictVelEnvelope['Acc'], axis=1),
             np.nanmax(dictVelEnvelope['Acc'], axis=1), color=cmap(0.2), alpha=0.2, zorder=0, label='all particles')
-    ax4.plot(trackedPartProp['t'][:], trackedPartProp['uAcc'][:,0], zorder=1, linewidth=1.0, color=cmap(0.25), label='tracked particles')
+    ax4.plot(trackedPartProp['t'][:], trackedPartProp['uAcc'][:, 0], zorder=1, linewidth=1.0, color=cmap(0.25),
+             label='tracked particles')
     ax4.plot(trackedPartProp['t'], trackedPartProp['uAcc'], zorder=1, linewidth=1.0, color=cmap(0.25))
     if mDataAvailable:
         addTrOrMe(ax4, measuredData, 't', 'uAcc', cmapData, label=False)
@@ -361,7 +368,8 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     l2 = ax6.fill_between(dictVelAltThalweg['sXYThalweg'], dictVelAltThalweg['minVelocity'],
                      dictVelAltThalweg['maxVelocity'], color=cmap(0.2), alpha=0.2, zorder=0, label='all particles')
     ax6.plot(trackedPartProp['sAimec'], trackedPartProp['velocityMag'], color=cmap(0.25), zorder=1)
-    ax6.plot(trackedPartProp['sAimec'][:,0], trackedPartProp['velocityMag'][:,0], color=cmap(0.25), zorder=1, label='tracked particles')
+    ax6.plot(trackedPartProp['sAimec'][:, 0], trackedPartProp['velocityMag'][:, 0], color=cmap(0.25), zorder=1,
+             label='tracked particles')
     if mDataAvailable:
         addTrOrMe(ax6, measuredData, 'sAimec', 'velocityMag', cmapData, label=True)
     # labels and ticks
@@ -387,7 +395,7 @@ def plotParticleMotionTracking(avalancheDir, simName, dictVelAltThalweg,
     plotName = ('particleMotionTracking_%s' % (simName))
     plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
     log.info("Plot for %s successfully saved at %s" % (plotName, str(plotPath)))
-    
+
 
 def addTrOrMe(ax, pDict, prop1, prop2, cmap, label=False, zorder=1, lineStyle='-'):
     """ add a line plot of x: prop1, y: prop2 and label if label=True
@@ -408,7 +416,7 @@ def addTrOrMe(ax, pDict, prop1, prop2, cmap, label=False, zorder=1, lineStyle='-
             order of the plot object on the axes
         """
 
-    # create an index array for colormap to divide into equal intervals according to the number of particles to be plotted
+    # create an index array for colormap to divide into equal intervals according to number of particles to be plotted
     cmapDiv = np.linspace(0, 1, pDict[prop2].shape[1])
     for ind in range(pDict[prop2].shape[1]):
         if label:
@@ -417,9 +425,11 @@ def addTrOrMe(ax, pDict, prop1, prop2, cmap, label=False, zorder=1, lineStyle='-
             labelStr = ''
         # if property is t, only 1D vector, for all others 2d array
         if prop1 == 't':
-            ax.plot(pDict[prop1][:], pDict[prop2][:, ind], color=cmap(cmapDiv[ind]), zorder=zorder, linewidth=1.0, label=labelStr, linestyle=lineStyle)
+            ax.plot(pDict[prop1][:], pDict[prop2][:, ind], color=cmap(cmapDiv[ind]), zorder=zorder, linewidth=1.0,
+                    label=labelStr, linestyle=lineStyle)
         else:
-            ax.plot(pDict[prop1][:, ind], pDict[prop2][:, ind], color=cmap(cmapDiv[ind]), zorder=zorder, linewidth=1.0, label=labelStr, linestyle=lineStyle)
+            ax.plot(pDict[prop1][:, ind], pDict[prop2][:, ind], color=cmap(cmapDiv[ind]), zorder=zorder, linewidth=1.0,
+                    label=labelStr, linestyle=lineStyle)
 
 
 def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alpha, oneColor=''):
@@ -456,10 +466,10 @@ def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alph
     simResDF, resTypeList = fU.makeSimFromResDF(avaDir, modName, inputDir=inputDir)
 
     # find peakFile for resType
-    peakFilePath = simResDF[resType].loc[simResDF['simName']==simName].values[0]
+    peakFilePath = simResDF[resType].loc[simResDF['simName'] == simName].values[0]
 
     # fetch cell size
-    cellSize = simResDF['cellSize'].loc[simResDF['simName']==simName].values[0]
+    cellSize = simResDF['cellSize'].loc[simResDF['simName'] == simName].values[0]
 
     # add constrained peak result field data plot to axes
     ax = oP.addConstrainedDataField(peakFilePath, resType, demField, ax, cellSize, alpha=alpha,
@@ -493,12 +503,12 @@ def velocityEnvelope(particlesTimeArrays):
 
     # loop over time steps and compute max, min, ...
     for j in range(len(particlesTimeArrays['t'])):
-        Max[j] = np.amax(particlesTimeArrays['velocityMag'][j,:])
-        Min[j] = np.amin(particlesTimeArrays['velocityMag'][j,:])
-        Mean[j] = np.mean(particlesTimeArrays['velocityMag'][j,:])
-        Median[j] = np.median(particlesTimeArrays['velocityMag'][j,:])
-        SxyzMax[j] = np.nanmax(particlesTimeArrays['trajectoryLengthXYZ'][j,:])
-        SxyzMin[j] = np.nanmin(particlesTimeArrays['trajectoryLengthXYZ'][j,:])
+        Max[j] = np.amax(particlesTimeArrays['velocityMag'][j, :])
+        Min[j] = np.amin(particlesTimeArrays['velocityMag'][j, :])
+        Mean[j] = np.mean(particlesTimeArrays['velocityMag'][j, :])
+        Median[j] = np.median(particlesTimeArrays['velocityMag'][j, :])
+        SxyzMax[j] = np.nanmax(particlesTimeArrays['trajectoryLengthXYZ'][j, :])
+        SxyzMin[j] = np.nanmin(particlesTimeArrays['trajectoryLengthXYZ'][j, :])
 
     dictVelEnvelope = {}
     dictVelEnvelope['Velocity'] = particlesTimeArrays['velocityMag']
@@ -514,7 +524,6 @@ def velocityEnvelope(particlesTimeArrays):
     return dictVelEnvelope
 
 
-#%% function to generate the velocity envelope along the thalweg from simulated flows
 def velocityEnvelopeThalweg(particlesTimeArrays):
     """ function to generate the velocity envelope along the thalweg from simulated flows
 
@@ -597,7 +606,6 @@ def velocityEnvelopeThalweg(particlesTimeArrays):
     return dictVelAltThalweg
 
 
-
 def readMeasuredParticleData(avalancheDir, demHeader, pData=''):
     """ fetch data on measured particles from pickle in Inputs/measuredParticles
         only one pickle file allowed if no pData (name of particle file) is provided
@@ -615,8 +623,8 @@ def readMeasuredParticleData(avalancheDir, demHeader, pData=''):
         ---------
         mParticles: dict
             dict with info on measured particles properties (veloctiyMag, x, y, z, uAcc, t)
-            all properties except t are of shape: mxn matrix, where m refers to the time steps and n to the individual particles
-            t is a vector of the time step values corresponding to m
+            all properties except t are of shape: mxn matrix, where m refers to the time steps and n to the
+            individual particles t is a vector of the time step values corresponding to m
             label is a list of names of the labels for the measured particles corresponding to n
     """
 
@@ -631,7 +639,8 @@ def readMeasuredParticleData(avalancheDir, demHeader, pData=''):
         partFiles = list(inputDir.glob('*.pickle'))
         partFileP = partFiles[0]
     if len(partFiles) > 1:
-        message = 'Multiple measured particle files found in %s, first one found selected: %s' % (str(inputDir), partFiles[0].name)
+        message = ('Multiple measured particle files found in %s, first one found selected: %s' %
+                   (str(inputDir), partFiles[0].name))
         log.warning(message)
 
     mParticles = pickle.load(open(partFileP, "rb"))

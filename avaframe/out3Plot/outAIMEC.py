@@ -1055,7 +1055,7 @@ def addLinePlot(contourDict, colorStr, labelStr, ax, key, zorder='', linestyle='
         ax.plot(contourDict['y'], contourDict['x'], c=colorStr, zorder=zorder, linestyle=linestyle, alpha=alpha)
 
 
-def plotThalwegAltitude(pathDict, rasterTransfo, pfvCrossMax, simName):
+def plotThalwegAltitude(pathDict, rasterTransfo, pfvCrossMax, simName, velocityThreshold):
     """ create thalweg-altitude plot
         the thalweg z profile and the mpfv²/2g (velocity-altitude) colorcoded using the mpfv values
         the mpfv values come from the cross max values along the thalweg coordinate system (aimec)
@@ -1078,14 +1078,14 @@ def plotThalwegAltitude(pathDict, rasterTransfo, pfvCrossMax, simName):
     ax1 = fig.add_subplot(1, 1, 1)
 
     # add thalweg-altitude plot to axes
-    ax1 = addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax)
+    ax1 = addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, velocityThreshold)
 
     # save and or plot
     plotName = ('thalwegAlt%s' % (simName))
     plotPath = pU.saveAndOrPlot(pathDict, plotName, fig)
 
 
-def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
+def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, velocityThreshold, zMaxM=np.nan):
     """ add thalweg-altitude plot to axes
         the thalweg z profile and the mpfv²/2g (velocity-altitude) colorcoded using the mpfv values
         the mpfv values come from the cross max values along the thalweg coordinate system (aimec)
@@ -1101,7 +1101,7 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
     """
 
     # compute velocity-Altitude-Field
-    g = pU.gravityAcc # gravitation constant
+    g = pU.gravityAcc
     pfvCM = pfvCrossMax.to_numpy()[0]
     velAltField = rasterTransfo['z'] + (pfvCM ** 2.) / (2. * g)
 
@@ -1110,9 +1110,17 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
     ax1.plot(rasterTransfo['s'], rasterTransfo['z'], '-y',
              path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], zorder=20, linewidth=1, markersize=0.8,
              label='Thalweg altitude')
-    # get indices where velocity is first bigger than 0 (start of velocity >0) and where velocity is again back to zero
-    indVelStart = np.where(pfvCM > 0.)[0][0]
-    indVelZero = np.where(pfvCM == 0.)[0][indVelStart]
+
+    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
+    # and where velocity is again back to < velocityThreshold
+    indVelStart = np.where(pfvCM > velocityThreshold)[0][0]
+    if len(np.where(pfvCM < velocityThreshold)[0]) == 0:
+        if len(np.where(np.isnan(pfvCM))[0]) > 1:
+            indVelZero = np.where(np.isnan(pfvCM))[0][indVelStart]
+        else:
+            indVelZero = len(pfvCM) - 1
+    else:
+        indVelZero = np.where(pfvCM < velocityThreshold)[0][indVelStart]
 
     # add colorbar
     cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
@@ -1131,8 +1139,9 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, zMaxM=np.nan):
     alpha = np.rad2deg(np.arctan(deltaz / deltas))
 
     # add textbox with angles, delta values
-    textString = (r'$\Delta z$=%s m\n$\Delta s_{xy}$=%s m\n' % (
-        str(round(deltaz, 1)), str(round(deltas, 1)))) + r'$\alpha$=' + str(round(alpha, 2)) + '°'
+    textString = (r'$\Delta z$' + ('=%s m\n' % str(round(deltaz, 1))) + (r'$\Delta s_{xy}$=%s ' %
+                  str(round(deltas, 1))) + 'm\n' + r'$\alpha$=' + str(round(alpha, 2)) +
+                  '° (pfv > %.1f $ms{-1}$)' % velocityThreshold)
     ax1.text(0.98, 0.9, textString, horizontalalignment='right',
              verticalalignment='top', fontsize=10, transform=ax1.transAxes, multialignment='left')
     X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
@@ -1179,7 +1188,7 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
                  'pprFieldMax', 'pprFieldMin', 'pprFieldMean', 'maxpprCrossMax',
                  'sRunout', 'deltaSXY', 'zRelease', 'zRunout', 'deltaZ', 'relMass',
                  'finalMass', 'entMass', 'runoutAngle']
-    units = ['ms-1', 'ms-1', 'ms-1', 'ms-1', 'm', 'm','m','m', 'kPa', 'kPa', 'kPa', 'kPa', 'm', 'm', 'm', 'm', 'm',
+    units = ['ms-1', 'ms-1', 'ms-1', 'ms-1', 'm', 'm', 'm', 'm', 'kPa', 'kPa', 'kPa', 'kPa', 'm', 'm', 'm', 'm', 'm',
              'kg', 'kg', 'kg', '°']
 
     if name1 not in availableoptions:
@@ -1210,7 +1219,7 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
     fig.ax_joint.scatter(valDF[name1], valDF[name2], color='k', label=labelRef)
     fig.ax_joint.legend()
 
-     # add label names with units
+    # add label names with units
     fig.ax_joint.set_xlabel('%s [%s]' % (availableoptions[name1Index], units[name1Index]))
     fig.ax_joint.set_ylabel('%s [%s]' % (availableoptions[name2Index], units[name2Index]))
     pU.putAvaNameOnPlot(fig.ax_joint, pathDict['avalancheDir'])
@@ -1241,7 +1250,6 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
             simulation name
 
     """
-
 
     # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
     # and where velocity is again back to < velocityThreshold
@@ -1303,7 +1311,6 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     ax2.set_ylim([np.nanmin(z)-np.nanmax(z)*0.05, np.nanmax(z)+np.nanmax(z)*0.01])
     ax1.set_ylim([np.nanmin(z) - np.nanmax(z) * 0.05, np.nanmax(z) + np.nanmax(z) * 0.01])
 
-
     # draw the horizontal and vertical lines for angle computation
     ax2.vlines(x=sXY[indVelStart], ymin=z[indVelZero], ymax=z[indVelStart],
                color='silver', linestyle='--', linewidth=1.5, label=(r'$\Delta s_{xy} = %.1f$$m$' % deltas))
@@ -1315,6 +1322,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
     ax2.plot(X, Y, color='lightgrey', linestyle='--', linewidth=1.5,
              label= (r'$\alpha$=%.1f° (pfv>%s%s)' % (alpha, cfgPlots['velocityThreshold'], pU.cfgPlotUtils['unitpfv'])))
+
     ax2.plot(rasterTransfo['s'][indMPFV], rasterTransfo['z'][indMPFV], color='darkred', marker='.', linestyle='',
              label=(r'$maxpfv$ = %.1f$ms^{-1}$' % pfvCrossMax[indMPFV]), zorder=200)
     ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
@@ -1331,21 +1339,22 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     # add colorbar for pft bars using pfv for colors
     sm2 = ScalarMappable(cmap=cmapCrameri.batlow.reversed(),
-                        norm=plt.Normalize(np.nanmin(pfvCrossMax[barIntStart::barInt]), np.nanmax(pfvCrossMax[barIntStart::barInt])))
+                        norm=plt.Normalize(np.nanmin(pfvCrossMax[barIntStart::barInt]),
+                                           np.nanmax(pfvCrossMax[barIntStart::barInt])))
     sm2.set_array([])
     cax = ax1.inset_axes([1.04, 0.0, 0.025, 0.99])
     cbar2 = plt.colorbar(sm2, shrink=0.5, ax=ax1, cax=cax)
     cbar2.set_label(r'pfv [m/s]', rotation=270, labelpad=25)
 
     # add bar for scale reference
-    if len(np.where(rasterTransfo['z']>0)[0]) > 1:
+    if len(np.where(rasterTransfo['z'] > 0)[0]) > 1:
         asb = AnchoredSizeBar(ax1.transData,
                               40,
                               r"5 m",
                               loc='lower left',
                               color='grey',
                               pad=0.5, borderpad=0.5, sep=5,
-                              size_vertical = 50,
+                              size_vertical=50,
                               frameon=False)
         ax1.add_artist(asb)
 
