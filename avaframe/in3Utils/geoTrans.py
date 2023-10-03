@@ -1010,15 +1010,15 @@ def areaPoly(X, Y):
     return area
 
 
-def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True):
-    """ convert shape file polygon to raster
+def prepareArea(line, dem, radius, thList="", combine=True, checkOverlap=True):
+    """convert shape file polygon to raster
 
     Parameters
     ----------
     line: dict
         line dictionary
-    header : dict
-        dem header dictionary
+    dem : dict
+        dictionary with dem information
     radius : float
         include all cells which center is in the polygon or close enough
     thList: list
@@ -1028,43 +1028,49 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
         if False return the list of distinct area rasters
         this option works only if thList is not empty
     checkOverlap : Boolean
-        if True check if features are overlaping and return an error if it is the case
-        if False check if features are overlaping and average the value for overlaping areas
+        if True check if features are overlapping and return an error if it is the case
+        if False check if features are overlapping and average the value for overlapping areas
+        (Attention: if combine is set to False, you do not see the result of the averaging
+        since the list of raters was not affected by the averaging step)
 
     Returns
     -------
-    updates the line dictionary with the rasterData: Either
-        Raster : 2D numpy array
-            raster of the area (returned if relRHlist is empty OR if combine is set
-            to True)
-        or
-        RasterList : list
-            list of 2D numpy array rasters (returned if relRHlist is not empty AND
-            if combine is set to True)
+    updates the line dictionary with the rasterData:
+        contains either
+
+        -  Raster: 2D numpy array, raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+        - RasterList: list, list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to False)
+
     """
-    NameRel = line['Name']
-    StartRel = line['Start']
-    LengthRel = line['Length']
+    NameRel = line["Name"]
+    StartRel = line["Start"]
+    LengthRel = line["Length"]
     RasterList = []
 
     for i in range(len(NameRel)):
         name = NameRel[i]
         start = StartRel[i]
         end = start + LengthRel[i]
-        avapath = {'x': line['x'][int(start):int(end)],
-                   'y': line['y'][int(start):int(end)],
-                   'Name': name}
+        avapath = {
+            "x": line["x"][int(start) : int(end)],
+            "y": line["y"][int(start) : int(end)],
+            "Name": name,
+        }
         # if relTh is given - set relTh
-        if thList != '':
-            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
-                                                                        line['thicknessSource'][i]))
-            Raster = polygon2Raster(header, avapath, radius, th=thList[i])
+        if thList != "":
+            log.info(
+                "%s feature %s, thickness: %.2f - read from %s"
+                % (line["type"], name, thList[i], line["thicknessSource"][i])
+            )
+            Raster = polygon2Raster(dem["originalHeader"], avapath, radius, th=thList[i])
         else:
-            Raster = polygon2Raster(header, avapath, radius)
+            Raster = polygon2Raster(dem["originalHeader"], avapath, radius)
         RasterList.append(Raster)
 
     # if RasterList not empty check for overlap between features
-    Raster = np.zeros((header['nrows'], header['ncols']))
+    Raster = np.zeros(np.shape(dem["rasterData"]))
     for rast in RasterList:
         ind1 = Raster > 0
         ind2 = rast > 0
@@ -1072,7 +1078,7 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
         if indMatch.any():
             # if there is an overlap, raise error
             if checkOverlap:
-                message = 'Features are overlaping - this is not allowed'
+                message = "Features are overlapping - this is not allowed"
                 log.error(message)
                 raise AssertionError(message)
             else:
@@ -1080,13 +1086,13 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
                 Raster = np.where(((Raster > 0) & (rast > 0)), (Raster + rast) / 2, Raster + rast)
         else:
             Raster = Raster + rast
-    if combine:
-        line['rasterData'] = Raster
-        return line
-    else:
-        line['rasterData'] = RasterList
-        return line
 
+    if combine:
+        line["rasterData"] = Raster
+    else:
+        line["rasterData"] = RasterList
+
+    return line
 
 def polygon2Raster(demHeader, Line, radius, th=''):
     """ convert line to raster

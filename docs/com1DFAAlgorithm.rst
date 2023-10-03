@@ -34,7 +34,7 @@ Initialize release, entrainment and resistance areas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Read and check shapefiles according to the configuration (check consistency between
 what is required by the configuration file and what is available in the ``Inputs`` folder).
-Convert shapefile features (polygons) to rasters (:py:func:`com1DFA.com1DFA.prepareArea`).
+Convert shapefile features (polygons) to rasters (:py:func:`in3Utils.geoTrans.prepareArea`).
 Check consistency of rasters according to the following rules:
 
   - multiple release features in the release and secondary release shapefiles

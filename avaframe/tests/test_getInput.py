@@ -13,12 +13,11 @@ import configparser
 import pytest
 import shutil
 import numpy as np
-from scipy.interpolate import interp1d
 import avaframe.in2Trans.shpConversion as shpConv
-from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import generateTopo
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.DFAtools as DFAtls
 from avaframe.com1DFA import com1DFA
 
@@ -523,7 +522,7 @@ def test_computeRelStats(tmp_path):
                 'y': np.asarray([100., 150., 150., 150., 100., 100., 100]),
                 'Start': np.asarray([0.]), 'Length': np.asarray([7]),
                 'Name': ['']}
-    lineDict = com1DFA.prepareArea(lineDict, dem, 0.01, combine=False, checkOverlap=False)
+    lineDict = geoTrans.prepareArea(lineDict, dem, 0.01, combine=False, checkOverlap=False)
 
     # call function to be tested
     lineDict = getInput.computeRelStats(lineDict, dem)
