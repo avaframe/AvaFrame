@@ -276,7 +276,6 @@ def test_areaPoly():
     tol = 1e-14
     assert area == pytest.approx(A, rel=tol)
 
-
 def test_prepareArea():
     """ test converting a polygon from a shape file to a raster """
 
@@ -289,7 +288,7 @@ def test_prepareArea():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     demHeader['cellsize'] = 5.0
-    demHeader['noDataValue'] = -9999
+    demHeader['nodata_value'] = -9999
     demHeader['nrows'] = 7
     demHeader['ncols'] = 7
     dem = {'header': demHeader}
@@ -303,7 +302,7 @@ def test_prepareArea():
     dem['header']['yllcenter'] = 0.0
     # call function to be tested
     # test 1
-    line = geoTrans.prepareArea(releaseLine, dem['originalHeader'], radius, thList='',
+    line = geoTrans.prepareArea(releaseLine, dem, radius, thList='',
                                combine=True, checkOverlap=True)
 
     # test 2
@@ -312,7 +311,7 @@ def test_prepareArea():
                     'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
                     'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Release'}
     line2 = geoTrans.prepareArea(
-        releaseLine2, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=True)
+        releaseLine2, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
 
     # test 3
     releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
@@ -322,11 +321,11 @@ def test_prepareArea():
 
     with pytest.raises(AssertionError) as e:
         assert geoTrans.prepareArea(
-            releaseLine3, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=True)
-    assert str(e.value) == "Features are overlaping - this is not allowed"
+            releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
+    assert str(e.value) == "Features are overlapping - this is not allowed"
 
     line5 = geoTrans.prepareArea(
-        releaseLine3, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=False)
+        releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
 
     print('line5', line5)
 
@@ -336,7 +335,7 @@ def test_prepareArea():
                     'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
                     'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
     line4 = geoTrans.prepareArea(
-        releaseLine4, dem['originalHeader'], 0.6, thList=thList, combine=False, checkOverlap=True)
+        releaseLine4, dem, 0.6, thList=thList, combine=False, checkOverlap=True)
 
     # test results
     testRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
@@ -371,7 +370,6 @@ def test_prepareArea():
     assert np.array_equal(line2['rasterData'], testRaster2)
     assert np.array_equal(line4['rasterData'], testList)
     assert np.array_equal(line5['rasterData'], testRaster6)
-
 
 def test_pointInPolygon():
     """ test if a point is inside polygon   """

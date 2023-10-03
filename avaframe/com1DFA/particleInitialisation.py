@@ -9,9 +9,9 @@ import numpy as np
 # Local imports
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.out3Plot.outDebugPlots as debPlot
+import avaframe.in3Utils.geoTrans as geoTrans
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     if len(relThField) != 0:
         relRaster = relThField
     particles = resetMassPerParticle(cfg, particles, dem, relRaster, relThField)
-    particles = com1DFA.checkParticlesInRelease(particles, inputSimLines['releaseLine'],
+    particles = geoTrans.checkParticlesInRelease(particles, inputSimLines['releaseLine'],
             cfg['GENERAL'].getfloat('thresholdPointInPoly'))
 
     # adjust mass of particles in order to match good final mass
