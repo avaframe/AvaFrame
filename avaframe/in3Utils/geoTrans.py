@@ -1145,8 +1145,8 @@ def polygon2Raster(demHeader, Line, radius, th=""):
     polygon = np.stack((xCoord, yCoord), axis=-1)
     path = mpltPath.Path(polygon)
     # add a tolerance to include cells for which the center is on the lines
-    # for this we need to know if the path is clockwise or counter clockwise
-    # to decide if the radius should be positif or negatif in contains_points
+    # for this we need to know if the path is clockwise or counterclockwise
+    # to decide if the radius should be positive or negative in contains_points
     is_ccw = isCounterClockWise(path)
     r = radius * is_ccw - radius * (1 - is_ccw)
     x = np.linspace(0, ncols - 1, ncols)
@@ -1206,10 +1206,8 @@ def checkParticlesInRelease(particles, line, radius):
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask) - np.sum(Mask)
     if nRemove > 0:
-        particles = particleTools.removePart(
-            particles, Mask, nRemove, "because they are not within the release polygon"
-        )
-        log.debug("removed %s particles because they are not within the release polygon" % nRemove)
+        particles = particleTools.removePart(particles, Mask, nRemove, '')
+        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
 

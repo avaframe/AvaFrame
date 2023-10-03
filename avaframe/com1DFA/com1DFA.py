@@ -1993,49 +1993,6 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     return particles, fields, zPartArray0, tCPU
 
 
-def checkParticlesInRelease(particles, line, radius):
-    """ remove particles laying outside the polygon
-
-    Parameters
-    ----------
-    particles : dict
-        particles dictionary
-    line: dict
-        line dictionary
-    radius: float
-        threshold val that decides if a point is in the polygon, on the line or
-        very close but outside
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary where particles outside of the polygon have been removed
-    """
-    NameRel = line['Name']
-    StartRel = line['Start']
-    LengthRel = line['Length']
-    Mask = np.full(np.size(particles['x']), False)
-    for i in range(len(NameRel)):
-        name = NameRel[i]
-        start = StartRel[i]
-        end = start + LengthRel[i]
-        avapath = {}
-        avapath['x'] = line['x'][int(start):int(end)]
-        avapath['y'] = line['y'][int(start):int(end)]
-        avapath['Name'] = name
-        mask = pointInPolygon(line['header'], particles, avapath, radius)
-        Mask = np.logical_or(Mask, mask)
-
-    # also remove particles with negative mass
-    mask = np.where(particles['m'] <= 0, False, True)
-    Mask = np.logical_and(Mask, mask)
-    nRemove = len(Mask)-np.sum(Mask)
-    if nRemove > 0:
-        particles = particleTools.removePart(particles, Mask, nRemove, '')
-        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
-
-    return particles
-
 
 def pointInPolygon(demHeader, points, Line, radius):
     """ find particles within a polygon

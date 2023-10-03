@@ -496,42 +496,6 @@ def test_reportAddTimeMassInfo():
     assert reportDict['Simulation Parameters']['Stop criterion'] == '0.1 percent of PKE'
 
 
-def test_checkParticlesInRelease():
-    """ test if particles are within release polygon and removed if not """
-
-    # setup required input
-    releaseLine = {'Name': ['testRel'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]), 'type': 'Release',
-                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
-    demHeader = {}
-    demHeader['xllcenter'] = 0.0
-    demHeader['yllcenter'] = 0.0
-    demHeader['cellsize'] = 1.0
-    demHeader['nodata_value'] = -9999
-    demHeader['nrows'] = 5
-    demHeader['ncols'] = 5
-    releaseLine['header'] = demHeader
-    particles = {'x': np.asarray([2.4, 9.7, 10.02, 11.5]), 'y': np.asarray([2.4, 9.7, 10.2, 11.5]),
-                 'nPart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
-    radius = np.sqrt(2)
-
-    # call function to be tested
-    particles = com1DFA.checkParticlesInRelease(particles, releaseLine, radius)
-    # call function to be tested
-    particles2 = {'x': np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
-                  'nPart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
-    particles2 = com1DFA.checkParticlesInRelease(particles2, releaseLine, 0.01)
-
-    print('particles', particles, particles2)
-    assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 10.02]))
-    assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 10.2]))
-    assert particles['mTot'] == (1.4+1.7+1.4)
-    assert particles['nPart'] == 3
-    assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 9.997, 0.0]))
-    assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 9.994, 0.0]))
-    assert particles2['mTot'] == (1.4+1.7+1.4+1.1)
-    assert particles2['nPart'] == 4
-
-
 def test_pointInPolygon():
     """ test if a point is inside polygon   """
 
