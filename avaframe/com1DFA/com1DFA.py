@@ -1993,58 +1993,6 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     return particles, fields, zPartArray0, tCPU
 
 
-
-def pointInPolygon(demHeader, points, Line, radius):
-    """ find particles within a polygon
-
-    Parameters
-    ----------
-    demHeader: dict
-        dem header dictionary
-    points: dict
-        points to check
-    Line : dict
-        line dictionary
-    radius: float
-        threshold val that decides if a point is in the polygon, on the line or
-        very close but outside
-
-    Returns
-    -------
-    Mask : 1D numpy array
-        Mask of particles to keep
-    """
-    xllc = demHeader['xllcenter']
-    yllc = demHeader['yllcenter']
-    xCoord0 = (Line['x'] - xllc)
-    yCoord0 = (Line['y'] - yllc)
-    if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
-        xCoord = np.delete(xCoord0, -1)
-        yCoord = np.delete(yCoord0, -1)
-    else:
-        xCoord = copy.deepcopy(xCoord0)
-        yCoord = copy.deepcopy(yCoord0)
-        xCoord0 = np.append(xCoord0, xCoord0[0])
-        yCoord0 = np.append(yCoord0, yCoord0[0])
-
-    # get the raster corresponding to the polygon
-    polygon = np.stack((xCoord, yCoord), axis=-1)
-    path = mpltPath.Path(polygon)
-    # add a tolerance to include cells for which the center is on the lines
-    # for this we need to know if the path is clockwise or counter clockwise
-    # to decide if the radius should be positif or negatif in contains_points
-    is_ccw = geoTrans.isCounterClockWise(path)
-    r = (radius*is_ccw - radius*(1-is_ccw))
-    points2Check = np.stack((points['x'], points['y']), axis=-1)
-    mask = path.contains_points(points2Check, radius=r)
-    mask = np.where(mask > 0, True, False)
-
-    if debugPlot:
-        debPlot.plotPartAfterRemove(points, xCoord0, yCoord0, mask)
-
-    return mask
-
-
 def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
     """ Release secondary release area if trigered
     Initialize particles of the trigured secondary release area and add them
