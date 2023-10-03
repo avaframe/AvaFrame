@@ -19,6 +19,7 @@ import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.com1DFA import com1DFA
+import avaframe.in3Utils.geoTrans as geoTrans
 from avaframe.out3Plot import in1DataPlots
 
 # create local logger
@@ -616,7 +617,7 @@ def computeAreasFromRasterAndLine(line, dem):
         projected area in xy plane
     """
 
-    line = com1DFA.prepareArea(line, dem, 0.01, combine=False, checkOverlap=False)
+    line = geoTrans.prepareArea(line, dem, 0.01, combine=False, checkOverlap=False)
 
     csz = dem["header"]["cellsize"]
     # create dict for raster data for each feature

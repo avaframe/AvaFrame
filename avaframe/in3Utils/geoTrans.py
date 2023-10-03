@@ -21,7 +21,7 @@ from avaframe.com1DFA import particleTools
 log = logging.getLogger(__name__)
 
 
-def projectOnRaster(dem, Points, interp='bilinear', inData='rasterData', outData='z'):
+def projectOnRaster(dem, Points, interp="bilinear", inData="rasterData", outData="z"):
     """Projects Points on raster
     using a bilinear or nearest interpolation and returns the z coord (no for loop)
 
@@ -45,20 +45,20 @@ def projectOnRaster(dem, Points, interp='bilinear', inData='rasterData', outData
     ioob: int
         number of out of bounds indexes
     """
-    header = dem['header']
+    header = dem["header"]
     rasterdata = dem[inData]
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    cellsize = header['cellsize']
-    xcoor = Points['x']
-    ycoor = Points['y']
+    xllc = header["xllcenter"]
+    yllc = header["yllcenter"]
+    cellsize = header["cellsize"]
+    xcoor = Points["x"]
+    ycoor = Points["y"]
 
     zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc, yllc=yllc, interp=interp)
     Points[outData] = zcoor
     return Points, ioob
 
 
-def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
     """Projects Z onto points (x,y)
     using a bilinear or nearest interpolation and returns the z coord
 
@@ -102,7 +102,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Ly = copy.deepcopy(Lyy)
 
     # find out of bound indexes
-    if interp == 'nearest':
+    if interp == "nearest":
         Lx[np.where((Lxx <= -0.5))] = np.NaN
         Ly[np.where((Lxx <= -0.5))] = np.NaN
         Lx[np.where(Lxx >= (ncol - 0.5))] = np.NaN
@@ -111,7 +111,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
         Ly[np.where(Lyy <= -0.5)] = np.NaN
         Lx[np.where(Lyy >= (nrow - 0.5))] = np.NaN
         Ly[np.where(Lyy >= (nrow - 0.5))] = np.NaN
-    elif interp == 'bilinear':
+    elif interp == "bilinear":
         Lx[np.where((Lxx < 0))] = np.NaN
         Ly[np.where((Lxx < 0))] = np.NaN
         Lx[np.where(Lxx >= (ncol - 1))] = np.NaN
@@ -134,17 +134,17 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation(do not take out of bound into account)
-    if interp == 'nearest':
+    if interp == "nearest":
         dx[mask] = np.round(Lx[mask])
         dy[mask] = np.round(Ly[mask])
-        z[mask] = Z[dy[mask].astype('int'), dx[mask].astype('int')]
-    elif interp == 'bilinear':
+        z[mask] = Z[dy[mask].astype("int"), dx[mask].astype("int")]
+    elif interp == "bilinear":
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
-        f11[mask] = Z[Ly0[mask].astype('int'), Lx0[mask].astype('int')]
-        f12[mask] = Z[Ly1[mask].astype('int'), Lx0[mask].astype('int')]
-        f21[mask] = Z[Ly0[mask].astype('int'), Lx1[mask].astype('int')]
-        f22[mask] = Z[Ly1[mask].astype('int'), Lx1[mask].astype('int')]
+        f11[mask] = Z[Ly0[mask].astype("int"), Lx0[mask].astype("int")]
+        f12[mask] = Z[Ly1[mask].astype("int"), Lx0[mask].astype("int")]
+        f21[mask] = Z[Ly0[mask].astype("int"), Lx1[mask].astype("int")]
+        f22[mask] = Z[Ly1[mask].astype("int"), Lx1[mask].astype("int")]
         # using bilinear interpolation on the cell
         z = f11 * (1 - dx) * (1 - dy) + f21 * dx * (1 - dy) + f12 * (1 - dx) * dy + f22 * dx * dy
 
@@ -169,26 +169,26 @@ def resizeData(raster, rasterRef):
     dataRef : 2D numpy array
         reference data
     """
-    if IOf.isEqualASCheader(raster['header'], rasterRef['header']):
-        return raster['rasterData'], rasterRef['rasterData']
+    if IOf.isEqualASCheader(raster["header"], rasterRef["header"]):
+        return raster["rasterData"], rasterRef["rasterData"]
     else:
-        headerRef = rasterRef['header']
-        ncols = headerRef['ncols']
-        nrows = headerRef['nrows']
-        csz = headerRef['cellsize']
-        xllc = headerRef['xllcenter']
-        yllc = headerRef['yllcenter']
+        headerRef = rasterRef["header"]
+        ncols = headerRef["ncols"]
+        nrows = headerRef["nrows"]
+        csz = headerRef["cellsize"]
+        xllc = headerRef["xllcenter"]
+        yllc = headerRef["yllcenter"]
         xgrid = np.linspace(xllc, xllc + (ncols - 1) * csz, ncols)
         ygrid = np.linspace(yllc, yllc + (nrows - 1) * csz, nrows)
         X, Y = np.meshgrid(xgrid, ygrid)
-        Points = {'x': X, 'y': Y}
-        Points, _ = projectOnRaster(raster, Points, interp='bilinear')
-        raster['rasterData'] = Points['z']
-        return raster['rasterData'], rasterRef['rasterData']
+        Points = {"x": X, "y": Y}
+        Points, _ = projectOnRaster(raster, Points, interp="bilinear")
+        raster["rasterData"] = Points["z"]
+        return raster["rasterData"], rasterRef["rasterData"]
 
 
-def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='cubic', larger=True):
-    """ compute raster data on a new mesh with cellSize using the specified remeshOption.
+def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="cubic", larger=True):
+    """compute raster data on a new mesh with cellSize using the specified remeshOption.
 
         remeshOption are to choose between 'griddata' or 'RectBivariateSpline'
         Only the 'griddata' works properly if the input data contains noData points,
@@ -216,16 +216,20 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         remeshed data dict with data as numpy array and header info
 
     """
-    header = rasterDict['header']
+    header = rasterDict["header"]
 
     # fetch shape info and get new mesh info
     xGrid, yGrid, _, _ = makeCoordGridFromHeader(header)
-    xGridNew, yGridNew, ncolsNew, nrowsNew = makeCoordGridFromHeader(header, cellSizeNew=cellSizeNew, larger=larger)
-    z = rasterDict['rasterData']
-    log.info('Remeshed data extent difference x: %f and y %f' % (xGrid[-1, -1] - xGridNew[-1, -1],
-                                                                 yGrid[-1, -1] - yGridNew[-1, -1]))
+    xGridNew, yGridNew, ncolsNew, nrowsNew = makeCoordGridFromHeader(
+        header, cellSizeNew=cellSizeNew, larger=larger
+    )
+    z = rasterDict["rasterData"]
+    log.info(
+        "Remeshed data extent difference x: %f and y %f"
+        % (xGrid[-1, -1] - xGridNew[-1, -1], yGrid[-1, -1] - yGridNew[-1, -1])
+    )
 
-    if remeshOption == 'griddata':
+    if remeshOption == "griddata":
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
         zCopy = np.copy(z).flatten()
@@ -234,44 +238,46 @@ def remeshData(rasterDict, cellSizeNew, remeshOption='griddata', interpMethod='c
         xGrid = xGrid[mask]
         yGrid = yGrid[mask]
         z = zCopy[mask]
-        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod,
-                                       fill_value=header['nodata_value'])
-    elif remeshOption == 'RectBivariateSpline':
+        zNew = sp.interpolate.griddata(
+            (xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod, fill_value=header["nodata_value"]
+        )
+    elif remeshOption == "RectBivariateSpline":
         if np.isnan(z).any():
             message = 'Data to remesh contains NaNs. Can not interpole with "RectBivariateSpline".'
             log.error(message)
             raise ValueError(message)
-        if interpMethod == 'linear':
+        if interpMethod == "linear":
             k = 1
-        elif interpMethod == 'cubic':
+        elif interpMethod == "cubic":
             k = 3
-        elif interpMethod == 'quintic':
+        elif interpMethod == "quintic":
             k = 5
         else:
-            message = 'There is no %s interpolation method available for RectBivariateSpline' % interpMethod
+            message = "There is no %s interpolation method available for RectBivariateSpline" % interpMethod
             log.error(message)
             raise NameError(message)
-        zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(yGridNew[:, 0],
-                                                                                           xGridNew[0, :], grid=True)
+        zNew = sp.interpolate.RectBivariateSpline(yGrid[:, 0], xGrid[0, :], z, ky=k, kx=k)(
+            yGridNew[:, 0], xGridNew[0, :], grid=True
+        )
         # zNew = zNew.reshape(np.shape(xGrid))
 
     # create header of remeshed DEM
     # set new header
     headerRemeshed = {}
-    headerRemeshed['xllcenter'] = header['xllcenter']
-    headerRemeshed['yllcenter'] = header['yllcenter']
-    headerRemeshed['nodata_value'] = header['nodata_value']
-    headerRemeshed['cellsize'] = cellSizeNew
-    headerRemeshed['ncols'] = ncolsNew
-    headerRemeshed['nrows'] = nrowsNew
+    headerRemeshed["xllcenter"] = header["xllcenter"]
+    headerRemeshed["yllcenter"] = header["yllcenter"]
+    headerRemeshed["nodata_value"] = header["nodata_value"]
+    headerRemeshed["cellsize"] = cellSizeNew
+    headerRemeshed["ncols"] = ncolsNew
+    headerRemeshed["nrows"] = nrowsNew
     # create remeshed raster dictionary
-    remeshedRaster = {'rasterData': zNew, 'header': headerRemeshed}
+    remeshedRaster = {"rasterData": zNew, "header": headerRemeshed}
 
     return remeshedRaster
 
 
 def remeshDEM(demFile, cfgSim, onlySearch=False):
-    """ change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
+    """change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
 
     the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
 
@@ -302,86 +308,87 @@ def remeshDEM(demFile, cfgSim, onlySearch=False):
     # -------- if no remeshed DEM found - remesh
     # fetch info on dem file
     dem = IOf.readRaster(demFile)
-    headerDEM = dem['header']
+    headerDEM = dem["header"]
     # read dem header info
-    cszDEM = headerDEM['cellsize']
+    cszDEM = headerDEM["cellsize"]
     # fetch info on desired meshCellSize
-    cszDEMNew = float(cfgSim['GENERAL']['meshCellSize'])
+    cszDEMNew = float(cfgSim["GENERAL"]["meshCellSize"])
 
     # start remesh
-    log.info('Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m' % (cszDEM, cszDEMNew))
-    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption='griddata', interpMethod='cubic', larger=False)
+    log.info("Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m" % (cszDEM, cszDEMNew))
+    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption="griddata", interpMethod="cubic", larger=False)
 
     # save remeshed DEM
-    pathToDem = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
+    pathToDem = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "DEMremeshed")
     fU.makeADir(pathToDem)
-    outFile = pathToDem / ('%s_remeshedDEM%.2f.asc' % (demFile.stem, remeshedDEM['header']['cellsize']))
+    outFile = pathToDem / ("%s_remeshedDEM%.2f.asc" % (demFile.stem, remeshedDEM["header"]["cellsize"]))
     if outFile.name in allDEMNames:
-        message = 'Name for saving remeshedDEM already used: %s' % outFile.name
+        message = "Name for saving remeshedDEM already used: %s" % outFile.name
         log.error(message)
         raise FileExistsError(message)
 
-    IOf.writeResultToAsc(remeshedDEM['header'], remeshedDEM['rasterData'], outFile, flip=True)
-    log.info('Saved remeshed DEM to %s' % outFile)
-    pathDem = str(pathlib.Path('DEMremeshed', outFile.name))
+    IOf.writeResultToAsc(remeshedDEM["header"], remeshedDEM["rasterData"], outFile, flip=True)
+    log.info("Saved remeshed DEM to %s" % outFile)
+    pathDem = str(pathlib.Path("DEMremeshed", outFile.name))
 
     return pathDem
 
 
 def searchRemeshedDEM(demName, cfgSim):
-    """ search if remeshed DEM with correct name and cell size already available
+    """search if remeshed DEM with correct name and cell size already available
 
-        Parameters
-        -----------
-        demName: str
-            name of DEM file in Inputs/
-        cfgSim: configparser object
-            configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
+    Parameters
+    -----------
+    demName: str
+        name of DEM file in Inputs/
+    cfgSim: configparser object
+        configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
 
-        Returns
-        --------
-        remshedDEM: dict
-            dictionary of remeshed DEM if not found empty dict
-        DEMFound: bool
-            flag if dem is found
-        allDEMNames: list
-            of all names of dems found in Inputs/DEMremeshed
+    Returns
+    --------
+    remshedDEM: dict
+        dictionary of remeshed DEM if not found empty dict
+    DEMFound: bool
+        flag if dem is found
+    allDEMNames: list
+        of all names of dems found in Inputs/DEMremeshed
     """
 
     # path to remeshed DEM folder
-    pathToDems = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
+    pathToDems = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "DEMremeshed")
     DEMFound = False
-    pathDem = ''
+    pathDem = ""
     allDEMNames = []
 
     # fetch info on desired meshCellSize
-    meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
-    meshCellSizeThreshold = float(cfgSim['GENERAL']['meshCellSizeThreshold'])
+    meshCellSize = float(cfgSim["GENERAL"]["meshCellSize"])
+    meshCellSizeThreshold = float(cfgSim["GENERAL"]["meshCellSizeThreshold"])
 
     # check if DEM is available
     if pathToDems.is_dir():
         # look for dems and check if cellSize within tolerance and origin matches
-        demFiles = list(pathToDems.glob('*.asc'))
+        demFiles = list(pathToDems.glob("*.asc"))
         allDEMNames = [d.name for d in demFiles]
         for demF in demFiles:
             headerDEM = IOf.readASCheader(demF)
-            if abs(meshCellSize - headerDEM['cellsize']) < meshCellSizeThreshold and demName in demF.stem:
-                log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, headerDEM['cellsize']))
+            if abs(meshCellSize - headerDEM["cellsize"]) < meshCellSizeThreshold and demName in demF.stem:
+                log.info("Remeshed DEM found: %s cellSize: %.5f" % (demF.name, headerDEM["cellsize"]))
                 DEMFound = True
-                pathDem = str(pathlib.Path('DEMremeshed', demF.name))
+                pathDem = str(pathlib.Path("DEMremeshed", demF.name))
                 continue
             else:
-                log.debug('Remeshed dem found %s with cellSize %.2f - not used' %
-                          (demF, headerDEM['cellsize']))
+                log.debug(
+                    "Remeshed dem found %s with cellSize %.2f - not used" % (demF, headerDEM["cellsize"])
+                )
 
     else:
-        log.debug('Directory %s does not exist' % pathToDems)
+        log.debug("Directory %s does not exist" % pathToDems)
 
     return pathDem, DEMFound, allDEMNames
 
 
 def computeS(avaPath):
-    """ compute s coordinate given a path (x, y)
+    """compute s coordinate given a path (x, y)
 
     Parameters
     -----------
@@ -393,17 +400,17 @@ def computeS(avaPath):
     avaPath: dict
         path dictionary updated with s coordinate
     """
-    xcoord = avaPath['x']
-    ycoord = avaPath['y']
+    xcoord = avaPath["x"]
+    ycoord = avaPath["y"]
     n = np.size(xcoord)
     # compute s
-    dxs = xcoord[1:n] - xcoord[0:n - 1]
-    dys = ycoord[1:n] - ycoord[0:n - 1]
+    dxs = xcoord[1:n] - xcoord[0 : n - 1]
+    dys = ycoord[1:n] - ycoord[0 : n - 1]
     # deduce the distance in s direction
-    ds2 = (dxs * dxs + dys * dys)
+    ds2 = dxs * dxs + dys * dys
     ds = np.sqrt(ds2)
     scoord = np.cumsum(ds)
-    avaPath['s'] = np.insert(scoord, 0, 0)
+    avaPath["s"] = np.insert(scoord, 0, 0)
     return avaPath
 
 
@@ -436,8 +443,8 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     """
 
     # fetch x, y coors from avapath
-    x = avapath['x']
-    y = avapath['y']
+    x = avapath["x"]
+    y = avapath["y"]
 
     # check if duplicate points in avapath cooridnates
     indexNonDup = np.where(np.abs(np.diff(x)) + np.abs(np.diff(y)) > 0)
@@ -449,8 +456,9 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     # create a B-spline with scipy for given x, y line
     if len(xNew) <= 3:
         tck, u = splprep([xNew, yNew], k=len(xNew) - 1)
-        log.warning('Path is defined by only %d points - degree of spline is set to %d' %
-                    (len(xNew), len(xNew) - 1))
+        log.warning(
+            "Path is defined by only %d points - degree of spline is set to %d" % (len(xNew), len(xNew) - 1)
+        )
     else:
         tck, u = splprep([xNew, yNew])
 
@@ -468,10 +476,10 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     sNew = np.append([0], sNew)
 
     resampAvaPath = avapath
-    resampAvaPath['x'] = xcoornew
-    resampAvaPath['y'] = ycoornew
+    resampAvaPath["x"] = xcoornew
+    resampAvaPath["y"] = ycoornew
     resampAvaPath, _ = projectOnRaster(dem, resampAvaPath)
-    resampAvaPath['s'] = sNew
+    resampAvaPath["s"] = sNew
     avaProfile = resampAvaPath
 
     # find split point by computing the distance to the line
@@ -484,29 +492,29 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
 
 def computeLengthOfLine2D(x, y):
-    """ compute distance along a line in 2D
+    """compute distance along a line in 2D
 
-        Parameters
-        ------------
-        x, y: np array
-            x, y coordinates of line
+    Parameters
+    ------------
+    x, y: np array
+        x, y coordinates of line
 
-        Returns
-        ---------
-        s: np array
-            accumulated distance measured along line from point to point
+    Returns
+    ---------
+    s: np array
+        accumulated distance measured along line from point to point
 
     """
     dx = np.diff(x)
     dy = np.diff(y)
-    s = np.sqrt(dx ** 2 + dy ** 2)
+    s = np.sqrt(dx**2 + dy**2)
     s = s.cumsum()
 
     return s
 
 
 def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
-    """ find point on dem given a direction and a z value to reach
+    """find point on dem given a direction and a z value to reach
 
     Parameters
     -----------
@@ -524,15 +532,15 @@ def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
     xExtTop, yExtTop, zExtTop:floats
         x, y and z coordinates of the point found
     """
-    header = dem['header']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    csz = header['cellsize']
-    zRaster = dem['rasterData']
+    header = dem["header"]
+    xllc = header["xllcenter"]
+    yllc = header["yllcenter"]
+    csz = header["cellsize"]
+    zRaster = dem["rasterData"]
     gamma = (zHighest - zFirst) / vDirZ * np.linspace(0.25, 2, 100)
     xArray = xFirst + gamma * vDirX
     yArray = yFirst + gamma * vDirY
-    zArray, _ = projectOnGrid(xArray, yArray, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    zArray, _ = projectOnGrid(xArray, yArray, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp="bilinear")
     idx = np.nanargmin(np.abs(zArray - np.array([zHighest])))
     xExtTop = np.array([xFirst + gamma[idx] * vDirX])
     yExtTop = np.array([yFirst + gamma[idx] * vDirY])
@@ -541,7 +549,7 @@ def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
 
 
 def findSplitPoint(avaProfile, Points):
-    """ Finds the closest point in Points to the avaProfile and returns
+    """Finds the closest point in Points to the avaProfile and returns
     its projection on avaProfile.
 
     Parameters
@@ -559,39 +567,39 @@ def findSplitPoint(avaProfile, Points):
         is projected)
     """
 
-    xcoor = avaProfile['x']
-    ycoor = avaProfile['y']
+    xcoor = avaProfile["x"]
+    ycoor = avaProfile["y"]
 
     indSplit = findClosestPoint(xcoor, ycoor, Points)
     projPoint = {}
-    projPoint['x'] = avaProfile['x'][indSplit]
-    projPoint['y'] = avaProfile['y'][indSplit]
-    projPoint['z'] = avaProfile['z'][indSplit]
-    projPoint['s'] = avaProfile['s'][indSplit]
-    projPoint['indSplit'] = indSplit
+    projPoint["x"] = avaProfile["x"][indSplit]
+    projPoint["y"] = avaProfile["y"][indSplit]
+    projPoint["z"] = avaProfile["z"][indSplit]
+    projPoint["s"] = avaProfile["s"][indSplit]
+    projPoint["indSplit"] = indSplit
     return projPoint
 
 
 def findClosestPoint(xcoor, ycoor, pointsDict):
-    """ find the closest point of pointDict along line defined by xcoor and ycoor - only xy plane!
+    """find the closest point of pointDict along line defined by xcoor and ycoor - only xy plane!
 
-        Parameters
-        -----------
-        xcoor, ycoor: np array
-            x and y coordinates of line
-        pointsDict: dict
-            a dictionary with coordinates of points with keys x and y
+    Parameters
+    -----------
+    xcoor, ycoor: np array
+        x and y coordinates of line
+    pointsDict: dict
+        a dictionary with coordinates of points with keys x and y
 
-        Returns
-        --------
-        indSplit: int
-            index of closest point found on the line
+    Returns
+    --------
+    indSplit: int
+        index of closest point found on the line
     """
 
     Dist = np.empty((0))
     IndSplit = np.empty((0))
-    for i in range(len(pointsDict['x'])):
-        dist = np.sqrt((xcoor - pointsDict['x'][i]) ** 2 + (ycoor - pointsDict['y'][i]) ** 2)
+    for i in range(len(pointsDict["x"])):
+        dist = np.sqrt((xcoor - pointsDict["x"][i]) ** 2 + (ycoor - pointsDict["y"][i]) ** 2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
         Dist = np.append(Dist, dist[indSplit])
@@ -602,48 +610,52 @@ def findClosestPoint(xcoor, ycoor, pointsDict):
     return indSplit
 
 
-def computeAlongLineDistance(line, dim='2D'):
-    """ compute distance along a dict of coordinates or a shapely lineString incrementally
+def computeAlongLineDistance(line, dim="2D"):
+    """compute distance along a dict of coordinates or a shapely lineString incrementally
 
-        Parameters
-        ------------
-        line: lineString shapely or dict
-            lineString object or dict with x, y, z keys and np.arrays as items
-        dim: str
-            2D only in xy, 3D in xyz
+    Parameters
+    ------------
+    line: lineString shapely or dict
+        lineString object or dict with x, y, z keys and np.arrays as items
+    dim: str
+        2D only in xy, 3D in xyz
 
-        Returns
-        --------
-        distancePoints: list
-            list of starting (at zero) distance along this line
+    Returns
+    --------
+    distancePoints: list
+        list of starting (at zero) distance along this line
     """
 
     # fetch coordinates of line
     if isinstance(line, dict):
-        x = line['x']
-        y = line['y']
-        if dim.lower() == '3d':
-            z = line['z']
+        x = line["x"]
+        y = line["y"]
+        if dim.lower() == "3d":
+            z = line["z"]
     elif isinstance(line, shp.LineString):
         x = np.asarray([coord[0] for coord in line.coords])
         y = np.asarray([coord[1] for coord in line.coords])
-        if dim.lower() == '3d':
+        if dim.lower() == "3d":
             z = np.asarray([coord[1] for coord in line.coords])
 
     # compute distance of points along line
     distancePoints = [0]
     for i in range(len(x) - 1):
-        if dim.lower() != '2d':
+        if dim.lower() != "2d":
             distancePoints.append(
-                distancePoints[i] + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2) + (z[i + 1] - z[i]) ** 2))
+                distancePoints[i]
+                + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2) + (z[i + 1] - z[i]) ** 2)
+            )
         else:
-            distancePoints.append(distancePoints[i] + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2)))
+            distancePoints.append(
+                distancePoints[i] + np.sqrt((x[i + 1] - x[i]) ** 2 + ((y[i + 1] - y[i]) ** 2))
+            )
 
     return distancePoints
 
 
 def checkProfile(avaProfile, projSplitPoint=None):
-    """ check that the avalanche profiles goes from top to bottom
+    """check that the avalanche profiles goes from top to bottom
     flip it if not and adjust the splitpoint in consequence
 
     Parameters
@@ -661,25 +673,25 @@ def checkProfile(avaProfile, projSplitPoint=None):
         point dictionary
     """
     if projSplitPoint:
-        indSplit = projSplitPoint['indSplit']
-    if avaProfile['z'][-1] > avaProfile['z'][0]:
-        log.info('Profile reversed')
-        avaProfile['x'] = np.flip(avaProfile['x'])
-        avaProfile['y'] = np.flip(avaProfile['y'])
-        avaProfile['z'] = np.flip(avaProfile['z'])
+        indSplit = projSplitPoint["indSplit"]
+    if avaProfile["z"][-1] > avaProfile["z"][0]:
+        log.info("Profile reversed")
+        avaProfile["x"] = np.flip(avaProfile["x"])
+        avaProfile["y"] = np.flip(avaProfile["y"])
+        avaProfile["z"] = np.flip(avaProfile["z"])
         try:
-            L = avaProfile['s'][-1]
-            avaProfile['s'] = L - np.flip(avaProfile['s'])
+            L = avaProfile["s"][-1]
+            avaProfile["s"] = L - np.flip(avaProfile["s"])
         except KeyError:
             pass
 
         if projSplitPoint:
-            indSplit = len(avaProfile['x']) - indSplit - 1
-            projSplitPoint['indSplit'] = indSplit
-            avaProfile['indSplit'] = indSplit
+            indSplit = len(avaProfile["x"]) - indSplit - 1
+            projSplitPoint["indSplit"] = indSplit
+            avaProfile["indSplit"] = indSplit
         else:
             projSplitPoint = None
-            avaProfile['indSplit'] = None
+            avaProfile["indSplit"] = None
 
     return projSplitPoint, avaProfile
 
@@ -706,7 +718,7 @@ def findAngleProfile(tmp, ds, dsMin):
     idsAnglePoint: int
         index of beta point
     """
-    noPointFoundMessage = 'No point found. Check the angle and threshold distance.'
+    noPointFoundMessage = "No point found. Check the angle and threshold distance."
     i = 0
     condition = True
     if np.size(tmp) == 0:
@@ -757,14 +769,14 @@ def prepareAngleProfile(beta, avaProfile, raiseWarning=True):
         distance between points discribed in tmp
     """
 
-    s = avaProfile['s']
-    z = avaProfile['z']
+    s = avaProfile["s"]
+    z = avaProfile["z"]
     try:
-        indSplit = avaProfile['indSplit']
+        indSplit = avaProfile["indSplit"]
         sSplit = s[indSplit]
     except KeyError:
         if raiseWarning:
-            log.warning('No split Point given!')
+            log.warning("No split Point given!")
         sSplit = 0
     ds = np.abs(s - np.roll(s, 1))
     dz = np.roll(z, 1) - z
@@ -782,7 +794,7 @@ def prepareAngleProfile(beta, avaProfile, raiseWarning=True):
 
 
 def isCounterClockWise(path):
-    """ Determines if a polygon path is mostly clockwise or counter clockwise
+    """Determines if a polygon path is mostly clockwise or counter clockwise
 
     https://stackoverflow.com/a/45986805/15887086
 
@@ -802,7 +814,7 @@ def isCounterClockWise(path):
 
 
 def getCellsAlongLine(header, lineDict, addBuffer=True):
-    """ Find all raster cells crossed by the line
+    """Find all raster cells crossed by the line
     line has to be entierly contained on the raster extend. If addBuffer is True, add neighbour cells to the result
     based on https://stackoverflow.com/a/35808540/15887086
 
@@ -820,14 +832,14 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
         line dictionary updated with the "cellsCrossed" 1D array (boolean array of 0 and 1 if the cell is crossed by the
         line or in its neigborhood)
     """
-    ncols = header['ncols']
-    nrows = header['nrows']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    csz = header['cellsize']
+    ncols = header["ncols"]
+    nrows = header["nrows"]
+    xllc = header["xllcenter"]
+    yllc = header["yllcenter"]
+    csz = header["cellsize"]
     # normalize line coordinates
-    xArray = (lineDict['x'] - xllc) / csz
-    yArray = (lineDict['y'] - yllc) / csz
+    xArray = (lineDict["x"] - xllc) / csz
+    yArray = (lineDict["y"] - yllc) / csz
     # loop on line points
     cellsCrossed = np.zeros((ncols * nrows))
     for i in range(np.size(xArray) - 1):
@@ -871,12 +883,12 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
             cellsCrossed[indCell] = 1
             if addBuffer:
                 cellsCrossed, _, _ = getNeighborCells(indX, indY, ncols, nrows, cellsCrossed)
-    lineDict['cellsCrossed'] = cellsCrossed.astype(int)
+    lineDict["cellsCrossed"] = cellsCrossed.astype(int)
     return lineDict
 
 
 def getNeighborCells(indX, indY, ncols, nrows, cellsArray):
-    """ Find the neighbour cells to a given cell
+    """Find the neighbour cells to a given cell
 
     Parameters
     ----------
@@ -943,11 +955,11 @@ def path2domain(xyPath, rasterTransfo):
     13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
-    csz = rasterTransfo['cellSizeSL']
-    x = xyPath['x']
-    y = xyPath['y']
+    csz = rasterTransfo["cellSizeSL"]
+    x = xyPath["x"]
+    y = xyPath["y"]
     # compute the non dimensional width
-    w = rasterTransfo['domainWidth'] / 2 / csz
+    w = rasterTransfo["domainWidth"] / 2 / csz
     # remove scaling due to cellsize
     x = x / csz
     y = y / csz
@@ -959,8 +971,8 @@ def path2domain(xyPath, rasterTransfo):
     dy = np.array((y[1] - y[0]))
     n = len(x)
     for i in range(2, n):
-        dx = np.append(dx, (x[i] - x[i - 2]) / 2.)
-        dy = np.append(dy, (y[i] - y[i - 2]) / 2.)
+        dx = np.append(dx, (x[i] - x[i - 2]) / 2.0)
+        dy = np.append(dy, (y[i] - y[i - 2]) / 2.0)
 
     dx = np.append(dx, x[-1] - x[-2])
     dy = np.append(dy, y[-1] - y[-2])
@@ -978,10 +990,10 @@ def path2domain(xyPath, rasterTransfo):
     DBYl = np.array((y + w * np.sin(d)))
     DBYr = np.array((y + w * np.sin(d + math.pi)))
 
-    rasterTransfo['DBXl'] = DBXl
-    rasterTransfo['DBXr'] = DBXr
-    rasterTransfo['DBYl'] = DBYl
-    rasterTransfo['DBYr'] = DBYr
+    rasterTransfo["DBXl"] = DBXl
+    rasterTransfo["DBXr"] = DBXr
+    rasterTransfo["DBYl"] = DBYl
+    rasterTransfo["DBYr"] = DBYr
 
     return rasterTransfo
 
@@ -1010,15 +1022,15 @@ def areaPoly(X, Y):
     return area
 
 
-def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True):
-    """ convert shape file polygon to raster
+def prepareArea(line, dem, radius, thList="", combine=True, checkOverlap=True):
+    """convert shape file polygon to raster
 
     Parameters
     ----------
     line: dict
         line dictionary
-    header : dict
-        dem header dictionary
+    dem : dict
+        dictionary with dem information
     radius : float
         include all cells which center is in the polygon or close enough
     thList: list
@@ -1028,43 +1040,49 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
         if False return the list of distinct area rasters
         this option works only if thList is not empty
     checkOverlap : Boolean
-        if True check if features are overlaping and return an error if it is the case
-        if False check if features are overlaping and average the value for overlaping areas
+        if True check if features are overlapping and return an error if it is the case
+        if False check if features are overlapping and average the value for overlapping areas
+        (Attention: if combine is set to False, you do not see the result of the averaging
+        since the list of raters was not affected by the averaging step)
 
     Returns
     -------
-    updates the line dictionary with the rasterData: Either
-        Raster : 2D numpy array
-            raster of the area (returned if relRHlist is empty OR if combine is set
-            to True)
-        or
-        RasterList : list
-            list of 2D numpy array rasters (returned if relRHlist is not empty AND
-            if combine is set to True)
+    updates the line dictionary with the rasterData:
+        contains either
+
+        -  Raster: 2D numpy array, raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+        - RasterList: list, list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to False)
+
     """
-    NameRel = line['Name']
-    StartRel = line['Start']
-    LengthRel = line['Length']
+    NameRel = line["Name"]
+    StartRel = line["Start"]
+    LengthRel = line["Length"]
     RasterList = []
 
     for i in range(len(NameRel)):
         name = NameRel[i]
         start = StartRel[i]
         end = start + LengthRel[i]
-        avapath = {'x': line['x'][int(start):int(end)],
-                   'y': line['y'][int(start):int(end)],
-                   'Name': name}
+        avapath = {
+            "x": line["x"][int(start) : int(end)],
+            "y": line["y"][int(start) : int(end)],
+            "Name": name,
+        }
         # if relTh is given - set relTh
-        if thList != '':
-            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
-                                                                        line['thicknessSource'][i]))
-            Raster = polygon2Raster(header, avapath, radius, th=thList[i])
+        if thList != "":
+            log.info(
+                "%s feature %s, thickness: %.2f - read from %s"
+                % (line["type"], name, thList[i], line["thicknessSource"][i])
+            )
+            Raster = polygon2Raster(dem["originalHeader"], avapath, radius, th=thList[i])
         else:
-            Raster = polygon2Raster(header, avapath, radius)
+            Raster = polygon2Raster(dem["originalHeader"], avapath, radius)
         RasterList.append(Raster)
 
     # if RasterList not empty check for overlap between features
-    Raster = np.zeros((header['nrows'], header['ncols']))
+    Raster = np.zeros(np.shape(dem["rasterData"]))
     for rast in RasterList:
         ind1 = Raster > 0
         ind2 = rast > 0
@@ -1072,7 +1090,7 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
         if indMatch.any():
             # if there is an overlap, raise error
             if checkOverlap:
-                message = 'Features are overlaping - this is not allowed'
+                message = "Features are overlapping - this is not allowed"
                 log.error(message)
                 raise AssertionError(message)
             else:
@@ -1080,16 +1098,17 @@ def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True
                 Raster = np.where(((Raster > 0) & (rast > 0)), (Raster + rast) / 2, Raster + rast)
         else:
             Raster = Raster + rast
+
     if combine:
-        line['rasterData'] = Raster
-        return line
+        line["rasterData"] = Raster
     else:
-        line['rasterData'] = RasterList
-        return line
+        line["rasterData"] = RasterList
+
+    return line
 
 
-def polygon2Raster(demHeader, Line, radius, th=''):
-    """ convert line to raster
+def polygon2Raster(demHeader, Line, radius, th=""):
+    """convert line to raster
 
     Parameters
     ----------
@@ -1108,13 +1127,13 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         updated raster
     """
     # adim and center dem and polygon
-    ncols = demHeader['ncols']
-    nrows = demHeader['nrows']
-    xllc = demHeader['xllcenter']
-    yllc = demHeader['yllcenter']
-    csz = demHeader['cellsize']
-    xCoord0 = (Line['x'] - xllc) / csz
-    yCoord0 = (Line['y'] - yllc) / csz
+    ncols = demHeader["ncols"]
+    nrows = demHeader["nrows"]
+    xllc = demHeader["xllcenter"]
+    yllc = demHeader["yllcenter"]
+    csz = demHeader["cellsize"]
+    xCoord0 = (Line["x"] - xllc) / csz
+    yCoord0 = (Line["y"] - yllc) / csz
     if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
         xCoord = np.delete(xCoord0, -1)
         yCoord = np.delete(yCoord0, -1)
@@ -1126,10 +1145,10 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     polygon = np.stack((xCoord, yCoord), axis=-1)
     path = mpltPath.Path(polygon)
     # add a tolerance to include cells for which the center is on the lines
-    # for this we need to know if the path is clockwise or counter clockwise
-    # to decide if the radius should be positif or negatif in contains_points
+    # for this we need to know if the path is clockwise or counterclockwise
+    # to decide if the radius should be positive or negative in contains_points
     is_ccw = isCounterClockWise(path)
-    r = (radius * is_ccw - radius * (1 - is_ccw))
+    r = radius * is_ccw - radius * (1 - is_ccw)
     x = np.linspace(0, ncols - 1, ncols)
     y = np.linspace(0, nrows - 1, nrows)
     X, Y = np.meshgrid(x, y)
@@ -1139,17 +1158,17 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     mask = path.contains_points(points, radius=r)
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
-    if th != '':
-        log.debug('REL set from dict, %.2f' % th)
-        Mask = np.where(Mask > 0, th, 0.)
+    if th != "":
+        log.debug("REL set from dict, %.2f" % th)
+        Mask = np.where(Mask > 0, th, 0.0)
     else:
-        Mask = np.where(Mask > 0, 1., 0.)
+        Mask = np.where(Mask > 0, 1.0, 0.0)
 
     return Mask
 
 
 def checkParticlesInRelease(particles, line, radius):
-    """ remove particles laying outside the polygon
+    """remove particles laying outside the polygon
 
     Parameters
     ----------
@@ -1166,34 +1185,35 @@ def checkParticlesInRelease(particles, line, radius):
     particles : dict
         particles dictionary where particles outside of the polygon have been removed
     """
-    NameRel = line['Name']
-    StartRel = line['Start']
-    LengthRel = line['Length']
-    Mask = np.full(np.size(particles['x']), False)
+    NameRel = line["Name"]
+    StartRel = line["Start"]
+    LengthRel = line["Length"]
+    Mask = np.full(np.size(particles["x"]), False)
     for i in range(len(NameRel)):
         name = NameRel[i]
         start = StartRel[i]
         end = start + LengthRel[i]
-        avapath = {'x': line['x'][int(start):int(end)],
-                   'y': line['y'][int(start):int(end)],
-                   'Name': name}
-        mask = pointInPolygon(line['header'], particles, avapath, radius)
+        avapath = {
+            "x": line["x"][int(start) : int(end)],
+            "y": line["y"][int(start) : int(end)],
+            "Name": name,
+        }
+        mask = pointInPolygon(line["header"], particles, avapath, radius)
         Mask = np.logical_or(Mask, mask)
 
     # also remove particles with negative mass
-    mask = np.where(particles['m'] <= 0, False, True)
+    mask = np.where(particles["m"] <= 0, False, True)
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask) - np.sum(Mask)
     if nRemove > 0:
-        particles = particleTools.removePart(particles, Mask, nRemove,
-                                             'because they are not within the release polygon')
-        log.debug('removed %s particles because they are not within the release polygon' % nRemove)
+        particles = particleTools.removePart(particles, Mask, nRemove, '')
+        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
 
 
 def pointInPolygon(demHeader, points, Line, radius):
-    """ find particles within a polygon
+    """find particles within a polygon
 
     Parameters
     ----------
@@ -1212,10 +1232,10 @@ def pointInPolygon(demHeader, points, Line, radius):
     Mask : 1D numpy array
         Mask of particles to keep
     """
-    xllc = demHeader['xllcenter']
-    yllc = demHeader['yllcenter']
-    xCoord0 = (Line['x'] - xllc)
-    yCoord0 = (Line['y'] - yllc)
+    xllc = demHeader["xllcenter"]
+    yllc = demHeader["yllcenter"]
+    xCoord0 = Line["x"] - xllc
+    yCoord0 = Line["y"] - yllc
     if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
         xCoord = np.delete(xCoord0, -1)
         yCoord = np.delete(yCoord0, -1)
@@ -1230,8 +1250,8 @@ def pointInPolygon(demHeader, points, Line, radius):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = isCounterClockWise(path)
-    r = (radius * is_ccw - radius * (1 - is_ccw))
-    points2Check = np.stack((points['x'], points['y']), axis=-1)
+    r = radius * is_ccw - radius * (1 - is_ccw)
+    points2Check = np.stack((points["x"], points["y"]), axis=-1)
     mask = path.contains_points(points2Check, radius=r)
     mask = np.where(mask > 0, True, False)
 
@@ -1264,11 +1284,16 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = '%s area feature overlapping with %s area - removing the overlapping part' % (nameToCheck,
-                                                                                                    nameRef)
+            message = "%s area feature overlapping with %s area - removing the overlapping part" % (
+                nameToCheck,
+                nameRef,
+            )
             log.warning(message)
         else:
-            message = '%s area features overlapping with %s area - this is not allowed' % (nameToCheck, nameRef)
+            message = "%s area features overlapping with %s area - this is not allowed" % (
+                nameToCheck,
+                nameRef,
+            )
             log.error(message)
             raise AssertionError(message)
 
@@ -1276,29 +1301,29 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
 
 
 def cartToSpherical(X, Y, Z):
-    """ convert from cartesian to spherical coordinates
+    """convert from cartesian to spherical coordinates
 
-        Parameters
-        -----------
-        X: float
-            x coordinate
-        Y: float
-            y coordinate
-        Z: float
-            z coordinate
+    Parameters
+    -----------
+    X: float
+        x coordinate
+    Y: float
+        y coordinate
+    Z: float
+        z coordinate
 
-        Returns
-        ---------
-        r: float
-            radius
-        phi: float
-            azimuth angle [degrees]
-        theta: float
-            for elevation angle defined from Z-axis down [degrees]
+    Returns
+    ---------
+    r: float
+        radius
+    phi: float
+        azimuth angle [degrees]
+    theta: float
+        for elevation angle defined from Z-axis down [degrees]
     """
 
-    xy = X ** 2 + Y ** 2
-    r = np.sqrt(xy + Z ** 2)
+    xy = X**2 + Y**2
+    r = np.sqrt(xy + Z**2)
     # for elevation angle defined from Z-axis down
     theta = np.arctan2(np.sqrt(xy), Z)
     theta = np.degrees(theta)
@@ -1310,22 +1335,22 @@ def cartToSpherical(X, Y, Z):
 
 
 def rotateRaster(rasterDict, theta, deg=True):
-    """ rotate clockwise a raster arround (0, 0) with theta angle
+    """rotate clockwise a raster arround (0, 0) with theta angle
 
-        Parameters
-        -----------
-        rasterDict: dict
-            raster dictionary
-        theta: float
-            rotation angle of the vector from start point to end point - degree default
+    Parameters
+    -----------
+    rasterDict: dict
+        raster dictionary
+    theta: float
+        rotation angle of the vector from start point to end point - degree default
 
-        deg: bool
-            if true theta is converted to rad from degree
+    deg: bool
+        if true theta is converted to rad from degree
 
-        Returns
-        --------
-        rotatedRaster: dict
-            rotated raster dictionary
+    Returns
+    --------
+    rotatedRaster: dict
+        rotated raster dictionary
     """
 
     # convert to rad if provided as degree
@@ -1333,12 +1358,12 @@ def rotateRaster(rasterDict, theta, deg=True):
         theta = np.radians(theta)
 
     # create raster grid with origin 0,0
-    header = rasterDict['header']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    ncols = header['ncols']
-    nrows = header['nrows']
-    csz = header['cellsize']
+    header = rasterDict["header"]
+    xllc = header["xllcenter"]
+    yllc = header["yllcenter"]
+    ncols = header["ncols"]
+    nrows = header["nrows"]
+    csz = header["cellsize"]
     X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
 
     # rotate Grid
@@ -1346,30 +1371,31 @@ def rotateRaster(rasterDict, theta, deg=True):
     yTheta = -np.sin(theta) * X + np.cos(theta) * Y
 
     # project data on this new grid
-    rotatedZ, _ = projectOnGrid(xTheta, yTheta, rasterDict['rasterData'], csz=csz, xllc=xllc, yllc=yllc,
-                                interp='bilinear')
+    rotatedZ, _ = projectOnGrid(
+        xTheta, yTheta, rasterDict["rasterData"], csz=csz, xllc=xllc, yllc=yllc, interp="bilinear"
+    )
 
-    rotatedRaster = {'header': header, 'rasterData': rotatedZ}
+    rotatedRaster = {"header": header, "rasterData": rotatedZ}
     return rotatedRaster
 
 
 def rotate(locationPoints, theta, deg=True):
-    """ rotate a vector provided as start and end point with theta angle
-        rotation counter-clockwise
+    """rotate a vector provided as start and end point with theta angle
+    rotation counter-clockwise
 
-        Parameters
-        -----------
-        locationPoints: list
-            list of lists with x,y coordinate of start and end point of a line
-        theta: float
-            rotation angle of the vector from start point to end point - degree default
-        deg: bool
-            if true theta is converted to rad from degree
+    Parameters
+    -----------
+    locationPoints: list
+        list of lists with x,y coordinate of start and end point of a line
+    theta: float
+        rotation angle of the vector from start point to end point - degree default
+    deg: bool
+        if true theta is converted to rad from degree
 
-        Returns
-        --------
-        rotatedLine: list
-            list of lists of x,y coordinates of start and end point of rotated vector
+    Returns
+    --------
+    rotatedLine: list
+        list of lists of x,y coordinates of start and end point of rotated vector
     """
 
     # convert to rad if provided as degree
@@ -1381,51 +1407,54 @@ def rotate(locationPoints, theta, deg=True):
 
     # create rotation matrix
     # counterclockwise rotation
-    rotationMatrix = np.array([
-        [np.cos(theta), -np.sin(theta)],
-        [np.sin(theta), np.cos(theta)],
-    ])
+    rotationMatrix = np.array(
+        [
+            [np.cos(theta), -np.sin(theta)],
+            [np.sin(theta), np.cos(theta)],
+        ]
+    )
 
     # rotate vector
     vectorRot = np.dot(rotationMatrix, vector)
 
     # create rotated line as list of start and end point
-    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0] + vectorRot[0][0])],  # x
-                   [locationPoints[1][0], float(locationPoints[1][0] + vectorRot[1][0])]  # y
-                   ]
+    rotatedLine = [
+        [locationPoints[0][0], float(locationPoints[0][0] + vectorRot[0][0])],  # x
+        [locationPoints[1][0], float(locationPoints[1][0] + vectorRot[1][0])],  # y
+    ]
 
     return rotatedLine
 
 
 def makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=False):
-    """ Get x and y (2D) grid description vectors for a mesh
-        with a given number of rows and columns, lower left center and cellSize.
-        If 'cellSizeNew' is not None use cellSizeNew instead of rasterHeader['cellsize']
-        Make sure the new grid is at least as big as the old one if larger=True
-        (can happen if 'cellSizeNew' is not None)
+    """Get x and y (2D) grid description vectors for a mesh
+    with a given number of rows and columns, lower left center and cellSize.
+    If 'cellSizeNew' is not None use cellSizeNew instead of rasterHeader['cellsize']
+    Make sure the new grid is at least as big as the old one if larger=True
+    (can happen if 'cellSizeNew' is not None)
 
-        Parameters
-        -----------
-        rasterHeader: dict
-            ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, nodata_value
-        cellSizeNew: float
-            If not None, use cellSizeNew as cell size
-        larger: boolean
-            If True, make sure the extend of the (xGrid, yGrid) is larger or equal than the
-            header one
-        Returns
-        --------
-        xGrid, yGrid: 2D numpy arrays
-            2D vector of x and y values for mesh center coordinates (produced using meshgrid)
-        ncols, nrows: int
-            number of columns and rows
+    Parameters
+    -----------
+    rasterHeader: dict
+        ratser header with info on ncols, nrows, csz, xllcenter, yllcenter, nodata_value
+    cellSizeNew: float
+        If not None, use cellSizeNew as cell size
+    larger: boolean
+        If True, make sure the extend of the (xGrid, yGrid) is larger or equal than the
+        header one
+    Returns
+    --------
+    xGrid, yGrid: 2D numpy arrays
+        2D vector of x and y values for mesh center coordinates (produced using meshgrid)
+    ncols, nrows: int
+        number of columns and rows
 
     """
-    ncols = rasterHeader['ncols']
-    nrows = rasterHeader['nrows']
-    xllc = rasterHeader['xllcenter']
-    yllc = rasterHeader['yllcenter']
-    csz = rasterHeader['cellsize']
+    ncols = rasterHeader["ncols"]
+    nrows = rasterHeader["nrows"]
+    xllc = rasterHeader["xllcenter"]
+    yllc = rasterHeader["yllcenter"]
+    csz = rasterHeader["cellsize"]
     # if a new cell size is provided, compute the new ncols and nrows
     if cellSizeNew is not None:
         xExtent = (ncols - 1) * csz
@@ -1473,41 +1502,43 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
 
 
 def snapPtsToLine(dbData, projstr, lineName, pointsList):
-    """ snap points to line in dataframe only considering x, y plane!
+    """snap points to line in dataframe only considering x, y plane!
 
-        Parameters
-        -----------
-        dbData: pandas dataframe
-            dataframe with geometry info of events
-        lineName: str
-            name of line column except projstr
-        pointsList: list
-            list with point column names except projstr
-        projstr: str
-            projection string to append to all names
+    Parameters
+    -----------
+    dbData: pandas dataframe
+        dataframe with geometry info of events
+    lineName: str
+        name of line column except projstr
+    pointsList: list
+        list with point column names except projstr
+    projstr: str
+        projection string to append to all names
 
-        Returns
-        --------
-        dbData: pandas dataframe
-            updated dataframe with ..._snapped point column
+    Returns
+    --------
+    dbData: pandas dataframe
+        updated dataframe with ..._snapped point column
     """
 
     for pt in pointsList:
-        dbData[pt + '_' + projstr + '_snapped'] = np.empty(len(dbData))
-        dbData['distanceXY'] = np.empty(len(dbData))
+        dbData[pt + "_" + projstr + "_snapped"] = np.empty(len(dbData))
+        dbData["distanceXY"] = np.empty(len(dbData))
 
     for index, row in dbData.iterrows():
-        xcoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[0]
-        ycoor = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords.xy[1]
-        zcoorTemp = dbData.loc[index, ('%s_%s_resampled' % (lineName, projstr))].coords
+        xcoor = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[0]
+        ycoor = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[1]
+        zcoorTemp = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords
         zcoor = np.asarray([coord[2] for coord in zcoorTemp])
 
         for pt in pointsList:
-            pointsDict = {'x': [dbData.loc[index, ('%s_%s' % (pt, projstr))].x],
-                          'y': [dbData.loc[index, ('%s_%s' % (pt, projstr))].y]}
+            pointsDict = {
+                "x": [dbData.loc[index, ("%s_%s" % (pt, projstr))].x],
+                "y": [dbData.loc[index, ("%s_%s" % (pt, projstr))].y],
+            }
 
             indSplit = findClosestPoint(xcoor, ycoor, pointsDict)
             projPoint = shp.Point(xcoor[indSplit], ycoor[indSplit], zcoor[indSplit])
-            dbData.loc[index, (pt + '_' + projstr + '_snapped')] = projPoint
+            dbData.loc[index, (pt + "_" + projstr + "_snapped")] = projPoint
 
     return dbData
