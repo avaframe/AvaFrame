@@ -244,6 +244,18 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
         ref = True sim2 = False
     -TN: float
         ref = False sim2 = False
+    -resTypeFieldMax: float
+        max value of peak field resType raster (original raster read from result file (no coordinate transformation)
+    -resTypeFieldMin: float
+        min value of peak field resType raster (original raster read from result file (no coordinate transformation)
+        0 values are masked
+    -resTypeFieldMean: float
+        mean value of peak field resType raster (original raster read from result file (no coordinate transformation)
+        0 values are masked
+    -resTypeFieldStd: float
+        std value of peak field resType raster (original raster read from result file (no coordinate transformation)
+        0 values are masked
+
 
     if mass analysis is performed
 
@@ -319,9 +331,11 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
 
             # add max, min and std values of result fields
             resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
-            resAnalysisDF.at[simRowHash, resType + 'FieldMin'] = np.nanmin(rasterData['rasterData'])
-            resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(rasterData['rasterData'])
-            resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(rasterData['rasterData'])
+            # for mean and min values and std, only take peak field values != 0
+            maskedRaster = np.where(rasterData['rasterData'] == 0., np.nan, rasterData['rasterData'])
+            resAnalysisDF.at[simRowHash, resType + 'FieldMin'] = np.nanmin(maskedRaster)
+            resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(maskedRaster)
+            resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(maskedRaster)
 
             # analyze all fields
             resAnalysisDF = aimecTools.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
