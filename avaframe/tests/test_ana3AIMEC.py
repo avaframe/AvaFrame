@@ -399,3 +399,28 @@ def test_fullAimecAnalysis(tmp_path):
     assert resAnalysisDF['sRunout'].iloc[0] == resAnalysisDF['sRunout'].iloc[1]
     assert resAnalysisDF['lRunout'].iloc[0] == resAnalysisDF['lRunout'].iloc[1]
     assert resAnalysisDF['simName'].iloc[0] != resAnalysisDF['simName'].iloc[1]
+    assert resAnalysisDF['pftFieldMax'].iloc[0] == resAnalysisDF['pftFieldMax'].iloc[1]
+    assert resAnalysisDF['pftFieldMean'].iloc[0] == resAnalysisDF['pftFieldMean'].iloc[1]
+
+    xllcenter = 5.
+    yllcenter = 10.
+    nRows = 8
+    nCols = 10
+    demHeader2 = {'cellsize': cellSize, 'nrows': nRows, 'ncols': nCols, 'nodata_value': nodata_value,
+                  'xllcenter': xllcenter, 'yllcenter': yllcenter}
+    res2 = np.zeros((nRows, nCols))
+    res2[1:5, 2:7] = 10.
+    res2[1:5, 6:9] = 6.
+    resFile2 = avaDir / 'testOutputs' / 'test1_01T_null_partDEM_pft.asc'
+    IOf.writeResultToAsc(demHeader2, res2, resFile2, flip=True)
+
+    rasterTransfo, resAnalysisDF, plotDict, newRasters, pathDict = ana3AIMEC.fullAimecAnalysis(avaDir, cfg,
+                                                                                               inputDir=testDir,
+                                                                                               demFileName='')
+
+    assert resAnalysisDF['pftFieldMax'].iloc[0] == resAnalysisDF['pftFieldMax'].iloc[1]
+    assert resAnalysisDF['sRunout'].iloc[0] == resAnalysisDF['sRunout'].iloc[1]
+    assert resAnalysisDF['lRunout'].iloc[0] == resAnalysisDF['lRunout'].iloc[1]
+    assert resAnalysisDF['simName'].iloc[0] != resAnalysisDF['simName'].iloc[1]
+    assert resAnalysisDF['pftFieldMax'].iloc[0] == resAnalysisDF['pftFieldMax'].iloc[1]
+    assert resAnalysisDF['pftFieldMean'].iloc[0] != resAnalysisDF['pftFieldMean'].iloc[1]
