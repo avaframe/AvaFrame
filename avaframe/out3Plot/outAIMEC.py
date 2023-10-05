@@ -1320,11 +1320,6 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     ax2.plot(rasterTransfo['s'][indMPFT], rasterTransfo['z'][indMPFT], color='lightcoral', marker='.', linestyle='',
              label=(r'$maxpft$ = %.1f$m$' % pftCrossMax[indMPFT]), zorder=201)
 
-    # add info on start of runout area
-    #ax2.axvline(x=sXY[indStartOfRunout], color='lightskyblue', linestyle='--', linewidth=1.5, alpha=0.5,
-    #           label=('start of runout area ' + (r'$\beta_{%.1f °}$' % rasterTransfo['startOfRunoutAreaAngle']) +
-    #                  '\n' + r'$\beta_{angle}$=%.1f° (pfv>%s%s)' % (beta, cfgPlots['velocityThreshold'], pU.cfgPlotUtils['unitpfv'])), zorder=0)
-
     if np.isnan(rasterTransfo['startOfRunoutAreaAngle']):
         labelBeta = ('runout area')
     else:

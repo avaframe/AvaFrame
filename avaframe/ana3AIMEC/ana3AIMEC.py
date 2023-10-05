@@ -332,7 +332,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
             # add max, min and std values of result fields
             resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
             # for mean and min values and std, only take peak field values != 0
-            maskedRaster = np.where(rasterData['rasterData'] == 0., np.nan, rasterData['rasterData'])
+            maskedRaster = np.where(rasterData['rasterData'] < cfgSetup.getfloat('minValueField'), np.nan, rasterData['rasterData'])
             resAnalysisDF.at[simRowHash, resType + 'FieldMin'] = np.nanmin(maskedRaster)
             resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(maskedRaster)
             resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(maskedRaster)
