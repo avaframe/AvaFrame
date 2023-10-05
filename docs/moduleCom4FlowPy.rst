@@ -30,6 +30,13 @@ Running the Code
 **You are required to install rasterio and gdal separately, since they are not included 
 in the general AvaFrame requirements.**
 
+If you have trouble installing GDAL or rasterio on Windows use these links to
+get the required version directly from their website, first install *GDAL* and then *rasterio*.
+
+*GDAL*: https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
+
+*rasterio*: https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
+
 Once the required libraries are installed the model runs via the ``runCom4FlowPy.py`` script. 
 
 Configuration

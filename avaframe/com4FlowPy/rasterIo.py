@@ -52,22 +52,13 @@ def output_raster(file, file_out, raster):
     try:
         crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
     except:
-        crs = rasterio.crs.CRS.from_epsg(4326)
+        #crs = rasterio.crs.CRS.from_epsg(4326)
+        crs = None
     if file_out.suffix == '.asc':
         new_dataset = rasterio.open(file_out, 'w', driver='AAIGrid', height = raster.shape[0], width = raster.shape[1], count=1,  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
     if file_out.suffix == '.tif':
         new_dataset = rasterio.open(file_out, 'w', driver='GTiff', height = raster.shape[0], width = raster.shape[1], count=1,  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
-# =============================================================================
-#     if file_out[-3:] != 'tif' & file_out[-3:] != 'asc':
-#         print('This Fileformat is not supported: .{}'.format(file_out[-3:]))
-#         return
-# =============================================================================
+
     new_dataset.write(raster, 1)
     new_dataset.close()
 
-
-# path = '/home/lawinenforschung/Desktop/PAR6_ValsGries_AUT/dhm_10_6.tif'
-# output = 'example.asc'
-# raster, header = read_raster(path)
-# output_raster(path, output, raster)
-# rasterio.rio.convert(output, 'example.asc', driver='AAIGrid')

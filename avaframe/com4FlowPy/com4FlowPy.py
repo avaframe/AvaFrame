@@ -8,18 +8,8 @@ Created on Mon May  7 14:23:00 2018
 import pathlib
 import numpy as np
 from datetime import datetime
-from multiprocessing import cpu_count
-import multiprocessing as mp
 import logging
 import pickle
-import os
-import platform
-if os.name == 'nt':
-    from multiprocessing.pool import ThreadPool as Pool
-elif platform.system() == 'Darwin':
-    from multiprocessing.pool import ThreadPool as Pool
-else:
-    from multiprocessing import Pool
 
 # Local imports
 from avaframe.in1Data import getInput as gI
@@ -109,15 +99,18 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     exp = float(cfgSetup["exp"])
     flux_threshold = float(cfgSetup["flux_threshold"])
     max_z = float(cfgSetup["max_z"])
+    nCPU = int(cfgSetup["cpuCount"])
+    tileSize = float(cfgSetup["tileSize"])
+    tileOverlap = float(cfgSetup["tileOverlap"])
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
     demPath = cfgPath["demPath"]
     releasePath = cfgPath["releasePath"]
     infraPath = cfgPath["infraPath"]
+    
 
-    #print("Starting...")
-    #print("...")
+    log.info("Starting...")
 
     start = datetime.now().replace(microsecond=0)
     infraBool = False
@@ -128,16 +121,6 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     tempDir = workDir / "temp"
     fU.makeADir(tempDir)
 
-    # # Setup logger
-    # for handler in logging.root.handlers[:]:
-    #     logging.root.removeHandler(handler)
-    #
-    # logging.basicConfig(level=logging.INFO,
-    #                     format='%(asctime)s %(levelname)-8s %(message)s',
-    #                     datefmt='%Y-%m-%d %H:%M:%S',
-    #                     filename=(resDir / 'log_{}.txt'.format(timeString)),
-    #                     filemode='w')
-
     # Start of Calculation
     log.info("Start Calculation")
     log.info("Alpha Angle: {}".format(alpha))
@@ -147,7 +130,6 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
-    # ToDo: we actualy only need to read the header
     dem = IOf.readRaster(demPath)
     # demHeader = demDict['header']
     demHeader = IOf.readASCheader(demPath)
@@ -200,20 +182,17 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nodata = demHeader["nodata_value"]
 
     # Here we split the computation domain in sub parts
-    # ToDo: Declare size in ini file
-    tileCOLS = int(15000 / cellsize)
-    tileROWS = int(15000 / cellsize)
-    U = int(5000 / cellsize)  # 5km overlap
+    tileCOLS = int(tileSize / cellsize)
+    tileROWS = int(tileSize / cellsize)
+    U = int(tileOverlap / cellsize)  # 5km overlap
 
     log.info("Start Tiling.")
-    #print("Start Tiling...")
 
     SPAM.tileRaster(demPath, "dem", tempDir, tileCOLS, tileROWS, U)
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
-
-    #print("Finished Tiling...")
+    log.info("Finished Tiling.")
     nTiles = pickle.load(open(tempDir / "nTiles", "rb"))
 
     optList = []
@@ -225,15 +204,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
-            optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold, max_z, tempDir, infraBool))
+            optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
+                            max_z, tempDir, infraBool, nCPU))
 
     # Calculation
-    log.info("Multiprocessing starts, used cores: %i" % (1))
-    #print("%i Processes started and %i calculations to perform." % (mp.cpu_count() - 1, len(optList)))
-    with Pool(processes=1) as pool:
-        pool.map(fc.calculation, optList)
-        pool.close()
-        pool.join()
+    for optTuple in optList:
+        fc.run(optTuple)
 
     log.info("Calculation finished, merging results.")
 
@@ -246,8 +222,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     sl_ta = SPAM.MergeRaster(tempDir, "res_sl")
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
-
-    # time_string = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
     log.info("Writing Output Files")
     output_format = ".tif"
     io.output_raster(demPath, resDir / ("flux%s" % (output_format)), flux)
@@ -259,8 +234,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         io.output_raster(demPath, resDir / ("z_delta_sum%s" % (output_format)), z_delta_sum)
     if infraBool:  # if infra
         io.output_raster(demPath, resDir / ("backcalculation%s" % (output_format)), backcalc)
-
-    #print("Calculation finished")
-    #print("...")
+    
+    # ToDo: delete temp dir
     end = datetime.now().replace(microsecond=0)
     log.info("Calculation needed: " + str(end - start) + " seconds")
