@@ -511,7 +511,7 @@ def fetchThicknessInfo(avaDir):
     inputSimFilesAll = gI.getInputDataCom1DFA(avaDir)
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll, avaDir)
+    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll)
 
     return inputSimFilesAll
 

@@ -822,7 +822,7 @@ def createSimDict(avalancheDir, com1DFA, cfgInitial, inputSimFiles, simNameExist
     for thType in ['entTh', 'relTh', 'secondaryRelTh']:
         _ = checkThicknessSettings(cfgInitial, thType)
     # update thickness settings, e.g. fetch if th read from shp
-    cfgInitial = gI.updateThicknessCfg(inputSimFiles, avalancheDir, com1DFA, cfgInitial)
+    cfgInitial = gI.updateThicknessCfg(inputSimFiles, cfgInitial)
 
     # reset variationDict
     variationDict = ''
