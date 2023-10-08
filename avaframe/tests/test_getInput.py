@@ -43,6 +43,27 @@ def test_readDEM():
     assert dem['rasterData'].shape == (401, 1001)
 
 
+def test_getDEMFromConfig(tmp_path):
+    """test get path of DEM"""
+
+    # setup required input
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    with pytest.raises(FileNotFoundError) as e:
+        assert getInput.getDEMFromConfig(avaTestDir, fileName="Hutzly")
+    assert str(e.value) == "Dem file: %s/Hutzly does not exist" % avaTestDirInputs
+
+    demFile = getInput.getDEMFromConfig(avaTestDir, fileName="DEM_HS_Topo.asc")
+    assert "DEM_HS_Topo.asc" in str(demFile)
+
+
 def test_getDEMPath(tmp_path):
     """ test get path of DEM """
 
@@ -114,10 +135,12 @@ def test_getInputData(tmp_path):
     dem2, rels2, ent2, res2, wall, entResInfo2 = getInput.getInputData(avaDir, cfg['INPUT'])
     # Test
     assert str(dem) == str(pathlib.Path(avaDir, 'Inputs', 'DEM_HS_Topo.asc'))
-    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
-    assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
+    assert rels == [pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp'),
+                    pathlib.Path(avaDir, 'Inputs', 'REL', 'release2HS.shp'),
+                    pathlib.Path(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
+    assert rels2 == [pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
     assert res == ''
-    assert str(ent) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
+    assert str(ent) == str(pathlib.Path(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
     assert entResInfo['flagEnt'] == "Yes"
     assert entResInfo['flagRes'] == "No"
     assert entResInfo['flagWall'] == "No"
@@ -126,17 +149,17 @@ def test_getInputData(tmp_path):
     # third option
     cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
     dem3, rels3, ent3, res3, wall, entResInfo3 = getInput.getInputData(avaDir, cfg['INPUT'])
-    assert str(ent3) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
+    assert str(ent3) == str(pathlib.Path(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
     assert entResInfo3['flagEnt'] == "Yes"
     assert entResInfo3['flagRes'] == "No"
     assert entResInfo['flagWall'] == "No"
     assert wall is None
-    assert rels3 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
+    assert rels3 == [pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
 
 
     # call function to be tested
     cfg['INPUT']['releaseScenario'] = 'release4HS'
-    releaseF = os.path.join(avaDir, 'Inputs', 'REL', 'release4HS.shp')
+    releaseF = pathlib.Path(avaDir, 'Inputs', 'REL', 'release4HS.shp')
     with pytest.raises(FileNotFoundError) as e:
         assert getInput.getInputData(avaDir, cfg['INPUT'])
     assert str(e.value) == ("No release scenario called: %s" % releaseF)
@@ -149,7 +172,6 @@ def test_getInputData(tmp_path):
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
     dem6, rels6, ent6, res6, wall, entResInfo6 = getInput.getInputData(avaDir, cfg['INPUT'])
-    print(wall)
     assert ent6 == ''
     assert res6 == ''
     assert str(wall) == os.path.join(avaDir, 'Inputs', 'DAM', 'dam.shp')
@@ -245,7 +267,7 @@ def test_getThicknessInputSimFiles(tmp_path):
         'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
         'flagSecondaryRelease': 'No'}, 'relThFile': None}
 
-    inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles, avaTestDir)
+    inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles)
 
     print('inputSimFiles', inputSimFiles)
 
@@ -294,7 +316,7 @@ def test_updateThicknessCfg(tmp_path):
     inputSimFiles['release2HS'] = {'thickness': ['1.0', '1.0'], 'id': ['0', '1'], 'ci95': ['None', 'None']}
     inputSimFiles['entrainment1HS'] = {'thickness': ['0.3'], 'id': ['0'], 'ci95': ['None']}
 
-    cfg = getInput.updateThicknessCfg(inputSimFiles, avaTestDir, com1DFA, cfg)
+    cfg = getInput.updateThicknessCfg(inputSimFiles, cfg)
 
     print('inputSimFiles', inputSimFiles)
 

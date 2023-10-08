@@ -247,7 +247,7 @@ def initializeInputs(avalancheDir, cleanDEMremeshed):
     inputSimFilesAll = gI.getInputDataCom1DFA(avalancheDir)
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll, avalancheDir)
+    inputSimFilesAll = gI.getThicknessInputSimFiles(inputSimFilesAll)
 
     return inputSimFilesAll, outDir, simDFExisting, simNameExisting
 
