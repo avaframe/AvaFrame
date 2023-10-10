@@ -1111,16 +1111,8 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, velocityThreshold, zMaxM
              path_effects=[pe.Stroke(linewidth=2, foreground='k'), pe.Normal()], zorder=20, linewidth=1, markersize=0.8,
              label='Thalweg altitude')
 
-    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
-    # and where velocity is again back to < velocityThreshold
-    indVelStart = np.where(pfvCM > velocityThreshold)[0][0]
-    if len(np.where(pfvCM < velocityThreshold)[0]) == 0:
-        if len(np.where(np.isnan(pfvCM))[0]) > 1:
-            indVelZero = np.where(np.isnan(pfvCM))[0][indVelStart]
-        else:
-            indVelZero = len(pfvCM) - 1
-    else:
-        indVelZero = np.where(pfvCM < velocityThreshold)[0][indVelStart]
+    # get indices
+    indVelStart, indVelZero = getIndicesVel(pfvCM, velocityThreshold)
 
     # add colorbar
     cbar2 = ax1.figure.colorbar(scat, ax=ax1, use_gridspec=True)
@@ -1251,16 +1243,7 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     """
 
-    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
-    # and where velocity is again back to < velocityThreshold
-    indVelStart = np.where(pfvCrossMax > cfgPlots.getfloat('velocityThreshold'))[0][0]
-    if len(np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0]) == 0:
-        if len(np.where(np.isnan(pfvCrossMax))[0]) > 1:
-            indVelZero = np.where(np.isnan(pfvCrossMax))[0][indVelStart]
-        else:
-            indVelZero = len(pfvCrossMax) - 1
-    else:
-        indVelZero = np.where(pfvCrossMax < cfgPlots.getfloat('velocityThreshold'))[0][indVelStart]
+    indVelStart, indVelZero = getIndicesVel(pfvCrossMax, cfgPlots.getfloat('velocityThreshold'))
     indStartOfRunout = rasterTransfo['indStartOfRunout']
 
     # compute alpha angle based on pfvCM field
@@ -1375,3 +1358,38 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
     pU.putAvaNameOnPlot(ax2, simName, date=True, color='grey', fontsize=8)
     outFileName = pathDict['projectName'] + ('_%s_thalwegAltitude' % (simName))
     pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+
+def getIndicesVel(pfvCM, velocityThreshold):
+    """create indices of peak flow velocity cross max vector first above tresholdValue and first
+        below threshold again
+
+        Parameters
+        -----------
+        pfvCM: numpy array
+            peak flow velocity cross max values along thalweg
+        velocityThreshold: float
+            threhshold value
+
+        Returns
+        --------
+        indVelStart: int
+            index where pfvCM first exceeds threshold
+        indVelZero: int
+            index where pfvCM first smaller than threshold but only further downstream than indVelStart
+
+    """
+
+    # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
+    # and where velocity is again back to < velocityThreshold
+    indVelStart = np.where(pfvCM > velocityThreshold)[0][0]
+    if len(np.where(pfvCM < velocityThreshold)[0]) == 0:
+        if len(np.where(np.isnan(pfvCM))[0]) > 1:
+            indVelZero = np.where(np.isnan(pfvCM))[0][indVelStart]
+        else:
+            indVelZero = len(pfvCM) - 1
+    else:
+        indVelZero = np.where(pfvCM < velocityThreshold)[0][indVelStart]
+
+    return indVelStart, indVelZero
