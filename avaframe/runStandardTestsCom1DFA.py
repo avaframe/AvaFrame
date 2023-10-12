@@ -20,6 +20,7 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import logUtils
+from avaframe.com5SnowSlide import com5SnowSlide
 
 
 # +++++++++REQUIRED+++++++++++++
@@ -45,7 +46,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 #  filterType = 'TAGS'
 #  valuesList = ['resistance']
 filterType = 'TAGS'
-valuesList = ['standardTest']
+valuesList = ['standardTestSnow', 'standardTestSnowGlide']
 testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -90,6 +91,17 @@ for test in testList:
     avaName = pathlib.Path(avaDir).name
     standardCfg = refDir / ('%s_com1DFACfg.ini' % test['AVANAME'])
     modName = 'com1DFA'
+
+    # if snowGlide test
+    if 'snowglide' in test['NAME'].lower():
+        snowSlideCfgFile = refDir / ('%s_com5SnowGlideCfg.ini' % test['AVANAME'])
+        # load snow slide tool config
+        snowSlideCfg = cfgUtils.getModuleConfig(com5SnowSlide, fileOverride=snowSlideCfgFile)
+        # ++++++++++ set configurations for com1DFA and override ++++++++++++
+        # get comDFA configuration and update with snow slide parameter set
+        standardCfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
+                                              onlyDefault=snowSlideCfg['com1DFA_override'].getboolean('defaultConfig'))
+        standardCfg, snowSlideCfg = cfgHandling.applyCfgOverride(standardCfg, snowSlideCfg, com1DFA, addModValues=False)
 
     # Set timing
     startTime = time.time()
