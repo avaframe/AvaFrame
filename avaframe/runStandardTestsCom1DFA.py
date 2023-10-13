@@ -46,8 +46,8 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 #  filterType = 'TAGS'
 #  valuesList = ['resistance']
 filterType = 'TAGS'
-valuesList = ['standardTestSnow', 'standardTestSnowGlide']
-testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='and')
+valuesList = ['standardTest', 'standardTestSnowGlide']
+testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='or')
 
 # Set directory for full standard test report
 outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
