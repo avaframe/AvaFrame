@@ -654,6 +654,10 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False, pro
         dem = providedDEM
 
     # mask dem to where there is data in result file
+    if data.shape != dem['rasterData'].shape:
+        message = 'DEM shape and data shape are not matching consider settings of threshold for remeshing used'
+        log.error(message)
+        raise AssertionError(message)
     demCut = np.where(data > 0, dem["rasterData"], np.nan)
 
     # identify min elevation and cut data to buffer zone around min elevation
