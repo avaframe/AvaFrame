@@ -670,8 +670,11 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
     datafiles = list(inputDir.glob(name))
 
     # build the result data frame
-    dataDF = pd.DataFrame(columns=['simName'])
+    resTypeListFromFiles = list(set([file.stem.split('_')[-1] for file in datafiles]))
+    columnsList = ['simName', 'releaseArea', 'simHash', 'simModified', 'simType', 'modelType', 'cellSize'] + resTypeListFromFiles
+    dataDF = pd.DataFrame(columns=columnsList)
     resTypeListOne = []
+
     for file in datafiles:
         name = file.stem
         if '_AF_' in name:
@@ -688,7 +691,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             infoParts = nameParts[1:]
             resType = infoParts[-1]
         simName = fNamePart + '_' + ('_'.join(infoParts[0:-1]))
-        # add line in the DF if the simulation does not exsist yet
+        # add line in the DF if the simulation does not exist yet
         if simName not in dataDF.simName.values:
             newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
             dataDF = pd.concat([dataDF, newLine], ignore_index=False)
@@ -704,6 +707,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
                 dataDF.loc[simName, 'simType'] = infoParts[2]
                 dataDF.loc[simName, 'modelType'] = infoParts[3]
             elif len(infoParts) == 4:
+                dataDF.loc[simName, 'simModified'] = 'not specified'
                 dataDF.loc[simName, 'simType'] = infoParts[1]
                 dataDF.loc[simName, 'modelType'] = infoParts[2]
             else:
