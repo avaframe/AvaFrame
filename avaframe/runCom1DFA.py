@@ -94,7 +94,7 @@ def runCom1DFA(avalancheDir='', calibration=''):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run com1DFA workflow')
-    parser.add_argument('avadir', metavar='avalanceDir', type=str, nargs='?', default='',
+    parser.add_argument('avadir', metavar='avalancheDir', type=str, nargs='?', default='',
                         help='the avalanche directory')
     parser.add_argument('-fc', '--friction_calibration', choices=['auto', 'large', 'medium', 'small', 'ini'],
                         type=str, default='ini',

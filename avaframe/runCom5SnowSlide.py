@@ -88,8 +88,8 @@ def runSnowSlide(avalancheDir=''):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run snow slide workflow')
-    parser.add_argument('avadir', metavar='avadir', type=str, nargs='+',
+    parser.add_argument('avadir', metavar='avadir', type=str, nargs='?', default='',
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    runSnowSlide(str(args.avadir[0]))
+    runSnowSlide(str(args.avadir))
