@@ -100,7 +100,8 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
         cfgStart = cfgInfo
 
     # fetch input data and create work and output directories
-    inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(avalancheDir, cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
+    inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(avalancheDir,
+                                                                                             cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # create dictionary with one key for each simulation that shall be performed
     simDict = dP.createSimDict(avalancheDir, com1DFA, cfgStart, inputSimFilesAll, simNameExisting)
@@ -180,11 +181,11 @@ def com1DFAMain(cfgMain, cfgInfo=''):
         for result in results:
             simDF = pd.concat([simDF, result[0]], axis=0)
             tCPUDF = pd.concat([tCPUDF, result[1]], axis=0)
-            dem = result[2] #only last dem is used
+            dem = result[2]  # only last dem is used
             reportDictList.append(result[3])
 
         timeNeeded = '%.2f' % (time.time() - startTime)
-        log.info('Overall (parallel) com1DFA computation took: %s s ' %timeNeeded)
+        log.info('Overall (parallel) com1DFA computation took: %s s ' % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
 
         # postprocessing: writing report, creating plots
@@ -206,7 +207,6 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
         Please read this in the context of the com1DFAMain function.
     """
 
-
     simDF = pd.DataFrame()
     tCPUDF = pd.DataFrame()
 
@@ -219,7 +219,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
     # fetch simHash for current sim
     simHash = simDict[cuSim]["simHash"]
 
-    log.info('%s runs as process: %s, %s' % (cuSim,  os.getpid(), threading.current_thread().ident))
+    log.info('%s runs as process: %s, %s' % (cuSim, os.getpid(), threading.current_thread().ident))
 
     # append configuration to dataframe
     simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
@@ -316,7 +316,6 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
         plotDict = ''
         # create contour line plot
         reportDictList, _ = outCom1DFA.createContourPlot(reportDictList, avalancheDir, simDF)
-
 
     if cfgMain['FLAGS'].getboolean('createReport'):
         # write report
@@ -418,7 +417,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
         reportDict['contours'] = contDictXY
 
     if particlesList[-1]['nExitedParticles'] != 0.:
-        log.warning('%d particles have been removed during simulation because they exited the domain' %  particlesList[-1]['nExitedParticles'])
+        log.warning('%d particles have been removed during simulation because they exited the domain' %
+                    particlesList[-1]['nExitedParticles'])
 
     cfgTrackPart = cfg['TRACKPARTICLES']
     # track particles
@@ -580,15 +580,14 @@ def prepareInputData(inputSimFiles, cfg):
 
     # get dem dictionary - already read DEM with correct mesh cell size
     demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], demPath=cfg['INPUT']['DEM'])
+    dOHeader = demOri['header']
 
     # read data from relThFile
     if relThFile != None and cfg['GENERAL'].getboolean('relThFromFile'):
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
         relThFieldDataOrig = relThFieldData.copy()
-        if demOri['header']['ncols'] != relThField['header']['ncols'] or \
-            demOri['header']['nrows'] != relThField['header']['nrows']:
-
+        if dOHeader['ncols'] != relThField['header']['ncols'] or dOHeader['nrows'] != relThField['header']['nrows']:
             message = ('Release thickness field read from %s does not match the number of rows and columns of the dem'
                 % inputSimFiles['relThFile'])
             log.error(message)
@@ -726,20 +725,28 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
 
     # add frict parameters
     if cfgGen['frictModel'].lower() == 'samosat':
-        reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'], 'tau0': cfgGen['tau0samosat'],
-            'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'], 'B' :  cfgGen['Bsamosat']}
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'],
+                                      'tau0': cfgGen['tau0samosat'],
+            'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'],
+                                      'B' :  cfgGen['Bsamosat']}
     elif cfgGen['frictModel'].lower() == 'samosatsmall':
-        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATSmall', 'mu': cfgGen['musamosatsmall'], 'tau0': cfgGen['tau0samosatsmall'],
-            'Rs0': cfgGen['Rs0samosatsmall'], 'kappa': cfgGen['kappasamosatsmall'], 'R':  cfgGen['Rsamosatsmall'], 'B' :  cfgGen['Bsamosatsmall']}
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATSmall', 'mu': cfgGen['musamosatsmall'],
+                                      'tau0': cfgGen['tau0samosatsmall'],
+            'Rs0': cfgGen['Rs0samosatsmall'], 'kappa': cfgGen['kappasamosatsmall'], 'R':  cfgGen['Rsamosatsmall'],
+                                      'B' :  cfgGen['Bsamosatsmall']}
     elif cfgGen['frictModel'].lower() == 'samosatmedium':
-        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATMedium', 'mu': cfgGen['musamosatmedium'], 'tau0': cfgGen['tau0samosatmedium'],
-            'Rs0': cfgGen['Rs0samosatmedium'], 'kappa': cfgGen['kappasamosatmedium'], 'R':  cfgGen['Rsamosatmedium'], 'B' :  cfgGen['Bsamosatmedium']}
+        reportST['Friction model'] = {'type': 'columns', 'model': 'samosATMedium', 'mu': cfgGen['musamosatmedium'],
+                                      'tau0': cfgGen['tau0samosatmedium'],
+            'Rs0': cfgGen['Rs0samosatmedium'], 'kappa': cfgGen['kappasamosatmedium'], 'R':  cfgGen['Rsamosatmedium'],
+                                      'B' :  cfgGen['Bsamosatmedium']}
     elif cfgGen['frictModel'].lower() == 'voellmy':
-        reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'], 'xsi': cfgGen['xsivoellmy']}
+        reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'],
+                                      'xsi': cfgGen['xsivoellmy']}
     elif cfgGen['frictModel'].lower() == 'coulomb':
         reportST['Friction model'] = {'type': 'columns', 'model': 'Coulomb', 'mu': cfgGen['mucoulomb']}
     elif cfgGen['frictModel'].lower() == 'wetsnow':
-        reportST['Friction model'] = {'type': 'columns', 'model': 'wetsnow', 'mu': cfgGen['mu0wetsnow'], 'xsi':  cfgGen['mu0wetsnow']}
+        reportST['Friction model'] = {'type': 'columns', 'model': 'wetsnow', 'mu': cfgGen['mu0wetsnow'],
+                                      'xsi':  cfgGen['mu0wetsnow']}
 
     # check if secondary release area
     if secRelAreaFlag == 'Yes':
@@ -748,20 +755,18 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
     # Check if parameter set is modified from default, and add section to report
     if '_C_' in logName:
         reportST['Simulation Parameters']['Parameter set'] = 'Changed'
-        reportST.update({'Parameters changed from default': {
-                        'type': 'list'
-                         }})
+        reportST.update({'Parameters changed from default': {'type': 'list'}})
         cfgDict = cfgUtils.convertConfigParserToDict(cfg)
         _, changedVals = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgDict)
 
         for key, val in changedVals.items():
             # Format key string for better readability (without loosing the parameter path)
-            keyStr = key.replace('root','')
-            keyStr = keyStr.replace("\'][\'","->")
-            keyStr = keyStr.replace("[\'","")
-            keyStr = keyStr.replace("\']","")
+            keyStr = key.replace('root', '')
+            keyStr = keyStr.replace("\'][\'", "->")
+            keyStr = keyStr.replace("[\'", "")
+            keyStr = keyStr.replace("\']", "")
 
-            valStr = val['new_value'] + ' (default is ' + val['old_value'] +')'
+            valStr = val['new_value'] + ' (default is ' + val['old_value'] +  ')'
 
             reportST['Parameters changed from default'][keyStr] = valStr
 
@@ -1408,9 +1413,9 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
         # part with the release)
         secondaryReleaseInfo['rasterData'] = noOverlaprasterList
         reportAreaInfo['secRelArea'] = {'type': 'columns',
-                                                    'Secondary release area scenario': secondaryReleaseInfo['fileName'].stem,
-                                                    'features': secondaryReleaseInfo['Name'].copy(),
-                                                    'thickness [m]': secondaryReleaseInfo['thickness'].copy()}
+                                        'Secondary release area scenario': secondaryReleaseInfo['fileName'].stem,
+                                        'features': secondaryReleaseInfo['Name'].copy(),
+                                         'thickness [m]': secondaryReleaseInfo['thickness'].copy()}
     else:
         secondaryReleaseInfo = {}
         secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
@@ -1654,7 +1659,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=''):
             # create plots for tt diagram animation
             if cfgRangeTime['PLOTS'].getboolean('animate') and cfg['VISUALISATION'].getboolean('TTdiagram'):
                 TTResType = cfgRangeTime['GENERAL']['rangeTimeResType']
-                dtAnaPlots.animationPlot(demRT, fields[TTResType], demRT['header']['cellsize'], TTResType, cfgRangeTime, mtiInfo, t)
+                dtAnaPlots.animationPlot(demRT, fields[TTResType], demRT['header']['cellsize'], TTResType,
+                                         cfgRangeTime, mtiInfo, t)
 
         # make sure the array is not empty
         if t >= (dtSave[0] - 1.e-8):
@@ -2303,7 +2309,7 @@ def savePartToPickle(dictList, outDir, logName):
     if isinstance(dictList, list):
         for dict in dictList:
             fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dict['t'])), "wb")
-            pickle.dump(dict, fi )
+            pickle.dump(dict, fi)
             fi.close()
     else:
         fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb")
@@ -2562,7 +2568,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # convert full configuration to dict
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
         # create release scenario name for simulation name
-        rel, cfgSim = gI.fetchReleaseFile(inputSimFiles, row._asdict()['releaseScenario'], cfgSim, variationDict['releaseScenario'])
+        rel, cfgSim = gI.fetchReleaseFile(inputSimFiles, row._asdict()['releaseScenario'], cfgSim,
+                                          variationDict['releaseScenario'])
         relName = rel.stem
         if '_' in relName:
             relNameSim = relName + '_AF'
@@ -2613,7 +2620,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # if frictModel is samosATAuto compute release vol
         if cfgSim['GENERAL']['frictModel'].lower() == 'samosatauto':
             pathToDemFull = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem)
-            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull)
+            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles['secondaryReleaseFile'])
         else:
             relVolume = ''
 
@@ -2764,7 +2771,7 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
     return dem, simDF, resTypeList
 
 
-def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
+def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.01):
     """ compute release area volume using release line and thickness info and dem
 
         Parameters
@@ -2797,6 +2804,49 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
     demVol = DFAtls.getNormalMesh(demVol, methodMeshNormal)
     demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
 
+    # compute volume of release area
+    relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main')
+
+    if cfg['GENERAL']['secRelArea'] == 'True':
+        # compute volume of secondary release area
+        secondaryRelVolume = initializeRelVol(cfg, demVol, secondaryReleaseFile, radius, releaseType='secondary')
+
+        totalVolume = relVolume + secondaryRelVolume
+        log.info('release volume is: %.2f m3 and secondary release volume is: %.2f m3 - total volume: %.2f m3 ' %
+                 (relVolume, secondaryRelVolume, totalVolume))
+
+        relVolume = relVolume + secondaryRelVolume
+    else:
+        log.info('release volume is: %.2f m3' % relVolume)
+
+    return relVolume
+
+
+def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main'):
+    """ initialize release line and apply thickness to compute release volume
+
+        Parameters
+        cfg: dict
+            configuration settings
+        demVol: dct
+            dictionary with info on DEM data, area
+        releaseFile: pathlib path
+            path to release area shp file
+        radius: float
+            include all cells which center is in the release line or close enough
+
+        Returns
+        ---------
+        relVolume: float
+            volume of the release area
+
+    """
+
+    if releaseType == 'main':
+        typeTh = 'relTh'
+    else:
+        typeTh = 'secondaryRelTh'
+
     # create release line
     releaseLine = {}
     releaseLine = shpConv.readLine(releaseFile, 'release1', demVol)
@@ -2806,7 +2856,7 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
     releaseLine['type'] = 'Release'
 
     # check if release thickness provided as field or constant value
-    if cfg['GENERAL']['relThFromFile'] == 'True':
+    if cfg['GENERAL']['relThFromFile'] == 'True' and releaseType == 'main':
 
         # read relThField from file
         relThFilePath = pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Inputs', cfg['INPUT']['relThFile'])
@@ -2817,9 +2867,9 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
         releaseLine = prepareArea(releaseLine, demVol, radius, combine=True, checkOverlap=False)
 
         # mask the relThField with raster from polygon
-        releaseLineMask = np.ma.masked_where(releaseLine['rasterData']==0., releaseLine['rasterData'])
-        releaseLineField = np.ma.masked_where(np.ma.getmask(releaseLineMask),relThField)
-        relVolumeField = np.ma.masked_where(np.ma.getmask(releaseLineMask),relThField) * demVol['areaRaster']
+        releaseLineMask = np.ma.masked_where(releaseLine['rasterData'] == 0., releaseLine['rasterData'])
+        releaseLineField = np.ma.masked_where(np.ma.getmask(releaseLineMask), relThField)
+        relVolumeField = np.ma.masked_where(np.ma.getmask(releaseLineMask), relThField) * demVol['areaRaster']
         relVolume = np.nansum(relVolumeField)
 
         if debugPlot:
@@ -2828,14 +2878,12 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, radius=0.01):
         relThField = ''
 
         # set thickness values on releaseLine
-        releaseLine = setThickness(cfg, releaseLine, 'relTh')
+        releaseLine = setThickness(cfg, releaseLine, typeTh)
         # when creating raster from polygon apply release thickness
         releaseLine = prepareArea(releaseLine, demVol, radius, thList=releaseLine['thickness'],
-            combine=True, checkOverlap=False)
+                                  combine=True, checkOverlap=False)
 
         # compute release volume using raster and dem area
         relVolume = np.nansum(releaseLine['rasterData'] * demVol['areaRaster'])
-
-    log.info('release volume is: %.2f m3' % relVolume)
 
     return relVolume

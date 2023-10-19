@@ -1842,20 +1842,20 @@ def test_fetchRelVolume(tmp_path):
     cfg = {}
     # relTh read from shp
     cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
-        'relTh': '', 'relThFromShp': True, 'relThFromFile': False, 'relTh0': 2.0, 'relTh1': 4.0}
+        'relTh': '', 'relThFromShp': True, 'relThFromFile': False, 'relTh0': 2.0, 'relTh1': 4.0, 'secRelArea': False}
     cfg['INPUT'] = {'relThFile': '', 'relThId': '0|1', 'relThThickness': '2.|4.', 'thFromIni': ''}
 
-    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
 
     assert relVolume == 34.
 
     cfg = {}
     # relTh read from cfg
     cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
-        'relTh': 5., 'relThFromShp': False, 'relThFromFile': False}
+        'relTh': 5., 'relThFromShp': False, 'relThFromFile': False, 'secRelArea': False}
     cfg['INPUT'] = {'relThFile': '', 'thFromIni': True}
 
-    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
 
     # call function
     assert relVolume == 65.
@@ -1863,10 +1863,10 @@ def test_fetchRelVolume(tmp_path):
     cfg = {}
     # relTh read from relThField
     cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
-        'relTh': '', 'relThFromShp': False, 'relThFromFile': True}
+        'relTh': '', 'relThFromShp': False, 'relThFromFile': True, 'secRelArea': False}
     cfg['INPUT'] = {'relThFile': 'RELTH/relThField1.asc', 'thFromIni': False}
 
     # call function
-    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath)
+    relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
 
     assert relVolume == 38.
