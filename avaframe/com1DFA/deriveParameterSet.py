@@ -243,7 +243,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     # if thickness should be read from shape file
     if cfg['GENERAL'].getboolean(thFlag):
         # if at least one but not all features in a shapefile have a thickness value - error
-        if ('None' in thicknessList):
+        if ('None' in thicknessList) and thType != 'entTh':
             message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
@@ -252,6 +252,12 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             log.error(message)
             raise AssertionError(message)
         else:
+            if thType == 'entTh' and ('None' in thicknessList):
+                thicknessList = [cfg['GENERAL']['entThIfMissingInShp']] * len(idList)
+                cfg['GENERAL']['entThFromShp'] = 'False'
+                cfg['GENERAL']['entTh'] = cfg['GENERAL']['entThIfMissingInShp']
+                log.warning('No thickness value provided for entrainment area using default value of %.2f instead' %
+                            cfg['GENERAL'].getfloat('entThIfMissingInShp'))
             # set thickness value in ini file from info of shape file
             thId = idList[0]
             thThickness = thicknessList[0]
