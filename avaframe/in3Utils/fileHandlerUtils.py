@@ -32,7 +32,7 @@ def makeADir(dirName):
     if os.path.isdir(dirName):
         log.debug('Be careful directory %s already existed - data saved on top of it' % (dirName))
     else:
-        # due parallel computing it might be problematic if exist_ok is not set to True 
+        # exist_ok is set to True because of parallel computation and different threads just the above check might be problematic
         os.makedirs(dirName, exist_ok=True)
     log.debug('Directory: %s created' % dirName)
 

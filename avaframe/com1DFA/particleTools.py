@@ -867,7 +867,7 @@ def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA')
     return Particles, timeStepInfo
 
 
-def savePartToCsv(particleProperties, dictList, outDir):
+def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv):
     """ Save each particle dictionary from a list to a csv file;
         works also for one dictionary instead of list
 
@@ -892,9 +892,15 @@ def savePartToCsv(particleProperties, dictList, outDir):
 
     # write particles locations and properties to csv file
     nParticles = len(dictList)
-    count = 0
+    if nParticles == 1:
+        count = countParticleCsv
+    else:
+        count = 0
     for m in range(nParticles):
-        particles = dictList[count]
+        if nParticles == 1:
+            particles = dictList[0]
+        else:
+            particles = dictList[count]
         simName = particles['simName']
         csvData = {}
         csvData['X'] = particles['x'] + particles['xllcenter']
