@@ -393,6 +393,25 @@ the statistics associated and the mass analysis figure (this means these figures
     The mass analysis plot shows the evolution of the total and entrained mass during
     the simulation and compares it to the reference
 
+List of Aimec result variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The result variables listed below are partly included in the above described plots and are also saved to the Aimec results directory as `..resAnalysisDF.csv`, with one row per simulation. In the following, the resType represents the result type(s) set in the aimecCfg.ini for the parameter *resTypes*.
+
+- resTypeFieldMax: maximum value of resType simulation result (simulation coordinate system)
+- resTypeFieldMin: minimum value of resType simulation result (simulation coordinate system), values smaller than a threshold (minValueField in aimecCfg.ini) are masked
+- resTypeFieldMean: average value of resType simulation result (simulation coordinate system), values smaller than a threshold (minValueField in aimecCfg.ini) are masked
+- resTypeFieldStd: standard deviation of resType simulation result (simulation coordinate system), values smaller than a threshold (minValueField in aimecCfg.ini) are masked
+- maxresTypeCrossMax: maximum value of cross profile maximum values of resType field (transformed in thalweg-following coordinate system)
+- sRunout: the last point along the thalweg (:math:`S_{XY}`) where the transformed resType field (cross profile maximum values) still exceeds a threshold value (thresholdValue in aimecCfg.ini)
+- lRunout: the cross profile coordinate (:math:`L_{XY}`) of the last point along the thalweg (:math:`S_{XY}`) where the transformed resType field (cross profile maximum values) still exceeds a threshold value (thresholdValue in aimecCfg.ini)
+- xRunout, yRunout: x and y coordinates of the *sRunout* point (simulation coordinate system)
+- sMeanRunout, xMeanRunout, yMeanRunout: runout point coordinates derived with cross profile mean values of transformed resType field instead of cross profile maximum values
+- deltaSXY: distance along thalweg (:math:`S_{XY}`) where the transformed resType field exceeds a threshold value (thresholdValue in aimecCfg.ini)
+- zRelease: altitude along thalweg where the transformed resType field first exceeds a threshold value (thresholdValue in aimecCfg.ini)
+- zRunout: altitude of the *sRunout* point
+- deltaZ: altitude difference between *zRelease* and *zRunout*
+- runoutAngle: corresponding runout angle based on *deltaSXY* and *deltaZ*
+
 
 Configuration parameters
 ----------------------------
