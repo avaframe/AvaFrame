@@ -43,7 +43,7 @@ def SHP2Array(infile, defname=None):
         Start : 1D numpy array
             np array with the starting index of each feature in the coordinates
             arrays (as many indexes as features)
-        Lengt : 1D numpy array
+        Length : 1D numpy array
             np array with the length of each feature in the coordinates
             arrays (as many indexes as features)
         thickness (optional) : 1D numpy array
@@ -52,7 +52,10 @@ def SHP2Array(infile, defname=None):
             list of oid as string for each feature
         ci95: list
             list of 95% confidence interval of thickness value
-
+        nParts: list
+            list of parts of polygon (added the total number of points as list item, so if multiple parts len>2)
+        nFeatures: int
+            number of features per line (parts)
 
     """
     #  Input shapefile
@@ -89,6 +92,7 @@ def SHP2Array(infile, defname=None):
     Coordy = np.empty((0))
     Coordz = np.empty((0))
     start = 0
+    nParts = []
 
     for n, item in enumerate(shps):
         pts = item.points
@@ -98,6 +102,8 @@ def SHP2Array(infile, defname=None):
             zs = item.z
         except AttributeError:
             zs = [0.0] * len(pts)
+        # add info on number of parts
+        nParts.append(list(item.parts) + [len(item.points)])
 
         # check if records are available and extract
         if records:
@@ -164,6 +170,8 @@ def SHP2Array(infile, defname=None):
     SHPdata['id'] = idList
     SHPdata['ci95'] = ci95List
     SHPdata['layerName'] = layerNameList
+    SHPdata['nParts'] = nParts
+    SHPdata['nFeatures'] = len(Start)
 
     sf.close()
 

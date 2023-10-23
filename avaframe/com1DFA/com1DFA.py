@@ -603,6 +603,8 @@ def prepareInputData(inputSimFiles, cfg):
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
     releaseLine['type'] = 'Release'
+    # check for holes in release area polygons
+    gI.checkForMultiplePartsShpArea(cfg['GENERAL']['avalancheDir'], releaseLine, 'com1DFA', type='release')
 
     # get line from secondary release area polygon
     if cfg['GENERAL'].getboolean('secRelArea'):
@@ -611,6 +613,9 @@ def prepareInputData(inputSimFiles, cfg):
             secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
             secondaryReleaseLine['fileName'] = secondaryReleaseFile
             secondaryReleaseLine['type'] = 'Secondary release'
+            # check for holes in secondary release area polygons
+            gI.checkForMultiplePartsShpArea(cfg['GENERAL']['avalancheDir'], secondaryReleaseLine, 'com1DFA',
+                                            type='secondary release')
         else:
             message = 'No secondary release file found'
             log.error(message)
@@ -627,6 +632,8 @@ def prepareInputData(inputSimFiles, cfg):
         entrainmentArea = entFile.name
         entLine['fileName'] = entFile
         entLine['type'] = 'Entrainment'
+        # check for holes in entrainment area polygons
+        gI.checkForMultiplePartsShpArea(cfg['GENERAL']['avalancheDir'], entLine, 'com1DFA', type='entrainment')
     else:
         entLine = None
         entrainmentArea = ''
@@ -638,6 +645,8 @@ def prepareInputData(inputSimFiles, cfg):
         resistanceArea = resFile.name
         resLine['fileName'] = resFile
         resLine['type'] = 'Resistance'
+        # check for holes in resistance area polygons
+        gI.checkForMultiplePartsShpArea(cfg['GENERAL']['avalancheDir'], resLine, 'com1DFA', type='resistance')
     else:
         resLine = None
         resistanceArea = ''
@@ -726,19 +735,19 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
     # add frict parameters
     if cfgGen['frictModel'].lower() == 'samosat':
         reportST['Friction model'] = {'type': 'columns', 'model': 'samosAT', 'mu': cfgGen['musamosat'],
-                                      'tau0': cfgGen['tau0samosat'],
-            'Rs0': cfgGen['Rs0samosat'], 'kappa': cfgGen['kappasamosat'], 'R':  cfgGen['Rsamosat'],
-                                      'B' :  cfgGen['Bsamosat']}
+                                      'tau0': cfgGen['tau0samosat'], 'Rs0': cfgGen['Rs0samosat'],
+                                      'kappa': cfgGen['kappasamosat'], 'R': cfgGen['Rsamosat'],
+                                      'B': cfgGen['Bsamosat']}
     elif cfgGen['frictModel'].lower() == 'samosatsmall':
         reportST['Friction model'] = {'type': 'columns', 'model': 'samosATSmall', 'mu': cfgGen['musamosatsmall'],
-                                      'tau0': cfgGen['tau0samosatsmall'],
-            'Rs0': cfgGen['Rs0samosatsmall'], 'kappa': cfgGen['kappasamosatsmall'], 'R':  cfgGen['Rsamosatsmall'],
-                                      'B' :  cfgGen['Bsamosatsmall']}
+                                      'tau0': cfgGen['tau0samosatsmall'], 'Rs0': cfgGen['Rs0samosatsmall'],
+                                      'kappa': cfgGen['kappasamosatsmall'], 'R': cfgGen['Rsamosatsmall'],
+                                      'B': cfgGen['Bsamosatsmall']}
     elif cfgGen['frictModel'].lower() == 'samosatmedium':
         reportST['Friction model'] = {'type': 'columns', 'model': 'samosATMedium', 'mu': cfgGen['musamosatmedium'],
-                                      'tau0': cfgGen['tau0samosatmedium'],
-            'Rs0': cfgGen['Rs0samosatmedium'], 'kappa': cfgGen['kappasamosatmedium'], 'R':  cfgGen['Rsamosatmedium'],
-                                      'B' :  cfgGen['Bsamosatmedium']}
+                                      'tau0': cfgGen['tau0samosatmedium'], 'Rs0': cfgGen['Rs0samosatmedium'],
+                                      'kappa': cfgGen['kappasamosatmedium'], 'R': cfgGen['Rsamosatmedium'],
+                                      'B': cfgGen['Bsamosatmedium']}
     elif cfgGen['frictModel'].lower() == 'voellmy':
         reportST['Friction model'] = {'type': 'columns', 'model': 'Voellmy', 'mu': cfgGen['muvoellmy'],
                                       'xsi': cfgGen['xsivoellmy']}
@@ -746,7 +755,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
         reportST['Friction model'] = {'type': 'columns', 'model': 'Coulomb', 'mu': cfgGen['mucoulomb']}
     elif cfgGen['frictModel'].lower() == 'wetsnow':
         reportST['Friction model'] = {'type': 'columns', 'model': 'wetsnow', 'mu': cfgGen['mu0wetsnow'],
-                                      'xsi':  cfgGen['mu0wetsnow']}
+                                      'xsi': cfgGen['mu0wetsnow']}
 
     # check if secondary release area
     if secRelAreaFlag == 'Yes':
@@ -766,7 +775,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             keyStr = keyStr.replace("[\'", "")
             keyStr = keyStr.replace("\']", "")
 
-            valStr = val['new_value'] + ' (default is ' + val['old_value'] +  ')'
+            valStr = val['new_value'] + ' (default is ' + val['old_value'] + ')'
 
             reportST['Parameters changed from default'][keyStr] = valStr
 
@@ -1415,7 +1424,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
         reportAreaInfo['secRelArea'] = {'type': 'columns',
                                         'Secondary release area scenario': secondaryReleaseInfo['fileName'].stem,
                                         'features': secondaryReleaseInfo['Name'].copy(),
-                                         'thickness [m]': secondaryReleaseInfo['thickness'].copy()}
+                                        'thickness [m]': secondaryReleaseInfo['thickness'].copy()}
     else:
         secondaryReleaseInfo = {}
         secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
@@ -2773,6 +2782,8 @@ def runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile='', delet
 
 def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.01):
     """ compute release area volume using release line and thickness info and dem
+        if in config settings secRelArea is True - also include secondary release area in
+        release volume estimate
 
         Parameters
         -----------
@@ -2782,6 +2793,8 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
             config settings of current sim
         pathToDem: pathlib path
             path to dem file used for current sim
+        releaseFile: pathlib path, None
+            path to secondary release area shp file or None if not available
         radius : float
             include all cells which center is in the release line or close enough
 
@@ -2805,7 +2818,7 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
     demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
 
     # compute volume of release area
-    relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main')
+    relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='primary')
 
     if cfg['GENERAL']['secRelArea'] == 'True':
         # compute volume of secondary release area
@@ -2822,7 +2835,7 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
     return relVolume
 
 
-def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main'):
+def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='primary'):
     """ initialize release line and apply thickness to compute release volume
 
         Parameters
@@ -2834,6 +2847,8 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main'):
             path to release area shp file
         radius: float
             include all cells which center is in the release line or close enough
+        releaseType: str
+            name of release area type, e.g. primary, secondary
 
         Returns
         ---------
@@ -2842,7 +2857,7 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main'):
 
     """
 
-    if releaseType == 'main':
+    if releaseType == 'primary':
         typeTh = 'relTh'
     else:
         typeTh = 'secondaryRelTh'
@@ -2856,7 +2871,7 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType='main'):
     releaseLine['type'] = 'Release'
 
     # check if release thickness provided as field or constant value
-    if cfg['GENERAL']['relThFromFile'] == 'True' and releaseType == 'main':
+    if cfg['GENERAL']['relThFromFile'] == 'True' and releaseType == 'primary':
 
         # read relThField from file
         relThFilePath = pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Inputs', cfg['INPUT']['relThFile'])

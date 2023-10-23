@@ -51,12 +51,11 @@ def getVariationDict(avaDir, fullCfg, modDict):
         if key not in ['resType', 'tSteps']:
             # if yes and if this value is different add this key to
             # the parameter variation dict
-            keyList = ['relThPercentVariation', 'entThPercentVariation',
-                'secondaryRelThPercentVariation', 'relThRangeVariation',
-                'entThRangeVariation', 'secondaryRelThRangeVariation',
-                'relThDistVariation', 'entThDistVariation', 'relThRangeFromCiVariation',
-                'entThRangeFromCiVariation', 'secondaryRelThRangeFromCiVariation',
-                           'secondaryRelThDistVariation', ]
+            keyList = ['relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation',
+                       'relThRangeVariation', 'entThRangeVariation', 'secondaryRelThRangeVariation',
+                       'relThDistVariation', 'entThDistVariation', 'relThRangeFromCiVariation',
+                       'entThRangeFromCiVariation', 'secondaryRelThRangeFromCiVariation',
+                       'secondaryRelThDistVariation']
             if key in keyList and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
@@ -75,7 +74,8 @@ def getVariationDict(avaDir, fullCfg, modDict):
                         log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
                     except KeyError:
                         defValue = None
-                        log.warning('Parameter %s: has a variation, seems to be added, is it acutally used? Ignored for now ' % (key))
+                        log.warning('Parameter %s: has a variation, seems to be added, is it acutally used? Ignored for now ' %
+                                    (key))
 
     # add releaseScenario info to variations dict - also if this parameter is not varied
     variations['releaseScenario'] = fullCfg['INPUT']['releaseScenario'].split('|')
@@ -247,17 +247,17 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
+        elif thType == 'entTh' and ('None' in thicknessList):
+            thicknessList = [cfg['GENERAL']['entThIfMissingInShp']] * len(idList)
+            cfg['GENERAL']['entThFromShp'] = 'False'
+            cfg['GENERAL']['entTh'] = cfg['GENERAL']['entThIfMissingInShp']
+            log.warning('No thickness value provided for entrainment area using default value of %.2f instead' %
+                        cfg['GENERAL'].getfloat('entThIfMissingInShp'))
         elif cfg['GENERAL'][thDistVariation] != '' and ('None' in ci95List):
             message = 'Not all features in shape file have a ci95 value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
         else:
-            if thType == 'entTh' and ('None' in thicknessList):
-                thicknessList = [cfg['GENERAL']['entThIfMissingInShp']] * len(idList)
-                cfg['GENERAL']['entThFromShp'] = 'False'
-                cfg['GENERAL']['entTh'] = cfg['GENERAL']['entThIfMissingInShp']
-                log.warning('No thickness value provided for entrainment area using default value of %.2f instead' %
-                            cfg['GENERAL'].getfloat('entThIfMissingInShp'))
             # set thickness value in ini file from info of shape file
             thId = idList[0]
             thThickness = thicknessList[0]
@@ -325,7 +325,8 @@ def checkThicknessSettings(cfg, thName):
     # if release thickness should be read from file check other parameters
     if thName == 'relTh':
         if cfg['GENERAL'].getboolean(thFile) and (cfg['GENERAL'].getboolean(thFlag) != False or cfg['GENERAL'][thName] != ''):
-            message = 'If %s is set to True - it is not allowed to set %s to True or provide a value in %s' % (thFile, thFlag, thName)
+            message = ('If %s is set to True - it is not allowed to set %s to True or provide a value in %s' %
+                       (thFile, thFlag, thName))
             log.error(message)
             raise AssertionError(message)
 
@@ -779,6 +780,7 @@ def checkDEM(cfgSim, demFile, onlySearch=False):
     log.info('path to DEM is: %s' % pathToDem)
 
     return pathToDem
+
 
 def writeToCfgLine(values):
     """ write an array of values to a string of values separated by | for configuration

@@ -17,14 +17,16 @@ def test_getVariationDict(caplog):
     avaDir = 'test/avaTest'
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
-    cfg['GENERAL'] = {'simTypeList' : 'null|ent', 'howMeBlue':'10:20:4' ,'modelType' : 'dfa', 'resType' : 'ppr|pft|pfv|particles|FT',
-                      'tSteps' : '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
-                      'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
-                      'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
+    cfg['GENERAL'] = {'simTypeList': 'null|ent', 'howMeBlue': '10:20:4', 'modelType': 'dfa',
+                      'resType': 'ppr|pft|pfv|particles|FT', 'tSteps': '0:1', 'initPartDistType': 'random',
+                      'initialiseParticlesFromFile': 'False', 'particleFile': '', 'seed': '12345', 'rho': '300|400',
+                      'rhoEnt': '100', 'relTh': '1.', 'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05',
+                      'tEnd': '400'}
     cfg['INPUT'] = {'releaseScenario': 'relTest'}
-    modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'], 'resType': ['ppr|pft|pfv', 'ppr|pft|pfv|particles|FT'],
-                'tSteps': ['0:1', '1'], 'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']},
-                'TEST': {'test': ['test1', '']}}
+    modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'],
+                           'resType': ['ppr|pft|pfv', 'ppr|pft|pfv|particles|FT'], 'tSteps': ['0:1', '1'],
+                           'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']},
+               'TEST': {'test': ['test1', '']}}
 
     # call function to be tested
     variations = dP.getVariationDict(avaDir, cfg, modDict)
@@ -40,7 +42,6 @@ def test_getVariationDict(caplog):
     assert variations['simTypeList'][0] == 'null'
     assert variations['simTypeList'][1] == 'ent'
     assert np.array_equal(variations['rho'], np.asarray([300, 400]))
-
 
     cfg['GENERAL']['relThFromShp'] = 'True'
     cfg['GENERAL']['relThFromFile'] = 'False'
@@ -156,7 +157,8 @@ def test_getThicknessValue():
 
     with pytest.raises(AssertionError) as e:
         assert dP.getThicknessValue(cfg, inputSimFiles, 'release1HS', thType)
-    assert str(e.value) == "Not all features in shape file have a thickness value - check shape file attributes: %s" % ('release1HS')
+    assert (str(e.value) == "Not all features in shape file have a thickness value - check shape file attributes: %s" %
+            ('release1HS'))
 
     inputSimFiles = {'release1HS': {'thickness': ['1.2', 'None']}}
     inputSimFiles['release1HS']['id'] = ['0', '1']
@@ -189,6 +191,45 @@ def test_getThicknessValue():
     assert cfg['GENERAL']['relThPercentVariation'] == ''
     assert cfg['GENERAL']['relTh'] == '1.0'
 
+    inputSimFiles = {'entrainment1': {'thickness': ['0.5', '0.6']}}
+    inputSimFiles['entrainment1']['id'] = ['0', '1']
+    inputSimFiles['entrainment1']['ci95'] = ['None', 'None']
+
+    thType = 'entTh'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'entTh': '', 'entThFromShp': 'True',
+                      'entThPercentVariation': '', 'entThDistVariation': '',
+                      'entThIfMissingInShp': '0.3'}
+    cfg['INPUT'] = {'releaseScenario': ''}
+
+    cfg = dP.getThicknessValue(cfg, inputSimFiles, 'entrainment1', thType)
+
+    assert cfg['INPUT']['entThThickness'] == '0.5|0.6'
+    assert cfg['INPUT']['entThId'] == '0|1'
+    assert cfg['INPUT']['entThCi95'] == 'None|None'
+    assert cfg['GENERAL']['entThPercentVariation'] == ''
+    assert cfg['GENERAL']['entTh'] == ''
+    assert cfg['GENERAL']['entThIfMissingInShp'] == '0.3'
+
+    inputSimFiles = {'entrainment1': {'thickness': ['None', 'None']}}
+    inputSimFiles['entrainment1']['id'] = ['0', '1']
+    inputSimFiles['entrainment1']['ci95'] = ['None', 'None']
+
+    thType = 'entTh'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'entTh': '', 'entThFromShp': 'True',
+                      'entThPercentVariation': '', 'entThDistVariation': '',
+                      'entThIfMissingInShp': '0.3'}
+    cfg['INPUT'] = {'releaseScenario': ''}
+
+    cfg = dP.getThicknessValue(cfg, inputSimFiles, 'entrainment1', thType)
+
+    assert cfg.has_option('INPUT', 'entThId') is False
+    assert cfg.has_option('INPUT', 'entThThickness') is False
+    assert cfg['GENERAL']['entThPercentVariation'] == ''
+    assert cfg['GENERAL']['entTh'] == '0.3'
+    assert cfg['GENERAL']['entThIfMissingInShp'] == '0.3'
+
 
 def test_checkThicknessSettings():
     """ test checking thickness settings function """
@@ -214,14 +255,11 @@ def test_checkThicknessSettings():
     cfg['GENERAL']['entTh'] = ''
     cfg['GENERAL']['entThFromFile'] = 'False'
 
-
     with pytest.raises(AssertionError) as e:
         assert dP.checkThicknessSettings(cfg, thName)
     assert str(e.value) == "If %s is set to False - it is required to set a value for %s" % ('entThFromShp', 'entTh')
 
-
     cfg['GENERAL']['entThFromShp'] = ''
-
 
     with pytest.raises(AssertionError) as e:
         assert dP.checkThicknessSettings(cfg, thName)
@@ -243,10 +281,9 @@ def test_appendShpThickness():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'relThFromShp': 'True', 'relTh': '',
-        'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': '', 'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
-        'relThDistVariation': ''}
+                      'relThFromFile': 'False', 'relThPercentVariation': '', 'relThRangeVariation': '',
+                      'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '', 'relThDistVariation': ''}
     cfg['INPUT'] = {'relThThickness': '1.2|1.4', 'relThId': '0|1', 'releaseScenario': 'release1HS'}
-
 
     # call function to be tested
     cfg = dP.appendShpThickness(cfg)
@@ -301,7 +338,6 @@ def test_setThicknessValueFromVariation():
             assert cfg['GENERAL']['relThPercentVariation'] == '+39.99999999999999$1'
             assert cfg['GENERAL']['relTh0'] == '1.68'
             assert cfg['GENERAL']['relTh1'] == '1.9599999999999997'
-
 
     cfg['GENERAL'] = {'secRelArea': 'False', 'relThFromShp': 'False', 'relTh': '1.',
         'relThFromFile': 'False', 'relThPercentVariation': '40$3', 'relThDistVariation': ''}

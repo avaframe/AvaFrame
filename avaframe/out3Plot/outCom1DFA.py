@@ -19,7 +19,6 @@ cfgFlags = cfgMain['FLAGS']
 log = logging.getLogger(__name__)
 
 
-
 def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSimName):
     """ Plot time series of tracked particles
 
@@ -105,7 +104,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem, cuSi
         # ani.save("testTrackAlr1.gif", writer=writer)
 
 
-def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
+def plotTrackParticleAcceleration(outDirData, trackedPartProp, cfg, cuSimName):
     """ Plot time series of tracked particles
     Parameters
     ----------
@@ -120,7 +119,6 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
         name of simulation
 
     """
-
 
     # do some ploting
     fig = plt.figure(figsize=(pU.figW, pU.figH))
@@ -137,35 +135,33 @@ def plotTrackParticleAcceleration(outDirData,trackedPartProp, cfg, cuSimName):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def plotAllPartAcc(outDirData,particlesList, cfg, Tsave, cuSimName):
+def plotAllPartAcc(outDirData, particlesList, cfg, Tsave, cuSimName):
     """ Plot time series of tracked particles
-    Parameters
-    ----------
-    outDirData: str
-        path to output directory
-    particlesList: list
-        list with dictionary of all particles time steps
-        particles
-    cfg : dict
-        configuration read from ini file
-    Tsave: list
-        list of saving time step info 
-    cuSimName: str
-        name of current sim
+        Parameters
+        ----------
+        outDirData: str
+            path to output directory
+        particlesList: list
+            list with dictionary of all particles time steps
+            particles
+        cfg : dict
+            configuration read from ini file
+        Tsave: list
+            list of saving time step info
+        cuSimName: str
+            name of current sim
     """
 
-
-    # do some ploting
+    # initialize fig
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     fig.suptitle('Tracked particles acceleration')
     ax1 = plt.subplot(111)
 
-
     uAcc = np.zeros((len(particlesList), particlesList[0]['nPart']))
     timeStep = np.asarray([p['t'] for p in particlesList])
     for idx in particlesList[0]['ID']:
-        uAcc[:,idx] = np.asarray([p['uAcc'][idx] for p in particlesList])
-        ax1.plot(Tsave, uAcc[:,idx])
+        uAcc[:, idx] = np.asarray([p['uAcc'][idx] for p in particlesList])
+        ax1.plot(Tsave, uAcc[:, idx])
     ax1.set_xlabel('time step [s]')
     ax1.set_ylabel('acceleration [ms-2]')
 
@@ -227,7 +223,7 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h', colBarResType=''
     variableC = particles[whatC]
     variableS = particles[whatS]
     minMax = np.nanmax(variableS)-np.nanmin(variableS)
-    if minMax>0:
+    if minMax > 0:
         variableS = ((variableS-np.nanmin(variableS))/(np.nanmax(variableS)-np.nanmin(variableS)) + 1)*pU.ms
     else:
         variableS = pU.ms
@@ -340,7 +336,8 @@ def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     csz = header['cellsize']
-    rowsMin, rowsMax, colsMin, colsMax, rasterData = pU.constrainPlotsToData(rasterData, csz, extentOption=False, constrainedData=True)
+    rowsMin, rowsMax, colsMin, colsMax, rasterData = pU.constrainPlotsToData(rasterData, csz, extentOption=False,
+                                                                             constrainedData=True)
     xArray = np.linspace(xllc+colsMin*csz, xllc+colsMax*csz, colsMax-colsMin+1)
     yArray = np.linspace(yllc+rowsMin*csz, yllc+rowsMax*csz, rowsMax-rowsMin+1)
     extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
@@ -403,7 +400,7 @@ def createContourPlot(reportDictList, avalancheDir, simDF):
     simName1 = simDF['simName'].iloc[0]
     # check if consistent settings throughout all sims
     if len(np.unique(simDF['contourResType'])) != 1 or len(np.unique(simDF['thresholdValue'])) != 1:
-        log.warning('Contou result type or thresholdValue are not identical for all sims performed - so cannot create contour plot')
+        log.warning('Contour result type or thresholdValue are not identical for all sims performed - so cannot create contour plot')
         return reportDictList, False
 
     # generate plot
@@ -443,7 +440,7 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     xGrid, yGrid, _, _ = geoTrans.makeCoordGridFromHeader(demHeader)
 
     # fetch contour line
-    contourDictXYLines = pU.fetchContourCoords(xGrid, yGrid, flowF,cfgVisu.getfloat('thresholdValue'))
+    contourDictXYLines = pU.fetchContourCoords(xGrid, yGrid, flowF, cfgVisu.getfloat('thresholdValue'))
 
     # setup dict
     contDictXY = {simName: contourDictXYLines}
