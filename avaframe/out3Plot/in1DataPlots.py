@@ -15,6 +15,7 @@ import avaframe.out3Plot.plotUtils as pU
 # flagLim if x axis limited
 flagLim = False
 
+
 def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     """ plot the CDF """
 
@@ -23,7 +24,7 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     fig = plt.figure()
     plt.plot(halfLine, 'k--')
     plt.plot(CDF)
-    plt.title('%s CDF, a=%.3f, b=%.3f, c=%.3f m' % (cfg['distType'], a,b,c))
+    plt.title('%s CDF, a=%.3f, b=%.3f, c=%.3f m' % (cfg['distType'], a, b, c))
     plt.xlabel('support')
     plt.ylabel('CDF')
     plt.grid()
@@ -32,6 +33,7 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     plotName = 'CDF_%s_%s' % (cfg['name'], cfg['distType'])
     plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
+
 def plotSample(workingDir, sample, cfg, flagShow):
     """ Generate bar plot of sample values """
 
@@ -39,7 +41,7 @@ def plotSample(workingDir, sample, cfg, flagShow):
     fig = plt.figure()
     plt.title('Sampled values from distribution')
     plt.ylabel('Sampled values')
-    plt.bar(xSteps,sample)
+    plt.bar(xSteps, sample)
 
     # save and or plot fig
     plotName = 'samples_%s_%s' % (cfg['name'], cfg['distType'])
@@ -80,7 +82,6 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow, x=''
     plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
 
-
 def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow, x=''):
     """ make a comparison plot of desired CDF and empirical CDF of sample """
 
@@ -99,7 +100,6 @@ def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow, x=''):
     plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
 
 
-
 def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
     """ make a comparison plot of desired CDF and empirical CDF of sample """
 
@@ -110,10 +110,39 @@ def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
     ax.plot(x, halfLine, 'k--')
     ax.plot(x, CDF, 'g', label='Desired CDF')
     # plot the cumulative histogram
-    n_bins = int(int(cfg['sampleSize'])* 0.25)
+    n_bins = int(int(cfg['sampleSize']) * 0.25)
     n, bins, patches = ax.hist(sample, n_bins, density=True, histtype='step',
                            cumulative=True, label='Empirical')
 
     # save and or plot fig
     plotName = 'CDFcompare%s_%s_%s' % (methodAbbr, cfg['name'], cfg['distType'])
     plotPath = pU.saveAndOrPlot({'pathResult': workingDir}, plotName, fig)
+
+
+def plotAreaShpError(xFeat, yFeat, nParts, pathDict):
+    """ plot polygon parts of polygon read from shp file to check if holes
+
+        Parameters
+        ------------
+        xFeat, yFeat: numpy array
+            x, y coordinates of polygon
+        nParts: list
+            indices of parts of polygon (2 make only an outer polygon as entire number of points is added)
+        pathDict: dict
+            dictionary with info on outDir, outFileName and title of plot
+    """
+
+    # create plot for each lineFeature
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    for indParts, valP in enumerate(nParts[:-1]):
+        if indParts == 0:
+            plt.plot(xFeat[0:nParts[indParts + 1]], yFeat[0:nParts[indParts + 1]],
+                     label=('part %d' % indParts))
+        else:
+            plt.plot(xFeat[valP:nParts[indParts + 1]], yFeat[valP:nParts[indParts + 1]],
+                     label=('part %d' % indParts))
+
+    plt.title(pathDict['title'])
+    plt.legend()
+    # save and or plot
+    pU.saveAndOrPlot(pathDict, pathDict['outFileName'], fig)

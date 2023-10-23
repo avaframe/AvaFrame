@@ -153,7 +153,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'testDEM.asc'
     inputSimFiles['relThFile'] = avaDir / 'Inputs' / 'RELTH' / 'testRel2.asc'
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir), 'relThFromFile': 'True'}
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir),
+                      'relThFromFile': 'True'}
     cfg['INPUT'] = {'DEM': 'testDEM.asc'}
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -218,10 +219,24 @@ def test_prepareInputData(tmp_path):
                       'relThFromFile': 'True'}
     cfg['INPUT'] = {'DEM': 'testDEM.asc'}
 
-
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
     assert str(e.value) == ("Release thickness field contains nans - not allowed no release thickness must be set to 0")
+
+    testDir = pathlib.Path(__file__).parents[0]
+    avaDir = pathlib.Path(tmp_path, 'avaTestHoles')
+    avaDir = dirName / '..' / 'data' / 'avaAlr'
+
+    relFile = testDir / 'data' / 'testForHoles' / 'relAlr2.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['relThFile'] = None
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir)}
+    cfg['INPUT'] = {'DEM': 'avaAlr.asc'}
+
+    with pytest.raises(AssertionError) as e:
+        assert com1DFA.prepareInputData(inputSimFiles, cfg)
+    assert "One or more release features in relAlr2.shp have holes - check error plots in" in str(e.value)
 
 
 def test_prepareReleaseEntrainment(tmp_path):
@@ -452,7 +467,8 @@ def test_createReportDict():
                       {'Projected Area [m2]': 'm2'}, 'secRelArea': 'No'}
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'musamosat': '0.15500', 'tau0samosat': '0', 'Rs0samosat': '0.222',
-        'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13', 'rho': '200.', 'frictModel': 'samosAT', 'entTh': '0.3',
+                      'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13', 'rho': '200.',
+                      'frictModel': 'samosAT', 'entTh': '0.3',
                       'rhoEnt': '100.0'}
 
     # call function to be tested
@@ -1080,7 +1096,6 @@ def test_releaseSecRelArea():
 
     pEnt = -10. * 2050 + 9.81 * 1.
 
-
     print('particles IN pytest socond', particles2)
     assert particles['nPart'] == 6
     assert np.array_equal(particles['x'], np.asarray(
@@ -1104,8 +1119,6 @@ def test_releaseSecRelArea():
     assert np.array_equal(particles2['m'], np.asarray(
         [1250., 1250., 1250., 50., 50., 50., 50., 25., 25., 25., 25.]))
     assert particles2['mTot'] == 4050.0
-
-
 
 
 def test_getRelThFromPart():
@@ -1136,7 +1149,7 @@ def test_getRelThFromPart():
     cfg['GENERAL']['relThFromFile'] = 'True'
     cfg['GENERAL']['relTh'] = ''
     relThField = np.zeros((10, 10))
-    relThField[0:10,1] = 10.0
+    relThField[0:10, 1] = 10.0
     # call function to be tested
     relThFromPart = com1DFA.getRelThFromPart(cfg['GENERAL'], inputSimLines['releaseLine'],
         relThField)
@@ -1180,7 +1193,8 @@ def test_initializeParticles():
     releaseLine['header']['xllcenter'] = dem['originalHeader']['xllcenter']
     releaseLine['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
-    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
+    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm',
+                'massPerPart', 'nPPK', 'mTot',
                 'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'trajectoryAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
@@ -1188,7 +1202,6 @@ def test_initializeParticles():
                 'partInCell', 'secondaryReleaseInfo', 'iterate', 'idFixed',
                 'peakForceSPH', 'forceSPHIni', 'totalEnthalpy', 'velocityMag',
                 'nExitedParticles']
-
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
@@ -1539,7 +1552,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
     testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'simTypeActual': 'entres',
                           'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
-                          'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
+                          'entTh0': '1.0', 'entThRangeVariation': '', 'relThRangeVariation': '',
                           'entThDistVariation': '', 'relThDistVariation': '',
                           'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                           'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.',
@@ -1567,7 +1580,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
             assert simDict[simName1]['cfgSim'][section][key] == testCfg[section][key]
 
     # call function to be tested
-    #relPath = pathlib.Path('test', 'relTest_extended.shp')
+    # relPath = pathlib.Path('test', 'relTest_extended.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
     variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent'], 'releaseScenario': ['relAlr']}
@@ -1585,7 +1598,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
                            'entThRangeFromCiVariation': '', 'relThRangeFromCiVariation': '',
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
                            'relThRangeVariation': '',
-                           'entThDistVariation': '', 'relThDistVariation': '','meshCellSize': '5.',
+                           'entThDistVariation': '', 'relThDistVariation': '', 'meshCellSize': '5.',
                            'meshCellSizeThreshold': '0.001', 'sphKernelRadius': '5.', 'frictModel': 'samosAT',
                            'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
                            'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
@@ -1597,7 +1610,6 @@ def test_prepareVarSimDict(tmp_path, caplog):
     simName2 = 'relAlr_' + simHash2 + '_C_entres_dfa'
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relAlr',
                             'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
-
 
     print(simDict2)
     print(testDict2)
@@ -1659,15 +1671,14 @@ def test_initializeSimulation(tmp_path):
     logName = 'simLog'
 
     # call function to be tested
-    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(
-        cfg,  outDir, demOri, inputSimLines, logName)
+    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(cfg,  outDir, demOri, inputSimLines, logName)
 
     print('particles', particles)
     print('fields', fields)
     print('dem', dem)
     print('reportAreaInfo', reportAreaInfo)
 
-    pEnt =  -10. *2050. + 9.81 * 1.
+    pEnt = -10. * 2050. + 9.81 * 1.
     assert np.array_equal(particles['y'], np.asarray(
         [6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
     assert np.sum(fields['pfv']) == 0.0
@@ -1694,7 +1705,8 @@ def test_initializeSimulation(tmp_path):
     inputSimLines['secondaryReleaseLine'] = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5]),
                                              'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
                                              'Start': np.asarray([0]), 'Length': np.asarray([5]),
-                                             'type': 'Secondary release', 'fileName': pathlib.Path(tmp_path, 'path2File.shp'),
+                                             'type': 'Secondary release',
+                                             'fileName': pathlib.Path(tmp_path, 'path2File.shp'),
                                              'Name': ['secRel1'], 'thickness': [0.5], 'thicknessSource': ['ini File']}
 
     relThField = np.zeros((12, 12)) + 0.5
@@ -1741,7 +1753,8 @@ def test_runCom1DFA(tmp_path, caplog):
 
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFile)
 
-    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
+    dictKeys = ['nPart', 'x', 'y', 'trajectoryLengthXY', 'trajectoryLengthXYCor', 'trajectoryLengthXYZ', 'z', 'm',
+                'dt', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'ux', 'uy', 'uz', 'uAcc', 'stoppCriteria', 'kineticEne', 'trajectoryAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
@@ -1812,6 +1825,7 @@ def test_runOrLoadCom1DFA(tmp_path, caplog):
     assert 'release1HS_0dcd58fc86_ent_dfa' in simDF['simName'].to_list()
     assert 'release2HS_3d519adab0_ent_dfa' in simDF['simName'].to_list()
 
+
 def test_fetchRelVolume(tmp_path):
     testDir = pathlib.Path(__file__).parents[0]
     inputDir = testDir / 'data' / 'avaTestRel'
@@ -1832,9 +1846,9 @@ def test_fetchRelVolume(tmp_path):
     # write relThField
     relThF = {'header': {'xllcenter': 0.0, 'yllcenter': 0., 'cellsize': 1., 'nrows': 10, 'ncols': 20,
         'nodata_value': -9999}}
-    relThF['rasterData'] = np.zeros((10,20))
+    relThF['rasterData'] = np.zeros((10, 20))
     for k in range(10):
-        relThF['rasterData'][k,:] = k*1
+        relThF['rasterData'][k, :] = k*1
     relThField1 = pathlib.Path(avaDir, 'Inputs', 'RELTH', 'relThField1.asc')
     fU.makeADir(pathlib.Path(avaDir, 'Inputs', 'RELTH'))
     IOf.writeResultToAsc(relThF['header'], relThF['rasterData'], relThField1, flip=False)

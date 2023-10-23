@@ -19,6 +19,7 @@ import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.com1DFA import com1DFA
+from avaframe.out3Plot import in1DataPlots
 
 
 # create local logger
@@ -754,3 +755,59 @@ def getInputPaths(avaDir):
     demFile = getDEMPath(avaDir)
 
     return demFile, relFiles, relFieldFiles
+
+
+def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=''):
+    """ check if in polygon read from shape file holes are present, if so error and save a plot to Outputs/com1DFA
+        procedure: check if polygon has several parts
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        lineDict: dict
+            dictionary with info read from shape file
+            used: x, y, Start, Length, nParts, nFeatures
+        modName: str
+            name of computational module where to save error plots to Outputs subfolder
+        type: str
+            type of shp file area (release, secondary release, entrainment, resistance)
+
+        Returns
+        --------
+        error if number of parts is bigger 1
+        save plot showing all parts of each polygon feature in Outputs/modName
+
+    """
+
+    foundMultipleParts = False
+    # loop over all polygons in scenario
+    for lineFeature in range(lineDict['nFeatures']):
+        if len(lineDict['nParts'][lineFeature]) > 2:
+            # fetch number of parts for each lineFeature
+            nParts = lineDict['nParts'][lineFeature]
+            # create x, y coordinates of each lineFeature
+            xFeat = lineDict['x'][int(lineDict['Start'][lineFeature]): int(lineDict['Start'][lineFeature] + lineDict['Length'][lineFeature])]
+            yFeat = lineDict['y'][int(lineDict['Start'][lineFeature]): int(lineDict['Start'][lineFeature] + lineDict['Length'][lineFeature])]
+
+            # check for type of area
+            if type.lower() in ['entrainment', 'resistance', 'secondary release']:
+                lineFileName = lineDict['fileName']
+            else:
+                lineFileName = lineDict['file']
+
+            # create plot of parts of feature for analysis
+            title = ('Parts of lineFeature %d of %s' % (lineFeature, lineFileName.stem))
+            outDir = pathlib.Path(avaDir, 'Outputs', modName)
+            pathDict = {'pathResult': outDir,
+                        'title': title, 'outFileName': ('%s feature%d_errorPlot' % (type, lineFeature))}
+            in1DataPlots.plotAreaShpError(xFeat, yFeat, nParts, pathDict)
+
+            # set flag
+            foundMultipleParts = True
+
+    # if polygon has multiple parts - error
+    if foundMultipleParts:
+        message = 'One or more %s features in %s have holes - check error plots in %s' % (type, lineFileName.name, outDir)
+        log.error(message)
+        raise AssertionError(message)
