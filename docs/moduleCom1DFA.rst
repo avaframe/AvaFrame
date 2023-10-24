@@ -89,6 +89,7 @@ Release, entrainment and secondary release thickness can be specified in two dif
 
   - add an attribute called `thickness` for each feature
   - important: ALL features have to have a single thickness value, which can differ between features
+  - for entrainment area only: if the thickness value is missing, the thickness value is taken from `entThIfMissingInShp` (default 0.3 m) in the configuration file
   - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
   - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp,
     secondaryRelthFromShp) to True in the configuration file (default is True)
@@ -203,9 +204,23 @@ optional outputs
 * pickles of particles properties (:ref:`com1DFAAlgorithm:Particle properties`.) for saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini``
 * a csv file of specified particle properties for the saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini`` and if in the VISUALISATION section writePartToCsv is set to True
 
-
 However, in the configuration file, it is possible to change the result parameters and time Steps that shall be exported.
+The result types that can be chosen to be exported are (all correspond to fields except the particles):
+
+* ppr - peak pressure
+* pfv - peak flow velocity
+* pft - peak flow thickness
+* pta - peak travel angle
+* FV - flow velocity
+* FT - flow thickness
+* P - pressure
+* FM - flow mass
+* Vx, Vy, Vz - velocity x-, y- and z-component
+* TA - travel angle
+* particles (:ref:`com1DFAAlgorithm:Particle properties`)
+
 Have a look at the designated subsection Output in ``com1DFA/com1DFACfg.ini``.
+
 
 Parallel computation
 --------------------
