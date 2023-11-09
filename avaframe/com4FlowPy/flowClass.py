@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Sep 16 15:14:39 2019
-
-This is the flow class
-
-    Copyright (C) <2020>  <Michael Neuhauser>
-    Michael.Neuhauser@bfw.gv.at
-"""
 
 import numpy as np
 import math

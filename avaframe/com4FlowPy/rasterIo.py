@@ -1,14 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jun 11 18:44:52 2019
-
-@author: Michael Neuhauser
-This file is for reading and writing raster files
-
-    Copyright (C) <2020>  <Michael Neuhauser>
-    Michael.Neuhauser@bfw.gv.at
-
-"""
 
 import rasterio
 import sys

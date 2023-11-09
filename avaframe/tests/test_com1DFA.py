@@ -12,7 +12,6 @@ import copy
 import pickle
 import shutil
 
-
 from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -241,15 +240,15 @@ def test_prepareInputData(tmp_path):
     )
 
     testDir = pathlib.Path(__file__).parents[0]
-    avaDir = pathlib.Path(tmp_path, 'avaTestHoles')
-    avaDir = dirName / '..' / 'data' / 'avaAlr'
+    avaDir = pathlib.Path(tmp_path, "avaTestHoles")
+    avaDir = dirName / ".." / "data" / "avaAlr"
 
-    relFile = testDir / 'data' / 'testForHoles' / 'relAlr2.shp'
-    inputSimFiles['releaseScenario'] = relFile
-    inputSimFiles['relThFile'] = None
+    relFile = testDir / "data" / "testForHoles" / "relAlr2.shp"
+    inputSimFiles["releaseScenario"] = relFile
+    inputSimFiles["relThFile"] = None
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'null', 'avalancheDir': str(avaDir)}
-    cfg['INPUT'] = {'DEM': 'avaAlr.asc'}
+    cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "null", "avalancheDir": str(avaDir)}
+    cfg["INPUT"] = {"DEM": "avaAlr.asc"}
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -1992,7 +1991,6 @@ def test_runOrLoadCom1DFA(tmp_path, caplog):
     assert "release2HS_3d519adab0_ent_dfa" in simDF["simName"].to_list()
 
 
-
 def test_fetchRelVolume(tmp_path):
     testDir = pathlib.Path(__file__).parents[0]
     inputDir = testDir / "data" / "avaTestRel"
@@ -2047,6 +2045,7 @@ def test_fetchRelVolume(tmp_path):
         "relThFromFile": False,
         "relTh0": 2.0,
         "relTh1": 4.0,
+        "secRelArea": False,
     }
     cfg["INPUT"] = {"relThFile": "", "relThId": "0|1", "relThThickness": "2.|4.", "thFromIni": ""}
 
@@ -2063,6 +2062,7 @@ def test_fetchRelVolume(tmp_path):
         "relTh": 5.0,
         "relThFromShp": False,
         "relThFromFile": False,
+        "secRelArea": False,
     }
     cfg["INPUT"] = {"relThFile": "", "thFromIni": True}
 
@@ -2080,11 +2080,9 @@ def test_fetchRelVolume(tmp_path):
         "relTh": "",
         "relThFromShp": False,
         "relThFromFile": True,
+        "secRelArea": False,
     }
     cfg["INPUT"] = {"relThFile": "RELTH/relThField1.asc", "thFromIni": False}
-    cfg['GENERAL'] = {'methodMeshNormal': 1, 'thresholdPointInPoly': 0.001, 'avalancheDir': avaDir,
-        'relTh': '', 'relThFromShp': False, 'relThFromFile': True, 'secRelArea': False}
-    cfg['INPUT'] = {'relThFile': 'RELTH/relThField1.asc', 'thFromIni': False}
 
     # call function
     relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
