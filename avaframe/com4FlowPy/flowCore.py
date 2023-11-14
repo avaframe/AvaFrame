@@ -145,6 +145,9 @@ def run(optTuple):
     backcalc = np.zeros_like(dem)
     fp_travelangle_array = np.zeros_like(dem)
     sl_travelangle_array = np.zeros_like(dem)
+    #Chris
+    travel_length_array = np.zeros_like(dem)
+    #ende chris
 
     z_delta_list = []
     flux_list = []
@@ -228,7 +231,11 @@ def calculation(args):
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
     
     backcalc = np.zeros_like(dem, dtype=np.int32)
-    
+
+    #Chris
+    travel_length_array = np.zeros_like(dem, dtype=np.float32)
+    #ende chris
+
     if infraBool:        
         back_list = []
 
@@ -294,7 +301,10 @@ def calculation(args):
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-
+            #Chris
+            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
+            #ende chris
+            
             #Backcalculation
             if infraBool:
                 if infra[cell.rowindex, cell.colindex] > 0:
@@ -310,6 +320,9 @@ def calculation(args):
             row_list, col_list = get_start_idx(dem, release)
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
+    #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
+    #Chris
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
+    #ende chris
 
