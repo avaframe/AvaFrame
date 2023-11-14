@@ -156,7 +156,10 @@ def run(optTuple):
     backcalc_list = []
     fp_ta_list = []
     sl_ta_list = []
-    
+    #Chris
+    travel_length_list = []
+    #chris ende
+
     for i in range(len(results)):
         res = results[i]
         res = list(res)
@@ -167,6 +170,11 @@ def run(optTuple):
         backcalc_list.append(res[4])
         fp_ta_list.append(res[5])
         sl_ta_list.append(res[6])
+        #Chris
+        travel_length_list.append(res[7])
+        #chris ende
+
+
 
     logging.info('Calculation finished, getting results.')
     for i in range(len(z_delta_list)):
@@ -176,15 +184,21 @@ def run(optTuple):
         z_delta_sum += z_delta_sum_list[i]
         backcalc = np.maximum(backcalc, backcalc_list[i])
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
-        sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])        
+        sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])   
+        #Chris
+        travel_length_array = np.maximum(travel_length_array, travel_length_list[i])
+        #ende chris    
         
-    # Save Calculated tiles
+    # Save Calculated tiles (Zwischenspeicher)
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
     np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), z_delta_sum)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), flux_array)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), count_array)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
+    #Chris
+    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travel_length_array)
+    #chris ende
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
 

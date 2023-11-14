@@ -185,8 +185,7 @@ class Cell:
         count = ((0 < self.dist) & (self.dist < threshold)).sum()
         count_alife = ((self.dist > threshold)).sum()
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
-        '''Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
-         the other fields'''
+        #Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to the other fields
         if mass_to_distribute > 0 and count_alife > 0:
             self.dist[self.dist > threshold] += mass_to_distribute / count_alife
             self.dist[self.dist < threshold] = 0
