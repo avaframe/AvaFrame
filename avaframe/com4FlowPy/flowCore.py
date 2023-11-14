@@ -148,6 +148,9 @@ def run(optTuple):
     #Chris
     travel_length_array = np.zeros_like(dem)
     #ende chris
+    #Paula
+    flow_energy_array = np.zeros_like(dem)
+    #ende paula
 
     z_delta_list = []
     flux_list = []
@@ -159,6 +162,9 @@ def run(optTuple):
     #Chris
     travel_length_list = []
     #chris ende
+    #Paula
+    flow_energy_list = []
+    #ende paula
 
     for i in range(len(results)):
         res = results[i]
@@ -173,6 +179,9 @@ def run(optTuple):
         #Chris
         travel_length_list.append(res[7])
         #chris ende
+        #Paula
+        flow_energy_list.append(res[8])
+        #ende paula
 
 
 
@@ -188,6 +197,9 @@ def run(optTuple):
         #Chris
         travel_length_array = np.maximum(travel_length_array, travel_length_list[i])
         #ende chris    
+        #Paula
+        flow_energy_array = np.maximum(flow_energy_array, flow_energy_list[i])
+        #ende paula
         
     # Save Calculated tiles (Zwischenspeicher)
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
@@ -199,6 +211,9 @@ def run(optTuple):
     #Chris
     np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travel_length_array)
     #chris ende
+    #Paula
+    np.save(tempDir / ("res_flow_energy_%s_%s" % (optTuple[0], optTuple[1])), flow_energy_array)
+    #ende paula
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
 
@@ -249,6 +264,9 @@ def calculation(args):
     #Chris
     travel_length_array = np.zeros_like(dem, dtype=np.float32)
     #ende chris
+    #Paula
+    flow_energy_array = np.zeros_like(dem, dtype=np.float32)
+    #ende paula
 
     if infraBool:        
         back_list = []
@@ -318,6 +336,10 @@ def calculation(args):
             #Chris
             travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
             #ende chris
+            #PAula
+            flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
+            #ende paula
+
             
             #Backcalculation
             if infraBool:
@@ -336,7 +358,7 @@ def calculation(args):
     #end = datetime.now().replace(microsecond=0)
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
-    #Chris
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
-    #ende chris
+    #Chris/Paula
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array
+    #ende 
 

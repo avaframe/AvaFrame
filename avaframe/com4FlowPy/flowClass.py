@@ -32,7 +32,10 @@ class Cell:
         self.max_distance = 0
         self.min_gamma = 0
         self.max_gamma = 0
-        self.sl_gamma = 0             
+        self.sl_gamma = 0       
+        #PAULA
+        self.flow_energy = 0
+        #ende paula      
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
             self.is_start = True  # set is_start to True
@@ -90,6 +93,12 @@ class Cell:
         self.tan_beta[1, 1] = 0
         if abs(np.sum(self.tan_beta)) > 0:
             self.r_t = self.tan_beta ** self.exp / np.sum(self.tan_beta ** self.exp)
+
+    def calc_flow_energy(self):
+        ##NEW PAULA
+        # calculate flow energy (corresponding to kinetic energy)
+        # analog to: kin_energy = mass * velocity² / 2  
+    	self.flow_energy = self.flux * self.z_delta / 2
 
     def calc_persistence(self):
         self.persistence = np.zeros_like(self.dem_ng)
@@ -171,6 +180,10 @@ class Cell:
         if not self.is_start:
             self.calc_fp_travelangle()
             self.calc_sl_travelangle()
+
+        #PAULA
+        self.calc_flow_energy()
+        #ende Paula
 
         threshold = self.flux_threshold
         if np.sum(self.r_t) > 0:

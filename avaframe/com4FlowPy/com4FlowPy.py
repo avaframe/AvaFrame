@@ -223,6 +223,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #Chris
     travel_length = SPAM.MergeRaster(tempDir, "res_travel_length")
     #ende chris
+    #Paula
+    flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
+    #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
     
@@ -235,6 +238,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #Chris
     io.output_raster(demPath, resDir / ("travel_length%s" % (output_format)), travel_length)
     #ende chris
+    #Paula
+    io.output_raster(demPath, resDir / ("flow_energy%s" % (output_format)), flow_energy)
+    #ende paula
+    
     if not infraBool:  # if no infra
         io.output_raster(demPath, resDir / ("cell_counts%s" % (output_format)), cell_counts)
         io.output_raster(demPath, resDir / ("z_delta_sum%s" % (output_format)), z_delta_sum)
