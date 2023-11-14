@@ -175,18 +175,24 @@ class Cell:
         threshold = self.flux_threshold
         if np.sum(self.r_t) > 0:
             self.dist = (self.persistence * self.r_t) / np.sum(self.persistence * self.r_t) * self.flux
+
+        '''
+        old version of flux conservation wrong!!
+        new approach:
         # This lines handle if a distribution to a neighbour cell is lower then the threshold, so we don´t lose
         # flux.
         # The flux of this cells will then spread equally to all neighbour cells
         count = ((0 < self.dist) & (self.dist < threshold)).sum()
+        count_alife = ((self.dist > threshold)).sum()
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
         '''Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
          the other fields'''
-        if mass_to_distribute > 0 and count > 0:
-            self.dist[self.dist > threshold] += mass_to_distribute / count
+        if mass_to_distribute > 0 and count_alife > 0:
+            self.dist[self.dist > threshold] += mass_to_distribute / count_alife
             self.dist[self.dist < threshold] = 0
-        if np.sum(self.dist) < self.flux and count > 0:
-            self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist))/count
+        if np.sum(self.dist) < self.flux and count_alife > 0:
+            self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist))/count_alife
+        '''
 
         row_local, col_local = np.where(self.dist > threshold)
 
