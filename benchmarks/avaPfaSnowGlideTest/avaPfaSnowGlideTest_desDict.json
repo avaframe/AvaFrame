@@ -1,1 +1,51 @@
-{"TAGS": ["null", "standardTestSnowGlide", "real"], "DESCRIPTION": " this is Pfa snowGlide test", "TYPE": ["2DPeak"], "FILES": ["relPfa_935fe71140_C_null_ssl_ppr", "relPfa_935fe71140_C_null_ssl_pft", "relPfa_935fe71140_C_null_ssl_pfv", "mass_relPfa_935fe71140_C_null_ssl"], "TOPOTYPE": "real", "AVANAME": "avaPfa", "AVADIR": "data/avaPfa", "simNameRef": "relPfa_935fe71140_C_null_ssl", "NAME": "avaPfaSnowGlideTest", "Test Info": {"type": "text", "Test Info": "This test runs on a Pfa DEM for snowGlide."}, "simType": "null", "simName": {"type": "simName", "name": "relPfa_935fe71140_C_null_ssl"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "relPfa", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Muvoellmy": "0.325", "Density [kgm-3]": "300", "Friction model": "Voellmy", "Initial mass [kg]": "2269714.21", "Final mass [kg]": "2269714.21", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "14.24", "Computation time [s]": "17.54"}}
+{
+  "TAGS": [
+    "null",
+    "standardTestSnowGlide",
+    "real"
+  ],
+  "DESCRIPTION": " this is Pfa snowGlide test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "relPfa_935fe71140_C_null_ssl_ppr",
+    "relPfa_935fe71140_C_null_ssl_pft",
+    "relPfa_935fe71140_C_null_ssl_pfv",
+    "mass_relPfa_935fe71140_C_null_ssl"
+  ],
+  "TOPOTYPE": "real",
+  "AVANAME": "avaPfa",
+  "AVADIR": "data/avaPfa",
+  "simNameRef": "relPfa_935fe71140_C_null_ssl",
+  "NAME": "avaPfaSnowGlideTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs on a Pfa DEM for snowGlide."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "relPfa_935fe71140_C_null_ssl"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.7.1",
+    "Parameter set": "",
+    "Release Area Scenario": "relPfa",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Parameter variation on": "",
+    "Parameter value": "",
+    "Muvoellmy": "0.325",
+    "Density [kgm-3]": "300",
+    "Friction model": "Voellmy",
+    "Initial mass [kg]": "2269714.21",
+    "Final mass [kg]": "2269714.21",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "14.24",
+    "Computation time [s]": "17.54"
+  }
+}

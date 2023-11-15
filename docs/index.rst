@@ -50,8 +50,9 @@ Computational modules
     * :doc:`moduleCom1DFAOrig`
     * :doc:`moduleCom2AB`
     * :doc:`moduleCom3Hybrid`
-    * :doc:`moduleCom5SnowSlide`
     * :doc:`moduleCom4FlowPy`
+    * :doc:`moduleCom5SnowSlide`
+    * :doc:`moduleCom6RockAvalanche`
 
 .. toctree::
    :maxdepth: 3
@@ -62,8 +63,9 @@ Computational modules
    moduleCom1DFAOrig.rst
    moduleCom2AB.rst
    moduleCom3Hybrid.rst
-   moduleCom5SnowSlide.rst
    moduleCom4FlowPy.rst
+   moduleCom5SnowSlide.rst
+   moduleCom6RockAvalanche.rst
 
 Input/transformation modules
 ============================

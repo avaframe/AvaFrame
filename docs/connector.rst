@@ -16,7 +16,7 @@ Operational
 .. glossary::
    :sorted:
   
-   Dense Flow Standard (com1)
+   Dense Flow (com1)
       Runs dense flow avalanche module com1DFA. For more specific info about the inputs (shapefile attributes etc), see 
       :ref:`moduleCom1DFA:Input`. You can select multiple shapefiles for release areas, each will be calculated as one scenario. 
       Each shapefile can contain multiple polygons. If you provide entrainment/resistance areas, each scenario will be calculated 
@@ -40,7 +40,7 @@ fully tested and might produce unwanted results.
 .. glossary::
    :sorted:
   
-   AvaFrameLayerRename   
+   Layer rename
       Renames com1DFA result layers by adding the values of the given variable (from the configuration file) 
 
    Probability run (ana4, com1)
@@ -57,6 +57,9 @@ fully tested and might produce unwanted results.
       Runs snow slide simulations via module com1DFA. For more info see com5SnowSlide section in the documentation.
       The resistance layer is meant for building outlines.
 
+   Rock Avalanche (com6)
+      Runs rock avalanche simulations via module com1DFA. For more info see com6RockAvalanche section in the
+      documentation. Note that a release thickness raster the same size as the DEM is needed.
 
 Admin
 -----
