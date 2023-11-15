@@ -294,51 +294,105 @@ def calculation(args):
                          alpha, exp, flux_threshold, max_z_delta, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
-        cell_list.append(startcell)
+        # Michi generation
+        #cell_list.append(startcell)
+        cell_list = [startcell] # list of parents for current iteration
+        gen_list = [cell_list]  # list of all cells (which are calculated), oreganised in generations
+        child_list = []         # list of childs of the current iteration
 
-        for idx, cell in enumerate(cell_list):
-            row, col, flux, z_delta = cell.calc_distribution()
+        #for idx, cell in enumerate(cell_list):
+        for gen, cell_list in enumerate(gen_list):
+            flux_sum = 0
+            for cell in cell_list:
+        #ende michi
+                row, col, flux, z_delta = cell.calc_distribution()
 
-            if len(flux) > 0:
-                # mass, row, col  = list(zip(*sorted(zip( mass, row, col), reverse=False)))
+                # Michi generation
+                #if len(flux) > 0:
+                    #z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
+                    # Sort this lists by elh, to start with the highest cell
+                if len(row) > 1:  # if there are more than 1 element in list, sort it by z_delta, lowest -> highest
+                    z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))  # reverse = True == descending
+                    row = list(row)
+                    col = list(col)
+                    flux = list(flux)
+                    z_delta = list(z_delta)
 
-                z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
-                # Sort this lists by elh, to start with the highest cell
+                #for i in range(idx, len(cell_list)):  # Check if Cell already exists
+                for i in range(len(cell_list)):
+                #ende michi
+                    k = 0
+                    while k < len(row):
+                        if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
+                            cell_list[i].add_os(flux[k])
+                            cell_list[i].add_parent(cell)
+                            if z_delta[k] > cell_list[i].z_delta:
+                                cell_list[i].z_delta = z_delta[k]
 
-            for i in range(idx, len(cell_list)):  # Check if Cell already exists
-                k = 0
-                while k < len(row):
-                    if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
-                        cell_list[i].add_os(flux[k])
-                        cell_list[i].add_parent(cell)
-                        if z_delta[k] > cell_list[i].z_delta:
-                            cell_list[i].z_delta = z_delta[k]
-                        row = np.delete(row, k)
-                        col = np.delete(col, k)
-                        flux = np.delete(flux, k)
-                        z_delta = np.delete(z_delta, k)
-                    else:
-                        k += 1
+                            #row = np.delete(row, k)
+                            #col = np.delete(col, k)
+                            #flux = np.delete(flux, k)
+                            #z_delta = np.delete(z_delta, k)
 
-            for k in range(len(row)):
-                dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
-                if (nodata in dem_ng) or np.size(dem_ng) < 9:
-                    continue
-                cell_list.append(
-                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                            # MICHI generation
+                            row.pop(k)
+                            col.pop(k)
+                            flux.pop(k)
+                            z_delta.pop(k)
+                            #ende michi
+                        else:
+                            k += 1
 
-            z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
-            flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-            count_array[cell.rowindex, cell.colindex] += int(1)
-            z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
-            fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
-            sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-            #Chris
-            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
-            #ende chris
-            #PAula
-            flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
-            #ende paula
+                # MICHI generation
+                for i in range(len(child_list)):  # Check if Cell already exists in child_list
+                    k = 0
+                    while k < len(row):
+                        if row[k] == child_list[i].rowindex and col[k] == child_list[i].colindex:
+                            child_list[i].add_os(flux[k])
+                            child_list[i].add_parent(cell)
+                            if z_delta[k] > child_list[i].z_delta:
+                                child_list[i].z_delta = z_delta[k]
+
+                            row.pop(k)
+                            col.pop(k)
+                            flux.pop(k)
+                            z_delta.pop(k)
+                        else:
+                            k += 1
+                #ende michi
+
+                for k in range(len(row)):
+                    dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
+                    if (nodata in dem_ng) or np.size(dem_ng) < 9:
+                        continue
+                    # Michi generation
+                    #cell_list.append(
+                    child_list.append(
+                        Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+
+            # prepare lists for next iteration
+            if len(child_list) > 0:
+                cell_list = child_list               
+                gen_list.append(cell_list)
+                child_list = []
+            
+            #Michi generation
+            for gen, cell_list in enumerate(gen_list):
+                for cell in cell_list:
+            #ende michi
+
+                    z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                    flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
+                    count_array[cell.rowindex, cell.colindex] += int(1)
+                    z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
+                    fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
+                    sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
+                    #Chris
+                    travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
+                    #ende chris
+                    #PAula
+                    flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
+                    #ende paula
 
             
             #Backcalculation
