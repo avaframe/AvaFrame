@@ -1,5 +1,5 @@
 """
-    Snow slide implemented in com1DFA
+    Rock avalanche overrides for com1DFA
 """
 
 # Load modules
@@ -16,20 +16,18 @@ from avaframe.com1DFA import com1DFA
 log = logging.getLogger(__name__)
 
 
-def runSnowSlide(cfgMain, snowSlideCfg):
-    """Run snow slide tool and adjust parameters to match snow slide settings for com1DFA run,
+def runRockAvalanche(cfgMain, rockAvalancheCfg):
+    """Run and adjust parameters to match rock avalanche settings for com1DFA run,
     result files, reports and plots are saved analog to a standard com1DFA model run
 
     Parameters
     -----------
     cfgMain: configparser object
         main AvaFrame settings
-    snowSlideCfg: configparser object
-        configuration settings for snow slide including com1DFA override parameters
+    rockAvalancheCfg: configparser object
+        configuration settings for rock avalanche including com1DFA override parameters
 
     """
-
-    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
     # ++++++++++ set configurations for com1DFA and override ++++++++++++
     # get comDFA configuration and update with snow slide parameter set
@@ -38,16 +36,16 @@ def runSnowSlide(cfgMain, snowSlideCfg):
         fileOverride="",
         modInfo=False,
         toPrint=False,
-        onlyDefault=snowSlideCfg["com1DFA_override"].getboolean("defaultConfig"),
+        onlyDefault=rockAvalancheCfg["com1DFA_override"].getboolean("defaultConfig"),
     )
-    com1DFACfg, snowSlideCfg = cfgHandling.applyCfgOverride(
-        com1DFACfg, snowSlideCfg, com1DFA, addModValues=False
+    com1DFACfg, rockAvalancheCfg = cfgHandling.applyCfgOverride(
+        com1DFACfg, rockAvalancheCfg, com1DFA, addModValues=False
     )
 
-    # run the com1DFA module with snowSlide settings
+    # run the com1DFA module with rockAvalanche settings
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=com1DFACfg)
 
     # print info about simulation performed to log
-    log.info("Com1DFA run performed with snowSlideTool settings")
+    log.info("Com1DFA run performed with rockAvalanche settings")
 
     return dem, plotDict, reportDictList, simDF
