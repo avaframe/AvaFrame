@@ -275,6 +275,9 @@ def calculation(args):
     #start = datetime.now().replace(microsecond=0)
     row_list, col_list = get_start_idx(dem, release)
 
+    #Paula
+    flux_last_gen = 0
+    #ende pau
     startcell_idx = 0
     while startcell_idx < len(row_list):
 
@@ -294,6 +297,10 @@ def calculation(args):
                          alpha, exp, flux_threshold, max_z_delta, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
+        #Paula
+        flux_sum_gen_list = [] # sum of flux for every genereration
+        #ende paula
+
         # Michi generation
         #cell_list.append(startcell)
         cell_list = [startcell] # list of parents for current iteration
@@ -306,6 +313,9 @@ def calculation(args):
             for cell in cell_list:
         #ende michi
                 row, col, flux, z_delta = cell.calc_distribution()
+                #Paula
+                flux_sum += sum(flux)
+                #ende paula
 
                 # Michi generation
                 #if len(flux) > 0:
@@ -375,8 +385,11 @@ def calculation(args):
                 cell_list = child_list               
                 gen_list.append(cell_list)
                 child_list = []
-            
-            #Michi generation
+
+            #Paula
+            flux_sum_gen_list.append(flux_sum)
+            #ende paula
+
             for gen, cell_list in enumerate(gen_list):
                 for cell in cell_list:
             #ende michi
@@ -408,11 +421,17 @@ def calculation(args):
             release[z_delta_array > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
+
+        #Paula
+        flux_last_gen += flux_sum_gen_list[-1]
+        #end paula
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
-
     #Chris/Paula
+    log = logging.getLogger(__name__)
+
+    log.info(f'sum of flux of last  generation: {flux_last_gen}')
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array
     #ende 
 
