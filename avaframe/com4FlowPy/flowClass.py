@@ -71,12 +71,50 @@ class Cell:
         ds = math.sqrt(dx ** 2 + dy ** 2) * self.cellsize
         self.sl_gamma = np.rad2deg(np.arctan(dh / ds))
 
+    def calc_theta(self):
+        #new (Paula): calculate slope
+        dz_dy, dz_dx = np.gradient(self.dem_ng, self.cellsize, self.cellsize)
+        slope_rad = np.arctan(np.sqrt(dz_dx ** 2 + dz_dy ** 2))
+        return slope_rad
+
+    def calc_Voellmy_friction(self):
+        #new (Paula): calculate turbulence term
+        #assume constants
+        g = 9.81 # m s-2
+        rho = 200 # kg m-3
+        
+        muVoellmy = 0.4
+        xsiVoellmy = 2000. #1000. #400-4000 (https://doi.org/10.3189/2015JoG14J168)  # 4000. (avaframe) #m/s²
+        #2000 for iSeeSnow
+        
+        u = np.sqrt(self.z_delta * 2 * g)
+        # mass = self.flux * cellsize**2 * h0 * rho
+        # h = mass / cellsize**2 / rho
+        h = self.flux * 10000 / self.cellsize**2
+        V = self.cellsize ** 2 * h # m³ Volume
+        
+        theta = self.calc_theta()
+        ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 0, 1], [np.sqrt(2), 1, np.sqrt(2)]])
+        
+        tan_alpha_turb_voellmy = u * u * ds * self.cellsize / np.cos(theta) / h / xsiVoellmy
+        return tan_alpha_turb_voellmy
+
+
     def calc_z_delta(self):
         self.z_delta_neighbour = np.zeros((3, 3))
         self.z_gamma = self.altitude - self.dem_ng
         ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 0, 1], [np.sqrt(2), 1, np.sqrt(2)]])
         tan_alpha = np.tan(np.deg2rad(self.alpha))
         self.z_alpha = ds * self.cellsize * tan_alpha
+
+        #Paula
+        #Voellmy with mu:
+        muVoellmy = 0.4
+        #self.z_alpha = muVoellmy * ds * self.cellsize + self.calc_Voellmy_friction()
+        #Voellmy with tan alpha
+        #self.z_alpha += self.calc_Voellmy_friction()
+        #end Paula
+        
         self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha
         self.z_delta_neighbour[self.z_delta_neighbour < 0] = 0
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
