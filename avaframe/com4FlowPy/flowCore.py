@@ -294,7 +294,7 @@ def calculation(args):
                          alpha, exp, flux_threshold, max_z_delta, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
-        # Michi gerneration
+        # Michi generation
         #cell_list.append(startcell)
         cell_list = [startcell] # list of parents for current iteration
         gen_list = [cell_list]  # list of all cells (which are calculated), oreganised in generations
@@ -312,11 +312,11 @@ def calculation(args):
                     #z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                     # Sort this lists by elh, to start with the highest cell
                 if len(row) > 1:  # if there are more than 1 element in list, sort it by z_delta, lowest -> highest
-                        z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))  # reverse = True == descending
-                        row = list(row)
-                        col = list(col)
-                        flux = list(flux)
-                        z_delta = list(z_delta)
+                    z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))  # reverse = True == descending
+                    row = list(row)
+                    col = list(col)
+                    flux = list(flux)
+                    z_delta = list(z_delta)
 
                 #for i in range(idx, len(cell_list)):  # Check if Cell already exists
                 for i in range(len(cell_list)):
@@ -376,20 +376,23 @@ def calculation(args):
                 gen_list.append(cell_list)
                 child_list = []
             
+            #Michi generation
+            for gen, cell_list in enumerate(gen_list):
+                for cell in cell_list:
             #ende michi
 
-            z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
-            flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-            count_array[cell.rowindex, cell.colindex] += int(1)
-            z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
-            fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
-            sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-            #Chris
-            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
-            #ende chris
-            #PAula
-            flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
-            #ende paula
+                    z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                    flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
+                    count_array[cell.rowindex, cell.colindex] += int(1)
+                    z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
+                    fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
+                    sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
+                    #Chris
+                    travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
+                    #ende chris
+                    #PAula
+                    flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
+                    #ende paula
 
             
             #Backcalculation
