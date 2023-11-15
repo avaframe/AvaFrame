@@ -114,7 +114,7 @@ class Cell:
         #Voellmy with tan alpha
         #self.z_alpha += self.calc_Voellmy_friction()
         #end Paula
-        
+
         self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha
         self.z_delta_neighbour[self.z_delta_neighbour < 0] = 0
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta

@@ -225,6 +225,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
+    velocity = np.sqrt(z_delta * 2 * 9.81)
+    thickness = flux * 1.5 #height of release area is 1.5 m for ISeeSnow
     #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
@@ -240,6 +242,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     io.output_raster(demPath, resDir / ("flow_energy%s" % (output_format)), flow_energy)
+    io.output_raster(demPath, resDir / ("velocity%s" % (output_format)), velocity)
+    io.output_raster(demPath, resDir / ("thickness%s" % (output_format)), thickness)
     #ende paula
     
     if not infraBool:  # if no infra
