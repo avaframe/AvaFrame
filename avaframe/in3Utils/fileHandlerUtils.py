@@ -578,7 +578,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         if any(x in name for x in indiStr):
             data['isDefault'].append(infoParts[1])
             # now check for friction calibration info
-            frictIndi = ['_S_', '_M_']
+            frictIndi = ['_S_', '_M_', '_L_']
             if any(x in name for x in frictIndi):
                 data['frictCalib'].append(infoParts[2])
                 j = 1  # j indicates whether there's an additional info
