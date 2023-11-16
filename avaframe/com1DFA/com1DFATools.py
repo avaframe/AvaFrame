@@ -71,7 +71,7 @@ def getPartInitMethod(cfg, csz, relThForPart):
 
 def setFrictTypeIndicator(simCfg):
     """ Sets the friction type indicator for the simname
-        Default is empty, otherwise M for samosATMedium, S for samosATSmall
+        Default is L, otherwise M for samosATMedium, S for samosATSmall
 
         Parameters
         -----------
@@ -81,11 +81,11 @@ def setFrictTypeIndicator(simCfg):
         Returns
         --------
         frictTypeIdentifier: str
-            None if default,  S for samosATSmall, M for samosATMedium
+            L if default,  S for samosATSmall, M for samosATMedium
 
     """
 
-    frictTypeIdentifier = None
+    frictTypeIdentifier = 'L'
 
     if simCfg['GENERAL']['frictModel'].lower() == 'samosatsmall':
         frictTypeIdentifier = 'S'
