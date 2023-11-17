@@ -268,7 +268,9 @@ def calculation(args):
     #ende chris
     #Paula
     flow_energy_array = np.zeros_like(dem, dtype=np.float32)
+    path_list = []
     #ende paula
+    
 
     if infraBool:        
         back_list = []
@@ -301,9 +303,6 @@ def calculation(args):
         cell_list = [startcell] # list of parents for current iteration
         gen_list = [cell_list]  # list of all cells (which are calculated), oreganised in generations
         child_list = []         # list of childs of the current iteration
-        #paula
-        path_list = []
-        #ende paula
 
         #for idx, cell in enumerate(cell_list):
         for gen, cell_list in enumerate(gen_list):
