@@ -84,6 +84,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double muVoellmyMinShear = cfg.getfloat('muvoellmyminshear')
   cdef double tau0VoellmyMinShear = cfg.getfloat('tau0voellmyminshear')
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
+  cdef double muCoulombMinShear = cfg.getfloat('mucoulombminshear')
+  cdef double tau0CoulombMinShear = cfg.getfloat('tau0coulombminshear')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -281,6 +283,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           elif frictType == 7:
             # voellmy MinShear friction type
             tau = muVoellmyMinShear * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyMinShear + tau0VoellmyMinShear
+          elif frictType == 8:
+            # coulomb MinShear friction type
+            tau = muCoulombMinShear * sigmaB + tau0CoulombMinShear
           else:
             tau = 0.0
 

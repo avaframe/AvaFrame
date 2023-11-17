@@ -94,7 +94,9 @@ def checkCfgFrictionModel(cfg, relVolume=''):
     'musamosatsmall', 'tau0samosatsmall', 'Rs0samosatsmall', 'kappasamosatsmall', 'Rsamosatsmall',
     'Bsamosatsmall',
     'musamosatmedium', 'tau0samosatmedium', 'Rs0samosatmedium', 'kappasamosatmedium', 'Rsamosatmedium',
-    'Bsamosatmedium']
+    'Bsamosatmedium',
+    'mucoulombminshear', 'tau0coulombminshear',
+    'muvoellmyminshear', 'xsivoellmyminshear']
 
     # if samosATAuto check for release volume and volume class to determine which parameter setup
     if cfg['GENERAL']['frictModel'].lower() == 'samosatauto':
@@ -112,7 +114,12 @@ def checkCfgFrictionModel(cfg, relVolume=''):
     if frictModel.lower() == 'samosat':
         frictParameterIn = [frictModel.lower() in frictP and 'small' not in frictP and 'medium' not in frictP for frictP in frictParameters]
     else:
-        frictParameterIn = [frictModel.lower() in frictP for frictP in frictParameters]
+        if frictModel.lower() == 'coulomb':
+            frictParameterIn = [frictModel.lower() in frictP and 'coulombminshear' not in frictP for frictP in frictParameters]
+        elif frictModel.lower() == 'voellmy':
+            frictParameterIn = [frictModel.lower() in frictP and 'voellmyminshear' not in frictP for frictP in frictParameters]
+        else:
+            frictParameterIn = [frictModel.lower() in frictP for frictP in frictParameters]
 
     for indexP, frictP in enumerate(frictParameters):
         if frictParameterIn[indexP]:
