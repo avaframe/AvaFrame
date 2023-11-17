@@ -112,7 +112,7 @@ class Cell:
         muVoellmy = 0.4
         #self.z_alpha = muVoellmy * ds * self.cellsize + self.calc_Voellmy_friction()
         #Voellmy with tan alpha
-        self.z_alpha += self.calc_Voellmy_friction()
+        #self.z_alpha += self.calc_Voellmy_friction()
         #end Paula
 
         self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha

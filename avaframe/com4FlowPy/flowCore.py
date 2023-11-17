@@ -408,7 +408,7 @@ def calculation(args):
                 #ende chris
                 #PAula
                 flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
-                #ende paula
+                #ende pau
 
             
             #Backcalculation
