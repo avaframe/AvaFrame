@@ -14,7 +14,9 @@ else:
     from multiprocessing import Pool
 
 from avaframe.com4FlowPy.flowClass import Cell
-
+#Paula
+from avaframe.com4FlowPy.flowPath import Path
+#end paula
 
 def get_start_idx(dem, release):
     """Sort Release Pixels by altitude and return the result as lists for the
@@ -299,6 +301,9 @@ def calculation(args):
         cell_list = [startcell] # list of parents for current iteration
         gen_list = [cell_list]  # list of all cells (which are calculated), oreganised in generations
         child_list = []         # list of childs of the current iteration
+        #paula
+        path_list = []
+        #ende paula
 
         #for idx, cell in enumerate(cell_list):
         for gen, cell_list in enumerate(gen_list):
@@ -376,27 +381,31 @@ def calculation(args):
                 gen_list.append(cell_list)
                 child_list = []
             
-            #PAULA
-            path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
-            #ende paula
+        #PAULA
+        #list with all paths (every startcell has one path)
+        path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
+        if startcell_idx == 0:
+            path_list[0].plot_test()
+            #print((path_list[0].flux_array>0).sum())
+        #ende paula
 
             #Michi generation
-            for gen, cell_list in enumerate(gen_list):
-                for cell in cell_list:
-            #ende michi
+        for gen, cell_list in enumerate(gen_list):
+            for cell in cell_list:
+        #ende michi
 
-                    z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
-                    flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-                    count_array[cell.rowindex, cell.colindex] += int(1)
-                    z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
-                    fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
-                    sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-                    #Chris
-                    travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
-                    #ende chris
-                    #PAula
-                    flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
-                    #ende paula
+                z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
+                count_array[cell.rowindex, cell.colindex] += int(1)
+                z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
+                fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
+                sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
+                #Chris
+                travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
+                #ende chris
+                #PAula
+                flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
+                #ende paula
 
             
             #Backcalculation
