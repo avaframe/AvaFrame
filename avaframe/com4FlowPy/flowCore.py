@@ -376,6 +376,10 @@ def calculation(args):
                 gen_list.append(cell_list)
                 child_list = []
             
+            #PAULA
+            path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
+            #ende paula
+
             #Michi generation
             for gen, cell_list in enumerate(gen_list):
                 for cell in cell_list:
