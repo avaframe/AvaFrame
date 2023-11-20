@@ -98,15 +98,14 @@ class Path:
             co_var[gen] = 1 / variable_co_sum * np.sum(var * co)
         return variable_sum, co_var
 
-    def plot_test(self):
+    def get_centerofs(self):
+        '''
+        calculate sum of variable for every iteration step/ generation and
+        center of energy & flux for the following variables:
+        '''
+
         self.get_path_arrays()
         self.get_variables_generation()
-
-        #row_generation, col_generation = self.get_coords_in_genlist_format()
-        energy_coE, energy_sum = self.calc_thalweg_centerof(self.flow_energy_generation, self.flow_energy_generation)
-        #row_coE, row_sum = self.calc_thalweg_centerof(self.row_generation, self.flow_energy_generation)
-        #col_coE, col_sum = self.calc_thalweg_centerof(self.col_generation, self.flow_energy_generation)
-
 
         variables = {'col': self.col_generation, 'row': self.row_generation, 'flux':self.flux_generation, 
         'energy':self.flow_energy_generation, 'altitude': self.altitude_generation, 
@@ -114,20 +113,19 @@ class Path:
         for var_name, var in variables.items():
             sumF, coF = self.calc_thalweg_centerof(var, self.flux_generation) # center of flux of every variable
             sumE, coE = self.calc_thalweg_centerof(var, self.flow_energy_generation) # center of energy of every variable
-    
-            globals()[f'{var_name}_sumF'] = sumF
-            globals()[f'{var_name}_coF'] = coF
-            globals()[f'{var_name}_sumE'] = sumE
-            globals()[f'{var_name}_coE'] = coE
+
+            setattr(self, f'{var_name}_sumF', sumF)
+            setattr(self, f'{var_name}_coF', coF)
+            setattr(self, f'{var_name}_sumE', sumE)
+            setattr(self, f'{var_name}_coE', coE)
 
 
+    def plot(self):
         fig, axs = plt.subplots()
         axs.imshow(self.dem, cmap ='Greys', alpha=0.8)
-        #axs.contour(self.dem, levels = 10, colors ='k',linewidths=0.5)
-        #f = axs.imshow(self.generation_array)
+        axs.contour(self.dem, levels = 10, colors ='k',linewidths=0.5)
         #fig.colorbar(f, ax = axs, label = 'flow energy')
-        axs.scatter(col_coE, row_coE, c = 'r', s = 0.4, label = 'center of energy')
-        axs.imshow(self.z_delta_array, cmap = 'Blues', alpha = 0.6)
+        axs.scatter(self.col_coE, self.row_coE, c = 'r', s = 0.4, label = 'center of energy')
         fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_analysis_TEST.png')
         plt.close(fig)
 
