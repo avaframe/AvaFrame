@@ -21,8 +21,15 @@ class Path:
         self.flux_generation = []
         self.travel_length_generation = []
         self.flow_energy_generation = []
+        self.row_generation = []
+        self.col_generation = []
+        self.altitude_generation = []
 
     def get_path_arrays(self):
+        ''' 
+            write ARRAYS with size of dem containing the variable values of every path
+            value 0 means, the path does not hit the cell
+        '''
         for gen, cell_list in enumerate(self.gen_list):
             for cell in cell_list:
                 self.z_delta_array[cell.rowindex, cell.colindex] = max(self.z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
@@ -32,26 +39,40 @@ class Path:
                 self.generation_array[cell.rowindex, cell.colindex] = gen
 
     def get_variables_generation(self):
+        '''
+            write LISTS with size and format of gen_list 
+            (the main list contains lists for every generation)
+        '''
         for gen, cell_list in enumerate(self.gen_list):
             cell_list_z_delta = []
             cell_list_flux = []
             cell_list_min_distance = []
             cell_list_flow_energy = []
+            cell_list_row = []
+            cell_list_col = []
+            cell_list_alt = []
 
             for cell in cell_list:
                 cell_list_z_delta.append(cell.z_delta)
                 cell_list_flux.append(cell.flux)
                 cell_list_min_distance.append(cell.min_distance)
                 cell_list_flow_energy.append(cell.flow_energy)
+                cell_list_row.append(cell.rowindex)
+                cell_list_col.append(cell.colindex)
+                cell_list_alt.append(cell.altitude)
 
             self.z_delta_generation.append(cell_list_z_delta)
             self.flux_generation.append(cell_list_flux)
             self.travel_length_generation.append(cell_list_min_distance)
             self.flow_energy_generation.append(cell_list_flow_energy)
+            self.row_generation.append(cell_list_row)
+            self.col_generation.append(cell_list_col)
+            self.altitude_generation.append(cell_list_alt)
 
     def get_coords_in_genlist_format(self):
         '''
         get coords in the format as the gen_list
+        UNNÖTIG????
         '''
         row = []
         col = []
@@ -68,32 +89,44 @@ class Path:
         variable_co: center of variable_so is calculated (variable is weighted) (in format gen_list)
         '''
         co_var = np.zeros(len(self.gen_list))
+        variable_sum = np.zeros(len(self.gen_list))
         for gen in range(1,len(self.gen_list)):
-            try:
-                var = np.array(variable[gen])
-                co = np.array(variable_co[gen])
-                variable_co_sum = np.sum(co)
-                co_var[gen] = 1 / variable_co_sum * np.sum(var * co)
-            except:
-                continue
-
-        return co_var
+            var = np.array(variable[gen])
+            co = np.array(variable_co[gen])
+            variable_sum[gen] = np.sum(var)
+            variable_co_sum = np.sum(co)
+            co_var[gen] = 1 / variable_co_sum * np.sum(var * co)
+        return variable_sum, co_var
 
     def plot_test(self):
         self.get_path_arrays()
         self.get_variables_generation()
 
-        row_generation, col_generation = self.get_coords_in_genlist_format()
-        energy_coE = self.calc_thalweg_centerof(self.flow_energy_generation, self.flow_energy_generation)
-        row_coE = self.calc_thalweg_centerof(row_generation, self.flow_energy_generation)
-        col_coE = self.calc_thalweg_centerof(col_generation, self.flow_energy_generation)
+        #row_generation, col_generation = self.get_coords_in_genlist_format()
+        energy_coE, energy_sum = self.calc_thalweg_centerof(self.flow_energy_generation, self.flow_energy_generation)
+        #row_coE, row_sum = self.calc_thalweg_centerof(self.row_generation, self.flow_energy_generation)
+        #col_coE, col_sum = self.calc_thalweg_centerof(self.col_generation, self.flow_energy_generation)
+
+
+        variables = {'col': self.col_generation, 'row': self.row_generation, 'flux':self.flux_generation, 
+        'energy':self.flow_energy_generation, 'altitude': self.altitude_generation, 
+        's' : self.travel_length_generation, 'z_delta': self.z_delta_generation}
+        for var_name, var in variables.items():
+            sumF, coF = self.calc_thalweg_centerof(var, self.flux_generation) # center of flux of every variable
+            sumE, coE = self.calc_thalweg_centerof(var, self.flow_energy_generation) # center of energy of every variable
+    
+            globals()[f'{var_name}_sumF'] = sumF
+            globals()[f'{var_name}_coF'] = coF
+            globals()[f'{var_name}_sumE'] = sumE
+            globals()[f'{var_name}_coE'] = coE
+
 
         fig, axs = plt.subplots()
         axs.imshow(self.dem, cmap ='Greys', alpha=0.8)
         #axs.contour(self.dem, levels = 10, colors ='k',linewidths=0.5)
         #f = axs.imshow(self.generation_array)
         #fig.colorbar(f, ax = axs, label = 'flow energy')
-        axs.scatter(col_coE[::1], row_coE[::1], c = 'r', s = 0.4, label = 'center of energy')
+        axs.scatter(col_coE, row_coE, c = 'r', s = 0.4, label = 'center of energy')
         axs.imshow(self.z_delta_array, cmap = 'Blues', alpha = 0.6)
         fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_analysis_TEST.png')
         plt.close(fig)
