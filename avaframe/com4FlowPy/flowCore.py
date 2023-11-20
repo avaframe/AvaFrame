@@ -109,6 +109,14 @@ def back_calculation(back_cell):
     #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
     return back_list
 
+def path_analysis(path_list_list):
+    # PAULA
+    path_travel_lengths = []
+    for path_list in path_list_list:
+        for path in path_list:
+            path_travel_lengths.append(max(path.s_coE))
+    print(path_travel_lengths)
+
 def run(optTuple):
     
     log = logging.getLogger(__name__)
@@ -167,6 +175,7 @@ def run(optTuple):
     #Paula
     flow_energy_list = []
     path_list_list = []
+    path_travel_lengths_list = []
     #ende paula
 
     for i in range(len(results)):
@@ -185,9 +194,9 @@ def run(optTuple):
         #Paula
         flow_energy_list.append(res[8])
         path_list_list.append(res[9])
+
+    path_analysis(path_list_list)
         #ende paula
-
-
 
     logging.info('Calculation finished, getting results.')
     for i in range(len(z_delta_list)):
@@ -386,7 +395,8 @@ def calculation(args):
         #PAULA
         #list with all paths (every startcell has one path)
         path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
-        
+        path_list[-1].get_centerofs()
+
         '''
         path_list[-1].plot_pathanaylsis() #this line takes lot of time!!
         path_test = path_list[-1]

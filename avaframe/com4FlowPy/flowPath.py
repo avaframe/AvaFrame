@@ -124,7 +124,7 @@ class Path:
             setattr(self, f'{var_name}_sumGen', sumF)
             setattr(self, f'{var_name}_coF', coF)
             setattr(self, f'{var_name}_coE', coE)
-
+        
 
     def plot_pathanaylsis(self):
         self.get_centerofs()
