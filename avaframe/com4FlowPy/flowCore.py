@@ -16,6 +16,7 @@ else:
 from avaframe.com4FlowPy.flowClass import Cell
 #Paula
 from avaframe.com4FlowPy.flowPath import Path
+import matplotlib.pyplot as plt
 #end paula
 
 def get_start_idx(dem, release):
@@ -112,10 +113,45 @@ def back_calculation(back_cell):
 def path_analysis(path_list_list):
     # PAULA
     path_travel_lengths = []
+    path_altitude = []
+    path_z_delta_sum = []
     for path_list in path_list_list:
         for path in path_list:
             path_travel_lengths.append(max(path.s_coE))
-    print(path_travel_lengths)
+            path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE))
+            path_z_delta_sum.append(sum(path.z_delta_coE))
+
+            ''' idea for calculating area between zdelta and terrain
+            for i,s in enumerate(path.s_coE):
+                s_diff[i] = path.s_coE[i+1] - s
+            s_diff.append()
+            path_z_delta_area.append(sum(path.z_delta_coE * s_diff))
+            '''
+
+
+            ''' EXPENSIVE!
+            fig = path.plot_pathanaylsis() #this line takes lot of time!!
+            fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
+            plt.close(fig)
+            '''
+    
+    fig,ax = plt.subplots()
+    ax.hist(path_travel_lengths)
+    plt.xlabel('max. travel length of coE path [m]')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_travel_length.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.hist(path_altitude)
+    plt.xlabel('drop height of coE path [m]')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_altitude.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.hist(path_z_delta_sum)
+    plt.xlabel('sum of Z^{\delta} along coE path')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_sum.png')
+    plt.close(fig)
 
 def run(optTuple):
     
@@ -175,7 +211,6 @@ def run(optTuple):
     #Paula
     flow_energy_list = []
     path_list_list = []
-    path_travel_lengths_list = []
     #ende paula
 
     for i in range(len(results)):
@@ -396,15 +431,7 @@ def calculation(args):
         #list with all paths (every startcell has one path)
         path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
         path_list[-1].get_centerofs()
-
-        '''
-        path_list[-1].plot_pathanaylsis() #this line takes lot of time!!
-        path_test = path_list[-1]
-        path_test.plot_pathanaylsis()
-        fig = path_test.plot_path_anaylsis
-        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
-        '''
-    #ende paula
+        #ende paula
 
             #Michi generation
         for gen, cell_list in enumerate(gen_list):
