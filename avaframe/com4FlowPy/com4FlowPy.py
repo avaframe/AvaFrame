@@ -225,6 +225,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
+    path_list = f'{tempDir}, res_path_list'
     #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")

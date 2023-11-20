@@ -166,6 +166,7 @@ def run(optTuple):
     #chris ende
     #Paula
     flow_energy_list = []
+    path_list_list = []
     #ende paula
 
     for i in range(len(results)):
@@ -183,6 +184,7 @@ def run(optTuple):
         #chris ende
         #Paula
         flow_energy_list.append(res[8])
+        path_list_list.append(res[9])
         #ende paula
 
 
@@ -215,6 +217,7 @@ def run(optTuple):
     #chris ende
     #Paula
     np.save(tempDir / ("res_flow_energy_%s_%s" % (optTuple[0], optTuple[1])), flow_energy_array)
+    #np.save(tempDir / ("res_path_list_%s_%s" % (optTuple[0], optTuple[1])), path_list_list)
     #ende paula
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
@@ -383,10 +386,15 @@ def calculation(args):
         #PAULA
         #list with all paths (every startcell has one path)
         path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
-        if startcell_idx == 0:
-            path_list[0].plot_test()
-            #print((path_list[0].flux_array>0).sum())
-        #ende paula
+        
+        '''
+        path_list[-1].plot_pathanaylsis() #this line takes lot of time!!
+        path_test = path_list[-1]
+        path_test.plot_pathanaylsis()
+        fig = path_test.plot_path_anaylsis
+        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
+        '''
+    #ende paula
 
             #Michi generation
         for gen, cell_list in enumerate(gen_list):
@@ -425,6 +433,6 @@ def calculation(args):
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
     #Chris/Paula
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, path_list
     #ende 
 
