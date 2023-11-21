@@ -139,6 +139,7 @@ def path_analysis(path_list_list):
     ax.hist(path_travel_lengths)
     plt.xlabel('max. travel length of coE path [m]')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_travel_length.png')
+# HARDCODED!!!
     plt.close(fig)
 
     fig,ax = plt.subplots()
