@@ -116,17 +116,30 @@ def path_analysis(path_list_list):
     path_altitude = []
     path_z_delta_sum = []
     for path_list in path_list_list:
-        for path in path_list:
-            path_travel_lengths.append(max(path.s_coE))
-            path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE))
-            path_z_delta_sum.append(sum(path.z_delta_coE))
+        for path in path_list: # calculate for every path
+            path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
+            path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
+            path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
 
-            ''' idea for calculating area between zdelta and terrain
+            #idea for calculating area between zdelta and terrain
+            distance = [0]
+            z_delta_mean = []
             for i,s in enumerate(path.s_coE):
-                s_diff[i] = path.s_coE[i+1] - s
-            s_diff.append()
-            path_z_delta_area.append(sum(path.z_delta_coE * s_diff))
-            '''
+		        if i < len(path.s_coE)-1:
+                    dist = path.s_coE[i+1]-s
+                    distance.append(dist)
+
+                    # mean z_delta
+                    z_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
+                    z_delta_mean.append(z_mean)
+            
+            # Distanz * z_delta an jeweiligem Ort
+            path_z_delta_area_1 = np.sum(np.array(distance) * np.array(path_z_delta))
+            # Distanz * mitterlwert von z_delta zwischen zwei punkten
+            path_z_delta_area_mean = np.sum(np.array(distance[1:]) * np.array(z_delta_mean))
+            print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
+            calculated with mean: {path_z_delta_area_mean}')
+            
 
 
             ''' EXPENSIVE!
