@@ -1155,7 +1155,7 @@ def addThalwegAltitude(ax1, rasterTransfo, pfvCrossMax, velocityThreshold, zMaxM
     return ax1
 
 
-def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
+def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None, showLabelRef=True):
     """plot result type name1 vs name 2 and colorcode scenarios using hue
        add reference sim value with label
 
@@ -1171,8 +1171,9 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
             name of parameter used for colorcoding
     """
 
-    # get dataFrame values for reference
-    valDF = resultsDF[resultsDF['simName'] == pathDict['refSimName']]
+    if showLabelRef:
+        # get dataFrame values for reference
+        valDF = resultsDF[resultsDF['simName'] == pathDict['refSimName']]
 
     # define units for available analysis parameters
     availableoptions = ['pfvFieldMax', 'pfvFieldMin', 'pfvFieldMean', 'maxpfvCrossMax',
@@ -1202,13 +1203,14 @@ def plotMaxValuesComp(pathDict, resultsDF, name1, name2, hue=None):
         message = 'Not all sims have a value for %s - no scenario used for plot' % hue
         log.warning(message)
         hue = None
-    else:
+    elif showLabelRef:
         labelRef = 'reference (%s)' % valDF[hue].values[0]
 
     name1Index = availableoptions.index(name1)
     name2Index = availableoptions.index(name2)
     fig = sns.jointplot(data=resultsDF, x=name1, y=name2, hue=hue)
-    fig.ax_joint.scatter(valDF[name1], valDF[name2], color='k', label=labelRef)
+    if showLabelRef:
+        fig.ax_joint.scatter(valDF[name1], valDF[name2], color='k', label=labelRef)
     fig.ax_joint.legend()
 
     # add label names with units

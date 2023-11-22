@@ -32,7 +32,7 @@ def makeADir(dirName):
     if os.path.isdir(dirName):
         log.debug('Be careful directory %s already existed - data saved on top of it' % (dirName))
     else:
-        os.makedirs(dirName)
+        os.makedirs(dirName, exist_ok=True)
     log.debug('Directory: %s created' % dirName)
 
 
