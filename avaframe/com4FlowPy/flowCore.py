@@ -110,53 +110,64 @@ def back_calculation(back_cell):
     #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
     return back_list
 
-def path_analysis(path_list_list):
+def path_calc_analysis(path_list):
     # PAULA
     path_travel_lengths = []
     path_altitude = []
     path_z_delta_sum = []
     path_z_delta_area_1 = []
     path_z_delta_area_mean = []
-    for path_list in path_list_list:
-        for path in path_list: # calculate for every path
-            path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
-            path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
-            path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
+    for path in path_list: # calculate for every path
+        path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
+        path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
+        path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
 
-            #idea for calculating area between zdelta and terrain
-            distance = [0]
-            z_delta_mean = []
+        #idea for calculating area between zdelta and terrain
+        distance = [0]
+        z_delta_mean = []
 
-            for i,s in enumerate(path.s_coE):
-                if i < (len(path.s_coE)-1):
-                    dist = path.s_coE[i+1]-s
-                    distance.append(dist)
+        for i,s in enumerate(path.s_coE):
+            if i < (len(path.s_coE)-1):
+                dist = path.s_coE[i+1]-s
+                distance.append(dist)
 
-                    z_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
-                    z_delta_mean.append(z_mean)
+                z_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
+                z_delta_mean.append(z_mean)
 
-            
-            # Distanz * z_delta an jeweiligem Ort
-            path_z_delta_area_1.append(np.sum(np.array(distance) * np.array(path.z_delta_coE)))
-            # Distanz * mitterlwert von z_delta zwischen zwei punkten
-            path_z_delta_area_mean.append(np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
-                        
-            #print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
-            #calculated with mean: {path_z_delta_area_mean}')
-            
+        # Distanz * z_delta an jeweiligem Ort
+        path_z_delta_area_1.append(np.sum(np.array(distance) * np.array(path.z_delta_coE)))
+        # Distanz * mitterlwert von z_delta zwischen zwei punkten
+        path_z_delta_area_mean.append(np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
+                    
+        #print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
+        #calculated with mean: {path_z_delta_area_mean}')
 
+        ''' EXPENSIVE!
+        fig = path.plot_pathanaylsis() #this line takes lot of time!!
+        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
+        plt.close(fig)
+        '''
+    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean
 
-            ''' EXPENSIVE!
-            fig = path.plot_pathanaylsis() #this line takes lot of time!!
-            fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
-            plt.close(fig)
-            '''
+def path_plot_analysis(path_analysis_list):
+    # get path variables from path_analysis_list
+    path_travel_lengths = []
+    path_altitude = []
+    path_z_delta_sum = []
+    path_z_delta_area_mean = []    
     
+    for var_processes in path_analysis_list:
+        path_travel_lengths.extend(var_processes[0])
+        path_altitude.extend(var_processes[1])
+        path_z_delta_sum.extend(var_processes[2])
+        path_z_delta_area_mean.extend(var_processes[3])
+
+    # Histograms
     fig,ax = plt.subplots()
     ax.hist(path_travel_lengths)
     plt.xlabel('max. travel length of coE path [m]')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_travel_length.png')
-# HARDCODED!!!
+    # HARDCODED!!!
     plt.close(fig)
 
     fig,ax = plt.subplots()
@@ -176,6 +187,16 @@ def path_analysis(path_list_list):
     plt.xlabel('area between Z^{\delta} and topography')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_area.png')
     plt.close(fig)
+
+    # BOxplots
+    fig,ax = plt.subplots()
+    ax.boxplot(path_travel_lengths)
+    plt.ylabel('max. travel length of coE path [m]')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/boxpl_travel_length.png')
+    # HARDCODED!!!
+    plt.close(fig)    
+    
+
 
 def run(optTuple):
     
@@ -235,6 +256,7 @@ def run(optTuple):
     #Paula
     flow_energy_list = []
     path_list_list = []
+    path_analysis_list = []
     #ende paula
 
     for i in range(len(results)):
@@ -253,8 +275,9 @@ def run(optTuple):
         #Paula
         flow_energy_list.append(res[8])
         path_list_list.append(res[9])
-
-    path_analysis(path_list_list)
+        path_analysis_list.append(res[10])
+    
+    path_plot_analysis(path_analysis_list)
         #ende paula
 
     logging.info('Calculation finished, getting results.')
@@ -492,8 +515,10 @@ def calculation(args):
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
-
+    
     #Chris/Paula
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, path_list
+    res_path_data = path_calc_analysis(path_list)
+
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, path_list, res_path_data
     #ende 
 
