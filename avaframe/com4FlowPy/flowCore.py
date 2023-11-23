@@ -115,6 +115,8 @@ def path_analysis(path_list_list):
     path_travel_lengths = []
     path_altitude = []
     path_z_delta_sum = []
+    path_z_delta_area_1 = []
+    path_z_delta_area_mean = []
     for path_list in path_list_list:
         for path in path_list: # calculate for every path
             path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
@@ -124,21 +126,23 @@ def path_analysis(path_list_list):
             #idea for calculating area between zdelta and terrain
             distance = [0]
             z_delta_mean = []
+
             for i,s in enumerate(path.s_coE):
-		        if i < len(path.s_coE)-1:
+                if i < (len(path.s_coE)-1):
                     dist = path.s_coE[i+1]-s
                     distance.append(dist)
 
-                    # mean z_delta
                     z_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
                     z_delta_mean.append(z_mean)
+
             
             # Distanz * z_delta an jeweiligem Ort
-            path_z_delta_area_1 = np.sum(np.array(distance) * np.array(path_z_delta))
+            path_z_delta_area_1.append(np.sum(np.array(distance) * np.array(path.z_delta_coE)))
             # Distanz * mitterlwert von z_delta zwischen zwei punkten
-            path_z_delta_area_mean = np.sum(np.array(distance[1:]) * np.array(z_delta_mean))
-            print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
-            calculated with mean: {path_z_delta_area_mean}')
+            path_z_delta_area_mean.append(np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
+                        
+            #print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
+            #calculated with mean: {path_z_delta_area_mean}')
             
 
 
@@ -165,6 +169,12 @@ def path_analysis(path_list_list):
     ax.hist(path_z_delta_sum)
     plt.xlabel('sum of Z^{\delta} along coE path')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_sum.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.hist(path_z_delta_area_mean)
+    plt.xlabel('area between Z^{\delta} and topography')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_area.png')
     plt.close(fig)
 
 def run(optTuple):
