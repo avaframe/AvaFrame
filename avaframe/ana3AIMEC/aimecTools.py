@@ -1029,7 +1029,9 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     # add maxCrossMax just below a certain coordinate
     indS = np.where(rasterTransfo['s'] >= sXYBound)[0][0]
     maxaCrossMaxConstrained = np.nanmax(aCrossMax[indS:])
+    maxaCrossMaxSXYValue = aCrossMax[indS]
     resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMaxConstrained'] = maxaCrossMaxConstrained
+    resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMaxSXYValue'] = maxaCrossMaxSXYValue
 
     return resAnalysisDF
 

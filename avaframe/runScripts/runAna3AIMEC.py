@@ -30,7 +30,8 @@ def runAna3AIMEC(avalancheDir, cfg, inputDir='', demFileName=''):
     # find max ppr value below certain sxy coordinate
     sXYBound = cfg['AIMECSETUP'].getfloat('sXYValue')
     indS = np.where(rasterTransfo['s'] >= sXYBound)[0][0]
-    print('max ppr value at SXY ', rasterTransfo['s'][indS], 'is ', resAnalysisDF['maxpprCrossMaxConstrained'])
+    print('max ppr value at SXY ', rasterTransfo['s'][indS], 'is ', resAnalysisDF['maxpprCrossMaxSXYValue'])
+    print('max ppr value along thalweg below SXY ', rasterTransfo['s'][indS], 'is ', resAnalysisDF['maxpprCrossMaxConstrained'])
 
     return pathDict, rasterTransfo, resAnalysisDF, plotDict
 
