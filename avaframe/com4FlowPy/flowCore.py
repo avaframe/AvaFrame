@@ -117,12 +117,14 @@ def path_calc_analysis(path_list):
     path_z_delta_sum = []
     path_z_delta_area_1 = []
     path_z_delta_area_mean = []
+    path_z_delta_max = []
     path_area = []
 
     for path in path_list: # calculate for every path
         path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
         path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
         path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
+        path_z_delta_max.append(max(path.z_delta_coE)) #max of z_delta
         path_area.append(path.path_area)
 
         #idea for calculating area between zdelta and terrain
@@ -150,7 +152,7 @@ def path_calc_analysis(path_list):
         fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
         plt.close(fig)
         '''
-    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean, path_area
+    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean, path_area, path_z_delta_max
 
 def path_plot_analysis(path_analysis_list):
     # get path variables from path_analysis_list
@@ -159,6 +161,7 @@ def path_plot_analysis(path_analysis_list):
     path_z_delta_sum = []
     path_z_delta_area_mean = []    
     path_area = []
+    path_z_delta_max = []
 
 
     for var_processes in path_analysis_list:
@@ -167,6 +170,7 @@ def path_plot_analysis(path_analysis_list):
         path_z_delta_sum.extend(var_processes[2])
         path_z_delta_area_mean.extend(var_processes[3])
         path_area.extend(var_processes[4])
+        path_z_delta_max.extend(var_processes[5])
 
     # Histograms
     fig,ax = plt.subplots()
@@ -206,7 +210,20 @@ def path_plot_analysis(path_analysis_list):
     plt.ylabel('max. travel length of coE path [m]')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/boxpl_travel_length.png')
     # HARDCODED!!!
-    plt.close(fig)    
+    plt.close(fig)   
+
+    #Scatterplot
+    fig,ax = plt.subplots(1,2)
+    ax[0].scatter(path_altitude, path_z_delta_area_mean)
+    ax[0].set(xlabel = 'Drop height [m]')
+    ax[0].set(ylabel = 'area between Z^{\delta} and topography')
+
+    ax[1].scatter(path_z_delta_max, path_z_delta_area_mean)
+    ax[1].set(xlabel = 'max z_delta')
+    ax[1].set(ylabel = 'area between Z^{\delta} and topography')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/scatter_area.png')
+    # HARDCODED!!!
+    plt.close(fig)   
     
 
 

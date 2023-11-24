@@ -129,7 +129,7 @@ class Path:
     def calc_path_area(self):
         self.get_path_arrays()
         count_cells = np.where(self.z_delta_array > 0)[0].sum()
-        self.path_area = count_cells * self.cellsize**2 *1e-6    #unit: km²     
+        self.path_area = count_cells * self.cellsize**2 *1e-6 #unit: km²     
 
     def calc_all_analysis(self):
         self.get_centerofs()
