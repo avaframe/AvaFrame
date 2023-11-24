@@ -90,8 +90,9 @@ class Cell:
         u = np.sqrt(self.z_delta * 2 * g)
         # mass = self.flux * cellsize**2 * h0 * rho
         # h = mass / cellsize**2 / rho
-        h = self.flux * 10000 / self.cellsize**2
-        V = self.cellsize ** 2 * h # m³ Volume
+        V = 165254 * 1.5 # m³ Volume #iSeeSnow IdealiedTopo
+        h = self.flux * V / self.cellsize**2
+        
         
         theta = self.calc_theta()
         ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 0, 1], [np.sqrt(2), 1, np.sqrt(2)]])
@@ -112,7 +113,7 @@ class Cell:
         muVoellmy = 0.4
         #self.z_alpha = muVoellmy * ds * self.cellsize + self.calc_Voellmy_friction()
         #Voellmy with tan alpha
-        #self.z_alpha += self.calc_Voellmy_friction()
+        self.z_alpha += self.calc_Voellmy_friction()
         #end Paula
 
         self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha
