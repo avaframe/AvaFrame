@@ -193,6 +193,12 @@ def path_plot_analysis(path_analysis_list):
     plt.close(fig)
 
     fig,ax = plt.subplots()
+    ax.hist(path_z_delta_max)
+    plt.xlabel('maximum of Z_delta along coE path')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_max.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
     ax.hist(path_z_delta_area_mean)
     plt.xlabel('area between Z^{\delta} and topography')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_area.png')
