@@ -25,6 +25,7 @@ class Path:
         self.row_generation = []
         self.col_generation = []
         self.altitude_generation = []
+        self.path_area = 0
 
         self.plot_path_anaylsis, ax = plt.subplots()
         plt.close(self.plot_path_anaylsis)
@@ -124,10 +125,18 @@ class Path:
             setattr(self, f'{var_name}_sumGen', sumF)
             setattr(self, f'{var_name}_coF', coF)
             setattr(self, f'{var_name}_coE', coE)
-        
 
-    def plot_pathanaylsis(self):
+    def calc_path_area(self):
+        self.get_path_arrays()
+        count_cells = np.where(self.z_delta_array > 0)[0].sum()
+        self.path_area = count_cells * self.cellsize**2 *1e-6    #unit: km²     
+
+    def calc_all_analysis(self):
         self.get_centerofs()
+        self.calc_path_area()
+    
+    def plot_pathanaylsis(self):
+        self.calc_all_analysis()
 
         fig, axs = plt.subplots(4,2) 
 

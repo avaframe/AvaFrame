@@ -117,10 +117,13 @@ def path_calc_analysis(path_list):
     path_z_delta_sum = []
     path_z_delta_area_1 = []
     path_z_delta_area_mean = []
+    path_area = []
+
     for path in path_list: # calculate for every path
         path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
         path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
         path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
+        path_area.append(path.path_area)
 
         #idea for calculating area between zdelta and terrain
         distance = [0]
@@ -147,7 +150,7 @@ def path_calc_analysis(path_list):
         fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
         plt.close(fig)
         '''
-    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean
+    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean, path_area
 
 def path_plot_analysis(path_analysis_list):
     # get path variables from path_analysis_list
@@ -155,12 +158,15 @@ def path_plot_analysis(path_analysis_list):
     path_altitude = []
     path_z_delta_sum = []
     path_z_delta_area_mean = []    
+    path_area = []
+
 
     for var_processes in path_analysis_list:
         path_travel_lengths.extend(var_processes[0])
         path_altitude.extend(var_processes[1])
         path_z_delta_sum.extend(var_processes[2])
         path_z_delta_area_mean.extend(var_processes[3])
+        path_area.extend(var_processes[4])
 
     # Histograms
     fig,ax = plt.subplots()
@@ -186,6 +192,12 @@ def path_plot_analysis(path_analysis_list):
     ax.hist(path_z_delta_area_mean)
     plt.xlabel('area between Z^{\delta} and topography')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_area.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.hist(path_area)
+    plt.xlabel('path area [km²]')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_area.png')
     plt.close(fig)
 
     # BOxplots
@@ -479,7 +491,7 @@ def calculation(args):
         #PAULA
         #list with all paths (every startcell has one path)
         path_list.append(Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list))
-        path_list[-1].get_centerofs()
+        path_list[-1].calc_all_analysis()
         #ende paula
 
             #Michi generation
