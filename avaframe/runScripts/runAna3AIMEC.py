@@ -3,6 +3,7 @@
 """
 # Load modules
 import logging
+import numpy as np
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
@@ -25,6 +26,11 @@ def runAna3AIMEC(avalancheDir, cfg, inputDir='', demFileName=''):
 
     rasterTransfo, resAnalysisDF, plotDict, _, pathDict = ana3AIMEC.fullAimecAnalysis(avalancheDir, cfg,
                                                                                       inputDir=inputDir, demFileName=demFileName)
+
+    # find max ppr value below certain sxy coordinate
+    sXYBound = cfg['AIMECSETUP'].getfloat('sXYValue')
+    indS = np.where(rasterTransfo['s'] >= sXYBound)[0][0]
+    print('max ppr value at SXY ', rasterTransfo['s'][indS], 'is ', resAnalysisDF['maxpprCrossMaxConstrained'])
 
     return pathDict, rasterTransfo, resAnalysisDF, plotDict
 

@@ -309,6 +309,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     flagMass = cfgFlags.getboolean('flagMass')
     refSimRowHash = pathDict['refSimRowHash']
     resTypeList = pathDict['resTypeList']
+    sXYBound = cfg['AIMECSETUP'].getfloat('sXYValue')
 
     # apply domain transformation
     log.info('Analyzing data in path coordinate system')
@@ -338,7 +339,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
             resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(maskedRaster)
 
             # analyze all fields
-            resAnalysisDF = aimecTools.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
+            resAnalysisDF = aimecTools.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF, sXYBound)
 
     # compute runout based on runoutResType
     resAnalysisDF = aimecTools.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)

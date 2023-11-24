@@ -982,7 +982,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     return resAnalysisDF
 
 
-def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnalysisDF):
+def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnalysisDF, sXYBound):
     """ analyze transformed field
 
     analyze transformed raster: compute the Max and Mean values in each cross section
@@ -1025,6 +1025,11 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMax'] = maxaCrossMax
     resAnalysisDF.at[simRowHash, dataType + 'CrossMax'] = aCrossMax
     resAnalysisDF.at[simRowHash, dataType + 'CrossMean'] = aCrossMean
+
+    # add maxCrossMax just below a certain coordinate
+    indS = np.where(rasterTransfo['s'] >= sXYBound)[0][0]
+    maxaCrossMaxConstrained = np.nanmax(aCrossMax[indS:])
+    resAnalysisDF.loc[simRowHash, 'max' + dataType + 'CrossMaxConstrained'] = maxaCrossMaxConstrained
 
     return resAnalysisDF
 
