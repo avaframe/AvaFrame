@@ -155,7 +155,7 @@ def path_plot_analysis(path_analysis_list):
     path_altitude = []
     path_z_delta_sum = []
     path_z_delta_area_mean = []    
-    
+
     for var_processes in path_analysis_list:
         path_travel_lengths.extend(var_processes[0])
         path_altitude.extend(var_processes[1])
@@ -255,10 +255,10 @@ def run(optTuple):
     #chris ende
     #Paula
     flow_energy_list = []
-    path_list_list = []
     path_analysis_list = []
     #ende paula
 
+    print('start for loop for results')
     for i in range(len(results)):
         res = results[i]
         res = list(res)
@@ -274,10 +274,12 @@ def run(optTuple):
         #chris ende
         #Paula
         flow_energy_list.append(res[8])
-        path_list_list.append(res[9])
-        path_analysis_list.append(res[10])
+        path_analysis_list.append(res[9])
+    print('end for loop for results')
     
+    print('start path plot')
     path_plot_analysis(path_analysis_list)
+    print('end path plot')
         #ende paula
 
     logging.info('Calculation finished, getting results.')
@@ -517,8 +519,10 @@ def calculation(args):
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
     
     #Chris/Paula
+    print('start calc path analysis')
     res_path_data = path_calc_analysis(path_list)
+    print('end calc path analysis')
 
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, path_list, res_path_data
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, res_path_data
     #ende 
 
