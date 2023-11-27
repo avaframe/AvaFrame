@@ -12,6 +12,10 @@ class Path:
         self.start_row = start_row
         self.start_col = start_col
 
+        self.drop_height = 0
+        self.travel_length = 0
+        self.alpha_calc =  0
+
         self.z_delta_array = np.zeros_like(self.dem, dtype=np.float32)
         self.flow_energy_array = np.zeros_like(self.dem, dtype=np.float32)
         '''
@@ -132,12 +136,19 @@ class Path:
 
     def calc_path_area(self):
         self.get_path_arrays()
-        count_cells = np.where(self.z_delta_array > 0)[0].sum()
-        self.path_area = count_cells * self.cellsize**2 *1e-6 #unit: km²     
+
+        count_cells = np.sum(self.z_delta_array>0)
+        self.path_area = count_cells * self.cellsize**2 *1e-4 #unit: ha    
+
+    def calc_alpha_angle(self):
+        self.drop_height = max(self.altitude_coE)-min(self.altitude_coE)
+        self.travel_length = max(self.s_coE)
+        self.alpha_calc = np.rad2deg(np.arctan(self.drop_height / self.travel_length))
 
     def calc_all_analysis(self):
         self.get_centerofs()
         self.calc_path_area()
+        self.calc_alpha_angle()
     
     def plot_pathanaylsis(self):
         self.calc_all_analysis()

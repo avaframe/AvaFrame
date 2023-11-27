@@ -118,15 +118,17 @@ def path_calc_analysis(path_list):
     thalweg_z_delta_area_1 = np.empty(0)
     thalweg_z_delta_area_mean = np.empty(0)
     thalweg_z_delta_max = np.empty(0)
+    thalweg_alpha_calc = np.empty(0)
     path_area = np.empty(0)
 
     path_z_delta_raster = np.empty((path_list[0].z_delta_array.shape))
 
     for i, path in enumerate(path_list): # calculate for every path
-        thalweg_travel_lengths = np.append(thalweg_travel_lengths, max(path.s_coE)) # travel length of the whole path 
-        thalweg_altitude = np.append(thalweg_altitude, max(path.altitude_coE)-min(path.altitude_coE)) #drop height
+        thalweg_travel_lengths = np.append(thalweg_travel_lengths, path.travel_length) # travel length of the whole path 
+        thalweg_altitude = np.append(thalweg_altitude, path.drop_height) #drop height
         thalweg_z_delta_sum = np.append(thalweg_z_delta_sum, sum(path.z_delta_coE)) #sum of z_delta
         thalweg_z_delta_max = np.append(thalweg_z_delta_max, max(path.z_delta_coE)) #max of z_delta
+        thalweg_alpha_calc = np.append(thalweg_alpha_calc, path.alpha_calc) # calculated alpha angle 
         path_area = np.append(path_area, path.path_area)
 
         #idea for calculating area between zdelta and terrain
@@ -157,7 +159,7 @@ def path_calc_analysis(path_list):
         #plt.close(fig)
         
     path_z_delta_raster = np.delete(path_z_delta_raster,[0,1],axis = 0)    #delete first empty 2d array
-    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max
+    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc
 
 def thalweg_plot_analysis(path_analysis_list):
     # get path variables from path_analysis_list
@@ -167,6 +169,7 @@ def thalweg_plot_analysis(path_analysis_list):
     path_z_delta_area_mean = []    
     path_area = []
     path_z_delta_max = []
+    path_alpha_calc = []
 
 
     for var_processes in path_analysis_list:
@@ -176,6 +179,7 @@ def thalweg_plot_analysis(path_analysis_list):
         path_z_delta_area_mean.extend(var_processes[3])
         path_area.extend(var_processes[4])
         path_z_delta_max.extend(var_processes[5])
+        path_alpha_calc.extend(var_processes[6])
 
     # Histograms
     fig,ax = plt.subplots()
@@ -183,6 +187,14 @@ def thalweg_plot_analysis(path_analysis_list):
     plt.xlabel('max. travel length of coE path [m]')
     plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_travel_length.png')
+    # HARDCODED!!!
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.hist(path_alpha_calc)
+    plt.xlabel('calculated alpha angle [°]')
+    plt.ylabel('Count')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_alpha_angle.png')
     # HARDCODED!!!
     plt.close(fig)
 
@@ -216,7 +228,7 @@ def thalweg_plot_analysis(path_analysis_list):
 
     fig,ax = plt.subplots()
     ax.hist(path_area)
-    plt.xlabel('path area [km²]')
+    plt.xlabel('path area [ha]')
     plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_area.png')
     plt.close(fig)
@@ -274,7 +286,6 @@ def run(optTuple):
                             for release_sub in release_list])
         pool.close()
         pool.join()
-    print('pool closed')
     z_delta_array = np.zeros_like(dem)
     flux_array = np.zeros_like(dem)
     count_array = np.zeros_like(dem)
@@ -304,7 +315,6 @@ def run(optTuple):
     path_analysis_list = []
     #ende paula
 
-    print('start for loop for results')
     for i in range(len(results)):
         res = results[i]
         res = list(res)
@@ -320,12 +330,8 @@ def run(optTuple):
         #chris ende
         #Paula
         flow_energy_list.append(res[8])
-        path_analysis_list.append(res[9])
-    print('end for loop for results')
-    
-    print('start path plot')
+        path_analysis_list.append(res[9])    
     thalweg_plot_analysis(path_analysis_list)
-    print('end path plot')
         #ende paula
 
     logging.info('Calculation finished, getting results.')
