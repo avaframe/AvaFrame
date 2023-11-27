@@ -90,7 +90,8 @@ class Cell:
         u = np.sqrt(self.z_delta * 2 * g)
         # mass = self.flux * cellsize**2 * h0 * rho
         # h = mass / cellsize**2 / rho
-        V = 165254 * 1.5 # m³ Volume #iSeeSnow IdealiedTopo
+        V = 165254 * 1.5 # m³ Volume #iSeeSnow RealTopo
+        #V = 47972 * 1.5 # m³ Volume #iSeeSnow IdealizedTopo
         h = self.flux * V / self.cellsize**2
         
         

@@ -226,7 +226,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
     velocity = np.sqrt(z_delta * 2 * 9.81)
-    thickness = flux * 1.5 #height of release area is 1.5 m for ISeeSnow
+    thickness = flux * 165254 * 1.5 / cellsize**2 # real topo: height of release area is 1.5 m for ISeeSnow
+    #thickness = flux * 47972 * 1.5 / cellsize**2 # ideal topo: height of release area is 1.5 m for ISeeSnow
     #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
