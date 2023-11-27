@@ -112,19 +112,21 @@ def back_calculation(back_cell):
 
 def path_calc_analysis(path_list):
     # PAULA
-    path_travel_lengths = np.empty(0)
-    path_altitude = np.empty(0)
-    path_z_delta_sum = np.empty(0)
-    path_z_delta_area_1 = np.empty(0)
-    path_z_delta_area_mean = np.empty(0)
-    path_z_delta_max = np.empty(0)
+    thalweg_travel_lengths = np.empty(0)
+    thalweg_altitude = np.empty(0)
+    thalweg_z_delta_sum = np.empty(0)
+    thalweg_z_delta_area_1 = np.empty(0)
+    thalweg_z_delta_area_mean = np.empty(0)
+    thalweg_z_delta_max = np.empty(0)
     path_area = np.empty(0)
 
-    for path in path_list: # calculate for every path
-        path_travel_lengths = np.append(path_travel_lengths, max(path.s_coE)) # travel length of the whole path 
-        path_altitude = np.append(path_altitude, max(path.altitude_coE)-min(path.altitude_coE)) #drop height
-        path_z_delta_sum = np.append(path_z_delta_sum, sum(path.z_delta_coE)) #sum of z_delta
-        path_z_delta_max = np.append(path_z_delta_max, max(path.z_delta_coE)) #max of z_delta
+    path_z_delta_raster = np.empty((path_list[0].z_delta_array.shape))
+
+    for i, path in enumerate(path_list): # calculate for every path
+        thalweg_travel_lengths = np.append(thalweg_travel_lengths, max(path.s_coE)) # travel length of the whole path 
+        thalweg_altitude = np.append(thalweg_altitude, max(path.altitude_coE)-min(path.altitude_coE)) #drop height
+        thalweg_z_delta_sum = np.append(thalweg_z_delta_sum, sum(path.z_delta_coE)) #sum of z_delta
+        thalweg_z_delta_max = np.append(thalweg_z_delta_max, max(path.z_delta_coE)) #max of z_delta
         path_area = np.append(path_area, path.path_area)
 
         #idea for calculating area between zdelta and terrain
@@ -140,21 +142,24 @@ def path_calc_analysis(path_list):
                 z_delta_mean = np.append(z_delta_mean, z_mean)
 
         # Distanz * z_delta an jeweiligem Ort
-        path_z_delta_area_1 = np.append(path_z_delta_area_1, np.sum(np.array(distance) * np.array(path.z_delta_coE)))
+        thalweg_z_delta_area_1 = np.append(thalweg_z_delta_area_1, np.sum(np.array(distance) * np.array(path.z_delta_coE)))
         # Distanz * mitterlwert von z_delta zwischen zwei punkten
-        path_z_delta_area_mean = np.append(path_z_delta_area_mean, np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
-                    
-        #print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
-        #calculated with mean: {path_z_delta_area_mean}')
+        thalweg_z_delta_area_mean = np.append(thalweg_z_delta_area_mean, np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
 
-        ''' EXPENSIVE!
-        fig = path.plot_pathanaylsis() #this line takes lot of time!!
-        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path_test.start_col},row{path_test.start_row}.png')
-        plt.close(fig)
-        '''
-    return path_travel_lengths, path_altitude, path_z_delta_sum, path_z_delta_area_mean, path_area, path_z_delta_max
+        path_z_delta_raster = np.append(path_z_delta_raster, path.z_delta_array, axis = 0)
 
-def path_plot_analysis(path_analysis_list):
+        #print(f'Area between z_delta and terrain: calculating with local z_delta: {thalweg_z_delta_area_1},
+        #calculated with mean: {thalweg_z_delta_area_mean}')
+
+        # EXPENSIVE!
+        #path.plot_pathanaylsis() #this line takes lot of time!!
+        #fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path.start_col},row{path.start_row}.png')
+        #plt.close(fig)
+        
+    path_z_delta_raster = np.delete(path_z_delta_raster,[0,1],axis = 0)    #delete first empty 2d array
+    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max
+
+def thalweg_plot_analysis(path_analysis_list):
     # get path variables from path_analysis_list
     path_travel_lengths = []
     path_altitude = []
@@ -176,6 +181,7 @@ def path_plot_analysis(path_analysis_list):
     fig,ax = plt.subplots()
     ax.hist(path_travel_lengths)
     plt.xlabel('max. travel length of coE path [m]')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_travel_length.png')
     # HARDCODED!!!
     plt.close(fig)
@@ -183,37 +189,42 @@ def path_plot_analysis(path_analysis_list):
     fig,ax = plt.subplots()
     ax.hist(path_altitude)
     plt.xlabel('drop height of coE path [m]')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_altitude.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
     ax.hist(path_z_delta_sum)
-    plt.xlabel('sum of Z^{\delta} along coE path')
+    plt.xlabel('sum of Z delta along coE path')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_sum.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
     ax.hist(path_z_delta_max)
-    plt.xlabel('maximum of Z_delta along coE path')
+    plt.xlabel('maximum of Z delta along coE path')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_max.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
     ax.hist(path_z_delta_area_mean)
-    plt.xlabel('area between Z^{\delta} and topography')
+    plt.xlabel('area between Z delta  and topography')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/hist_z_delta_area.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
     ax.hist(path_area)
     plt.xlabel('path area [km²]')
+    plt.ylabel('Count')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_area.png')
     plt.close(fig)
 
     # BOxplots
     fig,ax = plt.subplots()
     ax.boxplot(path_travel_lengths)
-    plt.ylabel('max. travel length of coE path [m]')
+    plt.ylabel('travel length of coE path [m]')
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/boxpl_travel_length.png')
     # HARDCODED!!!
     plt.close(fig)   
@@ -313,7 +324,7 @@ def run(optTuple):
     print('end for loop for results')
     
     print('start path plot')
-    path_plot_analysis(path_analysis_list)
+    thalweg_plot_analysis(path_analysis_list)
     print('end path plot')
         #ende paula
 
@@ -554,10 +565,7 @@ def calculation(args):
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
     
     #Chris/Paula
-    print('start calc path analysis')
     res_path_data = path_calc_analysis(path_list)
-    print('end calc path analysis')
-
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array, res_path_data
     #ende 
 

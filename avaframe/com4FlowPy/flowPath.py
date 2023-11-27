@@ -13,10 +13,10 @@ class Path:
         self.start_col = start_col
 
         self.z_delta_array = np.zeros_like(self.dem, dtype=np.float32)
+        self.flow_energy_array = np.zeros_like(self.dem, dtype=np.float32)
         '''
         self.flux_array = np.zeros_like(self.dem, dtype=np.float32)
         self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
-        self.flow_energy_array = np.zeros_like(self.dem, dtype=np.float32)
         self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
         '''
 
@@ -29,8 +29,8 @@ class Path:
         self.altitude_generation = []
         self.path_area = 0
 
-        self.plot_path_anaylsis, ax = plt.subplots()
-        plt.close(self.plot_path_anaylsis)
+        #self.plot_path_anaylsis, ax = plt.subplots()
+        #plt.close(self.plot_path_anaylsis)
 
     def get_path_arrays(self):
         ''' 
@@ -40,10 +40,10 @@ class Path:
         for gen, cell_list in enumerate(self.gen_list):
             for cell in cell_list:
                 self.z_delta_array[cell.rowindex, cell.colindex] = max(self.z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                self.flow_energy_array[cell.rowindex, cell.colindex] = max(self.flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
                 '''
                 self.flux_array[cell.rowindex, cell.colindex] = max(self.flux_array[cell.rowindex, cell.colindex], cell.flux)
                 self.travel_length_array[cell.rowindex, cell.colindex] = max(self.travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
-                self.flow_energy_array[cell.rowindex, cell.colindex] = max(self.flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
                 self.generation_array[cell.rowindex, cell.colindex] = gen
                 '''
 
@@ -207,10 +207,10 @@ class Path:
             axs[i,1].legend()
             axs[i,1].set(xlabel = 'iteration step / generation')   
         
-
-        #fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/path_analysis_TEST.png')
+        #return fig
+        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{self.start_col},row{self.start_row}.png')
+        #self.plot_path_analysis = fig
         plt.close(fig)
-        self.plot_path_anaylsis = fig
 
     
 
