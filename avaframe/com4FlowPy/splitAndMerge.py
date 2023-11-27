@@ -181,3 +181,9 @@ def MergeRaster(inDirPath, fName):
 
     return mergedRas
     del mergedRas
+
+def Load_BandRaster(inDirPath, fName):
+    #paula
+    # only works when n_tiles = 1
+    Ras = np.load(inDirPath / ("%s.npy" % (fName)))
+    return Ras

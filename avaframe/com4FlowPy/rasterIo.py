@@ -52,3 +52,26 @@ def output_raster(file, file_out, raster):
     new_dataset.write(raster, 1)
     new_dataset.close()
 
+def output_raster_path_bands(file, file_out, raster):
+    #paula
+    """Input is the original file, path to new file, raster_data
+
+    Input parameters:
+        file        the path to the file to reference on, mostly DEM on where
+                    Calculations were done
+        file_out    path for the outputfile, possible extends are .asc or .tif"""
+
+    raster_trans = rasterio.open(file)
+    try:
+        crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
+    except:
+        #crs = rasterio.crs.CRS.from_epsg(4326)
+        crs = None
+    if file_out.suffix == '.asc':
+        new_dataset = rasterio.open(file_out, 'w', driver='AAIGrid', height = raster.shape[1], width = raster.shape[2], count=raster.shape[0],  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
+    if file_out.suffix == '.tif':
+        new_dataset = rasterio.open(file_out, 'w', driver='GTiff', height = raster.shape[1], width = raster.shape[2], count=raster.shape[0],  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
+
+    for i, path in enumerate(raster):
+        new_dataset.write(path, i+1)
+    new_dataset.close()

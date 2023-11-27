@@ -121,7 +121,7 @@ def path_calc_analysis(path_list):
     thalweg_alpha_calc = np.empty(0)
     path_area = np.empty(0)
 
-    path_z_delta_raster = np.empty((path_list[0].z_delta_array.shape))
+    path_z_delta_raster = np.empty((1, path_list[0].z_delta_array.shape[0],path_list[0].z_delta_array.shape[1]))
 
     for i, path in enumerate(path_list): # calculate for every path
         thalweg_travel_lengths = np.append(thalweg_travel_lengths, path.travel_length) # travel length of the whole path 
@@ -148,7 +148,7 @@ def path_calc_analysis(path_list):
         # Distanz * mitterlwert von z_delta zwischen zwei punkten
         thalweg_z_delta_area_mean = np.append(thalweg_z_delta_area_mean, np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
 
-        path_z_delta_raster = np.append(path_z_delta_raster, path.z_delta_array, axis = 0)
+        path_z_delta_raster = np.append(path_z_delta_raster, [path.z_delta_array], axis = 0)
 
         #print(f'Area between z_delta and terrain: calculating with local z_delta: {thalweg_z_delta_area_1},
         #calculated with mean: {thalweg_z_delta_area_mean}')
@@ -158,10 +158,19 @@ def path_calc_analysis(path_list):
         #fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path.start_col},row{path.start_row}.png')
         #plt.close(fig)
         
-    path_z_delta_raster = np.delete(path_z_delta_raster,[0,1],axis = 0)    #delete first empty 2d array
-    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc
+    path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
+    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc, path_z_delta_raster
+
+def overlay_path_raster(path_analysis_list):
+    # paula
+    paths_z_delta = np.empty((1, path_analysis_list[0][7].shape[-2],  path_analysis_list[0][7].shape[-1]))
+    for var_processes in path_analysis_list:
+        paths_z_delta = np.append(paths_z_delta, var_processes[7], axis = 0)
+    paths_z_delta = np.delete(paths_z_delta, [0], axis = 0)
+    return paths_z_delta
 
 def thalweg_plot_analysis(path_analysis_list):
+    #paula
     # get path variables from path_analysis_list
     path_travel_lengths = []
     path_altitude = []
@@ -331,7 +340,9 @@ def run(optTuple):
         #Paula
         flow_energy_list.append(res[8])
         path_analysis_list.append(res[9])    
+
     thalweg_plot_analysis(path_analysis_list)
+    z_delta_all_paths = overlay_path_raster(path_analysis_list)
         #ende paula
 
     logging.info('Calculation finished, getting results.')
@@ -362,6 +373,7 @@ def run(optTuple):
     #chris ende
     #Paula
     np.save(tempDir / ("res_flow_energy_%s_%s" % (optTuple[0], optTuple[1])), flow_energy_array)
+    np.save(tempDir / ("res_z_delta_all_paths"), z_delta_all_paths)
     #np.save(tempDir / ("res_path_list_%s_%s" % (optTuple[0], optTuple[1])), path_list_list)
     #ende paula
     if infraBool:

@@ -225,7 +225,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
-    path_list = f'{tempDir}, res_path_list'
+    z_delta_all_paths = SPAM.Load_BandRaster(tempDir,"res_z_delta_all_paths")
     #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
@@ -241,6 +241,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     io.output_raster(demPath, resDir / ("flow_energy%s" % (output_format)), flow_energy)
+    io.output_raster_path_bands(demPath, resDir / ("z_delta_all_paths%s" % (output_format)), z_delta_all_paths)
     #ende paula
     
     if not infraBool:  # if no infra
