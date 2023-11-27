@@ -13,10 +13,12 @@ class Path:
         self.start_col = start_col
 
         self.z_delta_array = np.zeros_like(self.dem, dtype=np.float32)
+        '''
         self.flux_array = np.zeros_like(self.dem, dtype=np.float32)
         self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
         self.flow_energy_array = np.zeros_like(self.dem, dtype=np.float32)
         self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
+        '''
 
         self.z_delta_generation = []
         self.flux_generation = []
@@ -38,10 +40,12 @@ class Path:
         for gen, cell_list in enumerate(self.gen_list):
             for cell in cell_list:
                 self.z_delta_array[cell.rowindex, cell.colindex] = max(self.z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                '''
                 self.flux_array[cell.rowindex, cell.colindex] = max(self.flux_array[cell.rowindex, cell.colindex], cell.flux)
                 self.travel_length_array[cell.rowindex, cell.colindex] = max(self.travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
                 self.flow_energy_array[cell.rowindex, cell.colindex] = max(self.flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
                 self.generation_array[cell.rowindex, cell.colindex] = gen
+                '''
 
     def get_variables_generation(self):
         '''

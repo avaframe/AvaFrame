@@ -112,24 +112,24 @@ def back_calculation(back_cell):
 
 def path_calc_analysis(path_list):
     # PAULA
-    path_travel_lengths = []
-    path_altitude = []
-    path_z_delta_sum = []
-    path_z_delta_area_1 = []
-    path_z_delta_area_mean = []
-    path_z_delta_max = []
-    path_area = []
+    path_travel_lengths = np.empty(0)
+    path_altitude = np.empty(0)
+    path_z_delta_sum = np.empty(0)
+    path_z_delta_area_1 = np.empty(0)
+    path_z_delta_area_mean = np.empty(0)
+    path_z_delta_max = np.empty(0)
+    path_area = np.empty(0)
 
     for path in path_list: # calculate for every path
-        path_travel_lengths.append(max(path.s_coE)) # travel length of the whole path 
-        path_altitude.append(max(path.altitude_coE)-min(path.altitude_coE)) #drop height
-        path_z_delta_sum.append(sum(path.z_delta_coE)) #sum of z_delta
-        path_z_delta_max.append(max(path.z_delta_coE)) #max of z_delta
-        path_area.append(path.path_area)
+        path_travel_lengths = np.append(path_travel_lengths, max(path.s_coE)) # travel length of the whole path 
+        path_altitude = np.append(path_altitude, max(path.altitude_coE)-min(path.altitude_coE)) #drop height
+        path_z_delta_sum = np.append(path_z_delta_sum, sum(path.z_delta_coE)) #sum of z_delta
+        path_z_delta_max = np.append(path_z_delta_max, max(path.z_delta_coE)) #max of z_delta
+        path_area = np.append(path_area, path.path_area)
 
         #idea for calculating area between zdelta and terrain
         distance = [0]
-        z_delta_mean = []
+        z_delta_mean = np.empty(0)
 
         for i,s in enumerate(path.s_coE):
             if i < (len(path.s_coE)-1):
@@ -137,12 +137,12 @@ def path_calc_analysis(path_list):
                 distance.append(dist)
 
                 z_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
-                z_delta_mean.append(z_mean)
+                z_delta_mean = np.append(z_delta_mean, z_mean)
 
         # Distanz * z_delta an jeweiligem Ort
-        path_z_delta_area_1.append(np.sum(np.array(distance) * np.array(path.z_delta_coE)))
+        path_z_delta_area_1 = np.append(path_z_delta_area_1, np.sum(np.array(distance) * np.array(path.z_delta_coE)))
         # Distanz * mitterlwert von z_delta zwischen zwei punkten
-        path_z_delta_area_mean.append(np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
+        path_z_delta_area_mean = np.append(path_z_delta_area_mean, np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
                     
         #print(f'Area between z_delta and terrain: calculating with local z_delta: {path_z_delta_area_1},
         #calculated with mean: {path_z_delta_area_mean}')
@@ -263,7 +263,7 @@ def run(optTuple):
                             for release_sub in release_list])
         pool.close()
         pool.join()
-
+    print('pool closed')
     z_delta_array = np.zeros_like(dem)
     flux_array = np.zeros_like(dem)
     count_array = np.zeros_like(dem)
