@@ -136,7 +136,8 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
+        #paula: add forest
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, forest]
                             for release_sub in release_list])
         pool.close()
         pool.join()
@@ -221,6 +222,7 @@ def calculation(args):
     nodata = args[7]
     cellsize = args[8]
     infraBool = args[9]
+    forest = args[10]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
