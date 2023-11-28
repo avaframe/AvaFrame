@@ -252,12 +252,16 @@ def calculation(args):
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1:row_idx + 2, col_idx - 1:col_idx + 2]  # neighbourhood DEM
+        #paula
+        forest_local = forest[row_idx, col_idx]  # neighbourhood Forest Layer
+        #end
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
             continue
 
+        #paula: add forest
         startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                         alpha, exp, flux_threshold, max_z_delta, startcell=True)
+                         alpha, exp, flux_threshold, max_z_delta,forest_local, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         cell_list.append(startcell)
@@ -288,10 +292,13 @@ def calculation(args):
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
+                #paula
+                forest_local = forest[row[k], col[k]]  # local forest
+                #end
                 if (nodata in dem_ng) or np.size(dem_ng) < 9:
                     continue
                 cell_list.append(
-                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, forest_local, startcell))
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)

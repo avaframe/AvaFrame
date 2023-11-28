@@ -7,9 +7,9 @@ import math
 
 class Cell:
     
-    def __init__(self, rowindex, colindex, dem_ng, cellsize, flux, 
+    def __init__(self, rowindex, colindex,dem_ng, cellsize, flux, 
                  z_delta, parent, alpha, exp, flux_threshold, 
-                 max_z_delta, startcell):
+                 max_z_delta, forest, startcell):
         '''This class handles the spreading over the DEM!
         Depending on the process different alpha angles are used for energy dissipation.'''
         self.rowindex = rowindex
