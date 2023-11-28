@@ -32,7 +32,10 @@ class Cell:
         self.max_distance = 0
         self.min_gamma = 0
         self.max_gamma = 0
-        self.sl_gamma = 0             
+        self.sl_gamma = 0     
+        #paula
+        self.hitted_forest = 0        
+        #end paula
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
             self.is_start = True  # set is_start to True
