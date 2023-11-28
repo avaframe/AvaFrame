@@ -66,6 +66,28 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy):
             log.info("Release area file is: %s" % relFiles[0])
             cfgPath["releasePath"] = relFiles[0]
 
+    #PAULA
+    #read forest layer
+    forestDir = avalancheDir / "Inputs" / "FOREST"
+    #from tif:
+    if tryTif:
+        forestFiles = sorted(list(forestDir.glob("*.tif")))
+        if len(relFiles) == 0:
+            message = (
+                "You need to provide one *.shp file or one *.tif file containing the release area in %s"
+                % forestDir
+            )
+            log.error(message)
+            raise FileNotFoundError(message)
+        elif len(relFiles) > 1:
+            message = "There should be exactly one *.tif file containing the release area in %s" % releaseDir
+            log.error(message)
+            raise AssertionError(message)
+        else:
+            log.info("Forest area file is: %s" % forestFiles[0])
+            cfgPath["forestPath"] = forestFiles[0]
+    #ende paula
+
     # read infra area
     infraDir = avalancheDir / "Inputs" / "INFRA"
     infraPath = sorted(list(infraDir.glob("*.tif")))
@@ -108,6 +130,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     demPath = cfgPath["demPath"]
     releasePath = cfgPath["releasePath"]
     infraPath = cfgPath["infraPath"]
+    forestPath = cfgPath['forestPath']
     
 
     log.info("Starting...")
