@@ -110,8 +110,9 @@ def back_calculation(back_cell):
     #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
     return back_list
 
-def path_calc_analysis(path_list):
+def path_calc_analysis(path_list, path_raster = False):
     # PAULA
+    # calculate analysis of paths (in Process-splitting/ pool function)
     thalweg_travel_lengths = np.empty(0)
     thalweg_altitude = np.empty(0)
     thalweg_z_delta_sum = np.empty(0)
@@ -120,6 +121,8 @@ def path_calc_analysis(path_list):
     thalweg_z_delta_max = np.empty(0)
     thalweg_alpha_calc = np.empty(0)
     path_area = np.empty(0)
+    col_coE = np.empty(0)
+    row_coE = np.empty(0)
 
     path_z_delta_raster = np.empty((1, path_list[0].z_delta_array.shape[0],path_list[0].z_delta_array.shape[1]))
 
@@ -130,6 +133,8 @@ def path_calc_analysis(path_list):
         thalweg_z_delta_max = np.append(thalweg_z_delta_max, max(path.z_delta_coE)) #max of z_delta
         thalweg_alpha_calc = np.append(thalweg_alpha_calc, path.alpha_calc) # calculated alpha angle 
         path_area = np.append(path_area, path.path_area)
+        col_coE = np.append(col_coE, path.col_coE)
+        row_coE = np.append(row_coE, path.row_coE)
 
         #idea for calculating area between zdelta and terrain
         distance = [0]
@@ -147,8 +152,11 @@ def path_calc_analysis(path_list):
         thalweg_z_delta_area_1 = np.append(thalweg_z_delta_area_1, np.sum(np.array(distance) * np.array(path.z_delta_coE)))
         # Distanz * mitterlwert von z_delta zwischen zwei punkten
         thalweg_z_delta_area_mean = np.append(thalweg_z_delta_area_mean, np.sum(np.array(distance[1:]) * np.array(z_delta_mean)))
+        del distance
+        del z_delta_mean
 
-        path_z_delta_raster = np.append(path_z_delta_raster, [path.z_delta_array], axis = 0)
+        if path_raster == True:
+            path_z_delta_raster = np.append(path_z_delta_raster, [path.z_delta_array], axis = 0)
 
         #print(f'Area between z_delta and terrain: calculating with local z_delta: {thalweg_z_delta_area_1},
         #calculated with mean: {thalweg_z_delta_area_mean}')
@@ -158,37 +166,45 @@ def path_calc_analysis(path_list):
         #fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{path.start_col},row{path.start_row}.png')
         #plt.close(fig)
         
-    path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
-    return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc, path_z_delta_raster
+    
+    if path_raster == True:
+        path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
+        return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc, row_coE, col_coE, path_z_delta_raster
+    else:
+        return thalweg_travel_lengths, thalweg_altitude, thalweg_z_delta_sum, thalweg_z_delta_area_mean, path_area, thalweg_z_delta_max, thalweg_alpha_calc, row_coE, col_coE
 
 def overlay_path_raster(path_analysis_list):
     # paula
-    paths_z_delta = np.empty((1, path_analysis_list[0][7].shape[-2],  path_analysis_list[0][7].shape[-1]))
+    paths_z_delta = np.empty((1, path_analysis_list[0][-1].shape[-2],  path_analysis_list[0][-1].shape[-1]))
     for var_processes in path_analysis_list:
-        paths_z_delta = np.append(paths_z_delta, var_processes[7], axis = 0)
+        paths_z_delta = np.append(paths_z_delta, var_processes[-1], axis = 0)
     paths_z_delta = np.delete(paths_z_delta, [0], axis = 0)
     return paths_z_delta
 
-def thalweg_plot_analysis(path_analysis_list):
+def thalweg_plot_analysis(dem, path_analysis_list):
     #paula
     # get path variables from path_analysis_list
-    path_travel_lengths = []
-    path_altitude = []
-    path_z_delta_sum = []
-    path_z_delta_area_mean = []    
-    path_area = []
-    path_z_delta_max = []
-    path_alpha_calc = []
+    path_travel_lengths = np.empty(0)
+    path_altitude = np.empty(0)
+    path_z_delta_sum = np.empty(0)
+    path_z_delta_area_mean = np.empty(0)    
+    path_area = np.empty(0)
+    path_z_delta_max = np.empty(0)
+    path_alpha_calc = np.empty(0)
+    thalweg_row = []
+    thalweg_col = []
 
 
     for var_processes in path_analysis_list:
-        path_travel_lengths.extend(var_processes[0])
-        path_altitude.extend(var_processes[1])
-        path_z_delta_sum.extend(var_processes[2])
-        path_z_delta_area_mean.extend(var_processes[3])
-        path_area.extend(var_processes[4])
-        path_z_delta_max.extend(var_processes[5])
-        path_alpha_calc.extend(var_processes[6])
+        path_travel_lengths = np.append(path_travel_lengths, var_processes[0])
+        path_altitude = np.append(path_altitude, var_processes[1])
+        path_z_delta_sum = np.append(path_z_delta_sum, var_processes[2])
+        path_z_delta_area_mean = np.append(path_z_delta_area_mean, var_processes[3])
+        path_area = np.append(path_area, var_processes[4])
+        path_z_delta_max = np.append(path_z_delta_max, var_processes[5])
+        path_alpha_calc = np.append(path_alpha_calc, var_processes[6])
+        thalweg_row.append(var_processes[7])
+        thalweg_col.append(var_processes[8])
 
     # Histograms
     fig,ax = plt.subplots()
@@ -262,7 +278,17 @@ def thalweg_plot_analysis(path_analysis_list):
     fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/scatter_area.png')
     # HARDCODED!!!
     plt.close(fig)   
-    
+
+    # All Thalwege
+    fig,ax = plt.subplots()
+    ax.imshow(dem, cmap ='Greys', alpha=0.8)
+    ax.contour(dem, levels = 10, colors ='k',linewidths=0.5)
+    for i in range(len(thalweg_row)):
+        ax.plot(thalweg_col[i], thalweg_row[i], c = 'm', linewidth=0.2)
+        #ax.scatter(thalweg_col[i], thalweg_row[i], c = 'k', s = 0.2, label = 'center of energy')
+    fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/all_thalwege_coE.png')
+    # HARDCODED!!!
+    plt.close(fig) 
 
 
 def run(optTuple):
@@ -341,8 +367,8 @@ def run(optTuple):
         flow_energy_list.append(res[8])
         path_analysis_list.append(res[9])    
 
-    thalweg_plot_analysis(path_analysis_list)
-    z_delta_all_paths = overlay_path_raster(path_analysis_list)
+    thalweg_plot_analysis(dem, path_analysis_list)
+    #z_delta_all_paths = overlay_path_raster(path_analysis_list)
         #ende paula
 
     logging.info('Calculation finished, getting results.')
@@ -373,7 +399,7 @@ def run(optTuple):
     #chris ende
     #Paula
     np.save(tempDir / ("res_flow_energy_%s_%s" % (optTuple[0], optTuple[1])), flow_energy_array)
-    np.save(tempDir / ("res_z_delta_all_paths"), z_delta_all_paths)
+    #np.save(tempDir / ("res_z_delta_all_paths"), z_delta_all_paths)
     #np.save(tempDir / ("res_path_list_%s_%s" % (optTuple[0], optTuple[1])), path_list_list)
     #ende paula
     if infraBool:
