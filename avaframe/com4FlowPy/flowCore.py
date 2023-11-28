@@ -116,6 +116,9 @@ def run(optTuple):
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    #paula
+    forest = np.load(tempDir / ("init_forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    #end paula
     if infraBool:
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
