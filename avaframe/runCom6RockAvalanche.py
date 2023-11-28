@@ -12,7 +12,6 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.log2Report import generateReport as gR
 
 # import computation modules
 from avaframe.com6RockAvalanche import com6RockAvalanche
@@ -65,20 +64,6 @@ def runRockAvalanche(avalancheDir=""):
     avaDir = pathlib.Path(avalancheDir)
     inputDir = avaDir / "Outputs" / "com1DFA" / "peakFiles"
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-
-    # ----------------
-    # Collect results/plots/report  to a single directory
-    # Set directory for report
-    reportDir = avaDir / "Outputs" / "reports"
-    fU.makeADir(reportDir)
-    # write report and copy plots to report dir
-    gR.writeReport(
-        reportDir,
-        reportDictList,
-        cfgMain["FLAGS"].getboolean("reportOneFile"),
-        plotDict=plotDict,
-        standaloneReport=True,
-    )
 
     # Print time needed
     endTime = time.time()
