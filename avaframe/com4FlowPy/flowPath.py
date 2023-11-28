@@ -14,7 +14,7 @@ class Path:
 
         self.drop_height = 0
         self.travel_length = 0
-        self.alpha_calc =  0
+        self.alpha_calc =  np.nan
 
         self.z_delta_array = np.zeros_like(self.dem, dtype=np.float32)
         self.flow_energy_array = np.zeros_like(self.dem, dtype=np.float32)
@@ -143,7 +143,9 @@ class Path:
     def calc_alpha_angle(self):
         self.drop_height = max(self.altitude_coE)-min(self.altitude_coE)
         self.travel_length = max(self.s_coE)
-        self.alpha_calc = np.rad2deg(np.arctan(self.drop_height / self.travel_length))
+        if self.drop_height > 0:
+            self.alpha_calc = np.rad2deg(np.arctan(self.drop_height / self.travel_length))
+        
 
     def calc_all_analysis(self):
         self.get_centerofs()
