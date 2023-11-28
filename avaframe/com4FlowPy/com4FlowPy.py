@@ -178,12 +178,26 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         releasePathWork = releasePath
         releaseArea, releaseAreaHeader = io.read_raster(releasePath)
 
+    #PAULA
+    #read forest data
+    forestPathWork = forestPath
+    forest, forestHeader = io.read_raster(forestPath)
+    #end paula
+
     # Check if Layers have same size!!!
     if demHeader["ncols"] == releaseAreaHeader["ncols"] and demHeader["nrows"] == releaseAreaHeader["nrows"]:
         log.info("DEM and Release Layer ok!")
     else:
         log.error("Error: Release Layer doesn't match DEM!")
         return
+
+    #Paula
+    if demHeader["ncols"] == forestHeader["ncols"] and demHeader["nrows"] == forestHeader["nrows"]:
+        log.info("DEM and Forest Layer ok!")
+    else:
+        log.error("Error: Forest Layer doesn't match DEM!")
+        return
+    #ende paula
 
     if infraPath != "":
         infraArea, infraAreaHeader = io.read_raster(infraPath)
@@ -199,6 +213,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     if infraBool:
         del infraArea
     del releaseArea
+    #PAULA
+    del forest
+    #end
     log.info("Files read in")
 
     cellsize = demHeader["cellsize"]
@@ -213,6 +230,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     SPAM.tileRaster(demPath, "dem", tempDir, tileCOLS, tileROWS, U)
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
+    #paula
+    SPAM.tileRaster(forestPathWork, "init_forest", tempDir, tileCOLS, tileROWS, U, isInit=True)
+    #ende
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
     log.info("Finished Tiling.")
