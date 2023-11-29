@@ -18,6 +18,7 @@ def test_runCom6RockAvalanche(tmp_path, caplog):
     inputDir = testDir / "data" / "testCom6RockAvalanche"
     avaDir = pathlib.Path(tmp_path, "testCom6RockAvalanche")
     shutil.copytree(inputDir, avaDir)
+    print(avaDir)
     cfgMain = configparser.ConfigParser()
     cfgMain["MAIN"] = {"avalancheDir": str(avaDir), "nCPU": "auto", "CPUPercent": "90"}
     cfgMain["FLAGS"] = {
