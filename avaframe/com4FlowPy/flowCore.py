@@ -128,12 +128,19 @@ def run(optTuple):
     flux_threshold = float(optTuple[6])
     max_z_delta = float(optTuple[7])
 
+    #paula
+    row_list, col_list = get_start_idx(dem, release)
+    number_release = len(row_list)
+    del row_list
+    del col_list
+    #end
+
     log.info("Multiprocessing starts, used cores: %i" % (nCPU))
         
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, number_release]
                             for release_sub in release_list])
         pool.close()
         pool.join()
@@ -217,6 +224,8 @@ def run(optTuple):
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
 
+    return number_release
+
 def calculation(args):
     """This is the core function where all the data handling and calculation is
     done.
@@ -250,6 +259,7 @@ def calculation(args):
     nodata = args[7]
     cellsize = args[8]
     infraBool = args[9]
+    number_release = args[10]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -294,7 +304,7 @@ def calculation(args):
             continue
 
         startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                         alpha, exp, flux_threshold, max_z_delta, startcell=True)
+                         alpha, exp, flux_threshold, max_z_delta, number_release, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         #Paula
@@ -380,7 +390,7 @@ def calculation(args):
                     # Michi generation
                     #cell_list.append(
                     child_list.append(
-                        Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                        Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, number_release, startcell))
 
             # prepare lists for next iteration
             if len(child_list) > 0:
@@ -434,8 +444,6 @@ def calculation(args):
     #Chris/Paula
     log = logging.getLogger(__name__)
 
-    log.info(f'sum of flux of last  generation: {flux_last_gen}')
-    log.info(f'number of startcells: {len(row_list)}')
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array
     #ende 
 

@@ -171,7 +171,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         else:
             log.error("Error: Infra Layer doesn't match DEM!")
             return
-
+    
     # ToDo: why? is it in case it was too big?
     if infraBool:
         del infraArea
@@ -209,7 +209,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # Calculation
     for optTuple in optList:
-        fc.run(optTuple)
+        number_release = fc.run(optTuple)
+        #release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
     log.info("Calculation finished, merging results.")
 
@@ -226,7 +227,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
     velocity = np.sqrt(z_delta * 2 * 9.81)
-    thickness = flux * 165254 * 1.5 / cellsize**2 # real topo: height of release area is 1.5 m for ISeeSnow
+    thickness = flux * number_release
+    #thickness = flux * 165254 * 1.5 / cellsize**2 # real topo: height of release area is 1.5 m for ISeeSnow
     #thickness = flux * 47972 * 1.5 / cellsize**2 # ideal topo: height of release area is 1.5 m for ISeeSnow
     #ende paula
     if infraBool:

@@ -9,7 +9,7 @@ class Cell:
     
     def __init__(self, rowindex, colindex, dem_ng, cellsize, flux, 
                  z_delta, parent, alpha, exp, flux_threshold, 
-                 max_z_delta, startcell):
+                 max_z_delta, number_release, startcell):
         '''This class handles the spreading over the DEM!
         Depending on the process different alpha angles are used for energy dissipation.'''
         self.rowindex = rowindex
@@ -35,6 +35,7 @@ class Cell:
         self.sl_gamma = 0       
         #PAULA
         self.flow_energy = 0
+        self.number_release = number_release
         #ende paula      
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -92,7 +93,8 @@ class Cell:
         # h = mass / cellsize**2 / rho
         V = 165254 * 1.5 # m³ Volume #iSeeSnow RealTopo
         #V = 47972 * 1.5 # m³ Volume #iSeeSnow IdealizedTopo
-        h = self.flux * V / self.cellsize**2
+        #h = self.flux * V / self.cellsize**2
+        h = self.flux * self.number_release
         
         
         theta = self.calc_theta()
