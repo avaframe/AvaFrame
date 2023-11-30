@@ -34,7 +34,7 @@ class Cell:
         self.max_gamma = 0
         self.sl_gamma = 0     
         #paula
-        self.hitted_forest = 0        
+        self.hitted_forest = forest        
         #end paula
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -52,6 +52,10 @@ class Cell:
 
     def add_parent(self, parent):
         self.parent.append(parent)
+        #paula
+        # get forest flag = 1 from parent
+        if parent.hitted_forest == 1:
+            self.hitted_forest = 1
 
     def calc_fp_travelangle(self):
         dist_min = []
