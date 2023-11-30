@@ -149,6 +149,9 @@ def run(optTuple):
     backcalc = np.zeros_like(dem)
     fp_travelangle_array = np.zeros_like(dem)
     sl_travelangle_array = np.zeros_like(dem)
+    #paula
+    forest_flag_sum = np.zeros_like(dem)
+    #end
 
     z_delta_list = []
     flux_list = []
@@ -157,6 +160,9 @@ def run(optTuple):
     backcalc_list = []
     fp_ta_list = []
     sl_ta_list = []
+    #paula
+    forest_list = []
+    #end
     
     for i in range(len(results)):
         res = results[i]
@@ -168,6 +174,9 @@ def run(optTuple):
         backcalc_list.append(res[4])
         fp_ta_list.append(res[5])
         sl_ta_list.append(res[6])
+        #paula
+        forest_list.append(res[7])
+        #end
 
     logging.info('Calculation finished, getting results.')
     for i in range(len(z_delta_list)):
@@ -177,7 +186,10 @@ def run(optTuple):
         z_delta_sum += z_delta_sum_list[i]
         backcalc = np.maximum(backcalc, backcalc_list[i])
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
-        sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])        
+        sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])      
+        #paula
+        forest_flag_sum += forest_list[i]
+        #end
         
     # Save Calculated tiles
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
@@ -186,6 +198,9 @@ def run(optTuple):
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), count_array)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
+    #paula
+    np.save(tempDir / ("res_forest_%s_%s" % (optTuple[0], optTuple[1])), forest_flag_sum)
+    #end
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
 
@@ -233,6 +248,10 @@ def calculation(args):
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
     
     backcalc = np.zeros_like(dem, dtype=np.int32)
+
+    #paula
+    forest_flag_sum = np.zeros_like(dem, dtype=np.int32)
+    #end
     
     if infraBool:        
         back_list = []
@@ -306,6 +325,7 @@ def calculation(args):
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
+            forest_flag_sum[cell.rowindex, cell.colindex] += cell.hitted_forest
 
             #Backcalculation
             if infraBool:
@@ -322,6 +342,7 @@ def calculation(args):
             row_list, col_list = get_start_idx(dem, release)
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
+    #paula add forest
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, forest_flag_sum
 
 
