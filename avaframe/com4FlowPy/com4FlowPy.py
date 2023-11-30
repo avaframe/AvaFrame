@@ -94,32 +94,44 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy):
 
 
 def com4FlowPyMain(cfgPath, cfgSetup):
-    # Input Parameters
+    
+    # Model Parameters
     alpha = float(cfgSetup["alpha"])
     exp = float(cfgSetup["exp"])
     flux_threshold = float(cfgSetup["flux_threshold"])
     max_z = float(cfgSetup["max_z"])
+    # Number of CPUs to use
     nCPU = int(cfgSetup["cpuCount"])
+    # Tiling Options/Parameters
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
+    
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
     demPath = cfgPath["demPath"]
     releasePath = cfgPath["releasePath"]
-    infraPath = cfgPath["infraPath"]
-    
+
+    if cfgSetup["infra"]=='True':
+        infraPath = cfgPath["infraPath"]
+    else:
+        infraPath=""
 
     log.info("Starting...")
 
     start = datetime.now().replace(microsecond=0)
     infraBool = False
+
     # Create result directory
-    timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
-    resDir = outDir / "res_{}".format(timeString)
-    fU.makeADir(resDir)
-    tempDir = workDir / "temp"
-    fU.makeADir(tempDir)
+    if cfgPath["customDirs"]=="False":
+        timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
+        resDir = outDir / "res_{}".format(timeString)
+        fU.makeADir(resDir)
+        tempDir = workDir / "temp"
+        fU.makeADir(tempDir)
+    else:
+        resDir = cfgPath["outDir"]
+        tempDir = cfgPath["tempDir"]
 
     # Start of Calculation
     log.info("Start Calculation")
