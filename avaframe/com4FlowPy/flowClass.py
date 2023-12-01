@@ -54,8 +54,9 @@ class Cell:
         self.parent.append(parent)
         #paula
         # get forest flag = 1 from parent
-        if parent.hitted_forest == 1:
-            self.hitted_forest = 1
+        #if parent.hitted_forest == 1:
+        #    self.hitted_forest = 1
+        self.hitted_forest += parent.hitted_forest
 
     def calc_fp_travelangle(self):
         dist_min = []
