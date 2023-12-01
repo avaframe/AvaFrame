@@ -242,7 +242,6 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.xlabel('max. travel length of coE path [m]')
     plt.ylabel('Count')
     fig.savefig(f'{plotDir}/hist_travel_length.png')
-    # HARDCODED!!!
     plt.close(fig)
 
     fig,ax = plt.subplots()
@@ -250,7 +249,6 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.xlabel('calculated alpha angle [°]')
     plt.ylabel('Count')
     fig.savefig(f'{plotDir}/hist_alpha_angle.png')
-    # HARDCODED!!!
     plt.close(fig)
 
     fig,ax = plt.subplots()
@@ -293,7 +291,6 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     ax.boxplot(path_travel_lengths)
     plt.ylabel('travel length of coE path [m]')
     fig.savefig(f'{plotDir}/boxpl_travel_length.png')
-    # HARDCODED!!!
     plt.close(fig)   
 
     #Scatterplot
@@ -306,7 +303,6 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     ax[1].set(xlabel = 'max z_delta')
     ax[1].set(ylabel = 'area between Z^{\delta} and topography')
     fig.savefig(f'{plotDir}/scatter_area.png')
-    # HARDCODED!!!
     plt.close(fig)   
 
     # All Thalwege
@@ -317,7 +313,6 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         ax.plot(thalweg_col[i], thalweg_row[i], c = 'm', linewidth=0.2)
         #ax.scatter(thalweg_col[i], thalweg_row[i], c = 'k', s = 0.2, label = 'center of energy')
     fig.savefig(f'{plotDir}/all_thalwege_coE.png')
-    # HARDCODED!!!
     plt.close(fig) 
 
 def run(optTuple):
