@@ -151,6 +151,7 @@ class Path:
         self.get_centerofs()
         self.calc_path_area()
         self.calc_alpha_angle()
+        self.gen_list = []
     
     def plot_pathanaylsis(self):
         self.calc_all_analysis()

@@ -118,6 +118,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
     resDir = outDir / "res_{}".format(timeString)
     fU.makeADir(resDir)
+    #paula
+    plotDir = resDir / "Plots"
+    fU.makeADir(plotDir)
+    #end paula
     tempDir = workDir / "temp"
     fU.makeADir(tempDir)
 
@@ -204,8 +208,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
+            #paula: add plotDir
             optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+                            max_z, tempDir, infraBool, nCPU,  plotDir))
 
     # Calculation
     for optTuple in optList:
