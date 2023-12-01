@@ -188,7 +188,7 @@ def run(optTuple):
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])      
         #paula
-        forest_interaction_array = np.minimum(forest_interaction_array, forest_list[i])
+        forest_interaction_array = np.maximum(forest_interaction_array, forest_list[i])
         #end
         
     # Save Calculated tiles
@@ -199,7 +199,7 @@ def run(optTuple):
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
     #paula
-    np.save(tempDir / ("res_forest_%s_%s" % (optTuple[0], optTuple[1])), forest_flag_sum)
+    np.save(tempDir / ("res_forest_%s_%s" % (optTuple[0], optTuple[1])), forest_interaction_array)
     #end
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
@@ -325,7 +325,7 @@ def calculation(args):
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-            forest_interaction_array[cell.rowindex, cell.colindex] = min(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+            forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
 
             #Backcalculation
             if infraBool:
@@ -343,6 +343,6 @@ def calculation(args):
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
     #paula add forest
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, forest_flag_sum
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, forest_interaction_array
 
 
