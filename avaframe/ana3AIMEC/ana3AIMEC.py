@@ -157,7 +157,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     plotDict = {}
     log.info('Visualisation of AIMEC results')
     # plot the contour lines of all sims for the thresholdValue of runoutResType
-    outAimec.plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup)
+    outAimec.plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inputsDF)
 
     if sorted(pathDict['resTypeList']) == sorted(['ppr', 'pft', 'pfv']) and cfgPlots.getboolean('extraPlots'):
         outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)

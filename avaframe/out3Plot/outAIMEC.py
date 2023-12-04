@@ -229,6 +229,12 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     # Get input data
     varParList = cfgSetup['varParList'].split('|')
     paraVar = varParList[0]
+    if 'colorParameter' in pathDict:
+        if pathDict['colorParameter'] is False:
+            firstVar = None
+        else:
+            # get first sim value of paraVar to decide if str or float or bool
+            firstVar = resAnalysisDF[paraVar].iloc[0]
     percentile = cfgSetup.getfloat('percentile')
     runoutResType = cfgSetup['runoutResType']
     thresholdValue = cfgSetup['thresholdValue']
@@ -276,6 +282,11 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             values = None
             minVal = 0
             maxVal = 1
+        elif isinstance(firstVar, str):
+            values = inputsDF[varParList[0]].to_list()
+            minVal = 0
+            maxVal = 1
+            colorFlag = True
         else:
             values = inputsDF[varParList[0]].to_list()
             minVal = np.nanmin(values)
@@ -336,13 +347,20 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     cmap = mpl.cm.ScalarMappable(norm=norm, cmap=pU.cmapAvaframeCont)
     cmap.set_array([])
 
+    # map string varParList value to 0, 1 colorbar values
+    if isinstance(firstVar, str):
+        varParStrValues = list(set(resAnalysisDF[varParList[0]].tolist()))
+        cmapValues = np.linspace(0, 1, len(varParStrValues))
+
     # loop over all sims and compute colorbar value and add line plot
     countSim = 1
     for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
-        if colorFlag:
+        if colorFlag and (isinstance(firstVar, str) == False):
             cmapVal = resAnalysisRow[varParList[0]]
             if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
                 cmapVal = resAnalysisRow[(paraVar+'0')]
+        elif colorFlag and isinstance(firstVar, str):
+            cmapVal = cmapValues[varParStrValues.index(resAnalysisRow[varParList[0]])]
         else:
             cmapVal = countSim / nSamples
         if resAnalysisRow['simName'] == pathDict['refSimName']:
@@ -358,6 +376,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         if cfgSetup['unit'] != '':
             cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
+        if isinstance(firstVar, str):
+            cbar.set_ticks(ticks= list(cmapValues), labels=varParStrValues)
     # add labels title
     ax3.set_title('%s along thalweg for all sims' % name)
     ax3.legend(loc='upper right')
@@ -879,7 +899,7 @@ def fetchContourLines(rasterTransfo, inputs, level, contourDict):
     return contourDict
 
 
-def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
+def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inputsDF):
     """ plot contour lines of all transformed fields
         colorcode contour lines with first parameter in varParList if not type string of value
 
@@ -893,6 +913,9 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
             raster transformation dictionary
         cfgSetup: configparser
             configuration settings for AIMECSETUP
+        inputsDF: pandas DataFrame
+            dataframe with one row per simulation and information on parameter (if no configuration file found,
+            derived from simName) and available files
 
     """
     # fetch raster coordinate data
@@ -906,13 +929,14 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup):
 
     if pathDict['colorParameter']:
         # fetch parameter info for sims
-        simDF = cfgUtils.createConfigurationInfo(pathDict['avalancheDir'], specDir='')
+        simDF = inputsDF
         varParList = cfgSetup['varParList'].split('|')
         paraVar = varParList[0]
         values = simDF[varParList[0]].to_list()
         # if varPar is thickness and possibly read from shp
-        if np.isnan(values).any() and varParList[0] in ['relTh', 'entTh', 'secondaryRelTh']:
-            values = simDF[(varParList[0]+'0')].to_list() + values
+        if varParList[0] in ['relTh', 'entTh', 'secondaryRelTh']:
+           if np.isnan(values).any():
+                values = simDF[(varParList[0]+'0')].to_list() + values
 
         if isinstance(values[0], str) is False:
             minVal = np.nanmin(values)
