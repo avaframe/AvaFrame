@@ -188,7 +188,8 @@ def run(optTuple):
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])      
         #paula
-        forest_interaction_array = np.maximum(forest_interaction_array, forest_list[i])
+        forest_interaction_array = np.logical_and(forest_interaction_array, forest_list[i]) * np.minimum(forest_interaction_array, forest_list[i])
+        forest_interaction_array = np.logical_or(forest_interaction_array, forest_list[i]) * np.maximum(forest_interaction_array, forest_list[i])
         #end
         
     # Save Calculated tiles
@@ -325,7 +326,10 @@ def calculation(args):
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-            forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+            if forest_interaction_array[cell.rowindex, cell.colindex] > 0 and cell.hitted_forest > 0:
+                forest_interaction_array[cell.rowindex, cell.colindex] = min(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+            else:
+                forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
             #Backcalculation
             if infraBool:
                 if infra[cell.rowindex, cell.colindex] > 0:
