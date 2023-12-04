@@ -119,11 +119,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         infraPath=""
         infraBool = False
 
-    
-
     start = datetime.now().replace(microsecond=0)
     
-
     # Create result directory
     if cfgPath["customDirs"]=="False":
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -229,8 +226,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     optList = []
     # das hier ist die batch-liste, die von mulitprocessing
     # abgearbeitet werden muss - sieht so aus:
-    # [(0,0,alpha,exp,cellsize,-9999.),
-    # (0,1,alpha,exp,cellsize,-9999.),
+    # [(0,0,alpha,exp,cellsize,-9999., etc.),
+    # (0,1,alpha,exp,cellsize,-9999., etc.),
     # etc.]
 
     for i in range(nTiles[0] + 1):
@@ -251,6 +248,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     z_delta_sum = SPAM.MergeRaster(tempDir, "res_z_delta_sum")
     fp_ta = SPAM.MergeRaster(tempDir, "res_fp")
     sl_ta = SPAM.MergeRaster(tempDir, "res_sl")
+
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
     
@@ -270,6 +268,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     end = datetime.now().replace(microsecond=0)
     log.info("Calculation needed: " + str(end - start) + " seconds")
     
+    # Remove TempFolder if "customDirs" option is used and 'deleteTemp' is set to true
+    # in the (local_)com4FlowPyCfg.ini file
     if (cfgPath["customDirs"]=='True') and (cfgPath["deleteTemp"]=="True"):
         log.info('+++++++++++++++++++++++')
         log.info("deleteTempFolder = True in (local_)com4FlowPyCfg.ini")
@@ -280,4 +280,3 @@ def com4FlowPyMain(cfgPath, cfgSetup):
             log.info("deletion of temp folder {} failed".format(tempDir))
             print ("Error: %s : %s" %(tempDir, e.strerror))
         log.info('+++++++++++++++++++++++')
-
