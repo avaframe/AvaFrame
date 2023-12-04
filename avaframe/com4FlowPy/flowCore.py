@@ -250,7 +250,7 @@ def calculation(args):
     backcalc = np.zeros_like(dem, dtype=np.int32)
 
     #paula
-    forest_interaction_array = np.zeros_like(dem, dtype=np.int32)
+    forest_interaction_array = np.zeros_like(dem, dtype=np.int64)
     #end
     
     if infraBool:        
@@ -326,7 +326,6 @@ def calculation(args):
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
             forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
-
             #Backcalculation
             if infraBool:
                 if infra[cell.rowindex, cell.colindex] > 0:

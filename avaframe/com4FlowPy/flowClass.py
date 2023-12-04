@@ -34,6 +34,7 @@ class Cell:
         self.max_gamma = 0
         self.sl_gamma = 0     
         #paula
+        #self.hitted_forest = np.array(forest,dtype=np.int64)
         self.hitted_forest = forest        
         #end paula
 
@@ -46,17 +47,14 @@ class Cell:
         self.parent = []
         if type(parent) == Cell:
             self.parent.append(parent)
+            #paula
+            self.hitted_forest += parent.hitted_forest
 
     def add_os(self, flux):
         self.flux += flux
 
     def add_parent(self, parent):
         self.parent.append(parent)
-        #paula
-        # get forest flag = 1 from parent
-        #if parent.hitted_forest == 1:
-        #    self.hitted_forest = 1
-        self.hitted_forest += parent.hitted_forest
 
     def calc_fp_travelangle(self):
         dist_min = []
