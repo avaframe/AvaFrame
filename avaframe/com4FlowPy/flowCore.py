@@ -236,6 +236,7 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         thalweg_row = np.append(thalweg_row, np.load(tempDir / ("res_row_coE_%s_%s.npy" % (row,col))))
         thalweg_col = np.append(thalweg_col, np.load(tempDir / ("res_col_coE_%s_%s.npy" % (row,col))))
 
+    log.info('Save plots')
     # Histograms
     fig,ax = plt.subplots()
     ax.hist(path_travel_lengths)
@@ -243,6 +244,15 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.ylabel('Count')
     fig.savefig(f'{plotDir}/hist_travel_length.png')
     plt.close(fig)
+
+    # BOxplots
+    fig,ax = plt.subplots()
+    ax.boxplot(path_travel_lengths)
+    plt.ylabel('travel length of coE path [m]')
+    fig.savefig(f'{plotDir}/boxpl_travel_length.png')
+    plt.close(fig)  
+
+    del path_travel_lengths
 
     fig,ax = plt.subplots()
     ax.hist(path_alpha_calc)
@@ -252,10 +262,25 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.close(fig)
 
     fig,ax = plt.subplots()
+    ax.boxplot(path_alpha_calc)
+    plt.ylabel('calculated alpha angle [°]')
+    fig.savefig(f'{plotDir}/boxpl_alpha_angle.png')
+    plt.close(fig)  
+
+    del path_alpha_calc
+
+    fig,ax = plt.subplots()
     ax.hist(path_altitude)
     plt.xlabel('drop height of coE path [m]')
     plt.ylabel('Count')
     fig.savefig(f'{plotDir}/hist_altitude.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_altitude)
+    plt.xlabel('drop height of coE path [m]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_altitude.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
@@ -266,10 +291,26 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.close(fig)
 
     fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_sum)
+    plt.xlabel('sum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_sum.png')
+    plt.close(fig)
+
+    del path_z_delta_sum
+
+    fig,ax = plt.subplots()
     ax.hist(path_z_delta_max)
     plt.xlabel('maximum of Z delta along coE path')
     plt.ylabel('Count')
     fig.savefig(f'{plotDir}/hist_z_delta_max.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_max)
+    plt.xlabel('maximum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_max.png')
     plt.close(fig)
 
     fig,ax = plt.subplots()
@@ -280,18 +321,28 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     plt.close(fig)
 
     fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_area_mean)
+    plt.xlabel('area between Z delta  and topography')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_area.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
     ax.hist(path_area)
     plt.xlabel('path area [ha]')
     plt.ylabel('Count')
-    fig.savefig(f'{plotDir}/path_area.png')
+    fig.savefig(f'{plotDir}/hist_path_area.png')
     plt.close(fig)
 
-    # BOxplots
     fig,ax = plt.subplots()
-    ax.boxplot(path_travel_lengths)
-    plt.ylabel('travel length of coE path [m]')
-    fig.savefig(f'{plotDir}/boxpl_travel_length.png')
-    plt.close(fig)   
+    ax.boxplot(path_area)
+    plt.xlabel('path area [ha]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_path_area.png')
+    plt.close(fig)
+
+    del path_area
+   
 
     #Scatterplot
     fig,ax = plt.subplots(1,2)
@@ -299,11 +350,14 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     ax[0].set(xlabel = 'Drop height [m]')
     ax[0].set(ylabel = 'area between Z^{\delta} and topography')
 
+    del path_altitude
+
     ax[1].scatter(path_z_delta_max, path_z_delta_area_mean)
     ax[1].set(xlabel = 'max z_delta')
     ax[1].set(ylabel = 'area between Z^{\delta} and topography')
     fig.savefig(f'{plotDir}/scatter_area.png')
     plt.close(fig)   
+    del path_z_delta_max, path_z_delta_area_mean
 
     # All Thalwege
     fig,ax = plt.subplots()
@@ -314,6 +368,8 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         #ax.scatter(thalweg_col[i], thalweg_row[i], c = 'k', s = 0.2, label = 'center of energy')
     fig.savefig(f'{plotDir}/all_thalwege_coE.png')
     plt.close(fig) 
+
+    log.info('All plots saved')
 
 def run(optTuple):
     
