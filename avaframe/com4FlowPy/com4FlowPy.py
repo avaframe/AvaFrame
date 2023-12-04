@@ -148,7 +148,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         log.info("INFRA: {}".format(infraPath))
     log.info("------------------------")    
     if cfgPath["customDirs"]=="False":
-        log.info("WorkDir: {}".format(avalancheDir))
+        log.info("WorkDir: {}".format(workDir))
         log.info("ResultsDir: {}".format(resDir))
     else:
         log.info("WorkdDir: {}".format(workDir))
@@ -159,9 +159,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
     dem = IOf.readRaster(demPath)
+    dem['originalHeader'] = dem['header']
     # demHeader = demDict['header']
     demHeader = IOf.readASCheader(demPath)
     # dem, header = io.read_raster(demPath)
+    #demDict={}
+    #dhead['originalHeader']=demHeader
 
     # read the release area
     if releasePath.suffix == ".shp":
