@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 import logging
 import pickle
+import shutil
 
 # Local imports
 from avaframe.in1Data import getInput as gI
@@ -116,11 +117,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         infraPath = cfgPath["infraPath"]
     else:
         infraPath=""
+        infraBool = False
 
-    log.info("Starting...")
+    
 
     start = datetime.now().replace(microsecond=0)
-    infraBool = False
+    
 
     # Create result directory
     if cfgPath["customDirs"]=="False":
@@ -134,11 +136,28 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         tempDir = cfgPath["tempDir"]
 
     # Start of Calculation
-    log.info("Start Calculation")
+    log.info("Starting...")
+    log.info("========================")
     log.info("Alpha Angle: {}".format(alpha))
     log.info("Exponent: {}".format(exp))
     log.info("Flux Threshold: {}".format(flux_threshold))
     log.info("Max Z_delta: {}".format(max_z))
+    log.info("------------------------")
+    # Also log the used input-files
+    log.info("DEM: {}".format(demPath))
+    log.info("REL: {}".format(releasePath))
+    if infraBool:
+        log.info("calculation with Infrastructure")
+        log.info("INFRA: {}".format(infraPath))
+    log.info("------------------------")    
+    if cfgPath["customDirs"]=="False":
+        log.info("WorkDir: {}".format(avalancheDir))
+        log.info("ResultsDir: {}".format(resDir))
+    else:
+        log.info("WorkdDir: {}".format(workDir))
+        log.info("ResultsDir: {}".format(resDir))
+    log.info("========================")
+
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
@@ -250,3 +269,15 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # ToDo: delete temp dir
     end = datetime.now().replace(microsecond=0)
     log.info("Calculation needed: " + str(end - start) + " seconds")
+    
+    if (cfgPath["customDirs"]=='True') and (cfgPath["deleteTemp"]=="True"):
+        log.info('+++++++++++++++++++++++')
+        log.info("deleteTempFolder = True in (local_)com4FlowPyCfg.ini")
+        try:
+            shutil.rmtree(tempDir)
+            log.info("Deleted temp folder {}".format(tempDir))
+        except OSError as e:
+            log.info("deletion of temp folder {} failed".format(tempDir))
+            print ("Error: %s : %s" %(tempDir, e.strerror))
+        log.info('+++++++++++++++++++++++')
+
