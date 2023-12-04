@@ -164,14 +164,16 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
         inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
         configFound = True
     except (NotADirectoryError, FileNotFoundError) as e:
-        if cfgSetup['varParList'] != '':
+        if cfgSetup['varParList'] != '' and (any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')) == False):
             message = ('No configuration directory found. This is needed for sorting simulation according to '
                        '%s' % cfgSetup['varParList'])
             raise e(message)
+        elif cfgSetup['varParList'] != '' and any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')):
+            configFound = True
         else:
             configFound = False
 
-    # filter simulations
+            # filter simulations
     if cfg.has_section('FILTER'):
         parametersDict = fU.getFilterDict(cfg, 'FILTER')
         simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir='')
