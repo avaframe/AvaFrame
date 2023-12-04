@@ -39,6 +39,7 @@ def main():
         # IMPORTANT!! - this is a quick'n'dirty hack to set nSims to 99, so that
         # min(nCPU,nSims) in cfgUtils.getNumberOfProcesses returns nCPU
         cfgSetup['cpuCount'] = str(cfgUtils.getNumberOfProcesses(cfgMain,999))
+        cfgPath["customDirs"] = cfgCustomPaths["useCustomPaths"]
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
 
