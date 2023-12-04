@@ -68,6 +68,7 @@ def main():
         cfgPath["demPath"]=pathlib.Path(cfgCustomPaths["demPath"])
         cfgPath["releasePath"]=pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"]=pathlib.Path(cfgCustomPaths["infraPath"])
+        cfgPath["deleteTemp"]=cfgCustomPaths["deleteTempFolder"]
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
 
@@ -77,7 +78,7 @@ def main():
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
 
     else:
-        log.info('INPUT SETTINGS incorrect - abort')
+        print('INPUT SETTINGS incorrect - please check (local_)avaframeCfg.ini and (local_)com4FlowPyCfg.ini')
         sys.exit(1)
         pass
 
