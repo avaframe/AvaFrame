@@ -181,10 +181,11 @@ def path_calc_analysis(path_list, tempDir, plotDir, path_raster = False):
     np.save(tempDir / ("res_row_coE_%s_%s" % (row_save, col_save)), row_coE)
     np.save(tempDir / ("res_col_coE_%s_%s" % (row_save, col_save)), col_coE)
     '''
-    np.save(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_z_delta_max_%s_%s" % (row_save, col_save)), thalweg_z_delta_max)
-    np.save(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_alpha_calc_%s_%s" % (row_save, col_save)), thalweg_alpha_calc)
-    np.save(/home/paula/data/FlowPy_temp_Davos/("res_row_coE_%s_%s" % (row_save, col_save)), row_coE)
-    np.save(/home/paula/data/FlowPy_temp_Davos/("res_col_coE_%s_%s" % (row_save, col_save)), col_coE)
+    tempDir2 = "/home/paula/data/FlowPy_temp_Davos/"
+    np.save(("/home/paula/data/FlowPy_temp_Davos/res_thalweg_z_delta_max_%s_%s" % (row_save, col_save)), thalweg_z_delta_max)
+    np.save(("/home/paula/data/FlowPy_temp_Davos/res_thalweg_alpha_calc_%s_%s" % (row_save, col_save)), thalweg_alpha_calc)
+    np.save(("/home/paula/data/FlowPy_temp_Davos/res_row_coE_%s_%s" % (row_save, col_save)), row_coE)
+    np.save(("/home/paula/data/FlowPy_temp_Davos/res_col_coE_%s_%s" % (row_save, col_save)), col_coE)
     
     if path_raster == True:
         path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
@@ -202,6 +203,7 @@ def overlay_path_raster(path_analysis_list):
 
 def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     #paula
+    log = logging.getLogger(__name__)
     # get path variables from path_analysis_list
     path_travel_lengths = np.empty(0)
     path_altitude = np.empty(0)
@@ -229,7 +231,7 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         row_save.extend(var_processes[0])
         col_save.extend(var_processes[1])
     
-    # save variables for all paths to use less memory
+    # save variables for all paths to use less memory    
     for row,col in zip(row_save, col_save):
         path_travel_lengths = np.append(path_travel_lengths, np.load(tempDir / ("res_thalweg_travel_lengths_%s_%s.npy" % (row,col))))
         path_altitude = np.append(path_altitude, np.load(tempDir / ("res_thalweg_altitude_%s_%s.npy" % (row,col))))
@@ -242,10 +244,10 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         thalweg_row = np.append(thalweg_row, np.load(tempDir / ("res_row_coE_%s_%s.npy" % (row,col))))
         thalweg_col = np.append(thalweg_col, np.load(tempDir / ("res_col_coE_%s_%s.npy" % (row,col))))
         '''
-        path_z_delta_max = np.append(path_z_delta_max, np.load(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_z_delta_max_%s_%s.npy" % (row,col))))
-        path_alpha_calc = np.append(path_alpha_calc, np.load(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_alpha_calc_%s_%s.npy" % (row,col))))
-        thalweg_row = np.append(thalweg_row, np.load(/home/paula/data/FlowPy_temp_Davos/("res_row_coE_%s_%s.npy" % (row,col))))
-        thalweg_col = np.append(thalweg_col, np.load(/home/paula/data/FlowPy_temp_Davos/("res_col_coE_%s_%s.npy" % (row,col))))
+        path_z_delta_max = np.append(path_z_delta_max, np.load(("/home/paula/data/FlowPy_temp_Davos/res_thalweg_z_delta_max_%s_%s.npy" % (row,col))))
+        path_alpha_calc = np.append(path_alpha_calc, np.load(("/home/paula/data/FlowPy_temp_Davos/res_thalweg_alpha_calc_%s_%s.npy" % (row,col))))
+        thalweg_row = np.append(thalweg_row, np.load(("/home/paula/data/FlowPy_temp_Davos/res_row_coE_%s_%s.npy" % (row,col))))
+        thalweg_col = np.append(thalweg_col, np.load(("/home/paula/data/FlowPy_temp_Davos/res_col_coE_%s_%s.npy" % (row,col))))
 
     log.info('Save plots')
     # Histograms
