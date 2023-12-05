@@ -175,11 +175,16 @@ def path_calc_analysis(path_list, tempDir, plotDir, path_raster = False):
     np.save(tempDir / ("res_thalweg_z_delta_sum_%s_%s" % (row_save, col_save)), thalweg_z_delta_sum)
     np.save(tempDir / ("res_thalweg_z_delta_area_mean_%s_%s" % (row_save, col_save)), thalweg_z_delta_area_mean)
     np.save(tempDir / ("res_path_area_%s_%s" % (row_save, col_save)), path_area)
+    '''
     np.save(tempDir / ("res_thalweg_z_delta_max_%s_%s" % (row_save, col_save)), thalweg_z_delta_max)
     np.save(tempDir / ("res_thalweg_alpha_calc_%s_%s" % (row_save, col_save)), thalweg_alpha_calc)
     np.save(tempDir / ("res_row_coE_%s_%s" % (row_save, col_save)), row_coE)
     np.save(tempDir / ("res_col_coE_%s_%s" % (row_save, col_save)), col_coE)
-    
+    '''
+    np.save(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_z_delta_max_%s_%s" % (row_save, col_save)), thalweg_z_delta_max)
+    np.save(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_alpha_calc_%s_%s" % (row_save, col_save)), thalweg_alpha_calc)
+    np.save(/home/paula/data/FlowPy_temp_Davos/("res_row_coE_%s_%s" % (row_save, col_save)), row_coE)
+    np.save(/home/paula/data/FlowPy_temp_Davos/("res_col_coE_%s_%s" % (row_save, col_save)), col_coE)
     
     if path_raster == True:
         path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
@@ -231,10 +236,16 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         path_z_delta_sum = np.append(path_z_delta_sum, np.load(tempDir / ("res_thalweg_z_delta_sum_%s_%s.npy" % (row,col))))
         path_z_delta_area_mean = np.append(path_z_delta_area_mean, np.load(tempDir / ("res_thalweg_z_delta_area_mean_%s_%s.npy" % (row,col))))
         path_area = np.append(path_area, np.load(tempDir / ("res_path_area_%s_%s.npy" % (row,col))))
+        '''
         path_z_delta_max = np.append(path_z_delta_max, np.load(tempDir / ("res_thalweg_z_delta_max_%s_%s.npy" % (row,col))))
         path_alpha_calc = np.append(path_alpha_calc, np.load(tempDir / ("res_thalweg_alpha_calc_%s_%s.npy" % (row,col))))
         thalweg_row = np.append(thalweg_row, np.load(tempDir / ("res_row_coE_%s_%s.npy" % (row,col))))
         thalweg_col = np.append(thalweg_col, np.load(tempDir / ("res_col_coE_%s_%s.npy" % (row,col))))
+        '''
+        path_z_delta_max = np.append(path_z_delta_max, np.load(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_z_delta_max_%s_%s.npy" % (row,col))))
+        path_alpha_calc = np.append(path_alpha_calc, np.load(/home/paula/data/FlowPy_temp_Davos/("res_thalweg_alpha_calc_%s_%s.npy" % (row,col))))
+        thalweg_row = np.append(thalweg_row, np.load(/home/paula/data/FlowPy_temp_Davos/("res_row_coE_%s_%s.npy" % (row,col))))
+        thalweg_col = np.append(thalweg_col, np.load(/home/paula/data/FlowPy_temp_Davos/("res_col_coE_%s_%s.npy" % (row,col))))
 
     log.info('Save plots')
     # Histograms
