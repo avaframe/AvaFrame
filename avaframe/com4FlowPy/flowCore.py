@@ -202,6 +202,7 @@ def overlay_path_raster(path_analysis_list):
 
 def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     #paula
+    log = logging.getLogger(__name__)
     # get path variables from path_analysis_list
     path_travel_lengths = np.empty(0)
     path_altitude = np.empty(0)
