@@ -150,7 +150,7 @@ def run(optTuple):
     fp_travelangle_array = np.zeros_like(dem)
     sl_travelangle_array = np.zeros_like(dem)
     #paula
-    forest_interaction_array = np.zeros_like(dem)
+    forest_interaction_array = np.ones_like(dem) * -9999
     #end
 
     z_delta_list = []
@@ -188,8 +188,7 @@ def run(optTuple):
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])      
         #paula
-        forest_interaction_array = np.logical_and(forest_interaction_array, forest_list[i]) * np.minimum(forest_interaction_array, forest_list[i])
-        forest_interaction_array = np.logical_or(forest_interaction_array, forest_list[i]) * np.maximum(forest_interaction_array, forest_list[i])
+        forest_interaction_array = np.where((forest_interaction_array > 0) & (forest_list[i] > 0), np.minimum(forest_interaction_array, forest_list[i]), np.maximum(forest_interaction_array, forest_list[i]))
         #end
         
     # Save Calculated tiles
