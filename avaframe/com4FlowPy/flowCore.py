@@ -138,13 +138,13 @@ def run(optTuple):
         pool.close()
         pool.join()
 
-    z_delta_array = np.zeros_like(dem)
-    flux_array = np.zeros_like(dem)
-    count_array = np.zeros_like(dem)
-    z_delta_sum = np.zeros_like(dem)
-    backcalc = np.zeros_like(dem)
-    fp_travelangle_array = np.zeros_like(dem)
-    sl_travelangle_array = np.zeros_like(dem)
+    z_delta_array = np.zeros_like(dem, dtype=np.float32)
+    flux_array = np.zeros_like(dem, dtype=np.float32)
+    count_array = np.zeros_like(dem, dtype=np.int32)
+    z_delta_sum = np.zeros_like(dem, dtype=np.float32)
+    backcalc = np.zeros_like(dem, dtype=np.int32)
+    fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)
+    sl_travelangle_array = np.zeros_like(dem, dtype=np.float32)
 
     z_delta_list = []
     flux_list = []
