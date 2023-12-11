@@ -37,6 +37,8 @@ def get_start_idx(dem, release):
         # Sort this lists by altitude
     return row_list, col_list
 
+'''
+original split_release function
 def split_release(release, pieces):
     """Split the release layer in several tiles, the number is depending on the
     available CPU Cores, so every Core gets one tile. The area is determined by
@@ -77,6 +79,65 @@ def split_release(release, pieces):
             print("Release Split from {} to {}".format(breakpoint_x, i))
             breakpoint_x = i
     
+    return release_list
+'''
+
+def split_release(release, pieces):
+    """Split the release layer in several tiles, the number is depending on the
+    available CPU Cores, so every Core gets one tile. The area is determined by
+    the number of release pixels in it, so that every tile has the same amount
+    of release pixels in it.
+
+    In this version the split is performed along a flattened 2D-array to ensure
+    a more even splitting of release pixels that just along the x-Axis ...
+    
+    TO DO: Ideally a 'greedy' algorithm would let idle CPU cores 'snatch' any 
+    un-processed release cell until all releaseCells are handled -- this would
+    ensure that the total workload is distributed evenly along all CPUs (which
+    becomes an important factor for bigger model areas) !!!
+
+    The release tiles have still the size of the original layer, so no split
+    for the DEM is needed.
+
+    Input parameters:
+        release         the release layer with release pixels as int > 0
+        header_release  the header of the release layer to identify the
+                        noDataValue
+
+    Output parameters:
+        release_list    A list with the tiles(arrays) in it [array0, array1, ..]
+        """
+    release[release < 0] = 0
+    release[release > 1] = 1
+
+    # Flatten the array and compute the cumulative sum
+    flat_release = release.flatten()
+    cumulative_sum = np.cumsum(flat_release)
+
+    total_sum = cumulative_sum[-1]
+    sum_per_split = total_sum / pieces
+
+    release_list = []
+    start_index = 0
+
+    for i in range(1, pieces):
+        # Find the split point in the flattened array
+        split_index = np.searchsorted(cumulative_sum, sum_per_split * i)
+
+        # Create a new array for this split
+        split_flat = np.zeros_like(flat_release)
+        split_flat[start_index:split_index] = flat_release[start_index:split_index]
+
+        # Reshape the flat array back to 2D and add to the list
+        release_list.append(split_flat.reshape(release.shape))
+
+        start_index = split_index
+
+    # Handle the last piece
+    split_flat = np.zeros_like(flat_release)
+    split_flat[start_index:] = flat_release[start_index:]
+    release_list.append(split_flat.reshape(release.shape))
+
     return release_list
 
 def back_calculation(back_cell):
