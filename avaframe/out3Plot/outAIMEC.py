@@ -641,7 +641,6 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             contourRef = ax2.contour(S, L, np.transpose(refData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             # generate corresponding labels
             labels = [str(level) for level in thresholdArray[:-1]]
-            labels = labels[0:len(contourRef.collections)]
             # add legend associated to the contour plot
             handles, _ = contourRef.legend_elements()
             legend2 = ax2.legend(title=runoutResType + ' contour lines [' + unit + ']', handles=handles, labels=labels,
@@ -1005,6 +1004,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inpu
             cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
     else:
+        #TODO: remove?
         log.warning('ordering for contour line plot not available for parameter of type string')
 
     # add indication for runout area

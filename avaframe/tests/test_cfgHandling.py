@@ -38,7 +38,7 @@ def test_orderSimFiles():
 
     varParList, simDF = cfgHandling.orderSimulations(varParList, True, simDF)
 
-    assert simDF['simName'][0] == 'release1HS_0dcd58fc86_ent_dfa'
+    assert simDF['simName'].iloc[0] == 'release1HS_0dcd58fc86_ent_dfa'
 
     varParList = 'releaseSenario'
     message = ('Choose a valid parameter for sorting the simulations. \'releaseSenario\' is not valid.')

@@ -872,9 +872,15 @@ def analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=None):
     resAnalysisDF.loc[simRowHash, 'relativMassDiff'] = relativMassDiff
 
     if simRowHash == refSimRowHash:
-        resAnalysisDF['entMassFlowArray'] = np.nan
+        resAnalysisDF = pd.concat([resAnalysisDF,
+                                   pd.DataFrame({'entMassFlowArray': np.nan},
+                                                index=resAnalysisDF.index)],
+                                  axis=1).copy()
         resAnalysisDF['entMassFlowArray'] = resAnalysisDF['entMassFlowArray'].astype(object)
-        resAnalysisDF['totalMassArray'] = np.nan
+        resAnalysisDF = pd.concat([resAnalysisDF,
+                                   pd.DataFrame({'totalMassArray': np.nan},
+                                                index=resAnalysisDF.index)],
+                                  axis=1).copy()
         resAnalysisDF['totalMassArray'] = resAnalysisDF['totalMassArray'].astype(object)
 
     resAnalysisDF.at[simRowHash, 'entMassFlowArray'] = entMassFlow
@@ -929,6 +935,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
           run-out point
 
     """
+
     # read inputs
     scoord = rasterTransfo['s']
     lcoord = rasterTransfo['l']
@@ -1405,3 +1412,27 @@ def findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint):
              (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
+
+
+def addFieldsToDF(inputsDF):
+    """ add fields that will be added in aimec analysis to dataframe
+
+        Parameters
+        -----------
+        inputsDF: pandas DataFrame
+            DataFrame where fields should be added as empty columns
+            fields are:
+
+        Returns
+        ---------
+        inputsDF: pandas DataFrame
+            updated DataFrame
+
+    """
+    nanFields = ['sRunout', 'lRunout', 'xRunout', 'yRunout', 'deltaSXY', 'runoutAngle', 'zRelease', 'zRunout',
+                 'sMeanRunout', 'xMeanRunout', 'yMeanRunout', 'elevRel', 'deltaZ']
+    for item in nanFields:
+        inputsDF = pd.concat([inputsDF, pd.DataFrame({item: np.nan}, index=inputsDF.index)], axis=1).copy()
+
+
+    return inputsDF

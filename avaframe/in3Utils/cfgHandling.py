@@ -341,10 +341,10 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     thPercentVariation = key + 'PercentVariation'
 
     # append identifier if simulation matches thickness filter criteria
-    simDF['toBeAdded'] = False
+    simDF = pd.concat([simDF, pd.DataFrame({'toBeAdded': False}, index=simDF.index)], axis=1).copy()
 
     # initialize list for thickness parameter names (according to thickness configuration -
-    # e.g. mutiple features)
+    # e.g. multiple features)
     allThNames = []
     # loop over simDF and set identifier if filter criteria are matched
     for simHash, simDFrow in simDF.iterrows():

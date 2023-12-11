@@ -1032,7 +1032,7 @@ def plotErrorConvergence(
     fit: boolean
         if True add power law regression
     """
-    tSave = simDF["timeError"][0]
+    tSave = simDF["timeError"].iloc[0]
     relativ = cfgSimi.getboolean("relativError")
     cmap, _, ticks, norm = pU.makeColorMap(
         pU.cmapAvaframeCont,
@@ -1148,7 +1148,7 @@ def plotPresentation(
     fit: boolean
         if True add power law regression
     """
-    tSave = simDF["timeError"][0]
+    tSave = simDF["timeError"].iloc[0]
     relativ = cfgSimi.getboolean("relativError")
     cmap, _, ticks, norm = pU.makeColorMap(
         pU.cmapAvaframeCont,
@@ -1226,9 +1226,9 @@ def plotPresentation(
             p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
             p1H = p[0]
             p0H = np.exp(p[1])
-            color = cmap(norm(simDFNew[coloredBy][0]))
+            color = cmap(norm(simDFNew[coloredBy].iloc[0]))
             ax1.plot(xArray, p0H * xArray**p1H, color=color)
-            infoText = "%s = %.2f" % (coloredBy, simDFNew[coloredBy][0])
+            infoText = "%s = %.2f" % (coloredBy, simDFNew[coloredBy].iloc[0])
             ax1.text(
                 max(1.05 * xArray),
                 p0H * max(xArray) ** p1H,
@@ -1278,7 +1278,7 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logSc
         If you want a loglog scale
     """
     colorList = simDF[coloredBy].unique()
-    tSave = simDF["timeError"][0]
+    tSave = simDF["timeError"].iloc[0]
     cmap, _, ticks, norm = pU.makeColorMap(
         pU.cmapAvaframeCont,
         min(simDF[coloredBy]),
