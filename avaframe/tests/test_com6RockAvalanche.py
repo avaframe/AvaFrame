@@ -36,7 +36,7 @@ def test_runCom6RockAvalanche(tmp_path, caplog):
 
     outDir = avaDir / "Outputs" / "com1DFA"
     for ext in ["FT", "pft", "pfv"]:
-        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"][0], ext))).is_file()
+        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"].iloc[0], ext))).is_file()
 
-    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"][0]))).is_file()
+    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"].iloc[0]))).is_file()
     assert (outDir / "configurationFiles" / ("allConfigurations.csv")).is_file()

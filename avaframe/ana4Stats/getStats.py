@@ -112,9 +112,9 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
             peakValues[simName].update({'varPar': varParVal})
             if nameScenario != '':
                 nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
-                peakValues[simName].update({'scenario': nameScenarioVal[0]})
+                peakValues[simName].update({'scenario': nameScenarioVal.iloc[0]})
                 log.info('Simulation parameter %s= %s for resType: %s and name %s' %
-                        (varPar, str(varParVal), peakFilesDF['resType'][m], nameScenarioVal[0]))
+                        (varPar, str(varParVal), peakFilesDF['resType'][m], nameScenarioVal.iloc[0]))
             else:
                 log.info('Simulation parameter %s= %s for resType: %s' %
                         (varPar, str(varParVal), peakFilesDF['resType'][m]))

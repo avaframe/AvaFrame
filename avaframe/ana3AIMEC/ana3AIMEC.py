@@ -142,7 +142,9 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # postprocess reference...
     contourDict = {}
     timeMass = None
-    resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF, newRasters,
+    # add fields that will be filled in analysis
+    resAnalysisDF = aimecTools.addFieldsToDF(inputsDF)
+    resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters,
                                                            timeMass, refSimRowHash, contourDict)
     # postprocess other simulations
     for simRowHash, inputsDFrow in inputsDF.iterrows():

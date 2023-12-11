@@ -1465,10 +1465,13 @@ def test_initializeFields():
 
     print("particles", particles)
     print("fields", fields)
+    print('compute KE', fields['computeKE'])
+    print('compute TA', fields['computeTA'])
+    print('compute P', fields['computeP'])
 
     assert len(fields) == 16
-    assert ~fields["computeTA"]
-    assert ~fields["computeKE"]
+    assert fields["computeTA"] is False
+    assert fields["computeKE"] is False
     assert fields["computeP"]
     assert np.sum(fields["pfv"]) == 0.0
     assert np.sum(fields["pta"]) == 0.0
@@ -1490,7 +1493,7 @@ def test_initializeFields():
     assert len(fields) == 16
     assert fields["computeTA"]
     assert fields["computeKE"]
-    assert ~fields["computeP"]
+    assert fields['computeP'] is False
 
 
 def test_prepareVarSimDict(tmp_path, caplog):
@@ -1956,11 +1959,11 @@ def test_runCom1DFA(tmp_path, caplog):
     print(simDF["simName"])
     outDir = avaDir / "Outputs" / "com1DFA"
     for ext in ["ppr", "pft", "pfv"]:
-        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"][0], ext))).is_file()
-        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"][1], ext))).is_file()
+        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"].iloc[0], ext))).is_file()
+        assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"].iloc[1], ext))).is_file()
 
-    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"][0]))).is_file()
-    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"][1]))).is_file()
+    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"].iloc[0]))).is_file()
+    assert (outDir / "configurationFiles" / ("%s.ini" % (simDF["simName"].iloc[1]))).is_file()
     assert (outDir / "configurationFiles" / ("allConfigurations.csv")).is_file()
 
     initProj.cleanModuleFiles(avaDir, com1DFA, deleteOutput=False)
