@@ -232,6 +232,7 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
         col_save.extend(var_processes[1])
     
     # save variables for all paths to use less memory    
+    log.info('start loading files')
     for row,col in zip(row_save, col_save):
         path_travel_lengths = np.append(path_travel_lengths, np.load(tempDir / ("res_thalweg_travel_lengths_%s_%s.npy" % (row,col))))
         path_altitude = np.append(path_altitude, np.load(tempDir / ("res_thalweg_altitude_%s_%s.npy" % (row,col))))
@@ -376,9 +377,9 @@ def thalweg_plot_analysis(dem, path_coords_save, tempDir, plotDir):
     fig,ax = plt.subplots()
     ax.imshow(dem, cmap ='Greys', alpha=0.8)
     ax.contour(dem, levels = 10, colors ='k',linewidths=0.5)
-    for i in range(len(thalweg_row)):
-        ax.plot(thalweg_col[i], thalweg_row[i], c = 'm', linewidth=0.2)
-        #ax.scatter(thalweg_col[i], thalweg_row[i], c = 'k', s = 0.2, label = 'center of energy')
+    #for row, col in zip(thalweg_row, thalweg_col):
+        #ax.plot(col, row, c = 'm', linewidth=0.2)
+    ax.scatter(thalweg_col, thalweg_row,c = 'k', s = 0.1, label = 'center of energy')
     fig.savefig(f'{plotDir}/all_thalwege_coE.png')
     plt.close(fig) 
 
