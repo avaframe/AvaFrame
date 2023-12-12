@@ -107,8 +107,7 @@ def split_release(release, pieces):
     Output parameters:
         release_list    A list with the tiles(arrays) in it [array0, array1, ..]
         """
-    release[release < 0] = 0
-    release[release > 1] = 1
+    
 
     # Flatten the array and compute the cumulative sum
     flat_release = release.flatten()
@@ -190,10 +189,19 @@ def run(optTuple):
     max_z_delta = float(optTuple[7])
 
     log.info("Multiprocessing starts, used cores: %i" % (nCPU))
-        
-    release_list = split_release(release, nCPU)
+    log.info("Multiprocessing starts, used Processes: %i" % (nCPU*2))
     
-    with Pool(processes=nCPU) as pool:
+    release[release < 0] = 0
+    release[release > 1] = 1
+
+    nRel = np.sum(release)
+
+    log.info("Number of release cell: %i"%nRel)
+
+    release_list = split_release(release, int(nRel/100))
+    log.info("Multiprocessing starts, used Chunks: %i" % int(nRel/100))
+    
+    with Pool(processes=nCPU*2) as pool:
         results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
                             for release_sub in release_list])
         pool.close()
@@ -300,9 +308,9 @@ def calculation(args):
     startcell_idx = 0
     while startcell_idx < len(row_list):
 
-        sys.stdout.write('\r' "Calculating Startcell: " + str(startcell_idx + 1) + " of " + str(len(row_list)) + " = " + str(
-            round((startcell_idx + 1) / len(row_list) * 100, 2)) + "%" '\r')
-        sys.stdout.flush()
+        #sys.stdout.write('\r' "Calculating Startcell: " + str(startcell_idx + 1) + " of " + str(len(row_list)) + " = " + str(
+        #    round((startcell_idx + 1) / len(row_list) * 100, 2)) + "%" '\r')
+        #sys.stdout.flush()
 
         cell_list = []
         row_idx = row_list[startcell_idx]
