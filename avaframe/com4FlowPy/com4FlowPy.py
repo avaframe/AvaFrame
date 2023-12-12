@@ -231,7 +231,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     SPAM.tileRaster(demPath, "dem", tempDir, tileCOLS, tileROWS, U)
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
     #paula
-    SPAM.tileRaster(forestPathWork, "init_forest", tempDir, tileCOLS, tileROWS, U, isInit=True)
+    SPAM.tileRaster(forestPathWork, "init_forest", tempDir, tileCOLS, tileROWS, U)
     #ende
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
