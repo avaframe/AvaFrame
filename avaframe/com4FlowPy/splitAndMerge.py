@@ -181,3 +181,35 @@ def MergeRaster(inDirPath, fName):
 
     return mergedRas
     del mergedRas
+
+def MergeRaster_min(inDirPath, fName):
+    # paula
+    # for forest interaction
+
+    #os.chdir(inDirPath)
+
+    extL = pickle.load(open(inDirPath / "extentLarge", "rb"))
+    # print extL
+    nTiles = pickle.load(open(inDirPath / "nTiles", "rb"))
+
+    mergedRas = np.zeros((extL[0], extL[1]))
+    # create Raster with original size
+    mergedRas[:, :] = -9999
+
+    for i in range(nTiles[0]+1):
+        for j in range(nTiles[1]+1):
+            smallRas = np.load(inDirPath / ("%s_%i_%i.npy" % (fName, i, j)))
+            # print smallRas
+            pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
+            # print pos
+
+            mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
+                np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
+                np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas), 
+                np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
+                     
+            del smallRas
+            log.info("appended result %s_%i_%i", fName, i, j)
+
+    return mergedRas
+    del mergedRas

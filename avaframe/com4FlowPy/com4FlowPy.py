@@ -264,7 +264,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     fp_ta = SPAM.MergeRaster(tempDir, "res_fp")
     sl_ta = SPAM.MergeRaster(tempDir, "res_sl")
     #paula
-    forest_flag = SPAM.MergeRaster(tempDir, "res_forest")
+    forest_flag = SPAM.MergeRaster_min(tempDir, "res_forest")
     #end
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
