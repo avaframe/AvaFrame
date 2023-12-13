@@ -248,7 +248,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     rasterdataPres = newRasters['newRefRaster' + runoutResType.upper()]
     runout = resAnalysisDF['sRunout'].to_numpy()
-    pprCrossMax = np.stack(resAnalysisDF[runoutResType.lower() + 'CrossMax'].to_numpy())
+    crossValue = 'Cross' + cfgSetup['runoutCrossType'].upper()[0] + cfgSetup['runoutCrossType'].lower()[1:]
+    pprCrossMax = np.stack(resAnalysisDF[runoutResType.lower() + crossValue].to_numpy())
     ############################################
     # compute mean, median and percenti. of peak field cross max values and mask array with threshold
     pMean = np.mean(pprCrossMax, axis=0)
@@ -339,7 +340,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ax2.set_xlabel('$S_{xy}$ (thalweg) [m]')
     ax2.set_xlim([s.min(), s.max()])
     ax2.set_ylim(auto=True)
-    ax2.set_ylabel('$%s_{CrossMax}$ [%s]' % (runoutResType, unit))
+    ax2.set_ylabel('$%s_{%s}$ [%s]' % (runoutResType, crossValue, unit))
 
     # add all runResultType crossMax values along thalweg using colorcoding if available
     # setup colorbar
@@ -364,9 +365,9 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         else:
             cmapVal = countSim / nSamples
         if resAnalysisRow['simName'] == pathDict['refSimName']:
-            ax3.plot(s, resAnalysisRow[runoutResType.lower() + 'CrossMax'], c='k', label='reference', zorder=nSamples+1)
+            ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c='k', label='reference', zorder=nSamples+1)
         else:
-            ax3.plot(s, resAnalysisRow[runoutResType.lower() + 'CrossMax'], c=cmap.to_rgba(cmapVal))
+            ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c=cmap.to_rgba(cmapVal))
         countSim = countSim + 1
 
     # add colorbar
@@ -384,7 +385,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ax3.set_xlabel('$S_{xy}$ (thalweg) [m]')
     ax3.set_xlim([s.min(), s.max()])
     ax3.set_ylim(auto=True)
-    ax3.set_ylabel('$%s_{CrossMax}$ [%s]' % (runoutResType, unit))
+    ax3.set_ylabel('$%s_{%s}$ [%s]' % (runoutResType, crossValue, unit))
 
     outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
                            'slComparisonStat'])
@@ -1407,13 +1408,13 @@ def getIndicesVel(pfvCM, velocityThreshold):
 
     # get indices where velocity is first bigger than velocityThreshold (start of velocity > velocityThreshold)
     # and where velocity is again back to < velocityThreshold
-    indVelStart = np.where(pfvCM > velocityThreshold)[0][0]
-    if len(np.where(pfvCM < velocityThreshold)[0]) == 0:
-        if len(np.where(np.isnan(pfvCM))[0]) > 1:
-            indVelZero = np.where(np.isnan(pfvCM))[0][indVelStart]
-        else:
-            indVelZero = len(pfvCM) - 1
-    else:
-        indVelZero = np.where(pfvCM < velocityThreshold)[0][indVelStart]
+    sIndex = np.nonzero(pfvCM > velocityThreshold)[0]
+    if len(sIndex) == 0:
+        message = 'No peak flow velocity max along thalweg found exceeding: %.2f ms-1' % velocityThreshold
+        log.error(message)
+        raise AssertionError(message)
+
+    indVelStart = min(sIndex)
+    indVelZero = max(sIndex)
 
     return indVelStart, indVelZero
