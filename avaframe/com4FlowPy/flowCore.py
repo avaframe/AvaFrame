@@ -3,6 +3,9 @@
 
 import sys
 import numpy as np
+#paula
+import csv
+#end
 import logging
 import os
 import platform
@@ -14,7 +17,10 @@ else:
     from multiprocessing import Pool
 
 from avaframe.com4FlowPy.flowClass import Cell
-
+#Paula
+from avaframe.com4FlowPy.flowPath import Path
+import matplotlib.pyplot as plt
+#end paula
 
 def get_start_idx(dem, release):
     """Sort Release Pixels by altitude and return the result as lists for the
@@ -107,12 +113,305 @@ def back_calculation(back_cell):
     #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
     return back_list
 
+def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
+    # PAULA
+    # calculate analysis of paths (in Process-splitting/ pool function)
+
+    #path_z_delta_raster = np.empty((1, path_list[0].z_delta_array.shape[0],path_list[0].z_delta_array.shape[1]))
+
+    #per path one value (mean/min/max)
+    thalweg_travel_lengths = path.travel_length # travel length of the whole path 
+    thalweg_altitude = path.drop_height #drop height
+    thalweg_z_delta_sum = sum(path.z_delta_coE) #sum of z_delta
+    thalweg_z_delta_max = max(path.z_delta_coE) #max of z_delta
+    thalweg_alpha_calc = path.alpha_calc # calculated alpha angle 
+    path_area = path.path_area
+
+    # total thalweg
+    col_coE = path.col_coE
+    row_coE = path.row_coE
+    flux_coE = path.flux_coE
+    energy_coE = path.energy_coE
+    z_delta_coE = path.z_delta_coE
+    gamma_coE = path.gamma_coE
+    s_coE = path.s_coE
+    z_coE = path.altitude_coE
+
+
+    #idea for calculating area between zdelta and terrain
+    distance = 0
+    z_delta_mean = 0
+    for i,s in enumerate(path.s_coE):
+        if i < (len(path.s_coE)-1):
+            distance = path.s_coE[i+1]-s
+
+            z_delta_mean = np.mean([path.z_delta_coE[i+1],path.z_delta_coE[i]])
+
+        # Distanz * z_delta an jeweiligem Ort
+        thalweg_z_delta_area_1 = np.sum(np.array(distance) * np.array(path.z_delta_coE))
+        # Distanz * mitterlwert von z_delta zwischen zwei punkten
+        thalweg_z_delta_area_mean = np.sum(np.array(distance) * np.array(z_delta_mean))
+
+        #if path_raster == True:
+        #    path_z_delta_raster = np.append(path_z_delta_raster, [path.z_delta_array], axis = 0)
+
+        #print(f'Area between z_delta and terrain: calculating with local z_delta: {thalweg_z_delta_area_1},
+        #calculated with mean: {thalweg_z_delta_area_mean}')
+
+        # EXPENSIVE!
+        if PathPlots == True:
+            path.plot_pathanaylsis() #this line takes lot of time!!
+
+    # save files in csv file
+
+    with open(plotDir / ("values_travel_lengths_max.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_travel_lengths])
+
+    with open(plotDir / ("values_thalweg_altitude_max.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_altitude])
+
+    with open(plotDir / ("values_thalweg_z_delta_sum.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_z_delta_sum])
+    
+    with open(plotDir / ("values_thalweg_z_delta_max.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_z_delta_max])
+
+    with open(plotDir / ("values_thalweg_alpha_calc_min.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_alpha_calc])
+
+    with open(plotDir / ("values_path_area.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([path_area])
+
+    with open(plotDir / ("values_thalweg_z_delta_area_mean.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([thalweg_z_delta_area_mean])
+
+    with open(plotDir / ("values_thalweg_row_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(row_coE)
+
+    with open(plotDir / ("values_thalweg_col_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(col_coE)
+
+    with open(plotDir / ("values_thalweg_flux_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(flux_coE)
+    
+    with open(plotDir / ("values_thalweg_energy_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(energy_coE)
+
+    with open(plotDir / ("values_thalweg_zdelta_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(z_delta_coE)
+    
+    with open(plotDir / ("values_thalweg_gamma_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(gamma_coE)
+
+    with open(plotDir / ("values_thalweg_s_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(s_coE)
+    
+    with open(plotDir / ("values_thalweg_z_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(z_coE)
+
+    
+    '''
+    if path_raster == True:
+        path_z_delta_raster = np.delete(path_z_delta_raster,[0],axis = 0)    #delete first empty 2d array
+        return row_save, col_save, path_z_delta_raster
+    '''
+
+def overlay_path_raster(path_analysis_list):
+    # paula
+    paths_z_delta = np.empty((1, path_analysis_list[0][-1].shape[-2],  path_analysis_list[0][-1].shape[-1]))
+    for var_processes in path_analysis_list:
+        paths_z_delta = np.append(paths_z_delta, var_processes[-1], axis = 0)
+    paths_z_delta = np.delete(paths_z_delta, [0], axis = 0)
+    return paths_z_delta
+
+def thalweg_plot_analysis(dem, plotDir):
+    #paula
+    log = logging.getLogger(__name__)
+    # get path variables from path_analysis_list
+
+    
+    path_travel_lengths = np.loadtxt(plotDir / ("values_travel_lengths_max.csv"),delimiter=',')        
+
+    log.info('Save plots')
+    # Histograms
+    fig,ax = plt.subplots()
+    ax.hist(path_travel_lengths)
+    plt.xlabel('max. travel length of coE path [m]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_travel_length.png')
+    plt.close(fig)
+
+    # BOxplots
+    fig,ax = plt.subplots()
+    ax.boxplot(path_travel_lengths)
+    plt.ylabel('travel length of coE path [m]')
+    fig.savefig(f'{plotDir}/boxpl_travel_length.png')
+    plt.close(fig)  
+
+    del path_travel_lengths
+
+
+    path_alpha_calc = np.loadtxt(plotDir / ("values_thalweg_alpha_calc_min.csv"),delimiter=',')
+
+    fig,ax = plt.subplots()
+    ax.hist(path_alpha_calc)
+    plt.xlabel('calculated alpha angle [°]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_alpha_angle.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_alpha_calc)
+    plt.ylabel('calculated alpha angle [°]')
+    fig.savefig(f'{plotDir}/boxpl_alpha_angle.png')
+    plt.close(fig)  
+
+    del path_alpha_calc
+
+      
+    path_altitude = np.loadtxt(plotDir / ("values_thalweg_altitude_max.csv"),delimiter=',')
+    fig,ax = plt.subplots()
+    ax.hist(path_altitude)
+    plt.xlabel('drop height of coE path [m]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_altitude.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_altitude)
+    plt.xlabel('drop height of coE path [m]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_altitude.png')
+    plt.close(fig)
+
+
+    path_z_delta_sum = np.loadtxt(plotDir / ("values_thalweg_z_delta_sum.csv"),delimiter=',')  
+
+    fig,ax = plt.subplots()
+    ax.hist(path_z_delta_sum)
+    plt.xlabel('sum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_z_delta_sum.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_sum)
+    plt.xlabel('sum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_sum.png')
+    plt.close(fig)
+
+    del path_z_delta_sum
+
+
+    path_z_delta_max = np.loadtxt(plotDir / ("values_thalweg_z_delta_max.csv"),delimiter=',')
+    fig,ax = plt.subplots()
+    ax.hist(path_z_delta_max)
+    plt.xlabel('maximum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_z_delta_max.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_max)
+    plt.xlabel('maximum of Z delta along coE path')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_max.png')
+    plt.close(fig)
+
+
+    path_z_delta_area_mean = np.loadtxt(plotDir / ("values_thalweg_z_delta_area_mean.csv"),delimiter=',')
+    fig,ax = plt.subplots()
+    ax.hist(path_z_delta_area_mean)
+    plt.xlabel('area between Z delta  and topography')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_z_delta_area.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_z_delta_area_mean)
+    plt.xlabel('area between Z delta  and topography')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_z_delta_area.png')
+    plt.close(fig)
+
+        
+    path_area = np.loadtxt(plotDir / ("values_path_area.csv"),delimiter=',')
+    fig,ax = plt.subplots()
+    ax.hist(path_area)
+    plt.xlabel('path area [ha]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/hist_path_area.png')
+    plt.close(fig)
+
+    fig,ax = plt.subplots()
+    ax.boxplot(path_area)
+    plt.xlabel('path area [ha]')
+    plt.ylabel('Count')
+    fig.savefig(f'{plotDir}/boxpl_path_area.png')
+    plt.close(fig)
+
+    del path_area
+   
+
+    #Scatterplot
+    fig,ax = plt.subplots(1,2)
+    ax[0].scatter(path_altitude, path_z_delta_area_mean)
+    ax[0].set(xlabel = 'Drop height [m]')
+    ax[0].set(ylabel = 'area between Z^{\delta} and topography')
+
+    del path_altitude
+
+    ax[1].scatter(path_z_delta_max, path_z_delta_area_mean)
+    ax[1].set(xlabel = 'max z_delta')
+    ax[1].set(ylabel = 'area between Z^{\delta} and topography')
+    fig.savefig(f'{plotDir}/scatter_area.png')
+    plt.close(fig)   
+    del path_z_delta_max, path_z_delta_area_mean
+    
+
+    '''
+    # All Thalwege
+    thalweg_row = np.loadtxt(plotDir / ("values_thalweg_row_coE.csv"),delimiter=',')
+    thalweg_col = np.loadtxt(plotDir / ("values_thalweg_col_coE.csv"),delimiter=',')
+    fig,ax = plt.subplots()
+    ax.imshow(dem, cmap ='Greys', alpha=0.8)
+    ax.contour(dem, levels = 10, colors ='k',linewidths=0.5)
+    #for row, col in zip(thalweg_row, thalweg_col):
+        #ax.plot(col, row, c = 'm', linewidth=0.2)
+    ax.scatter(thalweg_col, thalweg_row,c = 'k', s = 0.1, label = 'center of energy')
+    fig.savefig(f'{plotDir}/all_thalwege_coE.png')
+    plt.close(fig) 
+    '''
+
+    log.info('All plots saved')
+
 def run(optTuple):
     
     log = logging.getLogger(__name__)
     tempDir = optTuple[8]
     infraBool = optTuple[9]
     nCPU = optTuple[10]
+    #paula
+    plotDir = optTuple[11]
+    Pathanalysis = optTuple[12]
+    PathPlots = optTuple[13]
+    #end puala
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -133,11 +432,10 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, plotDir, Pathanalysis, PathPlots]
                             for release_sub in release_list])
         pool.close()
         pool.join()
-
     z_delta_array = np.zeros_like(dem)
     flux_array = np.zeros_like(dem)
     count_array = np.zeros_like(dem)
@@ -181,9 +479,11 @@ def run(optTuple):
         #chris ende
         #Paula
         flow_energy_list.append(res[8])
+
+    if Pathanalysis == True:
+        thalweg_plot_analysis(dem, plotDir)
+        #z_delta_all_paths = overlay_path_raster(path_analysis_list)
         #ende paula
-
-
 
     logging.info('Calculation finished, getting results.')
     for i in range(len(z_delta_list)):
@@ -213,6 +513,7 @@ def run(optTuple):
     #chris ende
     #Paula
     np.save(tempDir / ("res_flow_energy_%s_%s" % (optTuple[0], optTuple[1])), flow_energy_array)
+    #np.save(tempDir / ("res_z_delta_all_paths"), z_delta_all_paths)
     #ende paula
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
@@ -250,6 +551,9 @@ def calculation(args):
     nodata = args[7]
     cellsize = args[8]
     infraBool = args[9]
+    plotDir = args[10]
+    Pathanalysis = args[11]
+    PathPlots = args[12]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -267,6 +571,7 @@ def calculation(args):
     #Paula
     flow_energy_array = np.zeros_like(dem, dtype=np.float32)
     #ende paula
+    
 
     if infraBool:        
         back_list = []
@@ -376,23 +681,30 @@ def calculation(args):
                 gen_list.append(cell_list)
                 child_list = []
             
-            #Michi generation
-            for gen, cell_list in enumerate(gen_list):
-                for cell in cell_list:
-            #ende michi
+        #PAULA
+        if Pathanalysis == True:
+            path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list, plotDir)
+            path.calc_all_analysis()
+            path_calc_analysis(path, plotDir, PathPlots)   
+        #ende paula
 
-                    z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
-                    flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-                    count_array[cell.rowindex, cell.colindex] += int(1)
-                    z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
-                    fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
-                    sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-                    #Chris
-                    travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
-                    #ende chris
-                    #PAula
-                    flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
-                    #ende paula
+            #Michi generation
+        for gen, cell_list in enumerate(gen_list):
+            for cell in cell_list:
+        #ende michi
+
+                z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
+                flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
+                count_array[cell.rowindex, cell.colindex] += int(1)
+                z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
+                fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
+                sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
+                #Chris
+                travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
+                #ende chris
+                #PAula
+                flow_energy_array[cell.rowindex, cell.colindex] = max(flow_energy_array[cell.rowindex, cell.colindex], cell.flow_energy)
+                #ende paula
 
             
             #Backcalculation
@@ -411,8 +723,9 @@ def calculation(args):
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
     #return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
-
+    
     #Chris/Paula
+    
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, flow_energy_array
     #ende 
 

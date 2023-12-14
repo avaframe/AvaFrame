@@ -102,6 +102,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nCPU = int(cfgSetup["cpuCount"])
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
+    Pathanalysis = bool(int(cfgSetup["PathAnalysis"]))
+    PathPlots = bool(int(cfgSetup["PathPlots"]))
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
@@ -118,6 +120,14 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
     resDir = outDir / "res_{}".format(timeString)
     fU.makeADir(resDir)
+    #paula
+    plotDir = resDir / "Plots"
+    fU.makeADir(plotDir)
+
+    if PathPlots == True:
+        pathPlotDir = plotDir / "Thalwege"
+        fU.makeADir(pathPlotDir)
+    #end paula
     tempDir = workDir / "temp"
     fU.makeADir(tempDir)
 
@@ -127,6 +137,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     log.info("Exponent: {}".format(exp))
     log.info("Flux Threshold: {}".format(flux_threshold))
     log.info("Max Z_delta: {}".format(max_z))
+    log.info("Path is analysed: {}".format(Pathanalysis))
+    log.info("Pathanalysis are plotted: {}".format(PathPlots))
+
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
@@ -204,8 +217,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
+            #paula: add plotDir
             optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+                            max_z, tempDir, infraBool, nCPU,  plotDir, Pathanalysis, PathPlots))
 
     # Calculation
     for optTuple in optList:
@@ -225,6 +239,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     flow_energy = SPAM.MergeRaster(tempDir, "res_flow_energy")
+    #z_delta_all_paths = SPAM.Load_BandRaster(tempDir,"res_z_delta_all_paths")
     #ende paula
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
@@ -240,6 +255,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #ende chris
     #Paula
     io.output_raster(demPath, resDir / ("flow_energy%s" % (output_format)), flow_energy)
+    #io.output_raster_path_bands(demPath, resDir / ("z_delta_all_paths%s" % (output_format)), z_delta_all_paths)
     #ende paula
     
     if not infraBool:  # if no infra
