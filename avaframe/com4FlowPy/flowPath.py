@@ -5,8 +5,9 @@ import math
 class Path:
     '''Class contains a path, containing one startcell  and corresponding child cells'''
     
-    def __init__(self, dem, start_row, start_col, gen_list):
+    def __init__(self, dem, start_row, start_col, gen_list, plotDir):
         self.dem = dem
+        self.plotDir = plotDir
         self.cellsize = gen_list[0][0].cellsize
         self.gen_list = gen_list
         self.start_row = start_row
@@ -158,8 +159,6 @@ class Path:
         self.gen_list = []
     
     def plot_pathanaylsis(self):
-        self.calc_all_analysis()
-
         fig, axs = plt.subplots(4,2) 
 
         fig.set_figheight(10)
@@ -224,10 +223,7 @@ class Path:
         for i in range(4):
             axs[i,1].legend()
             axs[i,1].set(xlabel = 'iteration step / generation')   
-        
-        #return fig
-        fig.savefig(f'/home/paula/data/Flowpy_test/plane/output_1cell_PRA/plots/plot_pathlist_col{self.start_col},row{self.start_row}.png')
-        #self.plot_path_analysis = fig
+        fig.savefig(f'{self.plotDir}/Thalwege/plot_pathlist_col{self.start_col},row{self.start_row}.png')
         plt.close(fig)
 
     

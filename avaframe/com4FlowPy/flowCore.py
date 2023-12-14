@@ -113,7 +113,7 @@ def back_calculation(back_cell):
     #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
     return back_list
 
-def path_calc_analysis(path, plotDir, path_raster = False):
+def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
     # PAULA
     # calculate analysis of paths (in Process-splitting/ pool function)
 
@@ -159,9 +159,8 @@ def path_calc_analysis(path, plotDir, path_raster = False):
         #calculated with mean: {thalweg_z_delta_area_mean}')
 
         # EXPENSIVE!
-        #path.plot_pathanaylsis() #this line takes lot of time!!
-        #fig.savefig(f'{plotDir}/plot_pathlist_col{path.start_col},row{path.start_row}.png')
-        #plt.close(fig)
+        if PathPlots == True:
+            path.plot_pathanaylsis() #this line takes lot of time!!
 
     # save files in csv file
 
@@ -411,6 +410,7 @@ def run(optTuple):
     #paula
     plotDir = optTuple[11]
     Pathanalysis = optTuple[12]
+    PathPlots = optTuple[13]
     #end puala
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -432,7 +432,7 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, plotDir, Pathanalysis]
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, plotDir, Pathanalysis, PathPlots]
                             for release_sub in release_list])
         pool.close()
         pool.join()
@@ -553,6 +553,7 @@ def calculation(args):
     infraBool = args[9]
     plotDir = args[10]
     Pathanalysis = args[11]
+    PathPlots = args[12]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -682,9 +683,9 @@ def calculation(args):
             
         #PAULA
         if Pathanalysis == True:
-            path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list)
+            path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list, plotDir)
             path.calc_all_analysis()
-            path_calc_analysis(path, plotDir)   
+            path_calc_analysis(path, plotDir, PathPlots)   
         #ende paula
 
             #Michi generation

@@ -102,7 +102,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nCPU = int(cfgSetup["cpuCount"])
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
-    Pathanalysis = bool(cfgSetup["Pathanalysis"])
+    Pathanalysis = bool(int(cfgSetup["PathAnalysis"]))
+    PathPlots = bool(int(cfgSetup["PathPlots"]))
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
@@ -122,6 +123,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #paula
     plotDir = resDir / "Plots"
     fU.makeADir(plotDir)
+
+    if PathPlots == True:
+        pathPlotDir = plotDir / "Thalwege"
+        fU.makeADir(pathPlotDir)
     #end paula
     tempDir = workDir / "temp"
     fU.makeADir(tempDir)
@@ -133,6 +138,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     log.info("Flux Threshold: {}".format(flux_threshold))
     log.info("Max Z_delta: {}".format(max_z))
     log.info("Path is analysed: {}".format(Pathanalysis))
+    log.info("Pathanalysis are plotted: {}".format(PathPlots))
 
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
@@ -213,7 +219,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         for j in range(nTiles[1] + 1):
             #paula: add plotDir
             optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU,  plotDir, Pathanalysis))
+                            max_z, tempDir, infraBool, nCPU,  plotDir, Pathanalysis, PathPlots))
 
     # Calculation
     for optTuple in optList:
