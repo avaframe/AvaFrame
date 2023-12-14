@@ -31,6 +31,7 @@ class Path:
         self.row_generation = []
         self.col_generation = []
         self.altitude_generation = []
+        self.gamma_generation = []
         self.path_area = 0
 
         #self.plot_path_anaylsis, ax = plt.subplots()
@@ -64,6 +65,7 @@ class Path:
             cell_list_row = []
             cell_list_col = []
             cell_list_alt = []
+            cell_list_gamma = []
 
             for cell in cell_list:
                 cell_list_z_delta.append(cell.z_delta)
@@ -73,6 +75,7 @@ class Path:
                 cell_list_row.append(cell.rowindex)
                 cell_list_col.append(cell.colindex)
                 cell_list_alt.append(cell.altitude)
+                cell_list_gamma.append(cell.max_gamma)
 
             self.z_delta_generation.append(cell_list_z_delta)
             self.flux_generation.append(cell_list_flux)
@@ -81,6 +84,7 @@ class Path:
             self.row_generation.append(cell_list_row)
             self.col_generation.append(cell_list_col)
             self.altitude_generation.append(cell_list_alt)
+            self.gamma_generation.append(cell_list_gamma)
 
     def get_coords_in_genlist_format(self):
         '''
@@ -125,7 +129,7 @@ class Path:
 
         variables = {'col': self.col_generation, 'row': self.row_generation, 'flux':self.flux_generation, 
         'energy':self.flow_energy_generation, 'altitude': self.altitude_generation, 
-        's' : self.travel_length_generation, 'z_delta': self.z_delta_generation}
+        's' : self.travel_length_generation, 'z_delta': self.z_delta_generation, 'gamma': self.gamma_generation}
         for var_name, var in variables.items():
             sumF, coF = self.calc_thalweg_centerof(var, self.flux_generation) # center of flux of every variable
             sumE, coE = self.calc_thalweg_centerof(var, self.flow_energy_generation) # center of energy of every variable

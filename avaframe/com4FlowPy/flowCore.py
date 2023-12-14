@@ -119,15 +119,24 @@ def path_calc_analysis(path, plotDir, path_raster = False):
 
     #path_z_delta_raster = np.empty((1, path_list[0].z_delta_array.shape[0],path_list[0].z_delta_array.shape[1]))
 
- 
+    #per path one value (mean/min/max)
     thalweg_travel_lengths = path.travel_length # travel length of the whole path 
     thalweg_altitude = path.drop_height #drop height
     thalweg_z_delta_sum = sum(path.z_delta_coE) #sum of z_delta
     thalweg_z_delta_max = max(path.z_delta_coE) #max of z_delta
     thalweg_alpha_calc = path.alpha_calc # calculated alpha angle 
     path_area = path.path_area
+
+    # total thalweg
     col_coE = path.col_coE
     row_coE = path.row_coE
+    flux_coE = path.flux_coE
+    energy_coE = path.energy_coE
+    z_delta_coE = path.z_delta_coE
+    gamma_coE = path.gamma_coE
+    s_coE = path.s_coE
+    z_coE = path.altitude_coE
+
 
     #idea for calculating area between zdelta and terrain
     distance = 0
@@ -156,11 +165,11 @@ def path_calc_analysis(path, plotDir, path_raster = False):
 
     # save files in csv file
 
-    with open(plotDir / ("values_travel_lengths.csv"), mode='a', newline='') as file:
+    with open(plotDir / ("values_travel_lengths_max.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_travel_lengths])
 
-    with open(plotDir / ("values_thalweg_altitude.csv"), mode='a', newline='') as file:
+    with open(plotDir / ("values_thalweg_altitude_max.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_altitude])
 
@@ -172,7 +181,7 @@ def path_calc_analysis(path, plotDir, path_raster = False):
         writer = csv.writer(file)
         writer.writerow([thalweg_z_delta_max])
 
-    with open(plotDir / ("values_thalweg_alpha_calc.csv"), mode='a', newline='') as file:
+    with open(plotDir / ("values_thalweg_alpha_calc_min.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_alpha_calc])
 
@@ -186,11 +195,35 @@ def path_calc_analysis(path, plotDir, path_raster = False):
 
     with open(plotDir / ("values_thalweg_row_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([row_coE])
+        writer.writerow(row_coE)
 
     with open(plotDir / ("values_thalweg_col_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([col_coE])
+        writer.writerow(col_coE)
+
+    with open(plotDir / ("values_thalweg_flux_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(flux_coE)
+    
+    with open(plotDir / ("values_thalweg_energy_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(energy_coE)
+
+    with open(plotDir / ("values_thalweg_zdelta_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(z_delta_coE)
+    
+    with open(plotDir / ("values_thalweg_gamma_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(gamma_coE)
+
+    with open(plotDir / ("values_thalweg_s_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(s_coE)
+    
+    with open(plotDir / ("values_thalweg_z_coE.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(z_coE)
 
     
     '''
@@ -213,7 +246,7 @@ def thalweg_plot_analysis(dem, plotDir):
     # get path variables from path_analysis_list
 
     
-    path_travel_lengths = np.loadtxt(plotDir / ("values_travel_lengths.csv"),delimiter=',')        
+    path_travel_lengths = np.loadtxt(plotDir / ("values_travel_lengths_max.csv"),delimiter=',')        
 
     log.info('Save plots')
     # Histograms
@@ -234,7 +267,7 @@ def thalweg_plot_analysis(dem, plotDir):
     del path_travel_lengths
 
 
-    path_alpha_calc = np.loadtxt(plotDir / ("values_thalweg_alpha_calc.csv"),delimiter=',')
+    path_alpha_calc = np.loadtxt(plotDir / ("values_thalweg_alpha_calc_min.csv"),delimiter=',')
 
     fig,ax = plt.subplots()
     ax.hist(path_alpha_calc)
@@ -252,7 +285,7 @@ def thalweg_plot_analysis(dem, plotDir):
     del path_alpha_calc
 
       
-    path_altitude = np.loadtxt(plotDir / ("values_thalweg_altitude.csv"),delimiter=',')
+    path_altitude = np.loadtxt(plotDir / ("values_thalweg_altitude_max.csv"),delimiter=',')
     fig,ax = plt.subplots()
     ax.hist(path_altitude)
     plt.xlabel('drop height of coE path [m]')
