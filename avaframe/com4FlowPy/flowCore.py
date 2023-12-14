@@ -207,7 +207,7 @@ def overlay_path_raster(path_analysis_list):
     paths_z_delta = np.delete(paths_z_delta, [0], axis = 0)
     return paths_z_delta
 
-def thalweg_plot_analysis(dem, tempDir, plotDir):
+def thalweg_plot_analysis(dem, plotDir):
     #paula
     log = logging.getLogger(__name__)
     # get path variables from path_analysis_list
@@ -377,6 +377,7 @@ def run(optTuple):
     nCPU = optTuple[10]
     #paula
     plotDir = optTuple[11]
+    Pathanalysis = optTuple[12]
     #end puala
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -398,7 +399,7 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, plotDir]
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, plotDir, Pathanalysis]
                             for release_sub in release_list])
         pool.close()
         pool.join()
@@ -446,8 +447,9 @@ def run(optTuple):
         #Paula
         flow_energy_list.append(res[8])
 
-    thalweg_plot_analysis(dem, tempDir, plotDir)
-    #z_delta_all_paths = overlay_path_raster(path_analysis_list)
+    if Pathanalysis == True:
+        thalweg_plot_analysis(dem, plotDir)
+        #z_delta_all_paths = overlay_path_raster(path_analysis_list)
         #ende paula
 
     logging.info('Calculation finished, getting results.')
@@ -517,6 +519,7 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     plotDir = args[10]
+    Pathanalysis = args[11]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -645,9 +648,10 @@ def calculation(args):
                 child_list = []
             
         #PAULA
-        path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list)
-        path.calc_all_analysis()
-        path_calc_analysis(path, plotDir)   
+        if Pathanalysis == True:
+            path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], gen_list)
+            path.calc_all_analysis()
+            path_calc_analysis(path, plotDir)   
         #ende paula
 
             #Michi generation
