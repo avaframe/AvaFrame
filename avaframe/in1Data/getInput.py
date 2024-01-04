@@ -230,7 +230,6 @@ def getInputDataCom1DFA(avaDir):
     relThFile, entResInfo["releaseThicknessFile"] = getAndCheckInputFiles(
         inputDir, "RELTH", "release thickness data", fileExt="asc", notMultiple=False,
     )
-    print('RELTH file here', relThFile)
 
     # Initialise secondary release areas
     secondaryReleaseFile, entResInfo["flagSecondaryRelease"] = getAndCheckInputFiles(

@@ -333,12 +333,17 @@ def checkThicknessSettings(cfg, thName):
     thRV = thName + 'RangeVariation'
     thPV = thName + 'PercentVariation'
     thRCiV = thName + 'RangeFromCiVariation'
+    flagsList = [cfg['GENERAL'][thRV] != '', cfg['GENERAL'][thPV] != '', cfg['GENERAL'][thRCiV] != '']
 
-    if cfg['GENERAL'][thRV] != '' and cfg['GENERAL'][thPV] != '' and cfg['GENERAL'][thRCiV] != '':
-        message = 'Only one variation type is allowed - check %s and %s' % (thRV, thPV)
+    if sum(flagsList) > 1:
+        message = 'Only one variation type is allowed - check %s and %s, %s' % (thRV, thPV, thRCiV)
         log.error(message)
         raise AssertionError(message)
 
+    if cfg['GENERAL'].getboolean(thFile) and (cfg['GENERAL'][thRV] != '' or cfg['GENERAL'][thPV] != '' or cfg['GENERAL'][thRCiV] != ''):
+        message = 'RelThFromFile is True - no variation allowed: check %s, %s or %s' % (thRV, thPV, thRCiV)
+        log.error(message)
+        raise AssertionError(message)
     # if no error ocurred - thickness settings are correct
     thicknessSettingsCorrect = True
 
@@ -484,7 +489,6 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
         # add thickness values for all features if thFromShape = True
         if cfg['GENERAL'][thFlag] == 'True':
             cfg = setVariationForAllFeatures(cfg, key, thType, varType, variationFactor)
-
         else:
             # update ini thValue if thFromShape=False
             if varType == 'Range':
