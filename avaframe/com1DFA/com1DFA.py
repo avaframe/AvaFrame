@@ -587,33 +587,18 @@ def prepareInputData(inputSimFiles, cfg):
     # load data
     entResInfo = inputSimFiles["entResInfo"].copy()
     relFile = inputSimFiles["releaseScenario"]
-    relThFile = inputSimFiles["relThFile"]
+    relThFiles = inputSimFiles["relThFile"]
 
     # get dem dictionary - already read DEM with correct mesh cell size
     demOri = gI.initializeDEM(cfg["GENERAL"]["avalancheDir"], demPath=cfg["INPUT"]["DEM"])
     dOHeader = demOri["header"]
 
     # read data from relThFile
-    if relThFile != None and cfg["GENERAL"].getboolean("relThFromFile"):
+    if relThFiles != None and cfg["GENERAL"].getboolean("relThFromFile"):
+        # read data from relThFile
+        relThFile = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField["rasterData"]
-        relThFieldDataOrig = relThFieldData.copy()
-        if (
-            dOHeader["ncols"] != relThField["header"]["ncols"]
-            or dOHeader["nrows"] != relThField["header"]["nrows"]
-        ):
-            message = (
-                "Release thickness field read from %s does not match the number of rows and columns of the dem"
-                % inputSimFiles["relThFile"]
-            )
-            log.error(message)
-            raise AssertionError(message)
-        elif np.isnan(relThFieldData).any() == True:
-            message = (
-                "Release thickness field contains nans - not allowed no release thickness must be set to 0"
-            )
-            log.error(message)
-            raise AssertionError(message)
     else:
         relThFieldData = ""
 
@@ -2581,6 +2566,10 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         pathToDem = dP.checkDEM(cfgSim, inputSimFiles["demFile"])
         cfgSim["INPUT"]["DEM"] = pathToDem
 
+        # check if relThFromFile is set, if a relThField is found with matching spatial resolution
+        if cfgSim['GENERAL']['relThFromFile'] == 'True':
+            checkRELTHFile(inputSimFiles, cfgSim)
+
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
 
@@ -2886,3 +2875,29 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
         relVolume = np.nansum(releaseLine["rasterData"] * demVol["areaRaster"])
 
     return relVolume
+
+def checkRELTHFile(inputSimFiles, cfgSim):
+    """ check if there is a RELTHFile that matches the nrows, ncols of the dem and cellSize
+
+        Parameters
+        -----------
+        inputSimFiles: dict
+            with input files
+        cfgSim: dict
+            configuration dictionary
+
+        Returns
+        --------
+        cfgSim: dict
+            updated simulation configuration with info on path to RELTH file
+    """
+
+    relThFiles = inputSimFiles["relThFile"]
+    demOri = gI.initializeDEM(cfgSim["GENERAL"]["avalancheDir"], demPath=cfgSim["INPUT"]["DEM"])
+    dOHeader = demOri["header"]
+    # read data from relThFile
+    if relThFiles != None and cfgSim["GENERAL"]["relThFromFile"] == 'True':
+        # read data from relThFile
+        _, cfgSim = gI.getAndCheckRelThFile(relThFiles, demOri["header"], cfgSim)
+
+    return cfgSim

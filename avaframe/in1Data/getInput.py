@@ -228,8 +228,9 @@ def getInputDataCom1DFA(avaDir):
 
     # check if relThFile is available
     relThFile, entResInfo["releaseThicknessFile"] = getAndCheckInputFiles(
-        inputDir, "RELTH", "release thickness data", fileExt="asc"
+        inputDir, "RELTH", "release thickness data", fileExt="asc", notMultiple=False,
     )
+    print('RELTH file here', relThFile)
 
     # Initialise secondary release areas
     secondaryReleaseFile, entResInfo["flagSecondaryRelease"] = getAndCheckInputFiles(
@@ -263,7 +264,7 @@ def getInputDataCom1DFA(avaDir):
     return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp"):
+def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", notMultiple=True):
     """Fetch fileExt files and check if they exist and if it is not more than one
 
     Raises error if there is more than one fileExt file.
@@ -292,13 +293,14 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp"):
     OutputFile = list(inDir.glob("*.%s" % fileExt))
     if len(OutputFile) < 1:
         OutputFile = None
-    elif len(OutputFile) > 1:
+    elif len(OutputFile) > 1 and notMultiple:
         message = "More than one %s .%s file in %s/%s/ not allowed" % (inputType, fileExt, inputDir, folder)
         log.error(message)
         raise AssertionError(message)
     else:
         available = "Yes"
-        OutputFile = OutputFile[0]
+        if len(OutputFile) == 1:
+            OutputFile = OutputFile[0]
 
     return OutputFile, available
 
@@ -393,10 +395,10 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
                 message = "relThFromFile set to True but no relTh file found"
                 log.error(message)
                 raise FileNotFoundError(message)
-            else:
-                cfgInitial["INPUT"]["relThFile"] = str(
-                    pathlib.Path("RELTH", inputSimFiles["relThFile"].name)
-                )
+            #else:
+                #cfgInitial["INPUT"]["relThFile"] = str(
+                #    pathlib.Path("RELTH", inputSimFiles["relThFile"].name)
+                #)
 
     # add entrainment and secondary release thickness in input data info and in cfg object
     if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
@@ -756,7 +758,6 @@ def getInputPaths(avaDir):
 
     return demFile, relFiles, relFieldFiles
 
-
 def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=''):
     """ check if in polygon read from shape file holes are present, if so error and save a plot to Outputs/com1DFA
         procedure: check if polygon has several parts
@@ -811,3 +812,60 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=''):
         message = 'One or more %s features in %s have holes - check error plots in %s' % (type, lineFileName.name, outDir)
         log.error(message)
         raise AssertionError(message)
+
+def getAndCheckRelThFile(relThFiles, demHeader, cfg):
+    """Fetch relTh file for desired meshCellSize and add info in cfg
+
+    Raises error if there is no relTh file with matching cell size and extent.
+    or if nrows and ncols do not match demHeader or if data contains nans
+
+    Parameters
+    ----------
+    relThFiles: list
+        list with paths to relth files
+    demHeader: dict
+        dictionary with header of DEM including cellsize, nrows, ncols
+    cfg: configparser object
+        configuration settings of sim
+
+    Returns
+    -------
+    relThFieldData: numpy array
+        release thickness values array with same extent as DEM
+    """
+
+    # read data from relThFile
+    relThFound = False
+    if relThFiles != None:
+        for relF in relThFiles:
+            relThField = IOf.readRaster(relF)
+            relThFieldData = relThField['rasterData']
+            if 'scenario' in relF.stem:
+                if (relF.stem.split('scenario')[1] == cfg['VISUALISATION']['scenario'] and (
+                        demHeader['ncols'] == relThField['header']['ncols'] and demHeader['nrows'] ==
+                        relThField['header']['nrows'])):
+                    relThFound = True
+                    cfg['INPUT']['relThFile'] = str(pathlib.Path('RELTH', relF.name))
+                    log.info('RELTH file found for scenario (%s): %s' % (cfg['VISUALISATION']['scenario'],relF.name))
+                    break
+            else:
+                if demHeader['ncols'] == relThField['header']['ncols'] and demHeader['nrows'] == relThField['header'][
+                    'nrows'] and demHeader['cellsize'] == relThField['header']['cellsize']:
+                    relThFound = True
+                    cfg['INPUT']['relThFile'] = str(pathlib.Path('RELTH', relF.name))
+                    log.info('RELTH file found: %s' % relF.name)
+                    break
+
+        if relThFound is False:
+            message = ('No matching release thickness file found that matches the number of rows and columns of the dem')
+            log.error(message)
+            raise AssertionError(message)
+        elif np.isnan(relThFieldData).any() == True:
+            message = ('Release thickness field contains nans - not allowed no release thickness must be set to 0')
+            log.error(message)
+            raise AssertionError(message)
+    else:
+        relThFieldData = ''
+
+    return relThFieldData, cfg
+
