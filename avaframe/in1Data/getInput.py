@@ -298,7 +298,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", notMultipl
         raise AssertionError(message)
     else:
         available = "Yes"
-        if len(OutputFile) == 1:
+        if notMultiple:
             OutputFile = OutputFile[0]
 
     return OutputFile, available

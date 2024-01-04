@@ -237,7 +237,8 @@ def test_checkThicknessSettings():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'entThFromShp': 'True', 'entTh': '', 'entThPercentVariation': '',
-                      'entThRangeVariation': ''}
+                      'entThRangeVariation': '', 'entThRangeFromCiVariation': ''
+                      }
 
     thName = 'entTh'
 
@@ -273,6 +274,37 @@ def test_checkThicknessSettings():
         assert dP.checkThicknessSettings(cfg, 'relTh')
     assert str(e.value) == ("If %s is set to True - it is not allowed to set %s to True or provide a value in %s" %
         ('relThFromFile', 'relThFromShp', 'relTh'))
+
+    # setup required inputs
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'relThFromShp': 'False', 'relTh': '', 'relThPercentVariation': '',
+                      'relThRangeVariation': '', 'relThRangeFromCiVariation': '',
+                      'relThFromFile': 'True'
+                      }
+
+    thName = 'relTh'
+
+    thicknessSettingsCorrect = dP.checkThicknessSettings(cfg, thName)
+
+    assert thicknessSettingsCorrect
+
+    cfg['GENERAL']['relThRangeVariation'] = '50$4'
+
+    with pytest.raises(AssertionError) as e:
+        assert dP.checkThicknessSettings(cfg, 'relTh')
+    assert 'RelThFromFile is True - no variation allowed: check' in str(e.value)
+
+    # setup required inputs
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'relThFromShp': 'True', 'relTh': '', 'relThPercentVariation': '',
+                      'relThRangeVariation': '50$4', 'relThRangeFromCiVariation': '50$1',
+                      'relThFromFile': 'False'
+                      }
+
+    thName = 'relTh'
+    with pytest.raises(AssertionError) as e:
+        assert dP.checkThicknessSettings(cfg, 'relTh')
+    assert 'Only one variation type is allowed - check' in str(e.value)
 
 
 def test_appendShpThickness():
