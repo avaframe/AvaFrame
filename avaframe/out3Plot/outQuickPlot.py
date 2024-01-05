@@ -580,3 +580,64 @@ def plotContours(contourDict, resType, thresholdValue, pathDict, addLegend=True)
     # save and or plot
     outFileName = pathDict['plotScenario'] + '_ContourLines'
     pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def plotAllContours(avaDir, modName, resType, level, specDir=''):
+    """ Create a plot of resType level contour lines for all resType files found in
+        avaDir/Outputs/modName/peakFiles or specDir optional
+        file format needs to be of type _resType.asc
+
+        Parameters
+        ------------
+        avaDir: str or pathlib path
+            path to avalanche directory
+        modName: str
+            name of computational module
+        resType: str
+            result variable type
+        level: float
+            contour line level
+        specDir: str or pathlib path
+            path to peak files folder - optional
+        """
+
+    # directory with peak files
+    if specDir == '':
+        inDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
+    elif pathlib.Path(specDir).is_dir():
+        inDir = pathlib.Path(specDir)
+    else:
+        message = 'specdir: %s is not a directory' % str(specDir)
+        log.error(message)
+        raise AssertionError(message)
+
+    # fetch all files for resType (file format needs to be of type _resType.asc)
+    pFiles = list(inDir.glob('*_%s.asc' % resType))
+
+    # loop over all pFiles and create contourLines dictionary
+    contourDict = {}
+    for pf in pFiles:
+        # load data
+        rasterF = IOf.readRaster(pf)
+        rasterData = rasterF["rasterData"]
+
+        # load info on extent to create coordinate mesh
+        x = rasterF['header']['xllcenter']
+        y = rasterF['header']['yllcenter']
+        nrows = rasterF['header']['nrows']
+        ncols = rasterF['header']['ncols']
+        cellSize = rasterF['header']['cellsize']
+        x1 = np.linspace(x, x + ncols * cellSize, ncols)
+        y1 = np.linspace(x, y + nrows * cellSize, nrows)
+        xm, ym = np.meshgrid(x1, y1)
+
+        # fetch contour line coords for data and level
+        contourDictXY = pU.fetchContourCoords(xm, ym, rasterData, level)
+        contourDict[pf.stem.split('_')[1]] = contourDictXY
+
+    # save and or plot figure
+    outDir = pathlib.Path(avaDir, 'Outputs', 'out3Plot')
+    pathDict = {'pathResult': outDir, 'plotScenario': pathlib.Path(avaDir).stem,
+                'avaDir': avaDir}
+    plotContours(contourDict, resType, level, pathDict, addLegend=True)
+
