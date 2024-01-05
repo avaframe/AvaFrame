@@ -93,7 +93,7 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
 
     # read initial configuration
     if typeCfgInfo in ["cfgFromFile", "cfgFromDefault"]:
-        cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
+        cfgStart = cfgUtils.getModuleConfig(com1DFA, cfgMain['MAIN']['configurationDir'], fileOverride=cfgInfo, toPrint=False)
     elif typeCfgInfo == "cfgFromObject":
         cfgStart = cfgInfo
 
@@ -167,7 +167,7 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(simDict))
 
         # Supply compute task with inputs
-        com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, avalancheDir, outDir)
+        com1DFACoreTaskWithInput = partial(com1DFACoreTask, simDict, inputSimFiles, cfgMain, outDir)
 
         # Create parallel pool and run
         # with multiprocessing.Pool(processes=nCPU) as pool:
@@ -200,10 +200,12 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         return 0, {}, [], ""
 
 
-def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
+def com1DFACoreTask(simDict, inputSimFiles, cfgMain, outDir, cuSim):
     """This is a subdivision of com1DFAMain to allow for parallel execution.
     Please read this in the context of the com1DFAMain function.
     """
+
+    avalancheDir = cfgMain['MAIN']['avalancheDir']
 
     simDF = pd.DataFrame()
     tCPUDF = pd.DataFrame()
@@ -232,7 +234,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
         cfgFinal,
         tCPU,
         particlesList,
-    ) = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, simHash=simHash)
+    ) = com1DFA.com1DFACore(cfg, cfgMain, cuSim, inputSimFiles, outDir, simHash=simHash)
 
     simDF.at[simHash, "nPart"] = str(int(particlesList[0]["nPart"]))
 
@@ -323,7 +325,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     return dem, plotDict, reportDictList, simDFNew
 
 
-def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
+def com1DFACore(cfg, cfgMain, cuSimName, inputSimFiles, outDir, simHash=""):
     """Run main com1DFA model
 
     This will compute a dense flow avalanche with the settings specified in cfg and the name cuSimName
@@ -332,12 +334,12 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     ----------
     cfg : configparser object
         configuration object for simulation to be performed
+    cfgMain: configparser object
+        main configuration of AvaFrame used here: avalancheDir, configurationDir
     cuSimName: str
         name of simulation
     inputSimFiles: dict
         dictionary with input files, release scenario chosen according to inputSimFiles['releaseScenario']
-    avaDir : str or pathlib object
-        path to avalanche directory
     outDir: str or pathlib object
         path to Outputs
     simHash: str
@@ -358,6 +360,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     particlesList: list
         list of particle dictionaries for all saving time steps
     """
+
+    avaDir = cfgMain['MAIN']['avalancheDir']
 
     # select release area input data according to chosen release scenario
     inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
@@ -388,7 +392,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     # ------------------------
     #  Start time step computation
     Tsave, particlesList, fieldsList, infoDict = DFAIterate(
-        cfg, particles, fields, dem, inputSimLines, simHash=simHash
+        cfg, particles, fields, dem, inputSimLines, cfgMain['MAIN']['configurationDir'], simHash=simHash
     )
 
     # write mass balance to File
@@ -1657,7 +1661,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     return cResRaster, detRaster, reportAreaInfo
 
 
-def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
+def DFAIterate(cfg, particles, fields, dem, inputSimLines, configDir, simHash=""):
     """Perform time loop for DFA simulation
      Save results at desired intervals
 
@@ -1676,6 +1680,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         dictionary with dem information
     inputSimLines : dict
         dictionary with input data dictionaries (releaseLine, entLine, ...)
+    configDir: str or pathlib Path
+        path to configuration directory - optional if not provided has to be empty string
 
     Returns
     -------
@@ -1762,7 +1768,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     # check if range-time diagram should be performed, if yes - initialize
     if cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"):
         demRT = dtAna.setDemOrigin(dem)
-        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash)
+        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash, configDir)
         # fetch initial time step too
         mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(
             cfgRangeTime, cfg, dtRangeTime, t, demRT["header"], fields, mtiInfo
