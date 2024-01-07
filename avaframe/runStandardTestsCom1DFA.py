@@ -100,7 +100,7 @@ for test in testList:
         # ++++++++++ set configurations for com1DFA and override ++++++++++++
         # get comDFA configuration and update with snow slide parameter set
         standardCfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-                                              onlyDefault=snowSlideCfg['com1DFA_override'].getboolean('defaultConfig'))
+                                              onlyDefault=snowSlideCfg['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
         standardCfg, snowSlideCfg = cfgHandling.applyCfgOverride(standardCfg, snowSlideCfg, com1DFA, addModValues=False)
 
     # Set timing

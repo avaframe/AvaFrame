@@ -185,7 +185,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     if variationType.lower() == 'normaldistribution':
         # get computeFromDistribution configuration and apply override
         cfgDist = cfgUtils.getModuleConfig(cP, fileOverride='', modInfo=False, toPrint=False,
-                                              onlyDefault=cfgProb['computeFromDistribution_override'].getboolean('defaultConfig'))
+                                           onlyDefault=cfgProb['in1Data_computeFromDistribution_override'].getboolean('defaultConfig'))
         cfgDist, cfgProb = cfgHandling.applyCfgOverride(cfgDist, cfgProb, cP, addModValues=False)
 
     # set variation in configuration
@@ -196,7 +196,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
             if valVariation == '':
                 valVariation = '-'
             parValue = (variationType + '$'
-                + valSteps + '$'  + valVariation + '$'
+                + valSteps + '$' + valVariation + '$'
                 + cfgDist['GENERAL']['minMaxInterval'] + '$'
                 + cfgDist['GENERAL']['buildType'] + '$'
                 + cfgDist['GENERAL']['support'])
@@ -226,11 +226,11 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
         cfg['GENERAL'][parName] = parValue
     else:
         # set variation
-        if  variationType.lower() == 'normaldistribution':
+        if variationType.lower() == 'normaldistribution':
             cfgDist = {'sampleSize': valSteps, 'mean': valVal,
-                'buildType': cfgProb['computeFromDistribution_override']['buildType'],
+                'buildType': cfgProb['in1Data_computeFromDistribution_override']['buildType'],
                 'buildValue': valVariation,
-                'minMaxInterval':  cfgDist['GENERAL']['minMaxInterval'],
+                'minMaxInterval': cfgDist['GENERAL']['minMaxInterval'],
                 'support': cfgDist['GENERAL']['support']}
             _, valValues, _, _ = cP.extractNormalDist(cfgDist)
             cfg['GENERAL'][varName] = dP.writeToCfgLine(valValues)
@@ -313,8 +313,7 @@ def checkForNumberOfReferenceValues(cfgGen, varPar):
     # check if variation is set
     if cfgGen[thPV] != '' or cfgGen[thRV] != '' or cfgGen[thDV] != '' or cfgGen[thRCiV] != '':
         message = ('Only one reference value is allowed for %s: but %s %s, %s %s, %s %s, %s %s is given' %
-            (varPar, thPV, cfgGen[thPV], thRV, cfgGen[thRV], thDV, cfgGen[thDV],thRCiV,
-             cfgGen[thRCiV]))
+                   (varPar, thPV, cfgGen[thPV], thRV, cfgGen[thRV], thDV, cfgGen[thDV], thRCiV, cfgGen[thRCiV]))
         log.error(message)
         raise AssertionError(message)
 
@@ -555,9 +554,11 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
 
     # create sets of parameters values for parameter variation
     if len(thReadFromShp) > 0:
-         paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList, valVariationValue, varType, thReadFromShp)
+        paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList,
+                                                                    valVariationValue, varType, thReadFromShp)
     else:
-        paramValuesD = createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, valVariationValue, varType)
+        paramValuesD = createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, valVariationValue,
+                                                                   varType)
         paramValuesDList = [paramValuesD]
 
     return paramValuesDList
@@ -599,7 +600,7 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
         varVal = cfgStart['GENERAL'].getfloat(varPar)
         if varType[idx].lower() == 'percent':
             lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
-            uB = varVal + varVal * ( float(valVariationValue[idx]) / 100.)
+            uB = varVal + varVal * (float(valVariationValue[idx]) / 100.)
         elif varType[idx].lower() == 'range':
             lB = varVal - float(valVariationValue[idx])
             uB = varVal + float(valVariationValue[idx])
@@ -677,14 +678,14 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
                 # add to list all the parameter names
                 fullListOfParameters = fullListOfParameters + thFeatureNames
                 parentParameterId = parentParameterId + [varParList.index(varPar)]*len(thFeatureNames)
-                thValues = np.append(thValues,thV)
-                ciValues = np.append(ciValues,ciV)
+                thValues = np.append(thValues, thV)
+                ciValues = np.append(ciValues, ciV)
             else:
                 parentParameterId.append(varParList.index(varPar))
                 fullListOfParameters.append(varPar)
                 staParameter.append(varPar)
-                thValues = np.append(thValues,np.asarray([None]))
-                ciValues = np.append(ciValues,np.asarray([None]))
+                thValues = np.append(thValues, np.asarray([None]))
+                ciValues = np.append(ciValues, np.asarray([None]))
 
         # initialize lower and upper bounds required to get a sample for the parameter values
         # numpy arrays required to do masking as lists don't work for a list indices
@@ -723,7 +724,7 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
             lB[parentParameterId[idx]] = lowerBounds[idx]
             uB[parentParameterId[idx]] = upperBounds[idx]
             parSample = qmc.scale(sample, lB, uB)
-            fullSample[:,idx] = parSample[:,parentParameterId[idx]]
+            fullSample[:, idx] = parSample[:, parentParameterId[idx]]
 
         # create dictionary with all the info
         thFromIni = cfgUtils.convertToCfgList(list(set(varParList).symmetric_difference(set(staParameter))))
@@ -821,7 +822,8 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
         Parameters
         -----------
         paramValuesDList: list
-            list of dictionaries with parameter names and values (array of all sets of parameter values, one row per value set)
+            list of dictionaries with parameter names and values (array of all sets of parameter values,
+             one row per value set)
             multiple dictionaries if multiple release area scenarios and thFromShp
         comMod: com module
             computational module
@@ -872,7 +874,7 @@ def fetchStartCfg(comMod, cfgProb):
         comMod: computational module
             module where configuration is read from
         cfgProb: configparser object
-            configuration settings of probAna with comMod_override section
+            configuration settings of probAna with collection_comMod_override section
 
         Returns
         --------
@@ -881,10 +883,11 @@ def fetchStartCfg(comMod, cfgProb):
     """
     # get filename of module
     modName = str(pathlib.Path(comMod.__file__).stem)
+    modP = (pathlib.Path(comMod.__file__).resolve().parent).stem
 
     # fetch comMod config
     cfgStart = cfgUtils.getModuleConfig(comMod, fileOverride='', toPrint=False,
-        onlyDefault=cfgProb['%s_override' % modName].getboolean('defaultConfig'))
+        onlyDefault=cfgProb['%s_%s_override' % (modP, modName)].getboolean('defaultConfig'))
 
     # override with parameters set in in the cfgProb comMod_override section
     cfgStart, cfgProb = cfgHandling.applyCfgOverride(cfgStart, cfgProb, comMod, addModValues=False)

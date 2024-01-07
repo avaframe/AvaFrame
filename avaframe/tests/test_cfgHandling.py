@@ -19,9 +19,9 @@ def test_addInfoToSimName():
     avaTestDir = 'avaParabolaStatsTest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
-    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu')
+    renameDF = cfgHandling.addInfoToSimName(avaDir, 'mu')
     assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_null_dfa'
-    renameDF = cfgHandling.addInfoToSimName(avaDir,'mu,tEnd')
+    renameDF = cfgHandling.addInfoToSimName(avaDir, 'mu,tEnd')
     assert renameDF.loc['c4f3a000c3']['newName'] == 'release1PF_c4f3a000c3_mu_0.155_tEnd_400_null_dfa'
 
 
@@ -134,7 +134,7 @@ def test_filterSims(tmp_path):
 
     assert len(simNames) == 4
     assert simNames == ['relGar_1022880a70_null_dfa', 'relGar_789ce37489_ent_dfa',
-    'relGar_9b75355a9a_ent_dfa','relGar_c4337e50ac_null_dfa']
+                        'relGar_9b75355a9a_ent_dfa','relGar_c4337e50ac_null_dfa']
 
     parametersDict = {'relTh': '<1.0'}
 
@@ -151,14 +151,16 @@ def test_applyCfgOverride(caplog):
     cfgWithOverrideParameters = configparser.ConfigParser()
     cfgWithOverrideParameters.optionxform = str
     cfgWithOverrideParameters['GENERAL'] = {'testp1': 1., 'testp2': 'testValue'}
-    cfgWithOverrideParameters['com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7, 'tStep': 100., 'notParameter': 1.}
+    cfgWithOverrideParameters['com1DFA_com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7, 'tStep': 100.,
+                                                             'notParameter': 1.}
 
     cfgToOverride = configparser.ConfigParser()
     cfgToOverride.optionxform = str
     cfgToOverride['GENERAL'] = {'mu': 1., 'tEnd': 400., 'relTh': 1.}
     cfgToOverride['DFA'] = {'tStep': 0.3, 'dt1': 6., 'flowF': 3.}
 
-    cfgToOverride, cfgWithOverrideParameters = cfgHandling.applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, com1DFA, addModValues=False)
+    cfgToOverride, cfgWithOverrideParameters = cfgHandling.applyCfgOverride(cfgToOverride, cfgWithOverrideParameters,
+                                                                            com1DFA, addModValues=False)
 
     assert cfgToOverride['GENERAL']['mu'] == '0.7'
     assert cfgToOverride['GENERAL']['tEnd'] == '400.0'
@@ -168,20 +170,20 @@ def test_applyCfgOverride(caplog):
     assert cfgToOverride['DFA']['flowF'] == '3.0'
     assert cfgWithOverrideParameters['GENERAL']['testp1'] == '1.0'
     assert cfgWithOverrideParameters['GENERAL']['testp2'] == 'testValue'
-    assert cfgWithOverrideParameters['com1DFA_override']['defaultConfig'] == 'True'
-    assert cfgWithOverrideParameters['com1DFA_override']['mu'] == '0.7'
-    assert cfgWithOverrideParameters['com1DFA_override']['tStep'] == '100.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['notParameter'] == '1.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['defaultConfig'] == 'True'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['mu'] == '0.7'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['tStep'] == '100.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['notParameter'] == '1.0'
     assert len(cfgWithOverrideParameters.items('GENERAL')) == 2
-    assert len(cfgWithOverrideParameters.items('com1DFA_override')) == 4
+    assert len(cfgWithOverrideParameters.items('com1DFA_com1DFA_override')) == 4
     assert len(cfgToOverride.items('GENERAL')) == 3
     assert len(cfgToOverride.items('GENERAL')) == 3
-
 
     cfgWithOverrideParameters = configparser.ConfigParser()
     cfgWithOverrideParameters.optionxform = str
     cfgWithOverrideParameters['GENERAL'] = {'testp1': 1., 'testp2': 'testValue'}
-    cfgWithOverrideParameters['com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7, 'tStep': 100., 'notParameter': 1.}
+    cfgWithOverrideParameters['com1DFA_com1DFA_override'] = {'defaultConfig': True, 'mu': 0.7,
+                                                             'tStep': 100., 'notParameter': 1.}
 
     cfgToOverride = configparser.ConfigParser()
     cfgToOverride.optionxform = str
@@ -190,7 +192,7 @@ def test_applyCfgOverride(caplog):
 
     with caplog.at_level(logging.WARNING):
         cfgToOverride, cfgWithOverrideParameters = cfgHandling.applyCfgOverride(cfgToOverride, cfgWithOverrideParameters, com1DFA, addModValues=True)
-    assert ('Additional Key [\'%s\'] in section %s_override is ignored.' % ('notParameter', 'com1DFA')) in caplog.text
+    assert ('Additional Key [\'%s\'] in section com1DFA_%s_override is ignored.' % ('notParameter', 'com1DFA')) in caplog.text
 
     assert cfgToOverride['GENERAL']['mu'] == '0.7'
     assert cfgToOverride['GENERAL']['tEnd'] == '400.0'
@@ -200,15 +202,15 @@ def test_applyCfgOverride(caplog):
     assert cfgToOverride['DFA']['flowF'] == '3.0'
     assert cfgWithOverrideParameters['GENERAL']['testp1'] == '1.0'
     assert cfgWithOverrideParameters['GENERAL']['testp2'] == 'testValue'
-    assert cfgWithOverrideParameters['com1DFA_override']['defaultConfig'] == 'True'
-    assert cfgWithOverrideParameters['com1DFA_override']['mu'] == '0.7'
-    assert cfgWithOverrideParameters['com1DFA_override']['tStep'] == '100.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['notParameter'] == '1.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['tEnd'] == '400.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['dt1'] == '6.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['flowF'] == '3.0'
-    assert cfgWithOverrideParameters['com1DFA_override']['relTh'] == '1.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['defaultConfig'] == 'True'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['mu'] == '0.7'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['tStep'] == '100.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['notParameter'] == '1.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['tEnd'] == '400.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['dt1'] == '6.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['flowF'] == '3.0'
+    assert cfgWithOverrideParameters['com1DFA_com1DFA_override']['relTh'] == '1.0'
     assert len(cfgWithOverrideParameters.items('GENERAL')) == 2
-    assert len(cfgWithOverrideParameters.items('com1DFA_override')) == 8
+    assert len(cfgWithOverrideParameters.items('com1DFA_com1DFA_override')) == 8
     assert len(cfgToOverride.items('GENERAL')) == 3
     assert len(cfgToOverride.items('GENERAL')) == 3

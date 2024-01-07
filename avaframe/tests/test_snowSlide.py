@@ -27,11 +27,11 @@ def test_snowSlide(tmp_path):
     cfgMain['MAIN'] = {'avalancheDir': str(avaDir), 'nCPU': '1'}
 
     snowSlideCfg = cfgUtils.getModuleConfig(com5SnowSlide)
-    snowSlideCfg['com1DFA_override']['dt'] = '1'
-    snowSlideCfg['com1DFA_override']['meshCellSize'] = '5'
-    snowSlideCfg['com1DFA_override']['tEnd'] = '5'
-    snowSlideCfg['com1DFA_override']['entThFromShp'] = 'False'
-    snowSlideCfg['com1DFA_override']['entTh'] = '0.3'
+    snowSlideCfg['com1DFA_com1DFA_override']['dt'] = '1'
+    snowSlideCfg['com1DFA_com1DFA_override']['meshCellSize'] = '5'
+    snowSlideCfg['com1DFA_com1DFA_override']['tEnd'] = '5'
+    snowSlideCfg['com1DFA_com1DFA_override']['entThFromShp'] = 'False'
+    snowSlideCfg['com1DFA_com1DFA_override']['entTh'] = '0.3'
 
     # call function to be tested
     _, _, _, simDF = com5SnowSlide.runSnowSlide(cfgMain, snowSlideCfg)

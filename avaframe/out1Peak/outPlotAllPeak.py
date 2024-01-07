@@ -133,7 +133,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             if True set limits of constrained data to plot
         oneColor: str
             optional to add a color for a single color for field
-            
+
         Return
         --------
         ax: matplotlib axes object
@@ -146,8 +146,8 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # constrain data to where there is data
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-    dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
-    demConstrained = demField[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+    dataConstrained = data[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
+    demConstrained = demField[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
 
     data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
     unit = pU.cfgPlotUtils["unit%s" % resType]
@@ -160,8 +160,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
-        pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap
-        )
+        pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
     cmap.set_bad(alpha=0)
     # uncomment this to set the under value for discrete cmap transparent
     # cmap.set_under(alpha=0)
@@ -179,13 +178,14 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # add peak field data
     if oneColor != '':
-        dataOneColor = np.where(data > 0.0, np.amax(data)*0.25,np.nan)
+        dataOneColor = np.where(data > 0.0, np.amax(data)*0.25, np.nan)
         im1 = ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
                         alpha=alpha)
     else:
         im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
             alpha=alpha)
-        pU.addColorBar(im1, ax, ticks, unit)
+        if len(np.nonzero(data)[0]) > 0.:
+            pU.addColorBar(im1, ax, ticks, unit)
 
     if setLimits:
         ax.set_xlim([colsMinPlot, colsMaxPlot])
@@ -248,7 +248,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
 
         if constrainData:
             rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-            dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+            dataConstrained = data[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
             data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
             rowsMinPlot = rowsMin * cellSize
             rowsMaxPlot = (rowsMax + 1) * cellSize

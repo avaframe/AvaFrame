@@ -74,6 +74,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
            whereas
            from avaframe.com2AB import com2AB as c2
            leads to getModuleConfig(c2)
+           OR: pathlib Path to module (python file)
 
     Str: fileOverride : allows for a completely different file location. However note:
         missing values from the default cfg will always be added!
@@ -93,11 +94,12 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         log.error(message)
         raise TypeError(message)
 
-    # get path of module
-    modPath = pathlib.Path(module.__file__).resolve().parent
-
-    # get filename of module
-    modName = str(pathlib.Path(module.__file__).stem)
+    if isinstance(module, pathlib.Path):
+        modPath = module.parent
+        # get filename of module
+        modName = module.stem
+    else:
+        modPath, modName = getModPathName(module)
 
     localFile = modPath / ('local_'+modName+'Cfg.ini')
     defaultFile = modPath / (modName+'Cfg.ini')
@@ -133,6 +135,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
 
     return cfg
 
+
 def getDefaultModuleConfig(module, toPrint=True):
     ''' Returns the default configuration for a given module
     returns a configParser object
@@ -147,11 +150,8 @@ def getDefaultModuleConfig(module, toPrint=True):
 
     '''
 
-    # get path of module
-    modPath = pathlib.Path(module.__file__).resolve().parent
-
-    # get filename of module
-    modName = str(pathlib.Path(module.__file__).stem)
+    # get path to the module and its name
+    modPath, modName = getModPathName(module)
 
     defaultFile = modPath / (modName+'Cfg.ini')
 
@@ -731,8 +731,9 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir='', csvName='allConfigurati
 
     return configFiles
 
+
 def convertToCfgList(parameterList):
-    """ convert a list into a string where inidividual list items are separated by |
+    """ convert a list into a string where individual list items are separated by |
 
         Parameters
         -----------
@@ -787,3 +788,28 @@ def getNumberOfProcesses(cfgMain, nSims):
     log.info("Taking %s cpu cores out of maximum of %s cores." % (nCPU, maxCPU))
 
     return nCPU
+
+
+def getModPathName(module):
+    """ get the path and name of a module from imported module
+
+    Parameters
+    ------------
+    module: imported module
+
+    Returns
+    --------
+    modPath: pathlib path
+        path to directory where module is located
+    modName: str
+        name of module
+
+    """
+
+    # get path of module
+    modPath = pathlib.Path(module.__file__).resolve().parent
+
+    # get filename of module
+    modName = str(pathlib.Path(module.__file__).stem)
+
+    return modPath, modName

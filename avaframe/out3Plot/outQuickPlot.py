@@ -103,7 +103,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     maxVal = max(np.nanmax(data1), np.nanmax(data2))
 
     # constrain data to where there is data
-    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot = pU.constrainPlotsToData(dataExtend, cellSize, extentOption=True)
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot = pU.constrainPlotsToData(dataExtend, cellSize,
+                                                                                 extentOption=True)
 
     # Location of box
     nybox = 0.05
@@ -213,24 +214,24 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         # Figure 2 cross and longprofile
         fig1, ax = plt.subplots(ncols=2, nrows=2, figsize=(pU.figW*2, pU.figH*2))
         suptitle = fig1.suptitle(avaName, fontsize=14, color='0.5')
-        ax[0,0].plot(data1[:, ny_loc], 'k', label='Simulation')
-        ax[0,0].plot(data2[:, ny_loc], 'b--', label='Reference')
-        ax[0,0].set_xlabel('Location across track [nrows]')
-        ax[0,0].set_ylabel('Result parameter')
-        ax[0,0].set_title('Cross profile at x =  %d' % ny_loc)
-        ax[0,1].plot(data1[nx_loc, :], 'k', label='Simulation')
-        ax[0,1].plot(data2[nx_loc, :], 'b--', label='Reference')
-        ax[0,1].set_xlabel('Location along track [ncols]')
-        ax[0,1].set_ylabel('Result parameter')
-        ax[0,1].set_title('Long profile at y =  %d' % nx_loc)
-        ax[0,0].legend()
-        ax[0,1].legend()
-        ax[1,0].imshow(data1P, cmap=cmap, extent=[0, nx, 0, ny], origin='lower', aspect=nx/ny)
-        ax[1,1].imshow(data2P, cmap=cmap, extent=[0, nx, 0, ny], origin='lower', aspect=nx/ny)
-        ax[1,1].axhline(ny - nx_loc, label='profile y=%d' % nx_loc)
-        ax[1,0].axvline(ny_loc, label='profile x=%d' % ny_loc)
-        ax[1,0].legend()
-        ax[1,1].legend()
+        ax[0, 0].plot(data1[:, ny_loc], 'k', label='Simulation')
+        ax[0, 0].plot(data2[:, ny_loc], 'b--', label='Reference')
+        ax[0, 0].set_xlabel('Location across track [nrows]')
+        ax[0, 0].set_ylabel('Result parameter')
+        ax[0, 0].set_title('Cross profile at x =  %d' % ny_loc)
+        ax[0, 1].plot(data1[nx_loc, :], 'k', label='Reference')
+        ax[0, 1].plot(data2[nx_loc, :], 'b--', label='Simulation')
+        ax[0, 1].set_xlabel('Location along track [ncols]')
+        ax[0, 1].set_ylabel('Result parameter')
+        ax[0, 1].set_title('Long profile at y =  %d' % nx_loc)
+        ax[0, 0].legend()
+        ax[0, 1].legend()
+        ax[1, 0].imshow(data1P, cmap=cmap, extent=[0, nx, 0, ny], origin='lower', aspect=nx/ny)
+        ax[1, 1].imshow(data2P, cmap=cmap, extent=[0, nx, 0, ny], origin='lower', aspect=nx/ny)
+        ax[1, 1].axhline(ny - nx_loc, label='profile y=%d' % nx_loc)
+        ax[1, 0].axvline(ny_loc, label='profile x=%d' % ny_loc)
+        ax[1, 0].legend()
+        ax[1, 1].legend()
         saveNameProfile = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
         # save and or show figure
         plotPath = pU.saveAndOrPlot({'pathResult': outDir}, saveNameProfile.stem, fig1)
@@ -640,4 +641,3 @@ def plotAllContours(avaDir, modName, resType, level, specDir=''):
     pathDict = {'pathResult': outDir, 'plotScenario': pathlib.Path(avaDir).stem,
                 'avaDir': avaDir}
     plotContours(contourDict, resType, level, pathDict, addLegend=True)
-
