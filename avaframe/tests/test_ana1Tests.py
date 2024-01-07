@@ -194,13 +194,16 @@ def test_mainEnegyLineTest(tmp_path):
     # ++++++++++ set configurations for all the used modules and override ++++++++++++
     # get comDFA configuration and save to file
     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-                                          onlyDefault=energyLineTestCfg['com1DFA_override'].getboolean('defaultConfig'))
-    com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA, addModValues=False)
-    print(energyLineTestCfg['com1DFA_override']['dam'], com1DFACfg['GENERAL']['dam'])
-    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+                                          onlyDefault=energyLineTestCfg['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
+    com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA,
+                                                                 addModValues=False)
+    print(energyLineTestCfg['com1DFA_com1DFA_override']['dam'], com1DFACfg['GENERAL']['dam'])
+    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings',
+                                           filePath=workPath)
     dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=com1DFACfgFile)
     for simName in simDF.index:
-        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem)
+        resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg,
+                                                                       simName, dem)
     print(resultEnergyTest)
     assert abs(resultEnergyTest['runOutSError']) < 0.02
     assert abs(resultEnergyTest['runOutZError']) < 0.02

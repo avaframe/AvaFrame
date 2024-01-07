@@ -53,7 +53,6 @@ def createThalwegTimeInfoFromSimResults(avalancheDir, cfgRangeTime, modName, ind
 
     """
 
-
     log.info('Perform range-time diagram for simulation: %s' % index)
 
     # add simHash info
@@ -223,8 +222,8 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
 
     if (np.any(radarFov[0] < np.amin(X)) or np.any(radarFov[0] > np.amax(X))
             or np.any(radarFov[1] < np.amin(Y)) or np.any(radarFov[1] > np.amax(Y))):
-        message = 'Radar location outside of DEM, x= %.2f, %.2f, y= %.2f, %.2f' % (radarFov[0][0],
-                                                                                   radarFov[0][1], radarFov[1][0], radarFov[1][1])
+        message = ('Radar location outside of DEM, x= %.2f, %.2f, y= %.2f, %.2f' %
+                   (radarFov[0][0], radarFov[0][1], radarFov[1][0], radarFov[1][1]))
         log.error(message)
         raise AssertionError(message)
 
@@ -581,6 +580,7 @@ def initializeRangeTime(modName, cfg, dem, simHash):
 
     # fetch configuration and add info
     cfgRangeTime = cfgUtils.getModuleConfig(modName)
+
     cfgRangeTime['GENERAL']['tEnd'] = cfg['GENERAL']['tEnd']
     cfgRangeTime['GENERAL']['avalancheDir'] = cfg['GENERAL']['avalancheDir']
     cfgRangeTime['GENERAL']['simHash'] = simHash
@@ -802,7 +802,7 @@ def approachVelocity(mtiInfo):
     if mtiInfo['type'] == 'rangeTime':
         # if in rangeList is measured in line of sight to the radar, in order to find the max runout close to the end of
         # the array, reference point is moved to closest found distance to radar and measured from start towards radar
-        rangeListSorted = (np.asarray(rangeList)[np.argsort(timeList)] - abs(np.nanmax(np.asarray(rangeList)))) *-1.
+        rangeListSorted = (np.asarray(rangeList)[np.argsort(timeList)] - abs(np.nanmax(np.asarray(rangeList)))) * -1.
     else:
         rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
     maxVel = 0.0

@@ -55,22 +55,24 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     # ++++++++++ set configurations for all the used modules and override ++++++++++++
     # get comDFA configuration and save to file
     com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-        onlyDefault=cfgHybrid['com1DFA_override'].getboolean('defaultConfig'))
+        onlyDefault=cfgHybrid['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
     com1DFACfg, cfgHybrid = cfgHandling.applyCfgOverride(com1DFACfg, cfgHybrid, com1DFA, addModValues=False)
-    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings', filePath=workPath)
+    com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings',
+                                           filePath=workPath)
 
     # fetch configuration for DFAPathGeneration
-    DFAPathGenerationCfg= cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
-        onlyDefault=cfgHybrid['DFAPathGeneration_override'].getboolean('defaultConfig'))
-    DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath, addModValues=False)
+    DFAPathGenerationCfg = cfgUtils.getModuleConfig(DFAPath, fileOverride='', modInfo=False, toPrint=False,
+        onlyDefault=cfgHybrid['ana5Utils_DFAPathGeneration_override'].getboolean('defaultConfig'))
+    DFAPathGenerationCfg, cfgHybrid = cfgHandling.applyCfgOverride(DFAPathGenerationCfg, cfgHybrid, DFAPath,
+                                                                   addModValues=False)
 
     # first create configuration object for com2AB
     com2ABCfg = cfgUtils.getModuleConfig(com2AB, fileOverride='', modInfo=False, toPrint=False,
-        onlyDefault=cfgHybrid['com1DFA_override'].getboolean('defaultConfig'))
+        onlyDefault=cfgHybrid['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
     com2ABCfg, cfgHybrid = cfgHandling.applyCfgOverride(com2ABCfg, cfgHybrid, com2AB, addModValues=False)
 
     # get initial mu value
-    muArray = np.array([cfgHybrid.getfloat('com1DFA_override', 'mucoulomb')])
+    muArray = np.array([cfgHybrid.getfloat('com1DFA_com1DFA_override', 'mucoulomb')])
     alphaArray = np.array([np.degrees(np.arctan(muArray[0]))])
 
     # prepare for iterating
@@ -99,7 +101,8 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # postprocess to extract path and energy line
         avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, addVelocityInfo=True)
         # make a copy because extendDFAPathKernel might modify avaProfileMass
-        avaProfileMassExt = DFAPath.extendDFAPath(DFAPathGenerationCfg['PATH'], avaProfileMass.copy(), dem, particlesList[0])
+        avaProfileMassExt = DFAPath.extendDFAPath(DFAPathGenerationCfg['PATH'], avaProfileMass.copy(), dem,
+                                                  particlesList[0])
         avaProfileMassExtOri = copy.deepcopy(avaProfileMassExt)
         avaProfileMassExtOri['x'] = avaProfileMassExtOri['x'] + demOri['header']['xllcenter']
         avaProfileMassExtOri['y'] = avaProfileMassExtOri['y'] + demOri['header']['yllcenter']
@@ -114,7 +117,8 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         pathDict, demAB, splitPoint, eqParams, resAB = com2AB.com2ABMain(com2ABCfg, avalancheDir)
         # make AB plot
         reportDictList = []
-        _, plotFile, writeFile = outAB.writeABpostOut(pathDict, demAB, splitPoint, eqParams, resAB, com2ABCfg, reportDictList)
+        _, plotFile, writeFile = outAB.writeABpostOut(pathDict, demAB, splitPoint, eqParams, resAB, com2ABCfg,
+                                                      reportDictList)
 
         # make custom com3 profile plot
         alpha = resAB[name]['alpha']
@@ -143,7 +147,8 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     outCom3Plots.hybridPathPlot(avalancheDir, dem, resultsHybrid, fields[0], particlesList[-1], muArray)
 
     # write com3HYbrid configuration settings to file for reproduction use
-    com3HybridCfgFile = cfgUtils.writeCfgFile(avalancheDir, com3Hybrid, cfgHybrid, fileName='com3Hybrid_settings', filePath=oPath)
+    com3HybridCfgFile = cfgUtils.writeCfgFile(avalancheDir, com3Hybrid, cfgHybrid, fileName='com3Hybrid_settings',
+                                              filePath=oPath)
 
     log.debug('Alpha array is %s' % alphaArray)
     log.debug('mu array is %s' % muArray)

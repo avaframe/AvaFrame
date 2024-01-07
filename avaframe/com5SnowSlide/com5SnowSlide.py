@@ -38,7 +38,7 @@ def runSnowSlide(cfgMain, snowSlideCfg):
         fileOverride="",
         modInfo=False,
         toPrint=False,
-        onlyDefault=snowSlideCfg["com1DFA_override"].getboolean("defaultConfig"),
+        onlyDefault=snowSlideCfg["com1DFA_com1DFA_override"].getboolean("defaultConfig"),
     )
     com1DFACfg, snowSlideCfg = cfgHandling.applyCfgOverride(
         com1DFACfg, snowSlideCfg, com1DFA, addModValues=False

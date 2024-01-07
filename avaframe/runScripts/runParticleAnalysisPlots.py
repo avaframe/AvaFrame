@@ -69,7 +69,7 @@ if cfgPartAna['GENERAL'].getboolean('runCom1DFA'):
     log.info('Perform com1DFA runs using the override section in the outParticlesAnalysis ini file')
     # get the configuration of com1DFA using overrides
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', modInfo=False, toPrint=False,
-        onlyDefault=cfgPartAna['com1DFA_override'].getboolean('defaultConfig'))
+        onlyDefault=cfgPartAna['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
     cfgCom1DFA, cfgPartAna = cfgHandling.applyCfgOverride(cfgCom1DFA, cfgPartAna, com1DFA, addModValues=False)
 
     # call com1DFA and perform simulations
@@ -81,7 +81,7 @@ else:
 
 # get the configuration of aimec using overrides
 cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, fileOverride='', modInfo=False, toPrint=False,
-    onlyDefault=cfgPartAna['ana3AIMEC_override'].getboolean('defaultConfig'))
+    onlyDefault=cfgPartAna['ana3AIMEC_ana3AIMEC_override'].getboolean('defaultConfig'))
 cfgAimec, cfgPartAna = cfgHandling.applyCfgOverride(cfgAimec, cfgPartAna, ana3AIMEC, addModValues=False)
 # fetch anaMod from aimec settings
 # TODO: shall we reset to modName or only use anaMod as modName - however run script targeted towards com1DFA
@@ -173,7 +173,7 @@ for i, simIndex in enumerate(SimDF.index):
 
     # create mtiInfo dicts for tt-diagram
     cfgRangeTime = cfgUtils.getModuleConfig(dtAna, fileOverride='', modInfo=False, toPrint=False,
-            onlyDefault=cfgPartAna['distanceTimeAnalysis_override'].getboolean('defaultConfig'))
+            onlyDefault=cfgPartAna['ana1Tests_distanceTimeAnalysis_override'].getboolean('defaultConfig'))
     cfgRangeTime, cfgPartAna = cfgHandling.applyCfgOverride(cfgRangeTime, cfgPartAna, dtAna, addModValues=False)
     cfgRangeTime['GENERAL']['avalancheDir'] = avalancheDir
     cfgRangeTime, mtiInfo = dtAna.createThalwegTimeInfoFromSimResults(avalancheDir,

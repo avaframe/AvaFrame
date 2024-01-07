@@ -36,7 +36,7 @@ def runRockAvalanche(cfgMain, rockAvalancheCfg):
         fileOverride="",
         modInfo=False,
         toPrint=False,
-        onlyDefault=rockAvalancheCfg["com1DFA_override"].getboolean("defaultConfig"),
+        onlyDefault=rockAvalancheCfg["com1DFA_com1DFA_override"].getboolean("defaultConfig"),
     )
     com1DFACfg, rockAvalancheCfg = cfgHandling.applyCfgOverride(
         com1DFACfg, rockAvalancheCfg, com1DFA, addModValues=False
