@@ -286,7 +286,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         demInputs = gI.getDEMPath(avaDir)
         cfgDEM = {'GENERAL': {'avalancheDir': avaDir, 'meshCellSize': header['cellsize'],
             'meshCellSizeThreshold': cfgFull['PLOT']['meshCellSizeThreshold']}}
-        pathDem = dP.checkDEM(cfgDEM, demInputs, onlySearch=True)
+        pathDem = dP.checkRasterMeshSize(cfgDEM, demInputs, onlySearch=True)
         if pathDem != '':
             demFile = pathlib.Path(cfgDEM['GENERAL']['avalancheDir'], 'Inputs', pathDem)
             demData = IOf.readRaster(demFile, noDataToNan=True)

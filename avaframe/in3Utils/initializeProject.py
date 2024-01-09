@@ -120,8 +120,8 @@ def cleanSingleAvaDir(avaDir, deleteOutput=True):
     return 'Cleaned directory'
 
 
-def cleanDEMremeshedDir(avaDir):
-    """ clean DEMremeshed folder in avaDir Inputs
+def cleanRemeshedDir(avaDir):
+    """ clean remeshedRasters folder in avaDir Inputs
 
         Parameters
         ------------
@@ -138,7 +138,7 @@ def cleanDEMremeshedDir(avaDir):
         return result
 
     # clean directory
-    folderName = 'DEMremeshed'
+    folderName = 'remeshedRasters'
     _checkForFolderAndDelete(avaDirInputsString, folderName)
     log.info('Cleaned %s/%s directory' % (avaDirInputsString,folderName))
 
