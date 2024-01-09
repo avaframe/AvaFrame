@@ -308,7 +308,7 @@ def getThicknessInputSimFiles(inputSimFiles):
 
     Parameters
     -----------
-    inputSimFiles: dict
+    inputSimFilessymotion-prefix)b: dict
         dictionary with info on release and entrainment file paths
 
     Returns
@@ -355,7 +355,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     inputSimFiles: dict
         dictionary with info on release and entrainment file paths
     cfgInitial: configParser object
-        configParser object with the current (and possibly overridden) configuration
+        with the current (and possibly overridden) configuration
 
     Returns
     --------
@@ -423,6 +423,50 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
 
     return cfgInitial
 
+def initializeRelTh(cfg, dOHeader):
+    """check for relThFile and load to dict
+
+    Parameters
+    -----------
+    cfg: configparser
+        used are avalanchDir and relThFile
+    demHeader:
+        header of dem to check for matching rows and numbers
+
+    Returns
+    --------
+    relThFieldData: ndarray
+        with release thickness field data
+    relThFile: path
+        updated path to relThFile (needed in case of remeshing)
+    """
+
+    avaDir = cfg["GENERAL"]["avalancheDir"]
+    relThFile = pathlib.Path(avaDir, "Inputs", cfg["INPUT"]["relThFile"])
+
+    if relThFile != None and cfg["GENERAL"].getboolean("relThFromFile"):
+        relThField = IOf.readRaster(relThFile)
+        relThFieldData = relThField["rasterData"]
+        if (
+            dOHeader["ncols"] != relThField["header"]["ncols"]
+            or dOHeader["nrows"] != relThField["header"]["nrows"]
+        ):
+            message = (
+                "Release thickness field read from %s does not match the number of rows and columns of the dem"
+                % relThFile
+            )
+            log.error(message)
+            raise AssertionError(message)
+        elif np.isnan(relThFieldData).any() == True:
+            message = (
+                "Release thickness field contains nans - not allowed no release thickness must be set to 0"
+            )
+            log.error(message)
+            raise AssertionError(message)
+    else:
+        relThFieldData = ""
+
+    return relThFieldData, relThFile
 
 def initializeDEM(avaDir, demPath=""):
     """check for dem and load to dict
@@ -704,8 +748,8 @@ def computeAreasFromLines(line):
     # fetch individual polygons
     for i in range(len(name)):
         end = start[i] + Length[i]
-        x = line["x"][int(start[i]): int(end)]
-        y = line["y"][int(start[i]): int(end)]
+        x = line["x"][int(start[i]) : int(end)]
+        y = line["y"][int(start[i]) : int(end)]
 
         # create shapely polygon
         for m in range(len(x)):
@@ -757,50 +801,61 @@ def getInputPaths(avaDir):
     return demFile, relFiles, relFieldFiles
 
 
-def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=''):
-    """ check if in polygon read from shape file holes are present, if so error and save a plot to Outputs/com1DFA
-        procedure: check if polygon has several parts
+def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
+    """check if in polygon read from shape file holes are present, if so error and save a plot to Outputs/com1DFA
+    procedure: check if polygon has several parts
 
-        Parameters
-        -----------
-        avaDir: str
-            path to avalanche directory
-        lineDict: dict
-            dictionary with info read from shape file
-            used: x, y, Start, Length, nParts, nFeatures
-        modName: str
-            name of computational module where to save error plots to Outputs subfolder
-        type: str
-            type of shp file area (release, secondary release, entrainment, resistance)
+    Parameters
+    -----------
+    avaDir: str
+        path to avalanche directory
+    lineDict: dict
+        dictionary with info read from shape file
+        used: x, y, Start, Length, nParts, nFeatures
+    modName: str
+        name of computational module where to save error plots to Outputs subfolder
+    type: str
+        type of shp file area (release, secondary release, entrainment, resistance)
 
-        Returns
-        --------
-        error if number of parts is bigger 1
-        save plot showing all parts of each polygon feature in Outputs/modName
+    Returns
+    --------
+    error if number of parts is bigger 1
+    save plot showing all parts of each polygon feature in Outputs/modName
 
     """
 
     foundMultipleParts = False
     # loop over all polygons in scenario
-    for lineFeature in range(lineDict['nFeatures']):
-        if len(lineDict['nParts'][lineFeature]) > 2:
+    for lineFeature in range(lineDict["nFeatures"]):
+        if len(lineDict["nParts"][lineFeature]) > 2:
             # fetch number of parts for each lineFeature
-            nParts = lineDict['nParts'][lineFeature]
+            nParts = lineDict["nParts"][lineFeature]
             # create x, y coordinates of each lineFeature
-            xFeat = lineDict['x'][int(lineDict['Start'][lineFeature]): int(lineDict['Start'][lineFeature] + lineDict['Length'][lineFeature])]
-            yFeat = lineDict['y'][int(lineDict['Start'][lineFeature]): int(lineDict['Start'][lineFeature] + lineDict['Length'][lineFeature])]
+            xFeat = lineDict["x"][
+                int(lineDict["Start"][lineFeature]) : int(
+                    lineDict["Start"][lineFeature] + lineDict["Length"][lineFeature]
+                )
+            ]
+            yFeat = lineDict["y"][
+                int(lineDict["Start"][lineFeature]) : int(
+                    lineDict["Start"][lineFeature] + lineDict["Length"][lineFeature]
+                )
+            ]
 
             # check for type of area
-            if type.lower() in ['entrainment', 'resistance', 'secondary release']:
-                lineFileName = lineDict['fileName']
+            if type.lower() in ["entrainment", "resistance", "secondary release"]:
+                lineFileName = lineDict["fileName"]
             else:
-                lineFileName = lineDict['file']
+                lineFileName = lineDict["file"]
 
             # create plot of parts of feature for analysis
-            title = ('Parts of lineFeature %d of %s' % (lineFeature, lineFileName.stem))
-            outDir = pathlib.Path(avaDir, 'Outputs', modName)
-            pathDict = {'pathResult': outDir,
-                        'title': title, 'outFileName': ('%s feature%d_errorPlot' % (type, lineFeature))}
+            title = "Parts of lineFeature %d of %s" % (lineFeature, lineFileName.stem)
+            outDir = pathlib.Path(avaDir, "Outputs", modName)
+            pathDict = {
+                "pathResult": outDir,
+                "title": title,
+                "outFileName": ("%s feature%d_errorPlot" % (type, lineFeature)),
+            }
             in1DataPlots.plotAreaShpError(xFeat, yFeat, nParts, pathDict)
 
             # set flag
@@ -808,6 +863,10 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=''):
 
     # if polygon has multiple parts - error
     if foundMultipleParts:
-        message = 'One or more %s features in %s have holes - check error plots in %s' % (type, lineFileName.name, outDir)
+        message = "One or more %s features in %s have holes - check error plots in %s" % (
+            type,
+            lineFileName.name,
+            outDir,
+        )
         log.error(message)
         raise AssertionError(message)

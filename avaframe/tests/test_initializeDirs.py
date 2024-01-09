@@ -21,21 +21,21 @@ def test_initialiseRunDirs(tmp_path):
     # define results
     workDirTest = avaDirtmp / 'Work' / modName
     outputDirTest = avaDirtmp / 'Outputs' / modName
-    DEMremeshedTest = avaDirtmp / 'Inputs' / 'DEMremeshed'
-    fU.makeADir(DEMremeshedTest)
+    remeshedRastersTest = avaDirtmp / 'Inputs' / 'remeshedRasters'
+    fU.makeADir(remeshedRastersTest)
 
     # call function to be tested
-    workDir, outputDir = iD.initialiseRunDirs(avaDirtmp, modName, cleanDEMremeshed=True)
+    workDir, outputDir = iD.initialiseRunDirs(avaDirtmp, modName, cleanRemeshedRasters=True)
 
     assert workDir == workDirTest
     assert outputDir == outputDirTest
     assert workDir.is_dir()
     assert outputDir.is_dir()
-    assert DEMremeshedTest.is_dir() is False
+    assert remeshedRastersTest.is_dir() is False
 
     # call function to be tested
     with pytest.raises(AssertionError) as e:
-        assert iD.initialiseRunDirs(avaDirtmp, modName, cleanDEMremeshed=False)
+        assert iD.initialiseRunDirs(avaDirtmp, modName, cleanRemeshedRasters=False)
     assert str(e.value) == 'Work directory %s already exists - delete first!' % (workDirTest)
 
     # set directory
@@ -46,14 +46,14 @@ def test_initialiseRunDirs(tmp_path):
     # define results
     workDirTest = avaDirtmp / 'Work' / modName
     outputDirTest = avaDirtmp / 'Outputs' / modName
-    DEMremeshedTest = avaDirtmp / 'Inputs' / 'DEMremeshed'
-    fU.makeADir(DEMremeshedTest)
+    remeshedRastersTest = avaDirtmp / 'Inputs' / 'remeshedRasters'
+    fU.makeADir(remeshedRastersTest)
 
     # call function to be tested
-    workDir, outputDir = iD.initialiseRunDirs(avaDirtmp, modName, cleanDEMremeshed=False)
+    workDir, outputDir = iD.initialiseRunDirs(avaDirtmp, modName, cleanRemeshedRasters=False)
 
     assert workDir == workDirTest
     assert outputDir == outputDirTest
     assert workDir.is_dir()
     assert outputDir.is_dir()
-    assert DEMremeshedTest.is_dir() is True
+    assert remeshedRastersTest.is_dir() is True

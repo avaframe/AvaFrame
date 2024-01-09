@@ -1,20 +1,20 @@
 """Tests for module geoTrans"""
-import numpy as np
-import math
-import pytest
+import configparser
 import logging
-import matplotlib.path as mpltPath
+import math
 import pathlib
 import shutil
-import configparser
+
+import matplotlib.path as mpltPath
+import numpy as np
 import pandas as pd
+import pytest
 import shapely as shp
 
-# Local imports
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
-
+# Local imports
+import avaframe.in3Utils.geoTrans as geoTrans
 
 log = logging.getLogger(__name__)
 
@@ -48,9 +48,7 @@ def test_projectOnRaster():
     assert testRes
 
     Points, _ = geoTrans.projectOnRaster(dem, Points, interp="bilinear")
-    zSol = np.array(
-        [[0.4, 1.4], [1, 2.2], [np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
-    )
+    zSol = np.array([[0.4, 1.4], [1, 2.2], [np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]])
     # # print(Points["z"])
     zSolnan = np.isnan(zSol)
     testRes = np.allclose(np.isnan(Points["z"]), zSolnan, atol=tol)
@@ -218,9 +216,7 @@ def test_checkProfile():
     AvaProfile["y"] = np.array((1, 2, 3, 4, 5))
     AvaProfile["z"] = np.array((0, 1, 2, 3, 4))
     AvaProfile["s"] = np.array((0, 2, 4, 6, 8))
-    projSplitPoint, AvaProfile = geoTrans.checkProfile(
-        AvaProfile, projSplitPoint=projSplitPoint
-    )
+    projSplitPoint, AvaProfile = geoTrans.checkProfile(AvaProfile, projSplitPoint=projSplitPoint)
     assert AvaProfile["z"][0] == 4
     assert AvaProfile["z"][-1] == 0
     assert AvaProfile["x"][0] == 4
@@ -276,113 +272,127 @@ def test_areaPoly():
     tol = 1e-14
     assert area == pytest.approx(A, rel=tol)
 
+
 def test_prepareArea():
-    """ test converting a polygon from a shape file to a raster """
+    """test converting a polygon from a shape file to a raster"""
 
     # setup required input
-    releaseLine = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-                   'Length': np.asarray([5, 5]), 'type': 'Release',
-                   'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
-                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    releaseLine = {
+        "Name": ["testRel", "test2"],
+        "Start": np.asarray([0.0, 5]),
+        "Length": np.asarray([5, 5]),
+        "type": "Release",
+        "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]),
+        "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0, 21.0, 21.0, 27.0, 27.0, 21.0]),
+    }
     demHeader = {}
-    demHeader['xllcenter'] = 0.0
-    demHeader['yllcenter'] = 0.0
-    demHeader['cellsize'] = 5.0
-    demHeader['nodata_value'] = -9999
-    demHeader['nrows'] = 7
-    demHeader['ncols'] = 7
-    dem = {'header': demHeader}
-    dem['rasterData'] = np.ones((demHeader['nrows'], demHeader['ncols']))
+    demHeader["xllcenter"] = 0.0
+    demHeader["yllcenter"] = 0.0
+    demHeader["cellsize"] = 5.0
+    demHeader["nodata_value"] = -9999
+    demHeader["nrows"] = 7
+    demHeader["ncols"] = 7
+    dem = {"header": demHeader}
+    dem["rasterData"] = np.ones((demHeader["nrows"], demHeader["ncols"]))
     radius = 0.01
     thList = [1.234, 7.8]
     combine = True
     checkOverlap = True
-    dem['originalHeader'] = dem['header']
-    dem['header']['xllcenter'] = 0.0
-    dem['header']['yllcenter'] = 0.0
+    dem["originalHeader"] = dem["header"]
+    dem["header"]["xllcenter"] = 0.0
+    dem["header"]["yllcenter"] = 0.0
     # call function to be tested
     # test 1
-    line = geoTrans.prepareArea(releaseLine, dem, radius, thList='',
-                               combine=True, checkOverlap=True)
+    line = geoTrans.prepareArea(releaseLine, dem, radius, thList="", combine=True, checkOverlap=True)
 
     # test 2
-    releaseLine2 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-                    'Length': np.asarray([5, 5]), 'thicknessSource': ['ini file', 'ini file'],
-                    'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
-                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Release'}
-    line2 = geoTrans.prepareArea(
-        releaseLine2, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
+    releaseLine2 = {
+        "Name": ["testRel", "test2"],
+        "Start": np.asarray([0.0, 5]),
+        "Length": np.asarray([5, 5]),
+        "thicknessSource": ["ini file", "ini file"],
+        "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]),
+        "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0, 21.0, 21.0, 27.0, 27.0, 21.0]),
+        "type": "Release",
+    }
+    line2 = geoTrans.prepareArea(releaseLine2, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
 
     # test 3
-    releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-                    'Length': np.asarray([5, 5]), 'thicknessSource': ['ini file', 'ini file'],
-                    'x': np.asarray([0, 10., 10.0, 0., 0., 5, 15., 15., 5., 5]),
-                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 5, 5, 15., 15., 5.]), 'type': 'Release'}
+    releaseLine3 = {
+        "Name": ["testRel", "test2"],
+        "Start": np.asarray([0.0, 5]),
+        "Length": np.asarray([5, 5]),
+        "thicknessSource": ["ini file", "ini file"],
+        "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0, 5, 15.0, 15.0, 5.0, 5]),
+        "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0, 5, 5, 15.0, 15.0, 5.0]),
+        "type": "Release",
+    }
 
     with pytest.raises(AssertionError) as e:
-        assert geoTrans.prepareArea(
-            releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
+        assert geoTrans.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
     assert str(e.value) == "Features are overlapping - this is not allowed"
 
-    line5 = geoTrans.prepareArea(
-        releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
+    line5 = geoTrans.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
 
-    print('line5', line5)
+    print("line5", line5)
 
     # test 4
-    releaseLine4 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
-                    'thicknessSource': ['ini file', 'ini file'], 'type': 'Release',
-                    'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
-                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
-    line4 = geoTrans.prepareArea(
-        releaseLine4, dem, 0.6, thList=thList, combine=False, checkOverlap=True)
+    releaseLine4 = {
+        "Name": ["testRel", "test2"],
+        "Start": np.asarray([0.0, 5]),
+        "Length": np.asarray([5, 5]),
+        "thicknessSource": ["ini file", "ini file"],
+        "type": "Release",
+        "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]),
+        "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0, 21.0, 21.0, 27.0, 27.0, 21.0]),
+    }
+    line4 = geoTrans.prepareArea(releaseLine4, dem, 0.6, thList=thList, combine=False, checkOverlap=True)
 
     # test results
-    testRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster = np.zeros((demHeader["nrows"], demHeader["ncols"]))
     testRaster[0:3, 0:3] = 1.0
     testRaster[5, 4:6] = 1.0
-    testRaster2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster2 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
     testRaster2[0:3, 0:3] = 1.234
     testRaster2[4, 4:6] = 7.8
     testRaster2[5, 4:6] = 7.8
-    testRaster4 = np.zeros((demHeader['nrows'], demHeader['ncols']))
-    testRaster5 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster4 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
+    testRaster5 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
     testRaster4[0:3, 0:3] = 1.234
     testRaster5[4, 4:6] = 7.8
     testRaster5[5, 4:6] = 7.8
     testList = [testRaster4, testRaster5]
-    testRaster6 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster6 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
     testRaster6[0:3, 0] = 1.234
     testRaster6[0, 0:3] = 1.234
-    testRaster6[1:3, 1:3] = (1.234 + 7.8) / 2.
+    testRaster6[1:3, 1:3] = (1.234 + 7.8) / 2.0
     testRaster6[3, 1:4] = 7.8
     testRaster6[1:4, 3] = 7.8
 
-    print('line Raster', line['rasterData'])
-    print('testRaster', testRaster)
-    print('line Raster', line2['rasterData'])
-    print('testRaster', testRaster2)
-    print('test 4 line Raster', line4['rasterData'])
-    print('testRaster', testList)
-    print('test raster 6', testRaster6)
+    print("line Raster", line["rasterData"])
+    print("testRaster", testRaster)
+    print("line Raster", line2["rasterData"])
+    print("testRaster", testRaster2)
+    print("test 4 line Raster", line4["rasterData"])
+    print("testRaster", testList)
+    print("test raster 6", testRaster6)
 
-    assert np.array_equal(line['rasterData'], testRaster)
-    assert np.array_equal(line2['rasterData'], testRaster2)
-    assert np.array_equal(line4['rasterData'], testList)
-    assert np.array_equal(line5['rasterData'], testRaster6)
+    assert np.array_equal(line["rasterData"], testRaster)
+    assert np.array_equal(line2["rasterData"], testRaster2)
+    assert np.array_equal(line4["rasterData"], testList)
+    assert np.array_equal(line5["rasterData"], testRaster6)
+
 
 def test_pointInPolygon():
-    """ test if a point is inside polygon   """
+    """test if a point is inside polygon"""
 
     # setup required input
     demHeader = {}
-    demHeader['xllcenter'] = 0.0
-    demHeader['yllcenter'] = 0.0
+    demHeader["xllcenter"] = 0.0
+    demHeader["yllcenter"] = 0.0
     radius = np.sqrt(2)
-    line = {'x': np.asarray([0, 10., 10., 0., 0.]),
-            'y': np.asarray([0., 0., 10., 10., 0.0])}
-    points = {'x': np.asarray([2.4, 9.7, -0.04, 10.09, 0.0]),
-              'y': np.asarray([2.4, 9.7, -0.11, 10.8, 0.0])}
+    line = {"x": np.asarray([0, 10.0, 10.0, 0.0, 0.0]), "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0])}
+    points = {"x": np.asarray([2.4, 9.7, -0.04, 10.09, 0.0]), "y": np.asarray([2.4, 9.7, -0.11, 10.8, 0.0])}
 
     # call function to be tested
     mask = geoTrans.pointInPolygon(demHeader, points, line, radius)
@@ -397,8 +407,7 @@ def test_pointInPolygon():
     assert np.array_equal(mask2, testMask2)
 
     # call function to be tested
-    line = {'x': np.asarray([0, 10., 10., 0.]),
-            'y': np.asarray([0., 0., 10., 10.])}
+    line = {"x": np.asarray([0, 10.0, 10.0, 0.0]), "y": np.asarray([0.0, 0.0, 10.0, 10.0])}
     mask3 = geoTrans.pointInPolygon(demHeader, points, line, 0.01)
     testMask3 = np.asarray([True, True, False, False, True])
 
@@ -406,18 +415,17 @@ def test_pointInPolygon():
 
 
 def test_polygon2Raster():
-    """ test if polygon is converted to raster properly """
+    """test if polygon is converted to raster properly"""
 
     # setup required inputs
     demHeader = {}
-    demHeader['cellsize'] = 1
-    demHeader['ncols'] = 10
-    demHeader['nrows'] = 10
-    demHeader['xllcenter'] = 0
-    demHeader['yllcenter'] = 0
+    demHeader["cellsize"] = 1
+    demHeader["ncols"] = 10
+    demHeader["nrows"] = 10
+    demHeader["xllcenter"] = 0
+    demHeader["yllcenter"] = 0
 
-    Line = {'x': np.asarray([0, 1., 0.989, 0., 0.]),
-            'y': np.asarray([0., 0., 0.989, 1., 0.0])}
+    Line = {"x": np.asarray([0, 1.0, 0.989, 0.0, 0.0]), "y": np.asarray([0.0, 0.0, 0.989, 1.0, 0.0])}
     radius = 0.0001
     th = 1.2
 
@@ -438,8 +446,7 @@ def test_polygon2Raster():
     assert np.array_equal(maskTest2, Mask2)
 
     # call function to be tested
-    Line = {'x': np.asarray([0, 1., 0.989, 0.]),
-            'y': np.asarray([0., 0., 0.989, 1.])}
+    Line = {"x": np.asarray([0, 1.0, 0.989, 0.0]), "y": np.asarray([0.0, 0.0, 0.989, 1.0])}
     Mask3 = geoTrans.polygon2Raster(demHeader, Line, 0.1, th=th)
     maskTest3 = maskTest.copy()
     maskTest3[1, 1] = 1.2
@@ -448,39 +455,53 @@ def test_polygon2Raster():
 
 
 def test_checkParticlesInRelease():
-    """ test if particles are within release polygon and removed if not """
+    """test if particles are within release polygon and removed if not"""
 
     # setup required input
-    releaseLine = {'Name': ['testRel'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]), 'type': 'Release',
-                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
+    releaseLine = {
+        "Name": ["testRel"],
+        "Start": np.asarray([0.0]),
+        "Length": np.asarray([5]),
+        "type": "Release",
+        "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0]),
+        "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0]),
+    }
     demHeader = {}
-    demHeader['xllcenter'] = 0.0
-    demHeader['yllcenter'] = 0.0
-    demHeader['cellsize'] = 1.0
-    demHeader['noDataValue'] = -9999
-    demHeader['nrows'] = 5
-    demHeader['ncols'] = 5
-    releaseLine['header'] = demHeader
-    particles = {'x': np.asarray([2.4, 9.7, 10.02, 11.5]), 'y': np.asarray([2.4, 9.7, 10.2, 11.5]),
-                 'nPart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
+    demHeader["xllcenter"] = 0.0
+    demHeader["yllcenter"] = 0.0
+    demHeader["cellsize"] = 1.0
+    demHeader["noDataValue"] = -9999
+    demHeader["nrows"] = 5
+    demHeader["ncols"] = 5
+    releaseLine["header"] = demHeader
+    particles = {
+        "x": np.asarray([2.4, 9.7, 10.02, 11.5]),
+        "y": np.asarray([2.4, 9.7, 10.2, 11.5]),
+        "nPart": 4,
+        "m": np.asarray([1.4, 1.7, 1.4, 1.8]),
+    }
     radius = np.sqrt(2)
 
     # call function to be tested
     particles = geoTrans.checkParticlesInRelease(particles, releaseLine, radius)
     # call function to be tested
-    particles2 = {'x': np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
-                  'nPart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
+    particles2 = {
+        "x": np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]),
+        "y": np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
+        "nPart": 5,
+        "m": np.asarray([1.4, 1.7, 1.4, 1.8, 1.1]),
+    }
     particles2 = geoTrans.checkParticlesInRelease(particles2, releaseLine, 0.01)
 
-    print('particles', particles, particles2)
-    assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 10.02]))
-    assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 10.2]))
-    assert particles['mTot'] == (1.4+1.7+1.4)
-    assert particles['nPart'] == 3
-    assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 9.997, 0.0]))
-    assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 9.994, 0.0]))
-    assert particles2['mTot'] == (1.4+1.7+1.4+1.1)
-    assert particles2['nPart'] == 4
+    print("particles", particles, particles2)
+    assert np.array_equal(particles["x"], np.asarray([2.4, 9.7, 10.02]))
+    assert np.array_equal(particles["y"], np.asarray([2.4, 9.7, 10.2]))
+    assert particles["mTot"] == (1.4 + 1.7 + 1.4)
+    assert particles["nPart"] == 3
+    assert np.array_equal(particles2["x"], np.asarray([2.4, 9.7, 9.997, 0.0]))
+    assert np.array_equal(particles2["y"], np.asarray([2.4, 9.7, 9.994, 0.0]))
+    assert particles2["mTot"] == (1.4 + 1.7 + 1.4 + 1.1)
+    assert particles2["nPart"] == 4
 
 
 def test_remeshData(tmp_path):
@@ -573,7 +594,7 @@ def test_remeshDEM(tmp_path):
     }
 
     # call function
-    pathDem = geoTrans.remeshDEM(avaDEM, cfg)
+    pathDem = geoTrans.remeshRaster(avaDEM, cfg)
     fullP = avaDir / "Inputs" / pathDem
     dataNew = IOf.readRaster(fullP)
 
@@ -604,9 +625,9 @@ def test_remeshDEM(tmp_path):
     inputDir1 = dirPath / ".." / "data" / avaName
     inputDEM = dirPath / "data" / "remeshedDEM8.00.asc"
     avaDir1 = pathlib.Path(tmp_path, avaName)
-    avaDEM = avaDir1 / "Inputs" / "DEMremeshed" / "DEM_PF_Topo_remeshedDEM8.00.asc"
+    avaDEM = avaDir1 / "Inputs" / "remeshedRasters" / "DEM_PF_Topo_remeshedDEM8.00.asc"
     shutil.copytree(inputDir1, avaDir1)
-    inputsAVA = avaDir1 / "Inputs" / "DEMremeshed"
+    inputsAVA = avaDir1 / "Inputs" / "remeshedRasters"
     fU.makeADir(inputsAVA)
     shutil.copy(inputDEM, avaDEM)
     inputDEM1 = inputDir1 / "Inputs" / "DEM_PF_Topo.asc"
@@ -616,7 +637,7 @@ def test_remeshDEM(tmp_path):
     cfg["GENERAL"]["meshCellSize"] = "8."
 
     # call function
-    pathDem2 = geoTrans.remeshDEM(avaDEM1, cfg)
+    pathDem2 = geoTrans.remeshRaster(avaDEM1, cfg)
     fullP2 = avaDir1 / "Inputs" / pathDem2
     dataNew2 = IOf.readRaster(fullP2)
     dataRaster2 = dataNew2["rasterData"]
@@ -633,10 +654,8 @@ def test_remeshDEM(tmp_path):
     IOf.writeResultToAsc(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
 
     with pytest.raises(FileExistsError) as e:
-        assert geoTrans.remeshDEM(avaDEM1, cfg)
-    assert str(e.value) == (
-        "Name for saving remeshedDEM already used: %s" % avaDEM.name
-    )
+        assert geoTrans.remeshRaster(avaDEM1, cfg)
+    assert str(e.value) == ("Name for saving remeshedRaster already used: %s" % avaDEM.name)
 
 
 def test_isCounterClockWise():
@@ -667,9 +686,7 @@ def test_checkOverlap():
     toCheckRaster[2:, 2:] = 1
     # print(refRaster)
     # print(toCheckRaster)
-    checkedRaster2 = geoTrans.checkOverlap(
-        toCheckRaster, refRaster, "to Check", "ref", crop=True
-    )
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, "to Check", "ref", crop=True)
     atol = 1e-10
     # print(checkedRaster2)
     # print(checkedRaster1)
@@ -681,21 +698,15 @@ def test_checkOverlap():
         AssertionError,
         match=r"to Check area features overlapping with ref area - this is not allowed",
     ):
-        checkedRaster2 = geoTrans.checkOverlap(
-            toCheckRaster, refRaster, "to Check", "ref", crop=False
-        )
+        checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, "to Check", "ref", crop=False)
 
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[3:, 3:] = 1
-    checkedRaster2 = geoTrans.checkOverlap(
-        toCheckRaster, refRaster, "to Check", "ref", crop=True
-    )
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, "to Check", "ref", crop=True)
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[3:, 3:] = 1
     assert np.allclose(checkedRaster2, toCheckRaster, atol=atol)
-    checkedRaster2 = geoTrans.checkOverlap(
-        toCheckRaster, refRaster, "to Check", "ref", crop=False
-    )
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, "to Check", "ref", crop=False)
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[3:, 3:] = 1
     assert np.allclose(checkedRaster2, toCheckRaster, atol=atol)
@@ -736,9 +747,7 @@ def test_makeCoordinateGrid():
         "yllcenter": yllc,
         "cellsize": csz,
     }
-    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(
-        rasterHeader, cellSizeNew=None, larger=True
-    )
+    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(rasterHeader, cellSizeNew=None, larger=True)
     # print(x)
     # print(y)
     # print(ncols)
@@ -758,9 +767,7 @@ def test_makeCoordinateGrid():
         "yllcenter": yllc,
         "cellsize": csz,
     }
-    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(
-        rasterHeader, cellSizeNew=1, larger=True
-    )
+    x, y, ncols, nrows = geoTrans.makeCoordGridFromHeader(rasterHeader, cellSizeNew=1, larger=True)
     # print(x)
     # print(y)
     # print(ncols)
@@ -775,7 +782,6 @@ def test_makeCoordinateGrid():
 
 
 def getIPZ(z0, xEnd, yEnd, dx):
-
     meanAlpha = 30.0
     nstepsX = int((xEnd + dx) / dx)
     nstepsY = int((yEnd + dx) / dx)
@@ -879,41 +885,48 @@ def test_rotateRaster():
     # print(rasterData)
     rotatedRaster = geoTrans.rotateRaster(rasterDict, theta, deg=True)
     # print(rotatedRaster["rasterData"][0:-1, 2])
-    assert np.allclose(
-        rotatedRaster["rasterData"][0:-1, 2], np.array([1, 1, 0, -1]), atol=1e-6
-    )
+    assert np.allclose(rotatedRaster["rasterData"][0:-1, 2], np.array([1, 1, 0, -1]), atol=1e-6)
 
 
 def test_findSplitPoint():
-    """ test fetching the closest point to a line in 2D coordinates """
+    """test fetching the closest point to a line in 2D coordinates"""
 
     # setup required inputs
-    avaProfile = {'x': np.asarray([0., 2., 4., 6., 8., 10.]), 'y': np.asarray([0., 0., 0., 0., 0., 0.]),
-        'z': np.asarray([0., 1., 2., 5., 8., 11.])}
+    avaProfile = {
+        "x": np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0]),
+        "y": np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        "z": np.asarray([0.0, 1.0, 2.0, 5.0, 8.0, 11.0]),
+    }
     s = [0]
-    for p in range(len(avaProfile['x'])-1):
-        s.append(s[p] + np.sqrt((avaProfile['x'][p+1] - avaProfile['x'][p])**2 + (avaProfile['y'][p+1] - avaProfile['y'][p])**2))
-    avaProfile['s'] = np.asarray(s)
-    pointsDict = {'x': np.asarray([1.5, 1.5]), 'y': np.asarray([0.2, 1.]), 'z': np.asarray([1.7, 1.7])}
+    for p in range(len(avaProfile["x"]) - 1):
+        s.append(
+            s[p]
+            + np.sqrt(
+                (avaProfile["x"][p + 1] - avaProfile["x"][p]) ** 2
+                + (avaProfile["y"][p + 1] - avaProfile["y"][p]) ** 2
+            )
+        )
+    avaProfile["s"] = np.asarray(s)
+    pointsDict = {"x": np.asarray([1.5, 1.5]), "y": np.asarray([0.2, 1.0]), "z": np.asarray([1.7, 1.7])}
 
     # call function
     projPoint = geoTrans.findSplitPoint(avaProfile, pointsDict)
-    print('avaProfile s', (avaProfile['s']), 's', s)
+    print("avaProfile s", (avaProfile["s"]), "s", s)
 
-    assert projPoint['x'] == 2.
-    assert projPoint['y'] == 0.
-    assert projPoint['z'] == 1.
-    assert projPoint['s'] == 2.
+    assert projPoint["x"] == 2.0
+    assert projPoint["y"] == 0.0
+    assert projPoint["z"] == 1.0
+    assert projPoint["s"] == 2.0
 
 
 def test_findClosesPoint():
-    """ test finding ind of closest point in pointsDict to line defined by xcoor, ycoor """
+    """test finding ind of closest point in pointsDict to line defined by xcoor, ycoor"""
 
     # setup required inputs
-    x = np.asarray([0., 2., 4., 6., 8., 10.])
-    y = np.asarray([0., 0., 0., 0., 0., 0.])
+    x = np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0])
+    y = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    pointsDict = {'x': np.asarray([1.5, 1.5]), 'y': np.asarray([0.2, 1.]), 'z': np.asarray([1.7, 1.7])}
+    pointsDict = {"x": np.asarray([1.5, 1.5]), "y": np.asarray([0.2, 1.0]), "z": np.asarray([1.7, 1.7])}
 
     # call function to be tested
     indSplit = geoTrans.findClosestPoint(x, y, pointsDict)
@@ -922,93 +935,128 @@ def test_findClosesPoint():
 
 
 def test_computeAlongLineDistance():
-    """ test computing incrementally added distance along a line defined by points """
+    """test computing incrementally added distance along a line defined by points"""
 
     # setup required inputs
-    avaProfile = {'x': np.asarray([0., 2., 4., 6., 8., 10.]), 'y': np.asarray([0., 0., 0., 0., 0., 0.]),
-        'z': np.asarray([0., 1., 2., 5., 8., 11.])}
+    avaProfile = {
+        "x": np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0]),
+        "y": np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+        "z": np.asarray([0.0, 1.0, 2.0, 5.0, 8.0, 11.0]),
+    }
     s = [0]
-    for p in range(len(avaProfile['x'])-1):
-        s.append(s[p] + np.sqrt((avaProfile['x'][p+1] - avaProfile['x'][p])**2 + (avaProfile['y'][p+1] - avaProfile['y'][p])**2))
+    for p in range(len(avaProfile["x"]) - 1):
+        s.append(
+            s[p]
+            + np.sqrt(
+                (avaProfile["x"][p + 1] - avaProfile["x"][p]) ** 2
+                + (avaProfile["y"][p + 1] - avaProfile["y"][p]) ** 2
+            )
+        )
 
     # call function to be tested
     distancePoints = geoTrans.computeAlongLineDistance(avaProfile)
 
     for ind, d in enumerate(distancePoints):
-        assert d == avaProfile['x'][ind]
+        assert d == avaProfile["x"][ind]
 
     # angle 45°
-    avaProfile['y'] = np.asarray([0., 2., 4., 6., 8., 10.])
+    avaProfile["y"] = np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0])
 
     # call function to be tested
     distancePoints2 = geoTrans.computeAlongLineDistance(avaProfile)
     s2 = [0]
-    for i in range(len(avaProfile['x'])-1):
-        s2.append(s2[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2))
+    for i in range(len(avaProfile["x"]) - 1):
+        s2.append(
+            s2[i]
+            + np.sqrt(
+                (avaProfile["x"][i + 1] - avaProfile["x"][i]) ** 2
+                + (avaProfile["y"][i + 1] - avaProfile["y"][i]) ** 2
+            )
+        )
 
     for ind, d in enumerate(distancePoints2):
         assert d == s2[ind]
 
-
-    avaProfile['y'] = np.asarray([0., 2., 4., 6., 10., 14.])
+    avaProfile["y"] = np.asarray([0.0, 2.0, 4.0, 6.0, 10.0, 14.0])
 
     # call function to be tested
     distancePoints2 = geoTrans.computeAlongLineDistance(avaProfile)
     s2 = [0]
-    for i in range(len(avaProfile['x'])-1):
-        s2.append(s2[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2))
+    for i in range(len(avaProfile["x"]) - 1):
+        s2.append(
+            s2[i]
+            + np.sqrt(
+                (avaProfile["x"][i + 1] - avaProfile["x"][i]) ** 2
+                + (avaProfile["y"][i + 1] - avaProfile["y"][i]) ** 2
+            )
+        )
 
-    print('distancePoints', distancePoints2)
+    print("distancePoints", distancePoints2)
     for ind, d in enumerate(distancePoints2):
         assert d == s2[ind]
-    assert np.isclose(np.rad2deg(np.arcsin(2./distancePoints2[1])), 45.)
-    assert np.isclose(np.rad2deg(np.arcsin(4./(distancePoints2[5]-distancePoints2[4]))), 63.435)
+    assert np.isclose(np.rad2deg(np.arcsin(2.0 / distancePoints2[1])), 45.0)
+    assert np.isclose(np.rad2deg(np.arcsin(4.0 / (distancePoints2[5] - distancePoints2[4]))), 63.435)
 
-    avaProfile['y'] = np.asarray([0., 2., 4., 6., 8., 10.])
-    avaProfile['z'] = np.asarray([0., 2., 4., 6., 8., 10.])
+    avaProfile["y"] = np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0])
+    avaProfile["z"] = np.asarray([0.0, 2.0, 4.0, 6.0, 8.0, 10.0])
 
     # call function to be tested
-    distancePoints3 = geoTrans.computeAlongLineDistance(avaProfile, dim='3D')
+    distancePoints3 = geoTrans.computeAlongLineDistance(avaProfile, dim="3D")
     s3 = [0]
-    for i in range(len(avaProfile['x'])-1):
-        s3.append(s3[i] + np.sqrt((avaProfile['x'][i+1] - avaProfile['x'][i])**2 + (avaProfile['y'][i+1] - avaProfile['y'][i])**2 + (avaProfile['z'][i+1] - avaProfile['z'][i])**2))
-    print('distancePoints3', distancePoints3)
+    for i in range(len(avaProfile["x"]) - 1):
+        s3.append(
+            s3[i]
+            + np.sqrt(
+                (avaProfile["x"][i + 1] - avaProfile["x"][i]) ** 2
+                + (avaProfile["y"][i + 1] - avaProfile["y"][i]) ** 2
+                + (avaProfile["z"][i + 1] - avaProfile["z"][i]) ** 2
+            )
+        )
+    print("distancePoints3", distancePoints3)
     for ind, d in enumerate(distancePoints3):
         assert d == s3[ind]
     assert distancePoints3[1] == np.sqrt(12)
 
 
 def test_snapPtsToLine():
-    """ test snapping points to closest point along a line and add these points to df """
+    """test snapping points to closest point along a line and add these points to df"""
 
     # setup required inputs
-    dbDict = {'geom_rel_event_pt3d_epsg:31287': shp.Point(1.5, 0.2, 1.7),
-    'geom_event_pt3d_epsg:31287': shp.Point(3.,0.1, 4.5),
-    'geom_path_ln3d_epsg:31287': shp.LineString([[0,0,0], [2,0,1], [4,0,2], [6,0,5], [8., 0., 8.], [10.,0.,11]]),
-    'path_name': 'test_ava', 'event_id': 10, 'path_id': 1, 'test_1': 100.}
+    dbDict = {
+        "geom_rel_event_pt3d_epsg:31287": shp.Point(1.5, 0.2, 1.7),
+        "geom_event_pt3d_epsg:31287": shp.Point(3.0, 0.1, 4.5),
+        "geom_path_ln3d_epsg:31287": shp.LineString(
+            [[0, 0, 0], [2, 0, 1], [4, 0, 2], [6, 0, 5], [8.0, 0.0, 8.0], [10.0, 0.0, 11]]
+        ),
+        "path_name": "test_ava",
+        "event_id": 10,
+        "path_id": 1,
+        "test_1": 100.0,
+    }
     dbData = pd.DataFrame(data=dbDict, index=[0])
-    projstr = 'epsg:31287'
+    projstr = "epsg:31287"
 
     lineResampled = []
     for index, row in dbData.iterrows():
-        line = row['geom_path_ln3d_epsg:31287']
-        distInt = int(np.ceil(line.length / 1.))
+        line = row["geom_path_ln3d_epsg:31287"]
+        distInt = int(np.ceil(line.length / 1.0))
         distances = np.linspace(0, line.length, distInt)
         lineR = shp.LineString([line.interpolate(dist) for dist in distances])
         lineResampled.append(lineR)
-    dbData.insert(0, 'geom_path_ln3d_epsg:31287_resampled', lineResampled)
+    dbData.insert(0, "geom_path_ln3d_epsg:31287_resampled", lineResampled)
     xLine = [coord[0] for coord in lineR.coords]
     yLine = [coord[1] for coord in lineR.coords]
     zLine = [coord[2] for coord in lineR.coords]
 
-
     # call function to be tested
-    dbData = geoTrans.snapPtsToLine(dbData, projstr, lineName='geom_path_ln3d', pointsList=['geom_rel_event_pt3d', 'geom_event_pt3d'])
+    dbData = geoTrans.snapPtsToLine(
+        dbData, projstr, lineName="geom_path_ln3d", pointsList=["geom_rel_event_pt3d", "geom_event_pt3d"]
+    )
 
-    snappedP1 = dbData['geom_rel_event_pt3d_epsg:31287_snapped'].iloc[0]
-    snappedP2 = dbData['geom_event_pt3d_epsg:31287_snapped'].iloc[0]
-    print('snapped', snappedP1.x)
-    print('xLine', xLine[1])
+    snappedP1 = dbData["geom_rel_event_pt3d_epsg:31287_snapped"].iloc[0]
+    snappedP2 = dbData["geom_event_pt3d_epsg:31287_snapped"].iloc[0]
+    print("snapped", snappedP1.x)
+    print("xLine", xLine[1])
 
     assert np.isclose(snappedP1.x, xLine[1])
     assert np.isclose(snappedP1.y, yLine[1])
@@ -1019,62 +1067,64 @@ def test_snapPtsToLine():
 
 
 def test_prepareLine():
-    """ testing preparing line """
-
+    """testing preparing line"""
 
     # TODO if k=3 for spline needs at least 4 pointsin path
-    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
-        'z': np.array([40, 30, 20, 0])}
+    avaProfile = {"x": np.array([1, 2, 3, 8]), "y": np.array([1, 2, 3, 8]), "z": np.array([40, 30, 20, 0])}
 
-    dem = {'header': {'xllcenter': 0, 'yllcenter': 0, 'cellsize': 2, 'nrows': 10, 'ncols': 11},
-           'rasterData': np.array([[50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
-                                   [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0]])}
+    dem = {
+        "header": {"xllcenter": 0, "yllcenter": 0, "cellsize": 2, "nrows": 10, "ncols": 11},
+        "rasterData": np.array(
+            [
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+                [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0],
+            ]
+        ),
+    }
 
     avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=2, Point=None)
 
-    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
-    indXY = np.where(diffXY > 2.)[0]
+    diffXY = np.sqrt((np.diff(avaProfile["x"])) ** 2 + (np.diff(avaProfile["y"])) ** 2)
+    indXY = np.where(diffXY > 2.0)[0]
     assert len(indXY) == 0
-    assert np.isclose(avaProfile['x'][0], 1.)
-    assert np.isclose(avaProfile['x'][-1], 8.)
-    assert np.isclose(avaProfile['y'][0], 1.)
-    assert np.isclose(avaProfile['y'][-1], 8.)
-    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))
+    assert np.isclose(avaProfile["x"][0], 1.0)
+    assert np.isclose(avaProfile["x"][-1], 8.0)
+    assert np.isclose(avaProfile["y"][0], 1.0)
+    assert np.isclose(avaProfile["y"][-1], 8.0)
+    assert np.allclose(avaProfile["s"], np.append(0, diffXY.cumsum()))
 
     # TODO if k=3 for spline needs at least 4 pointsin path
-    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
-        'z': np.array([40, 30, 20, 0])}
+    avaProfile = {"x": np.array([1, 2, 3, 8]), "y": np.array([1, 2, 3, 8]), "z": np.array([40, 30, 20, 0])}
 
     avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=4, Point=None)
 
-    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
-    indXY = np.where(diffXY > 4.)[0]
+    diffXY = np.sqrt((np.diff(avaProfile["x"])) ** 2 + (np.diff(avaProfile["y"])) ** 2)
+    indXY = np.where(diffXY > 4.0)[0]
     assert len(indXY) == 0
-    assert np.isclose(avaProfile['x'][0], 1.)
-    assert np.isclose(avaProfile['x'][-1], 8.)
-    assert np.isclose(avaProfile['y'][0], 1.)
-    assert np.isclose(avaProfile['y'][-1], 8.)
-    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))
+    assert np.isclose(avaProfile["x"][0], 1.0)
+    assert np.isclose(avaProfile["x"][-1], 8.0)
+    assert np.isclose(avaProfile["y"][0], 1.0)
+    assert np.isclose(avaProfile["y"][-1], 8.0)
+    assert np.allclose(avaProfile["s"], np.append(0, diffXY.cumsum()))
 
     # TODO if k=3 for spline needs at least 4 pointsin path
-    avaProfile = {'x': np.array([1, 2, 3, 8]), 'y': np.array([1, 2, 3, 8]),
-        'z': np.array([40, 30, 20, 0])}
+    avaProfile = {"x": np.array([1, 2, 3, 8]), "y": np.array([1, 2, 3, 8]), "z": np.array([40, 30, 20, 0])}
 
     avaProfile, _ = geoTrans.prepareLine(dem, avaProfile, distance=20, Point=None)
 
-    diffXY = np.sqrt((np.diff(avaProfile['x']))**2 + (np.diff(avaProfile['y']))**2)
-    indXY = np.where(diffXY > 20.)[0]
+    diffXY = np.sqrt((np.diff(avaProfile["x"])) ** 2 + (np.diff(avaProfile["y"])) ** 2)
+    indXY = np.where(diffXY > 20.0)[0]
     assert len(indXY) == 0
-    assert np.isclose(avaProfile['x'][0], 1.)
-    assert np.isclose(avaProfile['x'][-1], 8.)
-    assert np.isclose(avaProfile['y'][0], 1.)
-    assert np.isclose(avaProfile['y'][-1], 8.)
-    assert np.allclose(avaProfile['s'], np.append(0,diffXY.cumsum()))
+    assert np.isclose(avaProfile["x"][0], 1.0)
+    assert np.isclose(avaProfile["x"][-1], 8.0)
+    assert np.isclose(avaProfile["y"][0], 1.0)
+    assert np.isclose(avaProfile["y"][-1], 8.0)
+    assert np.allclose(avaProfile["s"], np.append(0, diffXY.cumsum()))

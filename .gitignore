@@ -32,6 +32,8 @@ avaframe/**/**/Outputs
 
 avaframe/**/**/Inputs/DEMremeshed
 
+avaframe/**/**/Inputs/remeshedRasters
+
 avaframe/com1DFA/*.c
 
 avaframe/com1DFA/*.so

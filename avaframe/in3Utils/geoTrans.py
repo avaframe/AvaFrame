@@ -276,115 +276,121 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     return remeshedRaster
 
 
-def remeshDEM(demFile, cfgSim, onlySearch=False):
-    """change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
+def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
+    """change raster cell size by reprojecting on a new grid - first check if remeshed raster available
 
-    the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
+    the new raster is as big or smaller as the original raster and saved to Inputs/remeshedRasters as
+    remeshedTYPEINDICATORcellSize
 
     Interpolation is based on griddata with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
 
     Parameters
     ----------
-    demFile: str or pathlib path
+    rasterFile: str or pathlib path
         file path to DEM in Inputs/
     cfgSim : configParser
         meshCellSizeThreshold : threshold under which no remeshing is done
         meshCellSize : desired cell size
+    typeIndicator: str
+        type of raster, possible options DEM or RELTH
     onlySearch: bool
         if True - only searching for remeshed DEM but not remeshing if not found
 
     Returns
     -------
-    pathDem : str
-        path of DEM with desired cell size relative to Inputs/
+    pathRaster : str
+        path of raster with desired cell size relative to Inputs/
 
     """
-    # first check if remeshed DEM is available
-    pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
-    if DEMFound or onlySearch:
-        return pathDem
+    # first check if remeshed raster is available
+    pathRaster, rasterFound, allRasterNames = searchRemeshedRaster(rasterFile.stem, cfgSim)
+    if rasterFound or onlySearch:
+        return pathRaster
 
-    # -------- if no remeshed DEM found - remesh
-    # fetch info on dem file
-    dem = IOf.readRaster(demFile)
-    headerDEM = dem["header"]
-    # read dem header info
-    cszDEM = headerDEM["cellsize"]
+    # -------- if no remeshed raster found - remesh
+    # fetch info on raster file
+    raster = IOf.readRaster(rasterFile)
+    headerRaster = raster["header"]
+    # read raster header info
+    cszRaster = headerRaster["cellsize"]
     # fetch info on desired meshCellSize
-    cszDEMNew = float(cfgSim["GENERAL"]["meshCellSize"])
+    cszRasterNew = float(cfgSim["GENERAL"]["meshCellSize"])
 
     # start remesh
-    log.info("Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m" % (cszDEM, cszDEMNew))
-    remeshedDEM = remeshData(dem, cszDEMNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+    log.info("Remeshing the input raster (of cell size %.2g m) to a cell size of %.2g m" % (cszRaster, cszRasterNew))
+    remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
 
-    # save remeshed DEM
-    pathToDem = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "DEMremeshed")
-    fU.makeADir(pathToDem)
-    outFile = pathToDem / ("%s_remeshedDEM%.2f.asc" % (demFile.stem, remeshedDEM["header"]["cellsize"]))
-    if outFile.name in allDEMNames:
-        message = "Name for saving remeshedDEM already used: %s" % outFile.name
+    # save remeshed raster
+    pathToRaster = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
+    fU.makeADir(pathToRaster)
+    outFile = pathToRaster / ("%s_remeshed%s%.2f.asc" % (rasterFile.stem, typeIndicator, remeshedRaster["header"][
+    "cellsize"]))
+    if outFile.name in allRasterNames:
+        message = "Name for saving remeshedRaster already used: %s" % outFile.name
         log.error(message)
         raise FileExistsError(message)
 
-    IOf.writeResultToAsc(remeshedDEM["header"], remeshedDEM["rasterData"], outFile, flip=True)
-    log.info("Saved remeshed DEM to %s" % outFile)
-    pathDem = str(pathlib.Path("DEMremeshed", outFile.name))
+    IOf.writeResultToAsc(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
+    log.info("Saved remeshed raster to %s" % outFile)
+    pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
 
-    return pathDem
+    return pathRaster
 
 
-def searchRemeshedDEM(demName, cfgSim):
-    """search if remeshed DEM with correct name and cell size already available
+def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
+    """search if remeshed raster with correct name and cell size already available
 
     Parameters
     -----------
-    demName: str
-        name of DEM file in Inputs/
+    rasterName: str
+        name of raster file in Inputs/
+    typeIndicator: str
+        which type of raster to handle, possible options Raster or RELTH
     cfgSim: configparser object
         configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
 
     Returns
     --------
-    remshedDEM: dict
-        dictionary of remeshed DEM if not found empty dict
-    DEMFound: bool
+    pathRaster: pathlib path
+        to Raster
+    rasterFound: bool
         flag if dem is found
-    allDEMNames: list
-        of all names of dems found in Inputs/DEMremeshed
+    allRasterNames: list
+        of all names of dems found in Inputs/remeshedRasters
     """
 
-    # path to remeshed DEM folder
-    pathToDems = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "DEMremeshed")
-    DEMFound = False
-    pathDem = ""
-    allDEMNames = []
+    # path to remeshed Raster folder
+    pathToRasters = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
+    rasterFound = False
+    pathRaster = ""
+    allRasterNames = []
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim["GENERAL"]["meshCellSize"])
     meshCellSizeThreshold = float(cfgSim["GENERAL"]["meshCellSizeThreshold"])
 
-    # check if DEM is available
-    if pathToDems.is_dir():
-        # look for dems and check if cellSize within tolerance and origin matches
-        demFiles = list(pathToDems.glob("*.asc"))
-        allDEMNames = [d.name for d in demFiles]
-        for demF in demFiles:
-            headerDEM = IOf.readASCheader(demF)
-            if abs(meshCellSize - headerDEM["cellsize"]) < meshCellSizeThreshold and demName in demF.stem:
-                log.info("Remeshed DEM found: %s cellSize: %.5f" % (demF.name, headerDEM["cellsize"]))
-                DEMFound = True
-                pathDem = str(pathlib.Path("DEMremeshed", demF.name))
+    # check if Raster is available
+    if pathToRasters.is_dir():
+        # look for rasters and check if cellSize within tolerance and origin matches
+        rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
+        allRasterNames = [d.name for d in rasterFiles]
+        for rasterF in rasterFiles:
+            headerRaster = IOf.readASCheader(rasterF)
+            if abs(meshCellSize - headerRaster["cellsize"]) < meshCellSizeThreshold and rasterName in rasterF.stem:
+                log.info("Remeshed Raster found: %s cellSize: %.5f" % (rasterF.name, headerRaster["cellsize"]))
+                rasterFound = True
+                pathRaster = str(pathlib.Path("remeshedRasters", rasterF.name))
                 continue
             else:
                 log.debug(
-                    "Remeshed dem found %s with cellSize %.2f - not used" % (demF, headerDEM["cellsize"])
+                    "Remeshed raster found %s with cellSize %.2f - not used" % (rasterF, headerRaster["cellsize"])
                 )
 
     else:
-        log.debug("Directory %s does not exist" % pathToDems)
+        log.debug("Directory %s does not exist" % pathToRasters)
 
-    return pathDem, DEMFound, allDEMNames
+    return pathRaster, rasterFound, allRasterNames
 
 
 def computeS(avaPath):

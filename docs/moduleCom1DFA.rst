@@ -136,16 +136,16 @@ cell size of 5 meters. However, it is also possible to specify a desired cell si
 configuration file (parameter `meshCellSize`). In this case, also consider reading :ref:`FAQ:Can the spatial resolution of simulations performed with com1DFA (dense flow) be changed?`.
 If the cell size of the DEM in ``Inputs`` is equal to the desired mesh cell size, the DEM is used without modification. If the cell sizes do not match, several options are available:
 
-    - cleanDEMremeshed = True, directory ``Inputs/DEMremeshed`` is cleaned, and the DEM in Inputs/
+    - cleanremeshedRasters = True, directory ``Inputs/remeshedRasters`` is cleaned, and the DEM in Inputs/
       is remeshed to the desired cell size - this is the default setting
 
-    - cleanDEMremeshed = False and a DEM including the name of the DEM in Inputs/ and the desired cell size is found
-      in Inputs/DEMremeshed - this DEM is used without modification
+    - cleanremeshedRasters = False and a DEM including the name of the DEM in Inputs/ and the desired cell size is found
+      in Inputs/remeshedRasters - this DEM is used without modification
 
-    - cleanDEMremeshed = False and no matching DEM is found in Inputs/DEMremeshed - the DEM in Inputs/ is remeshed
+    - cleanremeshedRasters = False and no matching DEM is found in Inputs/remeshedRasters - the DEM in Inputs/ is remeshed
       to the desired cell size
 
-If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed`` and available for subsequent
+If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/remeshedRasters`` and available for subsequent
 simulations.
 
 

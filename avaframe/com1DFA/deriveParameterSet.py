@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import sys
 from datetime import datetime
+import pathlib
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -744,42 +745,47 @@ def appendShpThickness(cfg):
     return cfg
 
 
-def checkDEM(cfgSim, demFile, onlySearch=False):
-    """ check if cell size of DEM in Inputs/ is same as desired meshCellSize
-        if not - check for remeshed DEM or remesh the DEM
+def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=False):
+    """ check if cell size of raster in Inputs/ is same as desired meshCellSize
+        if not - check for remeshed raster or remesh the raster
 
         Parameters
         -----------
         cfgSim: configparser object
             configuration settings of com module
-        demFile: str or pathlib path
-            path to dem in Inputs/
+        rasterFile: str or pathlib path
+            to raster in Inputs/
+        typeIndicator: str
+            indicate which type the raster is. Possible values DEM or RELTH
         onlySearch: bool
             if True - only searching for remeshed DEM but not remeshing if not found
 
         Returns
         --------
-        pathToDem: str
-            path to DEM with correct cellSize relative to Inputs/
+        pathToRaster: str
+            path to raster with correct cellSize relative to Inputs/
     """
 
     # read header of DEM file
-    headerDEM = IOf.readASCheader(demFile)
+    headerRaster = IOf.readASCheader(rasterFile)
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
     meshCellSizeThreshold = float(cfgSim['GENERAL']['meshCellSizeThreshold'])
 
-    # if cell size of DEM is different from desired meshCellSize - look for remeshed DEM or remesh
-    if np.abs(meshCellSize - headerDEM['cellsize']) > meshCellSizeThreshold:
-        pathToDem = geoTrans.remeshDEM(demFile, cfgSim, onlySearch=onlySearch)
+    # if cell size of raster is different from desired meshCellSize - look for remeshed raster or remesh
+    if np.abs(meshCellSize - headerRaster['cellsize']) > meshCellSizeThreshold:
+        pathToRaster = geoTrans.remeshRaster(rasterFile, cfgSim, onlySearch=onlySearch)
     else:
-        log.info('DEM taken from Inputs/')
-        pathToDem = demFile.name
+        log.info('Raster of type %s taken from Inputs/' % typeIndicator)
+        if typeIndicator == "RELTH":
+            pathToRaster = str(pathlib.Path("RELTH") / rasterFile.name)
+        else:
+            pathToRaster = rasterFile.name
 
-    log.info('path to DEM is: %s' % pathToDem)
+    log.info('path to raster is: %s' % pathToRaster)
 
-    return pathToDem
+    return pathToRaster
 
 
 def writeToCfgLine(values):

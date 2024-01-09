@@ -40,7 +40,7 @@ We want to list a few things that we strongly suggest to take into account when 
 Regarding DEM cell sizes: 
 - if a cell size XX different than the default 5 meters is chosen 
 - and the provided DEM in Inputs is of different mesh cell size than XX
-- the folder `DEMremeshed` will be checked for a matching DEM.
+- the folder `remeshedRasters` will be checked for a matching DEM.
 - if no matching DEM is found -> remeshing takes place
 
-Using the default settings, the subdirectory 'DEMremeshed' is cleaned when starting simulations, to ensure remeshing. This can be changed in the configuration file (further details are provided in :ref:`moduleCom1DFA:DEM input data`).
+Using the default settings, the subdirectory 'remeshedRasters' is cleaned when starting simulations, to ensure remeshing. This can be changed in the configuration file (further details are provided in :ref:`moduleCom1DFA:DEM input data`).

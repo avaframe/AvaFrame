@@ -274,14 +274,14 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
     return simDictAll, inputSimFilesAll, simDFExisting, outDir
 
 
-def initializeInputs(avalancheDir, cleanDEMremeshed):
+def initializeInputs(avalancheDir, cleanRemeshedRasters):
     """Create work and output directories, fetch input files and thickness info
 
     Parameters
     -----------
     avalancheDir: pathlib path
         to avalanche directory
-    cleanDEMremeshed: bool
+    cleanRemeshedRasters: bool
         flag if DEMremeshed directory shall be cleaned
 
     Returns
@@ -296,7 +296,7 @@ def initializeInputs(avalancheDir, cleanDEMremeshed):
     modName = str(pathlib.Path(com1DFA.__file__).stem)
 
     # Create output and work directories
-    _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanDEMremeshed)
+    _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanRemeshedRasters)
 
     # first fetch info on already existing simulations in Outputs
     # if it is needed to reproduce exactly the hash - need to be strings with exactly the same number of digits!!

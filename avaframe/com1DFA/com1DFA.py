@@ -2,22 +2,22 @@
     Main functions for python DFA kernel
 """
 
+import copy
 import logging
+import math
 import os
-import time
 import pathlib
+import pickle
+import platform
+import time
+from datetime import datetime
+from functools import partial
+from itertools import product
+
+import matplotlib.tri as tri
 import numpy as np
 import pandas as pd
-import math
-import copy
-import pickle
-from datetime import datetime
-import matplotlib.path as mpltPath
-from itertools import product
-import matplotlib.tri as tri
 from shapely.geometry import Polygon as sPolygon
-from functools import partial
-import platform
 
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
@@ -99,7 +99,7 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
 
     # fetch input data and create work and output directories
     inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(
-        avalancheDir, cfgStart["GENERAL"].getboolean("cleanDEMremeshed")
+        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters")
     )
 
     # create dictionary with one key for each simulation that shall be performed
@@ -149,6 +149,10 @@ def com1DFAMain(cfgMain, cfgInfo=""):
     for key in simDict:
         log.info("Simulation: %s" % key)
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
+
+    # if relThFromFile is needed, update the inputSimFiles
+    # if inputSimFiles["entResInfo"]["releaseThicknessFile"] == "Yes":
+    #    inputSimFiles["relThFile"] = simDict[[*simDict][0]]["cfgSim"]["INPUT"]["relThFile"]
 
     # initialize reportDict list
     reportDictList = list()
@@ -587,35 +591,13 @@ def prepareInputData(inputSimFiles, cfg):
     # load data
     entResInfo = inputSimFiles["entResInfo"].copy()
     relFile = inputSimFiles["releaseScenario"]
-    relThFile = inputSimFiles["relThFile"]
 
     # get dem dictionary - already read DEM with correct mesh cell size
     demOri = gI.initializeDEM(cfg["GENERAL"]["avalancheDir"], demPath=cfg["INPUT"]["DEM"])
     dOHeader = demOri["header"]
 
-    # read data from relThFile
-    if relThFile != None and cfg["GENERAL"].getboolean("relThFromFile"):
-        relThField = IOf.readRaster(relThFile)
-        relThFieldData = relThField["rasterData"]
-        relThFieldDataOrig = relThFieldData.copy()
-        if (
-            dOHeader["ncols"] != relThField["header"]["ncols"]
-            or dOHeader["nrows"] != relThField["header"]["nrows"]
-        ):
-            message = (
-                "Release thickness field read from %s does not match the number of rows and columns of the dem"
-                % inputSimFiles["relThFile"]
-            )
-            log.error(message)
-            raise AssertionError(message)
-        elif np.isnan(relThFieldData).any() == True:
-            message = (
-                "Release thickness field contains nans - not allowed no release thickness must be set to 0"
-            )
-            log.error(message)
-            raise AssertionError(message)
-    else:
-        relThFieldData = ""
+    # read data from relThFile if needed, already with correct mesh cell size
+    relThFieldData, inputSimFiles["relThFile"] = gI.initializeRelTh(cfg, dOHeader)
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, "release1", demOri)
@@ -1587,7 +1569,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine["thickness"])
         entrMassRaster = entLine["rasterData"]
         # ToDo: not used in samos but implemented
-        # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ')) * cfgGen.getfloat('entTempGrad')
+        # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ'))
+        # * cfgGen.getfloat('entTempGrad')
         # entrEnthRaster = np.where(tempRaster < 0, tempRaster*cfgGen.getfloat('cpIce'),
         #                           tempRaster*cfgGen.getfloat('cpWtr')/cfgGen.getfloat('hFusion'))
         entrEnthRaster = np.where(
@@ -2578,8 +2561,16 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgSim["INPUT"].pop("secondaryRelThCi95", None)
 
         # check if DEM in Inputs has desired mesh size
-        pathToDem = dP.checkDEM(cfgSim, inputSimFiles["demFile"])
+        pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
         cfgSim["INPUT"]["DEM"] = pathToDem
+
+        # check if RELTH in Inputs has desired mesh size
+        # if "relThFromFile" in cfgSim["GENERAL"]:
+        if cfgSim["GENERAL"]["relThFromFile"] == "True":
+            pathToRelTh = dP.checkRasterMeshSize(cfgSim, inputSimFiles["relThFile"], "RELTH")
+            cfgSim["INPUT"]["relThFile"] = pathToRelTh
+        else:
+            cfgSim["INPUT"]["relThFile"] = ""
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
@@ -2853,6 +2844,7 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
     releaseLine["type"] = "Release"
 
     # check if release thickness provided as field or constant value
+    # TODO why only for releaseType primary?
     if cfg["GENERAL"]["relThFromFile"] == "True" and releaseType == "primary":
         # read relThField from file
         relThFilePath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])

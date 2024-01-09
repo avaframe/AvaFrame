@@ -2,20 +2,21 @@
     Pytest for module com1DFA
 """
 
-#  Load modules
-import numpy as np
-import logging
-import pytest
 import configparser
-import pathlib
 import copy
+import logging
+import pathlib
 import pickle
 import shutil
 
-from avaframe.com1DFA import com1DFA
+#  Load modules
+import numpy as np
+import pytest
+
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.initializeProject as initProj
+from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 
 
@@ -30,10 +31,12 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "avaAlr.asc"
     inputSimFiles["entFile"] = avaDir / "Inputs" / "ENT" / "entAlr.shp"
-    inputSimFiles["relThFile"] = None
+    inputSimFiles["relThFile"] = ""
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "ent", "avalancheDir": str(avaDir)}
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"] = {"DEM": "avaAlr.asc"}
+    cfg["INPUT"]["relThFile"] = ""
 
     # call function to be tested
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -62,7 +65,9 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["avalancheDir"] = str(avaDir)
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"] = {"DEM": "DEM_PF_Topo.asc"}
+    cfg["INPUT"]["relThFile"] = ""
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     print("inputSimLines", inputSimLines)
@@ -83,6 +88,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "False"
+    cfg["INPUT"]["relThFile"] = ""
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     assert demOri["header"]["ncols"] == 1001
@@ -105,6 +111,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
+    cfg["INPUT"]["relThFile"] = str(dirName / "data" / "relThFieldTestFile.asc")
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     print("inputSimLines", inputSimLines)
@@ -138,6 +145,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = testFile
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
+    cfg["INPUT"]["relThFile"] = str(testFile)
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -162,6 +170,7 @@ def test_prepareInputData(tmp_path):
         "relThFromFile": "True",
     }
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
+    cfg["INPUT"]["relThFile"] = str(inputSimFiles["relThFile"])
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
@@ -200,6 +209,7 @@ def test_prepareInputData(tmp_path):
         "relTh": "1.1",
     }
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
+    cfg["INPUT"]["relThFile"] = ""
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
@@ -232,6 +242,7 @@ def test_prepareInputData(tmp_path):
         "relThFromFile": "True",
     }
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
+    cfg["INPUT"]["relThFile"] = str(inputSimFiles["relThFile"])
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -245,10 +256,11 @@ def test_prepareInputData(tmp_path):
 
     relFile = testDir / "data" / "testForHoles" / "relAlr2.shp"
     inputSimFiles["releaseScenario"] = relFile
-    inputSimFiles["relThFile"] = None
+    inputSimFiles["relThFile"] = ""
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "null", "avalancheDir": str(avaDir)}
     cfg["INPUT"] = {"DEM": "avaAlr.asc"}
+    cfg["INPUT"]["relThFile"] = ""
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -1465,9 +1477,9 @@ def test_initializeFields():
 
     print("particles", particles)
     print("fields", fields)
-    print('compute KE', fields['computeKE'])
-    print('compute TA', fields['computeTA'])
-    print('compute P', fields['computeP'])
+    print("compute KE", fields["computeKE"])
+    print("compute TA", fields["computeTA"])
+    print("compute P", fields["computeP"])
 
     assert len(fields) == 16
     assert fields["computeTA"] is False
@@ -1493,7 +1505,7 @@ def test_initializeFields():
     assert len(fields) == 16
     assert fields["computeTA"]
     assert fields["computeKE"]
-    assert fields['computeP'] is False
+    assert fields["computeP"] is False
 
 
 def test_prepareVarSimDict(tmp_path, caplog):
@@ -1509,6 +1521,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "secRelArea": "False",
         "relThFromShp": "False",
         "entThFromShp": "True",
+        "relThFromFile": "False",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "entThRangeVariation": "",
@@ -1561,6 +1574,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "simTypeActual": "entres",
         "secRelArea": "False",
         "relThFromShp": "False",
+        "relThFromFile": "False",
         "entThFromShp": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",

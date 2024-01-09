@@ -15,7 +15,7 @@ import avaframe.in3Utils.initializeProject as initProj
 log = logging.getLogger(__name__)
 
 
-def initialiseRunDirs(avaDir, modName, cleanDEMremeshed):
+def initialiseRunDirs(avaDir, modName, cleanRemeshedRasters):
     """ Initialise Simulation run with input data
 
         Parameters
@@ -24,7 +24,7 @@ def initialiseRunDirs(avaDir, modName, cleanDEMremeshed):
             path to avalanche directory
         modName : str
             name of module
-        cleanDEMremeshed: bool
+        cleanRemeshedRasters: bool
             if True directory Inputs/DEMremeshed shall be cleaned
 
         Returns
@@ -48,7 +48,7 @@ def initialiseRunDirs(avaDir, modName, cleanDEMremeshed):
         workDir.mkdir(parents=True, exist_ok=False)
     log.debug('Directory: %s created' % workDir)
 
-    if cleanDEMremeshed is True:
-        initProj.cleanDEMremeshedDir(avaDir)
+    if cleanRemeshedRasters is True:
+        initProj.cleanRemeshedDir(avaDir)
 
     return workDir, outputDir
