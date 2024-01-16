@@ -522,10 +522,10 @@ def errorDuplicateListEntry(listKeys, message):
         raise AssertionError
 
 
-def rewriteLocalCfgs(cfgFull):
+def rewriteLocalCfgs(cfgFull, avalancheDir, localCfgPath=''):
     """fetch all override sections in cfgFull and write a local_NAMEOVERRIDE.ini configuration file for the
-    available sections - caution this overrides existing local configuration files
-    naming is collection_module_override
+    available sections - naming is collection_module_override
+    if no localCfgPath is provided, default saved to avalancheDir/Inputs/configurationOverrides
     where package refers to e.g. ana1Tests, ana3AIMEC, etc-
     and module to e.g. energyLineTest.py, ana3AIMEC.py so all python files inside the packages that
     have a nameCfg.ini file too
@@ -534,8 +534,23 @@ def rewriteLocalCfgs(cfgFull):
      -----------
      cfgFull: configparser
         configuration with override sections for modules
+    avalancheDir: pathlib path or str
+        path to avalanche directory
+    localCfgPath: pathlib Path
+        optional - path to directory to store local_ cfg ini file to
+        if not provided - local_ cfg ini file is saved to avalanche directory
 
     """
+
+    # if a path is provided - save local cfg ini file there
+    pathProvided = False
+    if localCfgPath != '':
+        if pathlib.Path(localCfgPath).is_dir() is False:
+            message1 = 'Provided path for local cfg files is not a directory: %s' % localCfgPath
+            log.error(message1)
+            raise NotADirectoryError(message1)
+        else:
+            pathProvided = True
 
     # Get all override sections
     cfgSections = cfgFull.sections()
@@ -548,6 +563,7 @@ def rewriteLocalCfgs(cfgFull):
             % match
         )
         log.error(message)
+        raise AssertionError(message)
 
     # Go through sections
     for section in overrideSections:
@@ -556,6 +572,7 @@ def rewriteLocalCfgs(cfgFull):
         thisFilePath = pathlib.Path(cfgUtils.__file__).resolve().parents[1]
         modPath = thisFilePath / modName
         cfgNamePath = modPath / cfgName
+        locFilePath = modPath
 
         cfgModule = cfgUtils.getModuleConfig(
             cfgNamePath,
@@ -572,9 +589,17 @@ def rewriteLocalCfgs(cfgFull):
         # remove items that are not in Override
         cfgModule = _removeCfgItemsNotInOverride(cfgModule, overrideKeys)
 
-        cfgF = pathlib.Path(modPath, ("local_%sCfg.ini" % (cfgName)))
+        # fetch directory to save local cfg ini file
+        if pathProvided:
+            locFilePath = pathlib.Path(localCfgPath)
+        else:
+            # if not provided save to default location
+            locFilePath = pathlib.Path(avalancheDir, 'Inputs', 'configurationOverrides')
+            fU.makeADir(locFilePath)
+
+        cfgF = pathlib.Path(locFilePath, ("local_%sCfg.ini" % (cfgName)))
         if cfgF.is_file():
-            warningText = "%s already exists - overwriting file!" % (cfgF.name)
+            warningText = "%s already exists - overwriting file here %s!" % (cfgF.name, cfgF)
             log.warning(warningText)
         with open(cfgF, "w") as configfile:
             cfgModule.write(configfile)
@@ -583,6 +608,21 @@ def rewriteLocalCfgs(cfgFull):
 
 
 def _removeCfgItemsNotInOverride(cfgModule, overrideKeys):
+    """ remove options of cfgModule if not part of overrideKeys
+        in order to just have override parameters in new local cfg ini file
+
+        Parameters
+        ------------
+        cfgModule: configparser object
+            configuration of module
+        overrideKeys: list
+            list of options of configparser object that have been in override section and should be kept in cfgModule
+
+        Returns
+        ---------
+        cfgModule: configparser object
+            updated configuration - only override parameters left
+    """
 
     for sec in cfgModule.sections():
         for item in cfgModule[sec]:
