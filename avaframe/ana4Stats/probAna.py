@@ -322,7 +322,7 @@ def checkForNumberOfReferenceValues(cfgGen, varPar):
 
 
 def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='', simDFActual=''):
-    """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
+    """ Compute probability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
         ----------

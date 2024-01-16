@@ -74,7 +74,7 @@ def runProbAna(avalancheDir=''):
     # check if sampling strategy is from full sample - then only one configuration is possible
     probabilityConfigurations = probAna.fetchProbConfigs(cfgProb['PROBRUN'])
 
-    # perform pobability analysis
+    # perform probability analysis
     for probConf in probabilityConfigurations:
 
         # filter simulations according to probability configurations
