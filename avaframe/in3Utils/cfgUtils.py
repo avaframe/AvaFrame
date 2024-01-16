@@ -621,7 +621,7 @@ def convertDF2numerics(simDF):
         if simDFTest.str.match('nan').any():
             simDF = setStrnanToNan(simDF, simDFTest, name)
         # also include columns where nan is in first row - so check for any row
-        if simDFTest.str.isdigit().any():
+        if simDFTest.str.isdigit().any() and (name != 'tSteps'):
             # problem here is that it finds even if not present in | although not in ini
             simDFTest = simDF[name].str.replace('|', '§', regex=False)
             if simDFTest.str.contains('§').any() == False:
