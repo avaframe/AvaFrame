@@ -32,6 +32,8 @@ It is possible to modify these settings, there are two options:
   the name of the original configuration file and set the desired values of the
   individual parameters.
 
+* see :ref:`configuration:Override configuration` for additional options to modify configuration
+
 So the order is as follows:
 
 #. if there is a path provided, configuration is read from this file.
@@ -53,8 +55,10 @@ In the configuration file itself, there are multiple options to vary a parameter
 Override configuration
 ---------------------------
  
-If tools of one module, let's call this module **A** for now, are called from another module **B**, there is the option to include an *A_override* section in the 
+If tools of one module, let's call this module **A** for now, are called from another module **B**, there is the option to include an *collectionName_A_override* section in the
 configuration file of module **B**. In this case, the default configuration of module **A** is read and the parameters in the *A_override* section 
 in the module **B** configuration file are used to update the configuration settings of module **A**. This has the advantage of gathering all 
-the configuration parameters used for one task in one configuration file. Find below an example of: 
+the configuration parameters used for one task in one configuration file.
+An example of this usage can be found in ``ana1Tests/energyLineTestCfg.ini``.
+
   
