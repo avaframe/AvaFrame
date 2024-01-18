@@ -210,16 +210,16 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     plotPath = pU.saveAndOrPlot({'pathResult': outDir}, saveNameDiff.stem, fig)
 
     if crossProfile:
-        # Fgiure 2 cross and lonprofile
+        # Figure 2 cross and longprofile
         fig1, ax = plt.subplots(ncols=2, nrows=2, figsize=(pU.figW*2, pU.figH*2))
         suptitle = fig1.suptitle(avaName, fontsize=14, color='0.5')
-        ax[0,0].plot(data1[:, ny_loc], 'k', label='Reference')
-        ax[0,0].plot(data2[:, ny_loc], 'b--', label='Simulation')
+        ax[0,0].plot(data1[:, ny_loc], 'k', label='Simulation')
+        ax[0,0].plot(data2[:, ny_loc], 'b--', label='Reference')
         ax[0,0].set_xlabel('Location across track [nrows]')
         ax[0,0].set_ylabel('Result parameter')
         ax[0,0].set_title('Cross profile at x =  %d' % ny_loc)
-        ax[0,1].plot(data1[nx_loc, :], 'k', label='Reference')
-        ax[0,1].plot(data2[nx_loc, :], 'b--', label='Simulation')
+        ax[0,1].plot(data1[nx_loc, :], 'k', label='Simulation')
+        ax[0,1].plot(data2[nx_loc, :], 'b--', label='Reference')
         ax[0,1].set_xlabel('Location along track [ncols]')
         ax[0,1].set_ylabel('Result parameter')
         ax[0,1].set_title('Long profile at y =  %d' % nx_loc)
