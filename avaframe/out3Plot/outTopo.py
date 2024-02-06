@@ -123,15 +123,26 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
 
 
 def plotReleasePoints(xv, yv, xyPoints, demType):
+    fig1, ax = plt.subplots(ncols=2, nrows=1, figsize=(pU.figW * 3, pU.figH * 2))
+    ax[0].plot(xv, np.zeros(len(xv)) + yv[0], "k-")
+    ax[0].plot(xv, np.zeros(len(xv)) + yv[-1], "k-")
+    ax[0].plot(np.zeros(len(yv)) + xv[0], yv, "k-")
+    ax[0].plot(np.zeros(len(yv)) + xv[-1], yv, "k-")
+    ax[0].plot(xyPoints[:, 0], xyPoints[:, 1], "r*")
+    ax[0].set_title("Domain and release area of %s - projected" % demType)
+    ax[0].set_xlabel("along valley [m]")
+    ax[0].set_ylabel("across valley [m]")
 
-    plt.figure()
-    plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
-    plt.plot(xv, np.zeros(len(xv))+yv[-1], 'k-')
-    plt.plot(np.zeros(len(yv))+xv[0], yv, 'k-')
-    plt.plot(np.zeros(len(yv))+xv[-1], yv, 'k-')
-    plt.plot(xyPoints[:, 0], xyPoints[:, 1], 'r*')
-    plt.title('Domain and release area of %s - projected' % demType)
-    plt.xlabel('along valley [m]')
-    plt.ylabel('across valley [m]')
+    ax[1].plot(xyPoints[:, 0], xyPoints[:, 1], "r*")
+    ax[1].set_xlabel("along valley [m]")
+    ax[1].set_ylabel("across valley [m]")
+
+    xLength = abs(xyPoints[0, 0] - xyPoints[3, 0])
+    yLength = abs(xyPoints[0, 1] - xyPoints[1, 1])
+    infoText = "xLength: %.2f \n yLength: %.2f \n" % (xLength, yLength)
+    props = dict(boxstyle="round", facecolor='white')
+    ax[1].text(
+        0.5, 0.5, infoText, transform=ax[1].transAxes, fontsize=14, verticalalignment="top", bbox=props
+    )
 
     plt.show()

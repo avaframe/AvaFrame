@@ -5,7 +5,10 @@ Functions to create plots for visualizing transformation steps
 
 import matplotlib.pyplot as plt
 import logging
+import seaborn as sns
 
+sns.set_theme()
+import pathlib
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -84,3 +87,29 @@ def plotDepthToThickness(depth, thickness, slopeAngleField, profileAxis, profile
 
     # save and or show figure
     pU.saveAndOrPlot({"pathResult": outDir}, pName, fig1)
+
+
+def plotFetchedValues(avalancheDir, dataDF, xName, yName, plotName, scenario=None):
+    """plot values of dataDF
+
+    Parameters
+    -----------
+    dataDF: pandas dataFrame
+        dataframe with simulation info and pointValues
+    xName: str
+        name of column used for x axis
+    yName: str
+        name of column used for y axis
+    plotName: str
+        name of plot
+    scenario: str
+        name of column used for coloring
+    """
+
+    if dataDF[xName].dtype.name == "object" or dataDF[yName].dtype.name == "object":
+        g = sns.catplot(data=dataDF, x=xName, y=yName, hue=scenario)
+    else:
+        g = sns.jointplot(data=dataDF, x=xName, y=yName, hue=scenario)
+    outDir = pathlib.Path(avalancheDir, "Outputs", "out1Peak")
+
+    pU.saveAndOrPlot({"pathResult": outDir}, plotName, g.fig)
