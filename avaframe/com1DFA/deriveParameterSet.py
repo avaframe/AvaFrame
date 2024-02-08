@@ -339,11 +339,12 @@ def checkThicknessSettings(cfg, thName):
         log.error(message)
         raise AssertionError(message)
 
-    if cfg['GENERAL'].getboolean(thFile) and (cfg['GENERAL'][thRV] != '' or cfg['GENERAL'][thPV] != '' or cfg['GENERAL'][thRCiV] != ''):
+    if cfg['GENERAL'].getboolean(thFile) and (sum(flagsList) > 0):
         message = 'RelThFromFile is True - no variation allowed: check %s, %s or %s' % (thRV, thPV, thRCiV)
         log.error(message)
         raise AssertionError(message)
-    # if no error ocurred - thickness settings are correct
+
+    # if no error occurred - thickness settings are correct
     thicknessSettingsCorrect = True
 
     return thicknessSettingsCorrect
@@ -750,10 +751,11 @@ def appendShpThickness(cfg):
 def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=False):
     """ check if cell size of raster in Inputs/ is same as desired meshCellSize
         if not - check for remeshed raster or remesh the raster
+        If onlySearch is True: no remeshing is being done, only search for the right one
 
         Parameters
         -----------
-        cfgSim: configparser object
+        cfgSim: dict
             configuration settings of com module
         rasterFile: str or pathlib path
             to raster in Inputs/
@@ -768,7 +770,7 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=Fals
             path to raster with correct cellSize relative to Inputs/
     """
 
-    # read header of DEM file
+    # read header of raster file
     headerRaster = IOf.readASCheader(rasterFile)
 
     # fetch info on desired meshCellSize
