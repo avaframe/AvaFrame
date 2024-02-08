@@ -1520,8 +1520,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "simTypeActual": "entres",
         "secRelArea": "False",
         "relThFromShp": "False",
-        "entThFromShp": "True",
         "relThFromFile": "False",
+        "entThFromShp": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "entThRangeVariation": "",
@@ -1607,6 +1607,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "releaseScenario": "relAlr",
     }
     testCfg["INPUT"]["DEM"] = "avaAlr.asc"
+    testCfg["INPUT"]["relThFile"] = ""
     testCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
@@ -1658,6 +1659,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "secRelArea": "False",
         "relThFromShp": "False",
         "entThFromShp": "True",
+        "relThFromFile": "False",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "entThRangeFromCiVariation": "",
@@ -1688,6 +1690,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "releaseScenario": "relAlr",
     }
     testCfg2["INPUT"]["DEM"] = "avaAlr.asc"
+    testCfg2["INPUT"]["relThFile"] = ""
     testCfg2["GENERAL"]["avalancheDir"] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = "relAlr_" + simHash2 + "_C_L_entres_dfa"

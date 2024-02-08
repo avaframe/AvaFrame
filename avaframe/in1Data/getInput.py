@@ -2,24 +2,23 @@
     Fetch input data for avalanche simulations
 """
 
+import logging
 # Load modules
 import os
-import glob
 import pathlib
-import logging
+
 import numpy as np
 import pandas as pd
 import shapely as shp
 
-# Local imports
-from avaframe.in3Utils import cfgUtils
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.com1DFA.deriveParameterSet as dP
-import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.fileHandlerUtils as fU
-from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.geoTrans as geoTrans
+# Local imports
+from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import in1DataPlots
 
 # create local logger
@@ -308,7 +307,7 @@ def getThicknessInputSimFiles(inputSimFiles):
 
     Parameters
     -----------
-    inputSimFilessymotion-prefix)b: dict
+    inputSimFiles: dict
         dictionary with info on release and entrainment file paths
 
     Returns
@@ -424,7 +423,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     return cfgInitial
 
 def initializeRelTh(cfg, dOHeader):
-    """check for relThFile and load to dict
+    """check for relThFile and load to dict (if relTh is read from file)
 
     Parameters
     -----------
@@ -435,8 +434,9 @@ def initializeRelTh(cfg, dOHeader):
 
     Returns
     --------
-    relThFieldData: ndarray
+    relThFieldData: ndarray or str
         with release thickness field data
+        if not relThFromFile an empty string is returned
     relThFile: path
         updated path to relThFile (needed in case of remeshing)
     """

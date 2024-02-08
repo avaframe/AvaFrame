@@ -2,20 +2,20 @@
     Tools specific to the com1DFA computational kernel
 """
 
+import configparser
 # Load modules
 import logging
 import math
 import pathlib
-import configparser
+
 from deepdiff import DeepDiff
 
 # local imports
 import avaframe.com1DFA.deriveParameterSet as dP
-from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
-from avaframe.in3Utils import cfgUtils
 from avaframe.com1DFA import com1DFA
-
+from avaframe.in1Data import getInput as gI
+from avaframe.in3Utils import cfgUtils
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -238,7 +238,7 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
     # fetch input data and create work and output directories
-    # TODO: so for now DEMremeshed dir is cleaned before a run
+    # TODO: so for now remeshed dir is cleaned before a run
     inputSimFilesAll, outDir, simDFExisting, simNameExisting = initializeInputs(avalancheDir, True)
 
     # save dem file path as it is deleted from input sim files dict once it is set in the config
@@ -276,13 +276,14 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
 
 def initializeInputs(avalancheDir, cleanRemeshedRasters):
     """Create work and output directories, fetch input files and thickness info
+    If cleanRemeshedRasters is true, the remesh folder contents will be deleted at the beginning
 
     Parameters
     -----------
     avalancheDir: pathlib path
         to avalanche directory
     cleanRemeshedRasters: bool
-        flag if DEMremeshed directory shall be cleaned
+        flag if the remesh directory shall be cleaned
 
     Returns
     --------

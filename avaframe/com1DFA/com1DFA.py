@@ -150,10 +150,6 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         log.info("Simulation: %s" % key)
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
-    # if relThFromFile is needed, update the inputSimFiles
-    # if inputSimFiles["entResInfo"]["releaseThicknessFile"] == "Yes":
-    #    inputSimFiles["relThFile"] = simDict[[*simDict][0]]["cfgSim"]["INPUT"]["relThFile"]
-
     # initialize reportDict list
     reportDictList = list()
 
