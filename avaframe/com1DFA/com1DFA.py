@@ -888,7 +888,7 @@ def initializeMesh(cfg, demOri, num):
     cszDEM = headerDEM["cellsize"]
 
     # get normal vector of the grid mesh
-    dem = DFAtls.getNormalMesh(dem, num)
+    dem = geoTrans.getNormalMesh(dem, num=num)
 
     # Prepare SPH grid
     headerNeighbourGrid = {}
@@ -2779,7 +2779,7 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
     demVol["originalHeader"] = demVol["header"].copy()
     methodMeshNormal = cfg["GENERAL"].getfloat("methodMeshNormal")
     # get normal vector of the grid mesh
-    demVol = DFAtls.getNormalMesh(demVol, methodMeshNormal)
+    demVol = geoTrans.getNormalMesh(demVol, num=methodMeshNormal)
     demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
 
     # compute volume of release area

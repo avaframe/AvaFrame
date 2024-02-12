@@ -496,7 +496,7 @@ def test_computeAreasFromRasterAndLine(tmp_path):
     dem['originalHeader'] = dem['header'].copy()
     methodMeshNormal = 1
     # get normal vector of the grid mesh
-    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = geoTrans.getNormalMesh(dem, num=methodMeshNormal)
     dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
 
     lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
@@ -537,7 +537,7 @@ def test_computeRelStats(tmp_path):
     dem['originalHeader'] = dem['header'].copy()
     methodMeshNormal = 1
     # get normal vector of the grid mesh
-    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = geoTrans.getNormalMesh(dem, num=methodMeshNormal)
     dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
 
     lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),

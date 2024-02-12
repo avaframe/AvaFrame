@@ -44,7 +44,7 @@ def test_runD2Th(tmp_path):
     IOf.writeResultToAsc(testHeader, testDepth, outFile, flip=True)
 
     # call funct
-    runD2Th.runD2Th(avaDir, comMod, resType, num, profileAxis, profileIndex)
+    runD2Th.runD2Th(avaDir, comMod, resType, profileAxis, profileIndex)
 
     # read thickness
     thFile = pDir / 'transformed' / 'release1IP_testID_C_L_null_dfatransformed_pft.asc'

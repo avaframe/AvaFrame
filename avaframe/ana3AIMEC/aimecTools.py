@@ -491,7 +491,7 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     rasterTransfo = makeTransfoMat(rasterTransfo)
 
     # calculate the real area of the new cells as well as the scoord
-    dem = DFAtools.getNormalMesh(dem, 1)
+    dem = geoTrans.getNormalMesh(dem, 1)
     dem = DFAtools.getAreaMesh(dem, 1)
     rasterTransfo = getSArea(rasterTransfo, dem)
 

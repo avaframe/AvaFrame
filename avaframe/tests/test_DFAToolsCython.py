@@ -6,7 +6,7 @@ import pytest
 
 # Local imports
 import avaframe.com1DFA.DFAToolsCython as DFAfunC
-import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.in3Utils.geoTrans as gT
 
 
 def test_normalizeC(capfd):
@@ -204,7 +204,7 @@ def test_reprojectionC(capfd):
     threshold = 0.001
 
     # build normals corresponding to dem
-    dem = DFAtls.getNormalMesh(dem, num)
+    dem = gT.getNormalMesh(dem, num=num)
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
