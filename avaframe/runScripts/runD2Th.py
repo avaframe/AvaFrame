@@ -13,7 +13,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 
 
-def runD2Th(avaDir, comMod, resType, num, profileAxis, profileIndex):
+def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
     # fetch dem
     dem = gI.readDEM(avaDir)
 
@@ -21,27 +21,34 @@ def runD2Th(avaDir, comMod, resType, num, profileAxis, profileIndex):
     inDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles")
     resFiles = list(inDir.glob("*_%s.asc" % resType))
 
+    # create output directory
+    outDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles", "transformed")
+    fU.makeADir(outDir)
+
     # loop over resType files found
     for rF in resFiles:
         # read depth field to dict
         depthField = IOf.readRaster(rF)
 
         # convert depth to thickness using dem
-        thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthToThickness(depthField, dem, num=8)
+        thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthToThickness(depthField, dem)
 
-        # create output directory
-        outDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles", "transformed")
-        fU.makeADir(outDir)
-        pName = rF.stem.split("_pft")[0] + "transformed" + "_%s.asc" % resType
+        pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s.asc" % resType
 
         # create plot
         oT.plotDepthToThickness(
-            depthRasterResized, thicknessDict['rasterData'], slopeAngleField, profileAxis, profileIndex, outDir, pName
+            depthRasterResized,
+            thicknessDict["rasterData"],
+            slopeAngleField,
+            profileAxis,
+            profileIndex,
+            outDir,
+            pName,
         )
 
         # write thickness to file
         outFile = outDir / pName
-        IOf.writeResultToAsc(thicknessDict["header"], thicknessDict['rasterData'], outFile, flip=True)
+        IOf.writeResultToAsc(thicknessDict["header"], thicknessDict["rasterData"], outFile, flip=True)
 
 
 if __name__ == "__main__":
@@ -50,7 +57,6 @@ if __name__ == "__main__":
     logName = "runDepthToThickness"
     comMod = "com1DFA"
     resType = "pft"
-    num = 6
     profileAxis = "x"
     profileIndex = None
     # ++++++++++++++++++++++++++++++
@@ -60,4 +66,4 @@ if __name__ == "__main__":
     avaDir = cfgMain["MAIN"]["avalancheDir"]
 
     # call conversion
-    runD2Th(avaDir, comMod, resType, num, profileAxis, profileIndex)
+    runD2Th(avaDir, comMod, resType, profileAxis, profileIndex)

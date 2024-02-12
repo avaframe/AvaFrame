@@ -16,7 +16,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def convertDepthToThickness(depthDict, demDict, num=6):
+def convertDepthToThickness(depthDict, demDict):
     """convert depthField to thicknessField, using a DEM to compute the slope angle required for transformation
     also writes field to a new directory called transformed where depthFile is located
     Parameters
@@ -25,9 +25,6 @@ def convertDepthToThickness(depthDict, demDict, num=6):
         dictionary with dem header and rasterData (numpy nd array of z values)
     depthDict: dict
         dictionary with depthField header and rasterData (numpy nd array of depth values)
-    num: int
-        chosoe between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
-        1 to use the simple cross product method (with the diagonals)
 
     Returns
     --------
@@ -36,7 +33,7 @@ def convertDepthToThickness(depthDict, demDict, num=6):
 
     """
     # get normal vector of the grid mesh
-    demDict = DFAtls.getNormalMesh(demDict, num)
+    demDict = gT.getNormalMesh(demDict)
     _, _, NzNormed = DFAtls.normalize(demDict["Nx"], demDict["Ny"], demDict["Nz"])
 
     # if resType field cellSize/extent is different to DEM reproject raster on a grid of shape DEM
@@ -51,31 +48,6 @@ def convertDepthToThickness(depthDict, demDict, num=6):
     thicknessDict = {'header': demDict['header'], 'rasterData': thickness}
 
     return thicknessDict, depthRasterNew, slopeAngleField
-
-
-def checkIsFile(filePath):
-    """check if is file
-
-    Parameters
-    -----------
-    filePath: str or pathlib Path
-        path to desired file
-
-    Returns
-    --------
-    filePath: pathlib path
-        checked path to file
-
-    """
-
-    if not pathlib.Path(filePath).is_file():
-        message = "Provided filePath %s is not a file" % str(filePath)
-        log.error(message)
-        raise FileNotFoundError(message)
-    else:
-        filePath = pathlib.Path(filePath)
-
-    return filePath
 
 
 def fetchPointValuesFromField(dataDF, xyPoints, resType, interpMethod='bilinear'):
@@ -104,7 +76,7 @@ def fetchPointValuesFromField(dataDF, xyPoints, resType, interpMethod='bilinear'
         # read field
         field = IOf.readRaster(row[resType])
 
-        value, _ = gT.projectOnRaster(field, xyPoints, interp="bilinear", inData="rasterData", outData="value")
+        value, _ = gT.projectOnRaster(field, xyPoints, interp=interpMethod, inData="rasterData", outData="value")
         dataDF.loc[index, ('pointValues_%s' % resType)] = value['value'][0]
 
     return dataDF

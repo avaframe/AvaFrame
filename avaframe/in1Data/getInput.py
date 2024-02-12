@@ -600,7 +600,7 @@ def createReleaseStats(avaDir, cfg):
     dem["originalHeader"] = dem["header"].copy()
     methodMeshNormal = cfg.getfloat("GENERAL", "methodMeshNormal")
     # get normal vector of the grid mesh
-    dem = DFAtls.getNormalMesh(dem, methodMeshNormal)
+    dem = geoTrans.getNormalMesh(dem, methodMeshNormal)
     dem = DFAtls.getAreaMesh(dem, methodMeshNormal)
 
     # loop over all relFiles and compute information saved to dictionary of dataframes
