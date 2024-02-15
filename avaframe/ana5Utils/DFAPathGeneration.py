@@ -8,6 +8,8 @@ import numpy as np
 import logging
 import pathlib
 import shutil
+from scipy.optimize import curve_fit
+
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
@@ -17,16 +19,18 @@ import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAtools as DFAtls
 from avaframe.com1DFA import com1DFA
 import avaframe.out3Plot.outDebugPlots as debPlot
+
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 cfgAVA = cfgUtils.getGeneralConfig()
-debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
+debugPlot = cfgAVA["FLAGS"].getboolean("debugPlot")
 
 
-def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=False, flagAvaDir=True,
-                        comModule='com1DFA'):
-    """ extract path from fileds or particles
+def generateAveragePath(
+    avalancheDir, pathFromPart, simName, dem, addVelocityInfo=False, flagAvaDir=True, comModule="com1DFA"
+):
+    """extract path from fileds or particles
 
     Parameters
     -----------
@@ -58,31 +62,33 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
         x, y coord of the initial particles or flow thickness field
     """
     if pathFromPart:
-        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
-                                                                       comModule='com1DFA')
+        particlesList, timeStepInfo = particleTools.readPartFromPickle(
+            avalancheDir, simName=simName, flagAvaDir=True, comModule="com1DFA"
+        )
         particlesIni = particlesList[0]
-        log.info('Using particles to generate avalanche path profile')
+        log.info("Using particles to generate avalanche path profile")
         # postprocess to extract path and energy line
         avaProfileMass = getDFAPathFromPart(particlesList, addVelocityInfo=addVelocityInfo)
     else:
-        particlesList = ''
+        particlesList = ""
         # read field
-        fieldName = ['FT', 'FM']
+        fieldName = ["FT", "FM"]
         if addVelocityInfo:
-            fieldName.append['FV']
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, fieldName, simName=simName,
-                                                               flagAvaDir=True, comModule='com1DFA')
+            fieldName.append["FV"]
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(
+            avalancheDir, fieldName, simName=simName, flagAvaDir=True, comModule="com1DFA"
+        )
         # get fields header
-        ncols = fieldHeader['ncols']
-        nrows = fieldHeader['nrows']
-        csz = fieldHeader['cellsize']
+        ncols = fieldHeader["ncols"]
+        nrows = fieldHeader["nrows"]
+        csz = fieldHeader["cellsize"]
         # we want the origin to be in (0, 0) as it is in the avaProfile that comes in
         X, Y = gT.makeCoordinateGrid(0, 0, csz, ncols, nrows)
-        indNonZero = np.where(fieldsList[0]['FD'] > 0)
+        indNonZero = np.where(fieldsList[0]["FD"] > 0)
         # convert this data in a particles style (dict with x, y, z info)
-        particlesIni = {'x': X[indNonZero], 'y': Y[indNonZero]}
+        particlesIni = {"x": X[indNonZero], "y": Y[indNonZero]}
         particlesIni, _ = gT.projectOnRaster(dem, particlesIni)
-        log.info('Using fields to generate avalanche path profile')
+        log.info("Using fields to generate avalanche path profile")
         # postprocess to extract path and energy line
         avaProfileMass = getDFAPathFromField(fieldsList, fieldHeader, dem)
 
@@ -90,7 +96,7 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
 
 
 def getDFAPathFromPart(particlesList, addVelocityInfo=False):
-    """ compute mass averaged path from particles
+    """compute mass averaged path from particles
 
     Also returns the averaged velocity and kinetic energy associated
     If addVelocityInfo is True, information about velocity and kinetic energy is computed
@@ -110,46 +116,46 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
         the avaProfileMass dict (u2, ekin, totEKin)
     """
 
-    propList = ['x', 'y', 'z', 's', 'sCor']
-    propListPart = ['x', 'y', 'z', 'trajectoryLengthXY', 'trajectoryLengthXYCor']
+    propList = ["x", "y", "z", "s", "sCor"]
+    propListPart = ["x", "y", "z", "trajectoryLengthXY", "trajectoryLengthXYCor"]
     avaProfileMass = {}
     # do we have velocity info?
     if addVelocityInfo:
-        propList.append('u2')
-        propList.append('ekin')
-        propListPart.append('u2')
-        propListPart.append('ekin')
-        avaProfileMass['totEKin'] = np.empty((0, 1))
+        propList.append("u2")
+        propList.append("ekin")
+        propListPart.append("u2")
+        propListPart.append("ekin")
+        avaProfileMass["totEKin"] = np.empty((0, 1))
     # initialize other properties
     for prop in propList:
         avaProfileMass[prop] = np.empty((0, 1))
-        avaProfileMass[prop + 'std'] = np.empty((0, 1))
+        avaProfileMass[prop + "std"] = np.empty((0, 1))
 
     # loop on each particle dictionary (ie each time step saved)
     for particles in particlesList:
-        if particles['nPart'] > 0:
-            m = particles['m']
+        if particles["nPart"] > 0:
+            m = particles["m"]
             if addVelocityInfo:
-                ux = particles['ux']
-                uy = particles['uy']
-                uz = particles['uz']
+                ux = particles["ux"]
+                uy = particles["uy"]
+                uz = particles["uz"]
                 u = DFAtls.norm(ux, uy, uz)
-                u2Array = u*u
-                kineticEneArray = 0.5*m*u2Array
-                particles['u2'] = u2Array
-                particles['ekin'] = kineticEneArray
+                u2Array = u * u
+                kineticEneArray = 0.5 * m * u2Array
+                particles["u2"] = u2Array
+                particles["ekin"] = kineticEneArray
 
             # mass-averaged path
             avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, m, naming=propListPart)
 
             if addVelocityInfo:
-                avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], np.nansum(kineticEneArray))
+                avaProfileMass["totEKin"] = np.append(avaProfileMass["totEKin"], np.nansum(kineticEneArray))
 
     return avaProfileMass
 
 
 def getDFAPathFromField(fieldsList, fieldHeader, dem):
-    """ compute mass averaged path from fields
+    """compute mass averaged path from fields
 
     Also returns the averaged velocity and kinetic energy associated
     The dem and fieldsList (FT, FV and FM) need to have identical dimentions and cell size.
@@ -172,52 +178,52 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
         the avaProfileMass dict (u2, ekin, totEKin)
     """
     # get DEM
-    demRaster = dem['rasterData']
+    demRaster = dem["rasterData"]
     # get fields header
-    ncols = fieldHeader['ncols']
-    nrows = fieldHeader['nrows']
-    xllc = fieldHeader['xllcenter']
-    yllc = fieldHeader['yllcenter']
-    csz = fieldHeader['cellsize']
+    ncols = fieldHeader["ncols"]
+    nrows = fieldHeader["nrows"]
+    xllc = fieldHeader["xllcenter"]
+    yllc = fieldHeader["yllcenter"]
+    csz = fieldHeader["cellsize"]
     X, Y = gT.makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
 
-    propList = ['x', 'y', 'z']
+    propList = ["x", "y", "z"]
     avaProfileMass = {}
     # do we have velocity info?
     addVelocityInfo = False
-    if 'FV' in fieldsList[0]:
-        propList.append('u2')
-        propList.append('ekin')
-        avaProfileMass['totEKin'] = np.empty((0, 1))
+    if "FV" in fieldsList[0]:
+        propList.append("u2")
+        propList.append("ekin")
+        avaProfileMass["totEKin"] = np.empty((0, 1))
         addVelocityInfo = True
     # initialize other properties
     for prop in propList:
         avaProfileMass[prop] = np.empty((0, 1))
-        avaProfileMass[prop + 'std'] = np.empty((0, 1))
+        avaProfileMass[prop + "std"] = np.empty((0, 1))
     # loop on each field dictionary (ie each time step saved)
     for field in fieldsList:
         # find cells with snow
-        nonZeroIndex = np.where(field['FT'] > 0)
+        nonZeroIndex = np.where(field["FT"] > 0)
         xArray = X[nonZeroIndex]
         yArray = Y[nonZeroIndex]
         zArray, _ = gT.projectOnGrid(xArray, yArray, demRaster, csz=csz, xllc=xllc, yllc=yllc)
-        mArray = field['FM'][nonZeroIndex]
-        particles = {'x': xArray, 'y': yArray, 'z': zArray}
+        mArray = field["FM"][nonZeroIndex]
+        particles = {"x": xArray, "y": yArray, "z": zArray}
         if addVelocityInfo:
-            uArray = field['FV'][nonZeroIndex]
-            u2Array = uArray*uArray
-            kineticEneArray = 0.5*mArray*u2Array
-            particles['u2'] = u2Array
-            particles['ekin'] = kineticEneArray
+            uArray = field["FV"][nonZeroIndex]
+            u2Array = uArray * uArray
+            kineticEneArray = 0.5 * mArray * u2Array
+            particles["u2"] = u2Array
+            particles["ekin"] = kineticEneArray
 
         # mass-averaged path
         avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, mArray)
 
         if addVelocityInfo:
-            avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], np.nansum(kineticEneArray))
+            avaProfileMass["totEKin"] = np.append(avaProfileMass["totEKin"], np.nansum(kineticEneArray))
 
-    avaProfileMass['x'] = avaProfileMass['x'] - xllc
-    avaProfileMass['y'] = avaProfileMass['y'] - yllc
+    avaProfileMass["x"] = avaProfileMass["x"] - xllc
+    avaProfileMass["y"] = avaProfileMass["y"] - yllc
 
     # compute s
     avaProfileMass = gT.computeS(avaProfileMass)
@@ -225,7 +231,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
 
 
 def extendDFAPath(cfg, avaProfile, dem, particlesIni):
-    """ extend the DFA path at the top and bottom
+    """extend the DFA path at the top and bottom
     avaProfile with x, y, z, s information
 
     Parameters
@@ -254,15 +260,15 @@ def extendDFAPath(cfg, avaProfile, dem, particlesIni):
         extended profile at top and bottom (x, y, z).
     """
     # resample the profile
-    resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
+    resampleDistance = cfg.getfloat("nCellsResample") * dem["header"]["cellsize"]
     avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
-    avaProfile = extendProfileTop(cfg.getint('extTopOption'), particlesIni, avaProfile)
+    avaProfile = extendProfileTop(cfg.getint("extTopOption"), particlesIni, avaProfile)
     avaProfile = extendProfileBottom(cfg, dem, avaProfile)
     return avaProfile
 
 
 def extendProfileTop(extTopOption, particlesIni, profile):
-    """ extend the DFA path at the top (release)
+    """extend the DFA path at the top (release)
 
     Either towards the highest point in particlesIni (extTopOption = 0)
     or the point leading to the longest runout (extTopOption = 1)
@@ -285,51 +291,51 @@ def extendProfileTop(extTopOption, particlesIni, profile):
     """
     if extTopOption == 0:
         # get highest particle
-        indTop = np.argmax(particlesIni['z'])
-        xExtTop = particlesIni['x'][indTop]
-        yExtTop = particlesIni['y'][indTop]
-        zExtTop = particlesIni['z'][indTop]
-        dx = xExtTop - profile['x'][0]
-        dy = yExtTop - profile['y'][0]
+        indTop = np.argmax(particlesIni["z"])
+        xExtTop = particlesIni["x"][indTop]
+        yExtTop = particlesIni["y"][indTop]
+        zExtTop = particlesIni["z"][indTop]
+        dx = xExtTop - profile["x"][0]
+        dy = yExtTop - profile["y"][0]
         ds = np.sqrt(dx**2 + dy**2)
     elif extTopOption == 1:
         # get point with the most important runout gain
         # get first particle of the path
-        xFirst = profile['x'][0]
-        yFirst = profile['y'][0]
-        zFirst = profile['z'][0]
+        xFirst = profile["x"][0]
+        yFirst = profile["y"][0]
+        zFirst = profile["z"][0]
         # get last particle of the path
-        sLast = profile['s'][-1]
-        zLast = profile['z'][-1]
+        sLast = profile["s"][-1]
+        zLast = profile["z"][-1]
         # compute runout angle for averaged path
-        tanAngle = (zFirst-zLast)/sLast
+        tanAngle = (zFirst - zLast) / sLast
         # compute ds
-        dx = particlesIni['x'] - xFirst
-        dy = particlesIni['y'] - yFirst
+        dx = particlesIni["x"] - xFirst
+        dy = particlesIni["y"] - yFirst
         ds = np.sqrt(dx**2 + dy**2)
         # compute dz
-        dz = particlesIni['z'] - zFirst
+        dz = particlesIni["z"] - zFirst
         # remove the elevation needed to match the runout angle
         dz1 = dz - tanAngle * ds
         # get the particle with the highest potential
         indTop = np.argmax(dz1)
-        xExtTop = particlesIni['x'][indTop]
-        yExtTop = particlesIni['y'][indTop]
-        zExtTop = particlesIni['z'][indTop]
+        xExtTop = particlesIni["x"][indTop]
+        yExtTop = particlesIni["y"][indTop]
+        zExtTop = particlesIni["z"][indTop]
         ds = ds[indTop]
 
     # extend profile
-    profile['x'] = np.append(xExtTop, profile['x'])
-    profile['y'] = np.append(yExtTop, profile['y'])
-    profile['z'] = np.append(zExtTop, profile['z'])
-    profile['s'] = np.append(0, profile['s'] + ds)
+    profile["x"] = np.append(xExtTop, profile["x"])
+    profile["y"] = np.append(yExtTop, profile["y"])
+    profile["z"] = np.append(zExtTop, profile["z"])
+    profile["s"] = np.append(0, profile["s"] + ds)
     if debugPlot:
         debPlot.plotPathExtTop(profile, particlesIni, xFirst, yFirst, zFirst, dz1)
     return profile
 
 
 def extendProfileBottom(cfg, dem, profile):
-    """ extend the DFA path at the bottom (runout area)
+    """extend the DFA path at the bottom (runout area)
 
     Find the direction in which to extend considering the last point of the profile
     and a few previous ones but discarding the ones that are too close
@@ -355,34 +361,34 @@ def extendProfileBottom(cfg, dem, profile):
     profile: dict
         extended profile
     """
-    header = dem['header']
-    csz = header['cellsize']
-    zRaster = dem['rasterData']
+    header = dem["header"]
+    csz = header["cellsize"]
+    zRaster = dem["rasterData"]
     # get last point
-    xLast = profile['x'][-1]
-    yLast = profile['y'][-1]
-    sLast = profile['s'][-1]
+    xLast = profile["x"][-1]
+    yLast = profile["y"][-1]
+    sLast = profile["s"][-1]
     # compute distance from last point:
-    r = DFAtls.norm(profile['x']-xLast, profile['y']-yLast, 0)
+    r = DFAtls.norm(profile["x"] - xLast, profile["y"] - yLast, 0)
     # find the previous points
-    extendMinDistance = cfg.getfloat('nCellsMinExtend') * csz
-    extendMaxDistance = cfg.getfloat('nCellsMaxExtend') * csz
+    extendMinDistance = cfg.getfloat("nCellsMinExtend") * csz
+    extendMaxDistance = cfg.getfloat("nCellsMaxExtend") * csz
     pointsOfInterestLast = np.where((r < extendMaxDistance) & (r > extendMinDistance))[0]
-    xInterest = profile['x'][pointsOfInterestLast]
-    yInterest = profile['y'][pointsOfInterestLast]
+    xInterest = profile["x"][pointsOfInterestLast]
+    yInterest = profile["y"][pointsOfInterestLast]
 
     # check if points are found to compute direction of extension
     if len(xInterest) > 0:
         # find the direction in which we need to extend the path
         vDirX = xLast - xInterest
         vDirY = yLast - yInterest
-        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), 0*np.array([vDirY]))
+        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), 0 * np.array([vDirY]))
         vDirX = np.sum(vDirX)
         vDirY = np.sum(vDirY)
         vDirZ = np.sum(vDirZ)
         vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
         # extend in this direction
-        factExt = cfg.getfloat('factBottomExt')
+        factExt = cfg.getfloat("factBottomExt")
         gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
         xExtBottom = np.array([xLast + gamma * vDirX])
         yExtBottom = np.array([yLast + gamma * vDirY])
@@ -390,7 +396,7 @@ def extendProfileBottom(cfg, dem, profile):
         zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
         # Dicothomie method to find the last point on the extention and on the dem
         if np.isnan(zExtBottom):
-            factExt = factExt/2
+            factExt = factExt / 2
             stepSize = factExt
             isOut = True
         else:
@@ -399,14 +405,17 @@ def extendProfileBottom(cfg, dem, profile):
         count = 0
         # remember last point found inside
         factLast = 0
-        while count < cfg.getint('maxIterationExtBot') and stepSize * sLast > cfg.getint('nBottomExtPrecision')*csz:
+        while (
+            count < cfg.getint("maxIterationExtBot")
+            and stepSize * sLast > cfg.getint("nBottomExtPrecision") * csz
+        ):
             count = count + 1
             gamma = factExt * sLast / np.sqrt(vDirX**2 + vDirY**2)
             xExtBottom = np.array([xLast + gamma * vDirX])
             yExtBottom = np.array([yLast + gamma * vDirY])
             # project on DEM
             zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
-            stepSize = stepSize/2
+            stepSize = stepSize / 2
             if np.isnan(zExtBottom):
                 factExt = factExt - stepSize
                 isOut = True
@@ -424,20 +433,24 @@ def extendProfileBottom(cfg, dem, profile):
             yExtBottom = np.array([yLast + gamma * vDirY])
             # project on DEM
             zExtBottom, _ = gT.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz)
-        log.info('found extention after %d iterations, precision is %.2f m' % (count, stepSize * sLast))
+        log.info("found extention after %d iterations, precision is %.2f m" % (count, stepSize * sLast))
 
         # extend profile
-        profile['x'] = np.append(profile['x'], xExtBottom)
-        profile['y'] = np.append(profile['y'], yExtBottom)
-        profile['z'] = np.append(profile['z'], zExtBottom)
-        profile['s'] = np.append(profile['s'], sLast + np.sqrt((xLast-xExtBottom)**2 + (yLast-yExtBottom)**2))
+        profile["x"] = np.append(profile["x"], xExtBottom)
+        profile["y"] = np.append(profile["y"], yExtBottom)
+        profile["z"] = np.append(profile["z"], zExtBottom)
+        profile["s"] = np.append(
+            profile["s"], sLast + np.sqrt((xLast - xExtBottom) ** 2 + (yLast - yExtBottom) ** 2)
+        )
 
     else:
-        log.warning('Path not extended at bottom as no point of interest for computing direction \
-            of where to extend path is found')
+        log.warning(
+            "Path not extended at bottom as no point of interest for computing direction \
+            of where to extend path is found"
+        )
 
     if debugPlot:
-        debPlot.plotPathExtBot(profile, xInterest, yInterest, 0*yInterest, xLast, yLast)
+        debPlot.plotPathExtBot(profile, xInterest, yInterest, 0 * yInterest, xLast, yLast)
     return profile
 
 
@@ -464,34 +477,62 @@ def getParabolicFit(cfg, avaProfile, dem):
     parabolicFit: dict
         a, b, c coefficients of the parabolic fit (y = a*a*x + b*x + c)
     """
-    s = avaProfile['s']
+    s = avaProfile["s"]
     sE = s[-1]
-    z = avaProfile['z']
+    z = avaProfile["z"]
     z0 = z[0]
     zE = z[-1]
     # same start and end point, minimize distance between curves
-    if cfg.getfloat('fitOption') == 0:
-        SumNom = np.sum(s*(s-sE)*((zE-z0)/sE*s+z0-z))
-        SumDenom = s*(s-sE)
+    if cfg.getfloat("fitOption") == 0:
+        SumNom = np.sum(s * (s - sE) * ((zE - z0) / sE * s + z0 - z))
+        SumDenom = s * (s - sE)
         SumDenom = np.dot(SumDenom, SumDenom)
-        a = - SumNom/SumDenom
-        b = (zE-z0)/sE - a*sE
-    elif cfg.getfloat('fitOption') == 1:
+        a = -SumNom / SumDenom
+        b = (zE - z0) / sE - a * sE
+    elif cfg.getfloat("fitOption") == 1:
         angleProf, tmpProf, dsProf = gT.prepareAngleProfile(10, avaProfile, raiseWarning=False)
-        r = avaProfile['s'] - avaProfile['s'][-1]
-        resampleDistance = cfg.getfloat('nCellsSlope') * dem['header']['cellsize']
+        r = avaProfile["s"] - avaProfile["s"][-1]
+        resampleDistance = cfg.getfloat("nCellsSlope") * dem["header"]["cellsize"]
         pointsOfInterestLast = np.where(np.abs(r) < resampleDistance)
-        slope = np.nansum(angleProf[pointsOfInterestLast])/np.size(pointsOfInterestLast)
+        slope = np.nansum(angleProf[pointsOfInterestLast]) / np.size(pointsOfInterestLast)
         slope = -np.tan(np.radians(slope))
-        a = (slope*sE + (z0 - zE))/(sE*sE)
-        b = -slope - 2*(z0 - zE)/sE
+        a = (slope * sE + (z0 - zE)) / (sE * sE)
+        b = -slope - 2 * (z0 - zE) / sE
     c = z0
-    parabolicFit = {'a': a, 'b': b, 'c': c}
+    parabolicFit = {"a": a, "b": b, "c": c}
     return parabolicFit
 
 
+def funcParabola(s, a, b, c):
+    return a * (s**2) + b * s + c
+
+
+def fitCurveParabola(avaProfile, uncertainty=None):
+    """use scipy optimize and a parabola function to create a fit to a profile
+    options to define uncertainty of data
+
+    Parameters
+    -----------
+    avaProfile: dict
+        dictionary with s, coordinate along profile, z elevation of profile
+    uncertainty: numpy array
+        array of uncertainty values of data - same length as s, z arrays, default is 1
+
+    Returns
+    --------
+    avaProfile: dict
+        updated dict with zFit - array of elevation of fit
+    """
+
+    popt, pcov = curve_fit(funcParabola, avaProfile['s'], avaProfile['z'], sigma=uncertainty)
+
+    avaProfile['zFit'] = funcParabola(avaProfile['s'], *popt)
+
+    return avaProfile
+
+
 def getSplitPoint(cfg, avaProfile, parabolicFit):
-    """ find the split point corresponding to an avalanche profile, with parabolic fit and the slopeSplitPoint
+    """find the split point corresponding to an avalanche profile, with parabolic fit and the slopeSplitPoint
 
     Parameters
     -----------
@@ -512,30 +553,40 @@ def getSplitPoint(cfg, avaProfile, parabolicFit):
     splitPoint: dict
         (x, y, z, zPra, s) at split point location.
     """
-    indFirst = avaProfile['indStartMassAverage']
-    indEnd = avaProfile['indEndMassAverage']
-    s0 = avaProfile['s'][indFirst]
-    sEnd = avaProfile['s'][indEnd]
-    s = avaProfile['s']
-    z = avaProfile['z']
+    indFirst = avaProfile["indStartMassAverage"]
+    indEnd = avaProfile["indEndMassAverage"]
+    s0 = avaProfile["s"][indFirst]
+    sEnd = avaProfile["s"][indEnd]
+    s = avaProfile["s"]
+    z = avaProfile["z"]
     sNew = s - s0
-    zPara = parabolicFit['a']*sNew*sNew+parabolicFit['b']*sNew+parabolicFit['c']
-    parabolicProfile = {'s': sNew, 'z': zPara}
+    zPara = parabolicFit["a"] * sNew * sNew + parabolicFit["b"] * sNew + parabolicFit["c"]
+    parabolicProfile = {"s": sNew, "z": zPara}
 
-    anglePara, tmpPara, dsPara = gT.prepareAngleProfile(cfg.getfloat('slopeSplitPoint'), parabolicProfile,
-                                                        raiseWarning=False)
+    anglePara, tmpPara, dsPara = gT.prepareAngleProfile(
+        cfg.getfloat("slopeSplitPoint"), parabolicProfile, raiseWarning=False
+    )
     try:
-        indSplitPoint = gT.findAngleProfile(tmpPara, dsPara, cfg.getfloat('dsMin'))
-        splitPoint = {'x': avaProfile['x'][indSplitPoint], 'y': avaProfile['y'][indSplitPoint],
-                      'z': z[indSplitPoint], 'zPara': zPara[indSplitPoint], 's': sNew[indSplitPoint]}
+        indSplitPoint = gT.findAngleProfile(tmpPara, dsPara, cfg.getfloat("dsMin"))
+        splitPoint = {
+            "x": avaProfile["x"][indSplitPoint],
+            "y": avaProfile["y"][indSplitPoint],
+            "z": z[indSplitPoint],
+            "zPara": zPara[indSplitPoint],
+            "s": sNew[indSplitPoint],
+        }
     except IndexError:
-        noSplitPointFoundMessage = ('Automated split point generation failed as no point where slope is less than %s°'
-                                    'was found, provide the split point manually.' % cfg.getfloat('slopeSplitPoint'))
-        splitPoint = ''
+        noSplitPointFoundMessage = (
+            "Automated split point generation failed as no point where slope is less than %s°"
+            "was found, provide the split point manually." % cfg.getfloat("slopeSplitPoint")
+        )
+        splitPoint = ""
         log.warning(noSplitPointFoundMessage)
     if debugPlot:
-        angleProf, tmpProf, dsProf = gT.prepareAngleProfile(cfg.getfloat('slopeSplitPoint'), avaProfile)
-        debPlot.plotFindAngle(avaProfile, angleProf, parabolicProfile, anglePara, s0, sEnd, splitPoint, indSplitPoint)
+        angleProf, tmpProf, dsProf = gT.prepareAngleProfile(cfg.getfloat("slopeSplitPoint"), avaProfile)
+        debPlot.plotFindAngle(
+            avaProfile, angleProf, parabolicProfile, anglePara, s0, sEnd, splitPoint, indSplitPoint
+        )
     return splitPoint
 
 
@@ -560,18 +611,18 @@ def resamplePath(cfg, dem, avaProfile):
     avaProfile: dict
         resampled path profile
     """
-    resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
-    indFirst = avaProfile['indStartMassAverage']
-    indEnd = avaProfile['indEndMassAverage']
-    s0 = avaProfile['s'][indFirst]
-    sEnd = avaProfile['s'][indEnd]
+    resampleDistance = cfg.getfloat("nCellsResample") * dem["header"]["cellsize"]
+    indFirst = avaProfile["indStartMassAverage"]
+    indEnd = avaProfile["indEndMassAverage"]
+    s0 = avaProfile["s"][indFirst]
+    sEnd = avaProfile["s"][indEnd]
     avaProfile, _ = gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
     # make sure we get the good start and end point... prepareLine might make a small error on the s coord
-    indFirst = np.argwhere(avaProfile['s'] >= s0 - resampleDistance/3)[0][0]
+    indFirst = np.argwhere(avaProfile["s"] >= s0 - resampleDistance / 3)[0][0]
     # look for the first point in the extension and take the one before
-    indEnd = np.argwhere(avaProfile['s'] >= sEnd + resampleDistance/3)[0][0]-1
-    avaProfile['indStartMassAverage'] = indFirst
-    avaProfile['indEndMassAverage'] = indEnd
+    indEnd = np.argwhere(avaProfile["s"] >= sEnd + resampleDistance / 3)[0][0] - 1
+    avaProfile["indStartMassAverage"] = indFirst
+    avaProfile["indEndMassAverage"] = indEnd
     return avaProfile
 
 
@@ -597,32 +648,34 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
         resampled path profile
     """
     # put path back in original location
-    if splitPoint != '':
-        splitPoint['x'] = splitPoint['x'] + dem['originalHeader']['xllcenter']
-        splitPoint['y'] = splitPoint['y'] + dem['originalHeader']['yllcenter']
-    avaProfileMass['x'] = avaProfileMass['x'] + dem['originalHeader']['xllcenter']
-    avaProfileMass['y'] = avaProfileMass['y'] + dem['originalHeader']['yllcenter']
+    if splitPoint != "":
+        splitPoint["x"] = splitPoint["x"] + dem["originalHeader"]["xllcenter"]
+        splitPoint["y"] = splitPoint["y"] + dem["originalHeader"]["yllcenter"]
+    avaProfileMass["x"] = avaProfileMass["x"] + dem["originalHeader"]["xllcenter"]
+    avaProfileMass["y"] = avaProfileMass["y"] + dem["originalHeader"]["yllcenter"]
     # get projection from release shp layer
-    simName = simDFrow['simName']
-    relName = simName.split('_')[0]
-    inProjection = pathlib.Path(avalancheDir, 'Inputs', 'REL', relName + '.prj')
+    simName = simDFrow["simName"]
+    relName = simName.split("_")[0]
+    inProjection = pathlib.Path(avalancheDir, "Inputs", "REL", relName + ".prj")
     # save profile in Inputs
-    pathAB = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath', 'massAvgPath_%s_AB_aimec' % simName)
-    name = 'massAvaPath'
+    pathAB = pathlib.Path(avalancheDir, "Outputs", "DFAPath", "massAvgPath_%s_AB_aimec" % simName)
+    name = "massAvaPath"
     shpConv.writeLine2SHPfile(avaProfileMass, name, pathAB)
     if inProjection.is_file():
-        shutil.copy(inProjection, pathAB.with_suffix('.prj'))
+        shutil.copy(inProjection, pathAB.with_suffix(".prj"))
     else:
-        message = ('No projection layer for shp file %s' % inProjection)
+        message = "No projection layer for shp file %s" % inProjection
         log.warning(message)
-    log.info('Saved path to: %s', pathAB)
-    if splitPoint != '':
-        splitAB = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath', 'splitPointParabolicFit_%s_AB_aimec' % simName)
-        name = 'parabolaSplitPoint'
+    log.info("Saved path to: %s", pathAB)
+    if splitPoint != "":
+        splitAB = pathlib.Path(
+            avalancheDir, "Outputs", "DFAPath", "splitPointParabolicFit_%s_AB_aimec" % simName
+        )
+        name = "parabolaSplitPoint"
         shpConv.writePoint2SHPfile(splitPoint, name, splitAB)
         if inProjection.is_file():
-            shutil.copy(inProjection, splitAB.with_suffix('.prj'))
-        log.info('Saved split point to: %s', splitAB)
+            shutil.copy(inProjection, splitAB.with_suffix(".prj"))
+        log.info("Saved split point to: %s", splitAB)
 
 
 def weightedAvgAndStd(values, weights):
@@ -633,12 +686,12 @@ def weightedAvgAndStd(values, weights):
     """
     average = np.average(values, weights=weights)
     # Fast and numerically precise:
-    variance = np.average((values-average)**2, weights=weights)
+    variance = np.average((values - average) ** 2, weights=weights)
     return (average, math.sqrt(variance))
 
 
-def appendAverageStd(propList, avaProfile, particles, weights, naming=''):
-    """ append averaged to path
+def appendAverageStd(propList, avaProfile, particles, weights, naming=""):
+    """append averaged to path
 
     Parameters
     -----------
@@ -658,9 +711,9 @@ def appendAverageStd(propList, avaProfile, particles, weights, naming=''):
     avaProfile: dict
         averaged profile
     """
-    propListNames = naming if naming != '' else propList
+    propListNames = naming if naming != "" else propList
     for prop, propName in zip(propList, propListNames):
         avg, std = weightedAvgAndStd(particles[propName], weights)
         avaProfile[prop] = np.append(avaProfile[prop], avg)
-        avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
+        avaProfile[prop + "std"] = np.append(avaProfile[prop + "std"], std)
     return avaProfile
