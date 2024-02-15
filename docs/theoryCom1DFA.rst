@@ -1,10 +1,6 @@
 com1DFA DFA-Kernel theory
 ============================
 
-.. warning::
-
-   This theory has not been fully reviewed yet. Read its content with a critical mind.
-
 Governing Equations for the Dense Flow Avalanche
 ------------------------------------------------------
 

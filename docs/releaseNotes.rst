@@ -1,6 +1,7 @@
 Release Notes
 =============
 
+Please refer to `Github releases <https://github.com/avaframe/AvaFrame/releases>`_ for current release notes.
 
 1.3 (12. Okt 2022)
 ------------------

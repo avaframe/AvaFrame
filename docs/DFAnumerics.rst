@@ -2,11 +2,6 @@ com1DFA DFA-Kernel numerics
 ============================
 
 
-.. warning::
-
-   This theory has not been fully reviewed yet.
-
-
 The numerical method used in com1DFA mixes particle methods and
 mesh methods. Mass and momentum are tracked using particles but flow
 thickness is tracked using the mesh. The mesh is also used to access topographic information

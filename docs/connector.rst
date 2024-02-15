@@ -41,7 +41,11 @@ fully tested and might produce unwanted results.
    :sorted:
   
    Layer rename
-      Renames com1DFA result layers by adding the values of the given variable (from the configuration file) 
+      Renames com1DFA result layers by adding the values of the given variable (from the configuration file)
+
+   Probability analysis for directory (ana4)
+      Runs the probability analysis on com1DFA results from a given avalanche directory without running any
+      simulations. Please provide the base avalanche directory (i.e. the one containing INPUT, OUTPUT, *.log etc)
 
    Probability run (ana4, com1)
       Runs probability simulations via module com1DFA. The release shape HAS TO HAVE a ci95 field containing the 
@@ -53,13 +57,13 @@ fully tested and might produce unwanted results.
       Returns info for release area statistics in a csv file. See output of QGis processing for the location of
       the file. 
 
-   Snow slide (com5)
-      Runs snow slide simulations via module com1DFA. For more info see com5SnowSlide section in the documentation.
-      The resistance layer is meant for building outlines.
-
    Rock Avalanche (com6)
       Runs rock avalanche simulations via module com1DFA. For more info see com6RockAvalanche section in the
       documentation. Note that a release thickness raster the same size as the DEM is needed.
+
+   Snow slide (com5)
+      Runs snow slide simulations via module com1DFA. For more info see com5SnowSlide section in the documentation.
+      The resistance layer is meant for building outlines.
 
 Admin
 -----
