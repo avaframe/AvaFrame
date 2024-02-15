@@ -18,6 +18,8 @@ from matplotlib.cm import ScalarMappable
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
@@ -205,6 +207,9 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     Panel 2 crossMax values of peak field along thalweg for all sims
     Panel 3 mean, median and envelope of cross max values for all sims
 
+    option to colorcode according to first item of varParList
+    if str there is also the option to use a categorical colormap - then colors are indicated in legend not as colorbar
+
 
     Parameters
     ----------
@@ -268,7 +273,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     indYMax = min(np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])+5, len(l)-1)
     yMax = l[indYMax]
 
-    # get colormap for raster plot
+    # get colormap for raster plot of peak field
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
         maskedArrayTransposed[indYMin:indYMax, indXMin:]), np.nanmax(maskedArrayTransposed[indYMin:indYMax, indXMin:]),
         continuous=pU.contCmap)
@@ -284,10 +289,13 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             minVal = 0
             maxVal = 1
         elif isinstance(firstVar, str):
+            # if str then check for parameter values and create colormap that varies between 0, 1 with number of unique
+            # values as steps
             values = inputsDF[varParList[0]].to_list()
             minVal = 0
             maxVal = 1
             colorFlag = True
+            cmapSCVals = np.linspace(0, 1, nSamples)
         else:
             values = inputsDF[varParList[0]].to_list()
             minVal = np.nanmin(values)
@@ -297,8 +305,23 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         values = None
         minVal = 0
         maxVal = 1
+    # create colormap and setup ticks and itemsList
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
                                                                                                 unitSC)
+
+    # if parameter type for colorcoding is str and categorical colormap is chosen
+    if cfgSetup.getboolean('varParCategorical'):
+        norm3 = mpl.colors.Normalize(vmin=minVal, vmax=maxVal)
+        # map string varParList value to 0, 1 colorbar values
+        if isinstance(firstVar, str):
+            # fetch amount of different str parameter values
+            varParStrValues = list(set(resAnalysisDF[varParList[0]].tolist()))
+            # setup colormap
+            cmapUsed = cmapCrameri.glasgowS
+            cmapValues3 = np.linspace(0, 1, len(varParStrValues))
+            # create cmap object
+            cmap3 = mpl.cm.ScalarMappable(norm=norm3, cmap=cmapUsed)
+            cmap3.set_array([])
 
     ############################################
     # Figure: Analysis runout
@@ -314,21 +337,33 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ref5, im = pU.NonUnifIm(ax1, s, l, maskedArrayTransposed, '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
                             extent=[xMin, xMax, yMin, yMax],
                             cmap=cmap, norm=norm)
-    sc = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['lRunout'],
-                     c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
-                     label=('runout points (%s<%.1f%s)' % (runoutResType, cfgSetup.getfloat('thresholdValue'), unit)))
 
-    if displayColorBar:
-        pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
-    ax1.set_xlim([xMin, xMax])
+    if cfgSetup.getboolean('varParCategorical'):
+        for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
+            cmapVal1 = cmapValues3[varParStrValues.index(resAnalysisRow[varParList[0]])]
+            sc = ax1.plot(resAnalysisRow['sRunout'], resAnalysisRow['lRunout'], marker='o', c=cmap3.to_rgba(cmapVal1),
+                         label=resAnalysisRow[varParList[0]])
+        # add legend for categorical values and move outside of panel
+        ax1.legend(loc='center left', bbox_to_anchor=(1.2, 0.5))
+    else:
+        sc = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['lRunout'],
+                         c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
+                         label=('runout points (%s<%.1f%s)' % (runoutResType, cfgSetup.getfloat('thresholdValue'), unit)))
+        if displayColorBar:
+            pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
+        ax1.legend(loc='upper left')
+
+    # set panel axis labels
     ax1.set_ylim([yMin, yMax])
+    ax1.set_xlim([xMin, xMax])
     ax1.set_title('%s field (reference) for (%s>%.1f%s)' % (name, runoutResType, cfgSetup.getfloat('thresholdValue'), unit))
-    ax1.legend(loc='upper left')
     ax1.set_aspect('equal')
     pU.putAvaNameOnPlot(ax1, projectName)
 
+    # add colorbar for peak field
     pU.addColorBar(im, ax1, ticks, unit)
 
+    # add third panel for statistical measures of distribution of cross max values
     ax2.fill_between(s, pPercentile[2], pPercentile[0], facecolor=[.8, .8, .8], alpha=0.5,
                       label=('[%.2f, %.2f]%% interval' % (percentile/2, 100-percentile/2)))
     matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
@@ -342,17 +377,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     ax2.set_ylim(auto=True)
     ax2.set_ylabel('$%s_{%s}$ [%s]' % (runoutResType, crossValue, unit))
 
-    # add all runResultType crossMax values along thalweg using colorcoding if available
-    # setup colorbar
-    norm = mpl.colors.Normalize(vmin=minVal, vmax=maxVal)
-    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=pU.cmapAvaframeCont)
-    cmap.set_array([])
-
-    # map string varParList value to 0, 1 colorbar values
-    if isinstance(firstVar, str):
-        varParStrValues = list(set(resAnalysisDF[varParList[0]].tolist()))
-        cmapValues = np.linspace(0, 1, len(varParStrValues))
-
+    # add middle panel with cross max values along s
     # loop over all sims and compute colorbar value and add line plot
     countSim = 1
     for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
@@ -361,24 +386,30 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
                 cmapVal = resAnalysisRow[(paraVar+'0')]
         elif colorFlag and isinstance(firstVar, str):
-            cmapVal = cmapValues[varParStrValues.index(resAnalysisRow[varParList[0]])]
+            cmapVal = cmapSCVals[values.index(resAnalysisRow[varParList[0]])]
         else:
             cmapVal = countSim / nSamples
         if resAnalysisRow['simName'] == pathDict['refSimName']:
             ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c='k', label='reference', zorder=nSamples+1)
         else:
-            ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c=cmap.to_rgba(cmapVal))
+            if cfgSetup.getboolean('varParCategorical'):
+                cmapVal = cmapValues3[varParStrValues.index(resAnalysisRow[varParList[0]])]
+                ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c=cmap3.to_rgba(cmapVal),
+                         label=resAnalysisRow[varParList[0]])
+            else:
+                ax3.plot(s, resAnalysisRow[runoutResType.lower() + crossValue], c=cmapSC(cmapVal))
         countSim = countSim + 1
 
     # add colorbar
-    if colorFlag:
-        cbar = ax3.figure.colorbar(cmap, ax=ax3)
+    if colorFlag and (cfgSetup.getboolean('varParCategorical') is False):
+        cmapSC2 = ScalarMappable(norm=Normalize(minVal, maxVal), cmap=cmapSC)
+        cbar = ax3.figure.colorbar(cmapSC2, ax=ax3)
         cbar.outline.set_visible(False)
         if cfgSetup['unit'] != '':
             cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
         if isinstance(firstVar, str):
-            cbar.set_ticks(ticks= list(cmapValues), labels=varParStrValues)
+            cbar.set_ticks(ticks=np.linspace(0,1,len(itemsList)), labels=itemsList)
     # add labels title
     ax3.set_title('%s along thalweg for all sims' % name)
     ax3.legend(loc='upper right')
