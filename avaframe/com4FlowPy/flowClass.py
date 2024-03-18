@@ -98,7 +98,7 @@ class Cell:
         ##NEW PAULA
         # calculate flow energy (corresponding to kinetic energy)
         # analog to: kin_energy = mass * velocity² / 2  
-    	self.flow_energy = self.flux * self.z_delta / 2
+    	self.flow_energy = self.flux * self.z_delta * 9.81
 
     def calc_persistence(self):
         self.persistence = np.zeros_like(self.dem_ng)
