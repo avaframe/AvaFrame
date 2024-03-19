@@ -212,10 +212,18 @@ def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
     with open(plotDir / ("values_thalweg_flux_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(flux_coE)
+
+    with open(plotDir / ("values_thalweg_flux_coF.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.flux_coF)
     
     with open(plotDir / ("values_thalweg_energy_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(energy_coE)
+
+    with open(plotDir / ("values_thalweg_energy_coF.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.energy_coF)
 
     with open(plotDir / ("values_thalweg_zdelta_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
