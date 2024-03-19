@@ -265,6 +265,18 @@ def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
         writer = csv.writer(file)
         writer.writerow(path.z_delta_sumGen)
 
+    with open(plotDir / ("values_path_rows_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.row_generation)
+
+    with open(plotDir / ("values_path_cols_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.col_generation)
+
+    with open(plotDir / ("values_path_flux_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.flux_generation)
+
     
     '''
     if path_raster == True:
