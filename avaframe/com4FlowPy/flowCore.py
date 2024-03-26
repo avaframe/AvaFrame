@@ -277,6 +277,14 @@ def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
         writer = csv.writer(file)
         writer.writerow(path.flux_generation)
 
+    with open(plotDir / ("values_path_zdelta_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.z_delta_generation)
+
+    with open(plotDir / ("values_path_flowenergy_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.flow_energy_generation)
+
     
     '''
     if path_raster == True:
