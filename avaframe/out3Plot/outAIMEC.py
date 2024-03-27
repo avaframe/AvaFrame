@@ -297,9 +297,10 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             colorFlag = True
             cmapSCVals = np.linspace(0, 1, nSamples)
         else:
-            values = inputsDF[varParList[0]].to_list()
+            values = sorted(inputsDF[varParList[0]].to_list())
             minVal = np.nanmin(values)
             maxVal = np.nanmax(values)
+            cmapSCVals = np.linspace(0, 1, nSamples)
             colorFlag = True
     else:
         values = None
@@ -382,7 +383,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     countSim = 1
     for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
         if colorFlag and (isinstance(firstVar, str) == False):
-            cmapVal = resAnalysisRow[varParList[0]]
+            cmapVal = cmapSCVals[values.index(resAnalysisRow[varParList[0]])]
             if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
                 cmapVal = resAnalysisRow[(paraVar+'0')]
         elif colorFlag and isinstance(firstVar, str):
