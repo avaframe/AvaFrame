@@ -189,7 +189,7 @@ def run(optTuple):
     max_z_delta = float(optTuple[7])
 
     log.info("Multiprocessing starts, used cores: %i" % (nCPU))
-    log.info("Multiprocessing starts, used Processes: %i" % (nCPU*2))
+    #log.info("Multiprocessing starts, used Processes: %i" % (nCPU*2))
     
     release[release < 0] = 0
     release[release > 1] = 1
@@ -198,7 +198,7 @@ def run(optTuple):
 
     log.info("Number of release cell: %i"%nRel)
 
-    nChunks = int(nRel/(nCPU*3))
+    nChunks = max(int(nCPU*2),int(nRel/50.))
 
     release_list = split_release(release, nChunks) 
     log.info("Multiprocessing starts, used Chunks: %i" % nChunks)
