@@ -6,6 +6,7 @@ import numpy as np
 import logging
 import os
 import platform
+import gc
 if os.name == 'nt':
     from multiprocessing.pool import Pool as Pool    
 elif platform.system() == 'Darwin':
@@ -384,8 +385,12 @@ def calculation(args):
             release[z_delta_array > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
+
+        del cell_list
+                
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
+    gc.collect()
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
 
