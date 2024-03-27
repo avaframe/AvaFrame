@@ -198,10 +198,12 @@ def run(optTuple):
 
     log.info("Number of release cell: %i"%nRel)
 
-    release_list = split_release(release, int(nRel/100))
-    log.info("Multiprocessing starts, used Chunks: %i" % int(nRel/100))
+    nChunks = int(nRel/(nCPU*3))
+
+    release_list = split_release(release, nChunks) 
+    log.info("Multiprocessing starts, used Chunks: %i" % nChunks)
     
-    with Pool(processes=nCPU*2) as pool:
+    with Pool(processes=nCPU) as pool:
         results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
                             for release_sub in release_list])
         pool.close()
