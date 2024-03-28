@@ -391,10 +391,9 @@ def calculation(args):
             release[z_delta_array > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
-
+        
         del cell_list
-        del dem, infra, release
-                
+                        
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
     gc.collect()
