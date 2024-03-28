@@ -402,6 +402,7 @@ def calculation(args):
 
 
 def enoughMemoryAvailable(limit=.95):
+    log = logging.getLogger(__name__)
     availableMemory= psutil.virtual_memory().available/psutil.virtual_memory().total
     if availableMemory>=limit:
         log.info('RAM availability o.k. -- %.2f of %.2f'%(availableMemory*100,psutil.virtual_memory().total))
