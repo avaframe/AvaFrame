@@ -401,7 +401,7 @@ def calculation(args):
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
 
-def enoughMemoryAvailable(limit=.95):
+def enoughMemoryAvailable(limit=.05):
     log = logging.getLogger(__name__)
     availableMemory= psutil.virtual_memory().available/psutil.virtual_memory().total
     if availableMemory>=limit:
