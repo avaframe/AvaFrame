@@ -7,6 +7,9 @@ import logging
 import os
 import platform
 import gc
+import psutil
+import time
+
 if os.name == 'nt':
     from multiprocessing.pool import Pool as Pool    
 elif platform.system() == 'Darwin':
@@ -285,6 +288,9 @@ def calculation(args):
         back_calc   Array with back calculation, still to do!!!
         """
     
+    while not enoughMemoryAvailable():
+        time.sleep(30)
+
     dem = args[0]
     infra = args[1]
     release = args[2]
@@ -387,6 +393,7 @@ def calculation(args):
             row_list, col_list = get_start_idx(dem, release)
 
         del cell_list
+        del dem, infra, release
                 
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
@@ -394,3 +401,11 @@ def calculation(args):
     return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
 
 
+def enoughMemoryAvailable(limit=.95):
+    availableMemory= psutil.virtual_memory().available/psutil.virtual_memory().total
+    if availableMemory>=limit:
+        log.info('RAM availability o.k. -- %.2f of %.2f'%(availableMemory*100,psutil.virtual_memory().total))
+        return True
+    else:
+        log.info('RAM availability at limit -- %.2f of %.2f'%(availableMemory*100,psutil.virtual_memory().total))
+        return False
