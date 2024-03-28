@@ -87,30 +87,30 @@ def split_release(release, pieces):
 '''
 
 def split_release(release, pieces):
-    """Split the release layer in several tiles, the number is depending on the
-    available CPU Cores, so every Core gets one tile. The area is determined by
-    the number of release pixels in it, so that every tile has the same amount
-    of release pixels in it.
+    """ Split the release layer in several tiles. The area is determined by
+        the number of release pixels in it, so that every tile has the same amount
+        of release pixels in it.
 
-    In this version the split is performed along a flattened 2D-array to ensure
-    a more even splitting of release pixels that just along the x-Axis ...
+        In this version the split is performed along a flattened 2D-array to ensure
+        a more even splitting of release pixels than just along the x-Axis ...
     
-    TO DO: Ideally a 'greedy' algorithm would let idle CPU cores 'snatch' any 
-    un-processed release cell until all releaseCells are handled -- this would
-    ensure that the total workload is distributed evenly along all CPUs (which
-    becomes an important factor for bigger model areas) !!!
+        NOTE: TO DO: Ideally a 'greedy' algorithm would let idle CPU cores 'snatch' any 
+        un-processed release cell until all releaseCells are handled -- this would
+        ensure that the total workload is distributed evenly along all CPUs (which
+        becomes an important factor for bigger model areas) !!!
 
-    The release tiles have still the size of the original layer, so no split
-    for the DEM is needed.
+        The release tiles have still the size of the original layer, so no split
+        for the DEM is needed.
 
-    Input parameters:
-        release         the release layer with release pixels as int > 0
-        header_release  the header of the release layer to identify the
-                        noDataValue
+        Parameters
+        -----------
+        release: np.array - assumes a binary 0|1 array with  release pixels designated by '1'
+        pieces:  int - number of chunck in which the release layer should be split
 
-    Output parameters:
-        release_list    A list with the tiles(arrays) in it [array0, array1, ..]
-        """
+        Returns
+        -----------
+        release_list:    A list with the tiles(arrays) in it [array0, array1, ..]
+    """
     
 
     # Flatten the array and compute the cumulative sum
