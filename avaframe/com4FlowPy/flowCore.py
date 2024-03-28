@@ -191,26 +191,18 @@ def run(optTuple):
     nodata = float(optTuple[5])
     flux_threshold = float(optTuple[6])
     max_z_delta = float(optTuple[7])
-
-    log.info("Multiprocessing starts, used cores: %i" % (nCPU))
-    log.info("Multiprocessing starts, used Processes: %i" % (nCPU*2))
-    
+   
     release[release < 0] = 0
     release[release > 1] = 1
 
     nRel = np.sum(release)
-
     log.info("Number of release cell: %i"%nRel)
 
-    if nRel == 0:
-        nChunks=1
-    elif nRel < nCPU:
-        nChunks = nRel
-    else:
-        nChunks = min(max(int(nCPU*2),int(nRel/50.)),500)
-
+    #NOTE: procPerCPU and chunkSize Parameters should be moved to .ini file with sensible defaults!!
+    nProcesses, nChunks = calculateMultiProcessingOptions(nRel,nCPU,procPerCPU=2)
+    
     release_list = split_release(release, nChunks) 
-    log.info("Multiprocessing starts, used Chunks: %i" % nChunks)
+    log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" %(nCPU,nProcesses,nChunks))
     
     with Pool(processes=nCPU*2) as pool:
         results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
@@ -288,9 +280,12 @@ def calculation(args):
         back_calc   Array with back calculation, still to do!!!
         """
     
-    while not enoughMemoryAvailable():
-        time.sleep(30)
-
+    # check if there's enough RAM available (default value set to 5%)
+    # if not, wait for 30 secs and check again
+    # should prevent the occurence of broken pipe errors or similar issues related
+    # to RAM overflow
+    handleMemoryAvailability()
+    
     dem = args[0]
     infra = args[1]
     release = args[2]
@@ -401,11 +396,87 @@ def calculation(args):
 
 
 def enoughMemoryAvailable(limit=.05):
+    """ simple function to monitor memory(RAM) availability during parallel processing
+        of calculation() inside run(). utilizing psutil
+
+        Parameters
+        -----------
+        limit: float (between 0 and 1) - default at 0.05 (i.e. 5%)
+
+        Returns
+        -----------
+        'True' if more than the defined memory-limit is still available
+        'False' if less than the defined memory-limit is available
+    """
+
     log = logging.getLogger(__name__)
     availableMemory= psutil.virtual_memory().available/psutil.virtual_memory().total
+    
     if availableMemory>=limit:
-        log.info('RAM availability o.k. -- %.2f of %.2f'%(availableMemory*100,psutil.virtual_memory().total))
+        #log.info('RAM availability o.k. -- %.2f %% of %.2f GiB'%(availableMemory*100,psutil.virtual_memory().total/(1024.**3)))
         return True
     else:
-        log.info('RAM availability at limit -- %.2f of %.2f'%(availableMemory*100,psutil.virtual_memory().total))
+        log.info('RAM availability at limit -- %.2f %% of %.2f GiB - maybe recheck multiProcessing/Tiling settings'%(availableMemory*100,psutil.virtual_memory().total/(1024.**3)))
         return False
+
+def calculateMultiProcessingOptions(nRel,nCPU,procPerCPU=1,maxChunks=500,chunkSize=50):
+    """ compute required options for multiprocessing of calulation() function inside run() and accompanied splitting of
+        release cells into chunks in split_release().append
+        The general idea is to make good use of available CPU resources to speed up calculations while not getting into
+        trouble with RAM issues ...
+
+        NOTE: this is still a quick'n'dirty hack, it might make sense to have a more sophisticated approach for optimization
+              of CPU and RAM resource usage during multiprocessing depending on e.g.:
+                  - size of the numpy arrays that are processed (depending on tileSize and rasterResolution)
+                  - density of release areas in the tile
+                  - total available RAM and CPUs on the machine
+                  - (other com4FlowPy Parameterization)
+
+        Parameters
+        -----------
+        nRel: int - number of release Pixels inside the tile (i.e. all cells/pixels with values >=1 in 'release')
+        nCPU: int - number of available CPUs (as defined in the .ini files)
+        procPerCPU: int - number of processes to be spawned per CPU (default = 1) - might be set higher for increased
+                          performance
+        
+        maxChunks: int - hard limit to the maximum number of chunks that is used --> a larger number of chunks will very
+                   probably increase performance in terms of maximising CPU workload (especially with large numbers of 
+                   nCPU) but also cause higher RAM consumption (in the current multiprocessing implementation)
+        chunkSize: int - default number of release pixels per chunk in cases where the chunk-size is not constrained by
+                   nCPU*procPerCPU or maxChunks
+        Returns
+        -----------
+        nChunks: int - the number of chunks into which the release layer/array is split for multiprocessing
+        nProcesses: int - the number of processes used in Pool.map() inside run()
+    """
+    nProcesses = int(nCPU*procPerCPU)
+    #check if release is empty - if so, there's no reason to split
+    if nRel == 0:
+        nChunks=1
+    #if the number of release cells is smaller/equal than/to the number of processes
+    #each single release cell is assigned to a different process
+    elif nRel <= nProcesses:
+        nChunks = nRel    
+    #if there are more release cells than number of Processes available (this is the main case!)
+    #then either divide release cells equally to the available processes - however limit the size of single chunks
+    #to chunkSize if possible ...
+    else:
+        _nChunks = max(nProcesses,int(nRel/chunkSize))
+        nChunks = min(_nChunks,maxChunks)
+    
+    return nProcesses, nChunks
+
+def handleMemoryAvailability(recheckInterval=30):
+    """ function is called at the start of each subProcess for parallel processing to check if enough memory is available
+        and handle the situation if not
+
+        NOTE: currently only time.sleep() is called to delay the subprocess for a defined time and then re-check
+              memory availability.
+              other possible options:
+                  - log message and abort model run?
+        Parameters
+        -----------
+        recheckInterval: int - delay time for the process after which memory availability is re-checked
+    """
+    while not enoughMemoryAvailable():
+        time.sleep(recheckInterval)

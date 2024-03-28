@@ -224,6 +224,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
     log.info("Finished Tiling.")
+    log.info("---------------------")
     nTiles = pickle.load(open(tempDir / "nTiles", "rb"))
 
     optList = []
@@ -239,8 +240,11 @@ def com4FlowPyMain(cfgPath, cfgSetup):
                             max_z, tempDir, infraBool, nCPU))
 
     # Calculation
-    for optTuple in optList:
+    for i,optTuple in enumerate(optList):
+        log.info("starting tile %i of %i"%(i+1,len(optList)))
         fc.run(optTuple)
+        log.info("finished tile %i of %i"%(i+1,len(optList)))
+        log.info("---------------------")
 
     log.info("Calculation finished, merging results.")
 
