@@ -196,7 +196,7 @@ def run(optTuple):
     release[release > 1] = 1
 
     nRel = np.sum(release)
-    log.info("Number of release cell: %i"%nRel)
+    log.info("Number of release cells: %i"%nRel)
 
     #NOTE: procPerCPU and chunkSize Parameters should be moved to .ini file with sensible defaults!!
     nProcesses, nChunks = calculateMultiProcessingOptions(nRel,nCPU,procPerCPU=2)
@@ -204,7 +204,7 @@ def run(optTuple):
     release_list = split_release(release, nChunks) 
     log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" %(nCPU,nProcesses,nChunks))
     
-    with Pool(processes=nCPU*2) as pool:
+    with Pool(processes=nProcesses) as pool:
         results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
                             for release_sub in release_list])
         pool.close()
@@ -474,6 +474,9 @@ def handleMemoryAvailability(recheckInterval=30):
               memory availability.
               other possible options:
                   - log message and abort model run?
+        NOTE: The implementation with time.sleep() can cause an "infinite loop" in time-sleep if for some
+              reason memory is not freed after a sensible amount of time.altzone
+              Memory consumption is dependend on tile-sizes and number of Chunks/tile ... 
         Parameters
         -----------
         recheckInterval: int - delay time for the process after which memory availability is re-checked

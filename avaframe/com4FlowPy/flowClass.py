@@ -4,43 +4,50 @@
 import numpy as np
 import math
 
-
 class Cell:
-    
+    """ This is the com4FlowPy 'Cell ' class
+        This class handles the calculation at the 'cell level' (vgl. D'Amboise et al., 2022)
+    """
     def __init__(self, rowindex, colindex, dem_ng, cellsize, flux, 
                  z_delta, parent, alpha, exp, flux_threshold, 
                  max_z_delta, startcell):
-        '''This class handles the spreading over the DEM!
-        Depending on the process different alpha angles are used for energy dissipation.'''
-        self.rowindex = rowindex
-        self.colindex = colindex
-        self.altitude = dem_ng[1, 1]
-        self.dem_ng = dem_ng
-        self.cellsize = cellsize
+        """ constructor for the Cell class
+            the constructor function is called every time a new instance of type 'Cell' is
+            initialized.
+        """
+        self.rowindex = rowindex #index of the Cell in row-direction (i.e. local y-index in the calculation domain)
+        self.colindex = colindex #index of the Cell in column-direction (i.e. local x-index in the calculation domain)
+        self.dem_ng = dem_ng #elevation values in the 3x3 neigbourhood around the Cell
+        self.altitude = dem_ng[1, 1] #elevation value of the cell (central cell of 3x3 neighbourhood)
+        self.cellsize = cellsize #cellsize in meters
+        
         self.tan_beta = np.zeros_like(self.dem_ng)
         self.dist = np.zeros_like(self.dem_ng)
         self.persistence = np.zeros_like(self.dem_ng)
         self.r_t = np.zeros_like(self.dem_ng)
         self.no_flow = np.ones_like(self.dem_ng)
+
         self.flux = flux
         self.z_delta = z_delta
+
         self.alpha = float(alpha)
         self.exp = int(exp)
         self.max_z_delta = float(max_z_delta)
         self.flux_threshold = float(flux_threshold)
-        self.min_distance = 0
-        self.max_distance = 0
-        self.min_gamma = 0
+        
+        self.min_distance = 0 #minimal distance to start-cell (i.e. along shortest path) min_distance >= 
+        self.max_distance = 0 #NOTE: self.max_distance is never used - maybe remove!?
+        self.min_gamma = 0  #NOTE: self.min_gamma (assumingly minimal travel angle to cell) is never used - maybe remove!?
         self.max_gamma = 0
         self.sl_gamma = 0             
 
-        if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
-            self.is_start = True  # set is_start to True
+        if type(startcell) == bool:     # if a boolean variable (i.e.'True') is passed to the constructor
+            self.is_start = True        # set is_start to True
         else:            
             self.startcell = startcell  # give startcell to cell
-            self.is_start = False  # set is_start to False
+            self.is_start = False       # set is_start to False
 
-        self.parent = []
+        self.parent = []                #NOTE: maybe renameto 'parents' or 'lOfParents' for clarity ...
         if type(parent) == Cell:
             self.parent.append(parent)
 
@@ -51,8 +58,12 @@ class Cell:
         self.parent.append(parent)
 
     def calc_fp_travelangle(self):
-        dist_min = []
-        dh = self.startcell.altitude - self.altitude
+        """ function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
+            the trave-angle along the shortest flow-path is equivalent to the maximum travel angle along all paths from
+            the startcell to this cell.
+        """
+        dist_min = [] #
+        dh = self.startcell.altitude - self.altitude #elevation difference from cell to start-cell
         for parent in self.parent:
             dx = abs(parent.colindex - self.colindex)
             dy = abs(parent.rowindex - self.rowindex)
@@ -144,21 +155,7 @@ class Cell:
                         self.persistence[0, 1] += 0.707 * maxweight
                         self.persistence[1, 0] += 0.707 * maxweight
                         
-# =============================================================================
-#                 # New Calculation:
-#                 theta_child = np.array([[np.pi*5/4, np.pi*3/2 , np.pi*7/4], [np.pi, 0, 0], [np.pi*3/4, np.pi/2 , np.pi/4]])
-#                 theta_parent = (np.arctan2(dy, dx))
-#                 
-#                 pers1 = theta_parent - theta_child - np.pi
-#                 pers = np.zeros((3,3))
-#                 
-#                 for idx, element in np.ndenumerate(pers1):
-#                     pers[idx] = max(0, np.cos(element))
-#                     if pers[idx] < 2*np.finfo(np.float64).eps:
-#                         pers[idx] = 0
-#                 pers[1, 1] = 0
-#                 self.persistence += pers * maxweight
-# =============================================================================
+
                     
     def calc_distribution(self):
 
