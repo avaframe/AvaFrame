@@ -169,6 +169,7 @@ def plotProfile(avaProfile, eqParams, saveOutPath):
     f = avaProfile['f']
     indAlphaM1SD = avaProfile['indAlphaM1SD']
     indAlphaM2SD = avaProfile['indAlphaM2SD']
+    indAlphaP1SD = avaProfile['indAlphaP1SD']
     indSplit = avaProfile['indSplit']
     parameterSet = eqParams['parameterSet']
     # Plot the whole profile with beta, alpha ... points and lines
@@ -192,6 +193,9 @@ def plotProfile(avaProfile, eqParams, saveOutPath):
     if indAlphaM2SD:
         plt.plot(s[indAlphaM2SD], z[indAlphaM2SD], 'x', markersize=8,
                  label='Alpha - 2SD')
+    if indAlphaP1SD:
+        plt.plot(s[indAlphaP1SD], z[indAlphaP1SD], 'x', markersize=8,
+                 label='Alpha + 1SD')
 
     ax = plt.gca()
     fig.tight_layout()
