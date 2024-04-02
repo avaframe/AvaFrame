@@ -410,8 +410,8 @@ def computeS(avaPath):
     ycoord = avaPath["y"]
     n = np.size(xcoord)
     # compute s
-    dxs = xcoord[1:n] - xcoord[0 : n - 1]
-    dys = ycoord[1:n] - ycoord[0 : n - 1]
+    dxs = xcoord[1:n] - xcoord[0: n - 1]
+    dys = ycoord[1:n] - ycoord[0: n - 1]
     # deduce the distance in s direction
     ds2 = dxs * dxs + dys * dys
     ds = np.sqrt(ds2)
@@ -420,7 +420,15 @@ def computeS(avaPath):
     return avaPath
 
 
-def prepareLine(dem, avapath, distance=10, Point=None):
+def prepareLineStrict(dem, avapath, distance, Point=None):
+    """Resample and project line on dem, with strict settings, i.e. to follow
+    the line as close as possible. Calls prepareLine
+    """
+    avaProfile, projPoint = prepareLine(dem, avapath, distance, Point, k=1, s=0.0)
+    return avaProfile, projPoint
+
+
+def prepareLine(dem, avapath, distance, Point=None, k=3, s=None):
     """Resample and project line on dem
     1- Resample the avapath line with an interval of approximately distance in meters
     between points (projected distance on the horizontal plane).
@@ -437,6 +445,13 @@ def prepareLine(dem, avapath, distance=10, Point=None):
         resampling distance
     Point: dict
         a point dictionary (optional, can contain several point)
+    k: int
+        Degree of the spline for splprep. Set to splprep default of 3, use 1
+        if you want to lower the level of spline (3 is cubic)
+    s: float
+        A smoothing condition for splprep. Defaults to None (i.e. splprep default), set to 0 if you want
+        to minimize the distance between new line and old line
+
 
     Returns
     -------
@@ -452,7 +467,7 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     x = avapath["x"]
     y = avapath["y"]
 
-    # check if duplicate points in avapath cooridnates
+    # check if duplicate points in avapath coordinates
     indexNonDup = np.where(np.abs(np.diff(x)) + np.abs(np.diff(y)) > 0)
     xcoor = x[indexNonDup]
     xNew = np.append(xcoor, x[-1])
@@ -461,12 +476,12 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
     # create a B-spline with scipy for given x, y line
     if len(xNew) <= 3:
-        tck, u = splprep([xNew, yNew], k=len(xNew) - 1)
+        tck, u = splprep([xNew, yNew], k=len(xNew) - 1, s=s)
         log.warning(
             "Path is defined by only %d points - degree of spline is set to %d" % (len(xNew), len(xNew) - 1)
         )
     else:
-        tck, u = splprep([xNew, yNew])
+        tck, u = splprep([xNew, yNew], k=k, s=s)
 
     # compute accumulated distance along spline of x, y
     s = computeLengthOfLine2D(xNew, yNew)

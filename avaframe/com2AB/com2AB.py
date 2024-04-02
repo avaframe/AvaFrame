@@ -189,7 +189,7 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
-    avaProfile, projSplitPoint = geoTrans.prepareLine(dem, avaPath, distance, splitPoint)
+    avaProfile, projSplitPoint = geoTrans.prepareLineStrict(dem, avaPath, distance, splitPoint)
 
     if np.isnan(np.sum(avaProfile['z'])):
         raise ValueError('The resampled avalanche path exceeds the dem extent. Try with another path')
