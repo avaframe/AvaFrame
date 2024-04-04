@@ -223,8 +223,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
-    log.info("Finished Tiling.")
-    log.info("---------------------")
+    log.info("Finished Tiling All Input Rasters.\n----------------------------")
+
     nTiles = pickle.load(open(tempDir / "nTiles", "rb"))
 
     optList = []
