@@ -69,6 +69,7 @@ def main():
         cfgPath["demPath"]=pathlib.Path(cfgCustomPaths["demPath"])
         cfgPath["releasePath"]=pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"]=pathlib.Path(cfgCustomPaths["infraPath"])
+        cfgPath["forestPath"]=pathlib.Path(cfgCustomPaths["forestPath"])
         cfgPath["deleteTemp"]=cfgCustomPaths["deleteTempFolder"]
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
