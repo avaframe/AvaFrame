@@ -36,9 +36,9 @@ def main():
         log.info('MAIN SCRIPT')
         log.info('Current avalanche: %s', avalancheDir)
 
-        # IMPORTANT!! - this is a quick'n'dirty hack to set nSims to 99, so that
+        # IMPORTANT!! - this is a quick'n'dirty hack to set nSims to 9999, so that
         # min(nCPU,nSims) in cfgUtils.getNumberOfProcesses returns nCPU
-        cfgSetup['cpuCount'] = str(cfgUtils.getNumberOfProcesses(cfgMain,999))
+        cfgSetup['cpuCount'] = str(cfgUtils.getNumberOfProcesses(cfgMain,9999))
         cfgPath["customDirs"] = cfgCustomPaths["useCustomPaths"]
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
