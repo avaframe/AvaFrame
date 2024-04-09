@@ -31,6 +31,12 @@ log = logging.getLogger(__name__)
 
 
 def readFlowPyinputs(avalancheDir, cfgFlowPy):
+    """ function is used to read necessary flowPy Inputs 
+        function is only called from '../runCom4FlowPy.py', 
+        which in turn creates the necessary
+        'cfgPath' dictionary, that is passed to
+        the com4FlowPyMain() function in this file...
+    """
     cfgPath = {}
     avalancheDir = pathlib.Path(avalancheDir)
     # read release area
@@ -95,7 +101,9 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy):
 
 
 def com4FlowPyMain(cfgPath, cfgSetup):
-    
+    """ Main FlowPy Function that handles
+        - NOTE: to-do update function description
+    """
     # Model Parameters
     alpha = float(cfgSetup["alpha"])
     exp = float(cfgSetup["exp"])
@@ -106,18 +114,33 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Tiling Options/Parameters
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
-    
+        
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
     demPath = cfgPath["demPath"]
     releasePath = cfgPath["releasePath"]
-
+    
     if cfgSetup["infra"]=='True':
+        infraBool = True
         infraPath = cfgPath["infraPath"]
     else:
         infraPath=""
         infraBool = False
+
+    if cfgSetup["forest"]=='True':
+        forestBool = True
+        forestPath = cfgPath["forestPath"]
+        forestParams = {}
+        forestParams["maxAddedFriction"] = float(cfgSetup["maxAddedFrictionFor"])
+        forestParams["minAddedFriction"] = float(cfgSetup["minAddedFrictionFor"])
+        forestParams["velThForFriction"] = float(cfgSetup["velThForFriction"])
+        forestParams["maxDetrainment"]   = float(cfgSetup["maxDetrainmentFor"])
+        forestParams["minDetrainment"]   = float(cfgSetup["minDetrainmentFor"])
+        forestParams["velThForDetrain"]  = float(cfgSetup["velThForDetrain"])
+    else:
+        forestBool = False
+        forestPath=""
 
     start = datetime.now().replace(microsecond=0)
     
@@ -132,7 +155,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         resDir = cfgPath["outDir"]
         tempDir = cfgPath["tempDir"]
 
-    # Start of Calculation
+    # Start of Calculation (logging starts...)
     log.info("Starting...")
     log.info("========================")
     log.info("Alpha Angle: {}".format(alpha))
@@ -143,6 +166,13 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Also log the used input-files
     log.info("DEM: {}".format(demPath))
     log.info("REL: {}".format(releasePath))
+    if forestBool:
+        log.info("------------------------")
+        log.info("calculation with Forest Layer")
+        log.info("FOREST LAYER: {}".format(forestPath))
+        log.info("------------------------")
+        for param, value in forestParams.items():
+            log.info("{}:\t{}".format(param,value))
     if infraBool:
         log.info("calculation with Infrastructure")
         log.info("INFRA: {}".format(infraPath))
@@ -223,6 +253,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
+    if forestBool:
+        SPAM.tileRaster(forestPath, "forest", tempDir, tileCOLS, tileROWS, U)
     log.info("Finished Tiling All Input Rasters.\n----------------------------")
 
     nTiles = pickle.load(open(tempDir / "nTiles", "rb"))
@@ -236,8 +268,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
-            optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+            if forestBool:
+                optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
+                                max_z, tempDir, infraBool, nCPU, forestParams))
+            else:
+                optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
+                                max_z, tempDir, infraBool, nCPU))                
 
     # Calculation
     for i,optTuple in enumerate(optList):
@@ -265,13 +301,15 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     io.output_raster(demPath, resDir / ("z_delta%s" % (output_format)), z_delta)
     io.output_raster(demPath, resDir / ("FP_travel_angle%s" % (output_format)), fp_ta)
     io.output_raster(demPath, resDir / ("SL_travel_angle%s" % (output_format)), sl_ta)
+    #TODO: List of result files, which are produced should be specified also in the .ini file!!!!
+    #NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts) 
+    #      and only write other output files if set accordingly
     if not infraBool:  # if no infra
         io.output_raster(demPath, resDir / ("cell_counts%s" % (output_format)), cell_counts)
         io.output_raster(demPath, resDir / ("z_delta_sum%s" % (output_format)), z_delta_sum)
     if infraBool:  # if infra
         io.output_raster(demPath, resDir / ("backcalculation%s" % (output_format)), backcalc)
     
-    # ToDo: delete temp dir
     end = datetime.now().replace(microsecond=0)
     log.info("Calculation needed: " + str(end - start) + " seconds")
     
