@@ -109,11 +109,17 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     exp = float(cfgSetup["exp"])
     flux_threshold = float(cfgSetup["flux_threshold"])
     max_z = float(cfgSetup["max_z"])
-    # Number of CPUs to use
-    nCPU = int(cfgSetup["cpuCount"])
+    
     # Tiling Options/Parameters
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
+    
+    # Multiprocessing Options
+    MPOptions = {}
+    MPOptions["nCPU"]       = int(cfgSetup["cpuCount"]) #number of CPUs to use
+    MPOptions["procPerCPU"] = int(cfgSetup["procPerCPUCore"]) #processes per core
+    MPOptions["chunkSize"]  = int(cfgSetup["chunkSize"]) # default task size for MP
+    MPOptions["maxChunks"]  = int(cfgSetup["maxChunks"]) # max number of tasks for MP
         
     # Input Paths
     outDir = cfgPath["outDir"]
@@ -140,7 +146,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"]  = float(cfgSetup["velThForDetrain"])
     else:
         forestBool = False
-        forestPath=""
+        forestPath = ""
 
     start = datetime.now().replace(microsecond=0)
     
@@ -270,12 +276,13 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         for j in range(nTiles[1] + 1):
             if forestBool:
                 optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                                max_z, tempDir, infraBool, nCPU, forestParams))
+                                max_z, tempDir, infraBool, forestBool, forestParams, MPOptions))
             else:
                 optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                                max_z, tempDir, infraBool, nCPU))                
+                                max_z, tempDir, infraBool, forestBool, MPOptions))                
 
-    # Calculation
+    # Calculation, i.e. enumerating over the
+    # list of Tiles which have to be processed
     for i,optTuple in enumerate(optList):
         log.info("starting tile %i of %i"%(i+1,len(optList)))
         fc.run(optTuple)

@@ -176,7 +176,9 @@ def run(optTuple):
     log = logging.getLogger(__name__)
     tempDir = optTuple[8]
     infraBool = optTuple[9]
-    nCPU = optTuple[10]
+    forestBool = optTuple[10]
+
+    MPOptions = optTuple[-1] #last spot in optTuple should be kept for CPU, Multiprocessing options ...
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -184,6 +186,15 @@ def run(optTuple):
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
         infra = np.zeros_like(dem)
+
+    # if forestBool == 'True'
+    # --> load forestFile
+    # --> read parametersOfForestExtension
+    # NOTE-TODO: this is a quick work-around to simply include forest information - should probably be handled more
+    # elegantly/explicitly AND error handling should probably be included
+    if forestBool:
+        forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        forestParams = optTuple[11]
 
     alpha = float(optTuple[2])
     exp = float(optTuple[3])
@@ -198,18 +209,28 @@ def run(optTuple):
     nRel = np.sum(release)
     log.info("Number of release cells: %i"%nRel)
 
-    #NOTE: procPerCPU and chunkSize Parameters should be moved to .ini file with sensible defaults!!
-    nProcesses, nChunks = calculateMultiProcessingOptions(nRel,nCPU,procPerCPU=2)
+    #NOTE-TODO: procPerCPU and chunkSize Parameters should be moved to .ini file with sensible defaults!!
+    nProcesses, nChunks = calculateMultiProcessingOptions(nRel,MPOptions["nCPU"],procPerCPU=MPOptions["procPerCPU"],
+                                                          maxChunks=MPOptions["maxChunks"], chunkSize=MPOptions["chunkSize"])
     
     release_list = split_release(release, nChunks) 
-    log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" %(nCPU,nProcesses,nChunks))
+    log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" %(MPOptions["nCPU"],nProcesses,nChunks))
     
-    with Pool(processes=nProcesses) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool]
-                            for release_sub in release_list])
-        pool.close()
-        pool.join()
+    if forestBool:
+        with Pool(processes=nProcesses) as pool:
+            results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, forestBool, forestArray, forestParams]
+                                for release_sub in release_list])
+            pool.close()
+            pool.join()    
+    else:
+        with Pool(processes=nProcesses) as pool:
+            results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, forestBool]
+                                for release_sub in release_list])
+            pool.close()
+            pool.join()
 
+    
+    #initializing arrays for storing the results from the multiprocessing step
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     flux_array = np.zeros_like(dem, dtype=np.float32)
     count_array = np.zeros_like(dem, dtype=np.int32)
@@ -296,6 +317,10 @@ def calculation(args):
     nodata = args[7]
     cellsize = args[8]
     infraBool = args[9]
+    forestBool = args[10]
+    if forestBool:
+        forestArray  = args[11]
+        forestParams = args[12]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -305,6 +330,7 @@ def calculation(args):
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
     
+    #NOTE-TODO maybe also include a switch for INFRA (like Forest) and not implicitly always use an empty infra array ??
     backcalc = np.zeros_like(dem, dtype=np.int32)
     
     if infraBool:        
@@ -317,10 +343,6 @@ def calculation(args):
     startcell_idx = 0
     while startcell_idx < len(row_list):
 
-        #sys.stdout.write('\r' "Calculating Startcell: " + str(startcell_idx + 1) + " of " + str(len(row_list)) + " = " + str(
-        #    round((startcell_idx + 1) / len(row_list) * 100, 2)) + "%" '\r')
-        #sys.stdout.flush()
-
         cell_list = []
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
@@ -329,9 +351,15 @@ def calculation(args):
             startcell_idx += 1
             continue
 
-        startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                         alpha, exp, flux_threshold, max_z_delta, startcell=True)
-        # If this is a startcell just give a Bool to startcell otherwise the object startcell
+        if forestBool:
+            startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
+                            alpha, exp, flux_threshold, max_z_delta, startcell=True,
+                            FSI=forestArray[row_idx, col_idx],forestParams=forestParams)
+            # If this is a startcell just give a Bool to startcell otherwise the object startcell
+        else:
+            startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
+                            alpha, exp, flux_threshold, max_z_delta, startcell=True)
+            # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         cell_list.append(startcell)
 
@@ -361,10 +389,24 @@ def calculation(args):
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
+                
+                #This bit handles edge cases and noData-values in the DEM!! this is an important piece of code, since
+                #no-data handling is expected (by some users/applications) to behave like here:
+                #i.e. if nodata in the 3x3 neighbourhood --> no calculation
                 if (nodata in dem_ng) or np.size(dem_ng) < 9:
-                    continue
-                cell_list.append(
-                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                   continue
+
+                if forestBool:
+                    cell_list.append(
+                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell,
+                         alpha, exp, flux_threshold, max_z_delta, startcell,
+                         FSI=forestArray[row[k], col[k]],forestParams=forestParams)
+                    )
+                else:
+                    cell_list.append(
+                    Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell,
+                         alpha, exp, flux_threshold, max_z_delta, startcell)
+                    )
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
