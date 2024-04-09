@@ -74,7 +74,7 @@ def main():
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
 
-        cfgSetup["cpuCount"] = str(cfgUtils.getNumberOfProcesses(cfgMain,999))
+        cfgSetup["cpuCount"] = str(cfgUtils.getNumberOfProcesses(cfgMain,9999))
         cfgPath["customDirs"] = cfgCustomPaths["useCustomPaths"]
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
