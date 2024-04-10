@@ -105,6 +105,19 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         - NOTE: to-do update function description
     """
     # Model Parameters
+    # NOTE-TODO: maybe smarter to have all model parameters in a dict
+    #            all paths in a dict and all flags in a dict
+    #            --> Then the dict is passed to the optList and fc.run()
+    #            This way single parameters, paths, options/flags, etc.
+    #            could be added more flexibly in case of model extension/
+    #            modification ...
+    #     
+    # modelParameters = {}
+    # modelParameters["alpha"] = float(cfgSetup["alpha"])
+    # modelParameters["exp"] = float(cfgSetup["exp"])
+    # modelParameters["fluxThreshold"] = float(cfgSetup["flux_threshold"])
+    # modelParameters["maxZ"] = float(cfgSetup["max_z"]) 
+
     alpha = float(cfgSetup["alpha"])
     exp = float(cfgSetup["exp"])
     flux_threshold = float(cfgSetup["flux_threshold"])

@@ -506,7 +506,7 @@ def calculateMultiProcessingOptions(nRel,nCPU,procPerCPU=1,maxChunks=500,chunkSi
         _nChunks = max(nProcesses,int(nRel/chunkSize))
         nChunks = min(_nChunks,maxChunks)
     
-    return nProcesses, nChunks
+    return int(nProcesses), int(nChunks)
 
 def handleMemoryAvailability(recheckInterval=30):
     """ function is called at the start of each subProcess for parallel processing to check if enough memory is available
