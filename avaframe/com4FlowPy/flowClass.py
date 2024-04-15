@@ -92,15 +92,15 @@ class Cell:
             self.startcell = startcell  # give startcell to cell
             self.is_start = False       # set is_start to False
 
-        self.parent = []                #NOTE: maybe renameto 'parents' or 'lOfParents' for clarity ...
+        self.lOfParents = []                #NOTE: maybe rename to 'parents' or 'lOfParents' for clarity ...
         if type(parent) == Cell:
-            self.parent.append(parent)
+            self.lOfParents.append(parent)
 
     def add_os(self, flux):
         self.flux += flux
 
     def add_parent(self, parent):
-        self.parent.append(parent)
+        self.lOfParents.append(parent)
 
     def calc_fp_travelangle(self):
         """ function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
@@ -109,7 +109,7 @@ class Cell:
         """
         dist_min = [] #
         dh = self.startcell.altitude - self.altitude #elevation difference from cell to start-cell
-        for parent in self.parent:
+        for parent in self.lOfParents:
             dx = abs(parent.colindex - self.colindex)
             dy = abs(parent.rowindex - self.rowindex)
             dist_min.append(math.sqrt(dx ** 2 + dy ** 2) * self.cellsize + parent.min_distance)
@@ -174,10 +174,10 @@ class Cell:
         self.persistence = np.zeros_like(self.dem_ng)
         if self.is_start:
             self.persistence += 1
-        elif self.parent[0].is_start:
+        elif self.lOfParents[0].is_start:
             self.persistence += 1
         else:
-            for parent in self.parent:
+            for parent in self.lOfParents:
                 dx = (parent.colindex - self.colindex) 
                 dy = (parent.rowindex - self.rowindex)
 
