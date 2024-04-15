@@ -338,6 +338,7 @@ def calculation(args):
 
     # Core
     #start = datetime.now().replace(microsecond=0)
+    #NOTE-TODO: row_list, col_list are tuples - rethink variable naming
     row_list, col_list = get_start_idx(dem, release)
 
     startcell_idx = 0
@@ -417,6 +418,9 @@ def calculation(args):
 
             #Backcalculation
             if infraBool:
+                #NOTE-TODO:
+                #just store 'affected' infrastructure cells (row,index-colindex) here and
+                #do backcalculation after the path calculation is finished
                 if infra[cell.rowindex, cell.colindex] > 0:
                     #backlist = []
                     back_list = back_calculation(cell)

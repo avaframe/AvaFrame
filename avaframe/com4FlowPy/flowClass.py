@@ -254,6 +254,8 @@ class Cell:
         # This lines handle if a distribution to a neighbour cell is lower then the threshold, so we don´t lose
         # flux.
         # The flux of this cells will then spread equally to all neighbour cells
+        # NOTE-TODO: fix mass distribution and use count_alive instead of count
+        # see PS_flowpy_path branch in avaframe repo
         count = ((0 < self.dist) & (self.dist < threshold)).sum()
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
         '''Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
