@@ -43,6 +43,9 @@ class Cell:
         self.min_gamma = 0    #NOTE: self.min_gamma (assumingly minimal travel angle to cell) is never used - maybe remove!?
         self.max_gamma = 0
         self.sl_gamma = 0
+        
+        self._SQRT2=np.sqrt(2.)
+        self._RAD90=np.deg2rad(90.)
 
         # NOTE: Forest Interaction included here
         # if FSI != None AND forestParams != None - then self.ForestBool = True and forestParams and
@@ -60,7 +63,7 @@ class Cell:
             
             _vThFr = self.noFrictionEffectV
             _vThDe = self.noDetrainmentEffectV
-            _sqrt2xG = np.sqrt(2)*9.81
+            _sqrt2xG = self._SQRT2*9.81
             self.noFricitonEffectZdelta = (_vThFr*_vThFr)/_sqrt2xG
             self.noDetrainmentEffectZdelta = (_vThDe*_vThDe)/_sqrt2xG
 
@@ -92,7 +95,7 @@ class Cell:
             self.startcell = startcell  # give startcell to cell
             self.is_start = False       # set is_start to False
 
-        self.lOfParents = []                #NOTE: maybe rename to 'parents' or 'lOfParents' for clarity ...
+        self.lOfParents = []             
         if type(parent) == Cell:
             self.lOfParents.append(parent)
 
@@ -107,27 +110,27 @@ class Cell:
             the trave-angle along the shortest flow-path is equivalent to the maximum travel angle along all paths from
             the startcell to this cell.
         """
-        dist_min = [] #
-        dh = self.startcell.altitude - self.altitude #elevation difference from cell to start-cell
+        _ldistMin = [] #
+        _dh = self.startcell.altitude - self.altitude #elevation difference from cell to start-cell
         for parent in self.lOfParents:
-            dx = abs(parent.colindex - self.colindex)
-            dy = abs(parent.rowindex - self.rowindex)
-            dist_min.append(math.sqrt(dx ** 2 + dy ** 2) * self.cellsize + parent.min_distance)
-        self.min_distance = np.amin(dist_min)
-        self.max_gamma = np.rad2deg(np.arctan(dh / self.min_distance))
+            _dx = abs(parent.colindex - self.colindex)
+            _dy = abs(parent.rowindex - self.rowindex)
+            _ldistMin.append(math.sqrt(_dx*_dx + _dy*_dy) * self.cellsize + parent.min_distance)
+        self.min_distance = np.amin(_ldistMin)
+        self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
-        dx = abs(self.startcell.colindex - self.colindex)
-        dy = abs(self.startcell.rowindex - self.rowindex)
-        dh = self.startcell.altitude - self.altitude
+        _dx = abs(self.startcell.colindex - self.colindex)
+        _dy = abs(self.startcell.rowindex - self.rowindex)
+        _dh = self.startcell.altitude - self.altitude
 
-        ds = math.sqrt(dx ** 2 + dy ** 2) * self.cellsize
-        self.sl_gamma = np.rad2deg(np.arctan(dh / ds))
+        _ds = math.sqrt(_dx*_dx + _dy*_dy) * self.cellsize
+        self.sl_gamma = np.rad2deg(np.arctan(_dh / _ds))
 
     def calc_z_delta(self):
         self.z_delta_neighbour = np.zeros((3, 3))
         self.z_gamma = self.altitude - self.dem_ng
-        ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 0, 1], [np.sqrt(2), 1, np.sqrt(2)]])
+        ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 0, 1], [self._SQRT2, 1, self._SQRT2]])
         
         if ((self.forestBool) and (self.FSI>0.) and (not self.is_start)):
             #if forestBool, we assume that forestFriciton is activated
@@ -158,11 +161,11 @@ class Cell:
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
            
     def calc_tanbeta(self):
-        ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 1, 1], [np.sqrt(2), 1, np.sqrt(2)]])
-        distance = ds * self.cellsize
+        _ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 1, 1], [self._SQRT2, 1, self._SQRT2]])
+        _distance = _ds * self.cellsize
         
-        beta = np.arctan((self.altitude - self.dem_ng) / distance) + np.deg2rad(90)
-        self.tan_beta = np.tan(beta/2)
+        _beta = np.arctan((self.altitude - self.dem_ng) / _distance) + self._RAD90
+        self.tan_beta = np.tan(_beta/2)
 
         self.tan_beta[self.z_delta_neighbour <= 0] = 0
         self.tan_beta[self.persistence <= 0] = 0
@@ -223,7 +226,6 @@ class Cell:
                         self.persistence[0, 1] += 0.707 * maxweight
                         self.persistence[1, 0] += 0.707 * maxweight
                         
-
                     
     def calc_distribution(self):
 
