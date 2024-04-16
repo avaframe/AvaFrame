@@ -174,7 +174,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         resDir = cfgPath["outDir"]
         tempDir = cfgPath["tempDir"]
 
-    # Start of Calculation (logging starts...)
+    # Start of Calculation (logging...)
     log.info("Starting...")
     log.info("========================")
     log.info("Alpha Angle: {}".format(alpha))
