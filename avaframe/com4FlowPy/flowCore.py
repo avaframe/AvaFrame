@@ -159,11 +159,11 @@ def back_calculation(back_cell):
         #hit_cell_list.sort(key=lambda cell: cell.altitude, reverse=False)
         #print("{} Elements sorted!".format(len(hit_cell_list)))
     back_list = []
-    for parent in back_cell.parent:
+    for parent in back_cell.lOfParents:
         if parent not in back_list:
             back_list.append(parent)
     for cell in back_list:
-        for parent in cell.parent:
+        for parent in cell.lOfParents:
             # Check if parent already in list
             if parent not in back_list:
                 back_list.append(parent)
