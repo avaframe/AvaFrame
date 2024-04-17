@@ -172,13 +172,44 @@ def back_calculation(back_cell):
     return back_list
 
 def run(optTuple):
-    
-    log = logging.getLogger(__name__)
-    tempDir = optTuple[8]
-    infraBool = optTuple[9]
-    forestBool = optTuple[10]
+    """ This is a wrapper around calculation() for performing model runs for a single tile of the model domain
+        using multiprocessing across multiple CPUs
 
-    MPOptions = optTuple[-1] #last spot in optTuple should be kept for CPU, Multiprocessing options ...
+        Parameters:
+        ----------
+        optTuple: tuple with all necessary model information 
+            - optTuple[0] - int - i index of the processed tile (for loading correct data for tiles)
+            - optTuple[1] - int - j index of the processed tile (for loading correct data for tiles)
+
+            - optTuple[2] - {} - dict containing modelParameters
+            - optTuple[3] - {} - dict containing modelPaths
+            - optTuple[4] - {} - dict containing rasterAttributes
+            - optTuple[5] - {} - dict containing forestParameters
+            - optTuple[6] - {} - dict containing MPOptions
+        
+        Returns:
+        ----------
+        Nothing --> saves results for processed tile to temp folder (modelPaths["tempFolder"])
+    """
+
+    log = logging.getLogger(__name__)
+    
+    #Flow-Py parameters
+    alpha = float(optTuple[2]["alpha"])
+    exp = float(optTuple[2]["exp"])
+    flux_threshold = float(optTuple[2]["flux_threshold"])
+    max_z_delta = float(optTuple[2]["max_z"])
+    infraBool = optTuple[2]["infraBool"]
+    forestBool = optTuple[2]["forestBool"]
+
+    #Temp-Dir (all input files are located here and results are written back in here)
+    tempDir = optTuple[3]["tempDir"]
+    
+    #raster-layer Attributes
+    cellsize = float(optTuple[4]["cellsize"])
+    nodata = float(optTuple[4]["nodata"])
+
+    MPOptions = optTuple[6] #CPU, Multiprocessing options ...
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -194,15 +225,8 @@ def run(optTuple):
     # elegantly/explicitly AND error handling should probably be included
     if forestBool:
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
-        forestParams = optTuple[11]
+        forestParams = optTuple[5]
 
-    alpha = float(optTuple[2])
-    exp = float(optTuple[3])
-    cellsize = float(optTuple[4])
-    nodata = float(optTuple[5])
-    flux_threshold = float(optTuple[6])
-    max_z_delta = float(optTuple[7])
-   
     release[release < 0] = 0
     release[release > 1] = 1
 
