@@ -102,7 +102,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nCPU = int(cfgSetup["cpuCount"])
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
-    mu_voellmy = float(cfgSetup["mu_Voellmy"])
+    #paula
+    xsi_voellmy = float(cfgSetup["xsi_Voellmy"])
+    #ende paula
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
@@ -128,6 +130,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     log.info("Exponent: {}".format(exp))
     log.info("Flux Threshold: {}".format(flux_threshold))
     log.info("Max Z_delta: {}".format(max_z))
+    #paula
+    if xsi_voellmy > 0:
+        log.info("xsi_voellmy: {}".format(xsi_voellmy))
+    # ende paula
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
@@ -206,7 +212,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
             optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+                            max_z, tempDir, infraBool, nCPU, xsi_voellmy))
 
     # Calculation
     for optTuple in optList:

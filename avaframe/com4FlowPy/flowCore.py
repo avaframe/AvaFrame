@@ -127,6 +127,7 @@ def run(optTuple):
     nodata = float(optTuple[5])
     flux_threshold = float(optTuple[6])
     max_z_delta = float(optTuple[7])
+    xsi_voellmy = float(optTuple[11])
 
     #paula
     row_list, col_list = get_start_idx(dem, release)
@@ -140,7 +141,7 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, number_release]
+        results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, number_release, xsi_voellmy]
                             for release_sub in release_list])
         pool.close()
         pool.join()
@@ -260,6 +261,7 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     number_release = args[10]
+    xsi_voellmy = args[11]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -304,7 +306,7 @@ def calculation(args):
             continue
 
         startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                         alpha, exp, flux_threshold, max_z_delta, number_release, startcell=True)
+                         alpha, exp, flux_threshold, max_z_delta, number_release, xsi_voellmy, startcell=True)
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         #Paula
@@ -390,7 +392,7 @@ def calculation(args):
                     # Michi generation
                     #cell_list.append(
                     child_list.append(
-                        Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, number_release, startcell))
+                        Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, number_release, xsi_voellmy, startcell))
 
             # prepare lists for next iteration
             if len(child_list) > 0:

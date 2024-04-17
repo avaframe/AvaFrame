@@ -9,7 +9,7 @@ class Cell:
     
     def __init__(self, rowindex, colindex, dem_ng, cellsize, flux, 
                  z_delta, parent, alpha, exp, flux_threshold, 
-                 max_z_delta, number_release, startcell):
+                 max_z_delta, number_release, xsi_voellmy, startcell):
         '''This class handles the spreading over the DEM!
         Depending on the process different alpha angles are used for energy dissipation.'''
         self.rowindex = rowindex
@@ -36,6 +36,7 @@ class Cell:
         #PAULA
         self.flow_energy = 0
         self.number_release = number_release
+        self.xsi_voellmy = xsi_voellmy
         #ende paula      
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -79,28 +80,17 @@ class Cell:
         return slope_rad
 
     def calc_Voellmy_friction(self):
-        #new (Paula): calculate turbulence term
-        #assume constants
+        #new (Paula): calculate Voellmy turbulence term
+        # constants
         g = 9.81 # m s-2
-        rho = 200 # kg m-3
         
-        muVoellmy = 0.4
-        xsiVoellmy = 2000. #1000. #400-4000 (https://doi.org/10.3189/2015JoG14J168)  # 4000. (avaframe) #m/s²
-        #2000 for iSeeSnow
-        
-        u = np.sqrt(self.z_delta * 2 * g)
-        # mass = self.flux * cellsize**2 * h0 * rho
-        # h = mass / cellsize**2 / rho
-        V = 165254 * 1.5 # m³ Volume #iSeeSnow RealTopo
-        #V = 47972 * 1.5 # m³ Volume #iSeeSnow IdealizedTopo
-        #h = self.flux * V / self.cellsize**2
-        h = self.flux * self.number_release
-        
+        u = np.sqrt(self.z_delta * 2 * g) #velocity 
+        h = self.flux * self.number_release # thickness - uncertain!!
         
         theta = self.calc_theta()
         ds = np.array([[np.sqrt(2), 1, np.sqrt(2)], [1, 0, 1], [np.sqrt(2), 1, np.sqrt(2)]])
         
-        tan_alpha_turb_voellmy = u * u * ds * self.cellsize / np.cos(theta) / h / xsiVoellmy
+        tan_alpha_turb_voellmy = u * u * ds * self.cellsize / np.cos(theta) / h / self.xsi_voellmy
         return tan_alpha_turb_voellmy
 
 
@@ -112,12 +102,11 @@ class Cell:
         self.z_alpha = ds * self.cellsize * tan_alpha
 
         #Paula
-        #Voellmy with mu:
-        muVoellmy = 0.4
-        #self.z_alpha = muVoellmy * ds * self.cellsize + self.calc_Voellmy_friction()
-        #Voellmy with tan alpha
-        self.z_alpha += self.calc_Voellmy_friction()
+        # add turbulent friction Term (Voellmy) to Coulomb term, if Voellmy is switched on
+        if self.xsi_voellmy > 0:
+            self.z_alpha += self.calc_Voellmy_friction()
         #end Paula
+        print(self.xsi_voellmy)
 
         self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha
         self.z_delta_neighbour[self.z_delta_neighbour < 0] = 0
@@ -140,7 +129,7 @@ class Cell:
         ##NEW PAULA
         # calculate flow energy (corresponding to kinetic energy)
         # analog to: kin_energy = mass * velocity² / 2  
-    	self.flow_energy = self.flux * self.z_delta / 2
+    	self.flow_energy = self.flux * self.z_delta * 9.81
 
     def calc_persistence(self):
         self.persistence = np.zeros_like(self.dem_ng)
