@@ -102,6 +102,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nCPU = int(cfgSetup["cpuCount"])
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
+    mu_voellmy = float(cfgSetup["mu_Voellmy"])
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
