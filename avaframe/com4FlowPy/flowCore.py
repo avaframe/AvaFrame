@@ -113,11 +113,15 @@ def run(optTuple):
     tempDir = optTuple[8]
     infraBool = optTuple[9]
     nCPU = optTuple[10]
+    forest_int = optTuple[11]
 
     dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
     #paula
-    forest = np.load(tempDir / ("init_forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    if forest_int == 1:
+        forest = np.load(tempDir / ("init_forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        forest = None
     #end paula
     if infraBool:
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -136,7 +140,7 @@ def run(optTuple):
     release_list = split_release(release, nCPU)
     
     with Pool(processes=nCPU) as pool:
-        #paula: add forest
+        #paula: add forest if forest_int = 1
         results = pool.map(calculation,[[dem, infra, release_sub, alpha, exp, flux_threshold, max_z_delta, nodata, cellsize, infraBool, forest]
                             for release_sub in release_list])
         pool.close()
@@ -150,7 +154,8 @@ def run(optTuple):
     fp_travelangle_array = np.zeros_like(dem)
     sl_travelangle_array = np.zeros_like(dem)
     #paula
-    forest_interaction_array = np.ones_like(dem) * -9999
+    if forest_int == 1:
+        forest_interaction_array = np.ones_like(dem) * -9999
     #end
 
     z_delta_list = []
@@ -161,7 +166,8 @@ def run(optTuple):
     fp_ta_list = []
     sl_ta_list = []
     #paula
-    forest_list = []
+    if forest_int == 1:
+        forest_list = []
     #end
     
     for i in range(len(results)):
@@ -175,7 +181,8 @@ def run(optTuple):
         fp_ta_list.append(res[5])
         sl_ta_list.append(res[6])
         #paula
-        forest_list.append(res[7])
+        if forest_int == 1:
+            forest_list.append(res[7])
         #end
 
     logging.info('Calculation finished, getting results.')
@@ -188,7 +195,8 @@ def run(optTuple):
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])      
         #paula
-        forest_interaction_array = np.where((forest_interaction_array >= 0) & (forest_list[i] >= 0), np.minimum(forest_interaction_array, forest_list[i]), np.maximum(forest_interaction_array, forest_list[i]))
+        if forest_int == 1:
+            forest_interaction_array = np.where((forest_interaction_array >= 0) & (forest_list[i] >= 0), np.minimum(forest_interaction_array, forest_list[i]), np.maximum(forest_interaction_array, forest_list[i]))
         #end
         
     # Save Calculated tiles
@@ -199,7 +207,8 @@ def run(optTuple):
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
     #paula
-    np.save(tempDir / ("res_forest_%s_%s" % (optTuple[0], optTuple[1])), forest_interaction_array)
+    if forest_int == 1:
+        np.save(tempDir / ("res_forest_%s_%s" % (optTuple[0], optTuple[1])), forest_interaction_array)
     #end
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
@@ -250,7 +259,8 @@ def calculation(args):
     backcalc = np.zeros_like(dem, dtype=np.int32)
 
     #paula
-    forest_interaction_array = np.ones_like(dem, dtype=np.int64) * -9999
+    if forest is not None:
+        forest_interaction_array = np.ones_like(dem, dtype=np.int64) * -9999
     #end
     
     if infraBool:        
@@ -272,7 +282,10 @@ def calculation(args):
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1:row_idx + 2, col_idx - 1:col_idx + 2]  # neighbourhood DEM
         #paula
-        forest_local = forest[row_idx, col_idx]  # neighbourhood Forest Layer
+        if forest is not None:
+            forest_local = forest[row_idx, col_idx]  # neighbourhood Forest Layer
+        else:
+            forest_local = None
         #end
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
@@ -312,7 +325,8 @@ def calculation(args):
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
                 #paula
-                forest_local = forest[row[k], col[k]]  # local forest
+                if forest_local != None:
+                    forest_local = forest[row[k], col[k]]  # local forest
                 #end
                 if (nodata in dem_ng) or np.size(dem_ng) < 9:
                     continue
@@ -325,10 +339,14 @@ def calculation(args):
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
-            if forest_interaction_array[cell.rowindex, cell.colindex] >= 0 and cell.hitted_forest >= 0:
-                forest_interaction_array[cell.rowindex, cell.colindex] = min(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+            #PS
+            if forest is not None:
+                if forest_interaction_array[cell.rowindex, cell.colindex] >= 0 and cell.hitted_forest >= 0:
+                    forest_interaction_array[cell.rowindex, cell.colindex] = min(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+                else:
+                    forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
             else:
-                forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
+                forest_interaction_array = None
             #Backcalculation
             if infraBool:
                 if infra[cell.rowindex, cell.colindex] > 0:

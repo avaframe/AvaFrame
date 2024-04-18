@@ -35,7 +35,8 @@ class Cell:
         self.sl_gamma = 0     
         #paula
         #self.hitted_forest = np.array(forest,dtype=np.int64)
-        self.hitted_forest = forest        
+        if forest is not None:
+            self.hitted_forest = forest        
         #end paula
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -48,7 +49,8 @@ class Cell:
         if type(parent) == Cell:
             self.parent.append(parent)
             #paula
-            self.hitted_forest += parent.hitted_forest
+            if forest is not None:
+                self.hitted_forest += parent.hitted_forest
 
     def add_os(self, flux):
         self.flux += flux

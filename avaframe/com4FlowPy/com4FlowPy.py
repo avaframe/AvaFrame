@@ -124,6 +124,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     nCPU = int(cfgSetup["cpuCount"])
     tileSize = float(cfgSetup["tileSize"])
     tileOverlap = float(cfgSetup["tileOverlap"])
+    #PS
+    forest_int = float(cfgSetup["forestInteraction"])
+    #ende PS
     # Input Paths
     outDir = cfgPath["outDir"]
     workDir = cfgPath["workDir"]
@@ -150,6 +153,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     log.info("Exponent: {}".format(exp))
     log.info("Flux Threshold: {}".format(flux_threshold))
     log.info("Max Z_delta: {}".format(max_z))
+    #PS
+    if forest_int == 1:
+        log.info("Including forest interaction.")
 
     # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
     # Read in raster files
@@ -180,8 +186,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     #PAULA
     #read forest data
-    forestPathWork = forestPath
-    forest, forestHeader = io.read_raster(forestPath)
+    if forest_int == 1:
+        forestPathWork = forestPath
+        forest, forestHeader = io.read_raster(forestPath)
     #end paula
 
     # Check if Layers have same size!!!
@@ -192,11 +199,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         return
 
     #Paula
-    if demHeader["ncols"] == forestHeader["ncols"] and demHeader["nrows"] == forestHeader["nrows"]:
-        log.info("DEM and Forest Layer ok!")
-    else:
-        log.error("Error: Forest Layer doesn't match DEM!")
-        return
+    if forest_int == 1:
+        if demHeader["ncols"] == forestHeader["ncols"] and demHeader["nrows"] == forestHeader["nrows"]:
+            log.info("DEM and Forest Layer ok!")
+        else:
+            log.error("Error: Forest Layer doesn't match DEM!")
+            return
     #ende paula
 
     if infraPath != "":
@@ -214,7 +222,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         del infraArea
     del releaseArea
     #PAULA
-    del forest
+    if forest_int == 1:
+        del forest
     #end
     log.info("Files read in")
 
@@ -231,7 +240,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     SPAM.tileRaster(demPath, "dem", tempDir, tileCOLS, tileROWS, U)
     SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
     #paula
-    SPAM.tileRaster(forestPathWork, "init_forest", tempDir, tileCOLS, tileROWS, U)
+    if forest_int == 1:
+        SPAM.tileRaster(forestPathWork, "init_forest", tempDir, tileCOLS, tileROWS, U)
     #ende
     if infraBool:
         SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
@@ -248,7 +258,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
             optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+                            max_z, tempDir, infraBool, nCPU, forest_int))
 
     # Calculation
     for optTuple in optList:
@@ -264,7 +274,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     fp_ta = SPAM.MergeRaster(tempDir, "res_fp")
     sl_ta = SPAM.MergeRaster(tempDir, "res_sl")
     #paula
-    forest_flag = SPAM.MergeRaster_min(tempDir, "res_forest")
+    if forest_int == 1:
+        forest_flag = SPAM.MergeRaster_min(tempDir, "res_forest")
     #end
     if infraBool:
         backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
@@ -275,7 +286,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     io.output_raster(demPath, resDir / ("z_delta%s" % (output_format)), z_delta)
     io.output_raster(demPath, resDir / ("FP_travel_angle%s" % (output_format)), fp_ta)
     io.output_raster(demPath, resDir / ("SL_travel_angle%s" % (output_format)), sl_ta)
-    io.output_raster(demPath, resDir / ("Forest_interaction%s" % (output_format)), forest_flag)
+    #PS 
+    if forest_int == 1:
+        io.output_raster(demPath, resDir / ("Forest_interaction%s" % (output_format)), forest_flag)
+    #end PS
     if not infraBool:  # if no infra
         io.output_raster(demPath, resDir / ("cell_counts%s" % (output_format)), cell_counts)
         io.output_raster(demPath, resDir / ("z_delta_sum%s" % (output_format)), z_delta_sum)
