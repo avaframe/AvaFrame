@@ -29,7 +29,9 @@ and additional output of a forest interaction layer
 	- in *flowClass.py*: calculate forest interaction for each cell (in each path) from parent cell and forest information in own cell
 - The output *Forest_interaction.tif* shows how many forested cells a path passed previously. In the case of 
 overlying paths, the minimum of the interaction value is taken
+- The forest interaction layer serves e.g. as additional input in the autoATES workflow to consider the interaction between avalanches and forests, particularly below forestes areas.
 
 - Test cases:
 	- 'avaInclinedPlane' (generic)
 	- Davos_Jakobshorn_einHnag_test (real)
+	- Davos, Sellrain (large areas)
