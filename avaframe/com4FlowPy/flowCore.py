@@ -19,7 +19,6 @@ else:
 
 from avaframe.com4FlowPy.flowClass import Cell
 
-
 def get_start_idx(dem, release):
     """Sort Release Pixels by altitude and return the result as lists for the
     Rows and Columns, starting with the highest altitude
@@ -40,51 +39,6 @@ def get_start_idx(dem, release):
         altitude_list, row_list, col_list = list(zip(*sorted(zip(altitude_list, row_list, col_list), reverse=True)))
         # Sort this lists by altitude
     return row_list, col_list
-
-'''
-original split_release function
-def split_release(release, pieces):
-    """Split the release layer in several tiles, the number is depending on the
-    available CPU Cores, so every Core gets one tile. The area is determined by
-    the number of release pixels in it, so that every tile has the same amount
-    of release pixels in it. Splitting in x(Columns) direction.
-    The release tiles have still the size of the original layer, so no split
-    for the DEM is needed.
-
-    Input parameters:
-        release         the release layer with release pixels as int > 0
-        header_release  the header of the release layer to identify the
-                        noDataValue
-
-    Output parameters:
-        release_list    A list with the tiles(arrays) in it [array0, array1, ..]
-        """
-
-    release[release < 0] = 0
-    release[release > 1] = 1
-    sumRelease = np.sum(release) # Count number of release pixels
-    sum_per_split = sumRelease/pieces  # Divide the number by avaiable Cores
-    release_list = []
-    #2022-09-06 - AH: Note - maybe we need to think of sth. smarter here!!
-    #i.e. not slicing in columns??    
-    breakpoint_x = 0
-    for i in range(release.shape[1]):
-        if (len(release_list) == (pieces - 1)) or (np.sum(release[:, i:]) <= sum_per_split):
-            c = np.zeros_like(release)
-            c[:, breakpoint_x:] = release[:, breakpoint_x:]
-            release_list.append(c)
-            break
-        if np.sum(release[:, breakpoint_x:i]) < sum_per_split:
-            continue
-        else:
-            c = np.zeros_like(release)
-            c[:, breakpoint_x:i] = release[:, breakpoint_x:i]
-            release_list.append(c)
-            print("Release Split from {} to {}".format(breakpoint_x, i))
-            breakpoint_x = i
-    
-    return release_list
-'''
 
 def split_release(release, pieces):
     """ Split the release layer in several tiles. The area is determined by
@@ -154,10 +108,7 @@ def back_calculation(back_cell):
         Back_list   List of pixels that are on the way to the start cell
                     Maybe change it to array like DEM?
     """
-    #start = time.time()
-    #if len(hit_cell_list) > 1:
-        #hit_cell_list.sort(key=lambda cell: cell.altitude, reverse=False)
-        #print("{} Elements sorted!".format(len(hit_cell_list)))
+
     back_list = []
     for parent in back_cell.lOfParents:
         if parent not in back_list:
@@ -167,8 +118,7 @@ def back_calculation(back_cell):
             # Check if parent already in list
             if parent not in back_list:
                 back_list.append(parent)
-    #end = time.time()
-    #print('\n Backcalculation needed: ' + str(end - start) + ' seconds')
+
     return back_list
 
 def run(optTuple):
@@ -195,19 +145,19 @@ def run(optTuple):
     log = logging.getLogger(__name__)
     
     #Flow-Py parameters
-    alpha = float(optTuple[2]["alpha"])
-    exp = float(optTuple[2]["exp"])
+    alpha          = float(optTuple[2]["alpha"])
+    exp            = float(optTuple[2]["exp"])
     flux_threshold = float(optTuple[2]["flux_threshold"])
-    max_z_delta = float(optTuple[2]["max_z"])
-    infraBool = optTuple[2]["infraBool"]
-    forestBool = optTuple[2]["forestBool"]
+    max_z_delta    = float(optTuple[2]["max_z"])
+    infraBool      = optTuple[2]["infraBool"]
+    forestBool     = optTuple[2]["forestBool"]
 
     #Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
     
     #raster-layer Attributes
     cellsize = float(optTuple[4]["cellsize"])
-    nodata = float(optTuple[4]["nodata"])
+    nodata   = float(optTuple[4]["nodata"])
 
     MPOptions = optTuple[6] #CPU, Multiprocessing options ...
 
@@ -255,21 +205,21 @@ def run(optTuple):
 
     
     #initializing arrays for storing the results from the multiprocessing step
-    z_delta_array = np.zeros_like(dem, dtype=np.float32)
-    flux_array = np.zeros_like(dem, dtype=np.float32)
-    count_array = np.zeros_like(dem, dtype=np.int32)
-    z_delta_sum = np.zeros_like(dem, dtype=np.float32)
-    backcalc = np.zeros_like(dem, dtype=np.int32)
+    z_delta_array        = np.zeros_like(dem, dtype=np.float32)
+    flux_array           = np.zeros_like(dem, dtype=np.float32)
+    count_array          = np.zeros_like(dem, dtype=np.int32)
+    z_delta_sum          = np.zeros_like(dem, dtype=np.float32)
+    backcalc             = np.zeros_like(dem, dtype=np.int32)
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32)
 
-    z_delta_list = []
-    flux_list = []
-    cc_list = []
+    z_delta_list     = []
+    flux_list        = []
+    cc_list          = []
     z_delta_sum_list = []
-    backcalc_list = []
-    fp_ta_list = []
-    sl_ta_list = []
+    backcalc_list    = []
+    fp_ta_list       = []
+    sl_ta_list       = []
     
     for i in range(len(results)):
         res = results[i]
@@ -331,25 +281,26 @@ def calculation(args):
     # to RAM overflow
     handleMemoryAvailability()
     
-    dem = args[0]
-    infra = args[1]
-    release = args[2]
-    alpha = args[3]
-    exp = args[4]
+    dem            = args[0]
+    infra          = args[1]
+    release        = args[2]
+    alpha          = args[3]
+    exp            = args[4]
     flux_threshold = args[5]
-    max_z_delta=args[6]
-    nodata = args[7]
-    cellsize = args[8]
-    infraBool = args[9]
-    forestBool = args[10]
+    max_z_delta    = args[6]
+    nodata         = args[7]
+    cellsize       = args[8]
+    infraBool      = args[9]
+    forestBool     = args[10]
+
     if forestBool:
         forestArray  = args[11]
         forestParams = args[12]
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
-    z_delta_sum = np.zeros_like(dem, dtype=np.float32)
-    flux_array = np.zeros_like(dem, dtype=np.float32)
-    count_array = np.zeros_like(dem, dtype=np.int32)
+    z_delta_sum   = np.zeros_like(dem, dtype=np.float32)
+    flux_array    = np.zeros_like(dem, dtype=np.float32)
+    count_array   = np.zeros_like(dem, dtype=np.int32)
     
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
@@ -378,12 +329,12 @@ def calculation(args):
 
         if forestBool:
             startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                            alpha, exp, flux_threshold, max_z_delta, startcell=True,
-                            FSI=forestArray[row_idx, col_idx],forestParams=forestParams)
+                             alpha, exp, flux_threshold, max_z_delta, startcell=True,
+                             FSI=forestArray[row_idx, col_idx],forestParams=forestParams)
             # If this is a startcell just give a Bool to startcell otherwise the object startcell
         else:
             startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1, 0, None,
-                            alpha, exp, flux_threshold, max_z_delta, startcell=True)
+                             alpha, exp, flux_threshold, max_z_delta, startcell=True)
             # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         cell_list.append(startcell)

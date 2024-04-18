@@ -8,15 +8,16 @@ and output of model results
 # Load modules
 import pathlib
 import numpy as np
-from datetime import datetime
+from   datetime import datetime
 import logging
 import pickle
 import shutil
+import os
 
 # Local imports (avaFrame API)
-from avaframe.in1Data import getInput as gI
+from   avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
-from avaframe.in3Utils import fileHandlerUtils as fU
+from   avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
@@ -29,82 +30,14 @@ import avaframe.com4FlowPy.splitAndMerge as SPAM
 # create local logger
 log = logging.getLogger(__name__)
 
-
-def readFlowPyinputs(avalancheDir, cfgFlowPy):
-    """ function is used to read necessary flowPy Inputs 
-        function is only called from '../runCom4FlowPy.py', 
-        which in turn creates the necessary
-        'cfgPath' dictionary, that is passed to
-        the com4FlowPyMain() function in this file...
-    """
-    cfgPath = {}
-    avalancheDir = pathlib.Path(avalancheDir)
-    # read release area
-    releaseDir = avalancheDir / "Inputs" / "REL"
-    # from shapefile
-    relFiles = sorted(list(releaseDir.glob("*.shp")))
-    tryTif = False
-    if len(relFiles) == 0:
-        log.info("Found not *.shp file containing the release area in %s, trying with *.tif" % releaseDir)
-        tryTif = True
-    elif len(relFiles) > 1:
-        message = "There should be exactly one *.shp file containing the release area in %s" % releaseDir
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        log.info("Release area file is: %s" % relFiles[0])
-        cfgPath["releasePath"] = relFiles[0]
-
-    # from tif
-    if tryTif:
-        relFiles = sorted(list(releaseDir.glob("*.tif")))
-        if len(relFiles) == 0:
-            message = (
-                "You need to provide one *.shp file or one *.tif file containing the release area in %s"
-                % releaseDir
-            )
-            log.error(message)
-            raise FileNotFoundError(message)
-        elif len(relFiles) > 1:
-            message = "There should be exactly one *.tif file containing the release area in %s" % releaseDir
-            log.error(message)
-            raise AssertionError(message)
-        else:
-            log.info("Release area file is: %s" % relFiles[0])
-            cfgPath["releasePath"] = relFiles[0]
-
-    # read infra area
-    infraDir = avalancheDir / "Inputs" / "INFRA"
-    infraPath = sorted(list(infraDir.glob("*.tif")))
-    if len(infraPath) == 0 or cfgFlowPy.getboolean("SETUP", "infra") is False:
-        infraPath = ""
-    elif len(infraPath) > 1:
-        message = "More than one Infrastructure file .%s file in %s not allowed" % (infraDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        infraPath = infraPath[0]
-        log.info("Infrastructure area file is: %s" % infraPath)
-    cfgPath["infraPath"] = infraPath
-
-    # read DEM
-    demPath = gI.getDEMPath(avalancheDir)
-    log.info("DEM file is: %s" % demPath)
-    cfgPath["demPath"] = demPath
-
-    # make output path
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, "com4FlowPy", False)
-    cfgPath["outDir"] = outDir
-    cfgPath["workDir"] = workDir
-
-    return cfgPath
-
-
 def com4FlowPyMain(cfgPath, cfgSetup):
     """ com4FlowPy main function - handles:
             * reading of input data and model Parameters
             * calculation
             * writing of result files
+
+        the function assumes that all necessary directories inside cfgPath have
+        already been created (workDir, tempDir)
         
         Parameters
         ----------
@@ -125,20 +58,28 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["max_z"]          = float(cfgSetup["max_z"])
 
     # Flags for use of Forest and/or Infrastructure
-    modelParameters["infra"]          = cfgSetup["infra"]
-    modelParameters["forest"]         = cfgSetup["forest"]
+    modelParameters["infra"]  = cfgSetup["infra"]
+    modelParameters["forest"] = cfgSetup["forest"]
     
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
-    tilingParameters["tileSize"]       = float(cfgSetup["tileSize"])
-    tilingParameters["tileOverlap"]    = float(cfgSetup["tileOverlap"])
+    tilingParameters["tileSize"]    = float(cfgSetup["tileSize"])
+    tilingParameters["tileOverlap"] = float(cfgSetup["tileOverlap"])
 
     # Paths
     modelPaths = {}
-    modelPaths["outDir"]      = cfgPath["outDir"]
-    modelPaths["workDir"]     = cfgPath["workDir"]
-    modelPaths["demPath"]     = cfgPath["demPath"]
-    modelPaths["releasePath"] = cfgPath["releasePath"]  
+    modelPaths["outDir"]        = cfgPath["outDir"]
+    modelPaths["workDir"]       = cfgPath["workDir"]
+    modelPaths["demPath"]       = cfgPath["demPath"]
+    modelPaths["releasePath"]   = cfgPath["releasePath"]
+
+    modelPaths["resDir"]        = cfgPath["resDir"]
+    modelPaths["tempDir"]       = cfgPath["tempDir"]
+
+    # check if 'customDirs' are used - alternative is 'default' AvaFrame Folder Structure
+    modelPaths["useCustomDirs"]    = True if cfgPath["customDirs"]=='True' else False
+    # check if the temp folder, where intermediate results are stored, should be deleted after writing output files
+    modelPaths["deleteTempFolder"] = True if cfgPath["deleteTemp"]=="True" else False
     
     # Multiprocessing Options
     MPOptions = {}
@@ -153,7 +94,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         modelPaths["infraPath"]      = cfgPath["infraPath"]
     else:
         modelParameters["infraBool"] = False
-        modelPaths["infraPath"] = ""
+        modelPaths["infraPath"]      = ""
 
     forestParams = {}
     # check if calculation with forest
@@ -169,28 +110,19 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"]  = float(cfgSetup["velThForDetrain"])
     else:
         modelParameters["forestBool"] = False
-        modelPaths["forestPath"] = ""
+        modelPaths["forestPath"]      = ""
     
-    # Create result directory
-    # NOTE-TODO: maybe move into separate function as well ...
-    if cfgPath["customDirs"]=="False":
-        timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
-        modelPaths["resDir"] = outDir / "res_{}".format(timeString)
-        fU.makeADir(modelPaths["resDir"])
-        modelPaths["tempDir"] = workDir / "temp"
-        fU.makeADir(modelPaths["tempDir"])
-    else:
-        modelPaths["resDir"]  = cfgPath["outDir"]
-        modelPaths["tempDir"] = cfgPath["tempDir"]
-
+    # write model parameters paths, etc. to logfile
     startLogging(modelParameters, forestParams, modelPaths)
 
     # check if release file is given als .shp and convert to .tif/.asc in that case
+    # NOTE-TODO: maybe also handle this in ../runCom4FlowPy.py
     modelPaths = checkConvertReleaseShp2Tif(modelPaths)
 
     # check if input layers have same x,y dimensions
     checkInputLayerDimensions(modelParameters, modelPaths)
 
+    # get information on cellsize and nodata value from demHeader
     demHeader = IOf.readASCheader(modelPaths["demPath"])
     rasterAttributes = {}
     rasterAttributes["cellsize"] = demHeader["cellsize"]
@@ -208,19 +140,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     _endTime = datetime.now().replace(microsecond=0)
     log.info("Calculation needed: " + str(_endTime - _startTime) + " seconds")
     
-    # NOTE-TODO: maybe move into mergeAndWriteResults ...
-    # Remove TempFolder if "customDirs" option is used and 'deleteTemp' is set to true
-    # in the (local_)com4FlowPyCfg.ini file
-    if (cfgPath["customDirs"]=='True') and (cfgPath["deleteTemp"]=="True"):
-        log.info('+++++++++++++++++++++++')
-        log.info("deleteTempFolder = True in (local_)com4FlowPyCfg.ini")
-        try:
-            shutil.rmtree(modelPaths["tempDir"])
-            log.info("Deleted temp folder {}".format(modelPaths["tempDir"]))
-        except OSError as e:
-            log.info("deletion of temp folder {} failed".format(modelPaths["tempDir"]))
-            print ("Error: %s : %s" %(modelPaths["tempDir"], e.strerror))
-        log.info('+++++++++++++++++++++++')
+    if (modelPaths["useCustomDirs"]==True) and (modelPaths["deleteTempFolder"] == True):
+        deleteTempFolder(modelPaths["tempDir"])
 
 
 def startLogging(modelParameters, forestParams, modelPaths):
@@ -326,7 +247,7 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
                 )
             )
 
-    # Calculation, i.e. enumerating over the list of Tiles which have to be processed with fc.run()
+    # Calculation, i.e. iterating over the list of Tiles which have to be processed with fc.run()
     for i,optTuple in enumerate(optList):
         log.info("starting tile %i of %i"%(i+1,len(optList)))
         fc.run(optTuple)
@@ -402,3 +323,46 @@ def checkConvertReleaseShp2Tif(modelPaths):
         modelPaths["releasePathWork"] = modelPaths["releasePath"]
     
     return modelPaths
+
+def deleteTempFolder(tempFolderPath):
+    """ delete tempFolder containing the pickled np.arrays of the input data and output data tiles.
+            - should be called after all merged model results are written to disk.
+        performs a few checks to make sure the folder is indeed a com4FlowPy tempFolder, i.e.
+            - does not contain subfolders
+            - no other file-extensions than '.npy' and ''
+    """
+    
+    log.info('+++++++++++++++++++++++')
+    log.info("deleteTempFolder = True in (local_)com4FlowPyCfg.ini")
+
+    log.info("... checking if folder is a com4FlowPy temp Folder")
+    # check if path exists and is directory
+    isDir = os.path.isdir(tempFolderPath)
+    validTemp = True
+    
+    for f in os.scandir(tempFolderPath):
+        # check if there's a nested folder inside tempDir
+        if f.is_dir():
+            validTemp=False
+            break
+        # check if all files are either .npy or start with "ext, "nTi"
+        elif f.is_file():
+            if not f.path.endswith(".npy"):
+                if not f.name[:3] in ["ext","nTi"]:
+                    validTemp=False
+                    break
+    
+    if isDir and validTemp:
+        log.info("Tempfolder checked: isDir:{} isTemp:{}".format(isDir,validTemp))
+        try:
+            shutil.rmtree(tempFolderPath)
+            log.info("Deleted temp folder {}".format(tempFolderPath))
+        except OSError as e:
+            log.info("deletion of temp folder {} failed".format(tempFolderPath))
+            print ("Error: %s : %s" %(tempFolderPath, e.strerror))
+    else:
+        log.info("deletion of temp folder {} failed".format(tempFolderPath))
+        log.info(" isDir:{} isTemp:{}}".format(isDir,validTemp))
+    
+    log.info('+++++++++++++++++++++++')
+
