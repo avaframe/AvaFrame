@@ -14,71 +14,90 @@ class Cell:
         """ constructor for the Cell class
             the constructor function is called every time a new instance of type 'Cell' is
             initialized.
+            NOTE/TODO: parent can be of different data types still, maybe split into two separate variables
+                       * bool --> isStart
+                       * Cell --> startCell
         """
-        self.rowindex = rowindex #index of the Cell in row-direction (i.e. local y-index in the calculation domain)
-        self.colindex = colindex #index of the Cell in column-direction (i.e. local x-index in the calculation domain)
-        self.dem_ng = dem_ng #elevation values in the 3x3 neigbourhood around the Cell
-        self.altitude = dem_ng[1, 1] #elevation value of the cell (central cell of 3x3 neighbourhood)
-        self.cellsize = cellsize #cellsize in meters
+        self.rowindex = rowindex # index of the Cell in row-direction (i.e. local y-index in the calculation domain)
+        self.colindex = colindex # index of the Cell in column-direction (i.e. local x-index in the calculation domain)
+        self.dem_ng   = dem_ng   # elevation values in the 3x3 neigbourhood around the Cell
+        self.altitude = dem_ng[1, 1] # elevation value of the cell (central cell of 3x3 neighbourhood)
+        self.cellsize = cellsize # cellsize in meters
         
-        self.tan_beta = np.zeros_like(self.dem_ng)
-        self.dist = np.zeros_like(self.dem_ng)
+        self.tan_beta    = np.zeros_like(self.dem_ng)
+        self.dist        = np.zeros_like(self.dem_ng)
         self.persistence = np.zeros_like(self.dem_ng)
-        self.r_t = np.zeros_like(self.dem_ng)
-        self.no_flow = np.ones_like(self.dem_ng)
+        self.r_t         = np.zeros_like(self.dem_ng)
+        self.no_flow     = np.ones_like(self.dem_ng)
 
-        self.flux = flux
+        self.flux    = flux
         self.z_delta = z_delta
 
-        self.alpha = float(alpha)
-        self.exp = int(exp)
-        self.max_z_delta = float(max_z_delta)
+        self.alpha          = float(alpha)
+        self.exp            = int(exp)
+        self.max_z_delta    = float(max_z_delta)
         self.flux_threshold = float(flux_threshold)
 
-        self.tanAlpha=np.tan(np.deg2rad(self.alpha)) #moved to constructor, so this doesn't have to be calculated on
-        #every iteration of calc_z_delta(self)
+        self.tanAlpha = np.tan(np.deg2rad(self.alpha)) # moved to constructor, so this doesn't have to be calculated on
+        # every iteration of calc_z_delta(self)
         
-        self.min_distance = 0 #minimal distance to start-cell (i.e. along shortest path) min_distance >= 
-        self.max_distance = 0 #NOTE: self.max_distance is never used - maybe remove!?
-        self.min_gamma = 0    #NOTE: self.min_gamma (assumingly minimal travel angle to cell) is never used - maybe remove!?
-        self.max_gamma = 0
-        self.sl_gamma = 0
+        self.min_distance = 0 # minimal distance to start-cell (i.e. along shortest path) min_distance >= 
+        self.max_distance = 0 # NOTE: self.max_distance is never used - maybe remove!?
+        self.min_gamma    = 0 # NOTE: self.min_gamma (assumingly minimal travel angle to cell) is never used - maybe remove!?
+        self.max_gamma    = 0
+        self.sl_gamma     = 0
         
-        self._SQRT2=np.sqrt(2.)
-        self._RAD90=np.deg2rad(90.)
+        self._SQRT2 = np.sqrt(2.)
+        self._RAD90 = np.deg2rad(90.)
 
         # NOTE: Forest Interaction included here
         # if FSI != None AND forestParams != None - then self.ForestBool = True and forestParams and
         # FSI are accordingly initialized
 
         if ((FSI!=None) and (forestParams!=None)):
-            self.forestBool=True
-            self.FSI = FSI
-            self.maxAddedFrictionForest = forestParams["maxAddedFriction"]    
-            self.minAddedFrictionForest = forestParams["minAddedFriction"]     
-            self.noFrictionEffectV = forestParams["velThForFriction"]     
-            self.maxAddedDetrainmentForest = forestParams["maxDetrainment"]
-            self.minAddedDetrainmentForest = forestParams["minDetrainment"]
-            self.noDetrainmentEffectV = forestParams["velThForDetrain"]
             
-            _vThFr = self.noFrictionEffectV
-            _vThDe = self.noDetrainmentEffectV
-            _sqrt2xG = self._SQRT2*9.81
-            self.noFricitonEffectZdelta = (_vThFr*_vThFr)/_sqrt2xG
-            self.noDetrainmentEffectZdelta = (_vThDe*_vThDe)/_sqrt2xG
+            self.forestBool = True
+            self.forestModule = forestParams["forestModule"]
+
+            if ((self.forestModule == 'forestFriction') or (self.forestModule == 'forestDetrainment')):
+                self.FSI = FSI
+                self.maxAddedFrictionForest    = forestParams["maxAddedFriction"]    
+                self.minAddedFrictionForest    = forestParams["minAddedFriction"]     
+                self.noFrictionEffectV         = forestParams["velThForFriction"]     
+                self.maxAddedDetrainmentForest = forestParams["maxDetrainment"]
+                self.minAddedDetrainmentForest = forestParams["minDetrainment"]
+                self.noDetrainmentEffectV      = forestParams["velThForDetrain"]
+
+                _vThFr = self.noFrictionEffectV
+                _vThDe = self.noDetrainmentEffectV
+                _sqrt2xG = self._SQRT2*9.81
+                self.noFricitonEffectZdelta = (_vThFr*_vThFr)/_sqrt2xG
+                self.noDetrainmentEffectZdelta = (_vThDe*_vThDe)/_sqrt2xG
+
+            elif (self.forestModule == 'forestFrictionLayer'):
+
+                if forestParams["fFrLayerType"]=='absolute':
+                    self.AlphaFor = FSI
+                elif forestParams["fFrLayerType"]=='relative':
+                    self.AlphaFor = self.alpha + FSI
+                
+                self.AlphaFor = max(self.AlphaFor, self.alpha) # Friction in Forest can't be lower than Friciton without forest
+                self.tanAlphaFor = np.tan(np.deg2rad(self.AlphaFor))
 
             #NOTE: This is a quick hack to check if all values for Detrainment are set to 0 (as provided in the .ini file)
             #      if this is the case, then the self.forest_detrainment function does not have to be called inside
             #      self.calc_distribution
             #TO-DO: clean this up and handle it better
-            if ((self.maxAddedDetrainmentForest==0) and (self.minAddedDetrainmentForest==0) and (self.noDetrainmentEffectV==0)):
+            if (self.forestModule=='forestFriction') or (self.forestModule=='forestFrictionLayer'):
+                self.forestDetrainmentBool=False
+            elif ((self.maxAddedDetrainmentForest==0) and (self.minAddedDetrainmentForest==0) and (self.noDetrainmentEffectV==0)):
                 self.forestDetrainmentBool=False
             else:
-                self.forestDetrainmentBool=True
-            
+                self.forestDetrainmentBool=True    
 
         else:
             self.forestBool=False
+
             self.FSI = 0.
             self.maxAddedFrictionForest = 0
             self.minAddedFrictionForest = 0
@@ -95,7 +114,8 @@ class Cell:
             self.startcell = startcell  # give startcell to cell
             self.is_start = False       # set is_start to False
 
-        self.lOfParents = []             
+        self.lOfParents = []
+                     
         if type(parent) == Cell:
             self.lOfParents.append(parent)
 
@@ -128,29 +148,42 @@ class Cell:
         self.sl_gamma = np.rad2deg(np.arctan(_dh / _ds))
 
     def calc_z_delta(self):
+        """
+        function calculates zDelta to the eligible neighbours
+        NOTE: forestFriction related mechanics are implemented here!
+        """
         self.z_delta_neighbour = np.zeros((3, 3))
         self.z_gamma = self.altitude - self.dem_ng
         ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 0, 1], [self._SQRT2, 1, self._SQRT2]])
         
-        if ((self.forestBool) and (self.FSI>0.) and (not self.is_start)):
-            #if forestBool, we assume that forestFriciton is activated
-            #and if FSI > 0 then we also calculate _tanAlpha with forestEffect
-            #NOTE: We also don't assume a forest Effect on potential Start Zells, since this should
-            #      ideally be handled by a separate release-area algorithm in the pre-processing
-            #NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment' branch
-            #      and not yet fully tested!!
-            if self.z_delta < self.noFricitonEffectZdelta:
-                _rest = self.maxAddedFrictionForest * self.FSI # friction at rest v=0 would be applied to start cells
-                _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFricitonEffectZdelta)  # rise over run
-                friction = max(self.minAddedFrictionForest,
-                                   _slope * self.z_delta + _rest)  # y = mx + b, shere z_delta is the x
+        if self.forestBool:
+            if self.forestModule == 'forestFrictionLayer':
+                _tanAlpha = self.tanAlphaFor
+
+            elif ((self.forestModule == 'forestFriction') or (self.forestModule == 'forestDetrainment')):
+
+                if ((self.forestBool) and (self.FSI > 0.) and (not self.is_start)):
+                    #if forestBool, we assume that forestFriciton is activated
+                    #and if FSI > 0 then we also calculate _tanAlpha with forestEffect
+                    #NOTE: We also don't assume a forest Effect on potential Start Zells, since this should
+                    #      ideally be handled by a separate release-area algorithm in the pre-processing
+                    #NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment' branch
+                    #      and not yet fully tested!!
+                    if self.z_delta < self.noFricitonEffectZdelta:
+                        _rest = self.maxAddedFrictionForest * self.FSI # friction at rest v=0 would be applied to start cells
+                        _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFricitonEffectZdelta)  # rise over run
+                        friction = max(self.minAddedFrictionForest,
+                                        _slope * self.z_delta + _rest)  # y = mx + b, shere z_delta is the x
+                        
+                        _alpha_calc = self.alpha + max(0, friction) #NOTE: not sure what this line does, seems redundant!!!!
+                    else:
+                        _alpha_calc = self.alpha + self.minAddedFrictionForest
+                    
+                    _tanAlpha = np.tan(np.deg2rad(_alpha_calc))
                 
-                _alpha_calc = self.alpha + max(0, friction) #NOTE: not sure what this line does, seems redundant!!!!
-            else:
-                _alpha_calc = self.alpha + self.minAddedFrictionForest
-            
-            _tanAlpha = np.tan(np.deg2rad(_alpha_calc))
-        
+                else:
+                    _tanAlpha = self.tanAlpha
+
         else:
             #else simply use tanAlpha
             _tanAlpha = self.tanAlpha

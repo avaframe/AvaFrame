@@ -152,6 +152,7 @@ def run(optTuple):
     infraBool      = optTuple[2]["infraBool"]
     forestBool     = optTuple[2]["forestBool"]
 
+
     #Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
     
@@ -183,7 +184,6 @@ def run(optTuple):
     nRel = np.sum(release)
     log.info("Number of release cells: %i"%nRel)
 
-    #NOTE-TODO: procPerCPU and chunkSize Parameters should be moved to .ini file with sensible defaults!!
     nProcesses, nChunks = calculateMultiProcessingOptions(nRel,MPOptions["nCPU"],procPerCPU=MPOptions["procPerCPU"],
                                                           maxChunks=MPOptions["maxChunks"], chunkSize=MPOptions["chunkSize"])
     
@@ -203,8 +203,12 @@ def run(optTuple):
             pool.close()
             pool.join()
 
-    
-    #initializing arrays for storing the results from the multiprocessing step
+    # TODO - provide option in com4FlowPyCfg.ini file for which output layers to write
+    # e.g.: default  [zDelta, cellCounts, fpTravelAngle, (backCalc if Infra)]
+    #       optional [flux, slTravelAngle]
+    # TODO - NOTE:
+    # also move this part into a separate function
+    # initializing arrays for storing the results from the multiprocessing step
     z_delta_array        = np.zeros_like(dem, dtype=np.float32)
     flux_array           = np.zeros_like(dem, dtype=np.float32)
     count_array          = np.zeros_like(dem, dtype=np.int32)

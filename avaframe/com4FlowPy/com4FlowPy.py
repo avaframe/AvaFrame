@@ -12,7 +12,7 @@ from   datetime import datetime
 import logging
 import pickle
 import shutil
-import os
+import os, sys
 
 # Local imports (avaFrame API)
 from   avaframe.in1Data import getInput as gI
@@ -100,19 +100,29 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # check if calculation with forest
     if modelParameters["forest"]=='True':
         modelParameters["forestBool"] = True
-        modelPaths["forestPath"]      = cfgPath["forestPath"]
-                
+
+        forestParams["forestModule"] = cfgSetup["forestModule"]
+        modelPaths["forestPath"]        = cfgPath["forestPath"]
+        # 'forestFriction' and 'forestDetrainment' parameters
         forestParams["maxAddedFriction"] = float(cfgSetup["maxAddedFrictionFor"])
         forestParams["minAddedFriction"] = float(cfgSetup["minAddedFrictionFor"])
         forestParams["velThForFriction"] = float(cfgSetup["velThForFriction"])
         forestParams["maxDetrainment"]   = float(cfgSetup["maxDetrainmentFor"])
         forestParams["minDetrainment"]   = float(cfgSetup["minDetrainmentFor"])
         forestParams["velThForDetrain"]  = float(cfgSetup["velThForDetrain"])
+        # 'forestFrictionLayer' parameter
+        forestParams["fFrLayerType"]     = cfgSetup["forestFrictionLayerType"]
+
     else:
         modelParameters["forestBool"] = False
         modelPaths["forestPath"]      = ""
-    
+
+    # TODO: provide some kind of check for the model Parameters
+    #       i.e. * sensible value ranges
+    #            * contradicting options ...
+
     # write model parameters paths, etc. to logfile
+
     startLogging(modelParameters, forestParams, modelPaths)
 
     # check if release file is given als .shp and convert to .tif/.asc in that case
@@ -143,7 +153,6 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     if (modelPaths["useCustomDirs"]==True) and (modelPaths["deleteTempFolder"] == True):
         deleteTempFolder(modelPaths["tempDir"])
 
-
 def startLogging(modelParameters, forestParams, modelPaths):
     """ just used to move this chunk of code out of the main function
         only performs logging at the start of the simulation
@@ -161,7 +170,7 @@ def startLogging(modelParameters, forestParams, modelPaths):
     log.info("REL: {}".format(modelPaths["releasePath"]))
     if modelParameters["forestBool"]:
         log.info("------------------------")
-        log.info("calculation with Forest Layer")
+        log.info("Calculation using forestModule: {}".format(forestParams["forestModule"]))
         log.info("FOREST LAYER: {}".format(modelPaths["forestPath"]))
         log.info("-----")
         for param, value in forestParams.items():
@@ -176,35 +185,45 @@ def startLogging(modelParameters, forestParams, modelPaths):
     log.info("========================")
 
 def checkInputLayerDimensions(modelParameters, modelPaths):
+    """
+    check if all layers have the same size 
+    and can be read from the provided paths
+    """
     # Check if Layers have same size!!!
-    log.info("checking input layer alignment ...")
+    try:
+        log.info("checking input layer alignment ...")
 
-    _demHeader = IOf.readASCheader(modelPaths["demPath"])
-    _relHeader = io.read_header(modelPaths["releasePath"])
+        _demHeader = IOf.readASCheader(modelPaths["demPath"])
+        _relHeader = io.read_header(modelPaths["releasePath"])
 
-    if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
-        log.info("DEM and Release Layer ok!")
-    else:
-        log.error("Error: Release Layer doesn't match DEM!")
-        return
-
-    if modelParameters["infraBool"]:
-        _infraHeader = io.read_header(modelPaths["infraPath"])
-        if _demHeader["ncols"] == _infraHeader["ncols"] and _demHeader["nrows"] == _infraHeader["nrows"]:
-            log.info("Infra Layer ok!")
+        if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
+            log.info("DEM and Release Layer ok!")
         else:
-            log.error("Error: Infra Layer doesn't match DEM!")
-            return
+            log.error("Error: Release Layer doesn't match DEM!")
+            sys.exit(1)
 
-    if modelParameters["forestBool"]:
-        _forestHeader = io.read_header(modelPaths["forestPath"])
-        if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
-            log.info("Forest Layer ok!")
-        else:
-            log.error("Error: Infra Layer doesn't match DEM!")
-            return
+        if modelParameters["infraBool"]:
+            _infraHeader = io.read_header(modelPaths["infraPath"])
+            if _demHeader["ncols"] == _infraHeader["ncols"] and _demHeader["nrows"] == _infraHeader["nrows"]:
+                log.info("Infra Layer ok!")
+            else:
+                log.error("Error: Infra Layer doesn't match DEM!")
+                sys.exit(1)
 
-    log.info("========================")
+        if modelParameters["forestBool"]:
+            _forestHeader = io.read_header(modelPaths["forestPath"])
+            if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
+                log.info("Forest Layer ok!")
+            else:
+                log.error("Error: Infra Layer doesn't match DEM!")
+                sys.exit(1)
+
+        log.info("========================")
+    
+    except:
+        log.error("could not read all required Input Layers, please re-check files and paths provided in .ini files")
+        #return
+        sys.exit(1)
 
 def tileInputLayers(modelParameters,modelPaths,rasterAttributes,tilingParameters):
     
