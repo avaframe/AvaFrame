@@ -59,6 +59,7 @@ class Cell:
         self.flux += flux
 
     def add_parent(self, parent):
+        #if a cell has more parents
         self.parent.append(parent)
 
         # PS
