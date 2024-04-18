@@ -16,17 +16,17 @@ com4FlowPy has not been tested it on MacOS. If you are able to run it there, ple
 
 
 
-#### Branch: forest interaction
+### Branch: forest interaction
 
 - Source: more/less actual master branch
 - Modified ini - File to switch on (forestInteraction = 1) or off (forestInteraction = 0) the calculation
 and additional output of a forest interaction layer
 - **If forestInteraction is switched on:**
-	- Additional input: forest layer (binary: 0: no forest, 1: forest) is required in same extent and resolution as DEM
+	- Additional input: forest layer (binary: 0: no forest, 1: forest) in *.tif* format is required in same extent and resolution as DEM; the layer is in the folder *Input/FOREST/*
 (further extensions for forest density necessary???)
 	- in *com4FlowPy.py* and *flowCore.py*: Read in and hand over forest & get forest_interaction variable from 
-	*flowClass* and hand out minimum from all paths 
-	- in *flowClass.py*: calculate forest interaction for each cell (in each path)
+	*flowClass* and store minimum from all paths in a raster 
+	- in *flowClass.py*: calculate forest interaction for each cell (in each path) from parent cell and forest information in own cell
 - The output *Forest_interaction.tif* shows how many forested cells a path passed previously. In the case of 
 overlying paths, the minimum of the interaction value is taken
 
