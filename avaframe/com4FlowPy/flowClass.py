@@ -104,7 +104,8 @@ class Cell:
         #Paula
         # add turbulent friction Term (Voellmy) to Coulomb term, if Voellmy is switched on
         if self.xsi_voellmy > 0:
-            self.z_alpha += self.calc_Voellmy_friction()
+            turb_voellmy = self.calc_Voellmy_friction()
+            self.z_alpha += turb_voellmy
         #end Paula
         print(self.xsi_voellmy)
 
