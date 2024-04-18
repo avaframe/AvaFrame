@@ -33,10 +33,12 @@ class Cell:
         self.min_gamma = 0
         self.max_gamma = 0
         self.sl_gamma = 0     
+        
         #paula
         #self.hitted_forest = np.array(forest,dtype=np.int64)
-        if forest is not None:
-            self.hitted_forest = forest        
+        self.forest = forest
+        if self.forest is not None:
+            self.hitted_forest = self.forest        
         #end paula
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -49,6 +51,7 @@ class Cell:
         if type(parent) == Cell:
             self.parent.append(parent)
             #paula
+            #erster parent
             if forest is not None:
                 self.hitted_forest += parent.hitted_forest
 
@@ -57,6 +60,13 @@ class Cell:
 
     def add_parent(self, parent):
         self.parent.append(parent)
+
+        # PS
+        # check if new/ younger parent has a lower forest interaction number
+        # than the older one -> take minimum!
+        if self.forest is not None:
+            if parent.hitted_forest < (self.hitted_forest - self.forest):
+                self.hitted_forest = parent.hitted_forest + self.forest
 
     def calc_fp_travelangle(self):
         dist_min = []

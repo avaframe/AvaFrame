@@ -311,7 +311,9 @@ def calculation(args):
                 k = 0
                 while k < len(row):
                     if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
-                        cell_list[i].add_os(flux[k])
+                        #if cell exists: only add flux and parent to cell, take max(z_delta)
+                        # and delete from list for a new iteration
+                        cell_list[i].add_os(flux[k]) 
                         cell_list[i].add_parent(cell)
                         if z_delta[k] > cell_list[i].z_delta:
                             cell_list[i].z_delta = z_delta[k]
