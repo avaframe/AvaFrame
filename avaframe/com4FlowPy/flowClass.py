@@ -286,12 +286,15 @@ class Cell:
         threshold = self.flux_threshold
         if np.sum(self.r_t) > 0:
             self.dist = (self.persistence * self.r_t) / np.sum(self.persistence * self.r_t) * self.flux
-        # This lines handle if a distribution to a neighbour cell is lower then the threshold, so we don´t lose
-        # flux.
-        # The flux of this cells will then spread equally to all neighbour cells
-        # NOTE-TODO: fix mass distribution and use count_alive instead of count
-        # see PS_flowpy_path branch in avaframe repo
+
+        # This handles (local) flux re-distribution if n cells are below threshold, but lager 0 and m cells are
+        # still above threshold
+        # NOTE: this only works if "0 < n < 8" AND "0 < m < 8", the case where
+        # "0<n<8" AND "m=0" is not handled!!! (in this case flux is "lost")
         count = ((0 < self.dist) & (self.dist < threshold)).sum()
+        # count = (self.dist >= threshold).sum() #this is the correct way to calculate count
+        # TODO: make this the default, but keep option to use "old" version with minor Bug for backward compatibility of
+        # model results
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
         '''Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
          the other fields'''
