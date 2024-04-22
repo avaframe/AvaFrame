@@ -20,7 +20,6 @@ def test_add_parent():
                             alpha, exp, flux_threshold, max_z_delta,forest_local, startcell=True)
 
 
-
     # define an example child cell
     row_idx = 1
     col_idx = 5
@@ -53,3 +52,51 @@ def test_add_parent():
     assert len(test_cell.parent) == 3
 
 test_add_parent()
+
+def test_calc_distribution():
+
+    # define an example startcell
+    row_idx = 0
+    col_idx = 5
+    dem_ng = np.array([[1100,1100,1100],[1000, 1000, 1000], [990, 990, 990]])
+    cellsize = 10
+    alpha = 25
+    exp = 99
+    flux_threshold = 3e-4
+    max_z_delta = 9000
+    forest_local = 1
+    
+    test_startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1,0, None,
+                            alpha, exp, flux_threshold, max_z_delta,forest_local, startcell=True)
+
+
+    # define an example child cell
+    row_idx = 1
+    col_idx = 5
+    dem_ng = np.array([[1000, 1000, 1000], [990, 990, 990], [980,980,980]])
+    #cellsize = 10
+    #alpha = 25
+    #exp = 99
+    #flux_threshold = 3e-4
+    #max_z_delta = 9000
+    forest_local = 1
+
+    
+    test_cell = Cell(row_idx, col_idx, dem_ng, cellsize, 1. ,2, test_startcell,
+                            alpha, exp, flux_threshold, max_z_delta,forest_local, startcell=False)
+
+    # simple example: inclined plane, no lateral spreading (exp = 99)
+    # -> flux should be distributed totally to 1 cell downslope
+    # altitude difference = 10
+    # 10 = z_alpha + z_delta
+    # tan(alpha) = z_alpha / cellsize
+
+    test_cell.z_delta = 10 - cellsize * np.tan(np.deg2rad(alpha))
+    result_distribution = test_startcell.calc_distribution()
+    assert np.isclose(result_distribution[0], np.array(test_cell.rowindex))
+    assert np.isclose(result_distribution[1], np.array(test_cell.colindex))
+    assert np.isclose(result_distribution[2], test_cell.flux)
+    assert np.isclose(result_distribution[3], test_cell.z_delta)
+
+test_add_parent()
+test_calc_distribution()
