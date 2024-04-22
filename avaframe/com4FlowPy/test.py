@@ -4,16 +4,21 @@ import numpy as np
 
 
 def test_add_parent():
+    '''
+    Test the computation of forest interaction with different parent cells.
+    '''
 
-    # define an example startcell
-    row_idx = 0
-    col_idx = 5
-    dem_ng = np.array([[1100,1100,1100],[1000, 1000, 1000], [990, 990, 990]])
+    # define Flow-Py input parameters (as same attributes for all cells)
     cellsize = 10
     alpha = 25
     exp = 8
     flux_threshold = 3e-4
     max_z_delta = 9000
+
+    # define an example startcell
+    row_idx = 0
+    col_idx = 5
+    dem_ng = np.array([[1100,1100,1100],[1000, 1000, 1000], [990, 990, 990]])
     forest_local = 1
     
     test_startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1,0, None,
@@ -24,11 +29,6 @@ def test_add_parent():
     row_idx = 1
     col_idx = 5
     dem_ng = np.array([[1000, 1000, 1000], [990, 990, 990], [980,980,980]])
-    cellsize = 10
-    alpha = 25
-    exp = 8
-    flux_threshold = 3e-4
-    max_z_delta = 9000
     forest_local = 1
 
     # test if hitted forest from parent cell (1) is added to test child cell (1)
@@ -51,19 +51,26 @@ def test_add_parent():
     assert test_cell.hitted_forest == 1
     assert len(test_cell.parent) == 3
 
-test_add_parent()
 
 def test_calc_distribution():
-
-    # define an example startcell
-    row_idx = 0
-    col_idx = 5
-    dem_ng = np.array([[1100,1100,1100],[1000, 1000, 1000], [990, 990, 990]])
+    '''
+    Test the distribution function for a simple example at an inclined plane
+    without lateral spreading.
+    The total flux should be distributed in 1 cell downslope of the parent cell.
+    Additionally, the calculation of z_delta is tested for this example 
+    (since the output includes calculated z_delta).
+    '''
+    # define Flow-Py input parameters (as same attributes for all cells)
     cellsize = 10
     alpha = 25
     exp = 99
     flux_threshold = 3e-4
     max_z_delta = 9000
+
+    # define an example startcell
+    row_idx = 0
+    col_idx = 5
+    dem_ng = np.array([[1100,1100,1100],[1000, 1000, 1000], [990, 990, 990]])
     forest_local = 1
     
     test_startcell = Cell(row_idx, col_idx, dem_ng, cellsize, 1,0, None,
@@ -74,19 +81,13 @@ def test_calc_distribution():
     row_idx = 1
     col_idx = 5
     dem_ng = np.array([[1000, 1000, 1000], [990, 990, 990], [980,980,980]])
-    #cellsize = 10
-    #alpha = 25
-    #exp = 99
-    #flux_threshold = 3e-4
-    #max_z_delta = 9000
     forest_local = 1
 
     
     test_cell = Cell(row_idx, col_idx, dem_ng, cellsize, 1. ,2, test_startcell,
                             alpha, exp, flux_threshold, max_z_delta,forest_local, startcell=False)
 
-    # simple example: inclined plane, no lateral spreading (exp = 99)
-    # -> flux should be distributed totally to 1 cell downslope
+    
     # altitude difference = 10
     # 10 = z_alpha + z_delta
     # tan(alpha) = z_alpha / cellsize
@@ -97,6 +98,7 @@ def test_calc_distribution():
     assert np.isclose(result_distribution[1], np.array(test_cell.colindex))
     assert np.isclose(result_distribution[2], test_cell.flux)
     assert np.isclose(result_distribution[3], test_cell.z_delta)
+
 
 test_add_parent()
 test_calc_distribution()
