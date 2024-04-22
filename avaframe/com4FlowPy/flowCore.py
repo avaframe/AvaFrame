@@ -351,6 +351,7 @@ def calculation(args):
                     forest_interaction_array[cell.rowindex, cell.colindex] = max(forest_interaction_array[cell.rowindex, cell.colindex], cell.hitted_forest)
             else:
                 forest_interaction_array = None
+                
             #Backcalculation
             if infraBool:
                 if infra[cell.rowindex, cell.colindex] > 0:

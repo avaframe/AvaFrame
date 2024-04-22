@@ -109,6 +109,14 @@ def test_calc_distribution():
 # Test flowCore.py
 
 def test_calculation():
+    '''
+    Test the function in flowCore.py 'calculation'
+    that computes the GMF paths for each startcell and returns the arrays 
+    containing the parameter values combined of all paths.
+
+    The example is on an inclined plane without lateral spreading (exp = 99),
+    the flow should distribute downslope.
+    '''
 
     #define arguments
     dem = np.array([[1000, 1000, 1000], [990, 990, 990], [980,980,980], [970,970,970], [960,960,960]])
