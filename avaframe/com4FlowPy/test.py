@@ -1,10 +1,15 @@
 from avaframe.com4FlowPy.flowClass import Cell
+import avaframe.com4FlowPy.flowCore as fc
+
 import numpy as np
 #import pytest
 
 
+# Test flowClass.py
+
 def test_add_parent():
     '''
+    Test method of class Cell in flowClass.py:
     Test the computation of forest interaction with different parent cells.
     '''
 
@@ -54,6 +59,7 @@ def test_add_parent():
 
 def test_calc_distribution():
     '''
+    Test (main) method of class Cell in flowClass.py:
     Test the distribution function for a simple example at an inclined plane
     without lateral spreading.
     The total flux should be distributed in 1 cell downslope of the parent cell.
@@ -100,5 +106,55 @@ def test_calc_distribution():
     assert np.isclose(result_distribution[3], test_cell.z_delta)
 
 
+# Test flowCore.py
+
+def test_calculation():
+
+    #define arguments
+    dem = np.array([[1000, 1000, 1000], [990, 990, 990], [980,980,980], [970,970,970], [960,960,960]])
+    infra = np.zeros_like(dem)
+    release = np.array([[0,0,0], [0,1,0], [0,0,0], [0,0,0], [0,0,0]])
+    alpha = 5
+    exp = 99
+    flux_threshold = 3e-4
+    max_z_delta=9000
+    nodata = -9999
+    cellsize = 10
+    infraBool = False
+    forest = None
+
+    args = [dem,infra, release, alpha, exp,flux_threshold, max_z_delta, nodata, cellsize,
+    infraBool, forest]
+    
+    
+
+     # altitude difference = 10
+    # 10 = z_alpha + z_delta
+    # tan(alpha) = z_alpha / cellsize
+
+    z_delta1 = 10 - cellsize * np.tan(np.deg2rad(alpha))
+    z_delta2 = 20 - 2*cellsize * np.tan(np.deg2rad(alpha))
+    gamma = np.rad2deg(np.arctan(10 / cellsize))
+    
+    z_delta_array = np.array([[0, 0, 0], [0, 0 , 0], [0, z_delta1 , 0], [0, z_delta2 , 0], [0, 0 , 0]])
+    flux_array = np.array([[0, 0, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 0 , 0]])
+    count_array = np.array([[0, 0, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 0 , 0]])
+    z_delta_sum = z_delta_array
+    backcalc = np.zeros_like(dem, dtype=np.int32)
+    fp_travelangle_array = np.array([[0, 0, 0], [0, 0 , 0], [0, gamma , 0], [0, gamma , 0], [0, 0 , 0]])
+    sl_travelangle_array = fp_travelangle_array
+    forest_interaction_array = None
+   
+    assert np.allclose(fc.calculation(args)[0], z_delta_array) 
+    assert np.allclose(fc.calculation(args)[1], flux_array)
+    assert np.allclose(fc.calculation(args)[2],  count_array)
+    assert np.allclose(fc.calculation(args)[3], z_delta_sum)
+    assert np.allclose(fc.calculation(args)[4], backcalc)
+    assert np.allclose(fc.calculation(args)[5], fp_travelangle_array)
+    assert np.allclose(fc.calculation(args)[6], sl_travelangle_array)
+    assert fc.calculation(args)[7] is None
+
+
 test_add_parent()
 test_calc_distribution()
+test_calculation()

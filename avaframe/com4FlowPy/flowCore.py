@@ -138,6 +138,8 @@ def run(optTuple):
     log.info("Multiprocessing starts, used cores: %i" % (nCPU))
         
     release_list = split_release(release, nCPU)
+
+    print(release_list)
     
     with Pool(processes=nCPU) as pool:
         #paula: add forest if forest_int = 1
@@ -259,8 +261,8 @@ def calculation(args):
     backcalc = np.zeros_like(dem, dtype=np.int32)
 
     #paula
-    if forest is not None:
-        forest_interaction_array = np.ones_like(dem, dtype=np.int64) * -9999
+    #if forest is not None:
+    forest_interaction_array = np.ones_like(dem, dtype=np.int64) * -9999
     #end
     
     if infraBool:        
