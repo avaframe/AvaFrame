@@ -1607,9 +1607,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
-    d = cfg.getfloat("dRes")
-    cw = cfg.getfloat("cw")
-    sres = cfg.getfloat("sres")
+    cRes = cfg.getfloat("cRes")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
@@ -1620,7 +1618,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         log.info("Resistance area features: %s" % (resLine["Name"]))
         resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine["rasterData"]
-        cResRaster = 0.5 * d * cw / (sres * sres) * mask
+        # Combine constants (d, cw, sres) to one parameter cRes
+        cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
     else:
         cResRaster = np.zeros((nrows, ncols))
