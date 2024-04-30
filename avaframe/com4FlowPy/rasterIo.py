@@ -2,6 +2,10 @@
 
 import rasterio
 import sys
+import logging
+
+# create local logger
+log = logging.getLogger(__name__)
 
 def read_header(input_file):
     #Reads in the header of the raster file, input: filepath
@@ -44,11 +48,30 @@ def output_raster(file, file_out, raster):
     except:
         #crs = rasterio.crs.CRS.from_epsg(4326)
         crs = None
-    if file_out.suffix == '.asc':
-        new_dataset = rasterio.open(file_out, 'w', driver='AAIGrid', height = raster.shape[0], width = raster.shape[1], count=1,  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
-    if file_out.suffix == '.tif':
-        new_dataset = rasterio.open(file_out, 'w', driver='GTiff', height = raster.shape[0], width = raster.shape[1], count=1,  dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999)
+    
+    _success=True
 
-    new_dataset.write(raster, 1)
-    new_dataset.close()
+    if file_out.suffix == '.asc':
+        _driver = 'AAIGrid'
+    elif file_out.suffix == '.tif':
+        _driver = 'GTiff'
+        
+    try:
+        with rasterio.open(file_out, 'w', driver=_driver, height = raster.shape[0], width = raster.shape[1], count=1, dtype = raster.dtype, crs=crs, transform=raster_trans.transform, nodata=-9999) as new_dataset:
+            new_dataset.write(raster, 1)
+    except:
+        _success=False
+        print('Error while writing file to disk: ' + repr(error))
+    
+    try:
+        if _success==True:
+            log.info('wrote file: {}'.format(file_out))
+        else:
+            log.info('failed to write file: {}'.format(file_out))
+    except:
+        pass
+
+    
+
+
 

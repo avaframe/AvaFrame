@@ -123,7 +123,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # write model parameters paths, etc. to logfile
 
-    startLogging(modelParameters, forestParams, modelPaths)
+    startLogging(modelParameters, forestParams, modelPaths, MPOptions)
 
     # check if release file is given als .shp and convert to .tif/.asc in that case
     # NOTE-TODO: maybe also handle this in ../runCom4FlowPy.py
@@ -148,40 +148,50 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     mergeAndWriteResults(modelPaths, modelParameters)
 
     _endTime = datetime.now().replace(microsecond=0)
-    log.info("Calculation needed: " + str(_endTime - _startTime) + " seconds")
+    log.info("==================================")
+    log.info(":::> Total time needed: " + str(_endTime - _startTime) + " <:::")
+    log.info("==================================")
     
     if (modelPaths["useCustomDirs"]==True) and (modelPaths["deleteTempFolder"] == True):
         deleteTempFolder(modelPaths["tempDir"])
 
-def startLogging(modelParameters, forestParams, modelPaths):
+def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     """ just used to move this chunk of code out of the main function
         only performs logging at the start of the simulation
     """
     # Start of Calculation (logging...)
     log.info("Starting...")
     log.info("========================")
-    log.info("Alpha Angle: {}".format(modelParameters["alpha"]))
-    log.info("Exponent: {}".format(modelParameters["exp"]))
-    log.info("Flux Threshold: {}".format(modelParameters["flux_threshold"]))
-    log.info("Max Z_delta: {}".format(modelParameters["max_z"]))
+    log.info(f"{'Alpha Angle:' : <20}{modelParameters['alpha'] : <5}")
+    log.info(f"{'Exponent:' : <20}{modelParameters['exp'] : <5}")
+    log.info(f"{'Flux Threshold:' : <20}{modelParameters['flux_threshold'] : <5}")
+    log.info(f"{'Max Z_delta:' : <20}{modelParameters['max_z'] : <5}")
     log.info("------------------------")
     # Also log the used input-files
-    log.info("DEM: {}".format(modelPaths["demPath"]))
-    log.info("REL: {}".format(modelPaths["releasePath"]))
+    log.info(f"{'DEM:' : <5}{'%s'%modelPaths['demPath'] : <5}")
+    log.info(f"{'REL:' : <5}{'%s'%modelPaths['releasePath'] : <5}")
+    #log.info("DEM: {}".format(modelPaths["demPath"]))
+    #log.info("REL: {}".format(modelPaths["releasePath"]))
+    log.info("------------------------")
     if modelParameters["forestBool"]:
-        log.info("------------------------")
         log.info("Calculation using forestModule: {}".format(forestParams["forestModule"]))
-        log.info("FOREST LAYER: {}".format(modelPaths["forestPath"]))
+        log.info(f"{'FOREST LAYER:' : <14}{'%s'%modelPaths['forestPath'] : <5}")
         log.info("-----")
         for param, value in forestParams.items():
-            log.info("{}:\t{}".format(param,value))
+            log.info(f"{'%s:'%param : <20}{value : <5}")
         log.info("------------------------")
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
-        log.info("INFRA: {}".format(modelPaths["infraPath"]))
+        log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
+        log.info("------------------------")
+    for param, value in MPOptions.items():
+        log.info(f"{'%s:'%param : <20}{value : <5}")
+        #log.info("{}:\t{}".format(param,value))
     log.info("------------------------")    
-    log.info("WorkDir: {}".format(modelPaths["workDir"]))
-    log.info("ResultsDir: {}".format(modelPaths["resDir"]))
+    log.info(f"{'WorkDir:' : <12}{'%s'%modelPaths['workDir'] : <5}")
+    log.info(f"{'ResultsDir:' : <12}{'%s'%modelPaths['resDir'] : <5}")
+    #log.info("WorkDir: {}".format(modelPaths["workDir"]))
+    #log.info("ResultsDir: {}".format(modelPaths["resDir"]))
     log.info("========================")
 
 def checkInputLayerDimensions(modelParameters, modelPaths):
@@ -231,7 +241,8 @@ def tileInputLayers(modelParameters,modelPaths,rasterAttributes,tilingParameters
     _tileROWS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
     _U = int(tilingParameters["tileOverlap"] / rasterAttributes["cellsize"])  
 
-    log.info("Start Tiling.")
+    log.info("Start Tiling...")
+    log.info("---------------------")
 
     SPAM.tileRaster(modelPaths["demPath"], "dem", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     SPAM.tileRaster(modelPaths["releasePathWork"], "init", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U, isInit=True)
@@ -240,7 +251,8 @@ def tileInputLayers(modelParameters,modelPaths,rasterAttributes,tilingParameters
         SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
-    log.info("Finished Tiling All Input Rasters.\n----------------------------")
+    log.info("Finished Tiling All Input Rasters.")
+    log.info("==================================")
 
     nTiles = pickle.load(open(modelPaths["tempDir"] / "nTiles", "rb"))
 
@@ -266,19 +278,26 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
                 )
             )
 
+    log.info(' >> Start Calculation << ')
+    log.info("-------------------------")
     # Calculation, i.e. iterating over the list of Tiles which have to be processed with fc.run()
     for i,optTuple in enumerate(optList):
-        log.info("starting tile %i of %i"%(i+1,len(optList)))
+        log.info("processing tile %i of %i"%(i+1,len(optList)))
         fc.run(optTuple)
-        log.info("finished tile %i of %i"%(i+1,len(optList)))
-        log.info("---------------------")
+        log.info("finished   tile %i of %i"%(i+1,len(optList)))
+        log.info("-------------------------")
 
-    log.info("Calculation finished, merging results.")
+    log.info(' >> Calculation Finished << ')
+    log.info("==================================")
 
 def mergeAndWriteResults(modelPaths, modelOptions):
     """ function handles merging of results for all tiles inside the temp Folder
         and also writing result files to the resultDir
     """
+
+    log.info(" merging results ...")
+    log.info("-------------------------")
+
     # Merge calculated tiles
     z_delta     = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta")
     flux        = SPAM.MergeRaster(modelPaths["tempDir"], "res_flux")
@@ -291,7 +310,9 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
     
     # Write Output Files to Disk
-    log.info("Writing Output Files")
+    log.info("-------------------------")
+    log.info(" writing output files ...")
+    log.info("-------------------------")
     output_format = ".tif"
     io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("flux%s" % (output_format)), flux)
     io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta%s" % (output_format)), z_delta)

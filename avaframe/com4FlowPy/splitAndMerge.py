@@ -145,9 +145,8 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
             i += 1
 
     pickle.dump((imax, jmax), open(dirName / "nTiles", "wb"))
-    log.info("finished tiling %s: nTiles=%s\n----------------------------",
-                 fNameOut, (imax+1)*(jmax+1))
-
+    log.info("finished tiling %s: nTiles=%s" %(fNameOut, (imax+1)*(jmax+1)))
+    log.info("----------------------------")
     # del largeRaster, largeHeader
     del largeRaster
     gc.collect()
