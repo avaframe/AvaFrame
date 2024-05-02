@@ -672,7 +672,7 @@ def test_initializeResistance():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"cRes": 0.003}
+    cfg["GENERAL"] = {"cRes": 0.003, "detK": 10, "detrainment": False, "detWithoutRes": False}
 
     nrows = 11
     ncols = 15
@@ -703,7 +703,7 @@ def test_initializeResistance():
     dem["originalHeader"] = dem["header"]
     dem["header"]["xllcenter"] = 0.0
     dem["header"]["yllcenter"] = 0.0
-    cResRaster, reportAreaInfo = com1DFA.initializeResistance(
+    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
     )
     testArray = np.zeros((nrows, ncols))
@@ -713,8 +713,39 @@ def test_initializeResistance():
     print("reportAreaInfo", reportAreaInfo)
 
     assert np.array_equal(cResRaster, testArray)
+    assert np.array_equal(detRaster, np.zeros((nrows, ncols)))
+    assert np.sum(detRaster) == 0.0
     assert np.sum(cResRaster) == 0.363
     assert reportAreaInfo["resistance"] == "Yes"
+    assert reportAreaInfo["detrainment"] == "No"
+
+    cfg["GENERAL"] = {"cRes": 0.003, "detK": 10.0, "detrainment": True, "detWithoutRes": False}
+    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
+        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
+    )
+    detTestArray = np.zeros((nrows, ncols))
+    detTestArray[0:11, 0:11] = 10.0
+
+    assert np.array_equal(cResRaster, testArray)
+    assert np.array_equal(detRaster, detTestArray)
+    assert np.sum(detRaster) == 1210.0
+    assert np.sum(cResRaster) == 0.363
+    assert reportAreaInfo["resistance"] == "Yes"
+    assert reportAreaInfo["detrainment"] == "Yes"
+
+    cfg["GENERAL"] = {"cRes": 0.003, "detK": 10.0, "detrainment": True, "detWithoutRes": True}
+    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
+        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
+    )
+    detTestArray = np.zeros((nrows, ncols))
+    detTestArray[0:11, 0:11] = 10.0
+
+    assert np.array_equal(cResRaster, np.zeros((nrows, ncols)))
+    assert np.array_equal(detRaster, detTestArray)
+    assert np.sum(detRaster) == 1210.0
+    assert np.sum(cResRaster) == 0.0
+    assert reportAreaInfo["resistance"] == "No"
+    assert reportAreaInfo["detrainment"] == "Yes"
 
 
 def test_setDEMOriginToZero():
@@ -1161,6 +1192,7 @@ def test_initializeParticles():
         "trajectoryLengthXYZ",
         "z",
         "m",
+        "dmDet",
         "massPerPart",
         "nPPK",
         "mTot",
@@ -1289,6 +1321,7 @@ def test_writeMBFile(tmp_path):
     # setup required input
     infoDict = {"timeStep": np.asarray([0, 1, 2, 3, 4])}
     infoDict["massEntrained"] = np.asarray([0, 0, 10, 20, 30])
+    infoDict["massDetrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massTotal"] = np.asarray([60.0, 60.0, 70.0, 90.0, 120.0])
     avaName = "data/avaTest"
     avaDir = pathlib.Path(tmp_path, avaName)
@@ -1304,9 +1337,40 @@ def test_writeMBFile(tmp_path):
 
     assert np.array_equal(mbInfo[:, 0], infoDict["timeStep"])
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
+    assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 3
+    assert mbInfo.shape[1] == 4
+
+    infoDict["massEntrained"] = np.asarray([0, 0, 0, 0, 0])
+    infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
+    infoDict["massTotal"] = np.asarray([60.0, 50.0, 50.0, 20.0, 20.0])
+
+    com1DFA.writeMBFile(infoDict, avaDir, logName)
+    mbFilePath = avaDir / "Outputs" / "com1DFA" / "mass_simTestName.txt"
+    mbInfo = np.loadtxt(mbFilePath, delimiter=",", skiprows=1)
+
+    assert np.array_equal(mbInfo[:, 0], infoDict["timeStep"])
+    assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
+    assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
+    assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
+    assert mbInfo.shape[0] == 5
+    assert mbInfo.shape[1] == 4
+
+    infoDict["massEntrained"] = np.asarray([0, 20, 0, 0, 10])
+    infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
+    infoDict["massTotal"] = np.asarray([60.0, 70.0, 70.0, 40.0, 50.0])
+
+    com1DFA.writeMBFile(infoDict, avaDir, logName)
+    mbFilePath = avaDir / "Outputs" / "com1DFA" / "mass_simTestName.txt"
+    mbInfo = np.loadtxt(mbFilePath, delimiter=",", skiprows=1)
+
+    assert np.array_equal(mbInfo[:, 0], infoDict["timeStep"])
+    assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
+    assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
+    assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
+    assert mbInfo.shape[0] == 5
+    assert mbInfo.shape[1] == 4
 
 
 def test_savePartToPickle(tmp_path):
@@ -1462,6 +1526,7 @@ def test_initializeFields():
         "uy": np.asarray([0.0, 0.0, 0.0]),
         "uz": np.asarray([0.0, 0.0, 0.0]),
         "m": np.asarray([10.0, 10.0, 10.0]),
+        "dmDet": np.asarray([0.0, 0.0, 0.0]),
         "trajectoryAngle": np.asarray([0.0, 0.0, 0.0]),
     }
     cfg = configparser.ConfigParser()
@@ -1481,7 +1546,7 @@ def test_initializeFields():
     print("compute TA", fields["computeTA"])
     print("compute P", fields["computeP"])
 
-    assert len(fields) == 16
+    assert len(fields) == 17
     assert fields["computeTA"] is False
     assert fields["computeKE"] is False
     assert fields["computeP"]
@@ -1497,12 +1562,13 @@ def test_initializeFields():
     assert np.sum(fields["pft"]) != 0.0
     assert np.sum(fields["FT"]) != 0.0
     assert np.sum(fields["FM"]) != 0.0
+    assert np.sum(fields["dmDet"]) == 0.0
 
     cfg["REPORT"] = {"plotFields": "pft|pfv"}
     cfg["GENERAL"] = {"resType": "pke|pta|pft|pfv", "rho": "200.", "interpOption": "2"}
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
-    assert len(fields) == 16
+    assert len(fields) == 17
     assert fields["computeTA"]
     assert fields["computeKE"]
     assert fields["computeP"] is False
@@ -1752,9 +1818,7 @@ def test_initializeSimulation(tmp_path):
         "initPartDistType": "uniform",
         "thresholdPointInPoly": "0.001",
         "avalancheDir": "data/avaTest",
-        "dRes": "0.3",
-        "cw": "0.5",
-        "sres": "5",
+        "cRes": "0.003",
         "initialiseParticlesFromFile": "False",
         "entTempRef": "-10.",
         "cpIce": "2050.",
@@ -1947,6 +2011,8 @@ def test_runCom1DFA(tmp_path, caplog):
         "curvAcc",
         "totalEnthalpy",
         "nExitedParticles",
+        "dmDet",
+        "massDetrained"
     ]
 
     # read one particles dictionary

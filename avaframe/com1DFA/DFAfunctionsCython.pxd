@@ -8,6 +8,8 @@
 
 cpdef (double, double) computeEntMassAndForce(double, double, double, double, double, double, double)
 
+cpdef double computeDetMass(double, double, double, double)
+
 cpdef double computeResForce(double, double, double, double, double, double, int)
 
 cdef (double, double, double) addArtificialViscosity(double, double, double, double, double, double, double, double,
