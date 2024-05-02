@@ -128,6 +128,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
   cdef double[:, :] entrEnthRaster = fields['entrEnthRaster']
+  # PS
+  cdef double[:, :] detRaster = fields['detRaster']
+  #PS end
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
@@ -137,11 +140,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dMDet = np.zeros(nPart, dtype=np.float64)
   cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
-  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
+  cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
+  cdef double dmDet, detCell, areaDetPart
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -150,6 +155,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double w[4]
   cdef double wEnd[4]
   cdef int k
+
   force = {}
   # loop on particles
   for k in range(nPart):
@@ -341,6 +347,30 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
 
+      # PS detrainment
+      # adding detrainment analogous to entrainment
+      detCell = detRaster[indCellY, indCellX]
+      
+      if detCell > 0:
+        # compute detrained mass
+        dmDet, areaDetPart = computeDetMassAndForce(dt, detCell, areaPart, uMag)
+        if dmDet > 0:
+          dmDet = 0
+        if abs(dmDet) > m:
+          # mass can't be negative
+          dmDet = 0
+
+        # TODO: enthalpy change / energy change?
+
+        # update velocity (dmDet <= 0) according to momentum balance
+        ux = ux * m / (m + dmDet)
+        uy = uy * m / (m + dmDet)
+        uz = uz * m / (m + dmDet)
+        # update mass
+        m = m + dmDet
+        mass[k] = m
+        dMDet[k] = dmDet
+
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
@@ -352,6 +382,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
 
   # save results
   force['dM'] = np.asarray(dM)
+  force['dMDet'] = np.asarray(dMDet)
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
@@ -363,6 +394,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
+
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -435,6 +467,44 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
           areaEntrPart = entrMassCell / rhoEnt
 
   return dm, areaEntrPart
+
+cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
+                                              double areaPart, double uMag):
+  """ PS: compute force component due to detrained mass
+
+  Parameters
+  ----------
+  dt: float
+    time step
+  detCell : float
+      coefficient for detrainment
+  areaPart : float
+      particle area
+  uMag : float
+      particle speed (velocity magnitude)
+
+  Returns
+  -------
+  dm : float
+      detrained mass
+  areaDetPart : float
+      Area of detrainment 
+  """
+  cdef double width, ABotSwiped, areaDetPart
+  # compute detrained mass
+  cdef double dmDet = 0
+  if detCell > 0 and uMag > 0:
+      dmDet = - detCell / uMag * dt * areaPart
+  else:
+      dmDet = 0
+
+  if dmDet > 0 or np.isnan(dmDet):
+      dmDet = 0
+
+  # TODO: how to calculate detArea? - do we need it?
+  areaDetPart = areaPart
+
+  return dmDet, areaDetPart
 
 
 cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
@@ -633,6 +703,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
   cdef double[:] dM = force['dM']
+  cdef double[:] dMDet = force['dMDet']
   # read dam
   dam = dem['damLine']
   cdef int flagDam = dam['dam']
@@ -672,7 +743,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv, uMagt0, uMagt1
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
-  cdef double massEntrained = 0, massFlowing = 0, dissEm = 0
+  cdef double massEntrained = 0, massDetrained = 0, massFlowing = 0, dissEm = 0
   cdef int k, inter
   cdef int nRemove = 0
   # variables for interpolation
@@ -718,6 +789,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     # update mass (already done un computeForceC)
     mNew = m
     massEntrained = massEntrained + dM[k]
+    massDetrained = massDetrained + dMDet[k]
     # update position
     if centeredPosition:
       xNew = x + dtStop * 0.5 * (ux + uxNew)
@@ -888,6 +960,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['y'] = np.asarray(yNewArray)
   particles['z'] = np.asarray(zNewArray)
   particles['massEntrained'] = massEntrained
+  particles['massDetrained'] = massDetrained
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew

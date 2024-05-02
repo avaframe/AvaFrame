@@ -638,7 +638,7 @@ def prepareInputData(inputSimFiles, cfg):
         entrainmentArea = ""
 
     # get line from resistance area polygon
-    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]:
+    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res", "det"]: 
         resFile = inputSimFiles["resFile"]
         resLine = shpConv.readLine(resFile, "", demOri)
         resistanceArea = resFile.name
@@ -1097,6 +1097,14 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     fields["entrEnthRaster"] = entrEnthRaster
     entreainableMass = np.nansum(fields["entrMassRaster"] * dem["areaRaster"])
     log.info("Mass available for entrainment: %.2f kg" % (entreainableMass))
+
+    # PS detrainment
+    log.debug("Initializing detrainment area")
+    detRaster, reportAreaInfo = initializeDetrainment(
+        cfgGen, dem, simTypeActual, inputSimLines["resLine"], reportAreaInfo, thresholdPointInPoly
+    )
+    fields["detRaster"] = detRaster
+    # PS end
 
     log.debug("Initializing resistance area")
     cResRaster, reportAreaInfo = initializeResistance(
@@ -1582,6 +1590,51 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
 
     return entrMassRaster, entrEnthRaster, reportAreaInfo
 
+def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
+    """PS
+    Initialize detrainment matrix: use same File as for Resistance
+    TODO: own function or intergrated in initializeResistance?
+
+    Parameters
+    ----------
+    dem: dict
+        dem dictionary
+    simTypeActual: str
+        simulation type
+    resLine: dict
+        resistance line dictionary
+    reportAreaInfo: dict
+        simulation area information dictionary
+    thresholdPointInPoly: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
+
+    Returns
+    -------
+    detRaster : 2D numpy array
+        raster of detrainmnet area
+    reportAreaInfo: dict
+        simulation area information dictionary completed with detrainment area info
+    """
+    K = cfg.getfloat("detK")
+    # read dem header
+    header = dem["originalHeader"]
+    ncols = header["ncols"]
+    nrows = header["nrows"]
+    if simTypeActual in ["det"]: 
+        resistanceArea = resLine["fileName"]
+        log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
+        log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
+        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
+        mask = resLine["rasterData"]
+        detRaster = K * mask
+        reportAreaInfo["detrainment"] = "Yes"
+    else:
+        detRaster = np.zeros((nrows, ncols))
+        reportAreaInfo["detrainment"] = "No"
+
+    return detRaster, reportAreaInfo
+
 
 def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
     """Initialize resistance matrix
@@ -1708,6 +1761,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     fieldsList = []
     timeM = []
     massEntrained = []
+    massDetrained = []
     massTotal = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
@@ -1771,6 +1825,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
 
         # write mass balance info
         massEntrained.append(particles["massEntrained"])
+        massDetrained.append(particles["massDetrained"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
         # print progress to terminal
@@ -1869,12 +1924,14 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     # create infoDict for report and mass log file
     infoDict = {
         "massEntrained": massEntrained,
+        "massDetrained": massDetrained,
         "timeStep": timeM,
         "massTotal": massTotal,
         "tCPU": tCPU,
         "final mass": massTotal[-1],
         "initial mass": massTotal[0],
         "entrained mass": np.sum(massEntrained),
+        "detrained mass": np.sum(massDetrained),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
     }
 
@@ -2056,15 +2113,16 @@ def writeMBFile(infoDict, avaDir, logName):
 
     t = infoDict["timeStep"]
     massEntrained = infoDict["massEntrained"]
+    massDetrained = infoDict["massDetrained"]
     massTotal = infoDict["massTotal"]
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained\n")
+        mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
-            mFile.write("%.02f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m]))
+            mFile.write("%.02f,    %.06f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m], massDetrained[m]))
 
 
 def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
@@ -2654,7 +2712,7 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     entResInfo = inputSimFiles["entResInfo"]
 
     # check if set simType is a valid option
-    validSimTypesStr = "available|null|ent|entres|res"
+    validSimTypesStr = "available|null|ent|entres|res|det"
     validSimTypes = validSimTypesStr.split("|")
     validArray = [True if item in validSimTypes else False for item in simTypeList]
     if False in validArray:
@@ -2670,6 +2728,8 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
             simTypeList.append("ent")
         elif entResInfo["flagEnt"] == "No" and entResInfo["flagRes"] == "Yes":
             simTypeList.append("res")
+        elif entResInfo["flagDet"] == "Yes":
+            simTypeList.append("det")
         # always add null simulation
         simTypeList.append("null")
         simTypeList.remove("available")
