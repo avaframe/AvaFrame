@@ -116,7 +116,7 @@ def checkResType(fullCfg, section, key, value):
     # check that the resType asked actually exists
     if value != '':
         resType = value.split('|')
-        validResTypes = ['ppr', 'pft', 'pfv', 'pta', 'pke', 'FT', 'FV', 'FM', 'Vx', 'Vy', 'Vz', 'P', 'TA', 'particles']
+        validResTypes = ['ppr', 'pft', 'pfv', 'pta', 'pke', 'FT', 'FV', 'FM', 'Vx', 'Vy', 'Vz', 'P', 'TA', 'particles', 'dmDet']
         message = (
             'The parameter % s is not a valid resType. It will not be saved')
         newResType = []

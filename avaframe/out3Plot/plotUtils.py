@@ -242,6 +242,7 @@ colorMaps = {
     "TA": cmapTravelAngle,
     "pke": cmapEnergy,
     "zdelta": cmapZdelta,
+    "dmDet": cmapProb
 }
 
 cmapDEM = cmapGreys
