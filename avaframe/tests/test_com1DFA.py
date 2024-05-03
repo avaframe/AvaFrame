@@ -672,7 +672,7 @@ def test_initializeResistance():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"dRes": "0.3", "cw": "0.5", "sres": "5"}
+    cfg["GENERAL"] = {"cRes": 0.003}
 
     nrows = 11
     ncols = 15

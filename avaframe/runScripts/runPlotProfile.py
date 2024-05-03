@@ -27,7 +27,7 @@ resType = "pfv"
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain["MAIN"]["avalancheDir"]
-outDir = pathlib.Path(avalancheDir, 'Outputs', 'out3Plot')
+outDir = pathlib.Path(avalancheDir, 'Outputs', '../out3Plot')
 
 # Start logging
 logName = "plotProfiles_%s_%s" % (resType, varPar)
