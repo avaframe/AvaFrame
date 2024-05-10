@@ -915,7 +915,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
         csvData['time'] = particles['t']
 
         # create pandas dataFrame and save to csv
-        outFile = outDir / ('particles%s.csv.%d' % (simName, count))
+        outFile = outDir / ('particles%s.csv.%04d' % (simName, count))
         particlesData = pd.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
