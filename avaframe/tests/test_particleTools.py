@@ -248,9 +248,9 @@ def test_savePartToCsv(tmp_path):
     particleTools.savePartToCsv(particleProperties, dictList, outDir)
 
     # read csv file
-    partCsv1 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.0'
+    partCsv1 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.0000'
     DF1 = pd.read_csv(partCsv1)
-    partCsv2 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.1'
+    partCsv2 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.0001'
     DF2 = pd.read_csv(partCsv2)
     velMag = np.sqrt(4**2 + 4**2 + 4**2)
 
