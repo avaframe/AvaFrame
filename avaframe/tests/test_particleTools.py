@@ -204,10 +204,10 @@ def test_readPartFromPickle(tmp_path):
     inDir.mkdir()
     particlesTestDict = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
                          'm': np.asarray([10., 11., 11.]), 't': 0.}
-    pickle.dump(particlesTestDict, open(inDir / 'test.p', "wb"))
+    pickle.dump(particlesTestDict, open(inDir / 'test.pickle', "wb"))
     testDir = inDir / 'Outputs' / 'com1DFA' / 'particles'
     testDir.mkdir(parents=True)
-    pickle.dump(particlesTestDict, open(testDir / 'test.p', "wb"))
+    pickle.dump(particlesTestDict, open(testDir / 'test.pickle', "wb"))
 
     # call function to be tested
     Particles, TimeStepInfo = particleTools.readPartFromPickle(

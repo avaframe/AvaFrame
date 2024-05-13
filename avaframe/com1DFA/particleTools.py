@@ -851,9 +851,9 @@ def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA')
 
     # search for all pickles within directory
     if simName:
-        name = '*' + simName + '*.p'
+        name = '*' + simName + '*.pickle'
     else:
-        name = '*.p'
+        name = '*.pickle'
     PartDicts = sorted(list(inDir.glob(name)))
 
     # initialise list of particle dictionaries

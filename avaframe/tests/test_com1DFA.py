@@ -1334,8 +1334,8 @@ def test_savePartToPickle(tmp_path):
     com1DFA.savePartToPickle(dictList, outDir, logName)
 
     # read pickle
-    picklePath1 = outDir / "particles_simNameTest_0000.0000.p"
-    picklePath2 = outDir / "particles_simNameTest_0002.0000.p"
+    picklePath1 = outDir / "particles_simNameTest_0000.0000.pickle"
+    picklePath2 = outDir / "particles_simNameTest_0002.0000.pickle"
     particlesRead1 = pickle.load(open(picklePath1, "rb"))
     particlesRead2 = pickle.load(open(picklePath2, "rb"))
 
@@ -1356,7 +1356,7 @@ def test_savePartToPickle(tmp_path):
     com1DFA.savePartToPickle(particles1, outDir, logName)
 
     # read pickle
-    picklePath3 = outDir / "particles_simNameTest3_0000.0000.p"
+    picklePath3 = outDir / "particles_simNameTest3_0000.0000.pickle"
     particlesRead3 = pickle.load(open(picklePath3, "rb"))
 
     print("particklesRead3", particlesRead3)
@@ -1951,7 +1951,7 @@ def test_runCom1DFA(tmp_path, caplog):
 
     # read one particles dictionary
     inDir = avaDir / "Outputs" / "com1DFA" / "particles"
-    PartDicts = sorted(list(inDir.glob("*.p")))
+    PartDicts = sorted(list(inDir.glob("*.pickle")))
     particlesList = []
     timeStepInfo = []
     for particles in PartDicts:

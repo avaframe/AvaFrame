@@ -2239,11 +2239,11 @@ def savePartToPickle(dictList, outDir, logName):
 
     if isinstance(dictList, list):
         for dict in dictList:
-            fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dict["t"])), "wb")
+            fi = open(outDir / ("particles_%s_%09.4f.pickle" % (logName, dict["t"])), "wb")
             pickle.dump(dict, fi)
             fi.close()
     else:
-        fi = open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList["t"])), "wb")
+        fi = open(outDir / ("particles_%s_%09.4f.pickle" % (logName, dictList["t"])), "wb")
         pickle.dump(dictList, fi)
         fi.close()
 
