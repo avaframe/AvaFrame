@@ -216,6 +216,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Merge calculated tiles
     z_delta = SPAM.MergeRaster(tempDir, "res_z_delta")
     flux = SPAM.MergeRaster(tempDir, "res_flux")
+    flux_sum = SPAM.MergeRaster(tempDir, "res_flux_sum")
     cell_counts = SPAM.MergeRaster(tempDir, "res_count")
     z_delta_sum = SPAM.MergeRaster(tempDir, "res_z_delta_sum")
     fp_ta = SPAM.MergeRaster(tempDir, "res_fp")
@@ -226,6 +227,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     log.info("Writing Output Files")
     output_format = ".tif"
     io.output_raster(demPath, resDir / ("flux%s" % (output_format)), flux)
+    io.output_raster(demPath, resDir / ("flux_sum%s" % (output_format)), flux_sum)
     io.output_raster(demPath, resDir / ("z_delta%s" % (output_format)), z_delta)
     io.output_raster(demPath, resDir / ("FP_travel_angle%s" % (output_format)), fp_ta)
     io.output_raster(demPath, resDir / ("SL_travel_angle%s" % (output_format)), sl_ta)

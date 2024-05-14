@@ -140,6 +140,7 @@ def run(optTuple):
 
     z_delta_array = np.zeros_like(dem)
     flux_array = np.zeros_like(dem)
+    flux_sum_array = np.zeros_like(dem)
     count_array = np.zeros_like(dem)
     z_delta_sum = np.zeros_like(dem)
     backcalc = np.zeros_like(dem)
@@ -148,6 +149,7 @@ def run(optTuple):
 
     z_delta_list = []
     flux_list = []
+    flux_sum_list = []
     cc_list = []
     z_delta_sum_list = []
     backcalc_list = []
@@ -164,12 +166,14 @@ def run(optTuple):
         backcalc_list.append(res[4])
         fp_ta_list.append(res[5])
         sl_ta_list.append(res[6])
+        flux_sum_list.append(res[7])
 
     logging.info('Calculation finished, getting results.')
     for i in range(len(z_delta_list)):
         z_delta_array = np.maximum(z_delta_array, z_delta_list[i])
         flux_array = np.maximum(flux_array, flux_list[i])
-        count_array += cc_list[i]
+        flux_sum_array += flux_list[i]
+        count_array += cc_list[i] # PS:passt doch??
         z_delta_sum += z_delta_sum_list[i]
         backcalc = np.maximum(backcalc, backcalc_list[i])
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
@@ -203,6 +207,7 @@ def calculation(args):
         z_delta     Array like DEM with the max. kinetic Energy Height for every
                     pixel
         flux_array  Array with max. concentration factor saved
+        flux_sum_array  Array with sum of concentration factor saved
         count_array Array with the number of hits for every pixel
         elh_sum     Array with the sum of Energy Line Height
         back_calc   Array with back calculation, still to do!!!
@@ -222,6 +227,7 @@ def calculation(args):
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
     flux_array = np.zeros_like(dem, dtype=np.float32)
+    flux_sum_array = np.zeros_like(dem, dtype=np.float32)
     count_array = np.zeros_like(dem, dtype=np.int32)
     
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
@@ -290,7 +296,9 @@ def calculation(args):
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-            count_array[cell.rowindex, cell.colindex] += int(1)
+            # PS & Kalin
+            flux_sum_array[cell.rowindex, cell.colindex] += cell.flux
+            count_array[cell.rowindex, cell.colindex] += int(1) # PS: add 1 if cell is hitted
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
@@ -310,6 +318,6 @@ def calculation(args):
             row_list, col_list = get_start_idx(dem, release)
         startcell_idx += 1
     #end = datetime.now().replace(microsecond=0)
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, flux_sum_array
 
 
