@@ -183,6 +183,7 @@ def run(optTuple):
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
     np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), z_delta_sum)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), flux_array)
+    np.save(tempDir / ("res_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), flux_sum_array)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), count_array)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
