@@ -172,7 +172,7 @@ def run(optTuple):
     for i in range(len(z_delta_list)):
         z_delta_array = np.maximum(z_delta_array, z_delta_list[i])
         flux_array = np.maximum(flux_array, flux_list[i])
-        flux_sum_array += flux_list[i]
+        flux_sum_array += flux_sum_list[i]
         count_array += cc_list[i] # PS:passt doch??
         z_delta_sum += z_delta_sum_list[i]
         backcalc = np.maximum(backcalc, backcalc_list[i])
