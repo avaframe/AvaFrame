@@ -187,24 +187,15 @@ Resistance:
 """""""""""""
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
-as a function of the characteristic diameter :math:`\overline{d}` and height
-:math:`h_{\text{res}}` of the obstacles, the spacing
-:math:`s_{\text{res}}` between the obstacles and an empirical
-coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
-is defined as :math:`\min(\overline{h}, h_{res} )`:
+as a function of the characteristic
+coefficient :math:`c_{\text{res}}` that depends on the structure of the obstacles and the effective height :math:`h^{\text{eff}}`, defined as :math:`\min(\overline{h}, h_{res} )`:
 
 .. math::
-   F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
+   F_i^{\text{res}} = -c_{\text{res}}\,\rho_0\,A\,
     h^{\text{eff}}\,\overline{u}^2\,
     \frac{\overline{u}_i}{\|\overline{u}\|}
 
-
-.. _f-res:
-
-.. figure:: _static/f_res.png
-        :width: 90%
-
-        Resistance force due to obstacles (from :cite:`FiKo2013`)
+Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. Please check out previous documentation versions for details.
 
 
 
