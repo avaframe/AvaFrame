@@ -173,7 +173,7 @@ def run(optTuple):
         z_delta_array = np.maximum(z_delta_array, z_delta_list[i])
         flux_array = np.maximum(flux_array, flux_list[i])
         flux_sum_array += flux_sum_list[i]
-        count_array += cc_list[i] # PS:passt doch??
+        count_array += cc_list[i]
         z_delta_sum += z_delta_sum_list[i]
         backcalc = np.maximum(backcalc, backcalc_list[i])
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
@@ -272,8 +272,8 @@ def calculation(args):
 
                 z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                 # Sort this lists by elh, to start with the highest cell
-
-            for i in range(idx, len(cell_list)):  # Check if Cell already exists
+            
+            for i in range(0, len(cell_list)):  # Check if Cell already exists #instead of 0: idx
                 k = 0
                 while k < len(row):
                     if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
@@ -287,6 +287,7 @@ def calculation(args):
                         z_delta = np.delete(z_delta, k)
                     else:
                         k += 1
+            
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
@@ -297,9 +298,8 @@ def calculation(args):
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-            # PS & Kalin
             flux_sum_array[cell.rowindex, cell.colindex] += cell.flux
-            count_array[cell.rowindex, cell.colindex] += int(1) # PS: add 1 if cell is hitted
+            count_array[cell.rowindex, cell.colindex] += int(1)
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex], cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex], cell.sl_gamma)
