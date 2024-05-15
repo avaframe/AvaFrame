@@ -172,7 +172,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
     # also for the other parameters that are varied subsequently
     # first check if no parameter variation in provided for these parameters in the com module ini
-    # if so - errror
+    # if so - error
     _, _ = checkParameterSettings(cfg, varParList)
 
     # this is now done for parameter VARNAME from inputs
@@ -552,6 +552,13 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
     # check if thickness parameters are actually read from shp file
     _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
 
+    modNameString = str(pathlib.Path(comMod.__file__).stem)
+    if modNameString.lower() == "com1dfa":
+        # check if thickness parameters are actually read from shp file
+        _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
+    else:
+        thReadFromShp = []
+
     # create sets of parameters values for parameter variation
     if len(thReadFromShp) > 0:
         paramValuesDList = createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParList,
@@ -851,10 +858,11 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
         for count1, pVal in enumerate(paramValuesD['values']):
             for index, par in enumerate(paramValuesD['names']):
                 cfgStart['GENERAL'][par] = str(pVal[index])
-            cfgStart['VISUALISATION']['scenario'] = str(count1)
-            cfgStart['INPUT']['thFromIni'] = paramValuesD['thFromIni']
-            if 'releaseScenario' in paramValuesD.keys():
-                cfgStart['INPUT']['releaseScenario'] = paramValuesD['releaseScenario']
+            if modName.lower() == 'com1dfa':
+                cfgStart['VISUALISATION']['scenario'] = str(count1)
+                cfgStart['INPUT']['thFromIni'] = paramValuesD['thFromIni']
+                if 'releaseScenario' in paramValuesD.keys():
+                    cfgStart['INPUT']['releaseScenario'] = paramValuesD['releaseScenario']
             cfgF = pathlib.Path(cfgPath, ('%d_%sCfg.ini' % (countS, modName)))
             with open(cfgF, 'w') as configfile:
                 cfgStart.write(configfile)
