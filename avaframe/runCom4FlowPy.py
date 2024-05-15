@@ -39,7 +39,7 @@ def main():
     cfgMain = cfgUtils.getGeneralConfig()
     cfg     = cfgUtils.getModuleConfig(com4FlowPy)
 
-    cfgSetup = cfg['SETUP']
+    cfgSetup = cfg['GENERAL']
     cfgFlags = cfg['FLAGS']
     cfgCustomPaths = cfg['PATHS']
 
@@ -165,7 +165,7 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy):
     # read infra area
     infraDir = avalancheDir / "Inputs" / "INFRA"
     infraPath = sorted(list(infraDir.glob("*.tif")))
-    if len(infraPath) == 0 or cfgFlowPy.getboolean("SETUP", "infra") is False:
+    if len(infraPath) == 0 or cfgFlowPy.getboolean("GENERAL", "infra") is False:
         infraPath = ""
     elif len(infraPath) > 1:
         message = "More than one Infrastructure file .%s file in %s not allowed" % (infraDir)
