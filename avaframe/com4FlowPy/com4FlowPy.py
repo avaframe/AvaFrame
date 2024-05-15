@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon May  7 14:23:00 2018
+com4FlowPy main function
+mainly handling input of data, model params
+and output of model results
 """
-
 # Load modules
 import pathlib
 import numpy as np
 from datetime import datetime
 import logging
 import pickle
+import shutil
+import os
+import sys
 
-# Local imports
+# Local imports (avaFrame API)
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -19,222 +23,385 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
-# Flow-Py Libraries
+# com4FlowPy Libraries
 import avaframe.com4FlowPy.rasterIo as io
 import avaframe.com4FlowPy.flowCore as fc
 import avaframe.com4FlowPy.splitAndMerge as SPAM
 
 # create local logger
-# ToDo: save log to results
 log = logging.getLogger(__name__)
 
 
-def readFlowPyinputs(avalancheDir, cfgFlowPy):
-    cfgPath = {}
-    avalancheDir = pathlib.Path(avalancheDir)
-    # read release area
-    releaseDir = avalancheDir / "Inputs" / "REL"
-    # from shapefile
-    relFiles = sorted(list(releaseDir.glob("*.shp")))
-    tryTif = False
-    if len(relFiles) == 0:
-        log.info("Found not *.shp file containing the release area in %s, trying with *.tif" % releaseDir)
-        tryTif = True
-    elif len(relFiles) > 1:
-        message = "There should be exactly one *.shp file containing the release area in %s" % releaseDir
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        log.info("Release area file is: %s" % relFiles[0])
-        cfgPath["releasePath"] = relFiles[0]
-
-    # from tif
-    if tryTif:
-        relFiles = sorted(list(releaseDir.glob("*.tif")))
-        if len(relFiles) == 0:
-            message = (
-                "You need to provide one *.shp file or one *.tif file containing the release area in %s"
-                % releaseDir
-            )
-            log.error(message)
-            raise FileNotFoundError(message)
-        elif len(relFiles) > 1:
-            message = "There should be exactly one *.tif file containing the release area in %s" % releaseDir
-            log.error(message)
-            raise AssertionError(message)
-        else:
-            log.info("Release area file is: %s" % relFiles[0])
-            cfgPath["releasePath"] = relFiles[0]
-
-    # read infra area
-    infraDir = avalancheDir / "Inputs" / "INFRA"
-    infraPath = sorted(list(infraDir.glob("*.tif")))
-    if len(infraPath) == 0 or cfgFlowPy.getboolean("SETUP", "infra") is False:
-        infraPath = ""
-    elif len(infraPath) > 1:
-        message = "More than one Infrastructure file .%s file in %s not allowed" % (infraDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        infraPath = infraPath[0]
-        log.info("Infrastructure area file is: %s" % infraPath)
-    cfgPath["infraPath"] = infraPath
-
-    # read DEM
-    demPath = gI.getDEMPath(avalancheDir)
-    log.info("DEM file is: %s" % demPath)
-    cfgPath["demPath"] = demPath
-
-    # make output path
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, "com4FlowPy", False)
-    cfgPath["outDir"] = outDir
-    cfgPath["workDir"] = workDir
-
-    return cfgPath
-
-
 def com4FlowPyMain(cfgPath, cfgSetup):
-    # Input Parameters
-    alpha = float(cfgSetup["alpha"])
-    exp = float(cfgSetup["exp"])
-    flux_threshold = float(cfgSetup["flux_threshold"])
-    max_z = float(cfgSetup["max_z"])
-    nCPU = int(cfgSetup["cpuCount"])
-    tileSize = float(cfgSetup["tileSize"])
-    tileOverlap = float(cfgSetup["tileOverlap"])
-    # Input Paths
-    outDir = cfgPath["outDir"]
-    workDir = cfgPath["workDir"]
-    demPath = cfgPath["demPath"]
-    releasePath = cfgPath["releasePath"]
-    infraPath = cfgPath["infraPath"]
-    
+    """com4FlowPy main function - handles:
+        * reading of input data and model Parameters
+        * calculation
+        * writing of result files
 
+    the function assumes that all necessary directories inside cfgPath have
+    already been created (workDir, tempDir)
+
+    Parameters
+    ----------
+    cfgPath:  dictionary with paths from .ini file
+    cfgSetup: dictionary with other model configs from .ini file
+
+    Returns
+    ----------
+    nothing - performs model run and writes results to disk
+    """
+    _startTime = datetime.now().replace(microsecond=0)  # used for timing model runtime
+
+    modelParameters = {}
+    # Flow-Py parameters
+    modelParameters["alpha"] = cfgSetup.getfloat("alpha")  # float(cfgSetup["alpha"])
+    modelParameters["exp"] = cfgSetup.getfloat("exp")  # float(cfgSetup["exp"])
+    modelParameters["flux_threshold"] = cfgSetup.getfloat("flux_threshold")  # float(cfgSetup["flux_threshold"])
+    modelParameters["max_z"] = cfgSetup.getfloat("max_z")  # float(cfgSetup["max_z"])
+
+    # Flags for use of Forest and/or Infrastructure
+    modelParameters["infraBool"] = cfgSetup.getboolean("infra")
+    modelParameters["forestBool"] = cfgSetup.getboolean("forest")
+    # modelParameters["infra"]  = cfgSetup["infra"]
+    # modelParameters["forest"] = cfgSetup["forest"]
+
+    # Tiling Parameters used for calculation of large model-domains
+    tilingParameters = {}
+    tilingParameters["tileSize"] = cfgSetup.getfloat("tileSize")  # float(cfgSetup["tileSize"])
+    tilingParameters["tileOverlap"] = cfgSetup.getfloat("tileOverlap")  # float(cfgSetup["tileOverlap"])
+
+    # Paths
+    modelPaths = {}
+    modelPaths["outDir"] = cfgPath["outDir"]
+    modelPaths["workDir"] = cfgPath["workDir"]
+    modelPaths["demPath"] = cfgPath["demPath"]
+    modelPaths["releasePath"] = cfgPath["releasePath"]
+
+    modelPaths["resDir"] = cfgPath["resDir"]
+    modelPaths["tempDir"] = cfgPath["tempDir"]
+
+    # check if 'customDirs' are used - alternative is 'default' AvaFrame Folder Structure
+    modelPaths["useCustomDirs"] = True if cfgPath["customDirs"] == "True" else False
+    # check if the temp folder, where intermediate results are stored, should be deleted after writing output files
+    modelPaths["deleteTempFolder"] = True if cfgPath["deleteTemp"] == "True" else False
+
+    # Multiprocessing Options
+    MPOptions = {}
+    MPOptions["nCPU"] = cfgSetup.getint("cpuCount")  # int(cfgSetup["cpuCount"]) #number of CPUs to use
+    MPOptions["procPerCPU"] = cfgSetup.getint("procPerCPUCore")  # int(cfgSetup["procPerCPUCore"]) #processes per core
+    MPOptions["chunkSize"] = cfgSetup.getint("chunkSize")  # int(cfgSetup["chunkSize"]) # default task size for MP
+    MPOptions["maxChunks"] = cfgSetup.getint("maxChunks")  # int(cfgSetup["maxChunks"]) # max number of tasks for MP
+
+    # check if calculation with infrastructure
+    if modelParameters["infraBool"]:
+        modelPaths["infraPath"] = cfgPath["infraPath"]
+    else:
+        modelPaths["infraPath"] = ""
+
+    forestParams = {}
+    # check if calculation with forest
+    if modelParameters["forestBool"]:
+
+        forestParams["forestModule"] = cfgSetup.get("forestModule")
+        modelPaths["forestPath"] = cfgPath["forestPath"]
+        # 'forestFriction' and 'forestDetrainment' parameters
+        forestParams["maxAddedFriction"] = cfgSetup.getfloat("maxAddedFrictionFor")  # float(cfgSetup["maxAddedFr.."])
+        forestParams["minAddedFriction"] = cfgSetup.getfloat("minAddedFrictionFor")  # float(cfgSetup["minAddedFr.."])
+        forestParams["velThForFriction"] = cfgSetup.getfloat("velThForFriction")  # float(cfgSetup["velThForFriction"])
+        forestParams["maxDetrainment"] = cfgSetup.getfloat("maxDetrainmentFor")  # float(cfgSetup["maxDetrainmentFor"])
+        forestParams["minDetrainment"] = cfgSetup.getfloat("minDetrainmentFor")  # float(cfgSetup["minDetrainmentFor"])
+        forestParams["velThForDetrain"] = cfgSetup.getfloat("velThForDetrain")  # float(cfgSetup["velThForDetrain"])
+        # 'forestFrictionLayer' parameter
+        forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
+
+    else:
+        modelPaths["forestPath"] = ""
+
+    # TODO: provide some kind of check for the model Parameters
+    #       i.e. * sensible value ranges
+    #            * contradicting options ...
+
+    # write model parameters paths, etc. to logfile
+
+    startLogging(modelParameters, forestParams, modelPaths, MPOptions)
+
+    # check if release file is given als .shp and convert to .tif/.asc in that case
+    # NOTE-TODO: maybe also handle this in ../runCom4FlowPy.py
+    modelPaths = checkConvertReleaseShp2Tif(modelPaths)
+
+    # check if input layers have same x,y dimensions
+    checkInputLayerDimensions(modelParameters, modelPaths)
+
+    # get information on cellsize and nodata value from demHeader
+    demHeader = IOf.readASCheader(modelPaths["demPath"])
+    rasterAttributes = {}
+    rasterAttributes["cellsize"] = demHeader["cellsize"]
+    rasterAttributes["nodata"] = demHeader["nodata_value"]
+
+    # tile input layers and write tiles (pickled np.arrays) to temp Folder
+    nTiles = tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters)
+
+    # now run the model for all tiles and save the results for each tile to the temp Folder
+    performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttributes, forestParams, MPOptions)
+
+    # merge results for the tiles stored in Temp Folder and write Output files
+    mergeAndWriteResults(modelPaths, modelParameters)
+
+    _endTime = datetime.now().replace(microsecond=0)
+
+    log.info("==================================")
+    log.info(":::> Total time needed: " + str(_endTime - _startTime) + " <:::")
+    log.info("==================================")
+
+    if (modelPaths["useCustomDirs"] is True) and (modelPaths["deleteTempFolder"] is True):
+        deleteTempFolder(modelPaths["tempDir"])
+
+
+def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
+    """
+    just used to move this chunk of code out of the main function
+    only performs logging at the start of the simulation
+    """
+    # Start of Calculation (logging...)
     log.info("Starting...")
+    log.info("========================")
+    log.info(f"{'Alpha Angle:' : <20}{modelParameters['alpha'] : <5}")
+    log.info(f"{'Exponent:' : <20}{modelParameters['exp'] : <5}")
+    log.info(f"{'Flux Threshold:' : <20}{modelParameters['flux_threshold'] : <5}")
+    log.info(f"{'Max Z_delta:' : <20}{modelParameters['max_z'] : <5}")
+    log.info("------------------------")
+    # Also log the used input-files
+    log.info(f"{'DEM:' : <5}{'%s'%modelPaths['demPath'] : <5}")
+    log.info(f"{'REL:' : <5}{'%s'%modelPaths['releasePath'] : <5}")
+    # log.info("DEM: {}".format(modelPaths["demPath"]))
+    # log.info("REL: {}".format(modelPaths["releasePath"]))
+    log.info("------------------------")
+    if modelParameters["forestBool"]:
+        log.info("Calculation using forestModule: {}".format(forestParams["forestModule"]))
+        log.info(f"{'FOREST LAYER:' : <14}{'%s'%modelPaths['forestPath'] : <5}")
+        log.info("-----")
+        for param, value in forestParams.items():
+            log.info(f"{'%s:'%param : <20}{value : <5}")
+        log.info("------------------------")
+    if modelParameters["infraBool"]:
+        log.info("calculation with Infrastructure")
+        log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
+        log.info("------------------------")
+    for param, value in MPOptions.items():
+        log.info(f"{'%s:'%param : <20}{value : <5}")
+        # log.info("{}:\t{}".format(param,value))
+    log.info("------------------------")
+    log.info(f"{'WorkDir:' : <12}{'%s'%modelPaths['workDir'] : <5}")
+    log.info(f"{'ResultsDir:' : <12}{'%s'%modelPaths['resDir'] : <5}")
+    # log.info("WorkDir: {}".format(modelPaths["workDir"]))
+    # log.info("ResultsDir: {}".format(modelPaths["resDir"]))
+    log.info("========================")
 
-    start = datetime.now().replace(microsecond=0)
-    infraBool = False
-    # Create result directory
-    timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
-    resDir = outDir / "res_{}".format(timeString)
-    fU.makeADir(resDir)
-    tempDir = workDir / "temp"
-    fU.makeADir(tempDir)
 
-    # Start of Calculation
-    log.info("Start Calculation")
-    log.info("Alpha Angle: {}".format(alpha))
-    log.info("Exponent: {}".format(exp))
-    log.info("Flux Threshold: {}".format(flux_threshold))
-    log.info("Max Z_delta: {}".format(max_z))
-
-    # ToDo: this is a kind of inputs check, we should put it somewere else in a sub function
-    # Read in raster files
-    dem = IOf.readRaster(demPath)
-    # demHeader = demDict['header']
-    demHeader = IOf.readASCheader(demPath)
-    # dem, header = io.read_raster(demPath)
-
-    # read the release area
-    if releasePath.suffix == ".shp":
-        # the release is a shp polygon, we need to convert it to a raster
-        # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
-        releaseLine = shpConv.SHP2Array(releasePath, "releasePolygon")
-        thresholdPointInPoly = 0.01
-        releaseLine = gT.prepareArea(
-            releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=False
-        )
-        # give the same header as the dem
-        releaseAreaHeader = demHeader
-        releaseArea = np.flipud(releaseLine["rasterData"])
-        releasePathWork = workDir / "release.tif"
-        io.output_raster(demPath, workDir / "release.asc", releaseArea)
-        io.output_raster(demPath, workDir / "release.tif", releaseArea)
-        del releaseLine
-    else:
-        releasePathWork = releasePath
-        releaseArea, releaseAreaHeader = io.read_raster(releasePath)
-
+def checkInputLayerDimensions(modelParameters, modelPaths):
+    """
+    check if all layers have the same size
+    and can be read from the provided paths
+    """
     # Check if Layers have same size!!!
-    if demHeader["ncols"] == releaseAreaHeader["ncols"] and demHeader["nrows"] == releaseAreaHeader["nrows"]:
-        log.info("DEM and Release Layer ok!")
-    else:
-        log.error("Error: Release Layer doesn't match DEM!")
-        return
+    try:
+        log.info("checking input layer alignment ...")
 
-    if infraPath != "":
-        infraArea, infraAreaHeader = io.read_raster(infraPath)
-        if demHeader["ncols"] == infraAreaHeader["ncols"] and demHeader["nrows"] == infraAreaHeader["nrows"]:
-            log.info("Infra Layer ok!")
-            infraBool = True
-            log.info("Infrastructure File: %s" % (infraPath))
+        _demHeader = IOf.readASCheader(modelPaths["demPath"])
+        _relHeader = io.read_header(modelPaths["releasePath"])
+
+        if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
+            log.info("DEM and Release Layer ok!")
         else:
-            log.error("Error: Infra Layer doesn't match DEM!")
-            return
+            log.error("Error: Release Layer doesn't match DEM!")
+            sys.exit(1)
 
-    # ToDo: why? is it in case it was too big?
-    if infraBool:
-        del infraArea
-    del releaseArea
-    log.info("Files read in")
+        if modelParameters["infraBool"]:
+            _infraHeader = io.read_header(modelPaths["infraPath"])
+            if _demHeader["ncols"] == _infraHeader["ncols"] and _demHeader["nrows"] == _infraHeader["nrows"]:
+                log.info("Infra Layer ok!")
+            else:
+                log.error("Error: Infra Layer doesn't match DEM!")
+                sys.exit(1)
 
-    cellsize = demHeader["cellsize"]
-    nodata = demHeader["nodata_value"]
+        if modelParameters["forestBool"]:
+            _forestHeader = io.read_header(modelPaths["forestPath"])
+            if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
+                log.info("Forest Layer ok!")
+            else:
+                log.error("Error: Infra Layer doesn't match DEM!")
+                sys.exit(1)
 
-    # Here we split the computation domain in sub parts
-    tileCOLS = int(tileSize / cellsize)
-    tileROWS = int(tileSize / cellsize)
-    U = int(tileOverlap / cellsize)  # 5km overlap
+        log.info("========================")
 
-    log.info("Start Tiling.")
+    except:
+        log.error("could not read all required Input Layers, please re-check files and paths provided in .ini files")
+        # return
+        sys.exit(1)
 
-    SPAM.tileRaster(demPath, "dem", tempDir, tileCOLS, tileROWS, U)
-    SPAM.tileRaster(releasePathWork, "init", tempDir, tileCOLS, tileROWS, U, isInit=True)
-    if infraBool:
-        SPAM.tileRaster(infraPath, "infra", tempDir, tileCOLS, tileROWS, U)
-    log.info("Finished Tiling.")
-    nTiles = pickle.load(open(tempDir / "nTiles", "rb"))
+
+def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):
+
+    _tileCOLS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
+    _tileROWS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
+    _U = int(tilingParameters["tileOverlap"] / rasterAttributes["cellsize"])
+
+    log.info("Start Tiling...")
+    log.info("---------------------")
+
+    SPAM.tileRaster(modelPaths["demPath"], "dem", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    SPAM.tileRaster(modelPaths["releasePathWork"], "init", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U, isInit=True)
+
+    if modelParameters["infraBool"]:
+        SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["forestBool"]:
+        SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    log.info("Finished Tiling All Input Rasters.")
+    log.info("==================================")
+
+    nTiles = pickle.load(open(modelPaths["tempDir"] / "nTiles", "rb"))
+
+    return nTiles
+
+
+def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttributes, forestParams, MPOptions):
+    """wrapper around fc.run()
+    handles passing of model paths, configurations to fc.run()
+    also responsible for processing input-data tiles in sequence
+    """
 
     optList = []
-    # das hier ist die batch-liste, die von mulitprocessing
-    # abgearbeitet werden muss - sieht so aus:
-    # [(0,0,alpha,exp,cellsize,-9999.),
-    # (0,1,alpha,exp,cellsize,-9999.),
-    # etc.]
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
-            optList.append((i, j, alpha, exp, cellsize, nodata, flux_threshold,
-                            max_z, tempDir, infraBool, nCPU))
+            optList.append((i, j, modelParameters, modelPaths, rasterAttributes, forestParams, MPOptions))
 
-    # Calculation
-    for optTuple in optList:
+    log.info(" >> Start Calculation << ")
+    log.info("-------------------------")
+    # Calculation, i.e. iterating over the list of Tiles which have to be processed with fc.run()
+    for i, optTuple in enumerate(optList):
+        log.info("processing tile %i of %i" % (i + 1, len(optList)))
         fc.run(optTuple)
+        log.info("finished   tile %i of %i" % (i + 1, len(optList)))
+        log.info("-------------------------")
 
-    log.info("Calculation finished, merging results.")
+    log.info(" >> Calculation Finished << ")
+    log.info("==================================")
+
+
+def mergeAndWriteResults(modelPaths, modelOptions):
+    """function handles merging of results for all tiles inside the temp Folder
+    and also writing result files to the resultDir
+    """
+
+    log.info(" merging results ...")
+    log.info("-------------------------")
 
     # Merge calculated tiles
-    z_delta = SPAM.MergeRaster(tempDir, "res_z_delta")
-    flux = SPAM.MergeRaster(tempDir, "res_flux")
-    cell_counts = SPAM.MergeRaster(tempDir, "res_count")
-    z_delta_sum = SPAM.MergeRaster(tempDir, "res_z_delta_sum")
-    fp_ta = SPAM.MergeRaster(tempDir, "res_fp")
-    sl_ta = SPAM.MergeRaster(tempDir, "res_sl")
-    if infraBool:
-        backcalc = SPAM.MergeRaster(tempDir, "res_backcalc")
-    
-    log.info("Writing Output Files")
+    z_delta = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta")
+    flux = SPAM.MergeRaster(modelPaths["tempDir"], "res_flux")
+    cell_counts = SPAM.MergeRaster(modelPaths["tempDir"], "res_count")
+    z_delta_sum = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
+    fp_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_fp")
+    sl_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_sl")
+
+    if modelOptions["infraBool"]:
+        backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
+
+    # Write Output Files to Disk
+    log.info("-------------------------")
+    log.info(" writing output files ...")
+    log.info("-------------------------")
     output_format = ".tif"
-    io.output_raster(demPath, resDir / ("flux%s" % (output_format)), flux)
-    io.output_raster(demPath, resDir / ("z_delta%s" % (output_format)), z_delta)
-    io.output_raster(demPath, resDir / ("FP_travel_angle%s" % (output_format)), fp_ta)
-    io.output_raster(demPath, resDir / ("SL_travel_angle%s" % (output_format)), sl_ta)
-    if not infraBool:  # if no infra
-        io.output_raster(demPath, resDir / ("cell_counts%s" % (output_format)), cell_counts)
-        io.output_raster(demPath, resDir / ("z_delta_sum%s" % (output_format)), z_delta_sum)
-    if infraBool:  # if infra
-        io.output_raster(demPath, resDir / ("backcalculation%s" % (output_format)), backcalc)
-    
-    # ToDo: delete temp dir
-    end = datetime.now().replace(microsecond=0)
-    log.info("Calculation needed: " + str(end - start) + " seconds")
+    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("flux%s" % (output_format)), flux)
+    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta%s" % (output_format)), z_delta)
+    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("FP_travel_angle%s" % (output_format)), fp_ta)
+    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("SL_travel_angle%s" % (output_format)), sl_ta)
+
+    # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
+    # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
+    #      and only write other output files if set accordingly
+    if not modelOptions["infraBool"]:  # if no infra
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" % (output_format)), cell_counts)
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" % (output_format)), z_delta_sum)
+    if modelOptions["infraBool"]:  # if infra
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("backcalculation%s" % (output_format)),
+                         backcalc)
+
+
+def checkConvertReleaseShp2Tif(modelPaths):
+    """function checks if release area is a .shp file and tries to convert to tif in that case
+
+    Parameters:
+    ---------------
+    modelPaths: {} - dict with modelPaths
+
+    Returns:
+    ---------------
+    modelPaths: {} - dict with added ["releasePathWork"]
+
+    """
+    # the release is a shp polygon, we need to convert it to a raster
+    # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
+    if modelPaths["releasePath"].suffix == ".shp":
+
+        dem = IOf.readRaster(modelPaths["demPath"])
+        demHeader = IOf.readASCheader(modelPaths["demPath"])
+
+        releaseLine = shpConv.SHP2Array(modelPaths["releasePath"], "releasePolygon")
+        thresholdPointInPoly = 0.01
+        releaseLine = gT.prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=False)
+        # give the same header as the dem
+        releaseAreaHeader = demHeader
+        releaseArea = np.flipud(releaseLine["rasterData"])
+        modelPaths["releasePathWork"] = modelPaths["workDir"] / "release.tif"
+        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.asc", releaseArea)
+        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.tif", releaseArea)
+        del releaseLine
+    else:
+        modelPaths["releasePathWork"] = modelPaths["releasePath"]
+
+    return modelPaths
+
+
+def deleteTempFolder(tempFolderPath):
+    """delete tempFolder containing the pickled np.arrays of the input data and output data tiles.
+        - should be called after all merged model results are written to disk.
+    performs a few checks to make sure the folder is indeed a com4FlowPy tempFolder, i.e.
+        - does not contain subfolders
+        - no other file-extensions than '.npy' and ''
+    """
+
+    log.info("+++++++++++++++++++++++")
+    log.info("deleteTempFolder = True in (local_)com4FlowPyCfg.ini")
+
+    log.info("... checking if folder is a com4FlowPy temp Folder")
+    # check if path exists and is directory
+    isDir = os.path.isdir(tempFolderPath)
+    validTemp = True
+
+    for f in os.scandir(tempFolderPath):
+        # check if there's a nested folder inside tempDir
+        if f.is_dir():
+            validTemp = False
+            break
+        # check if all files are either .npy or start with "ext, "nTi"
+        elif f.is_file():
+            if not f.path.endswith(".npy"):
+                if not f.name[:3] in ["ext", "nTi"]:
+                    validTemp = False
+                    break
+
+    if isDir and validTemp:
+        log.info("Tempfolder checked: isDir:{} isTemp:{}".format(isDir, validTemp))
+        try:
+            shutil.rmtree(tempFolderPath)
+            log.info("Deleted temp folder {}".format(tempFolderPath))
+        except OSError as e:
+            log.info("deletion of temp folder {} failed".format(tempFolderPath))
+            print("Error: %s : %s" % (tempFolderPath, e.strerror))
+    else:
+        log.info("deletion of temp folder {} failed".format(tempFolderPath))
+        log.info(" isDir:{} isTemp:{}}".format(isDir, validTemp))
+
+    log.info("+++++++++++++++++++++++")
