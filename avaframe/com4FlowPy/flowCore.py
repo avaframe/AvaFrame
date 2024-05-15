@@ -272,7 +272,7 @@ def calculation(args):
 
                 z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                 # Sort this lists by elh, to start with the highest cell
-            
+
             for i in range(0, len(cell_list)):  # Check if Cell already exists #instead of 0: idx
                 k = 0
                 while k < len(row):
@@ -281,13 +281,14 @@ def calculation(args):
                         cell_list[i].add_parent(cell)
                         if z_delta[k] > cell_list[i].z_delta:
                             cell_list[i].z_delta = z_delta[k]
+                        
                         row = np.delete(row, k)
                         col = np.delete(col, k)
                         flux = np.delete(flux, k)
                         z_delta = np.delete(z_delta, k)
+                        
                     else:
                         k += 1
-            
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
