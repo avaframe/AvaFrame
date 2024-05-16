@@ -86,7 +86,7 @@ def runProbAna(avalancheDir=''):
         # perform probability analysis
         anaPerformed, contourDict = probAna.probAnalysis(avalancheDir,
                                                          cfgProb,
-                                                         com1DFA,
+                                                         'com1DFA',
                                                          parametersDict=parametersDict,
                                                          probConf=probConf,
                                                          simDFActual=simDFActual

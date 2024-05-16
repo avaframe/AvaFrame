@@ -4,10 +4,12 @@
 """
 
 import argparse
+
 # Load modules
 import pathlib
 
 from avaframe.ana4Stats import probAna
+
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
@@ -17,7 +19,7 @@ from avaframe.out3Plot import outQuickPlot as oP
 from avaframe.out3Plot import statsPlots as sP
 
 
-def runProbAna(avalancheDir=""):
+def runProbAna(avalancheDir="", modName="com1DFA"):
     """Run a com1DFA probability analysis with parameters and only an
     avalanche directory as input
 
@@ -25,6 +27,9 @@ def runProbAna(avalancheDir=""):
     ----------
     avalancheDir: str
         path to avalanche directory (setup e.g. with init scripts)
+    modName: str
+        name of computational module that has been used to produce sim results
+         - to locate results files and filtering options
 
     Returns
     -------
@@ -58,7 +63,7 @@ def runProbAna(avalancheDir=""):
 
     # perform probability analysis
     anaPerformed, contourDict = probAna.probAnalysis(
-        avalancheDir, cfgProb, com1DFA, parametersDict="", probConf="", simDFActual=""
+        avalancheDir, cfgProb, modName, parametersDict="", probConf="", simDFActual=""
     )
     if anaPerformed is False:
         log.warning("No files found")
@@ -87,5 +92,9 @@ if __name__ == "__main__":
         "avadir", metavar="a", type=str, nargs="?", default="", help="the avalanche directory"
     )
 
+    parser.add_argument(
+        "modName", metavar="modN", type=str, nargs="?", default="", help="name of computational module"
+    )
+
     args = parser.parse_args()
-    runProbAna(str(args.avadir))
+    runProbAna(str(args.avadir), str(args.modName))

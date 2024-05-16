@@ -320,7 +320,7 @@ def checkForNumberOfReferenceValues(cfgGen, varPar):
     return True
 
 
-def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='', simDFActual=''):
+def probAnalysis(avaDir, cfg, modName, parametersDict='', inputDir='', probConf='', simDFActual=''):
     """ Compute probability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
@@ -329,10 +329,10 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
             path to avalanche directory
         cfg : dict
             configuration read from ini file of probAna function
-        module
-            computational module that was used to run the simulations
+        modName
+            name of computational module that was used to run the simulations - to locate results files and filtering options
         parametersDict: dict
-            dictionary with simulation parameters to filter simulations
+            dictionary with simulation parameters to filter simulations - only available if modName=com1DFA
         inputDir : str
             optional - path to directory where data that should be analysed can be found in
             a subfolder called peakFiles and configurationFiles, required if not in module results
@@ -343,8 +343,6 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
 
     """
 
-    # get filename of module
-    modName = pathlib.Path(module.__file__).stem
     avaDir = pathlib.Path(avaDir)
 
     # set output directory
@@ -352,11 +350,17 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
     fU.makeADir(outDir)
 
     # fetch all result files and filter simulations according to parametersDict
-    simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir=inputDir, simDF=simDFActual)
+    if modName.lower() == 'com1dfa':
+        simNameList = cfgHandling.filterSims(avaDir, parametersDict, specDir=inputDir, simDF=simDFActual)
+        filtering = True
+    else:
+        simNameList = []
+        filtering = False
+        log.info('No filtering available for this comMod: %s' % modName)
 
     # initialize flag if analysis has been performed or e.g. no matching files found
     analysisPerformed = False
-    if simNameList == []:
+    if simNameList == [] and filtering:
         # no matching sims found for filtering criteria
         log.warning('No matching simulations found for filtering criteria')
         return analysisPerformed
@@ -368,6 +372,12 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
     else:
         inputDirPF = inputDir / 'peakFiles'
         peakFilesDF = fU.makeSimDF(inputDirPF, avaDir=avaDir)
+
+    if len(peakFilesDF) == 0:
+        message = 'No peak files found in %s' % str(inputDir)
+        log.error(message)
+
+        raise FileNotFoundError(message)
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFilesDF['files'][0])
@@ -384,7 +394,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
     for m in range(len(peakFilesDF['names'])):
 
         # only take simulations that match filter criteria from parametersDict
-        if peakFilesDF['simName'][m] in simNameList:
+        if (peakFilesDF['simName'][m] in simNameList) or filtering == False:
             # Load peak field for desired peak field parameter
             if peakFilesDF['resType'][m] == cfg['GENERAL']['peakVar']:
 
