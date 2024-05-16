@@ -46,7 +46,7 @@ def test_probAna(tmp_path):
     print('PARAMETERSDIC', parametersDict)
 
     # call function to test
-    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir='')
+    pA.probAnalysis(avaDirtmp, cfg, 'com1DFA', parametersDict=parametersDict, inputDir='')
     probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs',
                                        'ana4Stats',
                                        'avaParabola_prob__ppr_lim1.0.asc'), skiprows=6)
@@ -64,7 +64,7 @@ def test_probAna(tmp_path):
     testInputDir = avaDir / 'Outputs' / 'com1DFA'
     avaDirtmp2 = pathlib.Path(tmp_path, 'avaTest')
     avaDirtmp2.mkdir()
-    pA.probAnalysis(avaDirtmp2, cfg, com1DFA, parametersDict='', inputDir=testInputDir)
+    pA.probAnalysis(avaDirtmp2, cfg, 'com1DFA', parametersDict='', inputDir=testInputDir)
     probTest2 = np.loadtxt(os.path.join(avaDirtmp2, 'Outputs', 'ana4Stats', 'avaTest_prob__ppr_lim1.0.asc'), skiprows=6)
 
     # Compare result to reference solution

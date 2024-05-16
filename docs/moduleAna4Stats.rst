@@ -14,12 +14,15 @@ peak pressure threshold of 1kPa, but it is also possible to chose other result v
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with :py:mod:`com1DFA`
 using a parameter variation, different release-, entrainment- or resistance scenarios.
-An example run script is given by :py:mod:`runAna4ProbAna`: where firstly, :py:mod:`com1DFA` is used to
+An example run script is given by :py:mod:`runAna4ProbAna.py`: where firstly, :py:mod:`com1DFA` is used to
 perform avalanche simulations varying parameters set in the ``ana4Stats/probAnaCfg.ini`` file.
 Using these simulations, a probability map is generated.
 The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
 in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
 Details on this function, as for example required inputs can be found in: :py:mod:`ana4Stats.probAna`.
+In addition, there is the option to use the run script :py:mod:`runProbAnalysisOnly.py`: to create probability maps
+for an existing set of simulations. These can be created using :py:mod:`com1DFA` or another computational module.
+For more details look at the section *To run - example run scripts*.
 
 To run - via QGis Connector
 ---------------------------
@@ -30,7 +33,7 @@ release thickness are varied. Please note: *samosAT* friction is used instead of
 
 The input requirements are the same as for :py:mod:`com1DFA` with one important difference: an additional *ci95*
 attribute is needed for the release shapes.
-This describes the confidence intervall for the release thickness, using the same units. I.e. if you are using a
+This describes the confidence interval for the release thickness, using the same units. I.e. if you are using a
 release thickness of 1.5m, you need to provide the ci in [m] as well, for example ci=0.3m. The release thickness is
 then automatically varied within the release thickness plus/minus the confidence interval.
 
@@ -55,11 +58,37 @@ In order to run this example:
 * first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalancheDir
 * copy ``ana4Stats/probAnaCfg.ini`` to ``ana4Stats/local_probAnaCfg.ini`` and optionally adjust variation settings
-* uncomment ``'FILTER'`` section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
 * run::
 
       python3 runAna4ProbAna.py
 
+
+It is also possible to generate the probability maps for already existing simulations. The settings for the probability map
+can be set in ``ana4Stats/probAnaCfg.ini`` in the sections GENERAL and PLOT. The simulations need to be located in the
+``avaName/Outputs/comMod/peakfiles`` directory, where ``comMod`` refers to the name of the computational module that has been
+used to create the simualtion results. If com1DFA has been used, the full configuration information is accessible and hence
+also filtering is implemented. For other modules the only requirement is that simulation have to be named in the following format:
+``nameOfReleaseArea_uniqueSimulationIndicator_ModificationIndicator_simType_modelType_resultType.asc``
+
+* *uniqueSimulationIndicator*: a string that is unique for each simulation (can also be a combination of parameter names and values
+in case of com1DFA this is the simHash)
+* *ModificationIndicator*: **C** for changed or **D** for default model configuration
+* *simType*: **null**, **ent**, **res** or **entres** regarding whether or not entrainment or resistance have been considered
+* *modelType*: for example **dfa** (dense flow avalanche) or **psa** (powder snow avalanche)
+* *resultType*: result variable, for example **pft**, **ppr**, **pfv**
+
+In order to run:
+
+* first go to ``AvaFrame/avaframe``
+* copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalancheDir
+* copy ``ana4Stats/probAnaCfg.ini`` to ``ana4Stats/local_probAnaCfg.ini`` and optionally adjust GENERAL and PLOT settings
+* for simulations generated with **com1DFA** run::
+
+      python3 runProbAnalysisOnly.py
+
+* all other models run::
+
+     python3 runProbAnalysisOnly.py *pathToAvalancheDirectory* *comMod*
 
 Another example on how to generate probability maps for avalanche simulations performed with :py:mod:`com1DFA`
 is given in :py:mod:`runScripts.runProbAna`, where for *avaHockeyChannel* simulations are performed with
