@@ -30,7 +30,7 @@ URL = "http://avaframe.org"
 CLASSIFIERS = [
     # How mature is this project? Common values are
     # 3 - Alpha  4 - Beta  5 - Production/Stable
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     # Indicate who your project is intended for
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
@@ -39,6 +39,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 DESCRIPTION = "The Open Avalanche Framework"
@@ -57,6 +58,7 @@ req_packages = [
     "tabulate",
     "deepdiff",
     "deepmerge",
+    "psutil",
 ]
 
 
