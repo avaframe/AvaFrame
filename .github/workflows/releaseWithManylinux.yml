@@ -80,7 +80,7 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [windows-latest, macos-latest]
         python-version: ['3.8','3.9','3.10','3.11','3.12']
     steps:
       - uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: build wheel
         run: |
-          pip install wheel
+          pip install wheel setuptools
           pip install numpy cython
       - name: Compile cython code
         run: |
