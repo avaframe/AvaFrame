@@ -246,6 +246,8 @@ def addDem2Plot(ax, dem, what='slope', extent='', origHeader=False):
         what information about the dem will be plotted?
         slope: use the dem slope (computed from the normals) to color the plot
         z : use the elevation to color the plot
+    extent: list
+        optional: extent of NonUnifIm plot corresponding coordinates to dem data array at center locations
     origHeader: bool
         if True use originalHeader and not header
     """
@@ -277,6 +279,7 @@ def addDem2Plot(ax, dem, what='slope', extent='', origHeader=False):
     if extent == '':
         extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
 
+    # here extent is in data coordinates (here cell centers)
     ref0, im = pU.NonUnifIm(ax, xArray, yArray, value, 'x [m]', 'y [m]',
                             # extent=[2400, 2700, YY.min(), YY.max()],
                             extent=extent,
@@ -338,6 +341,8 @@ def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False
     csz = header['cellsize']
     rowsMin, rowsMax, colsMin, colsMax, rasterData = pU.constrainPlotsToData(rasterData, csz, extentOption=False,
                                                                              constrainedData=True)
+    # here it is xStart:xEnd where xEnd is colsMax not colsMax-1 as colsMax should still be included where
+    # it would be ncols-1 if ncols is the total number of cols
     xArray = np.linspace(xllc+colsMin*csz, xllc+colsMax*csz, colsMax-colsMin+1)
     yArray = np.linspace(yllc+rowsMin*csz, yllc+rowsMax*csz, rowsMax-rowsMin+1)
     extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
@@ -483,7 +488,9 @@ def plotReleaseScenarioView(avaDir, releaseLine, dem, titleFig, cuSimName):
         pU.colorMaps['pft'], np.amin(releaseLine['rasterData']), np.amax(releaseLine['rasterData']),
         continuous=pU.contCmap)
     cmap1.set_bad(alpha=0.)
+    # extent taking into account the 0.5*cellSize for imshow plot if meters is used
     extentCells = [xL - originCells, xL + Lx - originCells, yL + Ly - originCells, yL - originCells]
+    # extent given in cell center coordinates
     extentDem = [xL, xL + Lx, yL + Ly, yL]
 
     # create figure

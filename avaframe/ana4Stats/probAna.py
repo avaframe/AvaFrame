@@ -403,7 +403,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir='', probConf='
 
                 # fetch contourline info
                 xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(refData['header'])
-                contourDictXY = pU.fetchContourCoords(xGrid, yGrid, data, float(cfg['GENERAL']['peakLim']))
+                contourDictXY = pU.fetchContourCoords(xGrid, yGrid, fileData['rasterData'], float(cfg['GENERAL']['peakLim']))
                 contourDict[fileName.stem] = contourDictXY
 
                 log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))

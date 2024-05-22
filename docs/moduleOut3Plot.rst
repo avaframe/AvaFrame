@@ -58,7 +58,8 @@ outQuickPlot
 =================
 
 :py:mod:`out3Plot.outQuickPlot` is used to generate plots of raster datasets,
-as for example the simulation results of :py:mod:`com1DFA`.
+as for example the simulation results of :py:mod:`com1DFA`. The x- and y-axis are shown in meters, where
+the origin (0, 0) is set to the lower left center coordinate of the raster datasets.
 
 generatePlot
 --------------

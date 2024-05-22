@@ -472,8 +472,7 @@ def addPeakFieldConstrained(avaDir, modName, simName, resType, demData, ax, alph
     cellSize = simResDF['cellSize'].loc[simResDF['simName'] == simName].values[0]
 
     # add constrained peak result field data plot to axes
-    ax = oP.addConstrainedDataField(peakFilePath, resType, demField, ax, cellSize, alpha=alpha,
-        setLimits=True, oneColor=oneColor)
+    ax = oP.addConstrainedDataField(peakFilePath, resType, demField, ax, cellSize, alpha=alpha, oneColor=oneColor)
 
     return ax
 

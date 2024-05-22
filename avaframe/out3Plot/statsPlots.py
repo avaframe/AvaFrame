@@ -317,12 +317,8 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         suptitle = fig.suptitle(fullTitle, fontsize=14, color='0.5')
         ax1 = fig.add_subplot(121)
 
-        # set extent in meters using cellSize
-        rowsMinPlot = rowsMin*cellSize
-        rowsMaxPlot = (rowsMax+1)*cellSize
-        colsMinPlot = colsMin*cellSize
-        colsMaxPlot = (colsMax+1)*cellSize
-        extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
+        # set extent in meters using cellSize and llcenter location
+        extentCellCenters, extentCellCorners, rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot = pU.createExtent(rowsMin, rowsMax, colsMin, colsMax, header)
 
         # for now continuous color map is desired
         cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot),
@@ -332,20 +328,22 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             # also constrain DEM to data constrained
             demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
             # add DEM hillshade with contour lines
-            ls, CS = pU.addHillShadeContours(ax1, demConstrained, cellSize, extent)
+            pU.addHillShadeContours(ax1, demConstrained, cellSize, extentCellCenters)
             dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
             cmap.set_bad(alpha=0)
         else:
             cmap.set_bad(colorBackGround)
 
         # add data plot
-        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=extent, origin='lower', aspect='equal', norm=norm,
+        pU.checkExtentFormat(extentCellCorners, cellSize, dataPlot, plotName='probMap left panel')
+        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=extentCellCorners, origin='lower', aspect='equal', norm=norm,
             zorder=3)
 
         # create meshgrid for contour plot also constrained to where there is data
-        xx = np.arange(colsMinPlot, colsMaxPlot, cellSize)
-        yy = np.arange(rowsMinPlot, rowsMaxPlot, cellSize)
+        xx = np.linspace(colsMinPlot, colsMaxPlot, dataPlot.shape[1])
+        yy = np.linspace(rowsMinPlot, rowsMaxPlot, dataPlot.shape[0])
         X, Y = np.meshgrid(xx, yy)
+        pU.checkMeshgridInputs(xx, yy, cellSize, dataPlot, plotName="probMap (right) zoom panel")
 
         # add contourlines for levels
         if multLabel:
@@ -374,20 +372,26 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
                 cellSize, extentOption=True, constrainedData=True, buffer=cfg.getfloat('constrainBuffer'))
             dataCutConstrained = np.ma.masked_where(dataCutConstrained == 0.0, dataCutConstrained)
 
-            # set extent of zoom Plot
-            x0 = xOrigin + colsMinPlot
-            x1 = xOrigin + colsMaxPlot
-            y0 = yOrigin + rowsMinPlot
-            y1 = yOrigin + rowsMaxPlot
+            # set extent of zoom Plot, x0, x1, y0, y1 are cell center coordinates
+            x0 = xOrigin + colsMinPlot + header['xllcenter']
+            x1 = xOrigin + colsMaxPlot + header['xllcenter']
+            y0 = yOrigin + rowsMinPlot + header['yllcenter']
+            y1 = yOrigin + rowsMaxPlot + header['yllcenter']
+            # create extent for imshow plot - origin at -0.5*cellSize not at cell center
+            # for x1, y1 +0.5cellSize to get outer edge of cell (upper right corner)
+            extentDEMPlot = [x0-0.5*cellSize, x1+0.5*cellSize, y0-0.5*cellSize, y1+0.5*cellSize]
 
             # add plot
-            im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=[x0, x1, y0, y1],
+            pU.checkExtentFormat(extentDEMPlot, cellSize, dataCutConstrained, plotName='probMap (right) zoom panel')
+            im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=extentDEMPlot,
                              origin='lower', norm=norm, aspect='equal')
 
             # create meshgrid for contour plot also constrained to where there is data
+            # use cell center coordinates here
             xx2 = np.linspace(x0, x1, dataCutConstrained.shape[1])
             yy2 = np.linspace(y0, y1, dataCutConstrained.shape[0])
             X2, Y2 = np.meshgrid(xx2, yy2)
+            pU.checkMeshgridInputs(xx2, yy2, cellSize, dataCutConstrained, plotName="probMap (right) zoom panel")
 
             # add contourlines for levels
             if multLabel:
