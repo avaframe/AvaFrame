@@ -6,6 +6,8 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from cmcrameri import cm as cmapCameri
+import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.ascUtils as IOf
 
 
 def test_constrainPlotsToData():
@@ -40,9 +42,9 @@ def test_constrainPlotsToData():
     dataConstrainedTest[1:4, 1:7] = 4.
 
     assert rowsMinPlot == 300
-    assert rowsMaxPlot == 800
+    assert rowsMaxPlot == 700
     assert colsMinPlot == 200
-    assert colsMaxPlot == 1000
+    assert colsMaxPlot == 900
     assert np.array_equal(dataConstrained, dataConstrainedTest)
 
     # call function to be tested
@@ -50,9 +52,9 @@ def test_constrainPlotsToData():
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(inputData, cellSize, extentOption=False)
 
     assert rowsMin == 0
-    assert rowsMax == inputData.shape[0]
+    assert rowsMax == inputData.shape[0] - 1
     assert colsMin == 0
-    assert colsMax == inputData.shape[1]
+    assert colsMax == inputData.shape[1] - 1
 
 
 def test_putAvaNameOnPlot(tmp_path):
@@ -82,7 +84,7 @@ def test_putAvaNameOnPlot(tmp_path):
     print('info2', infoText2)
 
     assert infoText == (avaDir.stem)
-    assert infoText2 == ('avaTest;avaTest2')    
+    assert infoText2 == ('avaTest;avaTest2')
 
 
 def test_makeColorMap():
@@ -206,3 +208,77 @@ def test_getColors4Scatter(tmp_path):
     assert itemsList == ''
     assert ticksSC is None
     assert displayColorBar is True
+
+
+def test_addHillShadeContours(tmp_path):
+
+    # set up required inputs
+    testDir = pathlib.Path(tmp_path, 'testsPlots')
+    fU.makeADir(testDir)
+
+    c = np.array([1,2,3,4])
+    field1 = np.tile(c,(4,1))
+    for row in range(field1.shape[0]):
+        field1[row, :] = field1[row,:] * (row+1)
+    header = {'cellsize': 1, 'xllcenter': 0, 'yllcenter': 0, 'nrows': 4, 'ncols': 4, 'nodata_value': -9999}
+
+    outFileName = testDir / 'testDEM.asc'
+    IOf.writeResultToAsc(header, field1, outFileName, flip=False)
+
+
+    field2 = np.zeros((4,4)) +10.
+    outFileName2 = testDir / 'testData.asc'
+    IOf.writeResultToAsc(header, field2, outFileName2, flip=False)
+
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(field2, header['cellsize'])
+    xllcenter = header["xllcenter"]
+    yllcenter = header["yllcenter"]
+    rowsMinPlot = rowsMin * header['cellsize'] + yllcenter
+    rowsMaxPlot = (rowsMax) * header['cellsize'] + yllcenter
+    colsMinPlot = colsMin * header['cellsize'] + xllcenter
+    colsMaxPlot = (colsMax) * header['cellsize'] + xllcenter
+    extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
+    print('EXT', extent)
+    fig, ax = plt.subplots()
+    ls, CS = pU.addHillShadeContours(ax, field1, header['cellsize'], extent, colors=["gray"], onlyContours=False)
+
+    assert CS != None
+
+    # call function to be tested
+    xmin = header['xllcenter']
+    xmax = header['xllcenter']  + header['cellsize']*(header['ncols'])
+    ymin = header['yllcenter']
+    ymax = header['yllcenter']  + header['cellsize']*(header['nrows'])
+    extent2 = [xmin, xmax, ymin, ymax]
+    print('extent2 is', extent2)
+    with pytest.raises(AssertionError) as e:
+        assert pU.addHillShadeContours(ax, field1, header['cellsize'], extent2, colors=["gray"], onlyContours=False)
+    assert 'Extent of dem data for hillshade and provided extent' in str(e.value)
+
+
+def test_checkMeshgridInputs():
+    """ test if inputs for meshgrid are correct shapewise """
+
+    # setup required inputs
+    data = np.zeros((8,10))
+    cellSize = 5
+    rowsMin, rowsMax, colsMin, colsMax, dataConstrained = pU.constrainPlotsToData(data, cellSize,
+                                                                                  extentOption=False, constrainedData=True)
+    header = {'cellsize': 5, 'xllcenter': 0, 'yllcenter': 0, 'nrows': 8, 'ncols': 10, 'nodata_value': -9999}
+    rowsMinPlot = rowsMin*cellSize + header['yllcenter']
+    rowsMaxPlot = (rowsMax)*cellSize + header['yllcenter']
+    colsMinPlot = colsMin*cellSize + header['xllcenter']
+    colsMaxPlot = (colsMax)*cellSize + header['xllcenter']
+    # create meshgrid for contour plot also constrained to where there is data
+    xx = np.linspace(colsMinPlot, colsMaxPlot, data.shape[1])
+    yy = np.linspace(rowsMinPlot, rowsMaxPlot, data.shape[0])
+
+    pU.checkMeshgridInputs(xx, yy, cellSize, data, plotName="")
+
+
+    x2 = np.linspace(colsMinPlot, colsMaxPlot+1, data.shape[1])
+    y2 = np.linspace(rowsMinPlot, rowsMaxPlot+1, data.shape[0])
+    with pytest.raises(AssertionError) as e:
+        assert pU.checkMeshgridInputs(x2, y2, cellSize, data, plotName="")
+    assert 'Meshgrid coordinates created have a different spacing between points than cell centers of the corresponding data ' in str(e.value)
+

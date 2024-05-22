@@ -34,6 +34,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
         The difference plots also include an insert showing the histogram and the cumulative density function
         of the differences. The second plot shows a cross- and along profile cut of the two datasets.
         The folder and simulation name of the datasets has to be passed to the function.
+        The origin of the plots is set to 0,0 referring to the lower left center coordinate of the datasets.
 
         Parameters
         ----------
@@ -106,6 +107,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot = pU.constrainPlotsToData(dataExtend, cellSize,
                                                                                  extentOption=True)
 
+    # fetch extent of cellcenters or corners for imshow plot of raster data
+    extentCellCenters, extentCellCorners = pU.createExtentMinMax(dataExtend, {'cellsize':cellSize, 'nrows': ny, 'ncols': nx}, originLLCenter=False)
+
     # Location of box
     nybox = 0.05
     nxbox = 0.05
@@ -118,7 +122,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
-    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+    im1 = plt.imshow(data1P, cmap=cmap, extent=extentCellCorners, origin='lower',
                      aspect=nx/ny, norm=norm)
     ax1.set_xlim([colsMinPlot, colsMaxPlot])
     ax1.set_ylim([rowsMinPlot, rowsMaxPlot])
@@ -135,7 +139,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
-    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+    im2 = plt.imshow(data2P, cmap=cmap, extent=extentCellCorners, origin='lower',
                      aspect=nx/ny, norm=norm)
     pU.addColorBar(im2, ax2, ticks, unit)
     ax2.set_xlim([colsMinPlot, colsMaxPlot])
@@ -149,7 +153,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     cmap = pU.cmapdiv
     elevMax = np.nanmax(np.abs(dataDiff))
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elevMax, elevMax),
-                     extent=[0, Lx, 0, Ly],
+                     extent=extentCellCorners,
                      origin='lower', aspect=nx/ny)
     ax3.set_xlim([colsMinPlot, colsMaxPlot])
     ax3.set_ylim([rowsMinPlot, rowsMaxPlot])
@@ -183,7 +187,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     diffMeanZoom = np.nanmean(dataDiffZoom)
 
     im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elevMax, elevMax),
-                     extent=[0, Lx, 0, Ly],
+                     extent=extentCellCorners,
                      origin='lower', aspect=nx/ny)
     ax4.set_xlim([colsMinPlot, colsMaxPlot])
     ax4.set_ylim([rowsMinPlot, rowsMaxPlot])
@@ -481,6 +485,9 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     Lx = nx*cellSize
     axis = plotDict['axis']
 
+    # fetch extent of cellcenters or corners for imshow plot of raster data
+    extentCellCenters, extentCellCorners = pU.createExtentMinMax(data1, {'cellsize':cellSize, 'nrows': ny, 'ncols': nx}, originLLCenter=False)
+
     # Location of Profiles
     location = float(plotDict['location'])
     if axis == 'x':
@@ -499,7 +506,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
-    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=extentCellCorners, origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -578,6 +585,8 @@ def plotContours(contourDict, resType, thresholdValue, pathDict, addLegend=True)
     if addLegend:
         ax1.legend()
 
+    ax1.axis('equal')
+
     # save and or plot
     outFileName = pathDict['plotScenario'] + '_ContourLines'
     pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -628,8 +637,8 @@ def plotAllContours(avaDir, modName, resType, level, specDir=''):
         nrows = rasterF['header']['nrows']
         ncols = rasterF['header']['ncols']
         cellSize = rasterF['header']['cellsize']
-        x1 = np.linspace(x, x + ncols * cellSize, ncols)
-        y1 = np.linspace(x, y + nrows * cellSize, nrows)
+        x1 = np.linspace(x, x + (ncols-1) * cellSize, ncols)
+        y1 = np.linspace(y, y + (nrows-1) * cellSize, nrows)
         xm, ym = np.meshgrid(x1, y1)
 
         # fetch contour line coords for data and level

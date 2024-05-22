@@ -110,7 +110,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     return plotDict
 
 
-def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0, setLimits=False, oneColor=''):
+def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1., oneColor=''):
     """ find fileName data, constrain data and demField to where there is data,
         create colormap, define extent, add hillshade contours, add to axes
         and add colorbar
@@ -129,8 +129,6 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             cellSize of data
         alpha: float
             from 0 transparent to 1 opaque for plot of constrained data
-        setLimits: bool
-            if True set limits of constrained data to plot
         oneColor: str
             optional to add a color for a single color for field
 
@@ -164,38 +162,30 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
     cmap.set_bad(alpha=0)
     # uncomment this to set the under value for discrete cmap transparent
     # cmap.set_under(alpha=0)
-    # add origin of data to extent and cellssize to rows and columns
-    xllcenter = raster["header"]["xllcenter"]
-    yllcenter = raster["header"]["yllcenter"]
-    rowsMinPlot = rowsMin * cellSize + yllcenter
-    rowsMaxPlot = (rowsMax + 1) * cellSize + yllcenter
-    colsMinPlot = colsMin * cellSize + xllcenter
-    colsMaxPlot = (colsMax + 1) * cellSize + xllcenter
-    extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
+
+    # set extent in meters using cellSize and llcenter location
+    extentCellCenters, extentCellCorners, rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot= pU.createExtent(rowsMin, rowsMax, colsMin, colsMax, raster['header'])
 
     # add DEM hillshade with contour lines
-    ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
+    _, _ = pU.addHillShadeContours(ax, demConstrained, cellSize, extentCellCenters)
 
     # add peak field data
     if oneColor != '':
-        dataOneColor = np.where(data > 0.0, np.amax(data)*0.25, np.nan)
-        im1 = ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
+        dataOneColor = np.where(dataConstrained > 0.0, np.amax(data)*0.25, np.nan)
+        ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
                         alpha=alpha)
     else:
-        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin="lower", aspect="equal", zorder=4,
+        im1 = ax.imshow(dataConstrained, cmap=cmap, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
             alpha=alpha)
         if len(np.nonzero(data)[0]) > 0.:
             pU.addColorBar(im1, ax, ticks, unit)
-
-    if setLimits:
-        ax.set_xlim([colsMinPlot, colsMaxPlot])
-        ax.set_ylim([rowsMinPlot, rowsMaxPlot])
 
     return ax, rowsMinPlot, colsMinPlot
 
 
 def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
     """Plot all fields within given directory and save to outDir
+    here the extent of the axis is provided in meters and origin lower left corner coordinate
 
     Parameters
     ----------
@@ -207,7 +197,8 @@ def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
         path to directoy where plots shall be saved to
     unit: str
         unit of result type
-
+    constrainData: bool
+        if True - raster data is constrained to where data is nonzero + bufferZone (read from plotUtils ini file)
     """
 
     # Load all infos on simulations
@@ -250,21 +241,20 @@ def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
             rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
             dataConstrained = data[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
             data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-            rowsMinPlot = rowsMin * cellSize
-            rowsMaxPlot = (rowsMax + 1) * cellSize
-            colsMinPlot = colsMin * cellSize
-            colsMaxPlot = (colsMax + 1) * cellSize
+            # set extent in meters using cellSize and llcenter location
+            extentCellCenters, extentCellCorners, _, _, _, _ = pU.createExtent(rowsMin, rowsMax, colsMin, colsMax, header)
             im1 = ax.imshow(
                 data,
                 cmap=cmap,
                 norm=norm,
-                extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot],
+                extent=extentCellCorners,
                 origin="lower",
                 aspect=nx / ny,
             )
         else:
+            extentCellCenters, extentCellCorners = pU.createExtentMinMax(data, header, originLLCenter=True)
             im1 = ax.imshow(
-                data, cmap=cmap, norm=norm, extent=[0, Lx, 0, Ly], origin="lower", aspect=nx / ny
+                data, cmap=cmap, norm=norm, extent=extentCellCorners, origin="lower", aspect=nx / ny
             )
 
         pU.addColorBar(im1, ax, ticks, unit)

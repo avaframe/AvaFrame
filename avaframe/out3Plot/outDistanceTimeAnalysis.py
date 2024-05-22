@@ -57,7 +57,7 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
         configuration settings for range time diagram - here used avalancheDir, rangeTimeResType,
         simHash, and from plots width, height, lw, ..
     ax: matplotlib axes object
-        axes where plot shall be added to 
+        axes where plot shall be added to
 
     """
     # fetch required input info
@@ -334,8 +334,11 @@ def plotMaskForMTI(cfgRangeTime, bmaskRange, bmaskAvaRadar, bmaskAvaRadarRangesl
     headerInfo = mtiInfo["demOriginal"]["header"]
     x0 = headerInfo["xllcenter"]
     y0 = headerInfo["yllcenter"]
-    x1 = headerInfo["xllcenter"] + headerInfo["cellsize"] * bmaskRange.shape[1]
-    y1 = headerInfo["yllcenter"] + headerInfo["cellsize"] * bmaskRange.shape[0]
+    x1 = headerInfo["xllcenter"] + headerInfo["cellsize"] * (bmaskRange.shape[1] - 1)
+    y1 = headerInfo["yllcenter"] + headerInfo["cellsize"] * (bmaskRange.shape[0] - 1)
+    shiftCorner = 0.5 * headerInfo['cellsize']
+    # create extent for plot of raster data using cell corners - lower left (-shiftCorner) to upper right (+shiftCorner) from cell centers
+    extentPlot = [x0-shiftCorner, x1+shiftCorner, y0-shiftCorner, y1+shiftCorner]
     # dimensions
     nx = bmaskRange.shape[1]
     ny = bmaskRange.shape[0]
@@ -345,15 +348,16 @@ def plotMaskForMTI(cfgRangeTime, bmaskRange, bmaskAvaRadar, bmaskAvaRadarRangesl
     # add radar range gate mask
     ax1 = fig.add_subplot(131)
     ax1.set_title("Radar range gate mask")
-    im1 = ax1.imshow(bmaskRange, extent=[x0, x1, y0, y1], origin="lower", aspect=nx / ny)
+    pU.checkExtentFormat(extentPlot, headerInfo['cellsize'], bmaskRange, plotName="")
+    ax1.imshow(bmaskRange, extent=extentPlot, origin="lower", aspect=nx / ny)
     # add masked avalanche result field with threshold and radar field of view
     ax2 = fig.add_subplot(132)
     ax2.set_title("RadarFOV and resultThreshold mask")
-    im2 = ax2.imshow(bmaskAvaRadar, extent=[x0, x1, y0, y1], origin="lower", aspect=nx / ny)
+    ax2.imshow(bmaskAvaRadar, extent=extentPlot, origin="lower", aspect=nx / ny)
     # add combined mask
     ax3 = fig.add_subplot(133)
     ax3.set_title("Combined mask")
-    im3 = ax3.imshow(bmaskAvaRadarRangeslice, extent=[x0, x1, y0, y1], origin="lower", aspect=nx / ny)
+    ax3.imshow(bmaskAvaRadarRangeslice, extent=extentPlot, origin="lower", aspect=nx / ny)
 
     # create plot name and location for saving and save/plot
     outDir = pathlib.Path(cfgRangeTime["avalancheDir"], "Outputs", "ana5Utils")
@@ -728,8 +732,10 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     # initialize x, y vectors of result field domain
     xllc = demData["header"]["xllcenter"]
     yllc = demData["header"]["yllcenter"]
-    x = np.arange(demData["header"]["ncols"]) * cellSize + xllc
-    y = np.arange(demData["header"]["nrows"]) * cellSize + yllc
+    shiftCorner = demData["header"]["cellsize"] * 0.5
+    # get vectors for cell center positions
+    x = np.linspace(xllc, xllc + (demData["header"]["ncols"]-1) * cellSize, demData["header"]["ncols"])
+    y = np.linspace(yllc, yllc + (demData["header"]["nrows"]-1) * cellSize, demData["header"]["nrows"])
 
     # mask data for plot where it is zero
     data = np.ma.masked_where(data == 0.0, data)
@@ -745,11 +751,13 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
     )
 
     # add peak field data
+    extentPlot = [x.min()-shiftCorner, x.max()+shiftCorner, y.min()-shiftCorner, y.max()+shiftCorner]
+    pU.checkExtentFormat(extentPlot,  demData["header"]['cellsize'], data, plotName="")
     im1 = ax1.imshow(
         data,
         cmap=cmapRes,
         norm=normRes,
-        extent=[x.min(), x.max(), y.min(), y.max()],
+        extent=extentPlot,
         origin="lower",
         aspect="equal",
         zorder=4,
@@ -875,6 +883,7 @@ def animationPlot(demData, data, cellSize, resType, cfgRangeTime, mtiInfo, timeS
         [l.min(), l.max(), s.min(), s.max()],
         colors=["gray"],
         onlyContours=True,
+        extentCenters=False,
     )
 
     # invert y axis
