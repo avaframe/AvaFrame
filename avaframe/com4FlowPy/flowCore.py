@@ -231,6 +231,7 @@ def calculation(args):
     flux_sum_array = np.zeros_like(dem, dtype=np.float32)
     count_array = np.zeros_like(dem, dtype=np.int32)
     
+    
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
     
@@ -263,17 +264,18 @@ def calculation(args):
         # If this is a startcell just give a Bool to startcell otherwise the object startcell
 
         cell_list.append(startcell)
+        coords_list = np.array([[row_idx, col_idx]])
 
         for idx, cell in enumerate(cell_list):
             row, col, flux, z_delta = cell.calc_distribution()
-
+            '''
             if len(flux) > 0:
                 # mass, row, col  = list(zip(*sorted(zip( mass, row, col), reverse=False)))
 
                 z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                 # Sort this lists by elh, to start with the highest cell
-
-            for i in range(0, len(cell_list)):  # Check if Cell already exists #instead of 0: idx
+            
+            for i in range(idx, len(cell_list)):  # Check if Cell already exists ; PS: instead idx: 0???
                 k = 0
                 while k < len(row):
                     if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
@@ -289,6 +291,40 @@ def calculation(args):
                         
                     else:
                         k += 1
+            '''
+            #PS:
+            k = 0
+            while k < len(row):
+                if np.any(np.all(coords_list == [row[k],col[k]], axis = 1)): # check if cell already exists
+                    i = np.where(np.all(coords_list == [row[k],col[k]], axis = 1))[0][0]
+                    if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex: #check if i is the index in cell_list
+                        cell_list[i].add_os(flux[k])
+                        cell_list[i].add_parent(cell)
+                        if z_delta[k] > cell_list[i].z_delta:
+                            cell_list[i].z_delta = z_delta[k]
+                        
+                        row = np.delete(row, k)
+                        col = np.delete(col, k)
+                        flux = np.delete(flux, k)
+                        z_delta = np.delete(z_delta, k)
+                    else: # if index of coords list is not the same as in cell_list search for index in cell_list
+                        for i in range(0, len(cell_list)): 
+                            if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
+                                cell_list[i].add_os(flux[k])
+                                cell_list[i].add_parent(cell)
+                                if z_delta[k] > cell_list[i].z_delta:
+                                    cell_list[i].z_delta = z_delta[k]
+                                
+                                row = np.delete(row, k)
+                                col = np.delete(col, k)
+                                flux = np.delete(flux, k)
+                                z_delta = np.delete(z_delta, k)
+                                break
+                        
+                else:
+                    k += 1
+            #PS ende
+            
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1:row[k] + 2, col[k] - 1:col[k] + 2]  # neighbourhood DEM
@@ -296,6 +332,7 @@ def calculation(args):
                     continue
                 cell_list.append(
                     Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                coords_list = np.append(coords_list, [[row[k], col[k]]], axis = 0)
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
