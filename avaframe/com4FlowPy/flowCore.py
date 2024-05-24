@@ -165,123 +165,123 @@ def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
 
     # save files in csv file
 
-    with open(plotDir / ("values_travel_lengths_max.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_travel_lengths_max.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_travel_lengths])
 
-    with open(plotDir / ("values_thalweg_altitude_max.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_altitude_max.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_altitude])
 
-    with open(plotDir / ("values_thalweg_z_delta_sum.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_z_delta_sum.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_z_delta_sum])
     
-    with open(plotDir / ("values_thalweg_z_delta_max.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_z_delta_max.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_z_delta_max])
 
-    with open(plotDir / ("values_thalweg_alpha_calc_min.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_alpha_calc_min.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_alpha_calc])
 
-    with open(plotDir / ("values_path_area.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_path_area.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([path_area])
 
-    with open(plotDir / ("values_thalweg_z_delta_area_mean.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_z_delta_area_mean.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([thalweg_z_delta_area_mean])
 
-    with open(plotDir / ("values_thalweg_row_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_row_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(row_coE)
 
-    with open(plotDir / ("values_thalweg_col_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_col_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(col_coE)
 
-    with open(plotDir / ("values_thalweg_row_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_row_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.row_coF)
 
-    with open(plotDir / ("values_thalweg_col_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_col_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.col_coF)
 
-    with open(plotDir / ("values_thalweg_flux_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_flux_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(flux_coE)
 
-    with open(plotDir / ("values_thalweg_flux_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_flux_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.flux_coF)
     
-    with open(plotDir / ("values_thalweg_energy_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_energy_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(energy_coE)
 
-    with open(plotDir / ("values_thalweg_energy_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_energy_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.energy_coF)
 
-    with open(plotDir / ("values_thalweg_zdelta_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir/ "values_thalweg" / ("values_thalweg_zdelta_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(z_delta_coE)
 
-    with open(plotDir / ("values_thalweg_zdelta_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_zdelta_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.z_delta_coF)
     
-    with open(plotDir / ("values_thalweg_gamma_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_gamma_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(gamma_coE)
 
-    with open(plotDir / ("values_thalweg_s_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_s_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(s_coE)
     
-    with open(plotDir / ("values_thalweg_s_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_s_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.s_coF)
 
-    with open(plotDir / ("values_thalweg_z_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_z_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(z_coE)
 
-    with open(plotDir / ("values_thalweg_z_coF.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_z_coF.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.altitude_coF)
 
-    with open(plotDir / ("values_thalweg_sum_flux_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_sum_flux_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.flux_sumGen)
 
-    with open(plotDir / ("values_thalweg_sum_energy_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_sum_energy_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.energy_sumGen)
 
-    with open(plotDir / ("values_thalweg_sum_zdelta_coE.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_thalweg" / ("values_thalweg_sum_zdelta_coE.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.z_delta_sumGen)
 
-    with open(plotDir / ("values_path_rows_gen.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_path" / ("values_path_rows_gen.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.row_generation)
 
-    with open(plotDir / ("values_path_cols_gen.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_path" / ("values_path_cols_gen.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.col_generation)
 
-    with open(plotDir / ("values_path_flux_gen.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_path" / ("values_path_flux_gen.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.flux_generation)
 
-    with open(plotDir / ("values_path_zdelta_gen.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_path" / ("values_path_zdelta_gen.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.z_delta_generation)
 
-    with open(plotDir / ("values_path_flowenergy_gen.csv"), mode='a', newline='') as file:
+    with open(plotDir / "values_path" / ("values_path_flowenergy_gen.csv"), mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(path.flow_energy_generation)
 
@@ -306,7 +306,7 @@ def thalweg_plot_analysis(dem, plotDir):
     # get path variables from path_analysis_list
 
     
-    path_travel_lengths = np.loadtxt(plotDir / ("values_travel_lengths_max.csv"),delimiter=',')        
+    path_travel_lengths = np.loadtxt(plotDir / "values_thalweg" / ("values_travel_lengths_max.csv"),delimiter=',')        
     
     log.info('Save plots')
     # Histograms
@@ -329,7 +329,7 @@ def thalweg_plot_analysis(dem, plotDir):
     del path_travel_lengths
 
 
-    path_alpha_calc = np.loadtxt(plotDir / ("values_thalweg_alpha_calc_min.csv"),delimiter=',')
+    path_alpha_calc = np.loadtxt(plotDir / "values_thalweg" / ("values_thalweg_alpha_calc_min.csv"),delimiter=',')
 
     fig,ax = plt.subplots()
     if path_alpha_calc.size == 1:
@@ -349,7 +349,7 @@ def thalweg_plot_analysis(dem, plotDir):
     del path_alpha_calc
 
       
-    path_altitude = np.loadtxt(plotDir / ("values_thalweg_altitude_max.csv"),delimiter=',')
+    path_altitude = np.loadtxt(plotDir / "values_thalweg" / ("values_thalweg_altitude_max.csv"),delimiter=',')
     fig,ax = plt.subplots()
     if path_altitude.size == 1:
         path_altitude = np.array([path_altitude, np.nan])
@@ -367,7 +367,7 @@ def thalweg_plot_analysis(dem, plotDir):
     plt.close(fig)
 
 
-    path_z_delta_sum = np.loadtxt(plotDir / ("values_thalweg_z_delta_sum.csv"),delimiter=',')  
+    path_z_delta_sum = np.loadtxt(plotDir / "values_thalweg" / ("values_thalweg_z_delta_sum.csv"),delimiter=',')  
 
     fig,ax = plt.subplots()
     if path_z_delta_sum.size == 1:
@@ -388,7 +388,7 @@ def thalweg_plot_analysis(dem, plotDir):
     del path_z_delta_sum
 
 
-    path_z_delta_max = np.loadtxt(plotDir / ("values_thalweg_z_delta_max.csv"),delimiter=',')
+    path_z_delta_max = np.loadtxt(plotDir / "values_thalweg" / ("values_thalweg_z_delta_max.csv"),delimiter=',')
     fig,ax = plt.subplots()
     if path_z_delta_max.size == 1:
         path_z_delta_max = np.array([path_z_delta_max, np.nan])
@@ -406,7 +406,7 @@ def thalweg_plot_analysis(dem, plotDir):
     plt.close(fig)
 
 
-    path_z_delta_area_mean = np.loadtxt(plotDir / ("values_thalweg_z_delta_area_mean.csv"),delimiter=',')
+    path_z_delta_area_mean = np.loadtxt(plotDir / "values_thalweg" / ("values_thalweg_z_delta_area_mean.csv"),delimiter=',')
     fig,ax = plt.subplots()
     if path_z_delta_area_mean.size == 1:
         path_z_delta_area_mean = np.array([path_z_delta_area_mean, np.nan])
@@ -425,7 +425,7 @@ def thalweg_plot_analysis(dem, plotDir):
     plt.close(fig)
 
         
-    path_area = np.loadtxt(plotDir / ("values_path_area.csv"),delimiter=',')
+    path_area = np.loadtxt(plotDir / "values_thalweg" / ("values_path_area.csv"),delimiter=',')
     fig,ax = plt.subplots()
     if path_area.size == 1:
         path_area = np.array([path_area, np.nan])

@@ -127,6 +127,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     if PathPlots == True:
         pathPlotDir = plotDir / "Thalwege"
         fU.makeADir(pathPlotDir)
+        fU.makeADir(plotDir / "values_path")
+        fU.makeADir(plotDir / "values_thalweg")
+        
+
     #end paula
     tempDir = workDir / "temp"
     fU.makeADir(tempDir)
