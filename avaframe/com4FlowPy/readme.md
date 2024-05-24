@@ -18,7 +18,7 @@ com4FlowPy has not been tested it on MacOS. If you are able to run it there, ple
 
 - Source: master of AvaFrame version 1.8
 - Modified ini - File to Switch on if Pathanalyses (PathAnalysis = 1) and plots of thalwegs are saved (PathPlots = 1)
-- order, when cells are calculated (*flowCore.py*) differs: remember generation of every parentcell and calculate first all parentcells of one generation
+- order, when cells are calculated (*flowCore.py*) differs: remember generation of every parentcell and calculate first all parentcells of one generation --> need to check if calculation remains same
 
 - **If PathAnalysis is switched on:**
     - new File: *flowPath.py*
