@@ -13,6 +13,9 @@ Computational Modules
    com1DFA
    com2AB
    com3Hybrid
+   com4FlowPy
+   com5SnowSlide
+   com6RockAvalanche
 
 Input/Transformation Modules
 ============================

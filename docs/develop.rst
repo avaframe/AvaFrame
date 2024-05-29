@@ -39,7 +39,80 @@ AF-STYLE-4: No dead code
 AF-STYLE-5: Use spaces for indentation
   Use 4 spaces as indentation throughout the python code.
 
+AF-STYLE-5: Use numpy style for docstrings
+  See below.
+
 --------------------------
+
+
+Numpy docstring
+---------------
+
+Example::
+
+    def some_func(foo, bar, baz):
+      """Does some stuff
+
+      Parameters
+      ----------
+      foo : int, float, str, or tf.Tensor
+        The foo to bar, which has a really really, reeeeeeeeeeeeeeeeally
+        unnecessarily long multiline description.
+      bar : str
+        Bar to use on foo
+      baz : float
+        Baz to frobnicate
+
+      Returns
+      -------
+      float
+        The frobnicated baz
+      """
+
+for more info see numpy-documentation_.
+
+.. _numpy-documentation: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
+
+
+At the top of files:
+
+- Only the docstring
+
+- With a good one liner at start
+
+- (No: this is part of...)
+
+
+In api.rst
+
+*For all functions (all *.py) in directory* ::
+
+    Input/Transformation Modules
+    ============================
+
+    .. autosummary::
+       :toctree: _autosummary
+       :template: custom-module-template.rst
+       :recursive:
+
+       in2Trans
+       in3Utils
+
+*For selected functions* ::
+
+    Input/Transformation Modules
+    ============================
+
+    .. autosummary::
+       :toctree: _autosummary
+       :template: custom-module-template.rst
+       :recursive:
+
+       com1DFA.com1DFA
+
+For multifile modules (directories) use `__init__.py` and add docstring there
+
+
 
 Our suggested git workflow
 --------------------------
