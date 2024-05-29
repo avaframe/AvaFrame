@@ -66,12 +66,11 @@ In order to run this example:
 It is also possible to generate the probability maps for already existing simulations. The settings for the probability map
 can be set in ``ana4Stats/probAnaCfg.ini`` in the sections GENERAL and PLOT. The simulations need to be located in the
 ``avaName/Outputs/comMod/peakfiles`` directory, where ``comMod`` refers to the name of the computational module that has been
-used to create the simualtion results. If com1DFA has been used, the full configuration information is accessible and hence
-also filtering is implemented. For other modules the only requirement is that simulation have to be named in the following format:
+used to create the simulation results. If com1DFA has been used, the full configuration information is accessible and hence
+also filtering is implemented. For other modules the only requirement is that simulation results have to be named in the following format:
 ``nameOfReleaseArea_uniqueSimulationIndicator_ModificationIndicator_simType_modelType_resultType.asc``
 
-* *uniqueSimulationIndicator*: a string that is unique for each simulation (can also be a combination of parameter names and values
-in case of com1DFA this is the simHash)
+* *uniqueSimulationIndicator*: a string that is unique for each simulation (can also be a combination of parameter names and values in case of com1DFA this is the simHash)
 * *ModificationIndicator*: **C** for changed or **D** for default model configuration
 * *simType*: **null**, **ent**, **res** or **entres** regarding whether or not entrainment or resistance have been considered
 * *modelType*: for example **dfa** (dense flow avalanche) or **psa** (powder snow avalanche)
