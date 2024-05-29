@@ -1,18 +1,29 @@
 {
-    "creators": [
-        {
-            "affiliation": "BFW",
-            "name": "Felix Oesterle",
-            "orcid": "0000-0002-7772-6884"
-        },
-        {
-            "affiliation": "BFW",
-            "name": "Anna Wirbel"
-        },
-        {
-            "affiliation": "BFW",
-            "name": "Jan-Thomas Fischer",
-            "orcid": "0000-0001-5179-6457"
-        }
-    ]
+  "creators": [
+    {
+      "affiliation": "BFW",
+      "name": "Anna Wirbel",
+      "orcid": "0000-0001-7149-8625"
+    },
+    {
+      "affiliation": "BFW",
+      "name": "Felix Oesterle",
+      "orcid": "0000-0002-7772-6884"
+    },
+    {
+      "affiliation": "BFW",
+      "name": "Jan-Thomas Fischer",
+      "orcid": "0000-0001-5179-6457"
+    },
+    {
+      "affiliation": "BFW",
+      "name": "Andreas Huber",
+      "orcid": "0009-0005-4238-8124"
+    },
+    {
+      "affiliation": "BFW",
+      "name": "Paula Spannring",
+      "orcid": "0009-0005-1843-264X"
+    }
+  ]
 }
