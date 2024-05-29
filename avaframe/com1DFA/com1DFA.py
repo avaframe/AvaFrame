@@ -1276,6 +1276,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["xllcenter"] = dem["originalHeader"]["xllcenter"]
     particles["yllcenter"] = dem["originalHeader"]["yllcenter"]
     particles["nExitedParticles"] = 0.0
+    particles["dmDet"] = np.zeros(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):
@@ -1393,6 +1394,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vx"] = np.zeros((nrows, ncols))
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
+    fields["dmDet"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):

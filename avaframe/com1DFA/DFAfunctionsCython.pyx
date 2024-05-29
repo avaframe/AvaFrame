@@ -393,6 +393,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
+  particles['dmDet'] = np.asarray(dMDet)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
 
 
@@ -1121,6 +1122,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] areaRaster = dem['areaRaster']
   # read particles and fields
   cdef double[:] mass = particles['m']
+  cdef double[:] massDet = particles['dmDet']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] uxArray = particles['ux']
@@ -1135,8 +1137,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PFT = fields['pft']
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
+  cdef double[:, :] DMDet = fields['dmDet']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTBilinear = np.zeros((nrows, ncols))
@@ -1150,7 +1154,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
+  cdef double m, dm, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
   cdef int k, i
   cdef int indx, indy
   cdef int ind1[4]
@@ -1160,7 +1164,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # variables for interpolation
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
-  cdef double mwi
+  cdef double mwi, dmwi
 
   for k in range(nPart):
     x = xArray[k]
@@ -1169,6 +1173,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     uy = uyArray[k]
     uz = uzArray[k]
     m = mass[k]
+    dm = massDet[k]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -1185,7 +1190,9 @@ def updateFieldsC(cfg, particles, dem, fields):
       indx = Lx0 + ind1[i]
       indy = Ly0 + ind2[i]
       mwi = m * w[i]
+      dmwi = dm * w[i]
       MassBilinear[indy, indx] = MassBilinear[indy, indx] + mwi
+      MassDetBilinear[indy, indx] = MassDetBilinear[indy, indx] + dmwi  # PS TODO: sinnvoll???
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + mwi * ux
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + mwi * uy
       MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + mwi * uz
@@ -1193,6 +1200,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   for i in range(ncols):
     for j in range(nrows):
       m = MassBilinear[j, i]
+
+      #PS: TODO: sinnvoll??
+      DMDet[j, i] = DMDet[j, i] + MassDetBilinear[j, i]
+
       if m > 0:
         # TODO: here we devide by the area of the vertex, would it not make
         # more sense to devide by the area of the cell in the previous loop?
@@ -1226,6 +1237,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['FT'] = np.asarray(FTBilinear)
   fields['pfv'] = np.asarray(PFV)
   fields['pft'] = np.asarray(PFT)
+  fields['dmDet'] = np.asarray(DMDet)
   if computeP:
     fields['ppr'] = np.asarray(PP)
     fields['P'] = np.asarray(PBilinear)
