@@ -91,6 +91,7 @@ class Cell:
 
                 self.AlphaFor = max(self.AlphaFor, self.alpha)  # Friction in Forest can't be lower than without forest
                 self.tanAlphaFor = np.tan(np.deg2rad(self.AlphaFor))
+                self.nSkipForestCells = forestParams["nSkipForest"]
 
             # NOTE: This is a quick hack to check if all values for Detrainment are set to 0 (as provided in the
             #      .ini file)
@@ -171,7 +172,15 @@ class Cell:
 
         if self.forestBool:
             if self.forestModule == "forestFrictionLayer":
-                _tanAlpha = self.tanAlphaFor
+                # default behavior - forest effect only neglected for start-cells
+                if (self.nSkipForestCells == 1) and (not self.is_start):
+                    _tanAlpha = self.tanAlphaFor
+                # forest effect also neglected for direct successors to the start-cell if nSkipForestCells==2
+                elif ((self.nSkipForestCells == 2) and (not self.is_start) and
+                      (True not in [x.is_start for x in self.lOfParents])):
+                    _tanAlpha = self.tanAlphaFor
+                else:
+                    _tanAlpha = self.tanAlpha
 
             elif (self.forestModule == "forestFriction") or (self.forestModule == "forestDetrainment"):
 

@@ -113,6 +113,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"] = cfgSetup.getfloat("velThForDetrain")  # float(cfgSetup["velThForDetrain"])
         # 'forestFrictionLayer' parameter
         forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
+        forestParams["nSkipForest"] = cfgSetup.getint("skipForestCells")
 
     else:
         modelPaths["forestPath"] = ""
@@ -208,7 +209,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         log.info("checking input layer alignment ...")
 
         _demHeader = IOf.readASCheader(modelPaths["demPath"])
-        _relHeader = io.read_header(modelPaths["releasePath"])
+        _relHeader = io.read_header(modelPaths["releasePathWork"])
 
         if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
             log.info("DEM and Release Layer ok!")
@@ -349,6 +350,8 @@ def checkConvertReleaseShp2Tif(modelPaths):
 
         dem = IOf.readRaster(modelPaths["demPath"])
         demHeader = IOf.readASCheader(modelPaths["demPath"])
+
+        dem['originalHeader'] = demHeader
 
         releaseLine = shpConv.SHP2Array(modelPaths["releasePath"], "releasePolygon")
         thresholdPointInPoly = 0.01
