@@ -363,9 +363,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         # TODO: enthalpy change / energy change?
 
         # update velocity (dmDet <= 0) according to momentum balance
-        ux = ux * m / (m + dmDet)
-        uy = uy * m / (m + dmDet)
-        uz = uz * m / (m + dmDet)
+        # no velocity change due to mass reduction (Raketengleichung!)
+        #ux = ux * m / (m + dmDet)
+        #uy = uy * m / (m + dmDet)
+        #uz = uz * m / (m + dmDet)
         # update mass
         m = m + dmDet
         mass[k] = m
