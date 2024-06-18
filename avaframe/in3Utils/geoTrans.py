@@ -87,13 +87,13 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
     """
     nrow, ncol = np.shape(Z)
     # initialize outputs
-    z = np.ones((np.shape(x))) * np.NaN
-    dx = np.ones((np.shape(x))) * np.NaN
-    dy = np.ones((np.shape(x))) * np.NaN
-    f11 = np.ones((np.shape(x))) * np.NaN
-    f12 = np.ones((np.shape(x))) * np.NaN
-    f21 = np.ones((np.shape(x))) * np.NaN
-    f22 = np.ones((np.shape(x))) * np.NaN
+    z = np.ones((np.shape(x))) * np.nan
+    dx = np.ones((np.shape(x))) * np.nan
+    dy = np.ones((np.shape(x))) * np.nan
+    f11 = np.ones((np.shape(x))) * np.nan
+    f12 = np.ones((np.shape(x))) * np.nan
+    f21 = np.ones((np.shape(x))) * np.nan
+    f22 = np.ones((np.shape(x))) * np.nan
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lxx = (x - xllc) / csz
@@ -103,23 +103,23 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
 
     # find out of bound indexes
     if interp == "nearest":
-        Lx[np.where((Lxx <= -0.5))] = np.NaN
-        Ly[np.where((Lxx <= -0.5))] = np.NaN
-        Lx[np.where(Lxx >= (ncol - 0.5))] = np.NaN
-        Ly[np.where(Lxx >= (ncol - 0.5))] = np.NaN
-        Lx[np.where(Lyy <= -0.5)] = np.NaN
-        Ly[np.where(Lyy <= -0.5)] = np.NaN
-        Lx[np.where(Lyy >= (nrow - 0.5))] = np.NaN
-        Ly[np.where(Lyy >= (nrow - 0.5))] = np.NaN
+        Lx[np.where((Lxx <= -0.5))] = np.nan
+        Ly[np.where((Lxx <= -0.5))] = np.nan
+        Lx[np.where(Lxx >= (ncol - 0.5))] = np.nan
+        Ly[np.where(Lxx >= (ncol - 0.5))] = np.nan
+        Lx[np.where(Lyy <= -0.5)] = np.nan
+        Ly[np.where(Lyy <= -0.5)] = np.nan
+        Lx[np.where(Lyy >= (nrow - 0.5))] = np.nan
+        Ly[np.where(Lyy >= (nrow - 0.5))] = np.nan
     elif interp == "bilinear":
-        Lx[np.where((Lxx < 0))] = np.NaN
-        Ly[np.where((Lxx < 0))] = np.NaN
-        Lx[np.where(Lxx >= (ncol - 1))] = np.NaN
-        Ly[np.where(Lxx >= (ncol - 1))] = np.NaN
-        Lx[np.where(Lyy < 0)] = np.NaN
-        Ly[np.where(Lyy < 0)] = np.NaN
-        Lx[np.where(Lyy >= (nrow - 1))] = np.NaN
-        Ly[np.where(Lyy >= (nrow - 1))] = np.NaN
+        Lx[np.where((Lxx < 0))] = np.nan
+        Ly[np.where((Lxx < 0))] = np.nan
+        Lx[np.where(Lxx >= (ncol - 1))] = np.nan
+        Ly[np.where(Lxx >= (ncol - 1))] = np.nan
+        Lx[np.where(Lyy < 0)] = np.nan
+        Ly[np.where(Lyy < 0)] = np.nan
+        Lx[np.where(Lyy >= (nrow - 1))] = np.nan
+        Ly[np.where(Lyy >= (nrow - 1))] = np.nan
 
     # find index of not nan value
     mask = ~np.isnan(Lx + Ly)
