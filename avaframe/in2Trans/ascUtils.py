@@ -137,7 +137,7 @@ def readRaster(fname, noDataToNan=True):
     data = {}
     data["header"] = header
     if noDataToNan:
-        rasterdata[rasterdata == header["nodata_value"]] = np.NaN
+        rasterdata[rasterdata == header["nodata_value"]] = np.nan
         data["header"]["nodata_value"] = np.nan
     data["rasterData"] = np.flipud(rasterdata)
 
