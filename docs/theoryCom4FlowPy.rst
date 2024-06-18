@@ -1,16 +1,20 @@
-com4FlowPy Theory 
+com4FlowPy theory
 ===================
 
 .. Note::
   
-  THIS SECTION IS CURRENTLY UNDER DEVELOPMENT/REVIEW
+  This section is currently under development/review!
   
-  as such it might still contain some broken links, missing references, typos, etc. 
+  ... as such it might still contain some broken links, missing references, typos, etc. 
 
-  For a detailed reference on :py:mod:`com4FlowPy`, in the meantime,  we kindly refer to:
+  For additional reference on the concepts and motivation behind :py:mod:`com4FlowPy` , we kindly refer to:
      - D’Amboise, C.J.L.; Neuhauser, M.; Teich, M.; Huber, A.; Kofler, A.; Perzl, F.; Fromm, R.; Kleemayr, K.; Fischer, J.-T.(2022). Flow-Py v1.0: a customizable, open-source simulation tool to estimate runout and intensity of gravitational mass flows. Geoscientific Model Development. 15, 2423–2439. (https://doi.org/10.5194/gmd-15-2423-2022)
+  
+  Initial information pertaining to the application of :py:mod:`com4FlowPy` with consideration of forest-effects can be found in:
+     - D'Amboise, C.J.L; Teich, M.; Hormes, A.; Steger, S. and Berger, F. (2021). Modeling Protective Forests for Gravitational Natural Hazards and How It Relates to Risk-Based Decision Support Tools. in: *Protective forests as Ecosystem-based solution for Disaster Risk Reduction (ECO-DRR), Teich et al., 2021*. (https://www.intechopen.com/chapters/78979)
 
-Background and Motivation
+
+Background and motivation
 ----------------------------
 
 .. _fig-com4FlowPyMotivation:
@@ -70,7 +74,7 @@ flow path we combine these concepts [4] with extensions of existing algorithms [
 following sections.
 
 
-Spatial Input and Iterative Calculation Steps on the Path:
+Spatial input and iterative calculation steps on the path:
 ---------------------------------------------------------------
 
 In nature a GMF has one or more release areas that span over single or multiple release cells. Flow-Py computes the so 
@@ -220,7 +224,7 @@ terrain contribution to:
      \Phi_i = \dfrac{\psi_i + \frac{\pi}{2}}{2}
      :label: Phi_i
 
-Routing Flux: 
+Routing flux: 
 ~~~~~~~~~~~~~~~~~~~
 
 The routing flux summarizes the persistence and terrain contributions according to Eq.(16):
@@ -234,7 +238,7 @@ where i is the direction and n are the neighbors from 1 to 8. :math:`R_i` is the
 of Eq. (16) is a 3 x 3 array with assigned flux values. A normalization stage is then required to bring the sum of the 
 :math:`R_i`'s to the value of :math:`R_b`. This aims at avoiding loss of flux [2].
 
-Flow Chart / Overview:
+Flow chart / overview:
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 In :numref:`fig-com4FlowPy_FlowChart` the algorithm of the computational implementation is sketched, including function and files names with respect
@@ -268,9 +272,29 @@ Lawinenverbauung; WLV) in conjunction with the Federal Ministry Republic of Aust
 
 Citation
 ------------------------------------------------------
-If you are using :py:mod:`com4FlowPy` in your work, we kindly ask to include the following reference in any resulting
+If you are using :py:mod:`com4FlowPy` in your work, we are happy if you include the following reference in any resulting
 publications:
 
 - D’Amboise, C.J.L.; Neuhauser, M.; Teich, M.; Huber, A.; Kofler, A.; Perzl, F.; Fromm, R.; Kleemayr, K.; Fischer, J.-T.
   (2022). Flow-Py v1.0: a customizable, open-source simulation tool to estimate runout and intensity of gravitational 
   mass flows. Geoscientific Model Development. 15, 2423–2439. (https://doi.org/10.5194/gmd-15-2423-2022)
+
+com4FlowPy applications
+------------------------------------------------------
+
+:py:mod:`com4FlowPy` has been applied in different studies in recent years. Here are the ones we know about:
+
+autoATES
+~~~~~~~~~~~~~~~~~~~
+- Toft, H.B.; Sykes, J.; Schauer, A.; Hendrikx, J. and Hetland, A. (2024). AutoATES v2.0: Automated Avalanche Terrain Exposure Scale mapping. *Nat. Hazards Earth Syst. Sci., 24*, 1779–1793 (https://doi.org/10.5194/nhess-24-1779-2024)
+- Sykes, J.; Toft, H.B.; Haegeli, P. and Statham, G. (2024). Automated Avalanche Terrain Exposure Scale (ATES) mapping – local validation and optimization in western Canada. *Nat. Hazards Earth Syst. Sci., 24*, 947–971 (https://doi.org/10.5194/nhess-24-947-2024)
+- Spannring, P.; Hesselbach, C.; Mitterer, C. and Fischer, J.-T. (2024). Classification of avalanche terrain: a open-source model chain for the Avalanche Terrain Exposure Scale. *Proceedings Interpraevent 2024, Vienna, Austria* (https://www.interpraevent.at/en/proceeding/proceedings-ip-2024)
+- von Avis, C.D.; Sykes, J. and Tutt, B. (2023). Development of large scale automated Avalanche Terrain Exposure Scale (ATES) ratings in collaboration with local avalanche experts. *Proceedings, International Snow Science Workshop, Bend, OR, USA* (http://arc.lib.montana.edu/snow-science/item/2998)
+- Huber, A.; Hesselbach, C.; Oesterle, F.; Neuhauser, M.; Adams, M.; Plörer, M.; Stephan, L.; Toft, H.B.; Sykes, J.; Mitterer, C. and Fischer, J.-T. (2023). AutoATES Austria - Testing and application of an automated model-chain for avalanche terrain classification in the Austrian Alps. *Proceedings, International Snow Science Workshop, Bend, OR, USA* (http://arc.lib.montana.edu/snow-science/item/2989)
+- Hesselbach, C. (2023). Adaptaion and application of an automated Avalanche Terrain Classification in Austria. *Masters' Thesis*. University of Life Sciences (BOKU), Vienna (https://forschung.boku.ac.at/de/publications/175549)
+- Schumacher, J.; Toft, H.B.; McLean, J.P.; Hauglin, M.; Astrup, R. and Breidenbach, J. (2022). The utility of forest attribute maps for automated Avalanche Terrain Exposure Scale (ATES) modelling. Scandinavian Journal of Forest Research, 37:4, 264-275 (https://doi.org/10.1080/02827581.2022.2096921)
+
+other
+~~~~~~~~~~~~~~~~~~~
+- Perzl, F.; Huber, A.; Fromm, R. and Teich, M. (2024). Estimation of potential snow avalanche hazard probability in areas below protective forests in Austria. *Proceedings Interpraevent 2024, Vienna, Austria* (https://www.interpraevent.at/en/proceeding/proceedings-ip-2024)
+- D'Amboise, C.J.L; Teich, M.; Hormes, A.; Steger, S. and Berger, F. (2021). Modeling Protective Forests for Gravitational Natural Hazards and How It Relates to Risk-Based Decision Support Tools. in: *Protective forests as Ecosystem-based solution for Disaster Risk Reduction (ECO-DRR), Teich et al., 2021*. (https://www.intechopen.com/chapters/78979)

@@ -1,78 +1,190 @@
 com4FlowPy: Flow-Py
-==================
+======================
 
 .. Note::
-  THIS MODULE IS CURRENTLY UNDER HEAVY DEVELOPMENT! 
+  :py:mod:`com4FlowPy` is now the actively maintained version of Flow-Py, which has been previously hosted on https://github.com/avaframe/FlowPy.
+  **The old repository will be archived and is not actively maintained any longer.** We encourage existing users/developers 
+  of Flow-Py to switch to :py:mod:`com4FlowPy`.
 
-  The code is not automatically tested in any way and not included in the code coverage!
+  THE MODULE IS CURRENTLY UNDER HEAVY DEVELOPMENT!
 
-  It also does not adhere to the AvaFrame coding and naming conventions (yet)...
+  **As such the code is not automatically tested or included in the code coverage yet.** Also AvaFrame coding and 
+  naming conventions are not (yet) adhered.
 
   Use at your own risk and if you want to contribute to the modules improvement, you are very welcome to do so!
+  We are trying to keep this description up to date with the latest deveopments in the AvaFrame ``master`` branch.
 
-
-Flow-Py is an open source tool to compute gravitational mass flows (GMF) run out and intensity. 
+:py:mod:`com4FlowPy` is an open-source tool to compute gravitational mass flow (GMF) run outs and intensities. 
 The main objective is to compute the spatial extent of GMF, which consists of the starting, 
 transit and runout zones of GMF on the surface of a three dimensional terrain. The resulting 
 run out is mainly dependent on the terrain and the location of the starting/release point.
-No time-dependent equations are solved in the model. com4FlowPy uses existing statistical-data-based
-approaches for solving the routing and stopping of GMF. 
+No time-dependent equations are solved in the model. :py:mod:`com4FlowPy` uses a simple angle-of-reach approach in combination
+with a raster-based flow-routing routine for solving the routing and stopping of the modeled GMF. 
 
-The tool has been designed to be computationally light, allowing the application on a 
-regional scale including a large number of GMF paths. The 
-implementation allows users to address specific GMF research
-questions by keeping the parameterization flexible and the ability to include
-custom model extensions and add-ons.
+:py:mod:`com4FlowPy` has been developed for regional scale applications and with a focus on model extendability and 
+adaptability. While it has been successfully applied to different regional-scale case studies (see: :ref:`theoryCom4FlowPy:com4FlowPy theory` --> *com4FlowPy applications*), application over larger model
+domains can be computationally demanding and computation times are strongly correlated with model parametrization and the
+number of modeled release-cells.
+
+The motivational background and concepts behind the model, as well as a list of references can be found under
+:ref:`theoryCom4FlowPy:com4FlowPy theory`.
 
 Running the Code
 ----------------
 
-**You are required to install rasterio and gdal separately, since they are not included 
-in the general AvaFrame requirements.**
+- In order to run :py:mod:`com4FlowPy` you need to install ``rasterio`` and ``gdal`` separately, since they are not included in the general AvaFrame requirements (--> on Linux distributions inside the ``avaframe_env`` ``conda`` environment ``pip install rasterio`` should usually suffice).
 
-If you have trouble installing GDAL or rasterio on Windows use these links to
-get the required version directly from their website, first install *GDAL* and then *rasterio*.
+If you have trouble installing ``GDAL`` or ``rasterio`` on Windows use these links to
+get the required version directly from their website, first install ``GDAL`` and then ``rasterio``.
 
-*GDAL*: https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
+- ``GDAL``: https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
 
-*rasterio*: https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
+- ``rasterio``: https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
 
 Once the required libraries are installed the model runs via the ``runCom4FlowPy.py`` script. 
 
 Configuration
 ----------------
 
-The configuration can be found in ``com4FlowPyCfg.ini``
 
-- alpha_angle (controls the run out angle induced stopping and routing)
-- exponent (controls concentration of routing flux and therefore the lateral spread)
-- working directory path
-- path to DEM raster (.tiff or .asc)
-- path to release raster (.tiff or .asc)  
-- (Optional) flux threshold (positive number) flux_threshold=xx (limits spreading with the exponent)
-- (Optional) Max Z<sup>&delta;</sup> (positive number) max_z_delta=xx (max kinetic energy height, turbulent friction)
+
+The model configuratios for :py:mod:`com4FlowPy` can be found in ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
+``avaframe/com4FlowPy/com4FlowPyCfg.ini`` (module specific config).
+
+In these files,
+all model parameters are listed and can be modified. We recommend to create a local copy
+of both files and keep the default configurations in  in ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
+``avaframe/com4FlowPy/com4FlowPyCfg.ini`` (module specific config) untouched.
+For this purpose, inside ``AvaFrame/avaframe/`` run:
+
+  ::
+
+    cp avaframeCfg.ini local_avaframeCfg.ini
+    cp com4FlowPy/com4FlowPyCfg.ini com4FlowPy/local_com4FlowPyCfg.ini
+
+and modify the parameter values in the files with ``local_`` prefix. 
+
+in the ``avaframe/(local_)avaframeCfg.ini`` you can set the following general options:
+
+- ``avalancheDir`` ... the avalanche directory (this is only used if ``useCustomPaths = False`` in ``avaframe/com4FlowPy/com4FlowPyCfg.ini``)
+- ``nCPU`` ... number of CPU threads that will be used by the model (if *auto*, then ``CPUPercent`` is used), alternatively provide the number of CPU threads (should not exceed the number of actual threads on your machine)
+- ``CPUPercent`` ... if ``nCPU = auto`` the number of CPUs used will be calculated based on this percentage.
+
+in the ``avaframe/com4FlowPy/(local_)com4FlowPyCfg.ini`` you can set the following module specific options/parameters:
+
+i) general model parameters:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``alpha``: :math:`\alpha` - travel angle in :math:`^{\circ}` :math:`\ldots` controls the maximum runout along the path
+- ``exp``: Exponent controling the concentration of the routing flux and therefore lateral spreading behavior. :math:`exp = 1 \ldots` widespread process paths, :math:`exp \rightarrow \infty \ldots` very confied process paths (single flow direction).
+- ``flux_threshold``: minimal flux value that is still processed by the routing algorithm (limits model runtimes by stopping further model caluclation in cells with excessively small *flux* values; thus also influencing process spreading together with ``exp``)
+- ``max_z``: :math:`z_{\delta}^{max}\;[\rm{m}]` maximum kinetic energy height limit :math:`\ldots` sets a hard limit to the max. energy line height (see: :cite:`HoJaRuZi_2013`) :math:`\rightarrow` can roughly be interpreted as a limit to maximum process velocities using the conversion :math:`v_{max}=(2 g z_{\delta}^{max})^{(1/2)}` 
+
+ii) additional modules (forest, infrastructure)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``forest``: if set to ``True`` the runout calculation is performed with the *forest module* (a forest layer has to be provided)
+- ``infra``: if set to ``True`` the calculation is performend with the *backcalculation module* (an infrastructure layer has to be provided)
+
+iii) forest module parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. Note::
+  Forest modules and parameters are currently updated/developed; we will update the description of parameters accordingly
+
+  - ``forestModule``: if ``forest=True`` different forest modules ``[ForestFriction, ForestDetrainment, ForestFrictionLayer]`` can be selected.
+
+      - if ``forestModule in {ForestFriction, ForestDetrainment}``: *forest_layer* has to be scaled from 0 (no forest effect) to 1 (optimal forest effect).
+      - if ``forestModule = ForestFrictionLayer`` each cell of the provided *forest_layer* has to contain either an ``absolute`` or ``relative`` value for ``alpha``, which will be utilized. 
+
+  depending on choice of the ``forestModule`` the following parameters can be set:
+
+  - ``forestModule = ForestFriction``:
+      - ``maxAddedFrictionFor``: tba.
+      - ``minAddedFrictionFor``: tba.
+      - ``velThForFriction``:  tba.  
+
+  - ``forestModule = ForestDetrainment``:
+      - ``maxAddedFrictionFor``: tba.
+      - ``minAddedFrictionFor``: tba.
+      - ``velThForFriction``:  tba.
+      - ``maxDetrainmentFor``: tba.
+      - ``minDetrainmentFor``: tba.
+      - ``velThForDetrain``: tba.
+
+  - ``forestModule = ForestFrictionLayer``:
+      - ``forestFrictionLayerType``: can be either ``absolute`` or ``relative``
+
+
+iv) tiling and multiprocessing parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the model extent (i.e. number of cells and/or rows in the input layers) is larger than ``tileSize``, then :py:mod:`com4FlowPy` 
+will automatically split the input layers into different tiles (these are pickled to ``.npy`` files inside ``\temp`` folder). 
+Each (quadratic) tile will then be consecutively calculated using all CPUs as defined by ``nCPU`` in ``avaframeCfg.ini``. The 
+``tileOverlap`` option defines by which margins the tiles overlap; in overlapping parts of the model domain the outputs
+of the single tiles are combined (maximum, sum - depending on output variable).
+
+The default settings provide reasonable performance on standard machines/model domains - however for special applications (e.g. modeling
+over large areas or on HPC hardware, **different raster resolution**) tweaking parameters might improve model performance.
+
+- ``tileSize``: tile size in meters (default = :math:`15\;\rm{km}`)
+- ``tileOverlap``: overlap between tiles in meters (default = :math:`5\;\rm{km}`)
+
+These parameters control multiprocessing behavior (each tile is processed in parallel by a number of available CPUs). 
+Depending on configuration of available CPU and RAM these settings might be tweaked
+
+- ``procPerCPUCore``: Processes that can be spawned per CPU (default = 1)
+- ``chunkSize``: (default = 50) 
+- ``maxChunks``: max. number of single work-loads that are spawned for one tile (default = 500 ) - if there are issues with RAM overflow this number should be decreased
+
 
 Input Files
------------
+-------------
 
-All raster files (DEM, release, ...) must be in the .asc or .tif format.
+in case ``useCustomPaths = False`` in ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` the **Input Data** has to be provided in
+the following folder structure inside the ``avalancheDir`` directory inside which is defined in ``avaframe/avaframeCfg.ini``:
 
-All rasters need the same resolution (normal sizes are e.g. 5x5 or 10x10 meters).
+::
 
-All Layers need the same spatial extend, with no data values < 0 (standard no data values = -9999).
+    NameOfAvalanche/
+      Inputs/
+        ElevationModel - digital elevation model (.asc)
+        REL/      - release area file (can be either .asc, .tif, or .shp) <required>
+        RES/      - forest structure information (FSI) (.asc or .tif) <optional>
+        INFRA/    - infrastructure layer (.asc or .tif) <optional>
+      Outputs/
+      Work/
 
-The locations identified as release areas need values > 0. (see release.tif in examples)
+if ``useCustomPaths = True`` in ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` then the paths to the input files and working-
+directory can be defined inside ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` as follows (:math:`\rightarrow` *this option allows placing model
+inputs and working directories/model outputs in different places, which might be desirable for some applications*):
+
+- ``workDir`` :math:`\ldots` working directory (a ``temp/`` folder, model log and model results will be written here)
+- ``demPath`` :math:`\ldots` path to input DEM (must be ``.asc`` currently)
+- ``releasePath`` :math:`\ldots` path to release area raster (``.asc, .tif``)
+- ``infraPath`` :math:`\ldots` path to infrastructure raster (``.asc, .tif``) (required if ``infra = True``)
+- ``forestPath`` :math:`\ldots` path to forest (FSI) raster (``.asc, .tif``) (required if ``forest = True``)
+
+
+**All rasters need the same resolution (we recommend 10x10 meters) and raster extent!!**
+In all rasters values < 0 are interpeted as *noData* (standard no data values = -9999).
+The locations identified as release areas need values > 0.
+
+if ``useCustomPaths = True`` and ``deleteTempFolder=True`` then the ``temp/`` folder inside the ``workDir`` will be 
+deleted after completion of the model run (can be useful for calculation of large model domains).
 
 Output
-------
+-------
 
-All outputs are in the .tiff raster format in the same resolution and extent as the input raster layers.
+All outputs are in the .tif raster format in the same resolution and extent as the input raster layers.
 
-- z_delta: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
-- Flux: The maximum routing flux of all paths for every raster cell
-- sum_z_delta: z_delta summed up over all paths on every raster cell
-- Cell_Counts: number of paths that route flux through a raster cell
-- Flow Path Travel Angle, FP_TA: the gamma angle along the flow path
-- Straight Line Travel Angle, SL_TA: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
+- ``z_delta.tif``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
+- ``flux.tif``: The maximum routing flux of all paths for every raster cell
+- ``z_delta_sum.tif``: z_delta summed up over all paths on every raster cell
+- ``cell_counts.tif``: number of paths that route flux through a raster cell
+- ``FP_travel_angle.tif``: the gamma angle along the flow path
+- ``SL_travel_angle.tif``: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
 
-
+.. Note::
+  * **please interpret** ``cell_counts.tif`` **with caution, since absolute cell_count values do currently not reflect the number of release-cells which route flux through a cell - we are currently fixing the implementation of this feature**
+  * we are also working on making the output files configurable via the ``com4FlowPyCfg.ini`` file for improved flexibility (different output files might be desirable for different applications)
