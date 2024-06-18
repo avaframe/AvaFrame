@@ -148,6 +148,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
     demConstrained = demField[rowsMin:rowsMax + 1, colsMin:colsMax + 1]
 
     data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+    dataConstrained = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
     unit = pU.cfgPlotUtils["unit%s" % resType]
 
     # Set extent of peak file
