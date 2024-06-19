@@ -116,7 +116,7 @@ iteration step.
 
 When the iteration list is empty and all potential children fulfill one of the stopping criteria:
 
-- :math:`Z_{\delta}` has to be smaller than zero: :math:`Z_{\delta}<0`
+- :math:`Z^{\delta}` has to be smaller than zero: :math:`Z^{\delta}<0`
 - Routing Flux has to be smaller than the flux cut off: :math:`R_i < R_{Stop}`
 
 the path calculation is finished. The required information is saved from the cell class to the summarizing output raster 
@@ -126,7 +126,7 @@ magnitude for all release cells are summarized in the output raster files, which
 Every path is independent from the other, but depending on the information we want to extract, we save the highest 
 values (e.g. :math:`Z_{\delta}`) or sums (e.g.Cell Counts) of different paths to the output raster file.
 
-:math:`Z_{\delta}`
+:math:`Z^{\delta}`
 ~~~~~~~~~~~~~~~~~~~~~
 
 For each base cell in a path we solve the equations (:eq:`z_bn_alpha`, :eq:`z_bn_gamma`, :eq:`z_bn_delta`) for every neighbor n, if :math:`Z_{bn}^{\delta}` 
