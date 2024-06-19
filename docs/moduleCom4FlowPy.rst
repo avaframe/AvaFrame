@@ -76,7 +76,7 @@ i) general model parameters:
 - ``alpha``: :math:`\alpha` - travel angle in :math:`^{\circ}` :math:`\ldots` controls the maximum runout along the path
 - ``exp``: Exponent controling the concentration of the routing flux and therefore lateral spreading behavior. :math:`exp = 1 \ldots` widespread process paths, :math:`exp \rightarrow \infty \ldots` very confied process paths (single flow direction).
 - ``flux_threshold``: minimal flux value that is still processed by the routing algorithm (limits model runtimes by stopping further model caluclation in cells with excessively small *flux* values; thus also influencing process spreading together with ``exp``)
-- ``max_z``: :math:`z_{\delta}^{max}\;[\rm{m}]` maximum kinetic energy height limit :math:`\ldots` sets a hard limit to the max. energy line height (see: :cite:`HoJaRuZi_2013`) :math:`\rightarrow` can roughly be interpreted as a limit to maximum process velocities using the conversion :math:`v_{max}=(2 g z_{\delta}^{max})^{(1/2)}` 
+- ``max_z``: :math:`z^{\delta}_{max}\;[\rm{m}]` maximum kinetic energy height limit [m] :math:`\ldots` sets a hard limit to the max. energy line height (see: :cite:`HoJaRuZi_2013`) :math:`\rightarrow` can roughly be interpreted as a limit to maximum process velocities using the conversion :math:`v_{max}=(2 g z_{\delta}^{max})^{(1/2)}` 
 
 ii) additional modules (forest, infrastructure)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,7 +121,7 @@ In addition to increased friction also *flux* will be `detrained` on forested ra
 
 If 'ForestFrictionLayer' is selected, the user-provided *forest_layer* has to contain ``absolute`` or ``relative`` :math:`\alpha` 
 in :math:`^{\circ}` on forested cells. In case of  ``absolute``, the provided :math:`\alpha` in the *forest_layer* will
-be used in case of ``relative`` the provided :math:`\alpha` in the *forest_layer* will be added to :math:`\alpha` set in
+be used; in case of ``relative`` the provided :math:`\alpha` in the *forest_layer* will be added to :math:`\alpha` set in
 the general model parameters. In any case a check is performed, that :math:`\alpha` on forested cells has to be equal or
 greater than the global :math:`\alpha`.
 
