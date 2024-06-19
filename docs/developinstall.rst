@@ -45,9 +45,13 @@ package manager::
    You will have to do this compilation every time something changes in the cython code. We also suggest
    to do this everytime updates from the repositories are pulled.
 
-Install avaframe and its requirements::
+Install avaframe and its requirements by **either** doing::
 
   pip install -e .
+
+or if this fails (see `github issue 986 <https://github.com/avaframe/AvaFrame/issues/986>`_), do::
+
+  python setup.py develop
 
 This installs avaframe in editable mode, so every time you import avaframe the
 current (local) version will be used.
