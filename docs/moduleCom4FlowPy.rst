@@ -51,7 +51,7 @@ The model configuratios for :py:mod:`com4FlowPy` can be found in ``avaframe/avaf
 
 In these files,
 all model parameters are listed and can be modified. We recommend to create a local copy
-of both files and keep the default configurations in  ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
+of both files and keep the default configurations in ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
 ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` (module specific config) untouched.
 For this purpose, inside ``AvaFrame/avaframe/`` run:
 
