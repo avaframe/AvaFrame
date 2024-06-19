@@ -33,14 +33,14 @@ summarizes the basic concept of a constant run out angle (:math:`\alpha`) with
 the corresponding geometric relations in two dimensions along a possible process path.
 
 .. math::
-     \tan{\alpha} = \frac{Z(s_0)-Z(S_{\alpha})}{s_{\alpha}-s_0}
+     \tan{\alpha} = \frac{z(s_0)-z(s_{\alpha})}{s_{\alpha}-s_0}
      :label: tan_alpha
 
 The local travel angle gamma is defined by the altitude difference and projected distance along the path, from the 
 release point to the current location.
 
 .. math::
-     \tan{\gamma} = \frac{Z(s_0)-Z(s)}{s-s_0}
+     \tan{\gamma} = \frac{z(s_0)-z(s)}{s-s_0}
      :label: tan_gamma
 
 The angle delta is the difference between the local travel angle gamma and the runout angle alpha and is related to 
