@@ -46,14 +46,12 @@ Once the required libraries are installed the model runs via the ``runCom4FlowPy
 Configuration
 ----------------
 
-
-
 The model configuratios for :py:mod:`com4FlowPy` can be found in ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
 ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` (module specific config).
 
 In these files,
 all model parameters are listed and can be modified. We recommend to create a local copy
-of both files and keep the default configurations in  in ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
+of both files and keep the default configurations in  ``avaframe/avaframeCfg.ini`` (general AvaFrame config) and 
 ``avaframe/com4FlowPy/com4FlowPyCfg.ini`` (module specific config) untouched.
 For this purpose, inside ``AvaFrame/avaframe/`` run:
 
@@ -88,31 +86,46 @@ ii) additional modules (forest, infrastructure)
 
 iii) forest module parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. Note::
   Forest modules and parameters are currently updated/developed; we will update the description of parameters accordingly
 
-  - ``forestModule``: if ``forest=True`` different forest modules ``[ForestFriction, ForestDetrainment, ForestFrictionLayer]`` can be selected.
+- ``forestModule``: if ``forest=True`` different forest modules ``[ForestFriction, ForestDetrainment, ForestFrictionLayer]`` can be selected.
 
-      - if ``forestModule in {ForestFriction, ForestDetrainment}``: *forest_layer* has to be scaled from 0 (no forest effect) to 1 (optimal forest effect).
-      - if ``forestModule = ForestFrictionLayer`` each cell of the provided *forest_layer* has to contain either an ``absolute`` or ``relative`` value for ``alpha``, which will be utilized. 
+    - if ``forestModule in {ForestFriction, ForestDetrainment}``: *forest_layer* has to be scaled from 0 (no forest effect) to 1 (optimal forest effect).
+    - if ``forestModule = ForestFrictionLayer`` each cell of the provided *forest_layer* has to contain either an ``absolute`` or ``relative`` value for ``alpha``, which will be utilized. 
 
-  depending on choice of the ``forestModule`` the following parameters can be set:
+depending on choice of the ``forestModule`` the following parameters can be set:
 
-  - ``forestModule = ForestFriction``:
-      - ``maxAddedFrictionFor``: tba.
-      - ``minAddedFrictionFor``: tba.
-      - ``velThForFriction``:  tba.  
+**forestModule = `ForestFriction`**:
 
-  - ``forestModule = ForestDetrainment``:
-      - ``maxAddedFrictionFor``: tba.
-      - ``minAddedFrictionFor``: tba.
-      - ``velThForFriction``:  tba.
-      - ``maxDetrainmentFor``: tba.
-      - ``minDetrainmentFor``: tba.
-      - ``velThForDetrain``: tba.
+Friction (i.e. :math:`\alpha`) on forested pixels/raster cells will be increased. The actual value :math:`\Delta_{\alpha}\;[^{\circ}]`, by which the global :math:`\alpha`
+will be incremented is calculated as a function of ``maxAddedFrictionFor``, ``minAddedFrictionFor``, ``velThForFriction``, the FSI value of the forested cell (:math:`FSI\in\{0,\ldots,1\}`), and the energy-line height :math:`z^{\delta}` or equivalent velocity :math:`v=(2 g z^{\delta})^{(1/2)}` calculated at the cell.
 
-  - ``forestModule = ForestFrictionLayer``:
-      - ``forestFrictionLayerType``: can be either ``absolute`` or ``relative``
+- ``maxAddedFrictionFor``: max. added friction on a forested pixel expressed as increment to :math:`\alpha` in degrees :math:`[^{\circ}]`
+- ``minAddedFrictionFor``: min. added friction on a forested pixel expressed as increment to :math:`\alpha` in degrees :math:`[^{\circ}]`
+- ``velThForFriction``: velocity limit in :math:`\frac{\rm{m}}{\rm{s}}` above which added friction on forested pixels is set to ``minAddedFrictionFor``  
+
+**forestModule = `ForestDetrainment`**:
+
+In addition to increased friction also *flux* will be `detrained` on forested raster/cells. The amount of detrained *flux* is calculated in analogy to the added friction as a function of ``maxDetrainmentFor``, ``minDetrainmentFor``, ``velThForDetrain``, FSI and local :math:`z^{\delta}`.
+
+- ``maxAddedFrictionFor``: max. added friction on a forested pixel expressed as increment to :math:`\alpha` in degrees :math:`[^{\circ}]`
+- ``minAddedFrictionFor``: min. added friction on a forested pixel expressed as increment to :math:`\alpha` in degrees :math:`[^{\circ}]`
+- ``velThForFriction``:  velocity limit in :math:`\frac{\rm{m}}{\rm{s}}` above which added friction on forested pixels is set to ``minAddedFrictionFor``  
+- ``maxDetrainmentFor``: max. amount of *flux* that can be `detrained` on a forested cell
+- ``minDetrainmentFor``: min. amount of *flux* that can be `detrained` on a forested cell 
+- ``velThForDetrain``: velocity limit in :math:`\frac{\rm{m}}{\rm{s}}` above which detrained *flux* on forested pixels is set to ``minDetrainmentFor``
+
+**forestModule = `ForestFrictionLayer`**:
+
+If 'ForestFrictionLayer' is selected, the user-provided *forest_layer* has to contain ``absolute`` or ``relative`` :math:`\alpha` 
+in :math:`^{\circ}` on forested cells. In case of  ``absolute``, the provided :math:`\alpha` in the *forest_layer* will
+be used in case of ``relative`` the provided :math:`\alpha` in the *forest_layer* will be added to :math:`\alpha` set in
+the general model parameters. In any case a check is performed, that :math:`\alpha` on forested cells has to be equal or
+greater than the global :math:`\alpha`.
+
+- ``forestFrictionLayerType``: can be either ``absolute`` or ``relative``
 
 
 iv) tiling and multiprocessing parameters
@@ -188,3 +201,20 @@ All outputs are in the .tif raster format in the same resolution and extent as t
 .. Note::
   * **please interpret** ``cell_counts.tif`` **with caution, since absolute cell_count values do currently not reflect the number of release-cells which route flux through a cell - we are currently fixing the implementation of this feature**
   * we are also working on making the output files configurable via the ``com4FlowPyCfg.ini`` file for improved flexibility (different output files might be desirable for different applications)
+
+ .. Model Parameterisation
+ .. ------------------------
+ ..
+ .. :py:mod:`com4FlowPy` might be utilized to model a range of different GMFs. Past applications of the model have mainly been
+ .. focused on *snow avalanches* and *rockfall*, but also other GMFs can potentially be modelled.
+ .. While **we emphasize, that careful adaptation/calibration of model parameters to the specific use case is essential**, we
+ .. can try to provide some hints on parameter ranges based on past applications.
+
+ .. a) general model parameters
+ .. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ .. - ``alpha``: adaptation based on observations
+ .. - ``max_z``: :math:`z_{\delta}^{max}\;[\rm{m}]` might be defined based on observed max. velocities for different GMFs.
+
+ .. b) forest module
+ .. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

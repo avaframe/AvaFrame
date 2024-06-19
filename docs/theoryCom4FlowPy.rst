@@ -70,7 +70,7 @@ magnitude and can be interpreted as the kinetic energy or velocity of the proces
 
 The major drawback of implementing the geometric runout angle concepts is that they require a predefined flow path in 
 two dimensional terrain. To allow for an enhanced routing in three dimensional terrain without prior knowledge of the 
-flow path we combine these concepts [4] with extensions of existing algorithms [1,2,3] that are described in the 
+flow path we combine these concepts :cite:`HuFiKoKl_2016` with extensions of existing algorithms :cite:`Ho_1994, HoJaRuZi_2013, Wi_2017` that are described in the 
 following sections.
 
 
@@ -147,7 +147,7 @@ possible.
 
 Here :math:`S_{bn}` is the projected distance between the base and the neighbor.
 
-As :math:`Z_{bn_{\delta}}` can be interpreted as process magnitude (and kinetic energy or velocity respectively) it is 
+As :math:`Z_{bn}^{\delta}` can be interpreted as process magnitude (and kinetic energy or velocity respectively) it is 
 possible to limit this value to a maximum. In comparison to process based modeling approaches this would correspond to 
 maximum velocity induced by a velocity dependent turbulent friction term.
 
@@ -155,15 +155,15 @@ maximum velocity induced by a velocity dependent turbulent friction term.
      Z^{\delta}_{i} = min\{Z^{\delta}_{0}+Z^{\gamma}_{i}-Z^{\alpha}_{i}, Z^{\delta}_{max}\}
      :label: zDeltaMax
 
-The projected path lengths, or total travel distance to one of the neighbors (S<sub>n</sub>) equals the path length to 
-the base (S<sub>b</sub>) plus the path from base to the neighbor (S<sub>bn</sub>), which reads:
+The projected path lengths, or total travel distance to one of the neighbors (:math:`S_n`) equals the path length to 
+the base (:math:`S_b`) plus the path from base to the neighbor (:math:`S_{bn}`), which reads:
 
 .. math::
      S_{bn}=\frac{Z_b-Z_n-Z_{bn}^{\delta}}{\tan(\alpha)} \simeq \frac{Z_{bn}^{\alpha}}{\tan(\alpha)}
      :label: S_bn
 
 As there are many possibilities for the path from the starting point to the actual cell or base, the shortest path is 
-taken into account, corresponding to the highest Z<sup>&delta;</sup> in the base. If Z<sup>&delta;</sup><sub>max</sub> 
+taken into account, corresponding to the highest :math:`Z^{\delta}` in the base. If :math:`Z^{\delta}_{max}` 
 is set to infinity, or as in the code to 8848 m (= Mount Everest), we can calculate the shortest path from the starting 
 point to the base and yields the total projected travel distance:
 
@@ -206,7 +206,7 @@ Terrain based routing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The terrain based routing is solely dependent on the slope angle phi. The exponent exp allows to control the divergence 
-of the spreading. The Holmgren (1994) algorithm [1] is used in different kind of models and works well for avalanches 
+of the spreading. The Holmgren (1994) algorithm :cite:`Ho_1994` is used in different kind of models and works well for avalanches 
 but also rockfall or soil slides. For avalanches an exponent of 8 shows good results. To reach a single flow in step 
 terrain (rockfall, soil slides, steepest descend), an exponent of 75 is considered.
 
@@ -227,7 +227,7 @@ terrain contribution to:
 Routing flux: 
 ~~~~~~~~~~~~~~~~~~~
 
-The routing flux summarizes the persistence and terrain contributions according to Eq.(16):
+The routing flux summarizes the persistence and terrain contributions according to :eq:`routingFlux`:
 
 .. math::
      R_i = \frac{T_i P_i}{\sum^{8}_{n=1} T_n P_n} \cdot R_b
@@ -235,8 +235,8 @@ The routing flux summarizes the persistence and terrain contributions according 
 
 where i is the direction and n are the neighbors from 1 to 8. :math:`R_i` is then the routing flux in direction :math:`i`.
 :math:`R_b` is the flux in the base, for a release cell or starting cell the flux of the base equals one. The result 
-of Eq. (16) is a 3 x 3 array with assigned flux values. A normalization stage is then required to bring the sum of the 
-:math:`R_i`'s to the value of :math:`R_b`. This aims at avoiding loss of flux [2].
+of :eq:`routingFlux` is a 3 x 3 array with assigned flux values. A normalization stage is then required to bring the sum of the 
+:math:`R_i`'s to the value of :math:`R_b`. This aims at avoiding loss of flux.
 
 Flow chart / overview:
 ~~~~~~~~~~~~~~~~~~~~~~~~
