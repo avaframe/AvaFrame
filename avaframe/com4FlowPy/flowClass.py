@@ -35,6 +35,7 @@ class Cell:
         self.sl_gamma = 0       
         #PAULA
         self.flow_energy = 0
+        self.flux_generation = []
         #ende paula      
 
         if type(startcell) == bool:  # check, if start cell exist (start cell is release point)
@@ -49,6 +50,9 @@ class Cell:
 
     def add_os(self, flux):
         self.flux += flux
+
+    def add_flux_generation(self, flux, gen):
+        self.flux_generation.append(flux)
 
     def add_parent(self, parent):
         self.parent.append(parent)
@@ -189,14 +193,14 @@ class Cell:
         if np.sum(self.r_t) > 0:
             self.dist = (self.persistence * self.r_t) / np.sum(self.persistence * self.r_t) * self.flux
 
-        '''
-        old version of flux conservation wrong!!
-        new approach:
+        
+        #old version of flux conservation wrong!!
+        #new approach:
         # This lines handle if a distribution to a neighbour cell is lower then the threshold, so we don´t lose
         # flux.
         # The flux of this cells will then spread equally to all neighbour cells
         count = ((0 < self.dist) & (self.dist < threshold)).sum()
-        count_alife = ((self.dist > threshold)).sum()
+        count_alife = ((0 < self.dist) & (self.dist > threshold)).sum()
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
         #Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to the other fields
         if mass_to_distribute > 0 and count_alife > 0:
@@ -204,7 +208,7 @@ class Cell:
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count_alife > 0:
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist))/count_alife
-        '''
+        
 
         row_local, col_local = np.where(self.dist > threshold)
 

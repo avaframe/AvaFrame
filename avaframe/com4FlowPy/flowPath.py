@@ -34,6 +34,7 @@ class Path:
         self.altitude_generation = []
         self.gamma_generation = []
         self.path_area = 0
+        self.flux_gen = []
 
         #self.plot_path_anaylsis, ax = plt.subplots()
         #plt.close(self.plot_path_anaylsis)
@@ -67,6 +68,7 @@ class Path:
             cell_list_col = []
             cell_list_alt = []
             cell_list_gamma = []
+            cell_list_flux_gen = []
 
             for cell in cell_list:
                 cell_list_z_delta.append(cell.z_delta)
@@ -77,6 +79,7 @@ class Path:
                 cell_list_col.append(cell.colindex)
                 cell_list_alt.append(cell.altitude)
                 cell_list_gamma.append(cell.max_gamma)
+                cell_list_flux_gen.append(cell.flux_generation)
 
             self.z_delta_generation.append(cell_list_z_delta)
             self.flux_generation.append(cell_list_flux)
@@ -86,6 +89,7 @@ class Path:
             self.col_generation.append(cell_list_col)
             self.altitude_generation.append(cell_list_alt)
             self.gamma_generation.append(cell_list_gamma)
+            self.flux_gen.append(cell_list_flux_gen)
 
     def get_coords_in_genlist_format(self):
         '''
@@ -170,7 +174,7 @@ class Path:
         axs[0,0].contour(self.dem, levels = 10, colors ='k',linewidths=0.5)
         axs[0,0].scatter(self.col_coF[::5], self.row_coF[::5], c = 'k', s = 0.4, label = 'center of flux')
         axs[0,0].scatter(self.col_coE[::5], self.row_coE[::5], c = 'r', s = 0.4, label = 'center of energy')
-        f = axs[0,0].imshow(self.flow_energy_array, cmap = 'Blues', alpha = 0.6)
+        f = axs[0,0].imshow(self.flow_energy_array, cmap = 'Blues', alpha = 0.8)
         fig.colorbar(f, ax = axs[0,0], label = 'flow energy')
         axs[0,0].legend()
         
@@ -202,7 +206,7 @@ class Path:
         axs[2,0].plot(self.altitude_coE, 'r--', label = 'topography coE')
         axs[2,0].plot(self.altitude_coE + self.z_delta_coE, 'r', label = 'z_delta coE')
         axs[2,0].set(ylabel = 'altitude Z (coF)')
-        axs[2,0].set(xlabel = 'iteration step / generation')  
+        axs[2,0].set(xlabel = 'iteration step')  
         axs[2,0].legend()
 
         axs[0,1].plot(self.z_delta_sumGen)
@@ -222,7 +226,7 @@ class Path:
         #for all axes on right side
         for i in range(4):
             axs[i,1].legend()
-            axs[i,1].set(xlabel = 'iteration step / generation')   
+            axs[i,1].set(xlabel = 'iteration step')   
         fig.savefig(f'{self.plotDir}/Thalwege/plot_pathlist_col{self.start_col},row{self.start_row}.png')
         plt.close(fig)
 

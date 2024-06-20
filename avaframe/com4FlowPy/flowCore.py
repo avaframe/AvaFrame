@@ -285,6 +285,10 @@ def path_calc_analysis(path, plotDir, PathPlots, path_raster = False):
         writer = csv.writer(file)
         writer.writerow(path.flow_energy_generation)
 
+    with open(plotDir / "values_thalweg" / ("values_thalweg_flux_gen.csv"), mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(path.flux_gen)
+
     
     '''
     if path_raster == True:
@@ -707,6 +711,7 @@ def calculation(args):
                         if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
                             cell_list[i].add_os(flux[k])
                             cell_list[i].add_parent(cell)
+                            cell_list[i].add_flux_generation(flux[k], gen)
                             if z_delta[k] > cell_list[i].z_delta:
                                 cell_list[i].z_delta = z_delta[k]
 
@@ -731,6 +736,7 @@ def calculation(args):
                         if row[k] == child_list[i].rowindex and col[k] == child_list[i].colindex:
                             child_list[i].add_os(flux[k])
                             child_list[i].add_parent(cell)
+                            child_list[i].add_flux_generation(flux[k], gen)
                             if z_delta[k] > child_list[i].z_delta:
                                 child_list[i].z_delta = z_delta[k]
 
@@ -750,6 +756,7 @@ def calculation(args):
                     #cell_list.append(
                     child_list.append(
                         Cell(row[k], col[k], dem_ng, cellsize, flux[k], z_delta[k], cell, alpha, exp, flux_threshold, max_z_delta, startcell))
+                    child_list[-1].add_flux_generation(flux[k], gen)
 
             # prepare lists for next iteration
             if len(child_list) > 0:
