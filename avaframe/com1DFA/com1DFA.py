@@ -638,7 +638,7 @@ def prepareInputData(inputSimFiles, cfg):
         entrainmentArea = ""
 
     # get line from resistance area polygon
-    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res", "det"]: 
+    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]: 
         resFile = inputSimFiles["resFile"]
         resLine = shpConv.readLine(resFile, "", demOri)
         resistanceArea = resFile.name
@@ -1593,9 +1593,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     return entrMassRaster, entrEnthRaster, reportAreaInfo
 
 def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
-    """PS
+    """
     Initialize detrainment matrix: use same File as for Resistance
-    TODO: own function or intergrated in initializeResistance?
 
     Parameters
     ----------
@@ -1619,11 +1618,12 @@ def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thre
         simulation area information dictionary completed with detrainment area info
     """
     K = cfg.getfloat("detK")
+    detBool = cfg.getboolean("detBool")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
-    if simTypeActual in ["det"]: 
+    if simTypeActual in ["res"] and detBool: 
         resistanceArea = resLine["fileName"]
         log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
         log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))

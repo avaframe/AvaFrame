@@ -359,14 +359,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         if abs(dmDet) > m:
           # mass can't be negative
           dmDet = 0
-
-        # TODO: enthalpy change / energy change?
-
-        # update velocity (dmDet <= 0) according to momentum balance
-        # no velocity change due to mass reduction (Raketengleichung!)
-        #ux = ux * m / (m + dmDet)
-        #uy = uy * m / (m + dmDet)
-        #uz = uz * m / (m + dmDet)
+      
         # update mass
         m = m + dmDet
         mass[k] = m
