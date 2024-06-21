@@ -1098,13 +1098,11 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     entreainableMass = np.nansum(fields["entrMassRaster"] * dem["areaRaster"])
     log.info("Mass available for entrainment: %.2f kg" % (entreainableMass))
 
-    # PS detrainment
     log.debug("Initializing detrainment area")
     detRaster, reportAreaInfo = initializeDetrainment(
         cfgGen, dem, simTypeActual, inputSimLines["resLine"], reportAreaInfo, thresholdPointInPoly
     )
     fields["detRaster"] = detRaster
-    # PS end
 
     log.debug("Initializing resistance area")
     cResRaster, reportAreaInfo = initializeResistance(
@@ -1618,12 +1616,12 @@ def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thre
         simulation area information dictionary completed with detrainment area info
     """
     K = cfg.getfloat("detK")
-    detBool = cfg.getboolean("detBool")
+    DetBool = cfg.getboolean("DetBool")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
-    if simTypeActual in ["res"] and detBool: 
+    if simTypeActual in ["entres", "res"] and DetBool: 
         resistanceArea = resLine["fileName"]
         log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
         log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
@@ -1663,11 +1661,19 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         simulation area information dictionary completed with entrainment area info
     """
     cRes = cfg.getfloat("cRes")
+    DetBool = cfg.getboolean("DetBool")
+    DetAndRes = cfg.getboolean("DetAndRes")
+
+    # if detrainment is not considered, resistance is computed for respective simtypes
+    if DetBool == False:
+        DetAndRes = True
+
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
-    if simTypeActual in ["entres", "res"]:
+
+    if simTypeActual in ["entres", "res"] and DetAndRes:
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))

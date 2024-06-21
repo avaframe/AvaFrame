@@ -128,9 +128,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
   cdef double[:, :] entrEnthRaster = fields['entrEnthRaster']
-  # PS
   cdef double[:, :] detRaster = fields['detRaster']
-  #PS end
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
@@ -347,18 +345,15 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
 
-      # PS detrainment
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
       
       if detCell > 0:
         # compute detrained mass
         dmDet, areaDetPart = computeDetMassAndForce(dt, detCell, areaPart, uMag)
-        if dmDet > 0:
-          dmDet = 0
         if abs(dmDet) > m:
-          # mass can't be negative
-          dmDet = 0
+          # mass of a particle can't be negative
+          dmDet = - 1 * m
       
         # update mass
         m = m + dmDet
@@ -465,7 +460,7 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 
 cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
                                               double areaPart, double uMag):
-  """ PS: compute force component due to detrained mass
+  """ compute force component due to detrained mass
 
   Parameters
   ----------
@@ -485,9 +480,9 @@ cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
   areaDetPart : float
       Area of detrainment 
   """
-  cdef double width, ABotSwiped, areaDetPart
-  # compute detrained mass
+  cdef double width, areaDetPart
   cdef double dmDet = 0
+  # compute detrained mass
   if detCell > 0 and uMag > 0:
       dmDet = - detCell / uMag * dt * areaPart
   else:
