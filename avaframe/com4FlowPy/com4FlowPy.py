@@ -304,6 +304,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     z_delta_sum = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
     fp_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_fp")
     sl_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_sl")
+    travel_length = SPAM.MergeRaster(modelPaths["tempDir"], "res_travel_length")
 
     if modelOptions["infraBool"]:
         backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
@@ -317,6 +318,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta%s" % (output_format)), z_delta)
     io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("FP_travel_angle%s" % (output_format)), fp_ta)
     io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("SL_travel_angle%s" % (output_format)), sl_ta)
+    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("travel_length%s" % (output_format)), travel_length)
 
     # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
     # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
