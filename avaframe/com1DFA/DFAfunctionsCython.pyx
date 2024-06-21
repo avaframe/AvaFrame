@@ -27,7 +27,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 log = logging.getLogger(__name__)
 
 
-def computeForceC(cfg, particles, fields, dem, int frictType):
+def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType):
   """ compute forces acting on the particles (without the SPH component)
 
   Cython implementation implementation
@@ -44,6 +44,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       dictionary with dem information
   frictType: int
     identifier for friction law to be used
+  resistanceType: int
+    identifier for resistance model to be used
 
   Returns
   -------
@@ -100,6 +102,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double dt = particles['dt']
   cdef double mu0 = cfg.getfloat('mu0wetsnow')
   cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
+  cdef double muResCoulomb = cfg.getfloat('muResCoulomb')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -369,7 +372,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
-      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
+      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, sigmaB, 
+                                 muResCoulomb, explicitFriction, resistanceType)
       forceFrict[k] = forceFrict[k] - cResPart
 
       uxArray[k] = ux
@@ -500,8 +504,8 @@ cpdef double computeDetMass(double dt, double detCell,
   return dmDet
 
 
-cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
-                             double cResCell, double uMag, int explicitFriction):
+cpdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell,
+                             double uMag, double sigmaB, double muCoulomb, int explicitFriction, int resistanceType):
   """ compute force component due to resistance
 
   Parameters
@@ -518,8 +522,14 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
       resisance coefficient of cell
   uMag : float
       particle speed (velocity magnitude)
+  sigmaB : float
+      bottom normal stress
+  muCoulomb: float
+      mu for Coulomb friction/resistance
   explicitFriction: int
     if 1 add resistance with an explicit method. Implicit otherwise
+  resistanceType: int
+    identifier for resistance model to be used
 
   Returns
   -------
@@ -530,11 +540,45 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
   cdef double cRecResPart
   if(h < hRes):
       hResEff = h
+  # explicit formulation (explicitFriction == 1)
   if explicitFriction == 1:
-    # explicit formulation
-    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
+    if resistanceType == 1:
+      # cRes
+      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
+    elif resistanceType == 2:
+      # cResH
+      cRecResPart = - rho * areaPart * cResCell * uMag * uMag
+    elif resistanceType == 3:
+      #cResCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
+    elif resistanceType == 4:
+      #cResHCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * cResCell * uMag * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
   elif explicitFriction == 0:
-    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
+    if resistanceType == 1:
+      # cRes
+      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
+    elif resistanceType == 2:
+      # cResH
+      cRecResPart = - rho * areaPart * cResCell * uMag
+    elif resistanceType == 3:
+      #cResCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * hResEff * cResCell * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
+    elif resistanceType == 4:
+      #cResHCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * cResCell * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
   return cRecResPart
 
 

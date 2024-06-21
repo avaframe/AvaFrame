@@ -217,6 +217,22 @@ coefficient :math:`c_{\text{res}}` that depends on the structure of the obstacle
 
 Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. Please check out previous documentation versions for details.
 
+Three other options for computing resistance force :math:`F_i^{\text{res}}` can be chosen (they are still tested experimentally):
+
+- .. math::
+   F_i^{\text{res}} = -c_{\text{resH}}\,\rho_0\,A\,
+    \overline{u}^2\,
+    \frac{\overline{u}_i}{\|\overline{u}\|}
+- .. math::
+   F_i^{\text{res}} = - c_{\text{resCoulomb}}\,\rho_0\,A\,
+    h^{\text{eff}}\,\overline{u}^2\,
+    \frac{\overline{u}_i}{\|\overline{u}\|} + \sigma^{(b)}\,\mu
+- .. math::
+   F_i^{\text{res}} = - c_{\text{resHCoulomb}}\,\rho_0\,A\,
+   \overline{u}^2\,
+    \frac{\overline{u}_i}{\|\overline{u}\|} + \sigma^{(b)}\,\mu
+    
+with characteristic coefficients :math:`c_{\text{resH}}`, :math:`c_{\text{resCoulomb}}`, :math:`c_{\text{resHCoulomb}}`.
 
 
 Surface integral forces:
