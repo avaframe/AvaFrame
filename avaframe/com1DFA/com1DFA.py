@@ -638,7 +638,7 @@ def prepareInputData(inputSimFiles, cfg):
         entrainmentArea = ""
 
     # get line from resistance area polygon
-    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]: 
+    if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]:
         resFile = inputSimFiles["resFile"]
         resLine = shpConv.readLine(resFile, "", demOri)
         resistanceArea = resFile.name
@@ -1621,7 +1621,7 @@ def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thre
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
-    if simTypeActual in ["entres", "res"] and DetBool: 
+    if simTypeActual in ["entres", "res"] and DetBool:
         resistanceArea = resLine["fileName"]
         log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
         log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
@@ -1665,7 +1665,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     DetAndRes = cfg.getboolean("DetAndRes")
 
     # if detrainment is not considered, resistance is computed for respective simtypes
-    if DetBool == False:
+    if DetBool is False:
         DetAndRes = True
 
     # read dem header
@@ -2130,7 +2130,8 @@ def writeMBFile(infoDict, avaDir, logName):
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
         mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
-            mFile.write("%.02f,    %.06f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m], massDetrained[m]))
+            mFile.write("%.02f,    %.06f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m],
+                                                                    massDetrained[m]))
 
 
 def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
