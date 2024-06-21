@@ -133,22 +133,60 @@ def test_computeResForce(capfd):
     cResCell = 1
     uMag = 10
     explicitFriction = 0
+    sigmaB = 10
+    muCoulomb = 0.1
+    #cRes
+    resistanceType = 1
     cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-#    print(cResPart)
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
     assert cResPart == -2000
 
     h = 3
     cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-#    print(cResPart)
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
     assert cResPart == -4000
 
     explicitFriction = 1
     cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-#    print(cResPart)
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
     assert cResPart == -40000
+
+    #cResH
+    explicitFriction = 0
+    resistanceType = 2
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
+    assert cResPart == -2000
+
+    h = 1
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
+    assert cResPart == -2000
+
+    #cResCoulomb
+    resistanceType = 3
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
+    assert cResPart == -2001
+
+    h = 3
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
+    assert cResPart == -4001
+
+    #cResHCoulomb
+    resistanceType = 4
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, sigmaB, muCoulomb, explicitFriction, resistanceType)
+    print(cResPart)
+    assert cResPart == -2001
 
 
 def test_account4FrictionForce(capfd):
