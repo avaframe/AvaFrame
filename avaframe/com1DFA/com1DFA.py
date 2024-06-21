@@ -1612,11 +1612,17 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
-    cRes = cfg.getfloat("cRes")
     K = cfg.getfloat("detK")
     detrainment = cfg.getboolean("detrainment")
     detWithoutRes = cfg.getboolean("detWithoutRes")
 
+    # TODO: if we keep the ResCoulomb - resistance types,
+    # we should initialize the Coulomb-Value (as the resistamce parameter)
+    ResModel = cfg["ResistanceModel"].lower()
+    if ResModel in ["cres", "crescoulomb"]:
+        cRes = cfg.getfloat("cRes")
+    if ResModel in ["cresh", "creshcoulomb"]:
+        cRes = cfg.getfloat("cResH")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
@@ -1728,6 +1734,19 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     frictType = frictModelsList.index(frictModel) + 1
     log.debug("Friction Model used: %s, %s" % (frictModelsList[frictType - 1], frictType))
 
+    # turn resistance model into integer
+    # TODO: the different resistance parameters are tested experimentally
+    # TODO: unnecessary options should be removed
+    ResModel = cfgGen["ResistanceModel"].lower()
+    ResModelsList = [
+        "cres",
+        "cresH",
+        "cresroulomb",
+        "creshcoulomb"
+    ]
+    resistanceType = ResModelsList.index(ResModel) + 1
+    log.debug("Resistance Model used: %s, %s" % (ResModelsList[resistanceType - 1], resistanceType))
+
     # Initialise Lists to save fields and add initial time step
     particlesList = []
     fieldsList = []
@@ -1783,7 +1802,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
         # Perform computations
         particles, fields, zPartArray0, tCPU = computeEulerTimeStep(
-            cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType
+            cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
         )
         # set max values of fields to dataframe
         if cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"):
@@ -2098,7 +2117,7 @@ def writeMBFile(infoDict, avaDir, logName):
                                                                     massDetrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
+def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType):
     """compute next time step using an euler forward scheme
 
     Parameters
@@ -2117,6 +2136,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         computation time dictionary
     frictType: int
         indicator for chosen type of friction model
+    resistanceType: int
+        identifier for chosen type of resistance model
 
     Returns
     -------
@@ -2132,7 +2153,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
     # loop version of the compute force
     log.debug("Compute Force C")
-    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType)
+    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType, resistanceType)
     tCPUForce = time.time() - startTime
     tCPU["timeForce"] = tCPU["timeForce"] + tCPUForce
 
