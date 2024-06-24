@@ -90,13 +90,13 @@ def test_analyzeArea(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, 0, contourDict)
+                                                                newRasters, timeMass, 0, contourDict, {})
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
             inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                        newRasters, timeMass, index, contourDict)
+                                                                        newRasters, timeMass, index, contourDict, {})
     print(inputsDF['sRunout'])
     print(inputsDF['xRunout'])
     print(inputsDF['yRunout'])
@@ -195,13 +195,13 @@ def test_makeDomainTransfo(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, refSimRowHash, contourDict)
+                                                                newRasters, timeMass, refSimRowHash, contourDict, {})
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
             resAnalysisDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                             newRasters, timeMass, index, contourDict)
+                                                                             newRasters, timeMass, index, contourDict, {})
 
     for i in range(5):
         rasterSource = inputsDF['ppr'][i]

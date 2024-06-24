@@ -20,6 +20,7 @@ import avaframe.com1DFA.DFAtools as DFAtools
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.out3Plot.plotUtils as pU
 
+
 # create local logger
 log = logging.getLogger(__name__)
 
@@ -94,6 +95,17 @@ def readAIMECinputs(avalancheDir, pathDict, defineRunoutArea, dirName='com1DFA')
         pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC')
     pathDict['pathResult'] = pathResult
 
+    # check for reference data
+    referenceDir= pathlib.Path(avalancheDir, 'Inputs', 'REFDATA')
+    referenceLines = list(referenceDir.glob('*_LINE.shp'))
+    referencePolygons = list(referenceDir.glob('*_POLY.shp'))
+    referencePoints = list(referenceDir.glob('*_POINT.shp'))
+
+    # add file paths to pathDict
+    pathDict['referenceLine'] = referenceLines
+    pathDict['referencePolygon'] = referencePolygons
+    pathDict['referencePoint'] = referencePoints
+
     projectName = pathlib.Path(avalancheDir).stem
     pathDict['projectName'] = projectName
     pathName = profileLayer[0].stem
@@ -167,7 +179,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
         if cfgSetup['varParList'] != '' and (any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')) == False):
             message = ('No configuration directory found. This is needed for sorting simulation according to '
                        '%s' % cfgSetup['varParList'])
-            raise e(message)
+            raise (message)
         elif cfgSetup['varParList'] != '' and any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')):
             configFound = True
         else:
@@ -506,6 +518,9 @@ def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
 
     # add info on start of runout area
     rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
+
+    # add dem info to rasterTransfo
+    rasterTransfo['dem'] = dem
 
     return rasterTransfo
 
@@ -914,20 +929,20 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         result dataFrame updated for each simulation with
 
         - xRunout: float, x coord of the runout point
-          measured from the begining of the path. run-out
+          measured from the beginning of the path. run-out
           calculated with the MAX result in each cross section
         - yRunout: float, y coord of the runout point
-          measured from the begining of the path. run-out
+          measured from the beginning of the path. run-out
           calculated with the MAX result in each cross section
-        - sRunout: float, runout distance measured from the begining of the path.
+        - sRunout: float, runout distance measured from the beginning of the path.
           run-out calculated with the MAX result in each cross section
         - xMeanRunout: float, x coord of the runout point
-          measured from the begining of the path. run-out
+          measured from the beginning of the path. run-out
           calculated with the MEAN result in each cross section
         - yMeanRunout: float, y coord of the runout point
-          measured from the begining of the path. run-out
+          measured from the beginning of the path. run-out
           calculated with the MEAN result in each cross section
-        - sMeanRunout: float, runout distance measured from the begining of the path.
+        - sMeanRunout: float, runout distance measured from the beginning of the path.
           run-out calculated with the MEAN result in each cross section
         - elevRel: float, elevation of the release area (based on first point with
           peak field > thresholdValue)
@@ -991,6 +1006,95 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     return resAnalysisDF
 
 
+def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, type, name='', basedOnMax=False):
+    """ compute the runout line as for each l coordinate the furthest affected s coordinate using the desired
+        resType and thresholdvalue, or if basedOnMax searching for the max value (used for reference line, point)
+        also add runout point based on max s value of runout line
+
+        Parameters
+        -----------
+        cfgSetup: configparser object
+            configuration settings, here: runoutResType and tresholdValue
+        rasterTransfo: dict
+            information on raster transformation
+        transformedRasters: dict
+            transformed rasters from simulation
+        simRowHash: hash
+            index of current simulation
+        type: str
+            options: simulation, line, point, poly
+        name: str
+            optional name to find raster in transfromedRasters dict
+        basedOnMax: bool
+            if not threshold of runoutResType is used but max value along s for each l
+
+        Returns
+        ---------
+        runoutLine : dict
+            coordinates of runout line in s, l, and x, y, index of rasterTransfo['s']mname and type
+            coordinates of runout point (max s extent) in s, l
+        """
+
+    # get info on coordinate grids
+    gridx = rasterTransfo['gridx']
+    gridy = rasterTransfo['gridy']
+
+    # fetch raster data
+    if name == '':
+        runoutResType = cfgSetup['runoutResType']
+        anaRaster = transformedRasters['newRaster' + runoutResType.upper()]
+        name = simRowHash
+    else:
+        anaRaster = transformedRasters[name]
+
+    # set to 0 where nans and flip order of rows to search for furthest point in s
+    anaRaster = np.where(np.isnan(anaRaster), 0, anaRaster)
+    anaRasterFlip = np.flip(anaRaster, axis=0)
+
+    # setup runout line
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
+    runoutLine = {'s': np.zeros(rasterTransfo['l'].shape) * np.nan, 'l': np.zeros(rasterTransfo['l'].shape) * np.nan,
+                  'x': np.zeros(rasterTransfo['l'].shape) * np.nan, 'y': np.zeros(rasterTransfo['l'].shape) * np.nan,
+                  'runoutLineFound': np.zeros(rasterTransfo['l'].shape) * np.nan}
+    runoutLineIndex = np.zeros(rasterTransfo['l'].shape) * np.nan
+
+    # loop over each l coordinate to find max s coordinate
+    sMaxInd = np.nan
+    lMaxInd = np.nan
+    sMax = 0
+    for ind, lCoor in enumerate(rasterTransfo['l']):
+        index1 = False
+        if basedOnMax and (len(np.nonzero(anaRaster[:,ind])[0]) > 0):
+            index2 = np.argmax(anaRasterFlip[:,ind])
+            index1 = anaRaster.shape[0]-index2
+        elif (basedOnMax == False) and (len(np.nonzero(anaRaster[:,ind]> thresholdValue)[0]) > 0):
+            index1 = max(np.nonzero(anaRaster[:,ind] > thresholdValue)[0])
+        if index1 != False:
+            runoutLineIndex[ind] = index1
+            runoutLine['s'][ind] = (rasterTransfo['s'][index1])
+            runoutLine['l'][ind] = lCoor
+            runoutLine['x'][ind] = gridx[index1, ind]
+            runoutLine['y'][ind] = gridy[index1, ind]
+            runoutLine['runoutLineFound'][ind] = True
+            if rasterTransfo['s'][index1] > sMax:
+                sMaxInd = index1
+                lMaxInd = ind
+                sMax = rasterTransfo['s'][index1]
+        else:
+            runoutLine['runoutLineFound'][ind] = False
+
+    # add info on name, type
+    runoutLine['index'] = runoutLineIndex
+    runoutLine['name'] = name
+    runoutLine['type'] = type
+    runoutLine['sRunout'] = np.nanmax(runoutLine['s'])
+    runoutLine['lRunout'] = rasterTransfo['l'][lMaxInd]
+    runoutLine['xRunout'] = gridx[sMaxInd, lMaxInd]
+    runoutLine['yRunout'] = gridy[sMaxInd, lMaxInd]
+
+    return runoutLine
+
+
 def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnalysisDF):
     """ analyze transformed field
 
@@ -1038,7 +1142,7 @@ def analyzeField(simRowHash, rasterTransfo, transformedRaster, dataType, resAnal
     return resAnalysisDF
 
 
-def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathDict, contourDict):
+def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathDict, contourDict, referenceType='newRefRaster'):
     """Compare area results to reference.
 
     Compute True positive, False negative... areas.
@@ -1093,7 +1197,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathD
     # inputs for plot
     inputs = {}
     inputs['runoutLength'] = resAnalysisDF.loc[refSimRowHash, 'sRunout']
-    inputs['refData'] = newRasters['newRefRaster' + runoutResType.upper()]
+    inputs['refData'] = newRasters[referenceType + runoutResType.upper()]
     inputs['nStart'] = nStart
     inputs['runoutResType'] = runoutResType
 
@@ -1422,6 +1526,9 @@ def addFieldsToDF(inputsDF):
         inputsDF: pandas DataFrame
             DataFrame where fields should be added as empty columns
             fields are:
+        cfgSetup: configparser object
+            configuration settings, here used: includeReference if inputs from Inputs/REFDATA shall be included and
+            used to compare sim results to
 
         Returns
         ---------
@@ -1430,9 +1537,227 @@ def addFieldsToDF(inputsDF):
 
     """
     nanFields = ['sRunout', 'lRunout', 'xRunout', 'yRunout', 'deltaSXY', 'runoutAngle', 'zRelease', 'zRunout',
-                 'sMeanRunout', 'xMeanRunout', 'yMeanRunout', 'elevRel', 'deltaZ']
+                 'sMeanRunout', 'xMeanRunout', 'yMeanRunout', 'elevRel', 'deltaZ', 'refSim_Diff_sRunout',
+                 'refSim_Diff_lRunout', 'dataType', 'runoutLineDiff_line_RMSE', 'runoutLineDiff_poly_RMSE']
+
+    emptyStrFields = ['runoutLineDiff_line_pointsNotFoundInSim',
+                 'runoutLineDiff_line_pointsNotFoundInRef', 'runoutLineDiff_poly_pointsNotFoundInSim',
+                 'runoutLineDiff_poly_pointsNotFoundInRef']
+
     for item in nanFields:
         inputsDF = pd.concat([inputsDF, pd.DataFrame({item: np.nan}, index=inputsDF.index)], axis=1).copy()
 
+    for item in emptyStrFields:
+        inputsDF = pd.concat([inputsDF, pd.DataFrame({item: ''}, index=inputsDF.index)], axis=1).copy()
+
+    # add that datatype is simulation
+    inputsDF['dataType'] = ['simulation']*len(inputsDF)
 
     return inputsDF
+
+
+def createReferenceDF(pathDict):
+    """ create data frame with one row per reference data set found in Inputs/REFDATA
+        Parameters
+        -----------
+        pathDict: dict
+            dictionary with info paths to reference datasets
+
+        Returns
+        ---------
+        referenceDF: pandas DataFrame
+            DataFrame with one row per reference dataset
+
+    """
+
+    # add parameters that provide info on reference data and analysis that will be performed on this data
+    nanFields = ['reference_Type', 'reference_resType', 'reference_sRunout', 'reference_lRunout',
+                 'reference_xRunout', 'reference_yRunout', 'reference_name', 'reference_filePath',
+                 'dataType']
+
+    # create empty dataframe
+    referenceDF = pd.DataFrame(columns=nanFields)
+
+    # add one row for each reference dataset
+    refData = [pathDict['referenceLine'], pathDict['referencePolygon'], pathDict['referencePoint']]
+    for ref in refData:
+        for refFile in ref:
+            referenceName = refFile.stem
+            newLine = pd.DataFrame([[referenceName, refFile]], columns=['reference_name', 'reference_filePath'], index=[referenceName])
+            hash = pd.util.hash_pandas_object(newLine)
+            newLine = newLine.set_index(hash)
+            referenceDF = pd.concat([referenceDF, newLine], ignore_index=False)
+            referenceDF.loc[hash, 'dataType'] = 'reference'
+
+    # TODO add here if additional info read from shp or a textfile?
+
+    return referenceDF
+
+
+def computeRunoutPointDiff(resAnalysisDF, refData, simRowHash):
+    """ compute difference between runout point of simulation and runout point of refData
+
+        Parameters
+        -------------
+        resAnalysisDF: data frame
+            one row per simulation (config info, sim results and analysis)
+        refData: dict
+            dictionary of reference data set
+        simRowHash:
+            index of row in data frame for current simulation
+
+        Returns
+        --------
+        resAnalysisDF: data frame
+            updated DF with runout point difference
+
+    """
+
+    for item in ['sRunout', 'lRunout']:
+        simPoint = resAnalysisDF.loc[simRowHash, item]
+        refPoint = refData[item]
+
+        diffRunout = refPoint - simPoint
+
+        resAnalysisDF.loc[simRowHash, 'refSim_Diff_%s' % item] = diffRunout
+        log.info('%s Runout diff for %s is %.2f' % (item, resAnalysisDF.loc[simRowHash, 'simName'], diffRunout))
+
+    return resAnalysisDF
+
+
+def findSLCoors(rasterTransfo, refData, type):
+    """ find closest s,l coordinates to given x,y coordinates using transformation matrix
+
+        Parameters
+        -----------
+        rasterTransfo
+        refData
+
+    """
+
+    xx = rasterTransfo['gridx']
+    yy = rasterTransfo['gridy']
+    nrows = xx.shape[0]
+    ncols = xx.shape[1]
+    sizeXX = xx.size
+    indexArray = np.arange(sizeXX).reshape(nrows, ncols)
+
+    coors = np.column_stack((np.reshape(xx, sizeXX),  np.reshape(yy, sizeXX)))
+
+    if type.lower() == 'point':
+        test = np.zeros((len(coors), 2))
+        test[:, 0] = refData['x']
+        test[:, 1] = refData['y']
+
+        indexBool = np.isclose(coors, test)
+        index1Array = [np.where(np.all(indexBool==True, axis=1) == True)[0][0]]
+
+    elif type.lower() == 'line':
+        indRowArray = []
+        indColArray = []
+        index1Array = []
+        for x1, y1 in zip(refData['x'], refData['y']):
+            test = np.zeros((len(coors), 2))
+            test[:, 0] = x1
+            test[:, 1] = y1
+            indexBool = np.isclose(coors, test)
+
+            if len(np.where(np.all(indexBool==True, axis=1))[0]) > 1:
+                index1 = np.where(np.all(indexBool==True, axis=1) == True)[0][0]
+                indRowArray.append(np.where(indexArray==index1)[0][0])
+                indColArray.append(np.where(indexArray==index1)[1][0])
+                index1Array.append(index1)
+
+    gridL, gridS = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
+    slCoors = np.column_stack((np.reshape(gridL, gridL.size),  np.reshape(gridS, gridS.size)))
+    Lcoors = slCoors[index1Array,0]
+    Scoors = slCoors[index1Array,1]
+
+    return Lcoors, Scoors
+
+
+def addReferenceAnalysisTODF(referenceDF, refFile, refDataDict):
+    """ add reference analysis info to referenceDF
+
+        Parameters
+        ------------
+        referenceDF: data frame
+            one row per reference dataset
+        refFile: pathlib Path
+            file path of reference dataset file
+        refDataDict: dict
+            dict with info on reference data set and computed runout point
+
+        Returns
+        ----------
+        referenceDF: data frame
+            updated data DF with info on runout point coordinate
+    """
+
+    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_Type'] = 'line'
+    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_sRunout'] = refDataDict['sRunout']
+    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_lRunout'] = refDataDict['lRunout']
+    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_xRunout'] = refDataDict['xRunout']
+    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_yRunout'] = refDataDict['yRunout']
+
+    return referenceDF
+
+
+def analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict):
+    """ analyze difference between runout line derived from simRaster and reference datasets (lines, polygons)
+
+        Parameters
+        -------------
+        runoutLine: dict
+            info on runout line derived from simRaster
+        refDataTransformed: dict
+            info on runout line derived from reference datasets
+        resAnalysisDF: data frame
+            one row per simulation
+        simRowHash: ID
+            index of row for current sim in resAnalysisDF
+        pathDict: dict
+            dict with info on where to save plots
+
+        Returns
+        ----------
+        resAnalysisDF: data frame
+            updatad DF
+    """
+
+    for item in refDataTransformed:
+        refLine = refDataTransformed[item]
+
+        if refLine['type'] in ['line', 'poly']:
+
+            # simName is
+            simName = resAnalysisDF.loc[simRowHash, 'simName']
+
+            # add runoutLine differences as vector
+            resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s' % refLine['type']] = np.asarray(runoutLine['s'] - refLine['s'])
+
+            # compute difference between runoutLine from simulation and reference data
+            diffAll = runoutLine['s'] - refLine['s']
+            # check where both lines have points to compute RMSE
+            diffNoNans = diffAll[np.where((np.isnan(refLine['s']) == False) & (np.isnan(runoutLine['s']) == False))]
+            # check number of points where runoutLine sim has no points but reference Line has points
+            runoutLineNoPoints = len(np.where(np.isnan(runoutLine['s'][np.where(np.isnan(refLine['s']) == False)]))[0])
+            runoutLineAllPoints = len(np.where(np.isnan(runoutLine['s']) == False)[0])
+            # check number of points where refLine has no points but runout line sim has
+            refLineNoPoints = len(np.where(np.isnan(refLine['s'][np.where(np.isnan(runoutLine['s']) == False)]))[0])
+            refLineAllPoints = len(np.where(np.isnan(refLine['s']) == False)[0])
+            runoutStr = '%d/%d' % (runoutLineNoPoints, refLineAllPoints)
+            refLineStr = '%d/%d' % (refLineNoPoints, runoutLineAllPoints)
+
+            # compute RMSE between runout line and refLine
+            RMSE = np.sqrt(np.sum(diffNoNans**2)/len(diffNoNans))
+
+            # plot differences in runout lines
+            outAimec.plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, runoutStr,
+                                                         refLineStr, RMSE, diffNoNans)
+
+            resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInSim' % refLine['type']] = runoutStr
+            resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInRef' % refLine['type']] = refLineStr
+            resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_RMSE' % refLine['type']] = RMSE
+
+    return resAnalysisDF
