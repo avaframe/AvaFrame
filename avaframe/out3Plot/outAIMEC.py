@@ -1450,3 +1450,184 @@ def getIndicesVel(pfvCM, velocityThreshold):
     indVelZero = max(sIndex)
 
     return indVelStart, indVelZero
+
+
+def referenceLinePlot(refLineRasterXY, dem, refLine, rasterTransfo, refRasterSL, refLineSL, pathDict):
+    """ Create a plot with two panels, showing reference line and correspinding raster in
+    panel 1) x, y coordinates and 2) s, l coordinates
+
+        Parameters
+        ------------
+        refLineRasterXY: numpy nd array
+            raster created from referenceLine (which cells are affected by line)
+        dem: dict
+            header and raster data of dem corresponding to simulations (for extent of plots)
+        refLine: dict
+            info of reference line read from shp file
+        rasterTransfo: dict
+            aimec transformation information
+        refRasterSL: numpy nd array
+            reference line raster (affected cells) in s, l coordinate system
+        refLineSL: dict
+            information about referenceLine in s, l coordinates
+        pathDict: dict
+            info on aimec paths, where to save figures
+    """
+
+    # create extent for imshow plot of rasterXY
+    extentCellCenters, extentCellCorners = pU.createExtentMinMax(dem['rasterData'], dem['header'], originLLCenter=True)
+
+    # fetch info on domain transformation
+    # read avaPath with scale
+    xPath = rasterTransfo['x']
+    yPath = rasterTransfo['y']
+    # read domain boundarries with scale
+    cellSizeSL = rasterTransfo['cellSizeSL']
+    DBXl = rasterTransfo['DBXl']*cellSizeSL
+    DBXr = rasterTransfo['DBXr']*cellSizeSL
+    DBYl = rasterTransfo['DBYl']*cellSizeSL
+    DBYr = rasterTransfo['DBYr']*cellSizeSL
+
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax2 = fig.add_subplot(1, 2, 2)
+    # first panel XY coordinates
+    ax1.set_title('Raster XY reference %s' % refLineSL['type'])
+    ax1.imshow(refLineRasterXY, cmap='Reds', origin='lower', extent=extentCellCorners, vmin=0.1)
+    if refLineSL['type'] == 'poly':
+        ax1.plot(refLineSL['x'], refLineSL['y'], 'r', linewidth=4, label='runout line')
+    else:
+        ax1.plot(refLine['x'], refLine['y'], 'r', linewidth=4, label='original %s' % refLineSL['type'])
+    ax1.plot(refLineSL['x'], refLineSL['y'], 'b+', label='available in SL')
+    ax1.plot(xPath, yPath, 'k--', label='thalweg')
+    ax1.plot(DBXl, DBYl, 'k-', label='SL domain')
+    ax1.plot(DBXr, DBYr, 'k-')
+    ax1.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
+    ax1.set_xlabel('x [m]')
+    ax2.set_ylabel(['y [m]'])
+    ax1.legend()
+
+    # second panel SL coordinates
+    ax2.set_title('Raster SL reference %s' % refLineSL['type'])
+    pU.NonUnifIm(ax2, rasterTransfo['l'], rasterTransfo['s'], refRasterSL, '$L_{XY}$ (thalweg) [m]', '$S_{XY}$ (thalweg) [m]',
+                     extent=[rasterTransfo['l'].min(), rasterTransfo['l'].max(), rasterTransfo['s'].min(), rasterTransfo['s'].max()], aspect='equal')
+    if refLineSL['type'] == 'point':
+        ax2.plot(refLineSL['l'], refLineSL['s'], 'b', linestyle='', marker='*', markersize=4, label='point in SL')
+    else:
+        ax2.plot(refLineSL['l'], refLineSL['s'], 'b', label='line in SL')
+    ax2.legend()
+    ax2.yaxis.set_inverted(True)  #
+
+    # save figure
+    outFileName = pathDict['projectName'] + '_' + 'referenceLineTransfo_%s' % refLineSL['name']
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def compareRunoutLines(cfgSetup, refDataTransformed, newRaster, runoutLine, rasterTransfo, resAnalysisRow, pathDict):
+    """ plot runout line of current simulation and raster as well as runout lines
+    derived from reference data
+
+        Parameters
+        ------------
+        cfgSetup: configparser object
+            configuration settings for AIMEC
+        refDataTransformed: dict
+            info of all reference data sets found including derived runoutlines, points
+        newRaster: dict
+            raster of simulation
+        runoutLine: dict
+            runoutLine derived for current simulation
+        rasterTransfo: dict
+            information on raster transformation into s,l coordinates
+        resAnalysisRow: pandas data frame series
+            row of current simulation of resAnalysisDF (info on sim config, results, analysis)
+        pathDict: dict
+            dictionary with info on aimec paths
+
+    """
+
+    maskedArray = np.ma.masked_where(newRaster == 0, newRaster)
+    cmapTF, _, ticks, normTF = pU.makeColorMap(pU.colorMaps[cfgSetup['runoutResType']], np.nanmin((maskedArray)) ,
+                                               np.nanmax((maskedArray)), continuous=pU.contCmap)
+
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.set_title('Runout lines')
+
+    pU.NonUnifIm(ax1, rasterTransfo['l'], rasterTransfo['s'], maskedArray,
+                '$L_{XY}$ (thalweg) [m]', '$S_{XY}$ (thalweg) [m]',
+                extent=[rasterTransfo['l'].min(), rasterTransfo['l'].max(),
+                 rasterTransfo['s'].min(), rasterTransfo['s'].max()], cmap=cmapTF,
+                 aspect='equal')
+
+    ax1.plot(runoutLine['l'], runoutLine['s'], 'k', label='simulation')
+
+    # add runout lines from reference data
+    colors = {'line': 'lightcoral', 'point': 'gold','poly': 'purple'}
+    for ind, key in enumerate(refDataTransformed):
+        ax1.plot(refDataTransformed[key]['l'], refDataTransformed[key]['s'],
+                 marker='+', linestyle='-', c=colors[refDataTransformed[key]['type']], label=key)
+
+    # add legend
+    ax1.legend()
+
+    # save figure
+    outFileName = pathDict['projectName'] + '_runoutLines_%s' % resAnalysisRow['simName']
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, runoutLineNoPoints, refLineNoPoints, RMSE, diffNoNans):
+    """ compare runout line from current simulation to runout line derived from reference data
+
+        Parameters
+        ------------
+        refLine: dict
+            dictionary with info on runout line derived from reference data set (line or polygon)
+        runoutLine: dict
+            dictionary with info on runout line derived from current simulation based on runoutResType and threshold
+        pathDict: dict
+            dictionary with info on where to save plot
+        simName: str
+            name of current simulation
+        runoutLineNoPoints: int
+            number of points where no runout line was found or sim BUT for refLine one was found
+        RMSE: float
+            root mean squared error between s location of runout line from sim or from reference data set
+        diffNoNans: numpy array
+            difference values runoutLine sim s location - refLine s location
+    """
+
+    colors = {'line': 'lightcoral', 'point': 'gold','poly': 'purple'}
+
+    # create figure
+    fig = plt.figure(figsize=(pU.figW*1.5, pU.figH))
+    gs = gridspec.GridSpec(4, 2, hspace=1.5)
+
+    # add panel one with lines and differences across thalweg Lxy
+    ax1 = fig.add_subplot(gs[0:3, 0:2])
+    ax1.set_title('Runout line difference (from reference %s' % refLine['type'])
+    ax2 = ax1.twinx()
+    ax1.bar(refLine['l'], runoutLine['s']-refLine['s'], width=5, zorder=1)
+    ax2.plot(runoutLine['l'], runoutLine['s'], label='sim', c='k', zorder=3)
+    ax2.plot(refLine['l'], refLine['s'], label=('reference %s' % refLine['type']), c=colors[refLine['type']],
+             zorder=2)
+
+    # add differences as bars to panel
+    ax2.text(0.01, 0.01, ('points not found in sim: %s \npoints not found in ref: %s \nRMSE: %.2f' %
+             (runoutLineNoPoints, refLineNoPoints, RMSE)), horizontalalignment='left',
+             verticalalignment='bottom', transform=ax2.transAxes)
+    ax2.set_ylabel('S_xy along thalweg [m]')
+    ax1.set_ylabel('runout difference [m]')
+    ax1.set_xlabel('L_xy across thalweg [m]')
+    ax2.legend()
+
+    # add panels for hist and CDF
+    ax3 = fig.add_subplot(gs[3, 0])
+    ax4 = fig.add_subplot(gs[3, 1])
+    ax3.hist(diffNoNans)
+    _ = sPlot.plotHistCDFDiff(diffNoNans, ax4, ax3, insert='False', title=['diff histogram',
+                                                                             'diff CDF (95% and 99% centiles)'])
+
+    # save figure
+    outFileName = pathDict['projectName'] + '_runoutLinesComparison_%s_%s' % (simName, refLine['type'])
+    pU.saveAndOrPlot(pathDict, outFileName, fig)

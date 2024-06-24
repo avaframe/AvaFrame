@@ -7,11 +7,13 @@ import numpy as np
 import pathlib
 
 # Local imports
+from avaframe.in2Trans import shpConversion
 from avaframe.ana3AIMEC import aimecTools
 from avaframe.ana3AIMEC import dfa2Aimec
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.in1Data.getInput as gI
+from avaframe.in3Utils import geoTrans
 from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
 
@@ -55,6 +57,7 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir='', demFileName=''):
 
     # Setup input from computational module
     inputsDF, resTypeList = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg, inputDir=inputDir)
+
     # define reference simulation
     refSimRowHash, refSimName, inputsDF, colorParameter, valRef = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod,
                                                                                          cfg, inputDir=inputDir)
@@ -144,13 +147,22 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     timeMass = None
     # add fields that will be filled in analysis
     resAnalysisDF = aimecTools.addFieldsToDF(inputsDF)
+    # if includeReference add reference data to resAnalysisDF
+    if cfgSetup.getboolean('includeReference'):
+        referenceDF = aimecTools.createReferenceDF(pathDict)
+        refDataTransformed, referenceDF = postProcessReference(cfg, rasterTransfo, pathDict, referenceDF, newRasters)
+    else:
+        refDataTransformed = {}
+
+    # postprocess reference simulation
     resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters,
-                                                           timeMass, refSimRowHash, contourDict)
+                                                           timeMass, refSimRowHash, contourDict, refDataTransformed)
     # postprocess other simulations
     for simRowHash, inputsDFrow in inputsDF.iterrows():
         if simRowHash != refSimRowHash:
             resAnalysisDF, newRasters, timeMass, contourDict = postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF,
-                                                                   newRasters, timeMass, simRowHash, contourDict)
+                                                                   newRasters, timeMass, simRowHash, contourDict,
+                                                                                refDataTransformed)
             pathDict['simRowHash'] = simRowHash
 
     # -----------------------------------------------------------
@@ -158,6 +170,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # -----------------------------------------------------------
     plotDict = {}
     log.info('Visualisation of AIMEC results')
+
     # plot the contour lines of all sims for the thresholdValue of runoutResType
     outAimec.plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inputsDF)
 
@@ -197,7 +210,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     return rasterTransfo, resAnalysisDF, plotDict, newRasters
 
 
-def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash, contourDict):
+def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, timeMass, simRowHash, contourDict, refDataTransformed):
     """ Apply domain transformation and analyse result data (for example pressure, thickness, velocity...)
 
     Apply the domain tranformation to peak results
@@ -330,8 +343,13 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                 resAnalysisDF[resType + 'CrossMin'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
                 resAnalysisDF[resType + 'CrossMean'] = np.nan
                 resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+                if cfgSetup.getboolean('includeReference'):
+                    resAnalysisDF['runoutLineDiff_line'] = np.nan
+                    resAnalysisDF['runoutLineDiff_line'] = resAnalysisDF['runoutLineDiff_line'].astype(object)
+                    resAnalysisDF['runoutLineDiff_poly'] = np.nan
+                    resAnalysisDF['runoutLineDiff_poly'] = resAnalysisDF['runoutLineDiff_line'].astype(object)
 
-            # add max, min and std values of result fields
+                    # add max, min and std values of result fields
             resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
             # for mean and min values and std, only take peak field values != 0
             maskedRaster = np.where(rasterData['rasterData'] < cfgSetup.getfloat('minValueField'), np.nan, rasterData['rasterData'])
@@ -344,8 +362,20 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
 
     # compute runout based on runoutResType
     resAnalysisDF = aimecTools.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)
+    runoutLine = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, simRowHash, 'simulation', name='')
+
+    if 'refPoint' in refDataTransformed:
+        # compute differences between runout points
+        resAnalysisDF = aimecTools.computeRunoutPointDiff(resAnalysisDF, refDataTransformed['refPoint'], simRowHash)
+
+    # plot comparison between runout lines
+    outAimec.compareRunoutLines(cfgSetup, refDataTransformed, newRasters['newRaster'+cfgSetup['runoutResType'].upper()],
+                                runoutLine, rasterTransfo, resAnalysisDF.loc[simRowHash], pathDict)
+
+    # analyze distribution of diffs between runout lines
+    resAnalysisDF = aimecTools.analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict)
+
     if flagMass:
-        # perform mass analysis
         fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
         resAnalysisDF, timeMass = aimecTools.analyzeMass(fnameMass, simRowHash, refSimRowHash, resAnalysisDF, time=timeMass)
 
@@ -354,8 +384,9 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     else:
         timeMass = None
 
+    # TODO also include comparison to reference area if provided by polygon or raster (referenceType name of newRasters)
     resAnalysisDF, compPlotPath, contourDict = aimecTools.analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg,
-                                                 pathDict, contourDict)
+                                                 pathDict, contourDict, referenceType='newRefRaster')
 
     resAnalysisDF.loc[simRowHash, 'areasPlot'] = compPlotPath
 
@@ -365,6 +396,134 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                                        resAnalysisDF['simName'].loc[simRowHash])
 
     return resAnalysisDF, newRasters, timeMass, contourDict
+
+
+def postProcessReference(cfg, rasterTransfo, pathDict, referenceDF, newRasters):
+    """ Apply domain transformation and analyse reference data, e.g. compute runout point
+
+    Apply the domain tranformation to reference data sets
+    Analyse them.
+    Calculate runout
+
+    The output referenceDF contains:
+
+    -xRunout: float
+        x coord of the runout point calculated
+    -yRunout: float
+        y coord of the runout point calculated
+    -sRunout: float
+        runout point in s coordinate
+    -lRunout: float
+        runout point in l coordinate
+
+    Parameters
+    ----------
+    cfg: configParser objec
+        parameters for AIMEC analysis
+    rasterTransfo: dict
+        transformation information
+    pathDict : dict
+        dictionary with paths to dem and lines for Aimec analysis and reference data file paths
+    referenceDF : dataFrame
+        dataframe one row per reference data set
+    newRasters: dict
+        dictionary containing pressure, velocity and flow thickness rasters after
+        transformation for the reference and the current simulation
+
+    Returns
+    -------
+    referenceDataTransformed: dict
+        dictionary with refLine, refPoint, refPoly info on reference data set and computed runout line or point
+        - transformed and computed in s l coordinate system
+    referenceDF: dataFrame
+       updated df
+    """
+
+    cfgSetup = cfg['AIMECSETUP']
+    resampleLineFactor = cfgSetup.getfloat('resampleLineFactor')
+    interpMethod = cfgSetup['interpMethod']
+
+    # apply domain transformation
+    log.info('Analyzing reference data in path coordinate system')
+
+    # read reference LINE, RUNOUTPOINT, POLY and convert to s, l coordinate system (intermediate step: create raster)
+    # first read DEM (needed for transformation)
+    dem = rasterTransfo['dem']
+    refDataTransformed = {}
+
+    for ind, refFile in enumerate(pathDict['referenceLine']):
+        log.debug('Convert line: %s to raster' % refFile.stem)
+        refLine = shpConversion.readLine(refFile, "referenceLine", dem)
+        refLine, _ = geoTrans.prepareLine(dem, refLine, distance=(dem['header']['cellsize']/resampleLineFactor), Point=None, k=1)
+
+        # derive raster from line
+        _, refRasterXY = geoTrans.projectOnGrid(refLine['x'], refLine['y'], dem['rasterData'],
+                                              csz=dem['header']['cellsize'], xllc=dem['header']['xllcenter'],
+                                              yllc=dem['header']['yllcenter'], interp="bilinear", getXYField=True)
+
+        # transform xy raster into sl raster and compute where line lies in this raster
+        refRasterSL = aimecTools.transform({'header': dem['header'], 'rasterData': refRasterXY}, refFile.stem, rasterTransfo, interpMethod)
+        newRasters['refLine'] = refRasterSL
+        refLineSL = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, '',
+                                                                'line', ('refLine'), basedOnMax=True)
+        refDataTransformed['refLine'] = refLineSL
+
+        # create plot from reference line transformation
+        outAimec.referenceLinePlot(refRasterXY, dem, refLine, rasterTransfo, refRasterSL, refLineSL, pathDict)
+
+        # add info to DF
+        referenceDF = aimecTools.addReferenceAnalysisTODF(referenceDF, refFile, refLineSL)
+
+    for ind, refFile in enumerate(pathDict['referencePoint']):
+        log.debug('Convert point: %s to raster' % refFile.stem)
+        refPoint = shpConversion.readPoints(refFile, dem)
+
+        # derive raster from point
+        _, refRasterXY = geoTrans.projectOnGrid(refPoint['x'], refPoint['y'], dem['rasterData'],
+                                              csz=dem['header']['cellsize'], xllc=dem['header']['xllcenter'],
+                                              yllc=dem['header']['yllcenter'], interp="nearest", getXYField=True)
+
+        # transform xy raster into sl raster and compute where point lies in this raster
+        refRasterSL = aimecTools.transform({'header': dem['header'], 'rasterData': refRasterXY}, refFile.stem, rasterTransfo, interpMethod)
+        newRasters['refPoint'] = refRasterSL
+        refPointSL = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, '',
+                                                                 'point', ('refPoint'), basedOnMax=True)
+        refDataTransformed['refPoint'] = refPointSL
+
+        # add info to DF
+        referenceDF = aimecTools.addReferenceAnalysisTODF(referenceDF, refFile, refPointSL)
+
+        # create plot from reference line transformation
+        outAimec.referenceLinePlot(refRasterXY, dem, refPoint, rasterTransfo, refRasterSL, refPointSL, pathDict)
+
+    for ind, refFile in enumerate(pathDict['referencePolygon']):
+        log.debug('Convert point: %s to raster' % refFile.stem)
+
+        # derive area from polygon in xy coordinates
+        dem['originalHeader'] = dem['header']
+        refPoly = shpConversion.readLine(refFile, "referencepoly", dem)
+        refPoly = geoTrans.prepareArea(refPoly,
+            dem,
+            np.sqrt(dem['header']['cellsize']**2),
+            thList='',
+            combine=True,
+            checkOverlap=False,
+        )
+        refRasterXY = refPoly['rasterData']
+
+        # transform xy raster into sl raster and compute where runout line is in this raster
+        refRasterSL = aimecTools.transform({'header': dem['header'], 'rasterData': refRasterXY}, refFile.stem, rasterTransfo, interpMethod)
+        newRasters['refPolyPPR'] = refRasterSL
+        refPolySL = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, '', 'poly', 'refPolyPPR')
+        refDataTransformed['refPoly'] = refPolySL
+
+        # add info to DF
+        referenceDF = aimecTools.addReferenceAnalysisTODF(referenceDF, refFile, refPolySL)
+
+        # create plot from reference line transformation
+        outAimec.referenceLinePlot(refRasterXY, dem, refPoly, rasterTransfo, refRasterSL, refPolySL, pathDict)
+
+    return refDataTransformed, referenceDF
 
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, pathDict):

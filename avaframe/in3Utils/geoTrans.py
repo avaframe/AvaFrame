@@ -11,6 +11,7 @@ import shapely as shp
 import copy
 from scipy.interpolate import splprep, splev
 import matplotlib.path as mpltPath
+from shapely import LineString, Point, distance, MultiPoint
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -58,7 +59,7 @@ def projectOnRaster(dem, Points, interp="bilinear", inData="rasterData", outData
     return Points, ioob
 
 
-def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
+def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear", getXYField=False):
     """Projects Z onto points (x,y)
     using a bilinear or nearest interpolation and returns the z coord
 
@@ -86,6 +87,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
         number of out of bounds indexes
     """
     nrow, ncol = np.shape(Z)
+    zField = np.zeros((nrow, ncol))
     # initialize outputs
     z = np.ones((np.shape(x))) * np.nan
     dx = np.ones((np.shape(x))) * np.nan
@@ -138,6 +140,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
         dx[mask] = np.round(Lx[mask])
         dy[mask] = np.round(Ly[mask])
         z[mask] = Z[dy[mask].astype("int"), dx[mask].astype("int")]
+        zField[dy[mask].astype("int"), dx[mask].astype("int")] = 1.
     elif interp == "bilinear":
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
@@ -147,8 +150,16 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear"):
         f22[mask] = Z[Ly1[mask].astype("int"), Lx1[mask].astype("int")]
         # using bilinear interpolation on the cell
         z = f11 * (1 - dx) * (1 - dy) + f21 * dx * (1 - dy) + f12 * (1 - dx) * dy + f22 * dx * dy
+        zField[Ly0[mask].astype("int"), Lx0[mask].astype("int")] = 1.
+        zField[Ly1[mask].astype("int"), Lx0[mask].astype("int")] = 1.
+        zField[Ly0[mask].astype("int"), Lx1[mask].astype("int")] = 1.
+        zField[Ly1[mask].astype("int"), Lx1[mask].astype("int")] = 1.
 
-    return z, ioob
+    if getXYField:
+        return z, zField
+    else:
+        return z, ioob
+
 
 
 def resizeData(raster, rasterRef):
@@ -433,7 +444,7 @@ def prepareLine(dem, avapath, distance, Point=None, k=3, s=None):
     1- Resample the avapath line with an interval of approximately distance in meters
     between points (projected distance on the horizontal plane).
     2- Make avalanche profile out of the path (affect a z value using the dem)
-    3- Get projection of points on the profil (closest point)
+    3- Get projection of points on the profile (closest point)
 
     Parameters
     -----------
@@ -1854,3 +1865,43 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     ny, _ = projectOnGrid(x, y, Ny, csz=csz)
     nz, _ = projectOnGrid(x, y, Nz, csz=csz)
     return nx, ny, nz
+
+
+def cellsAffectedLine(header, pointsXY, type):
+    """ find which cells of data area affected by points
+
+        Parameters
+        -----------
+        header: dict
+        data: numpy nd array
+        points: shapely
+        type: str
+
+        """
+
+    xllc = header["xllcenter"]
+    yllc = header["yllcenter"]
+    cellSize = header["cellsize"]
+    x = np.linspace(xllc, xllc + (header["ncols"] - 1) * cellSize, header["ncols"])
+    y = np.linspace(yllc, yllc + (header["nrows"] - 1) * cellSize, header["nrows"])
+    xx, yy = np.meshgrid(x, y)
+
+    linecoords = np.zeros((len(pointsXY['x']), 2))
+    linecoords[:,0] = pointsXY['x']
+    linecoords[:,1] = pointsXY['y']
+
+    if type.lower() == 'linestring':
+        line = LineString(linecoords)
+    elif type.lower() == 'point' and len(pointsXY['x']) == 1:
+        line = Point(linecoords)
+    elif type.lower() == 'point' and len(pointsXY['x']) < 1:
+        line = MultiPoint(linecoords)
+
+
+    mask = np.zeros((header['nrows'], header['ncols']))
+    for ind, m in enumerate(xx[:, 0]):
+        for ind2, k in enumerate(xx[0, :]):
+            if distance(line, Point([xx[ind, ind2], yy[ind, ind2]])) <= np.sqrt(cellSize**2 + cellSize**2):
+                mask[ind, ind2] = 1.
+
+    return mask, xx, yy
