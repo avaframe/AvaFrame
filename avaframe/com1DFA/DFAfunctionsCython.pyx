@@ -954,6 +954,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['massEntrained'] = massEntrained
   particles['massDetrained'] = massDetrained
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
+  log.debug('Detrained DFA mass: %s kg', np.asarray(massDetrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
 
