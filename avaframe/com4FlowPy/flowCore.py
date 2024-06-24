@@ -155,6 +155,10 @@ def run(optTuple):
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
     forestInteraction = optTuple[2]["forestInteraction"]
+    uMaxBool = optTuple[2]["uMaxBool"]
+    varAlphaBool = optTuple[2]["varAlphaBool"]
+
+
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -169,7 +173,7 @@ def run(optTuple):
     if infraBool:
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
-        infra = np.zeros_like(dem)
+        infra = None
 
     # if forestBool == 'True'
     # --> load forestFile
@@ -180,6 +184,16 @@ def run(optTuple):
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
         forestParams["forestInteraction"] = forestInteraction
+
+    if uMaxBool:
+        uMaxArray = np.load(tempDir / ("uMax_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        uMaxArray = None
+
+    if varAlphaBool:
+        varAlphaArray = np.load(tempDir / ("varAlpha_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        varAlphaArray = None
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -210,6 +224,8 @@ def run(optTuple):
                         alpha, exp, flux_threshold, max_z_delta,
                         nodata, cellsize,
                         infraBool, forestBool,
+                        uMaxBool, uMaxArray,
+                        varAlphaBool, varAlphaArray,
                         forestArray, forestParams,
                     ]
                     for release_sub in release_list
@@ -227,6 +243,8 @@ def run(optTuple):
                         alpha, exp, flux_threshold, max_z_delta,
                         nodata, cellsize,
                         infraBool, forestBool,
+                        uMaxBool, uMaxArray,
+                        varAlphaBool, varAlphaArray,
                     ]
                     for release_sub in release_list
                 ],
@@ -345,15 +363,20 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
+    uMaxBool = args[11]
+    uMaxArray = args[12]
+    varAlphaBool = args[13]
+    varAlphaArray = args[14]
 
     if forestBool:
-        forestArray = args[11]
-        forestParams = args[12]
+        forestArray = args[15]
+        forestParams = args[16]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
         forestArray = None
         forestParams = None
+
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
@@ -387,6 +410,11 @@ def calculation(args):
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
+        if uMaxBool:
+            max_z_delta = (uMaxArray[row_idx, col_idx])**2 / 2 / 9.81
+        if varAlphaBool:
+            alpha = varAlphaArray[row_idx, col_idx]
+            #otherwise it uses for every cell a different alpha, we want one alpha per startcell
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1

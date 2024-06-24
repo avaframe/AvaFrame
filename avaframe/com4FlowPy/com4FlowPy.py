@@ -63,6 +63,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
     modelParameters["forestInteraction"] = cfgSetup.getboolean("forestInteraction")
+    modelParameters["uMaxBool"] = cfgSetup.getboolean("uMaxLim")
+    modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
@@ -119,6 +121,17 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     else:
         modelPaths["forestPath"] = ""
         modelParameters["forestInteraction"] = False
+
+    # check if with u_max limit
+    if modelParameters["uMaxBool"]:
+        modelPaths["uMaxPath"] = cfgPath["uMaxPath"]
+    else:
+        modelPaths["uMaxPath"] = ""
+    # check if we use the variable alpha layer
+    if modelParameters["varAlphaBool"]:
+        modelPaths["varAlphaPath"] = cfgPath["varAlphaPath"]
+    else:
+        modelPaths["varAlphaPath"] = ""
 
     # TODO: provide some kind of check for the model Parameters
     #       i.e. * sensible value ranges
@@ -187,6 +200,14 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
             log.info(f"{'%s:'%param : <20}{value : <5}")
         log.info(f"{'forestInteraction : ' : <20}{'%s'%modelParameters['forestInteraction'] : <5}")
         log.info("------------------------")
+    if modelParameters["varAlphaBool"]:
+        log.info("Calculation using variable Alpha")
+        log.info(f"{'ALPHA LAYER:' : <14}{'%s'%modelPaths['varAlphaPath'] : <5}")
+        log.info("------------------------")    
+    if modelParameters["uMaxBool"]:
+        log.info("Calculation using variable uMax Limit")
+        log.info(f"{'UMAX LAYER:' : <14}{'%s'%modelPaths['uMaxPath'] : <5}")
+        log.info("------------------------")    
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
@@ -236,7 +257,23 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
                 log.info("Forest Layer ok!")
             else:
-                log.error("Error: Infra Layer doesn't match DEM!")
+                log.error("Error: Forest Layer doesn't match DEM!")
+                sys.exit(1)
+
+        if modelParameters["uMaxBool"]:
+            _uMaxHeader = io.read_header(modelPaths["uMaxPath"])
+            if _demHeader["ncols"] == _uMaxHeader["ncols"] and _demHeader["nrows"] == _uMaxHeader["nrows"]:
+                log.info("uMax Limit Layer ok!")
+            else:
+                log.error("Error: uMax Limit Layer doesn't match DEM!")
+                sys.exit(1)
+        
+        if modelParameters["varAlphaBool"]:
+            _varAlphaHeader = io.read_header(modelPaths["varAlphaPath"])
+            if _demHeader["ncols"] == _varAlphaHeader["ncols"] and _demHeader["nrows"] == _varAlphaHeader["nrows"]:
+                log.info("variable Alpha Layer ok!")
+            else:
+                log.error("Error: variable Alpha Layer doesn't match DEM!")
                 sys.exit(1)
 
         log.info("========================")
@@ -261,6 +298,10 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
 
     if modelParameters["infraBool"]:
         SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["uMaxBool"]:
+        SPAM.tileRaster(modelPaths["uMaxPath"], "uMax", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["varAlphaBool"]:
+        SPAM.tileRaster(modelPaths["varAlphaPath"], "varAlpha", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     log.info("Finished Tiling All Input Rasters.")

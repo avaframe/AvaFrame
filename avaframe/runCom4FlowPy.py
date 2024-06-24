@@ -109,6 +109,8 @@ def main():
         cfgPath["releasePath"] = pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
+        cfgPath["uMaxPath"] = pathlib.Path(cfgCustomPaths["uMaxPath"])
+        cfgPath["varAlphaPath"] = pathlib.Path(cfgCustomPaths["varAlphaPath"])
         cfgPath["deleteTemp"] = cfgCustomPaths["deleteTempFolder"]
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
@@ -184,6 +186,34 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         infraPath = infraPath[0]
         log.info("Infrastructure area file is: %s" % infraPath)
     cfgPath["infraPath"] = infraPath
+
+    # read uMax Limit Raster
+    uMaxDir = avalancheDir / "Inputs" / "UMAX"
+    uMaxPath = sorted(list(uMaxDir.glob("*.tif")))
+    if len(uMaxPath) == 0 or cfgFlowPy.getboolean("GENERAL", "uMaxLim") is False:
+        uMaxPath = ""
+    elif len(uMaxPath) > 1:
+        message = "More than one uMax Limit file .%s file in %s not allowed" % (uMaxDir)
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        uMaxPath = uMaxPath[0]
+        log.info("uMax Limit file is: %s" % uMaxPath)
+    cfgPath["uMaxPath"] = uMaxPath
+
+    # read variable Alpha Angle Raster
+    varAlphaDir = avalancheDir / "Inputs" / "ALPHA"
+    varAlphaPath = sorted(list(varAlphaDir.glob("*.tif")))
+    if len(varAlphaPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableAlpha") is False:
+        varAlphaPath = ""
+    elif len(varAlphaPath) > 1:
+        message = "More than one variable alpha file .%s file in %s not allowed" % (varAlphaDir)
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        varAlphaPath = varAlphaPath[0]
+        log.info("variable Alpha file is: %s" % varAlphaPath)
+    cfgPath["varAlphaPath"] = varAlphaPath
 
     # check if forest should be used (assumed to be in the RES - 'RESISTANCE' directory)
 
