@@ -137,6 +137,7 @@ If ``forestInteraction = True``, an additional output Layer is computed, which r
 iv) variable parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 There are options to set for each path variable parameters:
 
 - alpha (``variableAlpha = True``), 
@@ -146,6 +147,7 @@ There are options to set for each path variable parameters:
 When an option is switched on (set ``True``), the user needs to provide a raster file, that contains values for the respective parameter in each grid cell that is assigned to a release cell. The paths are computed with the respective parameters.
 If the value of the variable layer in the cell that is assigned to a release cell is not > 0, the default parameters are used as described in i).
 When ``variableUmaxLim = True``, the type of the provided parameter is required: ``varUmaxParameter = uMax`` (in m/s) or ``varUmaxParameter = zDeltaMax`` (in m). (A layer containing release cells is still required).
+
 
 
 v) tiling and multiprocessing parameters
