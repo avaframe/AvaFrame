@@ -371,8 +371,8 @@ def calculation(args):
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
         if uMaxBool:
-            
             max_z_delta = (uMax[row_idx, col_idx])**2 / 2 / 9.81
+            alpha = forestArray[row_idx, col_idx]
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
