@@ -185,6 +185,20 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         log.info("Infrastructure area file is: %s" % infraPath)
     cfgPath["infraPath"] = infraPath
 
+    # read uMax Limit Raster
+    uMaxDir = avalancheDir / "Inputs" / "UMAX"
+    uMaxPath = sorted(list(uMaxDir.glob("*.tif")))
+    if len(uMaxPath) == 0 or cfgFlowPy.getboolean("GENERAL", "u_max_lim") is False:
+        uMaxPath = ""
+    elif len(uMaxPath) > 1:
+        message = "More than one uMax Limit file .%s file in %s not allowed" % (uMaxDir)
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        uMaxPath = uMaxPath[0]
+        log.info("uMax Limit file is: %s" % uMaxPath)
+    cfgPath["uMaxPath"] = uMaxPath
+
     # check if forest should be used (assumed to be in the RES - 'RESISTANCE' directory)
 
     forestDir = avalancheDir / "Inputs" / "RES"  # use directory for Resistance Layer for the forest layer

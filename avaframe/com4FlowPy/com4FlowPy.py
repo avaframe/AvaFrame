@@ -62,6 +62,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Flags for use of Forest and/or Infrastructure
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
+    
+    #PS
+    modelParameters["uMaxBool"] = cfgSetup.getboolean("u_max_lim")
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
@@ -116,6 +119,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     else:
         modelPaths["forestPath"] = ""
+
+    # check if with u_max limit
+    if modelParameters["uMaxBool"]:
+        modelPaths["uMaxPath"] = cfgPath["uMaxPath"]
+    else:
+        modelPaths["uMaxPath"] = ""
 
     # TODO: provide some kind of check for the model Parameters
     #       i.e. * sensible value ranges
@@ -229,7 +238,15 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
                 log.info("Forest Layer ok!")
             else:
-                log.error("Error: Infra Layer doesn't match DEM!")
+                log.error("Error: Forest Layer doesn't match DEM!")
+                sys.exit(1)
+
+        if modelParameters["uMaxBool"]:
+            _uMaxHeader = io.read_header(modelPaths["uMaxPath"])
+            if _demHeader["ncols"] == _uMaxHeader["ncols"] and _demHeader["nrows"] == _uMaxHeader["nrows"]:
+                log.info("uMax Limit Layer ok!")
+            else:
+                log.error("Error: uMax Limit Layer doesn't match DEM!")
                 sys.exit(1)
 
         log.info("========================")
@@ -254,6 +271,8 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
 
     if modelParameters["infraBool"]:
         SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["uMaxBool"]:
+        SPAM.tileRaster(modelPaths["uMaxPath"], "uMax", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     log.info("Finished Tiling All Input Rasters.")
