@@ -480,8 +480,10 @@ cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
   areaDetPart : float
       Area of detrainment 
   """
+
   cdef double width, areaDetPart
   cdef double dmDet = 0
+  
   # compute detrained mass
   if detCell > 0 and uMag > 0:
       dmDet = - detCell / uMag * dt * areaPart
