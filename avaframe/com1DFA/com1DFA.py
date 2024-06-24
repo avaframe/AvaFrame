@@ -2723,7 +2723,7 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
     entResInfo = inputSimFiles["entResInfo"]
 
     # check if set simType is a valid option
-    validSimTypesStr = "available|null|ent|entres|res|det"
+    validSimTypesStr = "available|null|ent|entres|res"
     validSimTypes = validSimTypesStr.split("|")
     validArray = [True if item in validSimTypes else False for item in simTypeList]
     if False in validArray:
