@@ -1617,10 +1617,12 @@ def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thre
     """
     K = cfg.getfloat("detK")
     DetBool = cfg.getboolean("DetBool")
+    
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
+    
     if simTypeActual in ["entres", "res"] and DetBool:
         resistanceArea = resLine["fileName"]
         log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
