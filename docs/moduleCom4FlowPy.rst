@@ -134,7 +134,21 @@ The user-provided *forest_layer* is treated binary, which means that forest (``c
 If ``forestInteraction = True``, an additional output Layer is computed, which represents the number of forested raster cells a path runs through. In this forest interaction layer, locations (raster cells) of paths are assigned to the number of forested cells previously hit. The output raster layer represents the i) **minimum** forest length within the path (that is from one release cell) and ii) the **minimum** value of overlapping paths. See an application and further description of the forestInteractionLayer in :cite:`SpHeMiFi2024`
 
 
-iv) tiling and multiprocessing parameters
+iv) variable parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are options to set for each path variable parameters:
+
+- alpha (``variableAlpha = True``), 
+- max. zDelta (``variableUmaxLim = True``),
+- exponent (``variableExponent = True``). 
+
+When an option is switched on (set ``True``), the user needs to provide a raster file, that contains values for the respective parameter in each grid cell that is assigned to a release cell. The paths are computed with the respective parameters.
+If the value of the variable layer in the cell that is assigned to a release cell is not > 0, the default parameters are used as described in i).
+When ``variableUmaxLim = True``, the type of the provided parameter is required: ``varUmaxParameter = uMax`` (in m/s) or ``varUmaxParameter = zDeltaMax`` (in m). (A layer containing release cells is still required).
+
+
+v) tiling and multiprocessing parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the model extent (i.e. number of cells and/or rows in the input layers) is larger than ``tileSize``, then :py:mod:`com4FlowPy` 
@@ -171,6 +185,9 @@ the following folder structure inside the ``avalancheDir`` directory inside whic
         REL/      - release area file (can be either .asc, .tif, or .shp) <required>
         RES/      - forest structure information (FSI) (.asc or .tif) <optional>
         INFRA/    - infrastructure layer (.asc or .tif) <optional>
+        ALPHA/	  - variable alpha angle layer (.tif) <optional>
+        UMAX/	  - variable uMax layer (.tif) <optional>
+        EXP/	  - variable exponent layer (.tif) <optional>
       Outputs/
       Work/
 
@@ -183,6 +200,9 @@ inputs and working directories/model outputs in different places, which might be
 - ``releasePath`` :math:`\ldots` path to release area raster (``.asc, .tif``)
 - ``infraPath`` :math:`\ldots` path to infrastructure raster (``.asc, .tif``) (required if ``infra = True``)
 - ``forestPath`` :math:`\ldots` path to forest (FSI) raster (``.asc, .tif``) (required if ``forest = True``)
+- ``varAlphaPath`` :math:`\ldots` path to variable alpha angle raster (``.tif``) (required if ``variableAlpha = True``)
+- ``varUmaxPath`` :math:`\ldots` path to variable uMax raster (``.tif``) (required if ``variableUmaxLim = True``)
+- ``varExponentPath`` :math:`\ldots` path to variable Exponent raster (``.tif``) (required if ``variableExponent = True``)
 
 
 **All rasters need the same resolution (we recommend 10x10 meters) and raster extent!!**

@@ -155,6 +155,10 @@ def run(optTuple):
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
     forestInteraction = optTuple[2]["forestInteraction"]
+    varUmaxBool = optTuple[2]["varUmaxBool"]
+    varAlphaBool = optTuple[2]["varAlphaBool"]
+    varExponentBool = optTuple[2]["varExponentBool"]
+
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -169,7 +173,7 @@ def run(optTuple):
     if infraBool:
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
-        infra = np.zeros_like(dem)
+        infra = None
 
     # if forestBool == 'True'
     # --> load forestFile
@@ -180,6 +184,28 @@ def run(optTuple):
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
         forestParams["forestInteraction"] = forestInteraction
+    else:
+        forestParams = None
+        forestArray = None
+
+    if varUmaxBool:
+        varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        if optTuple[2]["varUmaxType"].lower() == 'umax':
+            varUmaxArray[varUmaxArray>0] = varUmaxArray[varUmaxArray>0]**2 / 2 / 9.81
+        elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
+            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")   
+    else:
+        varUmaxArray = None
+
+    if varAlphaBool:
+        varAlphaArray = np.load(tempDir / ("varAlpha_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        varAlphaArray = None
+
+    if varExponentBool:
+        varExponentArray = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        varExponentArray = None
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -200,39 +226,25 @@ def run(optTuple):
     release_list = split_release(release, nChunks)
     log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" % (MPOptions["nCPU"], nProcesses, nChunks))
 
-    if forestBool:
-        with Pool(processes=nProcesses) as pool:
-            results = pool.map(
-                calculation,
+    with Pool(processes=nProcesses) as pool:
+        results = pool.map(
+            calculation,
+            [
                 [
-                    [
-                        dem, infra, release_sub,
-                        alpha, exp, flux_threshold, max_z_delta,
-                        nodata, cellsize,
-                        infraBool, forestBool,
-                        forestArray, forestParams,
-                    ]
-                    for release_sub in release_list
-                ],
-            )
-            pool.close()
-            pool.join()
-    else:
-        with Pool(processes=nProcesses) as pool:
-            results = pool.map(
-                calculation,
-                [
-                    [
-                        dem, infra, release_sub,
-                        alpha, exp, flux_threshold, max_z_delta,
-                        nodata, cellsize,
-                        infraBool, forestBool,
-                    ]
-                    for release_sub in release_list
-                ],
-            )
-            pool.close()
-            pool.join()
+                    dem, infra, release_sub,
+                    alpha, exp, flux_threshold, max_z_delta,
+                    nodata, cellsize,
+                    infraBool, forestBool,
+                    varUmaxBool, varUmaxArray,
+                    varAlphaBool, varAlphaArray,
+                    varExponentBool, varExponentArray,
+                    forestArray, forestParams,
+                ]
+                for release_sub in release_list
+            ],
+        )
+        pool.close()
+        pool.join()
 
     # TODO - provide option in com4FlowPyCfg.ini file for which output layers to write
     # e.g.: default  [zDelta, cellCounts, fpTravelAngle, (backCalc if Infra)]
@@ -345,10 +357,16 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
+    varUmaxBool = args[11]
+    varUmaxArray = args[12]
+    varAlphaBool = args[13]
+    varAlphaArray = args[14]
+    varExponentBool = args[15]
+    varExponentArray = args[16]
 
     if forestBool:
-        forestArray = args[11]
-        forestParams = args[12]
+        forestArray = args[17]
+        forestParams = args[18]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -387,6 +405,15 @@ def calculation(args):
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
+        if varUmaxBool and varUmaxArray is not None:
+            if varUmaxArray[row_idx, col_idx] > 0 and varUmaxArray[row_idx, col_idx] <= 8848:
+                max_z_delta = varUmaxArray[row_idx, col_idx]
+        if varAlphaBool and varAlphaArray is not None:
+            if varAlphaArray[row_idx, col_idx] > 0 and varAlphaArray[row_idx, col_idx] <= 90:
+                alpha = varAlphaArray[row_idx, col_idx]
+        if varExponentBool and varExponentArray is not None:
+            if varExponentArray[row_idx, col_idx] > 0:
+                exp = varExponentArray[row_idx, col_idx]
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1

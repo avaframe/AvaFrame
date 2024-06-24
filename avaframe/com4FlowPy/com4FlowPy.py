@@ -63,6 +63,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
     modelParameters["forestInteraction"] = cfgSetup.getboolean("forestInteraction")
+    modelParameters["varUmaxBool"] = cfgSetup.getboolean("variableUmaxLim")
+    modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
+    modelParameters["varExponentBool"] = cfgSetup.getboolean("variableExponent")
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
@@ -119,6 +122,23 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     else:
         modelPaths["forestPath"] = ""
         modelParameters["forestInteraction"] = False
+
+    # check if with u_max limit
+    if modelParameters["varUmaxBool"]:
+        modelParameters["varUmaxType"] = cfgSetup.get("varUmaxParameter")
+        modelPaths["varUmaxPath"] = cfgPath["varUmaxPath"]
+    else:
+        modelPaths["varUmaxPath"] = ""
+    # check if we use the variable alpha layer
+    if modelParameters["varAlphaBool"]:
+        modelPaths["varAlphaPath"] = cfgPath["varAlphaPath"]
+    else:
+        modelPaths["varAlphaPath"] = ""
+    # check if we use the variable exponent layer
+    if modelParameters["varExponentBool"]:
+        modelPaths["varExponentPath"] = cfgPath["varExponentPath"]
+    else:
+        modelPaths["varExponentPath"] = ""
 
     # TODO: provide some kind of check for the model Parameters
     #       i.e. * sensible value ranges
@@ -187,6 +207,18 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
             log.info(f"{'%s:'%param : <20}{value : <5}")
         log.info(f"{'forestInteraction : ' : <20}{'%s'%modelParameters['forestInteraction'] : <5}")
         log.info("------------------------")
+    if modelParameters["varAlphaBool"]:
+        log.info("Calculation using variable Alpha")
+        log.info(f"{'ALPHA LAYER:' : <14}{'%s'%modelPaths['varAlphaPath'] : <5}")
+        log.info("------------------------")
+    if modelParameters["varUmaxBool"]:
+        log.info("Calculation using variable uMax Limit")
+        log.info(f"{'UMAX LAYER:' : <14}{'%s'%modelPaths['varUmaxPath'] : <5}")
+        log.info("------------------------")
+    if modelParameters["varExponentBool"]:
+        log.info("Calculation using variable Alpha")
+        log.info(f"{'ALPHA LAYER:' : <14}{'%s'%modelPaths['varExponentPath'] : <5}")
+        log.info("------------------------")
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
@@ -233,7 +265,31 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
                 log.info("Forest Layer ok!")
             else:
-                log.error("Error: Infra Layer doesn't match DEM!")
+                log.error("Error: Forest Layer doesn't match DEM!")
+                sys.exit(1)
+
+        if modelParameters["varUmaxBool"]:
+            _varUmaxHeader = io.read_header(modelPaths["varUmaxPath"])
+            if _demHeader["ncols"] == _varUmaxHeader["ncols"] and _demHeader["nrows"] == _varUmaxHeader["nrows"]:
+                log.info("uMax Limit Layer ok!")
+            else:
+                log.error("Error: uMax Limit Layer doesn't match DEM!")
+                sys.exit(1)
+
+        if modelParameters["varAlphaBool"]:
+            _varAlphaHeader = io.read_header(modelPaths["varAlphaPath"])
+            if _demHeader["ncols"] == _varAlphaHeader["ncols"] and _demHeader["nrows"] == _varAlphaHeader["nrows"]:
+                log.info("variable Alpha Layer ok!")
+            else:
+                log.error("Error: variable Alpha Layer doesn't match DEM!")
+                sys.exit(1)
+
+        if modelParameters["varExponentBool"]:
+            _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
+            if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
+                log.info("variable Alpha Layer ok!")
+            else:
+                log.error("Error: variable Alpha Layer doesn't match DEM!")
                 sys.exit(1)
 
         log.info("========================")
@@ -258,6 +314,12 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
 
     if modelParameters["infraBool"]:
         SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["varUmaxBool"]:
+        SPAM.tileRaster(modelPaths["varUmaxPath"], "varUmax", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["varAlphaBool"]:
+        SPAM.tileRaster(modelPaths["varAlphaPath"], "varAlpha", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["varExponentBool"]:
+        SPAM.tileRaster(modelPaths["varExponentPath"], "varExponent", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     log.info("Finished Tiling All Input Rasters.")
