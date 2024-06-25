@@ -1607,11 +1607,12 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
-    # TODO: if we keep the ResCoulomb - resistance types, we should initialize the Coulomb-Value (as the resistamce parameter)
+    # TODO: if we keep the ResCoulomb - resistance types, 
+    # we should initialize the Coulomb-Value (as the resistamce parameter)
     ResModel = cfg["ResistanceModel"]
-    if ResModel in ["cRes","cResCoulomb"]:
+    if ResModel in ["cRes", "cResCoulomb"]:
         cRes = cfg.getfloat("cRes")
-    if ResModel in ["cResH","cResHCoulomb"]:
+    if ResModel in ["cResH", "cResHCoulomb"]:
         cRes = cfg.getfloat("cResH")
     # read dem header
     header = dem["originalHeader"]
@@ -1710,7 +1711,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
 
     # turn resistance model into integer
     # TODO: the different resistance parameters are tested experimentally
-    # TODO: unnecessary options should be removed 
+    # TODO: unnecessary options should be removed
     ResModel = cfgGen["ResistanceModel"]
     ResModelsList = [
         "cRes",
