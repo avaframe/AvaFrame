@@ -103,6 +103,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double dt = particles['dt']
   cdef double mu0 = cfg.getfloat('mu0wetsnow')
   cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
+  cdef double muResCoulomb = cfg.getfloat('muResCoulomb')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -346,7 +347,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, sigmaB, 
-                                 muCoulomb, explicitFriction, resistanceType)
+                                 muResCoulomb, explicitFriction, resistanceType)
       forceFrict[k] = forceFrict[k] - cResPart
 
       uxArray[k] = ux
@@ -477,20 +478,44 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
   if(h < hRes):
       hResEff = h
   # explicit formulation (explicitFriction == 1)
-  if resistanceType == 1:
-    # cRes
-    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
-  elif resistanceType == 2:
-    # cResH
-    cRecResPart = - rho * areaPart * cResCell * uMag * uMag
-  elif resistanceType == 3:
-    #cResCoulomb
-    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag + sigmaB * muCoulomb
-  elif resistanceType == 4:
-    #cResHCoulomb
-    cRecResPart = - rho * areaPart * cResCell * uMag * uMag + sigmaB * muCoulomb
-  if explicitFriction == 0:
-    cRecResPart = cRecResPart / uMag
+  if explicitFriction == 1:
+    if resistanceType == 1:
+      # cRes
+      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
+    elif resistanceType == 2:
+      # cResH
+      cRecResPart = - rho * areaPart * cResCell * uMag * uMag
+    elif resistanceType == 3:
+      #cResCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
+    elif resistanceType == 4:
+      #cResHCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * cResCell * uMag * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
+  elif explicitFriction == 0:
+    if resistanceType == 1:
+      # cRes
+      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
+    elif resistanceType == 2:
+      # cResH
+      cRecResPart = - rho * areaPart * cResCell * uMag
+    elif resistanceType == 3:
+      #cResCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * hResEff * cResCell * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
+    elif resistanceType == 4:
+      #cResHCoulomb
+      if cResCell > 0:
+        cRecResPart = - rho * areaPart * cResCell * uMag - sigmaB * muCoulomb
+      else:
+        cRecResPart = 0
   return cRecResPart
 
 

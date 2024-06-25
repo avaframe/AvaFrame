@@ -1607,6 +1607,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
+    # TODO: if we keep the ResCoulomb - resistance types, we should initialize the Coulomb-Value (as the resistamce parameter)
     ResModel = cfg["ResistanceModel"]
     if ResModel in ["cRes","cResCoulomb"]:
         cRes = cfg.getfloat("cRes")
@@ -1707,7 +1708,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     frictType = frictModelsList.index(frictModel) + 1
     log.debug("Friction Model used: %s, %s" % (frictModelsList[frictType - 1], frictType))
 
-    #turn resistance model into integer
+    # turn resistance model into integer
+    # TODO: the different resistance parameters are tested experimentally
+    # TODO: unnecessary options should be removed 
     ResModel = cfgGen["ResistanceModel"]
     ResModelsList = [
         "cRes",
