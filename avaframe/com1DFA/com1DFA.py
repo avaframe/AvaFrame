@@ -1098,17 +1098,13 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     entreainableMass = np.nansum(fields["entrMassRaster"] * dem["areaRaster"])
     log.info("Mass available for entrainment: %.2f kg" % (entreainableMass))
 
-    log.debug("Initializing detrainment area")
-    detRaster, reportAreaInfo = initializeDetrainment(
-        cfgGen, dem, simTypeActual, inputSimLines["resLine"], reportAreaInfo, thresholdPointInPoly
-    )
-    fields["detRaster"] = detRaster
-
     log.debug("Initializing resistance area")
-    cResRaster, reportAreaInfo = initializeResistance(
+    log.debug("Initializing detrainment area")
+    cResRaster, detRaster, reportAreaInfo = initializeResistance(
         cfgGen, dem, simTypeActual, inputSimLines["resLine"], reportAreaInfo, thresholdPointInPoly
     )
     fields["cResRaster"] = cResRaster
+    fields["detRaster"] = detRaster
     return particles, fields, dem, reportAreaInfo
 
 
@@ -1659,23 +1655,22 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     -------
     cResRaster : 2D numpy array
         raster of resistance coefficients
+    detRaster : 2D numpy array
+        raster of detrainment coefficients
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
     cRes = cfg.getfloat("cRes")
+    K = cfg.getfloat("detK")
     DetBool = cfg.getboolean("DetBool")
-    DetAndRes = cfg.getboolean("DetAndRes")
-
-    # if detrainment is not considered, resistance is computed for respective simtypes
-    if DetBool is False:
-        DetAndRes = True
+    DetWithoutRes = cfg.getboolean("DetWithoutRes")
 
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
 
-    if simTypeActual in ["entres", "res"] and DetAndRes:
+    if simTypeActual in ["entres", "res"]:
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
@@ -1684,11 +1679,27 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         # Combine constants (d, cw, sres) to one parameter cRes
         cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
+
+        if DetBool:
+            resistanceArea = resLine["fileName"]
+            log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
+            log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
+            resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
+            mask = resLine["rasterData"]
+            detRaster = K * mask
+            reportAreaInfo["detrainment"] = "Yes"
+            
+            if DetWithoutRes:
+                cResRaster = np.zeros((nrows, ncols))
+                reportAreaInfo["resistance"] = "No"
+        else:
+            detRaster = np.zeros((nrows, ncols))
+            reportAreaInfo["detrainment"] = "No"
     else:
         cResRaster = np.zeros((nrows, ncols))
         reportAreaInfo["resistance"] = "No"
 
-    return cResRaster, reportAreaInfo
+    return cResRaster, detRaster, reportAreaInfo
 
 
 def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
