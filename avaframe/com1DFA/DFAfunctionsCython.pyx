@@ -1114,7 +1114,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] areaRaster = dem['areaRaster']
   # read particles and fields
   cdef double[:] mass = particles['m']
-  cdef double[:] massDet = particles['massDetrained']
+  cdef double[:] massDet = particles['dmDet']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] uxArray = particles['ux']
