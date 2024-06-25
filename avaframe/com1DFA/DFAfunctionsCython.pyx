@@ -350,7 +350,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       
       if detCell > 0:
         # compute detrained mass
-        dmDet, areaDetPart = computeDetMassAndForce(dt, detCell, areaPart, uMag)
+        dmDet = computeDetMassAndForce(dt, detCell, areaPart, uMag)
         if abs(dmDet) > m:
           # mass of a particle can't be negative
           dmDet = - 1 * m
@@ -458,9 +458,9 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 
   return dm, areaEntrPart
 
-cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
+cpdef double computeDetMassAndForce(double dt, double detCell,
                                               double areaPart, double uMag):
-  """ compute force component due to detrained mass
+  """ compute detrained mass
 
   Parameters
   ----------
@@ -477,11 +477,8 @@ cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
   -------
   dm : float
       detrained mass
-  areaDetPart : float
-      Area of detrainment 
   """
 
-  cdef double width, areaDetPart
   cdef double dmDet = 0
   
   # compute detrained mass
@@ -493,10 +490,7 @@ cpdef (double, double) computeDetMassAndForce(double dt, double detCell,
   if dmDet > 0 or np.isnan(dmDet):
       dmDet = 0
 
-  # TODO: how to calculate detArea? - do we need it?
-  areaDetPart = areaPart
-
-  return dmDet, areaDetPart
+  return dmDet
 
 
 cpdef double computeResForce(double hRes, double h, double areaPart, double rho,

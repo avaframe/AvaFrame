@@ -1586,53 +1586,6 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
 
     return entrMassRaster, entrEnthRaster, reportAreaInfo
 
-def initializeDetrainment(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
-    """
-    Initialize detrainment matrix: use same File as for Resistance
-
-    Parameters
-    ----------
-    dem: dict
-        dem dictionary
-    simTypeActual: str
-        simulation type
-    resLine: dict
-        resistance line dictionary
-    reportAreaInfo: dict
-        simulation area information dictionary
-    thresholdPointInPoly: float
-        threshold val that decides if a point is in the polygon, on the line or
-        very close but outside
-
-    Returns
-    -------
-    detRaster : 2D numpy array
-        raster of detrainmnet area
-    reportAreaInfo: dict
-        simulation area information dictionary completed with detrainment area info
-    """
-    K = cfg.getfloat("detK")
-    DetBool = cfg.getboolean("DetBool")
-    
-    # read dem header
-    header = dem["originalHeader"]
-    ncols = header["ncols"]
-    nrows = header["nrows"]
-    
-    if simTypeActual in ["entres", "res"] and DetBool:
-        resistanceArea = resLine["fileName"]
-        log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
-        log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
-        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
-        mask = resLine["rasterData"]
-        detRaster = K * mask
-        reportAreaInfo["detrainment"] = "Yes"
-    else:
-        detRaster = np.zeros((nrows, ncols))
-        reportAreaInfo["detrainment"] = "No"
-
-    return detRaster, reportAreaInfo
-
 
 def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
     """Initialize resistance matrix
@@ -1681,11 +1634,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         reportAreaInfo["resistance"] = "Yes"
 
         if DetBool:
-            resistanceArea = resLine["fileName"]
             log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
             log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
-            resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
-            mask = resLine["rasterData"]
             detRaster = K * mask
             reportAreaInfo["detrainment"] = "Yes"
             
