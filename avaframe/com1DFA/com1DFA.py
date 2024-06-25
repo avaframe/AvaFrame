@@ -1607,7 +1607,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
-    # TODO: if we keep the ResCoulomb - resistance types, 
+    # TODO: if we keep the ResCoulomb - resistance types,
     # we should initialize the Coulomb-Value (as the resistamce parameter)
     ResModel = cfg["ResistanceModel"]
     if ResModel in ["cRes", "cResCoulomb"]:
