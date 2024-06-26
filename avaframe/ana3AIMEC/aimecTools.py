@@ -14,6 +14,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
+import avaframe.in1Data.getInput as gI
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.DFAtools as DFAtools
@@ -96,15 +97,17 @@ def readAIMECinputs(avalancheDir, pathDict, defineRunoutArea, dirName='com1DFA')
     pathDict['pathResult'] = pathResult
 
     # check for reference data
-    referenceDir= pathlib.Path(avalancheDir, 'Inputs', 'REFDATA')
-    referenceLines = list(referenceDir.glob('*_LINE.shp'))
-    referencePolygons = list(referenceDir.glob('*_POLY.shp'))
-    referencePoints = list(referenceDir.glob('*_POINT.shp'))
+    referenceDir= pathlib.Path(avalancheDir, 'Inputs')
 
-    # add file paths to pathDict
-    pathDict['referenceLine'] = referenceLines
-    pathDict['referencePolygon'] = referencePolygons
-    pathDict['referencePoint'] = referencePoints
+    referenceTypes = {"referenceLine": "LINE", "referencePolygon": "POLY",'referencePoint': 'POINT'}
+    for refType in referenceTypes:
+        referenceFile, availableFile = gI.getAndCheckInputFiles(referenceDir, 'REFDATA', referenceTypes[refType],
+                                                                fileExt="shp", fileSuffix=referenceTypes[refType])
+        if availableFile == 'Yes':
+            # add file paths to pathDict
+            pathDict[refType] = [referenceFile]
+        else:
+            pathDict[refType] = []
 
     projectName = pathlib.Path(avalancheDir).stem
     pathDict['projectName'] = projectName
@@ -1006,7 +1009,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     return resAnalysisDF
 
 
-def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, type, name='', basedOnMax=False):
+def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, actualType, name='', basedOnMax=False):
     """ compute the runout line as for each l coordinate the furthest affected s coordinate using the desired
         resType and thresholdvalue, or if basedOnMax searching for the max value (used for reference line, point)
         also add runout point based on max s value of runout line
@@ -1021,7 +1024,7 @@ def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, t
             transformed rasters from simulation
         simRowHash: hash
             index of current simulation
-        type: str
+        actualType: str
             options: simulation, line, point, poly
         name: str
             optional name to find raster in transfromedRasters dict
@@ -1062,14 +1065,19 @@ def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, t
     sMaxInd = np.nan
     lMaxInd = np.nan
     sMax = 0
+    oneIndexFound = False
     for ind, lCoor in enumerate(rasterTransfo['l']):
-        index1 = False
+        indexFound = False
         if basedOnMax and (len(np.nonzero(anaRaster[:,ind])[0]) > 0):
             index2 = np.argmax(anaRasterFlip[:,ind])
             index1 = anaRaster.shape[0]-index2
+            indexFound = True
+            oneIndexFound =True
         elif (basedOnMax == False) and (len(np.nonzero(anaRaster[:,ind]> thresholdValue)[0]) > 0):
             index1 = max(np.nonzero(anaRaster[:,ind] > thresholdValue)[0])
-        if index1 != False:
+            indexFound = True
+            oneIndexFound = True
+        if indexFound:
             runoutLineIndex[ind] = index1
             runoutLine['s'][ind] = (rasterTransfo['s'][index1])
             runoutLine['l'][ind] = lCoor
@@ -1086,11 +1094,14 @@ def computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, simRowHash, t
     # add info on name, type
     runoutLine['index'] = runoutLineIndex
     runoutLine['name'] = name
-    runoutLine['type'] = type
-    runoutLine['sRunout'] = np.nanmax(runoutLine['s'])
-    runoutLine['lRunout'] = rasterTransfo['l'][lMaxInd]
-    runoutLine['xRunout'] = gridx[sMaxInd, lMaxInd]
-    runoutLine['yRunout'] = gridy[sMaxInd, lMaxInd]
+    runoutLine['type'] = actualType
+    if oneIndexFound:
+        runoutLine['sRunout'] = np.nanmax(runoutLine['s'])
+        runoutLine['lRunout'] = rasterTransfo['l'][lMaxInd]
+        runoutLine['xRunout'] = gridx[sMaxInd, lMaxInd]
+        runoutLine['yRunout'] = gridy[sMaxInd, lMaxInd]
+    else:
+        log.warning('For new Raster %s no runout line is found' % name)
 
     return runoutLine
 
@@ -1165,6 +1176,8 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathD
     contourDict: dict
         dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
         for thresholdValue
+    referenceType: str
+        to decide which key to use for newRasters (transformed rasters)
 
     Returns
     -------
@@ -1581,13 +1594,14 @@ def createReferenceDF(pathDict):
     # add one row for each reference dataset
     refData = [pathDict['referenceLine'], pathDict['referencePolygon'], pathDict['referencePoint']]
     for ref in refData:
-        for refFile in ref:
-            referenceName = refFile.stem
-            newLine = pd.DataFrame([[referenceName, refFile]], columns=['reference_name', 'reference_filePath'], index=[referenceName])
-            hash = pd.util.hash_pandas_object(newLine)
-            newLine = newLine.set_index(hash)
-            referenceDF = pd.concat([referenceDF, newLine], ignore_index=False)
-            referenceDF.loc[hash, 'dataType'] = 'reference'
+        if ref != []:
+            for refFile in ref:
+                referenceName = refFile.stem
+                newLine = pd.DataFrame([[referenceName, refFile]], columns=['reference_name', 'reference_filePath'], index=[referenceName])
+                hashRef = pd.util.hash_pandas_object(newLine)
+                newLine = newLine.set_index(hashRef)
+                referenceDF = pd.concat([referenceDF, newLine], ignore_index=False)
+                referenceDF.loc[hashRef, 'dataType'] = 'reference'
 
     # TODO add here if additional info read from shp or a textfile?
 
@@ -1625,7 +1639,7 @@ def computeRunoutPointDiff(resAnalysisDF, refData, simRowHash):
     return resAnalysisDF
 
 
-def findSLCoors(rasterTransfo, refData, type):
+def findSLCoors(rasterTransfo, refData, referenceType):
     """ find closest s,l coordinates to given x,y coordinates using transformation matrix
 
         Parameters
@@ -1644,7 +1658,10 @@ def findSLCoors(rasterTransfo, refData, type):
 
     coors = np.column_stack((np.reshape(xx, sizeXX),  np.reshape(yy, sizeXX)))
 
-    if type.lower() == 'point':
+    # initialize index1Array
+    index1Array = None
+    if referenceType.lower() == 'point':
+        # arrange x,y coordinates of ref Data into a 2D array for finding closest coordinates of coors
         test = np.zeros((len(coors), 2))
         test[:, 0] = refData['x']
         test[:, 1] = refData['y']
@@ -1652,11 +1669,12 @@ def findSLCoors(rasterTransfo, refData, type):
         indexBool = np.isclose(coors, test)
         index1Array = [np.where(np.all(indexBool==True, axis=1) == True)[0][0]]
 
-    elif type.lower() == 'line':
+    elif referenceType.lower() == 'line':
         indRowArray = []
         indColArray = []
         index1Array = []
         for x1, y1 in zip(refData['x'], refData['y']):
+            # arrange x,y coordinates of ref Data into a 2D array for finding closest coordinates of coors
             test = np.zeros((len(coors), 2))
             test[:, 0] = x1
             test[:, 1] = y1
@@ -1668,10 +1686,14 @@ def findSLCoors(rasterTransfo, refData, type):
                 indColArray.append(np.where(indexArray==index1)[1][0])
                 index1Array.append(index1)
 
-    gridL, gridS = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
-    slCoors = np.column_stack((np.reshape(gridL, gridL.size),  np.reshape(gridS, gridS.size)))
-    Lcoors = slCoors[index1Array,0]
-    Scoors = slCoors[index1Array,1]
+    if index1Array is None:
+        Lcoors = None
+        Scoors = None
+    else:
+        gridL, gridS = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
+        slCoors = np.column_stack((np.reshape(gridL, gridL.size),  np.reshape(gridS, gridS.size)))
+        Lcoors = slCoors[index1Array,0]
+        Scoors = slCoors[index1Array,1]
 
     return Lcoors, Scoors
 
@@ -1694,11 +1716,8 @@ def addReferenceAnalysisTODF(referenceDF, refFile, refDataDict):
             updated data DF with info on runout point coordinate
     """
 
-    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_Type'] = 'line'
-    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_sRunout'] = refDataDict['sRunout']
-    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_lRunout'] = refDataDict['lRunout']
-    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_xRunout'] = refDataDict['xRunout']
-    referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_yRunout'] = refDataDict['yRunout']
+    for item in ['sRunout', 'lRunout', 'xRunout', 'yRunout']:
+        referenceDF.loc[referenceDF['reference_name'] == refFile.stem, 'reference_%s' % item] = refDataDict[item]
 
     return referenceDF
 
@@ -1722,7 +1741,7 @@ def analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRo
         Returns
         ----------
         resAnalysisDF: data frame
-            updatad DF
+            updated DF
     """
 
     for item in refDataTransformed:
@@ -1759,5 +1778,8 @@ def analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRo
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInSim' % refLine['type']] = runoutStr
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInRef' % refLine['type']] = refLineStr
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_RMSE' % refLine['type']] = RMSE
+
+        else:
+            log.info('For reference data type %s, runout line comparison is not available' % refLine['type'])
 
     return resAnalysisDF

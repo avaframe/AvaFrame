@@ -307,6 +307,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
     contourDict: dict
         dictionary with one key per sim and its x, y coordinates for contour line of runoutresType
         for thresholdValue
+    refDataTransformed: dict
+        dictionary with info on reference data sets
 
     Returns
     -------
@@ -478,6 +480,12 @@ def postProcessReference(cfg, rasterTransfo, pathDict, referenceDF, newRasters):
         log.debug('Convert point: %s to raster' % refFile.stem)
         refPoint = shpConversion.readPoints(refFile, dem)
 
+        # check if more than one point provided
+        if len(refPoint['x']) > 1:
+            message = 'More than one point in reference data file: %s - only one is allowed' % refFile.stem
+            log.error(message)
+            raise AssertionError(message)
+
         # derive raster from point
         _, refRasterXY = geoTrans.projectOnGrid(refPoint['x'], refPoint['y'], dem['rasterData'],
                                               csz=dem['header']['cellsize'], xllc=dem['header']['xllcenter'],
@@ -513,8 +521,9 @@ def postProcessReference(cfg, rasterTransfo, pathDict, referenceDF, newRasters):
 
         # transform xy raster into sl raster and compute where runout line is in this raster
         refRasterSL = aimecTools.transform({'header': dem['header'], 'rasterData': refRasterXY}, refFile.stem, rasterTransfo, interpMethod)
-        newRasters['refPolyPPR'] = refRasterSL
-        refPolySL = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, '', 'poly', 'refPolyPPR')
+        newRasters['refPoly'] = refRasterSL
+        refPolySL = aimecTools.computeRunoutLine(cfgSetup, rasterTransfo, newRasters, '', 'poly', 'refPoly',
+                                                 basedOnMax=True)
         refDataTransformed['refPoly'] = refPolySL
 
         # add info to DF

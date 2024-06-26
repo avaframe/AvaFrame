@@ -222,6 +222,9 @@ cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 
 cmapEnergy = {"cmap": cmapE, "colors": colorsE, "levels": levE}
 
+# for zdelta
+cmapZdelta = {"cmap": copy.copy(cmapCrameri.lipari), "colors": [], "levels": []}
+
 colorMaps = {
     "ppr": cmapPres,
     "pfv": cmapSpeed,
@@ -238,6 +241,7 @@ colorMaps = {
     "pta": cmapTravelAngle,
     "TA": cmapTravelAngle,
     "pke": cmapEnergy,
+    "zdelta": cmapZdelta,
 }
 
 cmapDEM = cmapGreys
