@@ -79,6 +79,10 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear", getXYField=
         y coord of the lower left center of the raster
     interp: str
         interpolation option, between nearest or bilinear
+    getXYField: bool
+        also return raster with dimension of raster data mark all cells that are used for interpolation of
+        x, y coordinates of points to project
+
     Returns
     -------
     z : 2D numpy array
@@ -486,7 +490,7 @@ def prepareLine(dem, avapath, distance, Point=None, k=3, s=None):
     yNew = np.append(ycoor, y[-1])
 
     # create a B-spline with scipy for given x, y line
-    if len(xNew) <= 3:
+    if len(xNew) <= 3 and k != 1:
         tck, u = splprep([xNew, yNew], k=len(xNew) - 1, s=s)
         log.warning(
             "Path is defined by only %d points - degree of spline is set to %d" % (len(xNew), len(xNew) - 1)
@@ -1867,16 +1871,19 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     return nx, ny, nz
 
 
-def cellsAffectedLine(header, pointsXY, type):
+def cellsAffectedLine(header, pointsXY, typePoints):
     """ find which cells of data area affected by points
 
         Parameters
         -----------
         header: dict
+            info on array llcenter, nrows, ncols, cellsize
         data: numpy nd array
-        points: shapely
-        type: str
-
+            data array
+        points: dict
+            dictionary with x, y coordinates
+        typePoints: str
+            type of coordinates in pointsXY, options: linestring, point
         """
 
     xllc = header["xllcenter"]
@@ -1890,11 +1897,11 @@ def cellsAffectedLine(header, pointsXY, type):
     linecoords[:,0] = pointsXY['x']
     linecoords[:,1] = pointsXY['y']
 
-    if type.lower() == 'linestring':
+    if typePoints.lower() == 'linestring':
         line = LineString(linecoords)
-    elif type.lower() == 'point' and len(pointsXY['x']) == 1:
+    elif typePoints.lower() == 'point' and len(pointsXY['x']) == 1:
         line = Point(linecoords)
-    elif type.lower() == 'point' and len(pointsXY['x']) < 1:
+    elif typePoints.lower() == 'point' and len(pointsXY['x']) < 1:
         line = MultiPoint(linecoords)
 
 

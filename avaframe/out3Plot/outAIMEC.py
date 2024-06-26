@@ -1453,7 +1453,7 @@ def getIndicesVel(pfvCM, velocityThreshold):
 
 
 def referenceLinePlot(refLineRasterXY, dem, refLine, rasterTransfo, refRasterSL, refLineSL, pathDict):
-    """ Create a plot with two panels, showing reference line and correspinding raster in
+    """ Create a plot with two panels, showing reference line and corresponding raster in
     panel 1) x, y coordinates and 2) s, l coordinates
 
         Parameters
@@ -1547,8 +1547,8 @@ def compareRunoutLines(cfgSetup, refDataTransformed, newRaster, runoutLine, rast
     """
 
     maskedArray = np.ma.masked_where(newRaster == 0, newRaster)
-    cmapTF, _, ticks, normTF = pU.makeColorMap(pU.colorMaps[cfgSetup['runoutResType']], np.nanmin((maskedArray)) ,
-                                               np.nanmax((maskedArray)), continuous=pU.contCmap)
+    cmapTF, _, ticks, normTF = pU.makeColorMap(pU.colorMaps[cfgSetup['runoutResType']], np.nanmin(maskedArray) ,
+                                               np.nanmax(maskedArray), continuous=pU.contCmap)
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     ax1 = fig.add_subplot(1, 1, 1)
@@ -1589,12 +1589,18 @@ def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, 
             dictionary with info on where to save plot
         simName: str
             name of current simulation
-        runoutLineNoPoints: int
-            number of points where no runout line was found or sim BUT for refLine one was found
+        runoutLineNoPoints: str
+            number of points where no runout line was found where points were found for refLine
+            format of str: nPointsFound/numberOfAllPointsRefLine
+        refLineNoPoints: str
+            number of points where no reference line was found where points were found for runoutLine
+            format of str: nPointsFound/numberOfAllPointsRunoutLine
         RMSE: float
             root mean squared error between s location of runout line from sim or from reference data set
+            only for l coordinates where for sim and ref runout line coordinate were found
         diffNoNans: numpy array
             difference values runoutLine sim s location - refLine s location
+            only for l coordinates where for sim and ref runout line coordinate were found
     """
 
     colors = {'line': 'lightcoral', 'point': 'gold','poly': 'purple'}

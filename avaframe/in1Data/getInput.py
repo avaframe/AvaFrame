@@ -262,7 +262,7 @@ def getInputDataCom1DFA(avaDir):
     return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp"):
+def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix=''):
     """Fetch fileExt files and check if they exist and if it is not more than one
 
     Raises error if there is more than one fileExt file.
@@ -277,6 +277,8 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp"):
         type of input (used for the logging messages). Secondary release or Entrainment or Resistance
     fileExt: str
         file extension e.g. shp, asc - optional default is shp
+    fileSuffix: str
+        file name part before extension
 
     Returns
     -------
@@ -288,7 +290,10 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp"):
     available = "No"
     # Initialise secondary release areas
     inDir = pathlib.Path(inputDir, folder)
-    OutputFile = list(inDir.glob("*.%s" % fileExt))
+    if fileSuffix == '':
+        OutputFile = list(inDir.glob("*.%s" % fileExt))
+    else:
+        OutputFile = list(inDir.glob("*%s.%s" % (fileSuffix, fileExt)))
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:
