@@ -594,12 +594,12 @@ def test_updateFieldsC():
     fields['pta'] = np.zeros((1, 1))
     fields['pke'] = np.zeros((header['nrows'], header['ncols']))
     fields['dmDet'] = np.zeros((header['nrows'], header['ncols']))
-    fields['dmDet'][[1,2,2],[0,1,2]] = 3
+    fields['dmDet'][[1, 2, 2], [0, 1, 2]] = 3
     print(fields['dmDet'])
     dmDet_calculated = np.copy(fields['dmDet'])
-    dmDet_calculated[[2,1,2,1], [2,2,1,1]] += 1
+    dmDet_calculated[[2, 1, 2, 1], [2, 2, 1, 1]] += 1
     particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
     print(fields['dmDet'])
     print(dmDet_calculated)
     atol = 1e-10
-    assert np.allclose(fields['dmDet'], dmDet_calculated, atol = atol)
+    assert np.allclose(fields['dmDet'], dmDet_calculated, atol=atol)
