@@ -336,6 +336,9 @@ def calculation(args):
     if forestBool:
         forestArray = args[11]
         forestParams = args[12]
+    else:
+        forestArray = None
+        forestParams = None
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -361,6 +364,7 @@ def calculation(args):
     startcell_idx = 0
     while startcell_idx < len(row_list):
 
+        processedCells = {}  # dictionary of cells that have been processed already
         cell_list = []
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
@@ -370,27 +374,19 @@ def calculation(args):
             startcell_idx += 1
             continue
 
-        if forestBool:
-            startcell = Cell(
-                row_idx, col_idx,
-                dem_ng, cellsize,
-                1, 0, None,
-                alpha, exp, flux_threshold, max_z_delta,
-                startcell=True,
-                FSI=forestArray[row_idx, col_idx],
-                forestParams=forestParams,
-            )
-            # If this is a startcell just give a Bool to startcell otherwise the object startcell
-        else:
-            startcell = Cell(
-                row_idx, col_idx,
-                dem_ng, cellsize,
-                1, 0, None,
-                alpha, exp, flux_threshold, max_z_delta,
-                startcell=True
-            )
-            # If this is a startcell just give a Bool to startcell otherwise the object startcell
+        startcell = Cell(
+            row_idx, col_idx,
+            dem_ng, cellsize,
+            1, 0, None,
+            alpha, exp, flux_threshold, max_z_delta,
+            startcell=True,
+            FSI=forestArray[row_idx, col_idx] if isinstance(forestArray, np.ndarray) else None,
+            forestParams=forestParams,
+        )
 
+        # dictionary of all the cells that have been processed and the number of times the cell has been visited
+        processedCells[(startcell.rowindex, startcell.colindex)] = 1
+        # list of flowClass.Cell() Objects that is contains the "path" for each release-cell
         cell_list.append(startcell)
 
         for idx, cell in enumerate(cell_list):
@@ -402,6 +398,7 @@ def calculation(args):
                 z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                 # Sort this lists by elh, to start with the highest cell
 
+            # check if cell already exists
             for i in range(idx, len(cell_list)):  # Check if Cell already exists
                 k = 0
                 while k < len(row):
@@ -426,38 +423,37 @@ def calculation(args):
                 if (nodata in dem_ng) or np.size(dem_ng) < 9:
                     continue
 
-                if forestBool:
-                    cell_list.append(
-                        Cell(row[k], col[k],
-                             dem_ng, cellsize,
-                             flux[k], z_delta[k],
-                             cell,
-                             alpha, exp, flux_threshold, max_z_delta,
-                             startcell,
-                             FSI=forestArray[row[k], col[k]],
-                             forestParams=forestParams,
-                             )
-                    )
+                # if the current child cell is already in processedCells
+                # just add +1 to the visit-counter, else add it to the
+                # processedCells dictionary with visit-count = 1
+                if (row[k], col[k]) in processedCells:
+                    processedCells[(row[k], col[k])] += 1
                 else:
-                    cell_list.append(
-                        Cell(row[k], col[k],
-                             dem_ng, cellsize,
-                             flux[k], z_delta[k],
-                             cell,
-                             alpha, exp, flux_threshold, max_z_delta,
-                             startcell,
-                             )
-                    )
+                    processedCells[(row[k], col[k])] = 1
+
+                cell_list.append(Cell(
+                            row[k], col[k],
+                            dem_ng, cellsize,
+                            flux[k], z_delta[k],
+                            cell,
+                            alpha, exp, flux_threshold, max_z_delta,
+                            startcell,
+                            FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
+                            forestParams=forestParams,
+                                     ))
 
             z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
             flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-            count_array[cell.rowindex, cell.colindex] += int(1)
+
+            if processedCells[(cell.rowindex, cell.colindex)] == 1:
+                count_array[cell.rowindex, cell.colindex] += int(1)
+
             z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
             fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex],
                                                                      cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex],
                                                                      cell.sl_gamma)
-            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], 
+            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex],
                                                                     cell.min_distance)
 
             # Backcalculation
@@ -478,12 +474,13 @@ def calculation(args):
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
 
-        del cell_list
+        del cell_list, processedCells
 
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
     gc.collect()
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
+    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, \
+        sl_travelangle_array, travel_length_array
 
 
 def enoughMemoryAvailable(limit=0.05):
