@@ -560,3 +560,46 @@ def test_computeCohesionForceC():
     assert force['forceSPHX'][2] > 0
     assert force['forceSPHY'][2] < 0
     assert force['forceSPHY'][1] == -force['forceSPHY'][2]
+
+def test_updateFieldsC():
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rho' : '200.',
+                      'interpOption' : '2'}
+    header = {}
+    header['nrows'] = 5
+    header['ncols'] = 5
+    header['cellsize'] = 1
+    dem = {}
+    dem['header'] = header
+    dem['areaRaster'] = 25 * np.ones((header['nrows'], header['ncols']))
+
+    particles = {}
+    
+    particles['m'] = np.array([100., 100., 100., 100.])
+    particles['dmDet'] =  np.array([1., 1., 1., 1.])
+    particles['x'] = np.array([2., 1., 2., 1.])
+    particles['y'] = np.array([2., 2., 1., 1.])
+    particles['ux'] = np.array([10., 10., 10., 10.])
+    particles['uy'] = np.array([10., 10., 10., 10.])
+    particles['uz'] = np.array([10., 10., 10., 10.])
+    particles['trajectoryAngle'] = np.array([10., 10., 10., 10.])
+    
+    fields = {}
+    fields['computeTA'] = False
+    fields['computeKE'] = False
+    fields['computeP'] = False
+    fields['pfv'] = np.zeros((1, 1))
+    fields['ppr'] = np.zeros((1, 1))
+    fields['pft'] = np.zeros((1, 1))
+    fields['pta'] = np.zeros((1, 1))
+    fields['pke'] = np.zeros((header['nrows'], header['ncols']))
+    fields['dmDet'] = np.zeros((header['nrows'], header['ncols']))
+    fields['dmDet'][[1,2,2],[0,1,2]] = 3
+    print(fields['dmDet'])
+    dmDet_calculated = np.copy(fields['dmDet'])
+    dmDet_calculated[[2,1,2,1], [2,2,1,1]] += 1
+    particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
+    print(fields['dmDet'])
+    print(dmDet_calculated)
+    atol = 1e-10
+    assert np.allclose(fields['dmDet'], dmDet_calculated, atol = atol)
