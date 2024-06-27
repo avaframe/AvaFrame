@@ -203,13 +203,13 @@ class Cell:
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
         '''Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
          the other fields'''
-        '''
+        
         if mass_to_distribute > 0 and count > 0:
             self.dist[self.dist > threshold] += mass_to_distribute / count
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist))/count
-        '''
+        
         row_local, col_local = np.where(self.dist > threshold)
 
         return self.rowindex - 1 + row_local, self.colindex - 1 + col_local, self.dist[row_local, col_local], self.z_delta_neighbour[row_local, col_local]
