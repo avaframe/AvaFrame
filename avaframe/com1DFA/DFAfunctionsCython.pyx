@@ -488,7 +488,7 @@ cpdef double computeDetMassAndForce(double dt, double detCell,
       dmDet = 0
 
   if dmDet > 0 or np.isnan(dmDet):
-      dmDet = 0
+      log.error('uMag, dt or areaPart is 0')
 
   return dmDet
 
