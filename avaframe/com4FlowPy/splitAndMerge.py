@@ -150,7 +150,27 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     # return largeRaster
 
 
-def MergeRaster(inDirPath, fName):
+def mergeRaster(inDirPath, fName, method='max'):
+    """
+    Merges the results for each tile to one array using the
+    method provided through the function parameters
+
+    Parameters
+    ----------
+    inDirPath: str
+        Path to the temporary files, that are results for each tile
+    fName : str
+        file name of the parameter which should be merged from tile-results
+    method : str
+        method, how the tiles should be merged (default: max)
+        method 'min' calculates the minimum of input raster tiles,
+        if the minimum is < 0, then 0 is used
+
+    Returns
+    -------
+    mergedRas : numpy array
+        merged raster
+    """
 
     # os.chdir(inDirPath)
 
@@ -169,10 +189,15 @@ def MergeRaster(inDirPath, fName):
             pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
             # print pos
 
-            mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.fmax(
-                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
-            )
+            if method == 'max':
+                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.fmax(
+                    mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
+                )
+            elif method == 'min':
+                mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
+                    np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
+                    np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
+                    np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
-
     return mergedRas
