@@ -154,7 +154,7 @@ def run(optTuple):
     max_z_delta = float(optTuple[2]["max_z"])
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
-
+    forestInteraction = optTuple[2]["forestInteraction"]
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -179,6 +179,7 @@ def run(optTuple):
     if forestBool:
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
+        forestParams["forestInteraction"] = forestInteraction
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -239,57 +240,69 @@ def run(optTuple):
     # TODO - NOTE:
     # also move this part into a separate function
     # initializing arrays for storing the results from the multiprocessing step
-    z_delta_array = np.zeros_like(dem, dtype=np.float32)
-    flux_array = np.zeros_like(dem, dtype=np.float32)
-    count_array = np.zeros_like(dem, dtype=np.int32)
-    z_delta_sum = np.zeros_like(dem, dtype=np.float32)
+    zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+    fluxArray = np.zeros_like(dem, dtype=np.float32)
+    countArray = np.zeros_like(dem, dtype=np.int32)
+    zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
     backcalc = np.zeros_like(dem, dtype=np.int32)
-    fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)
-    sl_travelangle_array = np.zeros_like(dem, dtype=np.float32)
-    travel_length_array = np.zeros_like(dem, dtype=np.float32)
+    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
+    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
+    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    if forestInteraction:
+        forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
-    z_delta_list = []
-    flux_list = []
-    cc_list = []
-    z_delta_sum_list = []
-    backcalc_list = []
-    fp_ta_list = []
-    sl_ta_list = []
-    travel_length_list = []
+    zDeltaList = []
+    fluxList = []
+    ccList = []
+    zDeltaSumList = []
+    backcalcList = []
+    fpTravelAngleList = []
+    slTravelAngleList = []
+    travelLengthList = []
+    if forestInteraction:
+        forestIntList = []
 
     for i in range(len(results)):
         res = results[i]
         res = list(res)
-        z_delta_list.append(res[0])
-        flux_list.append(res[1])
-        cc_list.append(res[2])
-        z_delta_sum_list.append(res[3])
-        backcalc_list.append(res[4])
-        fp_ta_list.append(res[5])
-        sl_ta_list.append(res[6])
-        travel_length_list.append(res[7])
+        zDeltaList.append(res[0])
+        fluxList.append(res[1])
+        ccList.append(res[2])
+        zDeltaSumList.append(res[3])
+        backcalcList.append(res[4])
+        fpTravelAngleList.append(res[5])
+        slTravelAngleList.append(res[6])
+        travelLengthList.append(res[7])
+        if forestInteraction:
+            forestIntList.append(res[8])
 
     logging.info("Calculation finished, getting results.")
-    for i in range(len(z_delta_list)):
-        z_delta_array = np.maximum(z_delta_array, z_delta_list[i])
-        flux_array = np.maximum(flux_array, flux_list[i])
-        count_array += cc_list[i]
-        z_delta_sum += z_delta_sum_list[i]
-        backcalc = np.maximum(backcalc, backcalc_list[i])
-        fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
-        sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])
-        travel_length_array = np.maximum(travel_length_array, travel_length_list[i])
+    for i in range(len(zDeltaList)):
+        zDeltaArray = np.maximum(zDeltaArray, zDeltaList[i])
+        fluxArray = np.maximum(fluxArray, fluxList[i])
+        countArray += ccList[i]
+        zDeltaSumArray += zDeltaSumList[i]
+        backcalc = np.maximum(backcalc, backcalcList[i])
+        fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
+        slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
+        travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
+        if forestInteraction:
+            forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
+                                    np.minimum(forestIntArray, forestIntList[i]),
+                                    np.maximum(forestIntArray, forestIntList[i]))
 
     # Save Calculated tiles
-    np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
-    np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), z_delta_sum)
-    np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), flux_array)
-    np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), count_array)
-    np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fp_travelangle_array)
-    np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), sl_travelangle_array)
-    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travel_length_array)
+    np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
+    np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
+    np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
+    np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
+    np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
+    np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), slTravelAngleArray)
+    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
+    if forestInteraction:
+        np.save(tempDir / ("res_forestInt_%s_%s" % (optTuple[0], optTuple[1])), forestIntArray)
 
 
 def calculation(args):
@@ -309,8 +322,8 @@ def calculation(args):
     Output parameters:
         z_delta     Array like DEM with the max. kinetic Energy Height for every
                     pixel
-        flux_array  Array with max. concentration factor saved
-        count_array Array with the number of hits for every pixel
+        fluxArray  Array with max. concentration factor saved
+        countArray Array with the number of hits for every pixel
         elh_sum     Array with the sum of Energy Line Height
         back_calc   Array with back calculation, still to do!!!
     """
@@ -336,25 +349,30 @@ def calculation(args):
     if forestBool:
         forestArray = args[11]
         forestParams = args[12]
+        forestInteraction = forestParams["forestInteraction"]
     else:
+        forestInteraction = False
         forestArray = None
         forestParams = None
 
-    z_delta_array = np.zeros_like(dem, dtype=np.float32)
-    z_delta_sum = np.zeros_like(dem, dtype=np.float32)
-    flux_array = np.zeros_like(dem, dtype=np.float32)
-    count_array = np.zeros_like(dem, dtype=np.int32)
+    zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+    zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    fluxArray = np.zeros_like(dem, dtype=np.float32)
+    countArray = np.zeros_like(dem, dtype=np.int32)
 
-    fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
-    sl_travelangle_array = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
+    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
+    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
 
-    travel_length_array = np.zeros_like(dem, dtype=np.float32)
+    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
 
     # NOTE-TODO maybe also include a switch for INFRA (like Forest) and not implicitly always use an empty infra array ?
     backcalc = np.zeros_like(dem, dtype=np.int32)
 
     if infraBool:
         back_list = []
+
+    if forestInteraction:
+        forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     # Core
     # start = datetime.now().replace(microsecond=0)
@@ -442,19 +460,17 @@ def calculation(args):
                             forestParams=forestParams,
                                      ))
 
-            z_delta_array[cell.rowindex, cell.colindex] = max(z_delta_array[cell.rowindex, cell.colindex], cell.z_delta)
-            flux_array[cell.rowindex, cell.colindex] = max(flux_array[cell.rowindex, cell.colindex], cell.flux)
-
+            zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
+            fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
+            zDeltaSumArray[cell.rowindex, cell.colindex] += cell.z_delta
+            fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
+                                                                   cell.max_gamma)
+            slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
+                                                                   cell.sl_gamma)
+            travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
+                                                                  cell.min_distance)
             if processedCells[(cell.rowindex, cell.colindex)] == 1:
-                count_array[cell.rowindex, cell.colindex] += int(1)
-
-            z_delta_sum[cell.rowindex, cell.colindex] += cell.z_delta
-            fp_travelangle_array[cell.rowindex, cell.colindex] = max(fp_travelangle_array[cell.rowindex, cell.colindex],
-                                                                     cell.max_gamma)
-            sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex],
-                                                                     cell.sl_gamma)
-            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex],
-                                                                    cell.min_distance)
+                countArray[cell.rowindex, cell.colindex] += int(1)
 
             # Backcalculation
             if infraBool:
@@ -468,9 +484,16 @@ def calculation(args):
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
                                                                        infra[cell.rowindex, cell.colindex])
+            if forestInteraction:
+                if forestIntArray[cell.rowindex, cell.colindex] >= 0 and cell.forestIntCount >= 0:
+                    forestIntArray[cell.rowindex, cell.colindex] = min(forestIntArray[cell.rowindex, cell.colindex],
+                                                                       cell.forestIntCount)
+                else:
+                    forestIntArray[cell.rowindex, cell.colindex] = max(forestIntArray[cell.rowindex, cell.colindex],
+                                                                       cell.forestIntCount)
 
         if infraBool:
-            release[z_delta_array > 0] = 0
+            release[zDeltaArray > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
 
@@ -479,8 +502,12 @@ def calculation(args):
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
     gc.collect()
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, \
-        sl_travelangle_array, travel_length_array
+    if forestInteraction:
+        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
+            travelLengthArray, forestIntArray
+    else:
+        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
+            travelLengthArray
 
 
 def enoughMemoryAvailable(limit=0.05):
