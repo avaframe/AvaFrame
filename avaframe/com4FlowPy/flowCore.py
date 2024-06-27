@@ -373,6 +373,8 @@ def calculation(args):
         if uMaxBool:
             max_z_delta = (uMax[row_idx, col_idx])**2 / 2 / 9.81
             alpha = forestArray[row_idx, col_idx]
+            forestBool = False 
+            #otherwise it uses for every cell a different alpha, we want one alpha per startcell
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
