@@ -154,7 +154,7 @@ def run(optTuple):
     max_z_delta = float(optTuple[2]["max_z"])
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
-
+    forestIntBool = optTuple[2]["forestInteractionBool"]
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -209,7 +209,7 @@ def run(optTuple):
                         alpha, exp, flux_threshold, max_z_delta,
                         nodata, cellsize,
                         infraBool, forestBool,
-                        forestArray, forestParams,
+                        forestArray, forestParams, forestIntBool,
                     ]
                     for release_sub in release_list
                 ],
@@ -247,6 +247,8 @@ def run(optTuple):
     fp_travelangle_array = np.zeros_like(dem, dtype=np.float32)
     sl_travelangle_array = np.zeros_like(dem, dtype=np.float32)
     travel_length_array = np.zeros_like(dem, dtype=np.float32)
+    if forestIntBool:
+        forestInt_array = np.ones_like(dem, dtype=np.float32) * -9999
 
     z_delta_list = []
     flux_list = []
@@ -256,6 +258,8 @@ def run(optTuple):
     fp_ta_list = []
     sl_ta_list = []
     travel_length_list = []
+    if forestIntBool:
+        forestInt_list = []
 
     for i in range(len(results)):
         res = results[i]
@@ -268,6 +272,8 @@ def run(optTuple):
         fp_ta_list.append(res[5])
         sl_ta_list.append(res[6])
         travel_length_list.append(res[7])
+        if forestIntBool:
+            forestInt_list.append(res[8])
 
     logging.info("Calculation finished, getting results.")
     for i in range(len(z_delta_list)):
@@ -279,6 +285,10 @@ def run(optTuple):
         fp_travelangle_array = np.maximum(fp_travelangle_array, fp_ta_list[i])
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])
         travel_length_array = np.maximum(travel_length_array, travel_length_list[i])
+        if forestIntBool:
+            forestInt_array = np.where((forestInt_array >= 0) & (forestInt_list[i] >= 0), 
+                                       np.minimum(forestInt_array, forestInt_list[i]), 
+                                       np.maximum(forestInt_array, forestInt_list[i]))
 
     # Save Calculated tiles
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), z_delta_array)
@@ -290,6 +300,8 @@ def run(optTuple):
     np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travel_length_array)
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
+    if forestIntBool:
+        np.save(tempDir / ("res_forestInt_%s_%s" % (optTuple[0], optTuple[1])), forestInt_array)
 
 
 def calculation(args):
@@ -336,6 +348,9 @@ def calculation(args):
     if forestBool:
         forestArray = args[11]
         forestParams = args[12]
+        forestIntBool = args[13]
+    else:
+        forestIntBool = False
 
     z_delta_array = np.zeros_like(dem, dtype=np.float32)
     z_delta_sum = np.zeros_like(dem, dtype=np.float32)
@@ -353,6 +368,9 @@ def calculation(args):
     if infraBool:
         back_list = []
 
+    if forestIntBool:
+        forestInt_array = np.ones_like(dem, dtype=np.float32) * -9999
+
     # Core
     # start = datetime.now().replace(microsecond=0)
     # NOTE-TODO: row_list, col_list are tuples - rethink variable naming
@@ -369,6 +387,7 @@ def calculation(args):
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
             continue
+        
 
         if forestBool:
             startcell = Cell(
@@ -379,6 +398,7 @@ def calculation(args):
                 startcell=True,
                 FSI=forestArray[row_idx, col_idx],
                 forestParams=forestParams,
+                forestIntBool=forestIntBool,
             )
             # If this is a startcell just give a Bool to startcell otherwise the object startcell
         else:
@@ -436,6 +456,7 @@ def calculation(args):
                              startcell,
                              FSI=forestArray[row[k], col[k]],
                              forestParams=forestParams,
+                             forestIntBool=forestIntBool,
                              )
                     )
                 else:
@@ -472,6 +493,11 @@ def calculation(args):
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
                                                                        infra[cell.rowindex, cell.colindex])
+            if forestIntBool:
+                if forestInt_array[cell.rowindex, cell.colindex] >= 0 and cell.forestInt >= 0:
+                    forestInt_array[cell.rowindex, cell.colindex] = min(forestInt_array[cell.rowindex, cell.colindex], cell.forestInt)
+                else:
+                    forestInt_array[cell.rowindex, cell.colindex] = max(forestInt_array[cell.rowindex, cell.colindex], cell.forestInt)
 
         if infraBool:
             release[z_delta_array > 0] = 0
@@ -483,7 +509,11 @@ def calculation(args):
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
     gc.collect()
-    return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
+    if forestIntBool:
+        return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, forestInt_array
+        print('return')
+    else:
+        return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
 
 
 def enoughMemoryAvailable(limit=0.05):
