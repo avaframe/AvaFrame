@@ -603,3 +603,16 @@ def test_updateFieldsC():
     print(dmDet_calculated)
     atol = 1e-10
     assert np.allclose(fields['dmDet'], dmDet_calculated, atol=atol)
+
+    particles['x'] = np.array([2.5, 1.5, 2.5, 1.5])
+    particles['y'] = np.array([2.5, 2.5, 1.5, 1.5])
+    fields['dmDet'] = np.zeros((header['nrows'], header['ncols']))
+    dmDet_calculated2 = np.array([[0, 0, 0, 0, 0,],
+                                  [0, 0.25, 0.5, 0.25, 0],
+                                  [0, 0.5, 1, 0.5, 0],
+                                  [0, 0.25, 0.5, 0.25, 0],
+                                  [0, 0, 0, 0, 0]])
+    particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
+    atol = 1e-10
+    assert np.allclose(fields['dmDet'], dmDet_calculated2, atol=atol)
+    print(fields['dmDet'])
