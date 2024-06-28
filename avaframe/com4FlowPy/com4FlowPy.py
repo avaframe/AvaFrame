@@ -63,7 +63,6 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
     
-    #PS
     modelParameters["uMaxBool"] = cfgSetup.getboolean("u_max_lim")
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
