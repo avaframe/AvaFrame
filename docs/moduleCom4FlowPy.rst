@@ -127,6 +127,10 @@ greater than the global :math:`\alpha`.
 
 - ``forestFrictionLayerType``: can be either ``absolute`` or ``relative``
 
+**forestInteraction**:
+
+If ``forest = True`` there is an option to switch on ``forestInteraction``. If ``forestInteraction = True``, an additional output Layer is computed, which represents the number of forested raster cells a path runs through. In this forest interaction layer, locations (raster cells) of paths are assigned to the number of forested cells previously hit. The output raster layer shows the minimum of forest interaction values of all paths.
+
 
 iv) tiling and multiprocessing parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,6 +201,7 @@ All outputs are in the .tif raster format in the same resolution and extent as t
 - ``cell_counts.tif``: number of paths that route flux through a raster cell
 - ``FP_travel_angle.tif``: the gamma angle along the flow path
 - ``SL_travel_angle.tif``: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
+- ``forestInteraction.tif``: only if ``forestInteraction = True``: minimum number of forested raster cells a path runs through
 
 .. Note::
   * **please interpret** ``cell_counts.tif`` **with caution, since absolute cell_count values do currently not reflect the number of release-cells which route flux through a cell - we are currently fixing the implementation of this feature**
