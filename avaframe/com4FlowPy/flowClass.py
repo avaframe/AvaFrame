@@ -17,7 +17,7 @@ class Cell:
         flux, z_delta, parent,
         alpha, exp, flux_threshold, max_z_delta,
         startcell,
-        FSI=None, forestParams=None, forestIntBool=False,
+        FSI=None, forestParams=None, 
     ):
         """constructor for the Cell class
         the constructor function is called every time a new instance of type 'Cell' is
@@ -59,12 +59,12 @@ class Cell:
         self._RAD90 = np.deg2rad(90.0)
 
         # forestInteraction:
-        self.forestIntBool = forestIntBool
-        self.forest = 0
-        if forestIntBool:
+        self.forestIntBool = forestParams["forestIntBool"]
+        self.isForest= 0
+        if self.forestIntBool:
             if FSI > 0:
-                self.forest = 1
-        self.forestInt = self.forest
+                self.isForest= 1
+        self.forestInt = self.isForest
 
         # NOTE: Forest Interaction included here
         # if FSI != None AND forestParams != None - then self.ForestBool = True and forestParams and
@@ -151,8 +151,8 @@ class Cell:
         if self.forestIntBool:
             # check if new/ younger parent has a lower forest interaction number
             # than the older one -> take minimum!
-            if parent.forestInt < (self.forestInt - self.forest):
-                self.forestInt = parent.forestInt + self.forest
+            if parent.forestInt < (self.forestInt - self.isForest):
+                self.forestInt = parent.forestInt + self.isForest
 
     def calc_fp_travelangle(self):
         """function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
