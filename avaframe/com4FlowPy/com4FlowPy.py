@@ -313,7 +313,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
 
     if modelOptions["forestInteraction"]:
-        forestInteraction = SPAM.MergeRaster_min(modelPaths["tempDir"], "res_forestInt")
+        forestInteraction = SPAM.mergeRasterMin(modelPaths["tempDir"], "res_forestInt")
 
     # Write Output Files to Disk
     log.info("-------------------------")

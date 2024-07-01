@@ -151,6 +151,21 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
 
 
 def MergeRaster(inDirPath, fName):
+    """
+    Merges the results for each tile to one array using the maximum value.
+
+    Parameters
+    ----------
+    inDirPath: str
+        Path to the temporary files, that are results for each tile
+    fName : str
+        file name of the parameter which should be merged from tile-results
+    
+    Returns
+    -------
+    mergedRas : numpy array
+        merged raster
+    """
 
     # os.chdir(inDirPath)
 
@@ -177,14 +192,25 @@ def MergeRaster(inDirPath, fName):
 
     return mergedRas
 
-def MergeRaster_min(inDirPath, fName):
-    # paula
-    # for forest interaction
+def mergeRasterMin(inDirPath, fName):
+    """
+    Merges the results for each tile to one array using the minimum value, 
+    except the value is smaller than 0.
 
-    #os.chdir(inDirPath)
+    Parameters
+    ----------
+    inDirPath: str
+        Path to the temporary files, that are results for each tile
+    fName : str
+        file name of the parameter which should be merged from tile-results
+
+    Returns
+    -------
+    mergedRas : numpy array
+        merged raster
+    """
 
     extL = pickle.load(open(inDirPath / "extentLarge", "rb"))
-    # print extL
     nTiles = pickle.load(open(inDirPath / "nTiles", "rb"))
 
     mergedRas = np.zeros((extL[0], extL[1]))
@@ -194,9 +220,7 @@ def MergeRaster_min(inDirPath, fName):
     for i in range(nTiles[0]+1):
         for j in range(nTiles[1]+1):
             smallRas = np.load(inDirPath / ("%s_%i_%i.npy" % (fName, i, j)))
-            # print smallRas
             pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
-            # print pos
 
             mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
                 np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
