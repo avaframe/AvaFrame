@@ -160,7 +160,7 @@ def MergeRaster(inDirPath, fName):
         Path to the temporary files, that are results for each tile
     fName : str
         file name of the parameter which should be merged from tile-results
-    
+
     Returns
     -------
     mergedRas : numpy array
@@ -194,7 +194,7 @@ def MergeRaster(inDirPath, fName):
 
 def mergeRasterMin(inDirPath, fName):
     """
-    Merges the results for each tile to one array using the minimum value, 
+    Merges the results for each tile to one array using the minimum value,
     except the value is smaller than 0.
 
     Parameters
@@ -224,7 +224,7 @@ def mergeRasterMin(inDirPath, fName):
 
             mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
                 np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
-                np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas), 
+                np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
                 np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
 
             del smallRas
