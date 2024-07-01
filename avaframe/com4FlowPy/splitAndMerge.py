@@ -152,7 +152,8 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
 
 def mergeRaster(inDirPath, fName, method = 'max'):
     """
-    Merges the results for each tile to one array using the maximum value.
+    Merges the results for each tile to one array using the 
+    method provided through the function parameters
 
     Parameters
     ----------
@@ -162,6 +163,8 @@ def mergeRaster(inDirPath, fName, method = 'max'):
         file name of the parameter which should be merged from tile-results
     method : str
         method, how the tiles should be merged (default: max)
+        method 'min' calculates the minimum of input raster tiles,
+        if the minimum is < 0, then 0 is used 
 
     Returns
     -------
