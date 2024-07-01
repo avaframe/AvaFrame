@@ -179,6 +179,7 @@ def run(optTuple):
     if forestBool:
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
+        forestParams["forestIntBool"] = forestIntBool
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -209,7 +210,7 @@ def run(optTuple):
                         alpha, exp, flux_threshold, max_z_delta,
                         nodata, cellsize,
                         infraBool, forestBool,
-                        forestArray, forestParams, forestIntBool,
+                        forestArray, forestParams, 
                     ]
                     for release_sub in release_list
                 ],
@@ -348,7 +349,7 @@ def calculation(args):
     if forestBool:
         forestArray = args[11]
         forestParams = args[12]
-        forestIntBool = args[13]
+        forestIntBool = forestParams["forestIntBool"]
     else:
         forestIntBool = False
 
@@ -397,7 +398,6 @@ def calculation(args):
                 startcell=True,
                 FSI=forestArray[row_idx, col_idx],
                 forestParams=forestParams,
-                forestIntBool=forestIntBool,
             )
             # If this is a startcell just give a Bool to startcell otherwise the object startcell
         else:
@@ -455,7 +455,6 @@ def calculation(args):
                              startcell,
                              FSI=forestArray[row[k], col[k]],
                              forestParams=forestParams,
-                             forestIntBool=forestIntBool,
                              )
                     )
                 else:
