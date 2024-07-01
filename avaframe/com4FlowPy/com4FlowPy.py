@@ -62,7 +62,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Flags for use of Forest and/or Infrastructure
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
-    modelParameters["forestInteractionBool"] = cfgSetup.getboolean("forestInteraction")
+    modelParameters["forestInteraction"] = cfgSetup.getboolean("forestInteraction")
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
@@ -184,7 +184,7 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
         log.info("-----")
         for param, value in forestParams.items():
             log.info(f"{'%s:'%param : <20}{value : <5}")
-        log.info(f"{'forestInteraction : ' : <20}{'%s'%modelParameters['forestInteractionBool'] : <5}")
+        log.info(f"{'forestInteraction : ' : <20}{'%s'%modelParameters['forestInteraction'] : <5}")
         log.info("------------------------")
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
@@ -312,7 +312,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if modelOptions["infraBool"]:
         backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
 
-    if modelOptions["forestInteractionBool"]:
+    if modelOptions["forestInteraction"]:
         forestInteraction = SPAM.MergeRaster_min(modelPaths["tempDir"], "res_forestInt")
 
     # Write Output Files to Disk
@@ -335,7 +335,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if modelOptions["infraBool"]:  # if infra
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("backcalculation%s" % (output_format)),
                          backcalc)
-    if modelOptions["forestInteractionBool"]:
+    if modelOptions["forestInteraction"]:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("forestInteraction%s" % (output_format)), 
                          forestInteraction)
 

@@ -154,7 +154,7 @@ def run(optTuple):
     max_z_delta = float(optTuple[2]["max_z"])
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
-    forestIntBool = optTuple[2]["forestInteractionBool"]
+    forestIntBool = optTuple[2]["forestInteraction"]
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
