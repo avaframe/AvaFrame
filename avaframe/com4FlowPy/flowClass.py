@@ -60,7 +60,6 @@ class Cell:
 
         # forestInteraction:
         self.forestIntBool = forestIntBool
-        #print(forestIntBool)
         self.forest = 0
         if forestIntBool:
             if FSI > 0:

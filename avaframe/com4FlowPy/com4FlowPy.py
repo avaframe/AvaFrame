@@ -336,7 +336,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("backcalculation%s" % (output_format)),
                          backcalc)
     if modelOptions["forestInteraction"]:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("forestInteraction%s" % (output_format)), 
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("forestInteraction%s" % (output_format)),
                          forestInteraction)
 
 

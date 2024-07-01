@@ -286,8 +286,8 @@ def run(optTuple):
         sl_travelangle_array = np.maximum(sl_travelangle_array, sl_ta_list[i])
         travel_length_array = np.maximum(travel_length_array, travel_length_list[i])
         if forestIntBool:
-            forestInt_array = np.where((forestInt_array >= 0) & (forestInt_list[i] >= 0), 
-                                       np.minimum(forestInt_array, forestInt_list[i]), 
+            forestInt_array = np.where((forestInt_array >= 0) & (forestInt_list[i] >= 0),
+                                       np.minimum(forestInt_array, forestInt_list[i]),
                                        np.maximum(forestInt_array, forestInt_list[i]))
 
     # Save Calculated tiles
@@ -387,7 +387,6 @@ def calculation(args):
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1
             continue
-        
 
         if forestBool:
             startcell = Cell(
@@ -478,7 +477,7 @@ def calculation(args):
                                                                      cell.max_gamma)
             sl_travelangle_array[cell.rowindex, cell.colindex] = max(sl_travelangle_array[cell.rowindex, cell.colindex],
                                                                      cell.sl_gamma)
-            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex], 
+            travel_length_array[cell.rowindex, cell.colindex] = max(travel_length_array[cell.rowindex, cell.colindex],
                                                                     cell.min_distance)
 
             # Backcalculation
@@ -495,9 +494,11 @@ def calculation(args):
                                                                        infra[cell.rowindex, cell.colindex])
             if forestIntBool:
                 if forestInt_array[cell.rowindex, cell.colindex] >= 0 and cell.forestInt >= 0:
-                    forestInt_array[cell.rowindex, cell.colindex] = min(forestInt_array[cell.rowindex, cell.colindex], cell.forestInt)
+                    forestInt_array[cell.rowindex, cell.colindex] = min(forestInt_array[cell.rowindex, cell.colindex], 
+                                                                        cell.forestInt)
                 else:
-                    forestInt_array[cell.rowindex, cell.colindex] = max(forestInt_array[cell.rowindex, cell.colindex], cell.forestInt)
+                    forestInt_array[cell.rowindex, cell.colindex] = max(forestInt_array[cell.rowindex, cell.colindex], 
+                                                                        cell.forestInt)
 
         if infraBool:
             release[z_delta_array > 0] = 0
@@ -511,7 +512,6 @@ def calculation(args):
     gc.collect()
     if forestIntBool:
         return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array, forestInt_array
-        print('return')
     else:
         return z_delta_array, flux_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array, travel_length_array
 
