@@ -59,12 +59,13 @@ class Cell:
         self._RAD90 = np.deg2rad(90.0)
 
         # forestInteraction:
-        self.forestIntBool = forestParams["forestIntBool"]
-        self.isForest= 0
-        if self.forestIntBool:
+        self.forestInteraction = forestParams["forestIntBool"]   
+        if self.forestInteraction:
             if FSI > 0:
                 self.isForest= 1
-        self.forestIntCount = self.isForest
+            else:
+                self.isForest = 0
+            self.forestIntCount = self.isForest
 
         # NOTE: Forest Interaction included here
         # if FSI != None AND forestParams != None - then self.ForestBool = True and forestParams and
@@ -140,19 +141,19 @@ class Cell:
 
         if type(parent) == Cell:
             self.lOfParents.append(parent)
-            if self.forestIntBool:
-                self.forestIntCount += parent.forestInt
+            if self.forestInteraction:
+                self.forestIntCount += parent.forestIntCount
 
     def add_os(self, flux):
         self.flux += flux
 
     def add_parent(self, parent):
         self.lOfParents.append(parent)
-        if self.forestIntBool:
+        if self.forestInteraction:
             # check if new/ younger parent has a lower forest interaction number
             # than the older one -> take minimum!
-            if parent.forestInt < (self.forestIntCount - self.isForest):
-                self.forestIntCount = parent.forestInt + self.isForest
+            if parent.forestIntCount < (self.forestIntCount - self.isForest):
+                self.forestIntCount = parent.forestIntCount + self.isForest
 
     def calc_fp_travelangle(self):
         """function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
