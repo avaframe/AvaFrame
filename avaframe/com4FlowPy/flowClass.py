@@ -59,7 +59,7 @@ class Cell:
         self._RAD90 = np.deg2rad(90.0)
 
         # forestInteraction:
-        self.forestInteraction = forestParams["forestIntBool"]   
+        self.forestInteraction = forestParams["forestInteraction"]   
         if self.forestInteraction:
             if FSI > 0:
                 self.isForest= 1

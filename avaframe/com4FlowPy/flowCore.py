@@ -154,7 +154,7 @@ def run(optTuple):
     max_z_delta = float(optTuple[2]["max_z"])
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
-    forestIntBool = optTuple[2]["forestInteraction"]
+    forestInteraction = optTuple[2]["forestInteraction"]
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -179,7 +179,7 @@ def run(optTuple):
     if forestBool:
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
-        forestParams["forestIntBool"] = forestIntBool
+        forestParams["forestInteraction"] = forestInteraction
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -248,7 +248,7 @@ def run(optTuple):
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     travelLengthArray = np.zeros_like(dem, dtype=np.float32)
-    if forestIntBool:
+    if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     zDeltaList = []
@@ -259,7 +259,7 @@ def run(optTuple):
     fpTravelAngleList = []
     slTravelAngleList = []
     travelLengthList = []
-    if forestIntBool:
+    if forestInteraction:
         forestIntList = []
 
     for i in range(len(results)):
@@ -273,7 +273,7 @@ def run(optTuple):
         fpTravelAngleList.append(res[5])
         slTravelAngleList.append(res[6])
         travelLengthList.append(res[7])
-        if forestIntBool:
+        if forestInteraction:
             forestIntList.append(res[8])
 
     logging.info("Calculation finished, getting results.")
@@ -286,7 +286,7 @@ def run(optTuple):
         fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
         slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
         travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
-        if forestIntBool:
+        if forestInteraction:
             forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
                                        np.minimum(forestIntArray, forestIntList[i]),
                                        np.maximum(forestIntArray, forestIntList[i]))
@@ -301,7 +301,7 @@ def run(optTuple):
     np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
-    if forestIntBool:
+    if forestInteraction:
         np.save(tempDir / ("res_forestInt_%s_%s" % (optTuple[0], optTuple[1])), forestIntArray)
 
 
@@ -349,9 +349,9 @@ def calculation(args):
     if forestBool:
         forestArray = args[11]
         forestParams = args[12]
-        forestIntBool = forestParams["forestIntBool"]
+        forestInteraction = forestParams["forestInteraction"]
     else:
-        forestIntBool = False
+        forestInteraction = False
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
@@ -369,7 +369,7 @@ def calculation(args):
     if infraBool:
         back_list = []
 
-    if forestIntBool:
+    if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     # Core
@@ -491,7 +491,7 @@ def calculation(args):
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
                                                                        infra[cell.rowindex, cell.colindex])
-            if forestIntBool:
+            if forestInteraction:
                 if forestIntArray[cell.rowindex, cell.colindex] >= 0 and cell.forestIntCount >= 0:
                     forestIntArray[cell.rowindex, cell.colindex] = min(forestIntArray[cell.rowindex, cell.colindex], 
                                                                         cell.forestIntCount)
@@ -509,7 +509,7 @@ def calculation(args):
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
     gc.collect()
-    if forestIntBool:
+    if forestInteraction:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, travelLengthArray, forestIntArray
     else:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, travelLengthArray
