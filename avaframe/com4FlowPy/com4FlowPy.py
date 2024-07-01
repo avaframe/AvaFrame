@@ -301,19 +301,19 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     log.info("-------------------------")
 
     # Merge calculated tiles
-    z_delta = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta")
-    flux = SPAM.MergeRaster(modelPaths["tempDir"], "res_flux")
-    cell_counts = SPAM.MergeRaster(modelPaths["tempDir"], "res_count")
-    z_delta_sum = SPAM.MergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
-    fp_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_fp")
-    sl_ta = SPAM.MergeRaster(modelPaths["tempDir"], "res_sl")
-    travel_length = SPAM.MergeRaster(modelPaths["tempDir"], "res_travel_length")
+    z_delta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
+    flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
+    cell_counts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
+    z_delta_sum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
+    fp_ta = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
+    sl_ta = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
+    travel_length = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
 
     if modelOptions["infraBool"]:
-        backcalc = SPAM.MergeRaster(modelPaths["tempDir"], "res_backcalc")
+        backcalc = SPAM.mergeRaster(modelPaths["tempDir"], "res_backcalc")
 
     if modelOptions["forestInteraction"]:
-        forestInteraction = SPAM.mergeRasterMin(modelPaths["tempDir"], "res_forestInt")
+        forestInteraction = SPAM.mergeRaster(modelPaths["tempDir"], "res_forestInt", method = 'min')
 
     # Write Output Files to Disk
     log.info("-------------------------")

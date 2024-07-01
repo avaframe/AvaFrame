@@ -150,7 +150,7 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     # return largeRaster
 
 
-def MergeRaster(inDirPath, fName):
+def mergeRaster(inDirPath, fName, method = 'max'):
     """
     Merges the results for each tile to one array using the maximum value.
 
@@ -160,6 +160,8 @@ def MergeRaster(inDirPath, fName):
         Path to the temporary files, that are results for each tile
     fName : str
         file name of the parameter which should be merged from tile-results
+    method : str
+        method, how the tiles should be merged (default: max)
 
     Returns
     -------
@@ -184,45 +186,12 @@ def MergeRaster(inDirPath, fName):
             pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
             # print pos
 
-            mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.fmax(
-                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
-            )
-            del smallRas
-            log.info("appended result %s_%i_%i", fName, i, j)
-
-    return mergedRas
-
-def mergeRasterMin(inDirPath, fName):
-    """
-    Merges the results for each tile to one array using the minimum value,
-    except the value is smaller than 0.
-
-    Parameters
-    ----------
-    inDirPath: str
-        Path to the temporary files, that are results for each tile
-    fName : str
-        file name of the parameter which should be merged from tile-results
-
-    Returns
-    -------
-    mergedRas : numpy array
-        merged raster
-    """
-
-    extL = pickle.load(open(inDirPath / "extentLarge", "rb"))
-    nTiles = pickle.load(open(inDirPath / "nTiles", "rb"))
-
-    mergedRas = np.zeros((extL[0], extL[1]))
-    # create Raster with original size
-    mergedRas[:, :] = -9999
-
-    for i in range(nTiles[0]+1):
-        for j in range(nTiles[1]+1):
-            smallRas = np.load(inDirPath / ("%s_%i_%i.npy" % (fName, i, j)))
-            pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
-
-            mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
+            if method == 'max':
+                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.fmax(
+                    mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
+                )
+            elif method == 'min':
+                mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] =\
                 np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
                 np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
                 np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
