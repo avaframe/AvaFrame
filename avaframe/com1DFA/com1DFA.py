@@ -1099,10 +1099,12 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     log.info("Mass available for entrainment: %.2f kg" % (entreainableMass))
 
     log.debug("Initializing resistance area")
-    cResRaster, reportAreaInfo = initializeResistance(
+    log.debug("Initializing detrainment area")
+    cResRaster, detRaster, reportAreaInfo = initializeResistance(
         cfgGen, dem, simTypeActual, inputSimLines["resLine"], reportAreaInfo, thresholdPointInPoly
     )
     fields["cResRaster"] = cResRaster
+    fields["detRaster"] = detRaster
     return particles, fields, dem, reportAreaInfo
 
 
@@ -1268,6 +1270,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["xllcenter"] = dem["originalHeader"]["xllcenter"]
     particles["yllcenter"] = dem["originalHeader"]["yllcenter"]
     particles["nExitedParticles"] = 0.0
+    particles["dmDet"] = np.zeros(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):
@@ -1385,6 +1388,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vx"] = np.zeros((nrows, ncols))
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
+    fields["dmDet"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
@@ -1604,14 +1608,21 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     -------
     cResRaster : 2D numpy array
         raster of resistance coefficients
+    detRaster : 2D numpy array
+        raster of detrainment coefficients
     reportAreaInfo: dict
         simulation area information dictionary completed with entrainment area info
     """
     cRes = cfg.getfloat("cRes")
+    K = cfg.getfloat("detK")
+    DetBool = cfg.getboolean("DetBool")
+    DetWithoutRes = cfg.getboolean("DetWithoutRes")
+
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
+
     if simTypeActual in ["entres", "res"]:
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
@@ -1621,11 +1632,24 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         # Combine constants (d, cw, sres) to one parameter cRes
         cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
+
+        if DetBool:
+            log.info("Initializing detrainment (resistance) area: %s" % (resistanceArea))
+            log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
+            detRaster = K * mask
+            reportAreaInfo["detrainment"] = "Yes"
+            
+            if DetWithoutRes:
+                cResRaster = np.zeros((nrows, ncols))
+                reportAreaInfo["resistance"] = "No"
+        else:
+            detRaster = np.zeros((nrows, ncols))
+            reportAreaInfo["detrainment"] = "No"
     else:
         cResRaster = np.zeros((nrows, ncols))
         reportAreaInfo["resistance"] = "No"
 
-    return cResRaster, reportAreaInfo
+    return cResRaster, detRaster, reportAreaInfo
 
 
 def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
@@ -1708,6 +1732,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     fieldsList = []
     timeM = []
     massEntrained = []
+    massDetrained = []
     massTotal = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
@@ -1771,6 +1796,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
 
         # write mass balance info
         massEntrained.append(particles["massEntrained"])
+        massDetrained.append(particles["massDetrained"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
         # print progress to terminal
@@ -1869,12 +1895,14 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     # create infoDict for report and mass log file
     infoDict = {
         "massEntrained": massEntrained,
+        "massDetrained": massDetrained,
         "timeStep": timeM,
         "massTotal": massTotal,
         "tCPU": tCPU,
         "final mass": massTotal[-1],
         "initial mass": massTotal[0],
         "entrained mass": np.sum(massEntrained),
+        "detrained mass": np.sum(massDetrained),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
     }
 
@@ -2056,15 +2084,17 @@ def writeMBFile(infoDict, avaDir, logName):
 
     t = infoDict["timeStep"]
     massEntrained = infoDict["massEntrained"]
+    massDetrained = infoDict["massDetrained"]
     massTotal = infoDict["massTotal"]
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained\n")
+        mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
-            mFile.write("%.02f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m]))
+            mFile.write("%.02f,    %.06f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m],
+                                                                    massDetrained[m]))
 
 
 def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
@@ -2670,6 +2700,8 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
             simTypeList.append("ent")
         elif entResInfo["flagEnt"] == "No" and entResInfo["flagRes"] == "Yes":
             simTypeList.append("res")
+        elif entResInfo["flagDet"] == "Yes":
+            simTypeList.append("det")
         # always add null simulation
         simTypeList.append("null")
         simTypeList.remove("available")
