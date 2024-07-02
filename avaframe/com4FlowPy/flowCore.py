@@ -170,7 +170,7 @@ def run(optTuple):
     if infraBool:
         infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
-        infra = np.zeros_like(dem)
+        infra = None
 
     # if forestBool == 'True'
     # --> load forestFile
@@ -184,7 +184,7 @@ def run(optTuple):
     if uMaxBool:
         uMax = np.load(tempDir / ("uMax_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
-        uMax = np.zeros_like(dem)
+        uMax = None
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
