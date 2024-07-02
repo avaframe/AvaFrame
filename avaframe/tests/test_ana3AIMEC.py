@@ -90,13 +90,13 @@ def test_analyzeArea(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, 0, contourDict)
+                                                                newRasters, timeMass, 0, contourDict, {})
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
             inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                        newRasters, timeMass, index, contourDict)
+                                                                        newRasters, timeMass, index, contourDict, {})
     print(inputsDF['sRunout'])
     print(inputsDF['xRunout'])
     print(inputsDF['yRunout'])
@@ -195,13 +195,13 @@ def test_makeDomainTransfo(tmp_path):
     # postprocess reference
     timeMass = None
     inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                newRasters, timeMass, refSimRowHash, contourDict)
+                                                                newRasters, timeMass, refSimRowHash, contourDict, {})
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         if index != pathDict['refSimRowHash']:
             resAnalysisDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
-                                                                             newRasters, timeMass, index, contourDict)
+                                                                             newRasters, timeMass, index, contourDict, {})
 
     for i in range(5):
         rasterSource = inputsDF['ppr'][i]
@@ -424,3 +424,44 @@ def test_fullAimecAnalysis(tmp_path):
     assert resAnalysisDF['simName'].iloc[0] != resAnalysisDF['simName'].iloc[1]
     assert resAnalysisDF['pftFieldMax'].iloc[0] == resAnalysisDF['pftFieldMax'].iloc[1]
     assert resAnalysisDF['pftFieldMean'].iloc[0] != resAnalysisDF['pftFieldMean'].iloc[1]
+
+
+def test_postProcessReference(tmp_path):
+    """ test computing the runout line from different data sets as furthest coordinate along s for each l"""
+
+    avaName = 'avaHockeyChannel'
+    dirname = pathlib.Path(__file__).parents[0]
+    sourceDir = dirname / '..' / 'data' / avaName
+    refFileTestDir = dirname / 'data' / 'referenceAIMECTest'
+    avalancheDir = tmp_path / avaName
+    refDataDir = avalancheDir / 'Inputs' / 'REFDATA'
+
+    # Copy input to tmp dir
+    shutil.copytree(sourceDir, avalancheDir)
+    shutil.copytree(refFileTestDir, refDataDir)
+
+    # setup inputs
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC, onlyDefault=True)
+    cfgSetup = cfg['AIMECSETUP']
+
+    pathDict = {}
+    pathDict = aT.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'), dirName='com1DFA')
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
+
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, 5., cfgSetup)
+
+    referenceDF = aT.createReferenceDF(pathDict)
+    newRasters = {}
+
+    # function to test
+    refDataTransformed, referenceDF = ana3AIMEC.postProcessReference(cfg, rasterTransfo, pathDict, referenceDF, newRasters)
+
+    assert np.isclose(refDataTransformed['refLine']['xRunout'], 4239.6903)
+    assert np.isclose(refDataTransformed['refLine']['yRunout'], -3950)
+    assert np.isclose(refDataTransformed['refLine']['sRunout'], 3198.7449)
+    assert np.isclose(refDataTransformed['refLine']['lRunout'], -50.)
+    assert len(np.where(refDataTransformed['refLine']['runoutLineFound'] is False)[0]) == 0
+    maxIndex = np.amax(refDataTransformed['refLine']['index'])
+
+    assert np.isclose(rasterTransfo['s'][int(maxIndex)], 3198.7449)

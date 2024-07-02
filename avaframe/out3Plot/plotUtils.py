@@ -222,6 +222,9 @@ cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 
 cmapEnergy = {"cmap": cmapE, "colors": colorsE, "levels": levE}
 
+# for zdelta
+cmapZdelta = {"cmap": copy.copy(cmapCrameri.lipari), "colors": [], "levels": []}
+
 colorMaps = {
     "ppr": cmapPres,
     "pfv": cmapSpeed,
@@ -238,6 +241,7 @@ colorMaps = {
     "pta": cmapTravelAngle,
     "TA": cmapTravelAngle,
     "pke": cmapEnergy,
+    "zdelta": cmapZdelta,
 }
 
 cmapDEM = cmapGreys
@@ -376,7 +380,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 ###################################
 # shortcut plot functions
 ###################################
-def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
+def NonUnifIm(ax, x, y, z, xlab, ylab, aspect=None, **kwargs):
     im = NonUniformImage(ax, **kwargs)
     im.set_data(x, y, z)
     # im.set_clim(vmin=vmin, vmax=vmax)
@@ -385,6 +389,8 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
     ax.set_ylim([y.min(), y.max()])
     ax.set_xlabel(xlab)
     ax.set_ylabel(ylab)
+    if aspect == 'equal':
+        ax.set_aspect('equal')
     return ref, im
 
 
