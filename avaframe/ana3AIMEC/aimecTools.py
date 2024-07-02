@@ -1722,7 +1722,7 @@ def addReferenceAnalysisTODF(referenceDF, refFile, refDataDict):
     return referenceDF
 
 
-def analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict):
+def analyzeDiffsRunoutLines(cfgSetup, runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict):
     """ analyze difference between runout line derived from simRaster and reference datasets (lines, polygons)
 
         Parameters
@@ -1772,7 +1772,7 @@ def analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRo
             RMSE = np.sqrt(np.sum(diffNoNans**2)/len(diffNoNans))
 
             # plot differences in runout lines
-            outAimec.plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, runoutStr,
+            outAimec.plotRunoutLineComparisonToReference(cfgSetup, refLine, runoutLine, pathDict, simName, runoutStr,
                                                          refLineStr, RMSE, diffNoNans)
 
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInSim' % refLine['type']] = runoutStr

@@ -375,7 +375,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                                 runoutLine, rasterTransfo, resAnalysisDF.loc[simRowHash], pathDict)
 
     # analyze distribution of diffs between runout lines
-    resAnalysisDF = aimecTools.analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict)
+    resAnalysisDF = aimecTools.analyzeDiffsRunoutLines(cfgSetup, runoutLine, refDataTransformed, resAnalysisDF, simRowHash, pathDict)
 
     if flagMass:
         fnameMass = resAnalysisDF.loc[simRowHash, 'massBal']
