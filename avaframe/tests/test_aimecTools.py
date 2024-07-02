@@ -159,9 +159,12 @@ def test_analyzeDiffsRunoutLines(tmp_path):
 
     resAnalysisDF['runoutLineDiff_line'] = resAnalysisDF['runoutLineDiff_line'].astype(object)
     pathDict = {'projectName': 'avaTest', 'pathResult': pathlib.Path(tmp_path, 'dir1')}
+    cfg = configparser.ConfigParser()
+    cfg['AIMECSETUP'] = {'runoutResType': 'pfv', 'thresholdValue': 1.}
 
     # call function
-    resAnalysisDF = aT.analyzeDiffsRunoutLines(runoutLine, refDataTransformed, resAnalysisDF, 0, pathDict)
+    resAnalysisDF = aT.analyzeDiffsRunoutLines(cfg['AIMECSETUP'], runoutLine, refDataTransformed, resAnalysisDF,
+                                               0, pathDict)
 
     assert np.isnan(resAnalysisDF['runoutLineDiff_line'].loc[0][0])
     assert resAnalysisDF['runoutLineDiff_line_pointsNotFoundInSim'].loc[0] == '2/8'

@@ -1576,7 +1576,7 @@ def compareRunoutLines(cfgSetup, refDataTransformed, newRaster, runoutLine, rast
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, runoutLineNoPoints, refLineNoPoints, RMSE, diffNoNans):
+def plotRunoutLineComparisonToReference(cfgSetup, refLine, runoutLine, pathDict, simName, runoutLineNoPoints, refLineNoPoints, RMSE, diffNoNans):
     """ compare runout line from current simulation to runout line derived from reference data
 
         Parameters
@@ -1604,6 +1604,7 @@ def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, 
     """
 
     colors = {'line': 'lightcoral', 'point': 'gold','poly': 'purple'}
+    unitResType = pU.cfgPlotUtils['unit' + cfgSetup['runoutResType']]
 
     # create figure
     fig = plt.figure(figsize=(pU.figW*1.5, pU.figH))
@@ -1611,7 +1612,8 @@ def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, 
 
     # add panel one with lines and differences across thalweg Lxy
     ax1 = fig.add_subplot(gs[0:3, 0:2])
-    ax1.set_title('Runout line difference (from reference %s' % refLine['type'])
+    ax1.set_title('Runout line (sim %s > %s %s) difference (from reference %s)' %
+                  (cfgSetup['runoutResType'], cfgSetup['thresholdValue'], unitResType, refLine['type']))
     ax2 = ax1.twinx()
     ax1.bar(refLine['l'], runoutLine['s']-refLine['s'], width=5, zorder=1)
     ax2.plot(runoutLine['l'], runoutLine['s'], label='sim', c='k', zorder=3)
@@ -1619,9 +1621,10 @@ def plotRunoutLineComparisonToReference(refLine, runoutLine, pathDict, simName, 
              zorder=2)
 
     # add differences as bars to panel
-    ax2.text(0.01, 0.01, ('points not found in sim: %s \npoints not found in ref: %s \nRMSE: %.2f' %
+    boxInfo = ax2.text(0.01, 0.01, ('points not found in sim: %s \npoints not found in ref: %s \nRMSE: %.2f m' %
              (runoutLineNoPoints, refLineNoPoints, RMSE)), horizontalalignment='left',
              verticalalignment='bottom', transform=ax2.transAxes)
+    boxInfo.set_bbox({'facecolor':'white', 'alpha': 0.5})
     ax2.set_ylabel('S_xy along thalweg [m]')
     ax1.set_ylabel('runout difference [m]')
     ax1.set_xlabel('L_xy across thalweg [m]')

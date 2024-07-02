@@ -7,6 +7,10 @@ For this purpose, avalanche simulation results are transformed into an avalanche
 (see :numref:`fig-aimec-comp-real`, :numref:`fig-aimec-comp-new`, :numref:`fig-aimec-domain-transfo`),
 which enables the comparison of different simulations (for example varying parameter sets,
 or performed with different models) of the same avalanche catchment, in a standardized way.
+There is also the option to compare simulation results to a reference data set, which can consist of a reference
+point, line or polygon. The simulation results are analysed regarding a chosen result variable (peak pressure, thickness or
+velocity) and a threshold of this variable. The derived runout point and/or line is then compared to the reference point, line or polygon.
+For further information, have a look at the Section :ref:`moduleAna3AIMEC:Analyze with respect to reference data sets`.
 
 In ``AvaFrame/avaframe/runScripts``, two different run scripts are provided and show examples
 on how the post-processing module :py:mod:`ana3AIMEC` can be used:
@@ -24,6 +28,12 @@ Inputs
 -------
 
 *  DEM  (digital elevation model) as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+.. Note:: The spatial resolution of the DEM and its extent can differ from the result raster data.
+          Spatial resolution can also differ between simulations. If this is the case, the spatial
+          resolution of the reference simulation results raster is used (default) or, if provided,
+          the resolution specified in the configuration file (``cellSizeSL``) is used.
+          This is done to ensure that all simulations will be transformed and analyzed using the
+          same spatial resolution.
 *  avalanche thalweg in LINES (as a shapefile named ``NameOfAvalanche/Inputs/LINES/path_aimec.shp``), the line needs to cover the entire affected area but is not allowed
    to exceed the DEM extent
 *  results from avalanche simulation (when using results from com1DFA,
@@ -33,14 +43,15 @@ Inputs
   is defined as reference. This can be changed in the ``ana3AIMEC/local_ana3AIMECCfg.ini``
   as explained in :ref:`moduleAna3AIMEC:Defining the reference simulation`.
 * consider adjusting the default settings to your application in the Aimec configuration 
-  (in your local copy of ``ana3AIMEC/local_ana3AIMECCfg.ini``) regarding the domain transformation, result types, runout computation and figures 
+  (in your local copy of ``ana3AIMEC/local_ana3AIMECCfg.ini``) regarding the domain transformation, result types, runout computation and figures
+
+If a comparison to reference data sets is desired, additionally the following inputs are required:
+
+* reference point, line and/or polygon in ``avalancheDir/Inputs/REFDATA`` (as shp file with corresponding suffix, options are ``*_POINT.shp``, ``*_LINE.shp``, ``*_POLY.shp``)
+
+.. Note:: The reference point shp file must only contain a single point.
   
-.. Note:: The spatial resolution of the DEM and its extent can differ from the result raster data.
-          Spatial resolution can also differ between simulations. If this is the case, the spatial
-          resolution of the reference simulation results raster is used (default) or, if provided,
-          the resolution specified in the configuration file (``cellSizeSL``) is used.
-          This is done to ensure that all simulations will be transformed and analyzed using the 
-          same spatial resolution.
+
  
 Optional inputs
 ~~~~~~~~~~~~~~~~
@@ -293,8 +304,27 @@ with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` f
 In this dataFrame there are multiple columns, one for each result from the analysis
 (one column for runout length, one for MMA, MAM...) and one row for each simulation analyzed.
 
+
+Analyze with respect to reference data sets
+----------------------------------------------
+To include a comparison to reference data sets, the flag ``includeReference`` in your local copy of ``ana3AIMEC/ana3AIMECCfg.ini``
+must to be set to ``True``. After reading the coordinates of the point, line or polygon from the respective shp file, a raster with the same extent
+as the DEM is created with values indicating which cells are affected by the features (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessReference`).
+This raster is then transformed into the thalweg following coordinate system. From the transformed rasters, a runout line/point is computed.
+This is done by identifying for each L coordinate (across thalweg) the corresponding S coordinate (along thalweg) for
+the point, line or polygon feature (see :py:func:`ana3AIMEC.aimecTools.computeRunoutLine`).
+In case of the polygon the S coordinate furthest in thalweg direction is chosen.
+A runout line is also derived from the simulation results. This is done by identifying for each simulation, the
+last point along the thalweg where the chosen threshold of the chosen ``runoutResType`` is still exceeded (similar to the
+identification of the runout point), for each L coordinate (across thalweg).
+For each simulation the derived runout line is compared to the runout line derived from the reference line or polygon, whereas
+in the case of the reference point, a distance between this point and the simulation runout point is computed.
+The derived difference measures are saved to the aimec result DataFrame, see :ref:`moduleAna3AIMEC:List of Aimec result variables`
+and several plots are created, see :ref:`moduleAna3AIMEC:Reference data set analysis plots`.
+
+
 Plot and save results
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
 Plots and saves the desired figures and writes results in ``resAnalysisDF`` to a csv file.
 By default, Aimec saves five summary plots plus three plots per simulation comparing the
@@ -393,6 +423,28 @@ the statistics associated and the mass analysis figure (this means these figures
     The mass analysis plot shows the evolution of the total and entrained mass during
     the simulation and compares it to the reference
 
+Reference data set analysis plots
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* *referenceLineTransfo_referenceFeature* plot where referenceFeature corresponds to either the reference point, line or polygon, As an example we here show the transformation plot of a polygon:
+
+.. figure:: _static/ana3AIMEC/avaAlr_referenceLineTransfo_refPoly.png
+    :width: 90%
+
+    Reference polygon in cartesian coordinate system already indicating which coordinates have been identified as
+    runout line in the thalweg following (SL) coordinate system (left panel), transformed into
+    the thalweg following coordinate system with identified runout line in blue (right panel).
+
+* *runoutLineComparison* plot where the runout line derived from the simulation is compared to the runout line derived from the reference line or polygon is compared and some statistical measures are provided:
+
+.. figure:: _static/ana3AIMEC/avaAlr_runoutLinesComparison_relAlr_50963401fb_D_M_null_dfa_poly.png
+    :width: 90%
+
+    Difference between runout line derived from simulation using the *runoutResType* and *threhsoldValue* from
+    the ana3AIMEC configuration and the reference data set, in this example the line is derived from
+    the reference polygon. The root mean squared error is computed over all points where both, the runout
+    line derived from the simulation and the reference data set have points.
+
+
 List of Aimec result variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The result variables listed below are partly included in the above described plots and are also saved to the Aimec results directory as `..resAnalysisDF.csv`, with one row per simulation. In the following, the resType represents the result type(s) set in the aimecCfg.ini for the parameter *resTypes*.
@@ -411,6 +463,17 @@ The result variables listed below are partly included in the above described plo
 - zRunout: altitude of the *sRunout* point
 - deltaZ: altitude difference between *zRelease* and *zRunout*
 - runoutAngle: corresponding runout angle based on *deltaSXY* and *deltaZ*
+
+If reference data sets are included in analysis, additionally these outputs are provided:
+
+- refSim_Diff_sRunout: difference between simulation runout point and reference point along S coordinate
+- refSim_Diff_lRunout: difference between simulation runout point and reference point along S coordinate
+- runoutLineDiff_line_RMSE: root mean squared error between difference along S coordinate over all L coordinates between runout line derived from simulation and reference line
+- runoutLineDiff_poly_RMSE: root mean squared error between difference along S coordinate over all L coordinates between runout line derived from simulation and reference polygon
+- runoutLineDiff_line_pointsNotFoundInSim: number of runout points not found in simulation but in reference / all points found in reference runout line
+- runoutLineDiff_line_pointsNotFoundInRef: number of runout points not found in reference but in simulation / all points found in simulation runout line
+- runoutLineDiff_poly_pointsNotFoundInSim: number of runout points not found in simulation but in reference / all points found in reference runout polygon
+- runoutLineDiff_poly_pointsNotFoundInRef: number of runout points not found in reference but in simulation / all points found in simulation runout polygon
 
 
 Configuration parameters
