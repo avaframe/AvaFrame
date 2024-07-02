@@ -109,6 +109,8 @@ def main():
         cfgPath["releasePath"] = pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
+        cfgPath["uMaxPath"] = pathlib.Path(cfgCustomPaths["uMaxPath"])
+        cfgPath["alphaPath"] = pathlib.Path(cfgCustomPaths["alphaPath"])
         cfgPath["deleteTemp"] = cfgCustomPaths["deleteTempFolder"]
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
@@ -198,6 +200,20 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         uMaxPath = uMaxPath[0]
         log.info("uMax Limit file is: %s" % uMaxPath)
     cfgPath["uMaxPath"] = uMaxPath
+
+    # read variable Alpha Angle Raster
+    varAlphaDir = avalancheDir / "Inputs" / "ALPHA"
+    varAlphaPath = sorted(list(varAlphaDir.glob("*.tif")))
+    if len(varAlphaPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableAlpha") is False:
+        varAlphaPath = ""
+    elif len(varAlphaPath) > 1:
+        message = "More than one variable alpha file .%s file in %s not allowed" % (varAlphaDir)
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        varAlphaPath = varAlphaPath[0]
+        log.info("variable Alpha file is: %s" % varAlphaPath)
+    cfgPath["varAlphaPath"] = varAlphaPath
 
     # check if forest should be used (assumed to be in the RES - 'RESISTANCE' directory)
 
