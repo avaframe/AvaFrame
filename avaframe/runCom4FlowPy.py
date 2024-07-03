@@ -32,8 +32,6 @@ def main():
     * handling creation of working directories ...
 
     NOTE-TODO:
-        * Forest Interaction currently only works with customDirs set to True
-          Currently this is not implemented in the with the AvaFrame File structure ...
         * This function needs clean-up!
     """
     # log file name; leave empty to use default runLog.log
@@ -42,12 +40,19 @@ def main():
     cfgMain = cfgUtils.getGeneralConfig()
     cfg = cfgUtils.getModuleConfig(com4FlowPy)
 
+    cfg["PATHS"]["outputFiles"] = checkOutputFilesFormat(cfg["PATHS"]["outputFiles"])
+    #print(cfg["PATHS"]["outputFiles"])
+
     cfgSetup = cfg["GENERAL"]
     cfgFlags = cfg["FLAGS"]
     cfgCustomPaths = cfg["PATHS"]
 
     # if customPaths == False --> use AvaFrame Folder structure
     if cfgCustomPaths["useCustomPaths"] == "False":
+        # if "useCustomPaths" == False, we also use the AvaDir Info for the
+        # creation of the simulaiton uid
+        cfg['GENERAL']['avaDir'] = cfgMain["MAIN"]["avalancheDir"]
+        uid = cfgUtils.cfgHash(cfg)
         # Load avalanche directory from general configuration file
         avalancheDir = cfgMain["MAIN"]["avalancheDir"]
         # Clean input directory of old work and output files from module
@@ -55,12 +60,13 @@ def main():
 
         # Start logging
         log = logUtils.initiateLogger(avalancheDir, logName)
+        log.info("==================================")
+        log.info("MAIN SCRIPT")
+        log.info("Current avalanche: %s", avalancheDir)
+        log.info("==================================")
 
         # Extract input file locations
         cfgPath = readFlowPyinputs(avalancheDir, cfg, log)
-
-        log.info("MAIN SCRIPT")
-        log.info("Current avalanche: %s", avalancheDir)
 
         # IMPORTANT!! - this is a quick'n'dirty hack to set nSims to 9999, so that
         # min(nCPU,nSims) in cfgUtils.getNumberOfProcesses returns nCPU
@@ -70,29 +76,43 @@ def main():
         # Create result directory
         # NOTE-TODO: maybe move into separate function as well ...
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
-        cfgPath["resDir"] = cfgPath["outDir"] / "res_{}".format(timeString)
-        fU.makeADir(cfgPath["resDir"])
-        cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
-        fU.makeADir(cfgPath["tempDir"])
+
+        cfgPath["resDir"] = cfgPath["outDir"] / "peakFiles" / "res_{}".format(uid)  # (timeString)
+        # check if simulation with same uid already has results folder
+        if os.path.isdir(cfgPath["resDir"]):
+            log.info("folder with same name already exists - aborting")
+            log.info("simulation results folder with same .ini parameters already exists")
+            sys.exit(1)
+        else:
+            fU.makeADir(cfgPath["resDir"])
+            cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
+            fU.makeADir(cfgPath["tempDir"])
 
         cfgPath["deleteTemp"] = "False"
+
+        cfgPath["uid"] = uid
+        cfgPath["timeString"] = timeString
+        cfgPath["outputFiles"] = cfgCustomPaths["outputFiles"]
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
 
     # if customPaths == True --> check
     elif cfgCustomPaths["useCustomPaths"] == "True":
-
+        # if "useCustomPaths" == True, we don't need the AvaDir Info for the
+        # creation of the simulaiton uid
+        uid = cfgUtils.cfgHash(cfg)
         cfgPath = {}
 
         # Handling Custom directory creation
         workDir = pathlib.Path(cfgCustomPaths["workDir"])
 
-        time_string = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
         try:
-            os.makedirs(workDir / "res_{}".format(time_string))
-            res_dir = workDir / "res_{}".format(time_string)
+            os.makedirs(workDir / "res_{}".format(uid)) # (time_string))
+            res_dir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
             print("folder with same name already exists - aborting")
+            print("simulation results folder with same .ini parameters already exists")
             sys.exit(1)
         try:
             os.makedirs(workDir / res_dir / "temp")
@@ -100,6 +120,7 @@ def main():
         except FileExistsError:
             print("temp folder already exists - aborting")
             sys.exit(1)
+        log = logUtils.initiateLogger(res_dir, logName)
 
         cfgPath["workDir"] = pathlib.Path(workDir)
         cfgPath["outDir"] = pathlib.Path(res_dir)
@@ -110,11 +131,14 @@ def main():
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
         cfgPath["deleteTemp"] = cfgCustomPaths["deleteTempFolder"]
-
-        log = logUtils.initiateLogger(cfgPath["outDir"], logName)
+        cfgPath["outputFileFormat"] = cfgCustomPaths["outputFileFormat"]
+        cfgPath["outputFiles"] = cfgCustomPaths["outputFiles"]
 
         cfgSetup["cpuCount"] = str(cfgUtils.getNumberOfProcesses(cfgMain, 9999))
         cfgPath["customDirs"] = cfgCustomPaths["useCustomPaths"]
+
+        cfgPath["uid"] = uid
+        cfgPath["timeString"] = timeString
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
 
@@ -215,7 +239,29 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     cfgPath["forestPath"] = forestPath
 
     # read DEM
-    demPath = gI.getDEMPath(avalancheDir)
+    demDir = avalancheDir / "Inputs"
+    patterns = ("*.tif", "*.asc", "*.TIF", "*.tiff", "*.TIFF", "*.ASC")
+    
+    _demPath = [f for f in demDir.iterdir() if any(f.match(p) for p in patterns)]
+
+    if len(_demPath) == 0:
+        message = (
+                "Please provide a DEM file in %s" % demDir
+            )
+        log.error(message)
+        raise AssertionError(message)
+    elif len(_demPath) > 1:
+        message = (
+                "Please provide exactly 1 (One!) DEM file in %s" % demDir
+            )
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        if os.path.splitext(_demPath[0])[1] in [".asc", ".ASC"]:
+            demPath = gI.getDEMPath(avalancheDir)
+        else:
+            demPath = _demPath[0]
+    
     log.info("DEM file is: %s" % demPath)
     cfgPath["demPath"] = demPath
 
@@ -224,7 +270,35 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     cfgPath["outDir"] = outDir
     cfgPath["workDir"] = workDir
 
+    cfgPath["outputFileFormat"] = cfgFlowPy["PATHS"]["outputFileFormat"]
+
     return cfgPath
+
+
+def checkOutputFilesFormat(strOutputFiles):
+    """check if outputFiles option is provided in proper format, else return
+    default string in right format
+
+    Parameters:
+    ---------------
+    strOutputFiles: string - outputFiles string from (local_)com4FlowPy.ini
+
+    Returns:
+    ---------------
+    strOutputFiles: string - returns the input if the format is ok, else default
+                    value string is returned
+    """
+
+    try:
+        setA = set(strOutputFiles.split('|'))
+        setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength',
+                    'slTravelAngle', 'flux', 'zDeltaSum'])
+        if (setA & setB):
+            return strOutputFiles
+        else:
+            raise ValueError('outputFiles defined in .ini have wrong format')
+    except ValueError:
+        return 'zDelta|cellCounts|travelLength|fpTravelAngle'
 
 
 if __name__ == "__main__":

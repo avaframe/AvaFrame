@@ -44,7 +44,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     Parameters
     ----------
     cfgPath:  dictionary with paths from .ini file
-    cfgSetup: dictionary with other model configs from .ini file
+    cfgSetup: configparser.SectionProxy Object with "GENERAL" model configs from .ini file
 
     Returns
     ----------
@@ -80,6 +80,15 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     modelPaths["resDir"] = cfgPath["resDir"]
     modelPaths["tempDir"] = cfgPath["tempDir"]
+    modelPaths["uid"] = cfgPath["uid"]
+    modelPaths["timeString"] = cfgPath["timeString"]
+    modelPaths["ouputFileList"] = cfgPath["outputFiles"].split('|')
+
+    modelPaths["outputFileFormat"] = cfgPath["outputFileFormat"]
+    if modelPaths["outputFileFormat"] in [".asc", ".ASC"]:
+        modelPaths["outputFileFormat"] ='.asc'
+    else:
+        modelPaths["outputFileFormat"] ='.tif'
 
     # check if 'customDirs' are used - alternative is 'default' AvaFrame Folder Structure
     modelPaths["useCustomDirs"] = True if cfgPath["customDirs"] == "True" else False
@@ -125,7 +134,6 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     #            * contradicting options ...
 
     # write model parameters paths, etc. to logfile
-
     startLogging(modelParameters, forestParams, modelPaths, MPOptions)
 
     # check if release file is given als .shp and convert to .tif/.asc in that case
@@ -136,10 +144,18 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     checkInputLayerDimensions(modelParameters, modelPaths)
 
     # get information on cellsize and nodata value from demHeader
-    demHeader = IOf.readASCheader(modelPaths["demPath"])
     rasterAttributes = {}
+
+    demExt = os.path.splitext(modelPaths["demPath"])[1]    
+    if demExt in ['.asc', '.ASC']:
+            demHeader = IOf.readASCheader(modelPaths["demPath"])
+            rasterAttributes["nodata"] = demHeader["nodata_value"]
+    elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
+            demHeader = io.read_header(modelPaths["demPath"])
+            rasterAttributes["nodata"] = demHeader["noDataValue"]
+    
     rasterAttributes["cellsize"] = demHeader["cellsize"]
-    rasterAttributes["nodata"] = demHeader["nodata_value"]
+    
 
     # tile input layers and write tiles (pickled np.arrays) to temp Folder
     nTiles = tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters)
@@ -166,8 +182,9 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     only performs logging at the start of the simulation
     """
     # Start of Calculation (logging...)
-    log.info("Starting...")
-    log.info("========================")
+    log.info("==================================")
+    log.info("Starting calculation ...")
+    log.info("==================================")
     log.info(f"{'Alpha Angle:' : <20}{modelParameters['alpha'] : <5}")
     log.info(f"{'Exponent:' : <20}{modelParameters['exp'] : <5}")
     log.info(f"{'Flux Threshold:' : <20}{modelParameters['flux_threshold'] : <5}")
@@ -211,8 +228,14 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
     try:
         log.info("checking input layer alignment ...")
 
-        _demHeader = IOf.readASCheader(modelPaths["demPath"])
-        _relHeader = io.read_header(modelPaths["releasePathWork"])
+        ext = os.path.splitext(modelPaths["demPath"])[1]
+        
+        if ext in ['.asc', '.ASC']:
+            _demHeader = IOf.readASCheader(modelPaths["demPath"])
+            _relHeader = io.read_header(modelPaths["releasePathWork"])
+        elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
+            _demHeader = io.read_header(modelPaths["demPath"])
+            _relHeader = io.read_header(modelPaths["releasePathWork"])
 
         if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
             log.info("DEM and Release Layer ok!")
@@ -297,18 +320,20 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     """function handles merging of results for all tiles inside the temp Folder
     and also writing result files to the resultDir
     """
+    _uid = modelPaths["uid"]
+    _outputs = set(modelPaths['ouputFileList'])
 
     log.info(" merging results ...")
     log.info("-------------------------")
 
     # Merge calculated tiles
-    z_delta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
+    zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
-    cell_counts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
-    z_delta_sum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
-    fp_ta = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
-    sl_ta = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
-    travel_length = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
+    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
+    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
+    fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
+    slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
+    travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
 
     if modelOptions["infraBool"]:
         backcalc = SPAM.mergeRaster(modelPaths["tempDir"], "res_backcalc")
@@ -320,24 +345,36 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     log.info("-------------------------")
     log.info(" writing output files ...")
     log.info("-------------------------")
-    output_format = ".tif"
-    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("flux%s" % (output_format)), flux)
-    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta%s" % (output_format)), z_delta)
-    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("FP_travel_angle%s" % (output_format)), fp_ta)
-    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("SL_travel_angle%s" % (output_format)), sl_ta)
-    io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("travel_length%s" % (output_format)), travel_length)
+    _oF = modelPaths["outputFileFormat"]
+    _ts = modelPaths["timeString"]
+
+    if 'flux' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_flux{}".format(_uid, _ts, _oF), flux)
+    if 'zDelta' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zdelta{}".format(_uid, _ts, _oF), zDelta)
+    if 'cellCounts' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_cellCounts{}".format(_uid, _ts, _oF), cellCounts)
+    if 'zDeltaSum' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF), zDeltaSum)
+    if 'fpTravelAngle' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid, _ts, _oF), fpTa)
+    if 'slTravelAngle' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_slTravelAngle{}".format(_uid, _ts, _oF), slTa)
+    if 'travelLength' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid, _ts, _oF), travelLength)
 
     # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
     # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
     #      and only write other output files if set accordingly
-    if not modelOptions["infraBool"]:  # if no infra
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" % (output_format)), cell_counts)
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" % (output_format)), z_delta_sum)
+    # NOTE: 
+    # if not modelOptions["infraBool"]:  # if no infra
+        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" % (output_format)), cell_counts)
+        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" % (output_format)), z_delta_sum)
     if modelOptions["infraBool"]:  # if infra
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("backcalculation%s" % (output_format)),
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_backcalculation{}".format(_uid, _ts, _oF),
                          backcalc)
     if modelOptions["forestInteraction"]:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("forestInteraction%s" % (output_format)),
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_forestInteraction{}".format(_uid, _ts, _oF),
                          forestInteraction)
 
 
@@ -355,10 +392,17 @@ def checkConvertReleaseShp2Tif(modelPaths):
     """
     # the release is a shp polygon, we need to convert it to a raster
     # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
+    
     if modelPaths["releasePath"].suffix == ".shp":
 
-        dem = IOf.readRaster(modelPaths["demPath"])
-        demHeader = IOf.readASCheader(modelPaths["demPath"])
+        ext = os.path.splitext(modelPaths["demPath"])[1]
+        
+        if ext in ['.asc', '.ASC']:
+            dem = IOf.readRaster(modelPaths["demPath"])
+            demHeader = IOf.readASCheader(modelPaths["demPath"])
+        elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
+            dem = io.read_raster(modelPaths["demPath"])
+            demHeader = io.read_header(modelPaths["demPath"])
 
         dem['originalHeader'] = demHeader
 
