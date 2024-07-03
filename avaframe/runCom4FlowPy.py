@@ -111,6 +111,7 @@ def main():
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
         cfgPath["uMaxPath"] = pathlib.Path(cfgCustomPaths["uMaxPath"])
         cfgPath["varAlphaPath"] = pathlib.Path(cfgCustomPaths["varAlphaPath"])
+        cfgPath["varExponentPath"] = pathlib.Path(cfgCustomPaths["varExponentPath"])
         cfgPath["deleteTemp"] = cfgCustomPaths["deleteTempFolder"]
 
         log = logUtils.initiateLogger(cfgPath["outDir"], logName)
@@ -214,6 +215,20 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         varAlphaPath = varAlphaPath[0]
         log.info("variable Alpha file is: %s" % varAlphaPath)
     cfgPath["varAlphaPath"] = varAlphaPath
+
+    # read variable Exponent Raster
+    varExponentDir = avalancheDir / "Inputs" / "EXP"
+    varExponentPath = sorted(list(varExponentDir.glob("*.tif")))
+    if len(varExponentPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableExponent") is False:
+        varExponentPath = ""
+    elif len(varExponentPath) > 1:
+        message = "More than one variable exponent file .%s file in %s not allowed" % (varExponentDir)
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        varExponentPath = varExponentPath[0]
+        log.info("variable Exponent file is: %s" % varExponentPath)
+    cfgPath["varExponentPath"] = varExponentPath
 
     # check if forest should be used (assumed to be in the RES - 'RESISTANCE' directory)
 

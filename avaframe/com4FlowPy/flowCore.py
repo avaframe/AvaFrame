@@ -157,6 +157,7 @@ def run(optTuple):
     forestInteraction = optTuple[2]["forestInteraction"]
     uMaxBool = optTuple[2]["uMaxBool"]
     varAlphaBool = optTuple[2]["varAlphaBool"]
+    varExponentBool = optTuple[2]["varExponentBool"]
 
 
     # Temp-Dir (all input files are located here and results are written back in here)
@@ -195,6 +196,11 @@ def run(optTuple):
     else:
         varAlphaArray = None
 
+    if varExponentBool:
+        varExponentArray = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        varExponentArray = None
+
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
     release[release < 0] = 0
@@ -226,6 +232,7 @@ def run(optTuple):
                         infraBool, forestBool,
                         uMaxBool, uMaxArray,
                         varAlphaBool, varAlphaArray,
+                        varExponentBool, varExponentArray,
                         forestArray, forestParams,
                     ]
                     for release_sub in release_list
@@ -245,6 +252,7 @@ def run(optTuple):
                         infraBool, forestBool,
                         uMaxBool, uMaxArray,
                         varAlphaBool, varAlphaArray,
+                        varExponentBool, varExponentArray,
                     ]
                     for release_sub in release_list
                 ],
@@ -367,10 +375,12 @@ def calculation(args):
     uMaxArray = args[12]
     varAlphaBool = args[13]
     varAlphaArray = args[14]
+    varExponentBool = args[15]
+    varExponentArray = args[16]
 
     if forestBool:
-        forestArray = args[15]
-        forestParams = args[16]
+        forestArray = args[17]
+        forestParams = args[18]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -414,6 +424,8 @@ def calculation(args):
             max_z_delta = (uMaxArray[row_idx, col_idx])**2 / 2 / 9.81
         if varAlphaBool:
             alpha = varAlphaArray[row_idx, col_idx]
+        if varExponentBool:
+            exp = varExponentArray[row_idx, col_idx]
             #otherwise it uses for every cell a different alpha, we want one alpha per startcell
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
