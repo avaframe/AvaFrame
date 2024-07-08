@@ -128,6 +128,13 @@ Only available for release thickness:
     with desired meshCellSize
 
 
+Friction parameters
+^^^^^^^^^^^^^^^^^^^
+
+By default the friction parameter set *samosATAuto* is active. This uses the calculated release volume (including
+secondary release areas) to determine the parameters used for the samosAT friction model.
+See :ref:`theoryCom1DFA:Friction model:SamosAT friction model` for the limits regarding release volumes.
+
 
 DEM input data
 ^^^^^^^^^^^^^^^^

@@ -20,7 +20,8 @@ Operational
       Runs dense flow avalanche module com1DFA. For more specific info about the inputs (shapefile attributes etc), see 
       :ref:`moduleCom1DFA:Input`. You can select multiple shapefiles for release areas, each will be calculated as one scenario. 
       Each shapefile can contain multiple polygons. If you provide entrainment/resistance areas, each scenario will be calculated 
-      once without them (i.e null simulation) and once with them. 
+      once without them (i.e null simulation) and once with them. It is possible to override the default friction
+      parameter set *samosATAuto* to another samosAT friction model calibration.
    
    Alpha Beta (com2) 
       Runs the alpha beta calculation via module com2AB. For more specific info about the inputs (shapefile attributes etc), see 
