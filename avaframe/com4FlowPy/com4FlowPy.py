@@ -260,8 +260,9 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
         log.info("========================")
 
-    except:
+    except Exception as ex:
         log.error("could not read all required Input Layers, please re-check files and paths provided in .ini files")
+        log.error('Error occured: %s' % ex)
         # return
         sys.exit(1)
 
@@ -372,7 +373,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
     # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
     #      and only write other output files if set accordingly
-    # NOTE: 
+    # NOTE:
     # if not modelOptions["infraBool"]:  # if no infra
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
