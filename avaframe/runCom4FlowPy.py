@@ -40,8 +40,8 @@ def main():
     cfgMain = cfgUtils.getGeneralConfig()
     cfg = cfgUtils.getModuleConfig(com4FlowPy)
 
+    # check and handle outputFiles list provided in (local_)com4FlowPyCfg.ini
     cfg["PATHS"]["outputFiles"] = checkOutputFilesFormat(cfg["PATHS"]["outputFiles"])
-    # print(cfg["PATHS"]["outputFiles"])
 
     cfgSetup = cfg["GENERAL"]
     cfgFlags = cfg["FLAGS"]
@@ -293,11 +293,13 @@ def checkOutputFilesFormat(strOutputFiles):
         setA = set(strOutputFiles.split('|'))
         setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength',
                     'slTravelAngle', 'flux', 'zDeltaSum'])
+        # if there is at least 1 correct ouputfile defined, we use the string provided in the .ini file
         if (setA & setB):
             return strOutputFiles
         else:
-            raise ValueError('outputFiles defined in .ini have wrong format')
+            raise ValueError('outputFiles defined in .ini have wrong format - using default settings')
     except ValueError:
+        # else we return the default options
         return 'zDelta|cellCounts|travelLength|fpTravelAngle'
 
 
