@@ -41,7 +41,7 @@ def main():
     cfg = cfgUtils.getModuleConfig(com4FlowPy)
 
     cfg["PATHS"]["outputFiles"] = checkOutputFilesFormat(cfg["PATHS"]["outputFiles"])
-    #print(cfg["PATHS"]["outputFiles"])
+    # print(cfg["PATHS"]["outputFiles"])
 
     cfgSetup = cfg["GENERAL"]
     cfgFlags = cfg["FLAGS"]
@@ -108,7 +108,7 @@ def main():
 
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
         try:
-            os.makedirs(workDir / "res_{}".format(uid)) # (time_string))
+            os.makedirs(workDir / "res_{}".format(uid))  # (time_string))
             res_dir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
             print("folder with same name already exists - aborting")
@@ -241,19 +241,19 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     # read DEM
     demDir = avalancheDir / "Inputs"
     patterns = ("*.tif", "*.asc", "*.TIF", "*.tiff", "*.TIFF", "*.ASC")
-    
+
     _demPath = [f for f in demDir.iterdir() if any(f.match(p) for p in patterns)]
 
     if len(_demPath) == 0:
         message = (
                 "Please provide a DEM file in %s" % demDir
-            )
+                  )
         log.error(message)
         raise AssertionError(message)
     elif len(_demPath) > 1:
         message = (
                 "Please provide exactly 1 (One!) DEM file in %s" % demDir
-            )
+                  )
         log.error(message)
         raise AssertionError(message)
     else:
@@ -261,7 +261,7 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
             demPath = gI.getDEMPath(avalancheDir)
         else:
             demPath = _demPath[0]
-    
+
     log.info("DEM file is: %s" % demPath)
     cfgPath["demPath"] = demPath
 
