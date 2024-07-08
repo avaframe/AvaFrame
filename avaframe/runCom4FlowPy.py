@@ -109,7 +109,7 @@ def main():
         cfgPath["releasePath"] = pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
-        cfgPath["uMaxPath"] = pathlib.Path(cfgCustomPaths["uMaxPath"])
+        cfgPath["varUmaxPath"] = pathlib.Path(cfgCustomPaths["varUmaxPath"])
         cfgPath["varAlphaPath"] = pathlib.Path(cfgCustomPaths["varAlphaPath"])
         cfgPath["varExponentPath"] = pathlib.Path(cfgCustomPaths["varExponentPath"])
         cfgPath["deleteTemp"] = cfgCustomPaths["deleteTempFolder"]
@@ -189,18 +189,18 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     cfgPath["infraPath"] = infraPath
 
     # read uMax Limit Raster
-    uMaxDir = avalancheDir / "Inputs" / "UMAX"
-    uMaxPath = sorted(list(uMaxDir.glob("*.tif")))
-    if len(uMaxPath) == 0 or cfgFlowPy.getboolean("GENERAL", "uMaxLim") is False:
-        uMaxPath = ""
-    elif len(uMaxPath) > 1:
-        message = "More than one uMax Limit file .%s file in %s not allowed" % (uMaxDir)
+    varUmaxDir = avalancheDir / "Inputs" / "UMAX"
+    varUmaxPath = sorted(list(varUmaxDir.glob("*.tif")))
+    if len(varUmaxPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableUmaxLim") is False:
+        varUmaxPath = ""
+    elif len(varUmaxPath) > 1:
+        message = "More than one uMax Limit file .%s file in %s not allowed" % (varUmaxDir)
         log.error(message)
         raise AssertionError(message)
     else:
-        uMaxPath = uMaxPath[0]
-        log.info("uMax Limit file is: %s" % uMaxPath)
-    cfgPath["uMaxPath"] = uMaxPath
+        varUmaxPath = varUmaxPath[0]
+        log.info("uMax Limit file is: %s" % varUmaxPath)
+    cfgPath["varUmaxPath"] = varUmaxPath
 
     # read variable Alpha Angle Raster
     varAlphaDir = avalancheDir / "Inputs" / "ALPHA"

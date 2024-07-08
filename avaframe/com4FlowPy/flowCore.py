@@ -155,7 +155,7 @@ def run(optTuple):
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
     forestInteraction = optTuple[2]["forestInteraction"]
-    uMaxBool = optTuple[2]["uMaxBool"]
+    varUmaxBool = optTuple[2]["varUmaxBool"]
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
 
@@ -189,10 +189,15 @@ def run(optTuple):
         forestParams = None
         forestArray = None
 
-    if uMaxBool:
-        uMaxArray = np.load(tempDir / ("uMax_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    if varUmaxBool:
+        varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        if optTuple[2]["varUmaxType"].lower() == 'umax':
+            print(optTuple[2]["varUmaxType"].lower())
+            varUmaxArray = varUmaxArray**2 / 2 / 9.81
+        elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
+            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
     else:
-        uMaxArray = None
+        varUmaxArray = None
 
     if varAlphaBool:
         varAlphaArray = np.load(tempDir / ("varAlpha_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -232,7 +237,7 @@ def run(optTuple):
                     alpha, exp, flux_threshold, max_z_delta,
                     nodata, cellsize,
                     infraBool, forestBool,
-                    uMaxBool, uMaxArray,
+                    varUmaxBool, varUmaxArray,
                     varAlphaBool, varAlphaArray,
                     varExponentBool, varExponentArray,
                     forestArray, forestParams,
@@ -354,8 +359,8 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
-    uMaxBool = args[11]
-    uMaxArray = args[12]
+    varUmaxBool = args[11]
+    varUmaxArray = args[12]
     varAlphaBool = args[13]
     varAlphaArray = args[14]
     varExponentBool = args[15]
@@ -403,8 +408,8 @@ def calculation(args):
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
         dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
-        if uMaxBool:
-            max_z_delta = (uMaxArray[row_idx, col_idx])**2 / 2 / 9.81
+        if varUmaxBool:
+            max_z_delta = varUmaxArray[row_idx, col_idx]
         if varAlphaBool:
             alpha = varAlphaArray[row_idx, col_idx]
         if varExponentBool:
