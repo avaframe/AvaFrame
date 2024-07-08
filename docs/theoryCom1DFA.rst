@@ -471,6 +471,9 @@ In order to increase the friction force and make the avalanche flow stop on stee
 .. math::
  \tau^{(b)} = \tau_0 + \tan{\delta}\,\sigma^{(b)} + \frac{g}{\xi}\,\rho_0\,\bar{u}^2
 
+
+.. _samosatfrict:
+
 SamosAT friction model
 """"""""""""""""""""""""
 

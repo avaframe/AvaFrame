@@ -183,7 +183,7 @@ Mean and max indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From the maximum values along path of the distribution :math:`A(s,l)` calculated in
-:ref:`moduleAna3AIMEC:Mean and max values along path`, it is possible to calculate
+:ref:`moduleAna3AIMEC:Mean and max values along thalweg`, it is possible to calculate
 the global maximum (MMA) and average maximum (AMA) values of the two dimensional
 distribution :math:`A(s,l)`:
 

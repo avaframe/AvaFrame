@@ -89,8 +89,7 @@ To run
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``com5SnowSlide/com5SnowSlideCfg.ini`` to ``com5SnowSlide/local_com5SnowSlideCfg.ini`` and if desired change configuration settings
-* if you are on a develop installation, make sure you have an updated compilation, see
-  :ref:`installation:Setup AvaFrame`
+* if you are on a develop installation, make sure you have an updated compilation, see :ref:`installation:Update AvaFrame`
 * run:
   ::
 
