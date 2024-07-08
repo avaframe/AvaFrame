@@ -2060,6 +2060,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dMDet = np.zeros(nPart, dtype=np.float64)
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
 
@@ -2109,6 +2110,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
 
   # save results
   force['dM'] = np.asarray(dM)
+  force['dMDet'] = np.asarray(dMDet)
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
