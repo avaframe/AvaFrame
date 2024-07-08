@@ -185,6 +185,9 @@ def run(optTuple):
         forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
         forestParams = optTuple[5]
         forestParams["forestInteraction"] = forestInteraction
+    else:
+        forestParams = None
+        forestArray = None
 
     if uMaxBool:
         uMaxArray = np.load(tempDir / ("uMax_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -220,45 +223,25 @@ def run(optTuple):
     release_list = split_release(release, nChunks)
     log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" % (MPOptions["nCPU"], nProcesses, nChunks))
 
-    if forestBool:
-        with Pool(processes=nProcesses) as pool:
-            results = pool.map(
-                calculation,
+    with Pool(processes=nProcesses) as pool:
+        results = pool.map(
+            calculation,
+            [
                 [
-                    [
-                        dem, infra, release_sub,
-                        alpha, exp, flux_threshold, max_z_delta,
-                        nodata, cellsize,
-                        infraBool, forestBool,
-                        uMaxBool, uMaxArray,
-                        varAlphaBool, varAlphaArray,
-                        varExponentBool, varExponentArray,
-                        forestArray, forestParams,
-                    ]
-                    for release_sub in release_list
-                ],
-            )
-            pool.close()
-            pool.join()
-    else:
-        with Pool(processes=nProcesses) as pool:
-            results = pool.map(
-                calculation,
-                [
-                    [
-                        dem, infra, release_sub,
-                        alpha, exp, flux_threshold, max_z_delta,
-                        nodata, cellsize,
-                        infraBool, forestBool,
-                        uMaxBool, uMaxArray,
-                        varAlphaBool, varAlphaArray,
-                        varExponentBool, varExponentArray,
-                    ]
-                    for release_sub in release_list
-                ],
-            )
-            pool.close()
-            pool.join()
+                    dem, infra, release_sub,
+                    alpha, exp, flux_threshold, max_z_delta,
+                    nodata, cellsize,
+                    infraBool, forestBool,
+                    uMaxBool, uMaxArray,
+                    varAlphaBool, varAlphaArray,
+                    varExponentBool, varExponentArray,
+                    forestArray, forestParams,
+                ]
+                for release_sub in release_list
+            ],
+        )
+        pool.close()
+        pool.join()
 
     # TODO - provide option in com4FlowPyCfg.ini file for which output layers to write
     # e.g.: default  [zDelta, cellCounts, fpTravelAngle, (backCalc if Infra)]
