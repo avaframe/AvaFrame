@@ -159,7 +159,6 @@ def run(optTuple):
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
 
-
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
@@ -375,7 +374,6 @@ def calculation(args):
         forestArray = None
         forestParams = None
 
-
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
     fluxArray = np.zeros_like(dem, dtype=np.float32)
@@ -414,7 +412,7 @@ def calculation(args):
             alpha = varAlphaArray[row_idx, col_idx]
         if varExponentBool:
             exp = varExponentArray[row_idx, col_idx]
-            #otherwise it uses for every cell a different alpha, we want one alpha per startcell
+            # otherwise it uses for every cell a different alpha, we want one alpha per startcell
 
         if (nodata in dem_ng) or np.size(dem_ng) < 9:
             startcell_idx += 1

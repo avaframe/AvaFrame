@@ -210,15 +210,15 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     if modelParameters["varAlphaBool"]:
         log.info("Calculation using variable Alpha")
         log.info(f"{'ALPHA LAYER:' : <14}{'%s'%modelPaths['varAlphaPath'] : <5}")
-        log.info("------------------------")    
+        log.info("------------------------")
     if modelParameters["varUmaxBool"]:
         log.info("Calculation using variable uMax Limit")
         log.info(f"{'UMAX LAYER:' : <14}{'%s'%modelPaths['varUmaxPath'] : <5}")
-        log.info("------------------------")    
+        log.info("------------------------")
     if modelParameters["varExponentBool"]:
         log.info("Calculation using variable Alpha")
         log.info(f"{'ALPHA LAYER:' : <14}{'%s'%modelPaths['varExponentPath'] : <5}")
-        log.info("------------------------")    
+        log.info("------------------------")
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
@@ -278,7 +278,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             else:
                 log.error("Error: uMax Limit Layer doesn't match DEM!")
                 sys.exit(1)
-        
+
         if modelParameters["varAlphaBool"]:
             _varAlphaHeader = io.read_header(modelPaths["varAlphaPath"])
             if _demHeader["ncols"] == _varAlphaHeader["ncols"] and _demHeader["nrows"] == _varAlphaHeader["nrows"]:
@@ -286,7 +286,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             else:
                 log.error("Error: variable Alpha Layer doesn't match DEM!")
                 sys.exit(1)
-        
+
         if modelParameters["varExponentBool"]:
             _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
             if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
@@ -294,7 +294,6 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             else:
                 log.error("Error: variable Alpha Layer doesn't match DEM!")
                 sys.exit(1)
-
 
         log.info("========================")
 
