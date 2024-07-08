@@ -161,7 +161,8 @@ An example on how these plotting functions are used and exemplary plots can be f
 
 Additionally, a plotting function for visualising probability maps is provided by :py:func:`out3Plot.statsPlots.plotProbMap`, where probability maps can be plotted
 including contour lines.
-An example on how these plotting function is used and an exemplary plot can be found in :ref:`moduleAna4Stats:probAna`.
+An example on how these plotting function is used and an exemplary plot can be found in
+:ref:`moduleAna4Stats:probAna - Probability maps`.
 
 
 

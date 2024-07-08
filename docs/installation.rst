@@ -66,7 +66,7 @@ Setup AvaFrameConnector and run
 This tries to install the AvaFrame core package as well (since AvaFrameConnector version 1.2). If it fails, head 
 over to the :ref:`operational:Manual Installation` instructions. 
 
-For more information about the functions in the AvaFrameConnector, see :ref:`connector:AvaFrameConnector (GUI)`
+For more information about the functions in the AvaFrameConnector, see :ref:`connector:QGis AvaFrameConnector`
 
 
 Update Avaframe to a new release
@@ -114,7 +114,7 @@ Setup AvaFrameConnector
 Hiermit wird versucht das AvaFrame-Kernpaket zu installieren (seit AvaFrameConnector Version 1.2). Wenn dies fehlschlägt, gehen Sie 
 zu: :ref:`operationalGerman:Manuelle Installation`.
 
-Für eine Kurzzusammenfassung der Funktionen des AvaFrameConnector, siehe :ref:`connector:AvaFrameConnector (GUI)`.
+Für eine Kurzzusammenfassung der Funktionen des AvaFrameConnector, siehe :ref:`connector:QGis AvaFrameConnector`.
 
 Update Avaframe auf eine neue Version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
