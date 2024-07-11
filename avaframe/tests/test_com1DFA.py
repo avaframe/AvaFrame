@@ -672,7 +672,11 @@ def test_initializeResistance():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"cRes": 0.003, "detK": 10, "detrainment": False, "detWithoutRes": False}
+    cfg["GENERAL"] = {"cRes": 0.003,
+                      "ResistanceModel": "cRes",
+                       "detK": 10, 
+                      "detrainment": False, 
+                      "detWithoutRes": False}
 
     nrows = 11
     ncols = 15
@@ -746,6 +750,24 @@ def test_initializeResistance():
     assert np.sum(cResRaster) == 0.0
     assert reportAreaInfo["resistance"] == "No"
     assert reportAreaInfo["detrainment"] == "Yes"
+
+    cfg["GENERAL"] = {"cRes": 0.003,
+                      "ResistanceModel": "cResCoulomb"}
+    assert np.array_equal(cResRaster, testArray)
+    assert np.sum(cResRaster) == 0.363
+    assert reportAreaInfo["resistance"] == "Yes"
+
+    cfg["GENERAL"] = {"cResH": 0.003,
+                      "ResistanceModel": "cResH"}
+    assert np.array_equal(cResRaster, testArray)
+    assert np.sum(cResRaster) == 0.363
+    assert reportAreaInfo["resistance"] == "Yes"
+
+    cfg["GENERAL"] = {"cResHCoulomb": 0.003,
+                      "ResistanceModel": "cResH"}
+    assert np.array_equal(cResRaster, testArray)
+    assert np.sum(cResRaster) == 0.363
+    assert reportAreaInfo["resistance"] == "Yes"
 
 
 def test_setDEMOriginToZero():
@@ -1823,6 +1845,7 @@ def test_initializeSimulation(tmp_path):
         "entTempRef": "-10.",
         "cpIce": "2050.",
         "TIni": "-10.",
+        "ResistanceModel": "cRes"
     }
     # setup dem input
     demHeader = {}
