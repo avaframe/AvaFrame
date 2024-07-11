@@ -1740,8 +1740,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     ResModel = cfgGen["ResistanceModel"].lower()
     ResModelsList = [
         "cres",
-        "cresH",
-        "cresroulomb",
+        "cresh",
+        "crescoulomb",
         "creshcoulomb"
     ]
     resistanceType = ResModelsList.index(ResModel) + 1
