@@ -44,6 +44,9 @@ digraph "com1DFA algorithm graph" {
   updateMassEntr [label="Take entrainment into account, update mass and velocity",
   href="../com1DFAAlgorithm.html#take-entrainment-into-account" tooltip="Go to: Add entrained mass" target="_top"];
 
+  updateMassDetr [label="Take detrainment into account, update mass",
+  href="../com1DFAAlgorithm.html#take-detrainment-into-account" tooltip="Go to: Add detrained mass" target="_top"];
+
   computeSPHForce [label="Compute lateral pressure force using SPH",
   href="../com1DFAAlgorithm.html#compute-lateral-pressure-forces" title="Go to: Add lateral pressure force" target="_top"];
 
@@ -75,7 +78,7 @@ digraph "com1DFA algorithm graph" {
   initializeFields -> timeLoop [weight=10,ltail=cluster_initialization];
   timeLoop -> intermediate0 [weight=10, arrowhead=none];
   intermediate0 -> artifViscosity [weight=10,lhead=cluster_Forces];
-  updateMassEntr -> computeSPHForce [weight=10, ltail=cluster_Forces];
+  updateMassDetr -> computeSPHForce [weight=10, ltail=cluster_Forces];
   computeSPHForce -> intermediate1 [weight=10, arrowhead=none];
   intermediate1 -> updateVelocityDrive [weight=10,lhead=cluster_2];
   correctPartPos -> addSecRelease [weight=10,ltail=cluster_2];
@@ -116,6 +119,7 @@ digraph "com1DFA algorithm graph" {
     computeFrictForce -> computeGravityForce[weight=10];
     computeGravityForce -> computeResForce[weight=10];
     computeResForce -> updateMassEntr[weight=10];
+    updateMassEntr -> updateMassDetr[weight=10];
     label = "Compute Forces";
   }
 

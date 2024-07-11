@@ -13,9 +13,11 @@ Mass balance:
 .. math::
     \frac{d}{dt} \int\limits_{V(t)} \rho_0 \,\mathrm{d}V = \rho_0 \frac{dV(t)}{dt} =
     \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A
+    + \oint\limits_{\partial V(t)} q^{\text{det}} \,\mathrm{d}A
     :label: mass-balance1
 
-Where :math:`q^{\text{ent}}` represents the snow entrainment rate.
+Where :math:`q^{\text{ent}}` represents the snow entrainment rate, 
+:math:`q^{\text{det}}` the snow detrainment rate (:math:`q^{\text{det}} < 0`).
 
 Momentum balance:
 ~~~~~~~~~~~~~~~~~~~
@@ -56,8 +58,11 @@ Using the mass balance equation :eq:`mass-balance1`, we get:
 
 .. math::
    \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,\mathrm{d}A
-   + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
+   + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A - 
+   \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{det}} \,\mathrm{d}A, 
    :label: momentum-balance3
+   
+   \quad i=(1,2,3)
 
 Boundary conditions:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,6 +187,18 @@ breaking energy per fracture surface unit :math:`e_s`
 where :math:`q^{\text{ent}}` refers to the entrainable mass per surface area (:math:`kg.m^{-2}`)
 defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depending on whether entrainment is due to ploughing
 or erision, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively :math:`\dot{q}^{\text{ero}}`, over time. 
+
+Detrainment:
+"""""""""""""
+
+The detrained snow :math:`M_{det}` at obstacles (e.g., trees) is computed by following the approach of (:cite:`FeBeTeBuChThBa2014`):
+
+.. math::
+   \frac{\mathrm{d}M_{det}(t)}{\mathrm{d}t} = - K\,\frac{A_b}{\left\Vert \overline{\mathbf{u}}\right\Vert}
+   :label: mass-balance-detrainment
+   
+The parameter :math:`K` (:math:`Pa`) depends on the structure of the obstacles and the properties of the snow.
+
 
 Resistance:
 """""""""""""

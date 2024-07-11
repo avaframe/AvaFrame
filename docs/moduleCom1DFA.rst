@@ -225,6 +225,7 @@ The result types that can be chosen to be exported are (all correspond to fields
 * FM - flow mass
 * Vx, Vy, Vz - velocity x-, y- and z-component
 * TA - travel angle
+* dmDet - detrained mass
 * particles (:ref:`com1DFAAlgorithm:Particle properties`)
 
 Have a look at the designated subsection Output in ``com1DFA/com1DFACfg.ini``.
