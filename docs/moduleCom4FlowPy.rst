@@ -101,6 +101,7 @@ ii) additional modules (forest, infrastructure)
 
 - ``forest``: if set to ``True`` the runout calculation is performed with the *forest module* (a forest layer has to be provided)
 - ``infra``: if set to ``True`` the calculation is performend with the *backcalculation module* (an infrastructure layer has to be provided)
+- ``calcGeneration``: if set to ``True`` the calculation (iteration per cell) is done per generation (iteration). The results can vary. This computation is required for deriving thalwegs.
 
 iii) forest module parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

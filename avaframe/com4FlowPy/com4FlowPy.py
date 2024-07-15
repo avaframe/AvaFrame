@@ -72,6 +72,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # Flag for use of old flux distribution version
     modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
+    modelParameters["calcGeneration"] = cfgSetup.getboolean("calcGeneration")
 
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
@@ -262,10 +263,13 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     if modelParameters["fluxDistOldVersionBool"]:
         log.info("Calculation using old (BUGGY!!) version of flux distribution!")
         log.info("------------------------")
-    for param, value in MPOptions.items():
-        log.info(f"{'%s:'%param : <20}{value : <5}")
+    try:
+        for param, value in MPOptions.items():
+            log.info(f"{'%s:'%param : <20}{value : <5}")
         # log.info("{}:\t{}".format(param,value))
-    log.info("------------------------")
+        log.info("------------------------")
+    except:
+        log.info("------------------------")
     log.info(f"{'WorkDir:' : <12}{'%s'%modelPaths['workDir'] : <5}")
     log.info(f"{'ResultsDir:' : <12}{'%s'%modelPaths['resDir'] : <5}")
     # log.info("WorkDir: {}".format(modelPaths["workDir"]))
