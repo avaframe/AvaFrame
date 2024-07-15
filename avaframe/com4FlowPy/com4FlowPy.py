@@ -243,10 +243,13 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
         log.info("------------------------")
-    for param, value in MPOptions.items():
-        log.info(f"{'%s:'%param : <20}{value : <5}")
+    try:
+        for param, value in MPOptions.items():
+            log.info(f"{'%s:'%param : <20}{value : <5}")
         # log.info("{}:\t{}".format(param,value))
-    log.info("------------------------")
+        log.info("------------------------")
+    except:
+        log.info("------------------------")
     log.info(f"{'WorkDir:' : <12}{'%s'%modelPaths['workDir'] : <5}")
     log.info(f"{'ResultsDir:' : <12}{'%s'%modelPaths['resDir'] : <5}")
     # log.info("WorkDir: {}".format(modelPaths["workDir"]))
