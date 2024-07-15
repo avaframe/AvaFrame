@@ -73,6 +73,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # Flag for use of old flux distribution version
     modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
+    modelParameters["calcGeneration"] = cfgSetup.getboolean("calcGeneration")
 
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
