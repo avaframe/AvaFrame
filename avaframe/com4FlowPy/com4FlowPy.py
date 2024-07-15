@@ -82,7 +82,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelPaths["tempDir"] = cfgPath["tempDir"]
     modelPaths["uid"] = cfgPath["uid"]
     modelPaths["timeString"] = cfgPath["timeString"]
-    modelPaths["ouputFileList"] = cfgPath["outputFiles"].split('|')
+    modelPaths["outputFileList"] = cfgPath["outputFiles"].split('|')
 
     modelPaths["outputFileFormat"] = cfgPath["outputFileFormat"]
     if modelPaths["outputFileFormat"] in [".asc", ".ASC"]:
@@ -321,7 +321,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     and also writing result files to the resultDir
     """
     _uid = modelPaths["uid"]
-    _outputs = set(modelPaths['ouputFileList'])
+    _outputs = set(modelPaths['outputFileList'])
 
     log.info(" merging results ...")
     log.info("-------------------------")
