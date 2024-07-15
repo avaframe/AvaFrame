@@ -18,16 +18,19 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
+
 def read_raster(path):
     raster = rasterio.open(path)
     output = raster.read(1)
     return output
+
 
 def compare(path, pathRef):
     raster = read_raster(path)
     rasterRef = read_raster(pathRef)
     diff = np.diff(rasterRef - raster)
     return diff
+
 
 # Which result types for comparison plots
 outputVariable = ['FP_travel_angle', 'z_delta']
@@ -39,7 +42,7 @@ logName = 'runStandardTestsCom4FlowPy'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testDictList = tU.readAllBenchmarkDesDicts(info=False, inDir = pathlib.Path('..', 'benchmarksCom4FlowPy'))
+testDictList = tU.readAllBenchmarkDesDicts(info=False, inDir=pathlib.Path('..', 'benchmarksCom4FlowPy'))
 
 # filter benchmarks for tag standardTest
 #  filterType = 'TAGS'
@@ -109,8 +112,7 @@ for test in testList:
         pathRasterRef = refDir / ('%s.tif' % variable)
         pathRaster = compDir / ('%s.tif' % variable)
         diff = compare(pathRaster, pathRasterRef)
-        if np.sum(abs(diff[diff!=0])) != 0:
+        if np.sum(abs(diff[diff != 0])) != 0:
             log.info(f'{test['NAME']}: for {variable}: rasters are *NOT* equal')
         else:
             log.info(f'{test['NAME']}: for {variable}: rasters are equal')
-
