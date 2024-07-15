@@ -28,8 +28,10 @@ def read_raster(path):
 def compare(path, pathRef):
     raster = read_raster(path)
     rasterRef = read_raster(pathRef)
-    diff = np.diff(rasterRef - raster)
-    return diff
+    diff = rasterRef - raster
+    equal = np.array_equal(rasterRef, raster)
+    close = np.all(np.isclose(raster, rasterRef , rtol=1e-04, equal_nan=True))
+    return diff, equal, close
 
 
 # Which result types for comparison plots
@@ -111,8 +113,12 @@ for test in testList:
     for variable in outputVariable:
         pathRasterRef = refDir / ('%s.tif' % variable)
         pathRaster = compDir / ('%s.tif' % variable)
-        diff = compare(pathRaster, pathRasterRef)
-        if np.sum(abs(diff[diff != 0])) != 0:
-            log.info(f'{test['NAME']}: for {variable}: rasters are *NOT* equal')
-        else:
+        diff, eq, close = compare(pathRaster, pathRasterRef)
+
+        if eq and np.sum(abs(diff[diff != 0])) == 0:
             log.info(f'{test['NAME']}: for {variable}: rasters are equal')
+        else:
+            if close:
+                log.info(f'{test['NAME']}: for {variable}: rasters are *NOT* equal, but close (relative tolerance: 10^-4)')
+            else:
+                log.info(f'{test['NAME']}: for {variable}: rasters are *NOT* equal and NOT close (relative tolerance: 10^-4)')
