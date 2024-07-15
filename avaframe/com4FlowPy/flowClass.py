@@ -354,10 +354,10 @@ class Cell:
         row_local, col_local = np.where(self.dist > threshold)
 
         return (
-            self.rowindex - 1 + row_local,
-            self.colindex - 1 + col_local,
-            self.dist[row_local, col_local],
-            self.z_delta_neighbour[row_local, col_local],
+            list(self.rowindex - 1 + row_local),
+            list(self.colindex - 1 + col_local),
+            list(self.dist[row_local, col_local]),
+            list(self.z_delta_neighbour[row_local, col_local]),
         )
 
     def forest_detrainment(self):
