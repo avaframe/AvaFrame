@@ -507,7 +507,7 @@ def calculation(args):
                                     forestParams=forestParams,
                                             ))
                 if len(childList) > 0:
-                    cellList = childList               
+                    cellList = childList
                     genList.append(cellList)
                     childList = []
 
