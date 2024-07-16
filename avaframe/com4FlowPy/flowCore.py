@@ -434,9 +434,9 @@ def calculation(args):
         processedCells[(startcell.rowindex, startcell.colindex)] = 1
         # list of flowClass.Cell() Objects that is contains the "path" for each release-cell
         if calcGeneration:
-            cellList = [startcell] # list of parents for current iteration
-            genList = [cellList]  # list of all cells (which are calculated), oreganised in generations
-            childList = []         # list of childs of the current iteration
+            cellList = [startcell]  # list of parents for current iteration
+            genList = [cellList]    # list of all cells (which are calculated), oreganised in generations
+            childList = []          # list of childs of the current iteration
 
             for gen, cellList in enumerate(genList):
                 for idx, cell in enumerate(cellList):
@@ -576,8 +576,8 @@ def calculation(args):
                 for k in range(len(row)):
                     dem_ng = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
 
-                    # This bit handles edge cases and noData-values in the DEM!! this is an important piece of code, since
-                    # no-data handling is expected (by some users/applications) to behave like here:
+                    # This bit handles edge cases and noData-values in the DEM!! this is an important piece of 
+                    # code, sinceno-data handling is expected (by some users/applications) to behave like here:
                     # i.e. if nodata in the 3x3 neighbourhood --> no calculation
                     if (nodata in dem_ng) or np.size(dem_ng) < 9:
                         continue
