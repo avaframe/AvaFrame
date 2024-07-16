@@ -117,6 +117,10 @@ for test in testList:
         diff, eq, close = compare(pathRaster, pathRasterRef)
 
         if eq and np.sum(abs(diff[diff != 0])) == 0:
-            log.info(f'{test['NAME']}: for {variable}: rasters are equal')
+            message = f'{test['NAME']}: for {variable}: rasters are equal \n'
         else:
-            log.info(f'{test['NAME']}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4)')
+            message = f'{test['NAME']}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4) \n'
+        
+        log.info(message)
+        with open(reportFile, 'a') as pfile:
+           pfile.write(message )
