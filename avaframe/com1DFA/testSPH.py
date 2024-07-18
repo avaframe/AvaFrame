@@ -71,8 +71,8 @@ rho = 200
 
 def definePart(dx, dy, Lx, Ly):
     # define particles
-    nx = np.int(Lx/dx)-1
-    ny = np.int(Ly/dy)-1
+    nx = int(Lx/dx)-1
+    ny = int(Ly/dy)-1
     nPart = nx*ny
     x = np.linspace(dx, Lx-dx, nx)
     y = np.linspace(dy, Ly-dy, ny)
@@ -82,8 +82,9 @@ def definePart(dx, dy, Lx, Ly):
     # Xpart = np.array([50., 54.])
     # Ypart = np.array([51., 53.])
     # nPart = 2
-    Xpart = xx + (np.random.rand(nPart) - 0.5) * dx * coef
-    Ypart = yy + (np.random.rand(nPart) - 0.5) * dy * coef
+    rng = np.random.default_rng()
+    Xpart = xx + (rng.random(nPart) - 0.5) * dx * coef
+    Ypart = yy + (rng.random(nPart) - 0.5) * dy * coef
     # adding z component
     Zpart, sx, sy, area = Sfunction(Xpart, Ypart, Lx, Ly)
     Hpart, _, _, _ = Hfunction(Xpart, Ypart, Zpart)
@@ -107,8 +108,8 @@ def definePart(dx, dy, Lx, Ly):
 
 def defineGrid(Lx, Ly, csz):
     # define grid
-    NX = np.int(Lx/csz + 1)
-    NY = np.int(Ly/csz + 1)
+    NX = int(Lx/csz + 1)
+    NY = int(Ly/csz + 1)
     header = {}
     header['ncols'] = NX
     header['nrows'] = NY

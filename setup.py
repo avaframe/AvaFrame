@@ -20,6 +20,7 @@ from setuptools import Extension, setup, find_packages
 from pathlib import Path
 import sys
 import numpy
+sys.path.append(str(Path(__file__).parent))
 from avaframe.version import getVersion
 
 DISTNAME = "avaframe"
@@ -68,13 +69,14 @@ long_description = (this_directory / "README.md").read_text()
 
 
 # Decide whether a cythonization of the pyx-file is required.
-# if build_ext is supplied -> use cython
 nos = (None, "0", "false")
-subcommand = sys.argv[1] if len(sys.argv) > 1 else None
-use_cython = subcommand == "build_ext"  # This is possibly a bit hacky.
+# if no .c files are found build_ext is required
+use_cython = not list(Path().glob("**/*.c"))
 
+setup_options = {}
 if use_cython:
     print("Package is built with cythonization.")
+    setup_options = {"build_ext": {"inplace": True}}
 
 ext = ".pyx" if use_cython else ".c"
 
@@ -126,6 +128,8 @@ setup(
     install_requires=req_packages,
     # additional groups of dependencies here (e.g. development dependencies).
     extras_require={},
+    # Run build_ext
+    options=setup_options,
     # Executable scripts
     entry_points={},
     zip_safe=False,
