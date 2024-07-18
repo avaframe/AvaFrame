@@ -180,7 +180,7 @@ def mergeRaster(inDirPath, fName, method='max'):
 
     mergedRas = np.zeros((extL[0], extL[1]))
     # create Raster with original size
-    mergedRas[:, :] = np.NaN
+    mergedRas[:, :] = np.nan
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
