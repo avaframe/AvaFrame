@@ -18,6 +18,7 @@ else:
     from multiprocessing import Pool
 
 from avaframe.com4FlowPy.flowClass import Cell
+from avaframe.com4FlowPy.flowPath import Path
 
 
 def get_start_idx(dem, release):
@@ -159,9 +160,11 @@ def run(optTuple):
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
     calcGeneration = optTuple[2]["calcGeneration"]
+    calcThalweg = optTuple[2]["calcThalweg"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
+    thalwegDir = optTuple[3]["thalwegDir"]
 
     # raster-layer Attributes
     cellsize = float(optTuple[4]["cellsize"])
@@ -240,7 +243,7 @@ def run(optTuple):
                     varAlphaBool, varAlphaArray,
                     varExponentBool, varExponentArray,
                     forestArray, forestParams,
-                    calcGeneration,
+                    calcGeneration, calcThalweg, thalwegDir,
                 ]
                 for release_sub in release_list
             ],
@@ -366,6 +369,8 @@ def calculation(args):
     varExponentBool = args[15]
     varExponentArray = args[16]
     calcGeneration = args[19]
+    calcThalweg = args[20]
+    thalwegDir = args[21]
 
     if forestBool:
         forestArray = args[17]
@@ -511,6 +516,10 @@ def calculation(args):
                     cellList = childList
                     genList.append(cellList)
                     childList = []
+
+            if calcThalweg:
+                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList)
+                path.saveAllThalwegData(thalwegDir)
 
             for gen, cellList in enumerate(genList):
                 for cell in cellList:

@@ -42,7 +42,7 @@ class Cell:
         self.z_delta = z_delta
 
         self.alpha = float(alpha)
-        self.exp = int(exp)
+        self.exp = float(exp)
         self.max_z_delta = float(max_z_delta)
         self.flux_threshold = float(flux_threshold)
 
@@ -234,6 +234,7 @@ class Cell:
         self.z_delta_neighbour[self.z_delta_neighbour < 0] = 0
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
 
+
     def calc_tanbeta(self):
         _ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 1, 1], [self._SQRT2, 1, self._SQRT2]])
         _distance = _ds * self.cellsize
@@ -246,6 +247,13 @@ class Cell:
         self.tan_beta[1, 1] = 0
         if abs(np.sum(self.tan_beta)) > 0:
             self.r_t = self.tan_beta**self.exp / np.sum(self.tan_beta**self.exp)
+
+
+    def calcFlowEnergy(self):
+        # calculate flow energy (corresponding to kinetic energy)
+        # analog to: kin_energy = mass * velocity² / 2  
+    	self.flowEnergy = self.flux * self.z_delta * 9.81
+
 
     def calc_persistence(self):
         self.persistence = np.zeros_like(self.dem_ng)
@@ -323,6 +331,7 @@ class Cell:
                 # substituted by self.flux_threshold????
                 self.flux = max(0.0003, self.flux - self.detrainment)
 
+        self.calcFlowEnergy()
         threshold = self.flux_threshold
         if np.sum(self.r_t) > 0:
             self.dist = (self.persistence * self.r_t) / np.sum(self.persistence * self.r_t) * self.flux
