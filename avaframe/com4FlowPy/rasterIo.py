@@ -23,6 +23,10 @@ def read_header(input_file):
     header["yllcorner"] = (raster.transform * (0, raster.height))[1]
     header["cellsize"] = raster.transform[0]
     header["noDataValue"] = raster.nodata
+    try:
+        header["crs"] = raster.crs.to_string()
+    except:
+        header["crs"] = None
     return header
 
 
