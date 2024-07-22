@@ -98,6 +98,11 @@ def main():
             log.info('could not write  config to {}/{}.json'.format(cfgPath['outDir'], uid))
             log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
+        if cfgSetup["calcThalweg"] == "True":
+            cfgPath["thalwegDir"] = cfgPath["resDir"] / "thalwegData"
+            fU.makeADir(cfgPath["thalwegDir"])            
+        else:
+            cfgPath["thalwegDir"] = ""
         cfgPath["deleteTemp"] = "False"
 
         cfgPath["uid"] = uid
@@ -130,6 +135,15 @@ def main():
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
+        if cfgSetup["calcThalweg"] is True:
+            try:
+                os.makedirs(workDir / res_dir / "thalwegData")
+                thalwegDir = workDir / res_dir / "thalwegData"
+            except FileExistsError:
+                log.info("thalweg folder for simualtion {} already exists - aborting".format(uid))
+                sys.exit(1)
+        else:
+            thalwegDir = ""
         log = logUtils.initiateLogger(res_dir, logName)
 
         # writing config to .json file
@@ -142,6 +156,10 @@ def main():
             log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
         cfgPath["workDir"] = pathlib.Path(workDir)
+        if cfgSetup["calcThalweg"] is True:
+            cfgPath["thalwegDir"] = pathlib.Path(thalwegDir)
+        else:
+            cfgPath["thalwegDir"] = None
         cfgPath["outDir"] = pathlib.Path(res_dir)
         cfgPath["resDir"] = cfgPath["outDir"]
         cfgPath["tempDir"] = pathlib.Path(temp_dir)
@@ -356,7 +374,7 @@ def checkOutputFilesFormat(strOutputFiles):
     try:
         setA = set(strOutputFiles.split('|'))
         setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength',
-                    'slTravelAngle', 'flux', 'zDeltaSum', 'routFluxSum', 'depFluxSum'])
+                    'slTravelAngle', 'flux', 'zDeltaSum', 'routFluxSum', 'depFluxSum', 'velocityMax'])
         # if there is at least 1 correct outputfile defined, we use the string provided in the .ini file
         if (setA & setB):
             return strOutputFiles

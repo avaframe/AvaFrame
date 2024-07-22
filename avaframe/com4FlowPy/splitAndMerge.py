@@ -11,7 +11,7 @@ import avaframe.com4FlowPy.rasterIo as io
 log = logging.getLogger(__name__)
 
 
-def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
+def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False, returnHeader=False):
 
     # if not os.path.exists(dirName):
     #    os.makedirs(dirName)
@@ -148,6 +148,8 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     del largeRaster
     gc.collect()
     # return largeRaster
+    if returnHeader:
+        return largeHeader
 
 
 def mergeRaster(inDirPath, fName, method='max'):
@@ -165,6 +167,7 @@ def mergeRaster(inDirPath, fName, method='max'):
         method, how the tiles should be merged (default: max)
         method 'min' calculates the minimum of input raster tiles,
         if the minimum is < 0, then 0 is used
+        method 'sum' calculates the sum of the raster tiles
 
     Returns
     -------
@@ -181,6 +184,8 @@ def mergeRaster(inDirPath, fName, method='max'):
     mergedRas = np.zeros((extL[0], extL[1]))
     # create Raster with original size
     mergedRas[:, :] = np.nan
+    if method == 'sum':
+        mergedRas[:,:] = 0
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
@@ -198,6 +203,10 @@ def mergeRaster(inDirPath, fName, method='max'):
                     np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
                     np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
                     np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
+            if method == 'sum':
+                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.add(
+                    mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
+                )
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
     return mergedRas

@@ -74,6 +74,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Flag for use of old flux distribution version
     modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
     modelParameters["calcGeneration"] = cfgSetup.getboolean("calcGeneration")
+    modelParameters["calcThalweg"] = cfgSetup.getboolean("calcThalweg")
+    modelParameters["thalwegCenterOf"] = cfgSetup.get("thalwegCenterOf")
+    modelParameters["thalwegVariables"] = cfgSetup.get("thalwegVariables")
+
+    # modelParameters["infra"]  = cfgSetup["infra"]
+    # modelParameters["forest"] = cfgSetup["forest"]
 
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
@@ -98,6 +104,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         modelPaths["outputFileFormat"] = '.asc'
     else:
         modelPaths["outputFileFormat"] = '.tif'
+    modelPaths["thalwegDir"] = cfgPath["thalwegDir"]
 
     # check if 'customDirs' are used - alternative is 'default' AvaFrame Folder Structure
     modelPaths["useCustomDirs"] = True if cfgPath["customDirs"] == "True" else False
@@ -185,9 +192,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         raise ValueError(_errMsg)
 
     rasterAttributes["cellsize"] = demHeader["cellsize"]
+    rasterAttributes["xllcenter"] = demHeader["xllcenter"]
+    rasterAttributes["yllcenter"] = demHeader["yllcenter"]
+    rasterAttributes["nrows"] = demHeader["nrows"]
 
     # tile input layers and write tiles (pickled np.arrays) to temp Folder
-    nTiles = tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters)
+    nTiles, rasterAttributes = tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters)
 
     # now run the model for all tiles and save the results for each tile to the temp Folder
     performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttributes, forestParams, MPOptions)
@@ -349,7 +359,7 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
     log.info("---------------------")
 
     SPAM.tileRaster(modelPaths["demPath"], "dem", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
-    SPAM.tileRaster(modelPaths["releasePathWork"], "init", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U, isInit=True)
+    header = SPAM.tileRaster(modelPaths["releasePathWork"], "init", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U, isInit=True, returnHeader=True)
 
     if modelParameters["infraBool"]:
         SPAM.tileRaster(modelPaths["infraPath"], "infra", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
@@ -365,8 +375,9 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
     log.info("==================================")
 
     nTiles = pickle.load(open(modelPaths["tempDir"] / "nTiles", "rb"))
+    rasterAttributes["crs"] = header["crs"]
 
-    return nTiles
+    return nTiles, rasterAttributes
 
 
 def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttributes, forestParams, MPOptions):
@@ -408,9 +419,9 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
     cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
-    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
-    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum")
-    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum")
+    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
     fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
     travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
@@ -455,6 +466,11 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if 'travelLength' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
         _ts, _oF), travelLength)
+    if 'velocityMax' in _outputs:
+        # TODO: calculate velocity somewhere else??
+        vel = (zDelta * 2 * 9.81)**0.5
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_velocityMax{}".format(_uid,
+        _ts, _oF), vel)
 
     # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
     # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)

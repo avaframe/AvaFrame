@@ -18,6 +18,7 @@ else:
     from multiprocessing import Pool
 
 from avaframe.com4FlowPy.flowClass import Cell
+from avaframe.com4FlowPy.flowPath import Path
 
 
 def get_start_idx(dem, release):
@@ -160,13 +161,23 @@ def run(optTuple):
     varExponentBool = optTuple[2]["varExponentBool"]
     fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
     calcGeneration = optTuple[2]["calcGeneration"]
+    calcThalweg = optTuple[2]["calcThalweg"]
+    if calcThalweg:
+        thalwegDir = optTuple[3]["thalwegDir"]
+        thalwegCenterOf = optTuple[2]["thalwegCenterOf"]
+        thalwegVariables = optTuple[2]["thalwegVariables"]
+        thalwegParameters = {"thalwegDir": thalwegDir,
+                             "thalwegCenterOf": thalwegCenterOf,
+                             "thalwegVariables": thalwegVariables}
+    else:
+        thalwegParameters = None
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
+    
 
     # raster-layer Attributes
-    cellsize = float(optTuple[4]["cellsize"])
-    nodata = float(optTuple[4]["nodata"])
+    rasterAttributes = optTuple[4]
 
     MPOptions = optTuple[6]  # CPU, Multiprocessing options ...
 
@@ -244,11 +255,11 @@ def run(optTuple):
                 [   # TODO: write in dicts:
                     dem, infra, release_sub,
                     alpha, exp, flux_threshold, max_z_delta,
-                    nodata, cellsize,
+                    rasterAttributes,
                     infraBool, forestBool,
                     varParams, fluxDistOldVersionBool,
                     forestArray, forestParams,
-                    calcGeneration,
+                    calcGeneration, calcThalweg, thalwegParameters,
                 ]
                 for release_sub in release_list
             ],
@@ -346,7 +357,7 @@ def calculation(args):
         header      The header of the elevation model
         infra       The infra layer
         release     The list of release arrays
-        alpha
+        rasterAttributes
         exp
         flux_threshold
         max_z_delta
@@ -373,22 +384,28 @@ def calculation(args):
     exp = args[4]
     flux_threshold = args[5]
     max_z_delta = args[6]
-    nodata = args[7]
-    cellsize = args[8]
-    infraBool = args[9]
-    forestBool = args[10]
-    varUmaxBool = args[11]['varUmaxBool']
-    varUmaxArray = args[11]['varUmaxArray']
-    varAlphaBool = args[11]['varAlphaBool']
-    varAlphaArray = args[11]['varAlphaArray']
-    varExponentBool = args[11]['varExponentBool']
-    varExponentArray = args[11]['varExponentArray']
-    fluxDistOldVersionBool = args[12]
-    calcGeneration = args[15]
+
+    rasterAttributes = args[7]
+    infraBool = args[8]
+    forestBool = args[9]
+    varUmaxBool = args[10]['varUmaxBool']
+    varUmaxArray = args[10]['varUmaxArray']
+    varAlphaBool = args[10]['varAlphaBool']
+    varAlphaArray = args[10]['varAlphaArray']
+    varExponentBool = args[10]['varExponentBool']
+    varExponentArray = args[10]['varExponentArray']
+    fluxDistOldVersionBool = args[11]
+    calcGeneration = args[14]
+    calcThalweg = args[15]
+    thalwegParameters = args[16]
+    
+
+    nodata = rasterAttributes["nodata"]
+    cellsize = rasterAttributes["cellsize"]
 
     if forestBool:
-        forestArray = args[13]
-        forestParams = args[14]
+        forestArray = args[12]
+        forestParams = args[13]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -469,7 +486,8 @@ def calculation(args):
                         # mass, row, col  = list(zip(*sorted(zip( mass, row, col), reverse=False)))
                         z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                         # Sort this lists by elh, to start with the highest cell
-
+                    
+                    '''
                     # check if cell already exists
                     for i in range(len(cellList)):  # Check if Cell already exists
                         k = 0
@@ -485,6 +503,7 @@ def calculation(args):
                                 z_delta = np.delete(z_delta, k)
                             else:
                                 k += 1
+                    '''
 
                     for i in range(len(childList)):  # Check if Cell already exists in childList
                         k = 0
@@ -532,6 +551,10 @@ def calculation(args):
                     cellList = childList
                     genList.append(cellList)
                     childList = []
+
+            if calcThalweg:
+                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList, rasterAttributes)
+                path.calcAndSaveThalwegData(thalwegParameters)
 
             for gen, cellList in enumerate(genList):
                 for cell in cellList:
