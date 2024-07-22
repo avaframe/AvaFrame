@@ -67,6 +67,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
     modelParameters["varExponentBool"] = cfgSetup.getboolean("variableExponent")
     modelParameters["calcGeneration"] = cfgSetup.getboolean("calcGeneration")
+    modelParameters["calcThalweg"] = cfgSetup.getboolean("calcThalweg")
+
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
@@ -84,6 +86,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     modelPaths["resDir"] = cfgPath["resDir"]
     modelPaths["tempDir"] = cfgPath["tempDir"]
+    modelPaths["thalwegDir"] = cfgPath["thalwegDir"]
 
     # check if 'customDirs' are used - alternative is 'default' AvaFrame Folder Structure
     modelPaths["useCustomDirs"] = True if cfgPath["customDirs"] == "True" else False

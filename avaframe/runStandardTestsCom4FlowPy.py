@@ -99,6 +99,7 @@ for test in testList:
     cfgPath["customDirs"] = False
     cfgPath["resDir"] = compDir
     fU.makeADir(cfgPath["resDir"])
+    cfgPath["thalwegDir"] = cfgPath["resDir"] / "thalwegData"
     cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
     fU.makeADir(cfgPath["tempDir"])
     cfgPath["deleteTemp"] = "False"

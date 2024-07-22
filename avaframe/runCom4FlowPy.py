@@ -74,7 +74,8 @@ def main():
         fU.makeADir(cfgPath["resDir"])
         cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
         fU.makeADir(cfgPath["tempDir"])
-
+        cfgPath["thalwegDir"] = cfgPath["resDir"] / "thalwegData"
+        fU.makeADir(cfgPath["thalwegDir"])
         cfgPath["deleteTemp"] = "False"
 
         com4FlowPy.com4FlowPyMain(cfgPath, cfgSetup)
@@ -100,8 +101,11 @@ def main():
         except FileExistsError:
             print("temp folder already exists - aborting")
             sys.exit(1)
+        os.makedirs(res_dir / "thalwegData")
+        thalwegDir = res_dir / "thalwegData"
 
         cfgPath["workDir"] = pathlib.Path(workDir)
+        cfgPath["thalwegDir"] = pathlib.Path(thalwegDir)
         cfgPath["outDir"] = pathlib.Path(res_dir)
         cfgPath["resDir"] = cfgPath["outDir"]
         cfgPath["tempDir"] = pathlib.Path(temp_dir)
