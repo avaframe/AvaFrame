@@ -79,6 +79,7 @@ for test in testList:
 
     avaDir = test['AVADIR']
     cfgMain['MAIN']['avalancheDir'] = avaDir
+    testName = test['NAME']
 
     # Fetch benchmark test info
     refDir = pathlib.Path('..', 'benchmarksCom4FlowPy', test['NAME'])
@@ -117,9 +118,9 @@ for test in testList:
         diff, eq, close = compare(pathRaster, pathRasterRef)
 
         if eq and np.sum(abs(diff[diff != 0])) == 0:
-            message = f'{test['NAME']}: for {variable}: rasters are equal \n'
+            message = f'{testName}: for {variable}: rasters are equal \n'
         else:
-            message = f'{test['NAME']}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4) \n'
+            message = f'{testName}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4) \n'
         
         log.info(message)
         with open(reportFile, 'a') as pfile:
