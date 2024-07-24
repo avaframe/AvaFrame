@@ -1562,8 +1562,8 @@ def snapPtsToLine(dbData, projstr, lineName, pointsList):
         dbData["distanceXY"] = np.empty(len(dbData))
 
     for index, row in dbData.iterrows():
-        xcoor = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[0]
-        ycoor = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[1]
+        xcoor = np.asarray(dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[0])
+        ycoor = np.asarray(dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[1])
         zcoorTemp = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords
         zcoor = np.asarray([coord[2] for coord in zcoorTemp])
 
