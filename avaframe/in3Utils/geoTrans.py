@@ -1562,8 +1562,7 @@ def snapPtsToLine(dbData, projstr, lineName, pointsList):
         dbData["distanceXY"] = np.empty(len(dbData))
 
     for index, row in dbData.iterrows():
-        xcoor = np.asarray(dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[0])
-        ycoor = np.asarray(dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy[1])
+        xycoor = np.asarray(dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords.xy)
         zcoorTemp = dbData.loc[index, ("%s_%s_resampled" % (lineName, projstr))].coords
         zcoor = np.asarray([coord[2] for coord in zcoorTemp])
 
@@ -1573,8 +1572,8 @@ def snapPtsToLine(dbData, projstr, lineName, pointsList):
                 "y": [dbData.loc[index, ("%s_%s" % (pt, projstr))].y],
             }
 
-            indSplit = findClosestPoint(xcoor, ycoor, pointsDict)
-            projPoint = shp.Point(xcoor[indSplit], ycoor[indSplit], zcoor[indSplit])
+            indSplit = findClosestPoint(xycoor[0,:], xycoor[1,:], pointsDict)
+            projPoint = shp.Point(xycoor[0, indSplit], xycoor[1, indSplit], zcoor[indSplit])
             dbData.loc[index, (pt + "_" + projstr + "_snapped")] = projPoint
 
     return dbData
