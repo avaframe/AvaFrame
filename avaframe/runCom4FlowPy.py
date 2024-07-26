@@ -8,6 +8,7 @@ import os
 import sys
 from datetime import datetime
 import logging
+import json
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
@@ -88,6 +89,15 @@ def main():
             cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
             fU.makeADir(cfgPath["tempDir"])
 
+        # writing config to .json file
+        successToJSON = writeCfgJSON(cfg, uid, cfgPath['outDir'])
+
+        if successToJSON is True:
+            log.info('wrote config to {}/{}.json'.format(cfgPath['outDir'], uid))
+        else:
+            log.info('could not write  config to {}/{}.json'.format(cfgPath['outDir'], uid))
+            log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
+
         cfgPath["deleteTemp"] = "False"
 
         cfgPath["uid"] = uid
@@ -121,6 +131,15 @@ def main():
             print("temp folder already exists - aborting")
             sys.exit(1)
         log = logUtils.initiateLogger(res_dir, logName)
+
+        # writing config to .json file
+        successToJSON = writeCfgJSON(cfg, uid, workDir)
+
+        if successToJSON is True:
+            log.info('wrote config to {}/{}.json'.format(workDir, uid))
+        else:
+            log.info('could not write  config to {}/{}.json'.format(workDir, uid))
+            log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
         cfgPath["workDir"] = pathlib.Path(workDir)
         cfgPath["outDir"] = pathlib.Path(res_dir)
@@ -346,6 +365,36 @@ def checkOutputFilesFormat(strOutputFiles):
     except ValueError:
         # else we return the default options
         return 'zDelta|cellCounts|travelLength|fpTravelAngle'
+
+
+def writeCfgJSON(cfg, uid, workDir):
+    """
+    writes a JSON file containing all the input parameters from the configFile
+    using the same uid as the simulation results
+
+    Parameters:
+    ---------------
+    cfg: configParser object - all the model configs are in here
+    uid: string - UID created based on the cfg object
+    workDir: string - workDirectory (place to write the .json file to)
+
+    Returns:
+    ---------------
+    success: boolean/Exception - True if file is written successfully, else Exception
+
+    """
+
+    cfgDict = cfgUtils.convertConfigParserToDict(cfg)
+
+    try:
+        with open(workDir / "{}.json".format(uid), 'w') as outfile:
+            jsonDict = json.dumps(cfgDict, sort_keys=True, ensure_ascii=True)
+            outfile.write(jsonDict)
+
+        return True
+
+    except Exception as e:
+        return e
 
 
 if __name__ == "__main__":

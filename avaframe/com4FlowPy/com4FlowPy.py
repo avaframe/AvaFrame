@@ -173,6 +173,10 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
         demHeader = io.read_header(modelPaths["demPath"])
         rasterAttributes["nodata"] = demHeader["noDataValue"]
+    else:
+        _errMsg = f"file format '{demExt}' for DEM is not supported, please provide '.tif' or '.asc'"
+        log.error(_errMsg)
+        raise ValueError(_errMsg)
 
     rasterAttributes["cellsize"] = demHeader["cellsize"]
 
@@ -267,6 +271,9 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
             _demHeader = io.read_header(modelPaths["demPath"])
             _relHeader = io.read_header(modelPaths["releasePathWork"])
+        else:
+            _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
+            raise ValueError(_errMsg)
 
         if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
             log.info("DEM and Release Layer ok!")
@@ -470,8 +477,15 @@ def checkConvertReleaseShp2Tif(modelPaths):
             dem = IOf.readRaster(modelPaths["demPath"])
             demHeader = IOf.readASCheader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            dem = io.read_raster(modelPaths["demPath"])
-            demHeader = io.read_header(modelPaths["demPath"])
+            #dem = io.read_raster(modelPaths["demPath"])
+            #demHeader = io.read_header(modelPaths["demPath"])
+            _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
+            log.error(_errMsg)
+            raise ValueError(_errMsg)  
+        else:
+            _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
+            log.error(_errMsg)
+            raise ValueError(_errMsg)
 
         dem['originalHeader'] = demHeader
 
