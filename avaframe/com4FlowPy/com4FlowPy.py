@@ -124,6 +124,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         # 'forestFrictionLayer' parameter
         forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
         forestParams["nSkipForest"] = cfgSetup.getint("skipForestCells")
+        forestParams["skipForestDist"] = cfgSetup.getfloat("skipForestDist")
 
     else:
         modelPaths["forestPath"] = ""
