@@ -183,6 +183,18 @@ where :math:`q^{\text{ent}}` refers to the entrainable mass per surface area (:m
 defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depending on whether entrainment is due to ploughing
 or erision, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively :math:`\dot{q}^{\text{ero}}`, over time. 
 
+Detrainment:
+"""""""""""""
+
+The detrained snow at obstacles (e.g., trees) is computed by:
+
+.. math::
+   \frac{\mathrm{d}M_{det}(t)}{\mathrm{d}t} = - K\,\frac{A_b}{\left\Vert \overline{\mathbf{u}}\right\Vert}
+   :label: mass-balance-detrainment
+   
+The parameter :math:`K` (:math:`Pa`) depends on the structure of the obstacles and the properties of the snow (:cite:`FeBeTeBuChThBa2014`).
+
+
 Resistance:
 """""""""""""
 
