@@ -69,7 +69,6 @@ long_description = (this_directory / "README.md").read_text()
 
 
 # Decide whether a cythonization of the pyx-file is required.
-nos = (None, "0", "false")
 # if no .c files are found build_ext is required
 use_cython = not list(Path().glob("**/*.c"))
 
