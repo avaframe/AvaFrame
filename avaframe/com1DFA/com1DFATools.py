@@ -16,6 +16,8 @@ import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.com1DFA import com1DFA
 from avaframe.in1Data import getInput as gI
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
+
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -297,11 +299,14 @@ def initializeInputs(avalancheDir, cleanRemeshedRasters):
     modName = str(pathlib.Path(com1DFA.__file__).stem)
 
     # Create output and work directories
-    _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanRemeshedRasters)
+    _ , outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanDEMremeshed)
+    configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFilesDone')
+    fU.makeADir(configDir)
 
     # first fetch info on already existing simulations in Outputs
-    # if it is needed to reproduce exactly the hash - need to be strings with exactly the same number of digits!!
-    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir="")
+    # if need to reproduce exactly the hash - need to be strings with exactly the same number of digits!!
+    # serachCfgFiles=True enables to search for preformed sims if run has been interrupted
+    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='', searchCfgFiles=True)
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
     inputSimFilesAll = gI.getInputDataCom1DFA(avalancheDir)

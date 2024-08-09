@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 def readDEM(avaDir):
-    """read the ascii DEM file from a provided avalanche directory
+    """ read the ascii DEM file from a provided avalanche directory
 
     Parameters
     ----------
