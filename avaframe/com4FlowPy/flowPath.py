@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import csv
+import pickle
 
 class Path:
     '''Class contains a path, containing one startcell  and corresponding child cells'''
@@ -154,15 +155,18 @@ class Path:
         '''
 
         self.dropHeightCoE = max(self.altitudeCoE)-min(self.altitudeCoE)
-        self.travelLengthCoE = max(self.sCoE)
+        self.travelLengthCoE = max(self.travelLengthCoE)
         if self.dropHeightCoE > 0:
             self.runoutAngleCoE = np.rad2deg(np.arctan(self.dropHeightCoE / self.travelLengthCoE))
-
+        else:
+            self.runoutAngleCoE = np.nan
         self.dropHeightCoF = max(self.altitudeCoF)-min(self.altitudeCoF)
-        self.travelLengthCoF = max(self.sCoF)
+        self.travelLengthCoF = max(self.travelLengthCoF)
         if self.dropHeightCoF > 0:
             self.runoutAngleCoF = np.rad2deg(np.arctan(self.dropHeightCoF / self.travelLengthCoF))
-
+        else:
+            self.runoutAngleCoF = np.nan
+            
 
     def saveThalwegData(self, variable, variableValue, saveDir):
         '''
@@ -191,13 +195,13 @@ class Path:
 
         for varName in variables:
             value = getattr(self, f'{varName}CoE')
-            self.saveThalwegData(varName, value, saveDir)
+            #self.saveThalwegData(varName, value, saveDir)
 
         metaData = {'alpha': round(self.alpha,1),
                     'exponent': self.exp,
                     'zDeltaMax': round(self.maxZDelta,1),
                     }
-        np.save(saveDir / (f"meta.npy"), metaData)
+        #np.save(saveDir / (f"meta.npy"), metaData)
 
         self.saveDict(saveDir)
 
@@ -230,25 +234,26 @@ class Path:
                 value = getattr(self, f'{varName}{co}')
                 thalwegData[f'{varName}{co}'] = value
 
-        self.getPathArrays()
-        thalwegData['flowEnergyArray'] = self.flowEnergyArray
-        thalwegData['zDeltaArray'] = self.zDeltaArray
-        thalwegData['fluxArray'] = self.fluxArray
+        #self.getPathArrays()
+        #thalwegData['flowEnergyArray'] = self.flowEnergyArray
+        #thalwegData['zDeltaArray'] = self.zDeltaArray
+        #thalwegData['fluxArray'] = self.fluxArray
 
-        self.stoppingCriteris()
+        self.stoppingCriteria()
         thalwegData['StoppingAlpha'] = self.StoppingAlpha
         thalwegData['StoppingVmax'] = self.StoppingVmax
-        np.save(saveDir / (f"thalwegData_{self.startcellRow}_{self.startcellCol}.npy"), thalwegData)
+        #np.save(saveDir / (f"thalwegData_{self.startcellRow}_{self.startcellCol}.npy"), thalwegData)
+        with open(saveDir / (f"thalwegData_{self.startcellRow}_{self.startcellCol}.pickle"), 'wb') as handle:
+            pickle.dump(thalwegData, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    def stoppingCriteria(self):
+        self.calcRunoutAngle()
+        if np.isclose(self.runoutAngleCoE, self.alpha):
+            self.StoppingAlpha = True
+        else:
+            self.StoppingAlpha = False
 
-def stoppingCriteria(self):
-    self.calcRunoutAngle()
-    if self.runoutAngleCoE == self.alpha:
-        self.StoppingAlpha = True
-    else:
-        self.StoppingAlpha = False
-
-    if max(self.zDeltaCoE) == self.maxZDelta:  #TODO: max(self.zDeltaCoE) oder max(self.zDeltaGeneration)??
-        self.StopppingVmax = True
-    else:
-        self.StoppingVmax = False
+        if max(self.zDeltaCoE) == self.maxZDelta:  #TODO: max(self.zDeltaCoE) oder max(self.zDeltaGeneration)??
+            self.StoppingVmax = True
+        else:
+            self.StoppingVmax = False
