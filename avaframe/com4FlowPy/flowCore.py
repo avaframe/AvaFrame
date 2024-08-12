@@ -161,14 +161,22 @@ def run(optTuple):
     varExponentBool = optTuple[2]["varExponentBool"]
     calcGeneration = optTuple[2]["calcGeneration"]
     calcThalweg = optTuple[2]["calcThalweg"]
+    if calcThalweg:
+        thalwegDir = optTuple[3]["thalwegDir"]
+        thalwegCenterOf = optTuple[2]["thalwegCenterOf"]
+        thalwegVariables = optTuple[2]["thalwegVariables"]
+        thalwegParameters = {"thalwegDir": thalwegDir,
+                             "thalwegCenterOf": thalwegCenterOf,
+                             "thalwegVariables": thalwegVariables}
+    else:
+        thalwegParameters = None
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
-    thalwegDir = optTuple[3]["thalwegDir"]
+    
 
     # raster-layer Attributes
-    cellsize = float(optTuple[4]["cellsize"])
-    nodata = float(optTuple[4]["nodata"])
+    rasterAttributes = optTuple[4]
 
     MPOptions = optTuple[6]  # CPU, Multiprocessing options ...
 
@@ -237,13 +245,13 @@ def run(optTuple):
                 [
                     dem, infra, release_sub,
                     alpha, exp, flux_threshold, max_z_delta,
-                    nodata, cellsize,
+                    rasterAttributes,
                     infraBool, forestBool,
                     varUmaxBool, varUmaxArray,
                     varAlphaBool, varAlphaArray,
                     varExponentBool, varExponentArray,
                     forestArray, forestParams,
-                    calcGeneration, calcThalweg, thalwegDir,
+                    calcGeneration, calcThalweg, thalwegParameters,
                 ]
                 for release_sub in release_list
             ],
@@ -331,7 +339,7 @@ def calculation(args):
         header      The header of the elevation model
         infra       The infra layer
         release     The list of release arrays
-        alpha
+        rasterAttributes
         exp
         flux_threshold
         max_z_delta
@@ -358,23 +366,25 @@ def calculation(args):
     exp = args[4]
     flux_threshold = args[5]
     max_z_delta = args[6]
-    nodata = args[7]
-    cellsize = args[8]
-    infraBool = args[9]
-    forestBool = args[10]
-    varUmaxBool = args[11]
-    varUmaxArray = args[12]
-    varAlphaBool = args[13]
-    varAlphaArray = args[14]
-    varExponentBool = args[15]
-    varExponentArray = args[16]
-    calcGeneration = args[19]
-    calcThalweg = args[20]
-    thalwegDir = args[21]
+    rasterAttributes = args[7]
+    infraBool = args[8]
+    forestBool = args[9]
+    varUmaxBool = args[10]
+    varUmaxArray = args[11]
+    varAlphaBool = args[12]
+    varAlphaArray = args[13]
+    varExponentBool = args[14]
+    varExponentArray = args[15]
+    calcGeneration = args[18]
+    calcThalweg = args[19]
+    thalwegParameters = args[20]
+
+    nodata = rasterAttributes["nodata"]
+    cellsize = rasterAttributes["cellsize"]
 
     if forestBool:
-        forestArray = args[17]
-        forestParams = args[18]
+        forestArray = args[16]
+        forestParams = args[17]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -518,8 +528,8 @@ def calculation(args):
                     childList = []
 
             if calcThalweg:
-                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList)
-                path.saveAllThalwegData(thalwegDir)
+                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList, rasterAttributes)
+                path.calcAndSaveThalwegData(thalwegParameters)
 
             for gen, cellList in enumerate(genList):
                 for cell in cellList:

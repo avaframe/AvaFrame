@@ -11,7 +11,7 @@ import avaframe.com4FlowPy.rasterIo as io
 log = logging.getLogger(__name__)
 
 
-def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
+def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False, returnHeader=False):
 
     # if not os.path.exists(dirName):
     #    os.makedirs(dirName)
@@ -148,6 +148,8 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     del largeRaster
     gc.collect()
     # return largeRaster
+    if returnHeader:
+        return largeHeader
 
 
 def mergeRaster(inDirPath, fName, method='max'):

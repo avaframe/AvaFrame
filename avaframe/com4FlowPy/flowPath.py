@@ -6,9 +6,14 @@ import pickle
 class Path:
     '''Class contains a path, containing one startcell  and corresponding child cells'''
 
-    def __init__(self, dem, startcellRow, startcellCol, genList):
+    def __init__(self, dem, startcellRow, startcellCol, genList, rasterAttributes):
         self.dem = dem
-        self.cellsize = genList[0][0].cellsize
+        self.cellsize = rasterAttributes["cellsize"]
+        self.xllcorner = rasterAttributes["xllcenter"] - self.cellsize / 2
+        self.yllcorner = rasterAttributes["yllcenter"] - self.cellsize / 2
+        self.nrows = rasterAttributes["nrows"]
+        self.crs = rasterAttributes["crs"]
+
         self.alpha = genList[0][0].alpha
         self.exp = genList[0][0].exp
         self.maxZDelta = genList[0][0].max_z_delta
@@ -38,7 +43,12 @@ class Path:
         #self.pathArea = 0
         self.flux_gen = []
 
-    
+    def indizesToCoords(self, cols, rows):
+        x = cols * self.cellsize + self.xllcorner
+        y = self.yllcorner + (self.nrows - rows) * self.cellsize
+        return x,y
+
+
     def getVariablesGeneration(self):
         '''
             write LISTS with size and format of genList 
@@ -137,6 +147,8 @@ class Path:
         self.getVariablesGeneration()
 
         for varName in variables:
+            if varName in ['s', 'z', 'x', 'y']:
+                continue
             values = getattr(self, f'{varName}Generation')
             sumF, coF = self.calcThalwegCenterof(values, self.fluxGeneration) # center of flux of every variable
             sumE, coE = self.calcThalwegCenterof(values, self.flowEnergyGeneration) # center of energy of every variable
@@ -166,85 +178,7 @@ class Path:
             self.runoutAngleCoF = np.rad2deg(np.arctan(self.dropHeightCoF / self.travelLengthCoF))
         else:
             self.runoutAngleCoF = np.nan
-            
 
-    def saveThalwegData(self, variable, variableValue, saveDir):
-        '''
-        Parameters:
-
-        variable: str
-            name of variable that is saved
-        
-        variableValue: np.array
-            Array of thalweg data that is saved
-
-        saveDir: pathlib.PosixPath
-            directory, in which the thalweg data is saved
-
-        '''
-
-        with open(saveDir / (f"{variable}.csv"), mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(variableValue)
-
-
-    def saveAllThalwegData(self, saveDir):   
-        variables = ['col', 'row', 'flux', 'flowEnergy', 'altitude', 'travelLength', 'zDelta', 'gamma']
-
-        self.getCenterofs(variables)
-
-        for varName in variables:
-            value = getattr(self, f'{varName}CoE')
-            #self.saveThalwegData(varName, value, saveDir)
-
-        metaData = {'alpha': round(self.alpha,1),
-                    'exponent': self.exp,
-                    'zDeltaMax': round(self.maxZDelta,1),
-                    }
-        #np.save(saveDir / (f"meta.npy"), metaData)
-
-        self.saveDict(saveDir)
-
-        '''
-        f = open(saveDir / (f"meta.csv"), mode='a')
-        f.write(f'alpha: {round(self.alpha,2)}° \n \
-                exponent: {self.exp}  \n \
-                max zDelta: {round(self.maxZDelta,2)} m \n \
-                v max: {round(np.sqrt(self.maxZDelta * 2 * 9.81),2)} m/s \n')
-        f.close()
-        '''
-
-    def saveDict(self, saveDir):
-        """
-        save thalweg data. (One file per thalweg)
-        Parameters:
-
-        saveDir: pathlib.PosixPath
-            directory, in which the thalweg data is saved
-
-        """
-        thalwegData = {'alpha': round(self.alpha,1),
-                    'exponent': self.exp,
-                    'zDeltaMax': round(self.maxZDelta,1),
-                    }
-        variables = ['col', 'row', 'flux', 'flowEnergy', 'altitude', 'travelLength', 'zDelta', 'gamma']
-        centerOfs = ['CoE', 'CoF', 'CoZd']
-        for varName in variables:
-            for co in centerOfs:
-                value = getattr(self, f'{varName}{co}')
-                thalwegData[f'{varName}{co}'] = value
-
-        #self.getPathArrays()
-        #thalwegData['flowEnergyArray'] = self.flowEnergyArray
-        #thalwegData['zDeltaArray'] = self.zDeltaArray
-        #thalwegData['fluxArray'] = self.fluxArray
-
-        self.stoppingCriteria()
-        thalwegData['StoppingAlpha'] = self.StoppingAlpha
-        thalwegData['StoppingVmax'] = self.StoppingVmax
-        #np.save(saveDir / (f"thalwegData_{self.startcellRow}_{self.startcellCol}.npy"), thalwegData)
-        with open(saveDir / (f"thalwegData_{self.startcellRow}_{self.startcellCol}.pickle"), 'wb') as handle:
-            pickle.dump(thalwegData, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def stoppingCriteria(self):
         self.calcRunoutAngle()
@@ -257,3 +191,78 @@ class Path:
             self.StoppingVmax = True
         else:
             self.StoppingVmax = False
+
+
+    def saveDict(self, saveDir, centerOfs, variables):
+        """
+        save thalweg data. (One file per thalweg)
+
+        Parameters:
+        ------------
+        saveDir: pathlib.PosixPath
+            directory, in which the thalweg data is saved
+
+        """
+        thalwegData = {'alpha': round(self.alpha,1),
+                    'exponent': self.exp,
+                    'zDeltaMax': round(self.maxZDelta,1),
+                    'crs': self.crs,
+                    }
+        variables = variables
+        centerOfs = centerOfs
+        
+        for co in centerOfs:
+            for varName in variables:
+                if varName in ['x', 'y']:
+                    # compute x and y coordinates of thalweg
+                    x, y = self.indizesToCoords(getattr(self, f'col{co}'), getattr(self, f'row{co}'))
+                    setattr(self, f'x{co}', x)
+                    setattr(self, f'y{co}', y) 
+
+                if varName == 'z':
+                    value = getattr(self, f'altitude{co}')
+                elif varName == 's':
+                    value = getattr(self, f'travelLength{co}')
+                else:
+                    value = getattr(self, f'{varName}{co}')
+                thalwegData[f'{varName}'] = value
+                
+
+            #self.getPathArrays()
+            #thalwegData['flowEnergyArray'] = self.flowEnergyArray
+            #thalwegData['zDeltaArray'] = self.zDeltaArray
+            #thalwegData['fluxArray'] = self.fluxArray
+
+            #self.stoppingCriteria()
+            #thalwegData['StoppingAlpha'] = self.StoppingAlpha
+            #thalwegData['StoppingVmax'] = self.StoppingVmax
+            with open(saveDir / (f"thalwegData_{co}_{self.startcellRow}_{self.startcellCol}.pickle"), 'wb') as handle:
+                pickle.dump(thalwegData, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+    def calcAndSaveThalwegData(self, thalwegParameters):
+        saveDir = thalwegParameters["thalwegDir"]
+        cos = eval(thalwegParameters["thalwegCenterOf"])
+        variables = eval(thalwegParameters["thalwegVariables"])
+        centerOfs = []
+        for co in cos:
+            co.lower()
+            if co in ['energy', 'coe']:
+                centerOf = 'CoE'
+            elif co in ['flux', 'cof']:
+                centerOf = 'CoF'
+            elif co in ['zdelta', 'cozd']:
+                centerOf = 'CoZd'
+            centerOfs.append(centerOf)
+
+
+        if 's' in variables:
+            variables.append('travelLength')
+        if 'z' in variables:
+            variables.append('altitude')
+        if 'x' in variables or 'y' in variables:
+            variables.append('col')
+            variables.append('row')            
+        
+        self.getCenterofs(variables)
+        self.saveDict(saveDir, centerOfs, variables)
