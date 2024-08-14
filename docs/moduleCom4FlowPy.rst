@@ -151,7 +151,33 @@ When ``variableUmaxLim = True``, the type of the provided parameter is required:
 
 
 
-v) tiling and multiprocessing parameters
+v) thalweg output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To recieve thalweg data, the flags ``calcGeneration`` and ``calcThalweg`` are set to ``True``. 
+The results may vary due to a different iteration trough the cells (``calcGeneration = True``).
+The thalweg data are stored in a separate 'thalwegData'-folder in the output folder. For every thalweg that belongs to a cell assigned to a PRA a dictionary (in a pickle - file) i ssaved containing thalweg data.
+The thalweg is calculated as the center of energy, center of flux or center of zDelta in every iteration step. Of which variable the center is computed can be chosen in the parameter ``thalwegCenterOf`` that requires a list of the variable names (e.g., ``thalwegCenterOf = ['energy', 'flux', 'zDelta']``).
+The output parameters that are stored in the dictionary always contain the Flow-Py input parameters ``alpha``, ``zDeltaMax`` and ``exponent`` that are used for the path simulation. Additionaly parameters can be chosen via the parameter ``thalwegVariables``  (e.g., ``thalwegVariables = ['x', 'y', 'z', 'zDelta']``);
+possible output parameters are:
+
+* col - column coordinate of thalweg
+* row - row coordinate of thalweg
+* x - x coordinate of thalweg (in the coordinate system of the PRA-raster file)
+* y - y coordinate of the thalweg (in the coordinate system of the PRA-raster file)
+* z or altitude - elevation along thalweg
+* flux - flux along thalweg
+* zDelta - velocity alitude along thalweg 
+* flowEnergy - flow energy (:math:`= flux * zdelta * g`, with gravitational acceleration :math:`g`) along thalweg
+* gamma - travel angle along thalweg
+* s or travelLength - horizontally projected travel length along thalweg
+* flowEnergyArray - flow energy of the path (2 dimensional array)
+* zDeltaArray - velocity altitude of the path (2 dimensional array)
+* fluxArray - flux of the path (2 dimensional array)
+
+
+
+vi) tiling and multiprocessing parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the model extent (i.e. number of cells and/or rows in the input layers) is larger than ``tileSize``, then :py:mod:`com4FlowPy` 
