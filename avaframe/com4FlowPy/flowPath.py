@@ -144,10 +144,11 @@ class Path:
         variables: list
             List of variables that should be weighted (with center of energy and flux)
         '''
+              
         self.getVariablesGeneration()
 
         for varName in variables:
-            if varName in ['s', 'z', 'x', 'y']:
+            if varName in ['s', 'z', 'x', 'y', 'flowEnergyArray', 'zDeltaArray', 'fluxArray']:
                 continue
             values = getattr(self, f'{varName}Generation')
             sumF, coF = self.calcThalwegCenterof(values, self.fluxGeneration) # center of flux of every variable
@@ -219,19 +220,16 @@ class Path:
                     setattr(self, f'x{co}', x)
                     setattr(self, f'y{co}', y) 
 
-                if varName == 'z':
+                if varName in ['flowEnergyArray', 'zDeltaArray', 'fluxArray']:
+                    self.getPathArrays()
+                    value = getattr(self, f'{varName}')
+                elif varName == 'z':
                     value = getattr(self, f'altitude{co}')
                 elif varName == 's':
                     value = getattr(self, f'travelLength{co}')
                 else:
                     value = getattr(self, f'{varName}{co}')
                 thalwegData[f'{varName}'] = value
-                
-
-            #self.getPathArrays()
-            #thalwegData['flowEnergyArray'] = self.flowEnergyArray
-            #thalwegData['zDeltaArray'] = self.zDeltaArray
-            #thalwegData['fluxArray'] = self.fluxArray
 
             #self.stoppingCriteria()
             #thalwegData['StoppingAlpha'] = self.StoppingAlpha
