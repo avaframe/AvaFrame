@@ -1640,3 +1640,66 @@ def plotRunoutLineComparisonToReference(cfgSetup, refLine, runoutLine, pathDict,
     # save figure
     outFileName = pathDict['projectName'] + '_runoutLinesComparison_%s_%s' % (simName, refLine['type'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def boxScalarMeasures(pathDict, resultsDF, name='', orderList=None):
+    """ create a boxplot for distribution of scalar measures deltaSXY, runoutAngle, max field values of pfv and pft
+
+        Parameters
+        -----------
+        pathDict: dict
+            dictionary with info on where to save plot
+        resultsDF: pandas Dataframe
+            one row per simulation with info on simulation results, aimec analysis and model configuration
+        name: str
+            name extension for plot name
+        orderList: lst
+            list of strings to order the appearance on x axis
+
+    """
+
+    # setup boxplot of resultsDF
+    fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(pU.figW * 2.4, pU.figH * 1.))
+    sns.boxplot(resultsDF, x='testCase', y='sRunout', ax=ax[0, 0], order=orderList)
+    sns.boxplot(resultsDF, x='testCase', y='runoutAngle', ax=ax[0, 1], order=orderList)
+    sns.boxplot(resultsDF, x='testCase', y='pfvFieldMax', ax=ax[1, 0], order=orderList)
+    sns.boxplot(resultsDF, x='testCase', y='pftFieldMax', ax=ax[1, 1], order=orderList)
+
+    # add single data points next to boxplot of distribution
+    for ind2, resVal2 in resultsDF.iterrows():
+        ax[0, 0].plot(resVal2['testCasePoints'], resVal2['sRunout'], 'b*')
+        ax[0, 1].plot(resVal2['testCasePoints'], resVal2['runoutAngle'], 'b*')
+        ax[1, 0].plot(resVal2['testCasePoints'], resVal2['pfvFieldMax'], 'b*')
+        ax[1, 1].plot(resVal2['testCasePoints'], resVal2['pftFieldMax'], 'b*')
+
+    # remove x labels
+    ax[0, 0].set_xlabel('')
+    ax[0, 1].set_xlabel('')
+    ax[1, 0].set_xlabel('')
+    ax[1, 1].set_xlabel('')
+
+    # add y labels
+    ax[1, 0].set_ylabel('max pfv [ms-1]', fontsize=14)
+    ax[1, 1].set_ylabel('max pft [m]',  fontsize=14)
+    ax[0, 0].set_ylabel('sRunout [m]',  fontsize=14)
+    ax[0, 1].set_ylabel('runout angle [°]',  fontsize=14)
+
+    # set tick size
+    ax[1, 1].tick_params(axis='both', which='major', labelsize=14)
+    ax[1, 1].tick_params(axis='both', which='minor', labelsize=14)
+    ax[1, 0].tick_params(axis='both', which='major', labelsize=14)
+    ax[1, 0].tick_params(axis='both', which='minor', labelsize=14)
+    ax[0, 0].tick_params(axis='both', which='major', labelsize=14)
+    ax[0, 0].tick_params(axis='both', which='minor', labelsize=14)
+    ax[0, 1].tick_params(axis='both', which='major', labelsize=14)
+    ax[0, 1].tick_params(axis='both', which='minor', labelsize=14)
+
+    # only add ticks for each test case not for also points
+    ax[0,0].set_xticks(orderList[::2])
+    ax[0, 1].set_xticks(orderList[::2])
+    ax[1, 0].set_xticks(orderList[::2])
+    ax[1, 1].set_xticks(orderList[::2])
+
+    plt.show()
+    outFileName = 'distributionAimecScalarValues_%s' % (name)
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
