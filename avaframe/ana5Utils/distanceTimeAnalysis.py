@@ -292,6 +292,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     rangeMasked = mtiInfo['rangeMasked']
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
+    maxOrMean = cfgRangeTime['GENERAL']['maxOrMean']
 
     # mask range with radar field of view and treshold of flow variable result
     maskAva, bmaskAvaRadar, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
@@ -326,7 +327,10 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
             bmaskAvaRadarRangeslice = ~np.logical_and(~bmaskRange, ~bmaskAvaRadar)
             if np.any(~bmaskAvaRadarRangeslice):
                 # only update if range_slice mask is not empty
-                mtiValue = np.mean(np.ma.array(np.ma.getdata(maskAva), mask=bmaskAvaRadarRangeslice))
+                if maxOrMean.lower() == 'max':
+                    mtiValue = np.amax(np.ma.array(np.ma.getdata(maskAva), mask=bmaskAvaRadarRangeslice))
+                else:
+                    mtiValue = np.mean(np.ma.array(np.ma.getdata(maskAva), mask=bmaskAvaRadarRangeslice))
                 mtiNew[indexRI] = mtiValue
                 if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
                     dtAnaPlots.plotMaskForMTI(cfgRangeTime['GENERAL'], bmaskRange, bmaskAvaRadar,

@@ -224,7 +224,7 @@ def test_extractFrontAndMeanValuesRadar():
 
     # setup required input
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 3.1}
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 3.1, 'maxOrMean': 'mean'}
     cfgRangeTime['PLOTS'] = {'debugPlot': False}
     flowF = np.asarray([[2., 2., 2., 2.],
                         [3., 4., 5., 6.],
@@ -249,7 +249,7 @@ def test_extractFrontAndMeanValuesRadar():
     assert mtiInfo['mti'][3] == 23./3
 
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 30.1}
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 30.1, 'maxOrMean': 'mean'}
     cfgRangeTime['PLOTS'] = {'debugPlot': False}
     mtiInfo = {'rangeGates': np.arange(4), 'rangeMasked': rangeMasked, 'rArray': range,
                'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
@@ -264,6 +264,23 @@ def test_extractFrontAndMeanValuesRadar():
     assert mtiInfo['mti'][1] == 0
     assert mtiInfo['mti'][2] == 0.
     assert mtiInfo['mti'][3] == 0.
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 8.1, 'maxOrMean': 'max'}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False}
+    mtiInfo = {'rangeGates': np.arange(4), 'rangeMasked': rangeMasked, 'rArray': range,
+               'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
+
+    # call function to be tested
+    mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
+    print('mtiInfo3', mtiInfo)
+
+    assert mtiInfo['timeList'] == []
+    assert mtiInfo['rangeList'] == [3]
+    assert mtiInfo['mti'][0] == 0
+    assert mtiInfo['mti'][1] == 0
+    assert mtiInfo['mti'][2] == 0.
+    assert mtiInfo['mti'][3] == 10.
 
 
 def test_setupThalwegTimeDiagram():
