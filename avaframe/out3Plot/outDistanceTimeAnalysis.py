@@ -96,7 +96,7 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
 
     # add colorbar and infobox
     unit = pU.cfgPlotUtils["unit" + rangeTimeResType]
-    if mtiInfo["type"] == "thalwegTime" and cfgRangeTime["GENERAL"]["maxOrMean"].lower() == "max":
+    if cfgRangeTime["GENERAL"]["maxOrMean"].lower() == "max":
         avgType = "max"
     else:
         avgType = "avg."
