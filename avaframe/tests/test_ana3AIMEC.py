@@ -461,7 +461,7 @@ def test_postProcessReference(tmp_path):
     assert np.isclose(refDataTransformed['refLine']['yRunout'], -3950)
     assert np.isclose(refDataTransformed['refLine']['sRunout'], 3198.7449)
     assert np.isclose(refDataTransformed['refLine']['lRunout'], -50.)
-    assert len(np.where(refDataTransformed['refLine']['runoutLineFound'] is False)[0]) == 0
+    assert len(np.where(refDataTransformed['refLine']['runoutLineFound'] == False)[0]) == 0
     maxIndex = np.amax(refDataTransformed['refLine']['index'])
 
     assert np.isclose(rasterTransfo['s'][int(maxIndex)], 3198.7449)
