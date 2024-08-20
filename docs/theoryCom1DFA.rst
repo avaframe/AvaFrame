@@ -194,7 +194,7 @@ Detrainment:
 The detrained snow :math:`M_{det}` at obstacles (e.g., trees) is computed by following the approach of (:cite:`FeBeTeBuChThBa2014`):
 
 .. math::
-   \frac{\mathrm{d}M_{det}(t)}{\mathrm{d}t} = - K\,\frac{A_b}{\left\Vert \overline{\mathbf{u}}\right\Vert}
+   \oint\limits_{\partial V(t)} \dot{q}^{\text{det}}\,\mathrm{d}A = \frac{\mathrm{d}M_{det}(t)}{\mathrm{d}t} = - K\,\frac{A_b}{\left\Vert \overline{\mathbf{u}}\right\Vert}
    :label: mass-balance-detrainment
    
 The parameter :math:`K` (:math:`Pa`) depends on the structure of the obstacles and the properties of the snow.
@@ -238,7 +238,9 @@ Which simplifies the momentum balance :eq:`momentum-balance3` to:
    \begin{aligned}
    \rho_0 V \frac{d\overline{u}_i}{dt} = & \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,
    \mathrm{d}x_3\right)\,\mathrm{d}l -A_b\overline{\sigma}_{i3}^{(b)} + \rho_0 V g_i  + F_i^{\text{ent}} +
-   F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A,\\
+   F_i^{\text{res}} \\
+   - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A -
+   \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{det}} \,\mathrm{d}A,
    &\quad i=(1,2,3)
    \end{aligned}
    :label: momentum-balance5
@@ -396,7 +398,7 @@ remains unchanged:
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_b\overline{h}\right)}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-   + \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   + \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert - \frac{K}{\rho_0}\,\frac{A_b}{\left\Vert \overline{\mathbf{u}}\right\Vert}
    :label: mass-balance3
 
 The unknown :math:`\overline{u}_1`, :math:`\overline{u}_2` and
