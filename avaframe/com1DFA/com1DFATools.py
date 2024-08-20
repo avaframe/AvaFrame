@@ -129,6 +129,14 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
         "root['INPUT']['releaseScenario']",
     ]
 
+    # Entrainment might not be set in shpfile, but still the default from
+    # ini file is used. This is still default D and not changed C
+    if simCfg["GENERAL"]["entThFromShp"] == "False":
+        # check if entTh is the default entTh if no other entTh is set
+        if simCfg["GENERAL"]["entTh"] == defCfg["GENERAL"]["entThIfMissingInShp"]:
+            excludeItems.append("root['GENERAL']['entThFromShp']")
+            excludeItems.append("root['GENERAL']['entTh']")
+
     # sphKernelSize is set during runtime, make sure it is not reported
     # as changed if default is set to meshCellSize
     if defCfg["GENERAL"]["sphKernelRadius"] == "meshCellSize":
