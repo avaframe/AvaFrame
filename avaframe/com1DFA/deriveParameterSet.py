@@ -246,12 +246,20 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
-        elif thType == 'entTh' and ('None' in thicknessList):
+        # if entrainment but thicknessList contains only None
+        elif thType == 'entTh' and all(el == 'None' for el in thicknessList):
             thicknessList = [cfg['GENERAL']['entThIfMissingInShp']] * len(idList)
             cfg['GENERAL']['entThFromShp'] = 'False'
             cfg['GENERAL']['entTh'] = cfg['GENERAL']['entThIfMissingInShp']
             log.warning('No thickness value provided for entrainment area using default value of %.2f instead' %
                         cfg['GENERAL'].getfloat('entThIfMissingInShp'))
+        # if entrainment but thicknessList contains only None
+        elif ('None' in thicknessList) and thType == 'entTh':
+            message = ('Not all features in entrainment file have a thickness value - check shape file attributes: '
+                       '%s' %fName)
+            log.error(message)
+            raise AssertionError(message)
+
         elif cfg['GENERAL'][thDistVariation] != '' and ('None' in ci95List):
             message = 'Not all features in shape file have a ci95 value - check shape file attributes: %s' % fName
             log.error(message)

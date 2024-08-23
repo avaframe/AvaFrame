@@ -181,6 +181,7 @@ def getInputData(avaDir, cfg):
     entFile, entResInfo["flagEnt"] = getAndCheckInputFiles(inputDir, "ENT", "Entrainment", fileExt="shp")
     if entFile is None:
         entFile = ""
+
     # Initialise dam line
     wallFile, entResInfo["flagWall"] = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
     # Initialise DEM
@@ -234,15 +235,23 @@ def getInputDataCom1DFA(avaDir):
     secondaryReleaseFile, entResInfo["flagSecondaryRelease"] = getAndCheckInputFiles(
         inputDir, "SECREL", "Secondary release", fileExt="shp"
     )
+    if secondaryReleaseFile:
+        log.info("Secondary release file is: %s" % secondaryReleaseFile)
 
     # Initialise resistance areas
     resFile, entResInfo["flagRes"] = getAndCheckInputFiles(inputDir, "RES", "Resistance", fileExt="shp")
+    if resFile:
+        log.info("Resistance file is: %s" % resFile)
 
     # Initialise entrainment areas
     entFile, entResInfo["flagEnt"] = getAndCheckInputFiles(inputDir, "ENT", "Entrainment", fileExt="shp")
+    if entFile:
+        log.info("Entrainment file is: %s" % entFile)
 
     # Initialise dam line
     damFile, entResInfo["dam"] = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
+    if damFile:
+        log.info("Dam file is: %s" % damFile)
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)

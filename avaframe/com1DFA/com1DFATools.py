@@ -129,6 +129,15 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
         "root['INPUT']['releaseScenario']",
     ]
 
+    # If entrainment is requested, and it is set in shapefile, check if it contains the default entrainment thickness
+    # in ALL features of the shapefile
+    if simCfg["GENERAL"]["simTypeList"] == "ent" and simCfg["GENERAL"]["entThFromShp"] == "True":
+        defaultEntTh = defCfg["GENERAL"]["entThIfMissingInShp"]
+
+        if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split('|')]):
+            defaultIdentifierString = "C"
+            log.info('Non-default entrainment value(s) used: %s' % simCfg["INPUT"]["entThThickness"])
+
     # Entrainment might not be set in shpfile, but still the default from
     # ini file is used. This is still default D and not changed C
     if simCfg["GENERAL"]["entThFromShp"] == "False":
