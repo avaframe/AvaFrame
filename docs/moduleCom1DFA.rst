@@ -89,7 +89,9 @@ Release, entrainment and secondary release thickness can be specified in two dif
 
   - add an attribute called `thickness` for each feature
   - important: ALL features have to have a single thickness value, which can differ between features
-  - for entrainment area only: if the thickness value is missing, the thickness value is taken from `entThIfMissingInShp` (default 0.3 m) in the configuration file
+  - for entrainment area only: if the thickness value is missing, the thickness value is
+    taken from `entThIfMissingInShp` (default 0.3 m) in the configuration file. If multiple features are
+    in the entrainment file the thickness attribute has to be set either for ALL or NONE of the features.
   - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
   - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp,
     secondaryRelthFromShp) to True in the configuration file (default is True)
