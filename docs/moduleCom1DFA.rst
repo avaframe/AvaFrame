@@ -218,6 +218,7 @@ However, in the configuration file, it is possible to change the result paramete
 The result types that can be chosen to be exported are (all correspond to fields except the particles):
 
 * ppr - peak pressure
+  (:math:`pressure = \mathbf{\rho}  \mathbf{u}²` with :math:`\rho` snow density and :math:`\mathbf{u}` flow velocity)
 * pfv - peak flow velocity
 * pft - peak flow thickness
 * pta - peak travel angle
