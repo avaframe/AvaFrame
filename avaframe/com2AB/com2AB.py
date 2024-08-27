@@ -5,7 +5,6 @@
 
 import logging
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 import pathlib
 
@@ -20,21 +19,17 @@ log = logging.getLogger(__name__)
 debugPlot = False
 
 
-def setEqParameters(cfg, smallAva):
+def setEqParameters(cfg):
     """ Set alpha beta equation parameters
 
     Set alpha beta equation parameters to
-    - standard (default)
+    - standard (default values from ini file)
     - small avalanche (if smallAva==True)
-    - custom (if cfgsetup('customParam') is True use the custom values provided in the ini file)
 
     Parameters
     ----------
     cfg : configParser
-        if cfgsetup('customParam') is True, the custom parameters provided
-        in the cfg are used in theAlphaBeta equation. (provide all 5 k1, k2, k3, k4 and SD values)
-    smallAva : boolean
-        True if the small avallanche AlphaBeta equation parameters should be used
+        cfg that's providing all 5 k1, k2, k3, k4 and SD values
 
     Returns
     -------
@@ -44,37 +39,25 @@ def setEqParameters(cfg, smallAva):
 
     cfgsetup = cfg['ABSETUP']
     eqParameters = {}
+    smallAva = cfgsetup.getboolean('smallAva')
 
     if smallAva is True:
         log.debug('Using small Avalanche Setup')
-        eqParameters['k1'] = 0.933
-        eqParameters['k2'] = 0.0
-        eqParameters['k3'] = 0.0088
-        eqParameters['k4'] = -5.02
-        eqParameters['SD'] = 2.36
+        eqParameters['k1'] = cfgsetup.getfloat('k1_small')
+        eqParameters['k2'] = cfgsetup.getfloat('k2_small')
+        eqParameters['k3'] = cfgsetup.getfloat('k3_small')
+        eqParameters['k4'] = cfgsetup.getfloat('k4_small')
+        eqParameters['SD'] = cfgsetup.getfloat('SD_small')
 
         parameterSet = "Small avalanches"
 
-    elif cfgsetup.getboolean('customParam'):
-        log.debug('Using custom Avalanche Setup:')
-        parameterName = ['k1', 'k2', 'k3', 'k4', 'SD']
-        for paramName in parameterName:
-            if cfg.has_option('ABSETUP', paramName):
-                eqParameters[paramName] = cfgsetup.getfloat(paramName)
-            else:
-                message = 'Custom parameter %s is missing in the configuration file' % paramName
-                log.error(message)
-                raise KeyError(message)
-
-        parameterSet = "Custom"
-
     else:
-        log.debug('Using standard Avalanche Setup')
-        eqParameters['k1'] = 1.05
-        eqParameters['k2'] = -3130.0
-        eqParameters['k3'] = 0.0
-        eqParameters['k4'] = -2.38
-        eqParameters['SD'] = 1.25
+        log.debug('Using configuration file Avalanche Setup')
+        eqParameters['k1'] = cfgsetup.getfloat('k1')
+        eqParameters['k2'] = cfgsetup.getfloat('k2')
+        eqParameters['k3'] = cfgsetup.getfloat('k3')
+        eqParameters['k4'] = cfgsetup.getfloat('k4')
+        eqParameters['SD'] = cfgsetup.getfloat('SD')
 
         parameterSet = "Standard"
 
@@ -90,7 +73,7 @@ def com2ABMain(cfg, avalancheDir):
     Parameters
     ----------
     cfg : configparser
-        configparser with all requiered fields in com2ABCfg.ini
+        configparser with all required fields in com2ABCfg.ini
     avalancheDir : str
         path to directory of avalanche to analyze
 
@@ -109,7 +92,6 @@ def com2ABMain(cfg, avalancheDir):
     """
     abVersion = '4.1'
     cfgsetup = cfg['ABSETUP']
-    smallAva = cfgsetup.getboolean('smallAva')
     resampleDistance = cfgsetup.getfloat('distance')
     betaThresholdDistance = cfgsetup.getfloat('dsMin')
     resAB = {}
@@ -125,7 +107,7 @@ def com2ABMain(cfg, avalancheDir):
     splitPoint = shpConv.readPoints(pathDict['splitPointSource'], dem)
 
     # Read input setup
-    eqParams = setEqParameters(cfg, smallAva)
+    eqParams = setEqParameters(cfg)
 
     NameAva = fullAvaPath['Name']
     StartAva = fullAvaPath['Start']
@@ -136,10 +118,10 @@ def com2ABMain(cfg, avalancheDir):
         start = StartAva[i]
         end = start + LengthAva[i]
         # extract individual line
-        avaPath = {'sks': fullAvaPath['sks']}
-        avaPath['x'] = fullAvaPath['x'][int(start):int(end)]
-        avaPath['y'] = fullAvaPath['y'][int(start):int(end)]
-        avaPath['name'] = name
+        avaPath = {'sks': fullAvaPath['sks'],
+                   'x': fullAvaPath['x'][int(start):int(end)],
+                   'y': fullAvaPath['y'][int(start):int(end)],
+                   'name': name}
         log.info('Running Alpha Beta %s on: %s ', abVersion, name)
         avaProfile = com2ABKern(avaPath, splitPoint, dem, eqParams, resampleDistance, betaThresholdDistance)
         resAB[name] = avaProfile
@@ -148,11 +130,11 @@ def com2ABMain(cfg, avalancheDir):
             savename = name + '_com2AB_eqparam.pickle'
             save_file = pathlib.Path(pathDict['saveOutPath'], savename)
             pickle.dump(eqParams, open(save_file, "wb"))
-            log.info('Saving intermediate results to: %s' % (save_file))
+            log.info('Saving intermediate results to: %s' % save_file)
             savename = name + '_com2AB_avaProfile.pickle'
             save_file = pathlib.Path(pathDict['saveOutPath'], savename)
             pickle.dump(avaProfile, open(save_file, "wb"))
-            log.info('Saving intermediate results to: %s' % (save_file))
+            log.info('Saving intermediate results to: %s' % save_file)
 
     return pathDict, dem, splitPoint, eqParams, resAB
 
@@ -185,9 +167,8 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
         avaPath dictionary with AlphaBeta model results (path became a profile adding the z and s arrays.
         AB runout angles and distances)
     """
-    name = avaPath['name']
 
-    # read inputs, ressample ava path
+    # read inputs, resample ava path
     # make pofile and project split point on path
     avaProfile, projSplitPoint = geoTrans.prepareLineStrict(dem, avaPath, distance, splitPoint)
 
@@ -204,7 +185,7 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
     # run AB model and get angular results
     avaProfile = calcABAngles(avaProfile, eqParams, dsMin)
     # convert the angular results in distances
-    avaProfile = calcABDistances(avaProfile, name)
+    avaProfile = calcABDistances(avaProfile)
 
     return avaProfile
 
@@ -219,10 +200,10 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
     avalancheDir : str
         path to directory of avalanche to analyze
     path2Line : pathlib path
-        pathlib path to altrnative line
+        to alternative line
         (if empty, reading the line from the input directory Inputs/LINES/yourNameAB.shp)
     path2SplitPoint : pathlib path
-        pathlib path to altrnative splitPoint
+        to alternative splitPoint
         (if empty, reading the point from the input directory Inputs/LINES/yourNameAB.shp)
 
     Returns
@@ -247,7 +228,7 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
     else:
         path2Line = pathlib.Path(path2Line)
         if not path2Line.is_file():
-            message = 'No line called: %s' % (path2Line)
+            message = 'No line called: %s' % path2Line
             log.error(message)
             raise FileNotFoundError(message)
         pathDict['profileLayer'] = path2Line
@@ -274,7 +255,7 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
     else:
         path2SplitPoint = pathlib.Path(path2SplitPoint)
         if not path2SplitPoint.is_file():
-            message = 'No line called: %s' % (path2SplitPoint)
+            message = 'No line called: %s' % path2SplitPoint
             log.error(message)
             raise FileNotFoundError(message)
         pathDict['splitPointSource'] = path2SplitPoint
@@ -336,7 +317,7 @@ def calcABAngles(avaProfile, eqParameters, dsMin):
         debPlot.plotSlopeAngle(s, angle, indBetaPoint)
         debPlot.plotProfile(s, z, indBetaPoint)
 
-    # Do a quadtratic fit and get the polycom2ABKernnom for 2nd derivative later
+    # Do a quadratic fit and get the polycom2ABKernnom for 2nd derivative later
     zQuad = np.polyfit(s, z, 2)
     poly = np.poly1d(zQuad)
     # Get H0: max - min for parabola
@@ -361,7 +342,7 @@ def calcABAngles(avaProfile, eqParameters, dsMin):
     return avaProfile
 
 
-def calcABDistances(avaProfile, name):
+def calcABDistances(avaProfile):
     """ Compute runout distances and points from angles computed in calcABAngles
 
     Parameters
@@ -369,8 +350,6 @@ def calcABDistances(avaProfile, name):
     avaProfile : dict
         dictionary with the name of the avapath, the x, y and z coordinates of
         the path
-    name: str
-        profile name
 
     Returns
     -------
