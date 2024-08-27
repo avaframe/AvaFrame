@@ -68,6 +68,9 @@ digraph "com1DFA algorithm graph" {
   updateFields [label="Update mesh properties",
   href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_top"];
 
+  computePressure [label="Compute pressure",
+  href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Compute Pressure" target="_top"];
+
   updateParticlesFlowThickness [label="Update particles flow thickness",
   href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_top"];
 
@@ -136,7 +139,8 @@ digraph "com1DFA algorithm graph" {
   }
   subgraph cluster_3 {
     /* rank=same; */
-    updateFields -> updateParticlesFlowThickness [weight=10];
+    updateFields -> computePressure [weight=10];
+    computePressure -> updateParticlesFlowThickness [weight=10];
     label = "Update Fields";
     style="rounded";
     color="#0E4160";

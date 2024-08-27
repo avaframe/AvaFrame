@@ -1046,6 +1046,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     particles, fields = initializeFields(cfg, dem, particles, releaseLine)
 
+    reportAreaInfo['Release area info']["Model release volume [m3]"] = "%.2f" % (particles['mTot'] / cfgGen.getfloat('rho'))
+
     # initialize Dam
     damLine = inputSimLines["damLine"]
     # FSO: disabled writing of damFootLine inside the initializeWallLines.
@@ -2823,13 +2825,13 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
 
         totalVolume = relVolume + secondaryRelVolume
         log.info(
-            "release volume is: %.2f m3 and secondary release volume is: %.2f m3 - total volume: %.2f m3 "
-            % (relVolume, secondaryRelVolume, totalVolume)
+            "release volume is: %.2f m3 and secondary release volume is: %.2f m3 - total volume: %.2f m3 - based on %.2f meter grid"
+            % (relVolume, secondaryRelVolume, totalVolume, demVol['header']['cellsize'])
         )
 
         relVolume = relVolume + secondaryRelVolume
     else:
-        log.info("release volume is: %.2f m3" % relVolume)
+        log.info("%.2f meter grid based release volume is: %.2f m3" % (demVol['header']['cellsize'], relVolume))
 
     return relVolume
 

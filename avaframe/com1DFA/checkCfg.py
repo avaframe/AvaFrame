@@ -106,7 +106,8 @@ def checkCfgFrictionModel(cfg, relVolume=''):
             cfg['GENERAL']['frictModel'] = 'samosATMedium'
         elif relVolume > float(cfg['GENERAL']['volClassMedium']):
             cfg['GENERAL']['frictModel'] = 'samosAT'
-        log.info('samosATAuto - release volume is %.2f and hence friction model: %s is chosen' % (relVolume, cfg['GENERAL']['frictModel']))
+        log.info('samosATAuto - %.2f meter grid based release volume is %.2f and hence friction model: %s is chosen' %
+                 (float(cfg['GENERAL']['meshCellSize']), relVolume, cfg['GENERAL']['frictModel']))
 
     # fetch friction model
     frictModel = cfg['GENERAL']['frictModel']

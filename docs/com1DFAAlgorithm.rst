@@ -436,6 +436,18 @@ The mesh values are updated with the particles properties using
 :ref:`particles to mesh interpolation <DFAnumerics:Particles to mesh>` methods.
 This is used to compute flow thickness, flow velocity and pressure fields from the particle properties.
 
+Compute pressure
+~~~~~~~~~~~~~~~~~
+Pressure is computed following:
+
+.. math::
+
+  p = \mathbf{\rho}  \mathbf{u}²,
+
+where :math:`\rho` is the snow density and :math:`\mathbf{u}` is the flow velocity.
+This is done in :py:func:`com1DFA.DFAfunctionsCython.computePressure`.
+
+
 Update particles flow thickness
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The mesh flow thickness is finally used to update the particle flow thickness value

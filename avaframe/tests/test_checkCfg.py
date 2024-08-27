@@ -112,7 +112,8 @@ def test_checkCfgFrictionModel():
         'Rs0samosatsmall': '0.222', 'kappasamosatsmall': '0.43', 'Rsamosatsmall': '0.05',
         'Bsamosatsmall': '4.13', 'musamosatmedium': '0.17', 'tau0samosatmedium': '0',
         'Rs0samosatmedium': '0.222', 'kappasamosatmedium': '0.43', 'Rsamosatmedium': '0.05',
-        'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.'}}
+        'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
+        'meshCellSize': '5'}}
 
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=24999.)
 
@@ -132,7 +133,8 @@ def test_checkCfgFrictionModel():
         'Rs0samosatsmall': '0.222', 'kappasamosatsmall': '0.43', 'Rsamosatsmall': '0.05',
         'Bsamosatsmall': '4.13', 'musamosatmedium': '0.17', 'tau0samosatmedium': '0.9',
         'Rs0samosatmedium': '1.222', 'kappasamosatmedium': '2.43', 'Rsamosatmedium': '0.75',
-        'Bsamosatmedium': '4.23', 'volClassSmall': '25000.', 'volClassMedium': '60000.'}}
+        'Bsamosatmedium': '4.23', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
+        'meshCellSize': '5'}}
 
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=26999.)
 
@@ -152,7 +154,8 @@ def test_checkCfgFrictionModel():
         'Rs0samosatsmall': '0.222', 'kappasamosatsmall': '0.43', 'Rsamosatsmall': '0.05',
         'Bsamosatsmall': '4.13', 'musamosatmedium': '0.17', 'tau0samosatmedium': '0',
         'Rs0samosatmedium': '0.222', 'kappasamosatmedium': '0.43', 'Rsamosatmedium': '0.05',
-        'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.'}}
+        'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
+        'meshCellSize': '5'}}
 
     cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=74999.)
 
