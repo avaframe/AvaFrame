@@ -7,12 +7,6 @@ import time
 import argparse
 import pathlib
 
-# Local imports
-from avaframe.com2AB import com2AB
-from avaframe.out3Plot import outAB
-from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
-
 # Import the avaframe modules you want to use. This list will
 # grow as you use more avaframe modules. You can refer to the different
 # computational modules documentation to know which imports are required
@@ -29,7 +23,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 
 
-def runCom2AB(avalancheDir=''):
+def runCom2AB(avalancheDir='', smallAva=False):
     """ Run com2AB in the default configuration with only an
     avalanche directory as input
 
@@ -37,6 +31,8 @@ def runCom2AB(avalancheDir=''):
     ----------
     avalancheDir: str
         path to avalanche directory (setup eg. with init scipts)
+    smallAva: bool
+        use small avalanche setting; overrides ini setting
 
     Returns
     -------
@@ -71,6 +67,12 @@ def runCom2AB(avalancheDir=''):
 
     # Call the main com2AB functions
     cfgAB = cfgUtils.getModuleConfig(com2AB)
+
+    # Override smallAva from ini file if needed
+    if smallAva:
+        cfgAB['ABSETUP']['smallAva'] = 'True'
+        log.info('Small avalanche setting override from runCom2AB (forced to true)')
+
     pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
     abShpFile = outAB.writeABtoSHP(pathDict, resAB)
 
@@ -103,6 +105,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run com2AB workflow')
     parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
                         help='the avalanche directory')
+    parser.add_argument("--small_ava", action="store_true",
+                        help='activate small avalanche calibration')
 
     args = parser.parse_args()
-    runCom2AB(str(args.avadir))
+    runCom2AB(str(args.avadir), args.small_ava)

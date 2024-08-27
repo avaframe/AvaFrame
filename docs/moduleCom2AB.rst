@@ -106,21 +106,28 @@ Configuration parameters
 
 :dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
 
+
+:k1: float. Parameter for alpha beta equation
+
+:k2: float. Parameter for alpha beta equation
+
+:k3: float. Parameter for alpha beta equation
+
+:k4: float. Parameter for alpha beta equation
+
+:SD: float. Parameter for alpha beta equation
+
 :smallAva: boolean (False as default) if True apply :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or False, standard avalanches
 
-:customParam: boolean (False as default). Enables to choose custom :math:`(k_1, k_2, k_3, k_4, SD)``. If True,
-  the values from the configuration file are used
+:k1_small: float. Use this value if ``smallAva=True``
 
-:k1: float. Use this value if ``customParam=True``
+:k2_small: float. Use this value if ``smallAva=True``
 
-:k2: float. Use this value if ``customParam=True``
+:k3_small: float. Use this value if ``smallAva=True``
 
-:k3: float. Use this value if ``customParam=True``
+:k4_small: float. Use this value if ``smallAva=True``
 
-:k4: float. Use this value if ``customParam=True``
-
-:SD: float. Use this value if ``customParam=True``
-
+:SD_small: float. Use this value if ``smallAva=True``
 
 :PlotPath: Plot Avalanche path on raster; default False
 :PlotProfile: Plot profile; default False

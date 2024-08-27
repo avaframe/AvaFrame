@@ -23,7 +23,9 @@ def test_setEqParameters(capfd):
     eqParamRef['k4'] = -5.02
     eqParamRef['SD'] = 2.36
 
-    eqParams = com2AB.setEqParameters(cfg, smallAva=True)
+    cfg['ABSETUP']['smallAva'] = 'True'
+
+    eqParams = com2AB.setEqParameters(cfg)
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
@@ -35,28 +37,11 @@ def test_setEqParameters(capfd):
     eqParamRef['k4'] = -2.38
     eqParamRef['SD'] = 1.25
 
-    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
+    cfg['ABSETUP']['smallAva'] = 'False'
+    eqParams = com2AB.setEqParameters(cfg)
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
-    cfg['ABSETUP']['customParam'] = 'True'
-    cfg['ABSETUP']['k1'] = '1'
-    cfg['ABSETUP']['k2'] = '2'
-    cfg['ABSETUP']['k3'] = '3'
-    cfg['ABSETUP']['k4'] = '4'
-    cfg['ABSETUP']['SD'] = '5'
-
-    eqParamRef = {}
-    eqParamRef['parameterSet'] = 'Custom'
-    eqParamRef['k1'] = cfg.getfloat('ABSETUP', 'k1')
-    eqParamRef['k2'] = cfg.getfloat('ABSETUP', 'k2')
-    eqParamRef['k3'] = cfg.getfloat('ABSETUP', 'k3')
-    eqParamRef['k4'] = cfg.getfloat('ABSETUP', 'k4')
-    eqParamRef['SD'] = cfg.getfloat('ABSETUP', 'SD')
-
-    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
-    for key in eqParamRef.keys():
-        assert eqParamRef[key] == eqParams[key]
 
 
 def test_calcABAngles(caplog):
@@ -71,7 +56,7 @@ def test_calcABAngles(caplog):
     s = np.linspace(0.0, -B/(2*A), num=N)
     z = np.empty(np.shape(s))
     for i in range(N):
-        if (s[i] < (-B/(2*A))):
+        if s[i] < (-B / (2 * A)):
             z[i] = 1*(A * s[i]*s[i]+B * s[i]+C)
         else:
             z[i] = 1*(-B*B / (4*A) + C)
@@ -97,7 +82,7 @@ def test_calcABAngles(caplog):
     eqIn['y'] = []  # y coordinate of the path
     eqIn['z'] = z  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = 2  # index of split point
-    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
+    eqParams = com2AB.setEqParameters(cfg)
     eqOut = com2AB.calcABAngles(eqIn, eqParams, 30)
     alpha = eqOut['alpha']
     alphaSD = eqOut['alphaSD']
@@ -111,7 +96,7 @@ def test_calcABAngles(caplog):
 
     with pytest.raises(IndexError) as e:
         eqOut = com2AB.calcABAngles(eqIn, eqParams, 500)
-    assert str(e.value) == ("No Beta point found. Check your pathAB.shp and splitPoint.shp.")
+    assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
 
 
 def test_writeABtoSHP(tmp_path):
