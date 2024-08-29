@@ -153,7 +153,13 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
             excludeItems.append("root['GENERAL']['sphKernelRadius']")
 
     # do the diff and analyse
-    diff = DeepDiff(defCfg, simCfg, exclude_paths=excludeItems)
+    # this is the deepdiff > 8.0 version
+    # TODO: remove this again in the future when deepdiff > 8.0 is wider established
+    try:
+        diff = DeepDiff(defCfg, simCfg, exclude_paths=excludeItems, threshold_to_diff_deeper=0)
+    # for older deepdiff versions which don't know threshold_to_diff_deeper
+    except ValueError:
+        diff = DeepDiff(defCfg, simCfg, exclude_paths=excludeItems)
 
     # Sometimes (after variation split) the type changes, so check if it is the default or something else
     # If it is, check the type_changes and convert to values_change if necessary
