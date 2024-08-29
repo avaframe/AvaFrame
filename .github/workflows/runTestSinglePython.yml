@@ -28,13 +28,14 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
         check-latest: true
     - name: Install dependencies
       run: |
         python -m pip install  --upgrade pip
         pip install flake8 pytest pytest-cov
         pip install numpy cython
+        pip install setuptools
     # This compilation is necessary to have the .c file for the next step
     # Alternative is to include the .c file in the repo
     - name: Compile cython code
