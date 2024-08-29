@@ -60,7 +60,7 @@ def test_extractLogInfo():
     # call function to be tested
     logDict = fU.extractLogInfo(logName)
 
-    print('logDict', logDict)
+#    print('logDict', logDict)
     # define test results
     time = np.asarray([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 301.1])
     mass = np.asarray([1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07,
@@ -98,7 +98,7 @@ def test_checkIfFileExists():
 
     # call function to be tested
     pathData2 = 'test/dataTest'
-    print('pathDatastr', pathData2)
+#    print('pathDatastr', pathData2)
     with pytest.raises(FileNotFoundError) as e:
         assert fU.checkIfFileExists(pathData, fileType='log info')
     assert str(e.value) == ('No log info file found called: %s' % str(pathData))
@@ -112,7 +112,7 @@ def test_makeSimDF():
     inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
     cfg = {'varPar': 'test'}
-    print(inputDir)
+#    print(inputDir)
     dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
 
     assert dataDF['names'][0] == 'releaseTest1_0.888_entres_dfa_ppr'
@@ -139,9 +139,9 @@ def test_makeSimFromResDF():
     dirPath = os.path.dirname(__file__)
     inputDir = os.path.join(dirPath, '..', '..', 'benchmarks', 'avaHelixChannelWetSnowTest')
     dataDF, resTypeList = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
-    print(resTypeList)
-    print(dataDF.columns)
-    print(dataDF.index)
+#    print(resTypeList)
+#    print(dataDF.columns)
+#    print(dataDF.index)
     assert dataDF['simName'].iloc[0] == 'release1HX_f087345c17_C_ent_dfa'
     assert dataDF['releaseArea'].iloc[0] == 'release1HX'
     assert dataDF['simType'].iloc[0] == 'ent'
@@ -345,7 +345,7 @@ def test_getFilterDict():
 
     noKey = 'simType' in parametersDict
 
-    print('parametersDict', parametersDict)
+#    print('parametersDict', parametersDict)
 
     assert np.allclose(parametersDict['relTh'], np.asarray([1, 1.5, 2]), atol=1e-10)
     assert noKey is False
@@ -371,7 +371,7 @@ def test_fetchFlowFields():
     # call function to be tested
     flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=suffix)
     flowFields = sorted(flowFields)
-    print('flowFields', flowFields, sorted(flowFields))
+#    print('flowFields', flowFields, sorted(flowFields))
 
     assert flowFields[0].stem == 'release1HS_0dcd58fc86_ent_dfa_ppr'
     assert flowFields[1].stem == 'release2HS_3d519adab0_ent_dfa_ppr'
@@ -380,7 +380,7 @@ def test_fetchFlowFields():
     # call function to be tested
     flowFields = fU.fetchFlowFields(flowFieldsDir)
     flowFields = sorted(flowFields)
-    print('flowFields', flowFields, sorted(flowFields))
+#    print('flowFields', flowFields, sorted(flowFields))
 
     assert flowFields[0].stem == 'release1HS_0dcd58fc86_ent_dfa_pft'
     assert len(flowFields) == 6

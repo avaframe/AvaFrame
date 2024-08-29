@@ -18,7 +18,7 @@ def test_normalizeC(capfd):
     norme = DFAfunC.norm(x, y, z)
     norme2 = DFAfunC.norm2(x, y, z)
     xn, yn, zn = DFAfunC.normalize(x, y, z)
-    print(xn, yn, zn)
+#    print(xn, yn, zn)
     atol = 1e-10
     assert norme == np.sqrt(3.)
     assert norme2 == 3.
@@ -104,8 +104,8 @@ def test_getWeightsC(capfd):
         for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
             Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows,
                                                                             csz, interpOption)
-            print(Lx0, Ly0)
-            print(f00, f10, f01, f11)
+#            print(Lx0, Ly0)
+#            print(f00, f10, f01, f11)
             assert Lx0 == 0.
             assert Ly0 == 0.
             assert iCell == 0.
@@ -125,8 +125,8 @@ def test_getWeightsC(capfd):
         for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
             Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows,
                                                                             csz, interpOption)
-            print(Lx0, Ly0, iCell)
-            print(f00, f10, f01, f11)
+#            print(Lx0, Ly0, iCell)
+#            print(f00, f10, f01, f11)
             assert Lx0 == 2.
             assert Ly0 == 1.
             assert iCell == 6.
@@ -143,7 +143,7 @@ def test_getWeightsC(capfd):
     cellInd = np.array([0, -1, -1, 4, -1, 1, -1, -1, -1, -1])
     for x, y, res in zip(X, Y, cellInd):
         iCell = DFAfunC.getCells(x, y, ncols, nrows, csz)
-        print(iCell)
+#        print(iCell)
         assert iCell == res
 
 
@@ -167,7 +167,7 @@ def test_getScalVect(capfd):
         xRes, yRes, zRes = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, ZZ,
                                              2*ZZ, 3*ZZ)
         res = -2*xpExp + 1000-ypExp + 500
-        print(xRes, res)
+#        print(xRes, res)
         atol = 1e-10
         assert zScalRes == pytest.approx(res, rel=atol)
         assert xRes == pytest.approx(res, rel=atol)
@@ -227,7 +227,7 @@ def test_reprojectionC(capfd):
     # make a point above the parabola at dist d:
     d = 15
 
-    print(xpExpected, zpExpected)
+#    print(xpExpected, zpExpected)
     x1 = xpExpected + d*nx
     y1 = ypExpected + d*ny
     z1 = zpExpected + d*nz
@@ -243,7 +243,7 @@ def test_reprojectionC(capfd):
                                                                                       ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
 
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
-        print(xpn, zpn)
+#        print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
     ax.set_aspect('equal', 'box')
     # plt.show()
@@ -265,7 +265,7 @@ def test_reprojectionC(capfd):
         xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.normalProjectionIteratrive(x1, y1, z1,
                                                                                        ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
-        print(xpn, zpn)
+#        print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
 
     ax.plot([xpExpected, x1], [zpExpected, z1], 'b')
@@ -292,7 +292,7 @@ def test_reprojectionC(capfd):
         xpn, ypn, zpn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.distConservProjectionIteratrive(
             xPrev, yPrev, zPrev, ZZ, Nx, Ny, Nz, x1, y1, z1, csz, ncols, nrows, interpOption,
             reprojectionIterations, threshold)
-        print(xpn, zpn)
+#        print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
 
     ax.plot([xpExpected, x1], [zpExpected, z1], 'b')
@@ -323,9 +323,9 @@ def test_SamosATfric(capfd):
     sigmaB = 10
     h = 1
     tau = DFAfunC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
-    print(tau)
+#    print(tau)
     assert tau == 1.9128193823277053
     tau0 = 2
     tau = DFAfunC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
-    print(tau)
+#    print(tau)
     assert tau == 3.9128193823277053

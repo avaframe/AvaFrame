@@ -50,7 +50,7 @@ def test_getVariationDict(caplog):
     # call function to be tested
     variations = dP.getVariationDict(avaDir, cfg, modDict)
 
-    print("variations", variations)
+#    print("variations", variations)
 
     # see if a parameter that was locally added to the GENERAL cfg and has a variation is filtered out:
     assert ("Parameter howMeBlue: has a variation, seems to be added") in caplog.text
@@ -76,7 +76,7 @@ def test_getVariationDict(caplog):
     # call function to be tested
     variations2 = dP.getVariationDict(avaDir, cfg, modDict)
 
-    print("variations2", variations2)
+#    print("variations2", variations2)
 
     variationsTest2 = {
         "simTypeList": ["null", "ent"],
@@ -126,7 +126,7 @@ def test_validateVarDict():
     # call function to be tested
     variationDictTest = dP.validateVarDict(variationDict, standardCfg)
 
-    print("variationDictTest", variationDictTest)
+#    print("variationDictTest", variationDictTest)
 
     assert len(variationDictTest.keys()) == 3
     assert variationDictTest["simTypeList"][0] == "null"
@@ -145,7 +145,7 @@ def test_validateVarDict():
     # call function to be tested
     variationDictTest = dP.validateVarDict(variationDict, standardCfg)
 
-    print("variationDictTest", variationDictTest)
+#    print("variationDictTest", variationDictTest)
 
     assert len(variationDictTest.keys()) == 3
     assert variationDictTest["simTypeList"][0] == "null"
@@ -171,7 +171,7 @@ def test_checkResType():
     # call function to be tested
     fullCfg = dP.checkResType(fullCfg, section, key, value)
 
-    print("fullCfg", fullCfg)
+#    print("fullCfg", fullCfg)
 
     assert fullCfg["GENERAL"]["resType"] == "pft|ppr|pfv|particles"
 
@@ -554,8 +554,8 @@ def test_splitVariationToArraySteps():
     value = "40$4"
     itemsTest = np.linspace(0.6, 1.4, 4)
     itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
-    print("itemsTest", itemsTest)
-    print("itemsArray", itemsArray)
+#    print("itemsTest", itemsTest)
+#    print("itemsArray", itemsArray)
 
     assert np.array_equal(itemsArray, itemsTest)
 

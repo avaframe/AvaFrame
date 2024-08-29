@@ -71,9 +71,9 @@ def test_getNeighborsC(capfd):
                      16])
 
     particles = DFAfunC.getNeighborsC(particles, dem)
-    print(particles['inCellDEM'])
-    print(particles['indPartInCell'])
-    print(particles['partInCell'])
+#    print(particles['inCellDEM'])
+#    print(particles['indPartInCell'])
+#    print(particles['partInCell'])
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
     assert np.allclose(particles['partInCell'], pInC, atol=atol)
 
@@ -89,7 +89,7 @@ def test_computeEntMassAndForce(capfd):
     rhoEnt = 100
     dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
         dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
-    print(dm, areaEntrPart)
+#    print(dm, areaEntrPart)
     assert dm == 0
     assert areaEntrPart == 1
 
@@ -97,14 +97,14 @@ def test_computeEntMassAndForce(capfd):
     entEroEnergy = 0
     dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
         dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
-    print(dm, areaEntrPart)
+#    print(dm, areaEntrPart)
     assert dm == 200
     assert areaEntrPart == 2
 
     entEroEnergy = 5000
     dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
         dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
-    print(dm, areaEntrPart)
+#    print(dm, areaEntrPart)
     assert dm == 0.2
     assert areaEntrPart == 1
     
@@ -120,7 +120,7 @@ def test_computeDetMass(capfd):
 
     detCell = 10
     dmDet = DFAfunC.computeDetMass(dt, detCell, areaPart, uMag)
-    print(dmDet)
+#    print(dmDet)
     assert dmDet == -0.1
 
 
@@ -135,19 +135,19 @@ def test_computeResForce(capfd):
     explicitFriction = 0
     cResPart = DFAfunC.computeResForce(
         hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-    print(cResPart)
+#    print(cResPart)
     assert cResPart == -2000
 
     h = 3
     cResPart = DFAfunC.computeResForce(
         hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-    print(cResPart)
+#    print(cResPart)
     assert cResPart == -4000
 
     explicitFriction = 1
     cResPart = DFAfunC.computeResForce(
         hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-    print(cResPart)
+#    print(cResPart)
     assert cResPart == -40000
 
 
@@ -163,7 +163,7 @@ def test_account4FrictionForce(capfd):
     explicitFriction = 0
     uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
         uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
-    print(uxNew, uyNew, uzNew, dtStop)
+#    print(uxNew, uyNew, uzNew, dtStop)
     assert dtStop == 0.1
     assert uxNew == 5
 
@@ -174,8 +174,8 @@ def test_account4FrictionForce(capfd):
     m = 0.5
     uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
         uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
-    print(uxNew, uyNew, uzNew, dtStop)
-    print(dt*forceFrict/m)
+#    print(uxNew, uyNew, uzNew, dtStop)
+#    print(dt*forceFrict/m)
     assert dtStop == 0.05
     assert uxNew == 0
 
@@ -185,8 +185,8 @@ def test_account4FrictionForce(capfd):
     m = 10
     uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
         uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
-    print(uxNew, uyNew, uzNew, dtStop)
-    print(dt*forceFrict/m)
+#    print(uxNew, uyNew, uzNew, dtStop)
+#    print(dt*forceFrict/m)
     assert dtStop == 0.1
     assert uxNew == 9.0
 
@@ -315,7 +315,7 @@ def test_updatePositionC():
 
     # call function to be tested
     particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
-    print('sph', particles['peakForceSPH'], sphForceNew)
+#    print('sph', particles['peakForceSPH'], sphForceNew)
 
     uAcc = (np.sqrt(11.**2 + 11.0**2 +0.) - np.sqrt(1.**2 + 1.**2 + 0.)) / 1.
     velocityMag = np.asarray([np.sqrt((11.**2) + (11.**2)), np.sqrt((11.**2) + (11.**2)), np.sqrt((11.**2) + (11.**2))])
@@ -355,7 +355,7 @@ def test_updatePositionC():
 
     # call function to be tested
     particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
-    print('sph', particles['peakForceSPH'], sphForceNew)
+#    print('sph', particles['peakForceSPH'], sphForceNew)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
     assert np.array_equal(particles['x'], np.array([6., 7., 8.]))
@@ -383,7 +383,7 @@ def test_computeTrajectoryAngle():
     z = np.array([0.0, 0.0, 0.0, 1.0])
     particles = {'nPart': nPart, 'parentID': parentID, 'trajectoryLengthXY': s, 'z': z}
     particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
-    print(particles['trajectoryAngle'])
+#    print(particles['trajectoryAngle'])
     gamma = particles['trajectoryAngle']
     assert gamma[2] == 0
     assert gamma[0] == 45
@@ -400,11 +400,11 @@ def test_initializeBondsC():
     triangles = tri.Triangulation(x, y)
     particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z}
     particles = DFAfunC.initializeBondsC(particles, triangles)
-    print(triangles.triangles)
-    print(triangles.edges)
-    print(particles['bondStart'])
-    print(particles['bondDist'])
-    print(particles['bondPart'])
+#    print(triangles.triangles)
+#    print(triangles.edges)
+#    print(particles['bondStart'])
+#    print(particles['bondDist'])
+#    print(particles['bondPart'])
     bondStart = particles['bondStart']
     bondDist = particles['bondDist']
     bondPart = particles['bondPart']
@@ -436,20 +436,20 @@ def test_removeBondsC():
     triangles = tri.Triangulation(x, y)
     particles = {'nPart': nPart, 'x': x, 'y': y, 'z': z}
     particles = DFAfunC.initializeBondsC(particles, triangles)
-    print(particles['bondStart'])
-    print(particles['bondDist'])
-    print(particles['bondPart'])
+#    print(particles['bondStart'])
+#    print(particles['bondDist'])
+#    print(particles['bondPart'])
 
     # now remove one particle (here particle 1):
     keepParticle = np.array([1., 0., 1.])
     nRemove = 1
     nBondRemove = DFAfunC.countRemovedBonds(particles, keepParticle, nRemove)
-    print(nBondRemove)
+#    print(nBondRemove)
     assert nBondRemove == 4
     particles = DFAfunC.removedBonds(particles, keepParticle, nRemove, nBondRemove)
-    print(particles['bondStart'])
-    print(particles['bondDist'])
-    print(particles['bondPart'])
+#    print(particles['bondStart'])
+#    print(particles['bondDist'])
+#    print(particles['bondPart'])
     bondStart = particles['bondStart']
     bondDist = particles['bondDist']
     bondPart = particles['bondPart']
@@ -494,15 +494,15 @@ def test_computeCohesionForceC():
     particles = DFAfunC.initializeBondsC(particles, triangles)
     # bond breaking
     particles['x'][1] = 1.21
-    print('Here')
+#    print('Here')
     force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
-    print('Here')
-    print(particles['bondStart'])
-    print(particles['bondDist'])
-    print(particles['bondPart'])
-    print(force['forceSPHX'])
-    print(force['forceSPHY'])
-    print(force['forceSPHZ'])
+#    print('Here')
+#    print(particles['bondStart'])
+#    print(particles['bondDist'])
+#    print(particles['bondPart'])
+#    print(force['forceSPHX'])
+#    print(force['forceSPHY'])
+#    print(force['forceSPHZ'])
     bondStart = particles['bondStart']
     bondDist = particles['bondDist']
     bondPart = particles['bondPart']
@@ -543,12 +543,12 @@ def test_computeCohesionForceC():
     particles = DFAfunC.initializeBondsC(particles, triangles)
     particles['x'][1] = 1.09
     force, particles = DFAfunC.computeCohesionForceC(cfg['GENERAL'], particles, force)
-    print(particles['bondStart'])
-    print(particles['bondDist'])
-    print(particles['bondPart'])
-    print(force['forceSPHX'])
-    print(force['forceSPHY'])
-    print(force['forceSPHZ'])
+#    print(particles['bondStart'])
+#    print(particles['bondDist'])
+#    print(particles['bondPart'])
+#    print(force['forceSPHX'])
+#    print(force['forceSPHY'])
+#    print(force['forceSPHZ'])
     bondStart = particles['bondStart']
     bondDist = particles['bondDist']
     bondPart = particles['bondPart']
@@ -615,12 +615,12 @@ def test_updateFieldsC():
     fields['pke'] = np.zeros((header['nrows'], header['ncols']))
     fields['dmDet'] = np.zeros((header['nrows'], header['ncols']))
     fields['dmDet'][[1, 2, 2], [0, 1, 2]] = 3
-    print(fields['dmDet'])
+#    print(fields['dmDet'])
     dmDet_calculated = np.copy(fields['dmDet'])
     dmDet_calculated[[2, 1, 2, 1], [2, 2, 1, 1]] += 1
     particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
-    print(fields['dmDet'])
-    print(dmDet_calculated)
+#    print(fields['dmDet'])
+#    print(dmDet_calculated)
     atol = 1e-10
     assert np.allclose(fields['dmDet'], dmDet_calculated, atol=atol)
     
@@ -635,5 +635,5 @@ def test_updateFieldsC():
     particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
     atol = 1e-10
     assert np.allclose(fields['dmDet'], dmDet_calculated2, atol=atol)
-    print(fields['dmDet'])
+#    print(fields['dmDet'])
     '''

@@ -33,7 +33,7 @@ def test_computeParameters():
     alphaTest = 2.6
     betaTest = 3.4
 
-    print('alpa, beta, mu', alpha, beta, mu)
+#    print('alpa, beta, mu', alpha, beta, mu)
 
     assert alpha == alphaTest
     assert beta == betaTest
@@ -64,9 +64,9 @@ def test_extractUniform():
     # call function to be tested
     CDF, CDFInt, sampleVect = cD.extractUniform(a, c, x, cfg['GENERAL'])
 
-    print('CDF', CDF)
-    print('sample', sampleVect)
-    print('CDF', CDF)
+#    print('CDF', CDF)
+#    print('sample', sampleVect)
+#    print('CDF', CDF)
 
     assert np.array_equal(sampleVect, np.linspace(10,105,20))
     assert len(sampleVect) == sampleSize
@@ -77,9 +77,9 @@ def test_extractUniform():
     cfg['GENERAL']['flagMinMax'] = 'False'
     CDF, CDFInt, sampleVect = cD.extractUniform(a, c, x, cfg['GENERAL'])
 
-    print('CDF', CDF)
-    print('sample', sampleVect)
-    print('CDF', CDF)
+#    print('CDF', CDF)
+#    print('sample', sampleVect)
+#    print('CDF', CDF)
 
     assert np.allclose(sampleVect, np.linspace(10,105,22)[1:-1], atol=1.e-6)
     assert len(sampleVect) == sampleSize
@@ -132,7 +132,7 @@ def test_extractFromCDF():
 
     # call function to be tested
     sampleVect = cD.extractFromCDF(CDF, CDFInt, x, cfg['GENERAL'])
-    print('sample', sampleVect)
+#    print('sample', sampleVect)
 
     # test output
     sampleTest = np.linspace(10, 105, 20)
@@ -152,7 +152,7 @@ def test_EmpiricalCDFNEW():
     # call function to be tested
     ECDF, sampleSorted = cD.getEmpiricalCDFNEW(sample)
 
-    print('ECDF', ECDF, sampleSorted)
+#    print('ECDF', ECDF, sampleSorted)
 
     assert np.allclose(np.linspace(0.05, 1, 20), ECDF, atol=1.e-6)
 

@@ -93,10 +93,10 @@ def test_getIntersection(capfd):
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(
         energyLineTestCfg, avaProfileMass, mu, csz
     )
-    print(sIntersection)
-    print(zIntersection)
-    print(slopeExt)
-    print(coefExt)
+#    print(sIntersection)
+#    print(zIntersection)
+#    print(slopeExt)
+#    print(coefExt)
     atol = 1e-10
     assert sIntersection == pytest.approx(5, abs=atol)
     assert zIntersection == pytest.approx(-1, abs=atol)
@@ -110,10 +110,10 @@ def test_getIntersection(capfd):
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(
         energyLineTestCfg, avaProfileMass, mu, csz
     )
-    print(sIntersection)
-    print(zIntersection)
-    print(slopeExt)
-    print(coefExt)
+#    print(sIntersection)
+#    print(zIntersection)
+#    print(slopeExt)
+#    print(coefExt)
     atol = 1e-10
     assert sIntersection == pytest.approx(3, abs=atol)
     assert zIntersection == pytest.approx(1, abs=atol)
@@ -127,10 +127,10 @@ def test_getIntersection(capfd):
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(
         energyLineTestCfg, avaProfileMass, mu, csz
     )
-    print(sIntersection)
-    print(zIntersection)
-    print(slopeExt)
-    print(coefExt)
+#    print(sIntersection)
+#    print(zIntersection)
+#    print(slopeExt)
+#    print(coefExt)
     atol = 1e-10
     assert sIntersection == pytest.approx(10.600000000000238, abs=atol)
     assert zIntersection == pytest.approx(-6.600000000000238, abs=atol)
@@ -183,11 +183,11 @@ def test_getEnergyInfo(capfd):
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(
         avaProfileMass, g, mu, sIntersection, zIntersection, runOutAngleDeg, alphaDeg
     )
-    print(zEne)
-    print(v2Path)
-    print(sGeomL)
-    print(zGeomL)
-    print(errorEnergyTest)
+#    print(zEne)
+#    print(v2Path)
+#    print(sGeomL)
+#    print(zGeomL)
+#    print(errorEnergyTest)
     atol = 1e-10
     assert errorEnergyTest["runOutZError"] == pytest.approx(-10, abs=atol)
     assert errorEnergyTest["runOutSError"] == pytest.approx(10, abs=atol)
@@ -217,14 +217,14 @@ def test_mainEnergyLineTest(tmp_path):
                                           onlyDefault=energyLineTestCfg['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
     com1DFACfg, energyLineTestCfg = cfgHandling.applyCfgOverride(com1DFACfg, energyLineTestCfg, com1DFA,
                                                                  addModValues=False)
-    print(energyLineTestCfg['com1DFA_com1DFA_override']['dam'], com1DFACfg['GENERAL']['dam'])
+#    print(energyLineTestCfg['com1DFA_com1DFA_override']['dam'], com1DFACfg['GENERAL']['dam'])
     com1DFACfgFile = cfgUtils.writeCfgFile(avalancheDir, com1DFA, com1DFACfg, fileName='com1DFA_settings',
                                            filePath=workPath)
     dem, simDF, _ = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=True, cfgFile=com1DFACfgFile)
     for simName in simDF.index:
         resultEnergyTest, savePath = energyLineTest.mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg,
                                                                        simName, dem)
-    print(resultEnergyTest)
+#    print(resultEnergyTest)
     assert abs(resultEnergyTest["runOutSError"]) < 0.02
     assert abs(resultEnergyTest["runOutZError"]) < 0.02
     assert abs(resultEnergyTest["rmseVelocityElevation"]) < 0.02

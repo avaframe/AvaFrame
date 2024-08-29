@@ -32,7 +32,7 @@ def test_readDEM():
     # call function to be tested
     dem = getInput.readDEM(avaDir)
 
-    print('demHeader', dem['header'])
+#    print('demHeader', dem['header'])
 
     assert dem['header']['ncols'] == 1001
     assert dem['header']['nrows'] == 401
@@ -78,7 +78,7 @@ def test_getDEMPath(tmp_path):
     # call function to be tested
     demPath = getInput.getDEMPath(avaTestDir)
 
-    print('dem path', demPath)
+#    print('dem path', demPath)
 
     assert 'DEM_HS_Topo.asc' in str(demPath)
 
@@ -195,10 +195,10 @@ def test_getInputDataCom1DFA(tmp_path):
     inputSimFiles = getInput.getInputDataCom1DFA(avaDir)
 
     # Test
-    print(inputSimFiles['demFile'])
-    print(avaDir / 'Inputs' / 'DEM_HS_Topo.asc')
-    print(inputSimFiles['relFiles'])
-    print([avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp'])
+#    print(inputSimFiles['demFile'])
+#    print(avaDir / 'Inputs' / 'DEM_HS_Topo.asc')
+#    print(inputSimFiles['relFiles'])
+#    print([avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp'])
     assert inputSimFiles['demFile'] == avaDir / 'Inputs' / 'DEM_HS_Topo.asc'
     assert inputSimFiles['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp',
                                          avaDir / 'Inputs' / 'REL' / 'release2HS.shp',
@@ -228,8 +228,8 @@ def test_getAndCheckInputFiles(tmp_path):
     outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType,
         fileExt='shp')
 
-    print('outfile', outFile)
-    print('available', available)
+#    print('outfile', outFile)
+#    print('available', available)
 
     assert available == 'Yes'
     assert 'Inputs/ENT/entrainment1HS.shp' in str(outFile)
@@ -268,7 +268,7 @@ def test_getThicknessInputSimFiles(tmp_path):
 
     inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles)
 
-    print('inputSimFiles', inputSimFiles)
+#    print('inputSimFiles', inputSimFiles)
 
     assert inputSimFiles['release1HS']['thickness'] == ['1.0']
     assert inputSimFiles['release2HS']['thickness'] == ['1.0', '1.0']
@@ -317,7 +317,7 @@ def test_updateThicknessCfg(tmp_path):
 
     cfg = getInput.updateThicknessCfg(inputSimFiles, cfg)
 
-    print('inputSimFiles', inputSimFiles)
+#    print('inputSimFiles', inputSimFiles)
 
     assert cfg['INPUT']['releaseScenario'] == 'release1HS|release2HS'
     assert cfg['INPUT']['release1HS_relThId'] == '0'

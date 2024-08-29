@@ -21,7 +21,7 @@ def test_appendAverageStd():
                   'u2': np.empty((0, 1)), 'u2std': np.empty((0, 1)), 'ekin': np.empty((0, 1)),
                   'ekinstd': np.empty((0, 1)), 'totEKin': np.empty((0, 1))}
     avaProfile = DFAPathGeneration.appendAverageStd(proList, avaProfile, particles, weights)
-    print(avaProfile)
+#    print(avaProfile)
     assert avaProfile['x'] == 3
     assert avaProfile['xstd'] == 1.5
     assert avaProfile['y'] == 3
@@ -42,13 +42,13 @@ def test_getDFAPathFromPart():
                       'trajectoryLengthXY': values, 'trajectoryLengthXYCor': values,
                       'ux': values, 'uy': values, 'uz': values}]
     avaProfile = DFAPathGeneration.getDFAPathFromPart(particlesList, addVelocityInfo=False)
-    print(avaProfile)
+#    print(avaProfile)
     for prop in ['x', 'y', 'z', 's', 'sCor']:
         assert avaProfile[prop] == 3
         assert avaProfile[prop + 'std'] == 1.5
 
     avaProfile = DFAPathGeneration.getDFAPathFromPart(particlesList, addVelocityInfo=True)
-    print(avaProfile)
+#    print(avaProfile)
     for prop in ['x', 'y', 'z', 's', 'sCor']:
         assert avaProfile[prop] == 3
         assert avaProfile[prop + 'std'] == 1.5
@@ -88,7 +88,7 @@ def test_extendDFAPath():
 
     # using the longest runout method
     avaProfileExt = DFAPathGeneration.extendDFAPath(cfg['PATH'], avaProfile, dem, particlesIni)
-    print(avaProfileExt)
+#    print(avaProfileExt)
     atol = 1e-10
     assert avaProfileExt['x'][0] == 0.7
     assert avaProfileExt['x'][-1] == pytest.approx(9.44242641, abs=1e-6)
@@ -110,7 +110,7 @@ def test_extendDFAPath():
 
 
     avaProfileExt = DFAPathGeneration.extendDFAPath(cfg['PATH'], avaProfile, dem, particlesIni)
-    print(avaProfileExt)
+#    print(avaProfileExt)
     atol = 1e-10
     assert np.allclose(avaProfileExt['x'][0], 6.9, atol=atol)
     assert avaProfileExt['x'][-1] == pytest.approx(30., abs=1e-6)
@@ -126,7 +126,7 @@ def test_extendDFAPath():
     avaProfile = {'x': np.array([10, 20, 30, 70]), 'y': np.array([10, 20, 30, 70]), 'z': np.array([40, 30, 20, 0])}
 
     avaProfileExt = DFAPathGeneration.extendDFAPath(cfg['PATH'], avaProfile, dem, particlesIni)
-    print(avaProfileExt)
+#    print(avaProfileExt)
     atol = 1e-10
     assert np.allclose(avaProfileExt['x'][0], 6.9, atol=atol)
     assert avaProfileExt['x'][-1] == pytest.approx(87.48555023, abs=1e-6)
@@ -159,7 +159,7 @@ def test_resamplePath():
 
     # using the longest runout method
     avaProfile = DFAPathGeneration.resamplePath(cfg['PATH'], dem, avaProfile)
-    print(avaProfile)
+#    print(avaProfile)
     assert avaProfile['indStartMassAverage'] == 3
     assert avaProfile['indEndMassAverage'] == 7
 
@@ -179,10 +179,10 @@ def test_getParabolicFit():
     # using the distance minimization method
     parabolicFit = DFAPathGeneration.getParabolicFit(cfg['PATH'], avaProfile, dem)
     zPara = parabolicFit['a']*avaProfile['s']*avaProfile['s']+parabolicFit['b']*avaProfile['s']+parabolicFit['c']
-    print(parabolicFit)
-    print(zPara)
+#    print(parabolicFit)
+#    print(zPara)
     slope = 2*parabolicFit['a']*avaProfile['s']+parabolicFit['b']
-    print(slope)
+#    print(slope)
     assert zPara[0] == 50
     assert zPara[-1] == 0
     assert slope[-1] != 0
@@ -191,8 +191,8 @@ def test_getParabolicFit():
     cfg['PATH'] = {'fitOption': '1', 'nCellsSlope': '2', 'slopeSplitPoint': '30', 'dsMin': '5'}
     parabolicFit = DFAPathGeneration.getParabolicFit(cfg['PATH'], avaProfile, dem)
     zPara = parabolicFit['a']*avaProfile['s']*avaProfile['s']+parabolicFit['b']*avaProfile['s']+parabolicFit['c']
-    print(parabolicFit)
-    print(zPara)
+#    print(parabolicFit)
+#    print(zPara)
     slope = 2*parabolicFit['a']*avaProfile['s']+parabolicFit['b']
     angle = np.rad2deg(np.arctan(slope))
     assert zPara[0] == 50
@@ -200,6 +200,6 @@ def test_getParabolicFit():
     assert slope[-1] == 0
 
     splitPoint = DFAPathGeneration.getSplitPoint(cfg['PATH'], avaProfile, parabolicFit)
-    print(splitPoint)
-    print(angle)
+#    print(splitPoint)
+#    print(angle)
     assert splitPoint['s'] == 50

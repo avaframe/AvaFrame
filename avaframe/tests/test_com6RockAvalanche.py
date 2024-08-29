@@ -19,7 +19,7 @@ def test_runCom6RockAvalanche(tmp_path, caplog):
     inputDir = testDir / "data" / "testCom6RockAvalanche"
     avaDir = pathlib.Path(tmp_path, "testCom6RockAvalanche")
     shutil.copytree(inputDir, avaDir)
-    print(avaDir)
+#    print(avaDir)
     cfgMain = configparser.ConfigParser()
     cfgMain["MAIN"] = {"avalancheDir": str(avaDir), "nCPU": "auto", "CPUPercent": "90"}
     cfgMain["FLAGS"] = {
@@ -31,7 +31,7 @@ def test_runCom6RockAvalanche(tmp_path, caplog):
     }
     # modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
     modCfg, modInfo = cfgUtils.getModuleConfig(com6RockAvalanche, modInfo=True)
-    print(modCfg)
+#    print(modCfg)
 
     dem, plotDict, reportDictList, simDF = com6RockAvalanche.runRockAvalanche(cfgMain, modCfg)
 
