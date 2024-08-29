@@ -75,7 +75,7 @@ def test_writeReport(tmp_path):
         for line in lines:
             lineVals.append(line)
 
-    print(lineVals)
+#    print(lineVals)
 
     # Test
     assert lineVals[0] == '# This is my report title \n'
@@ -104,7 +104,7 @@ def test_writeReport(tmp_path):
         lineVals2 = []
         for line in lines:
             lineVals2.append(line)
-        print('lineVals2', lineVals2)
+#        print('lineVals2', lineVals2)
 
         assert lineVals2[0] == '# This is my report title \n'
         assert lineVals2[2] == '### Avalanche directory: *data/avaTest* \n'

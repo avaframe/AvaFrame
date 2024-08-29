@@ -57,8 +57,8 @@ def test_radarMask(tmp_path):
     # call function to be tested
     radarRange, rangeGates = dtAna.radarMask(demOriginal, radarFov, aperture, cfgRangeTime)
 
-    print('randarRange', radarRange)
-    print('rangeGates', rangeGates)
+#    print('randarRange', radarRange)
+#    print('rangeGates', rangeGates)
 
     assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10.]))
 
@@ -106,7 +106,7 @@ def test_appraoachVelocity():
 
     # call function to be tested
     maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
-    print(maxVel, rangeVel, timeVel)
+#    print(maxVel, rangeVel, timeVel)
     assert maxVel == pytest.approx(2.5, rel=1e-8)
     assert rangeVel == 10.
     assert timeVel == 1.
@@ -119,7 +119,7 @@ def test_appraoachVelocity():
 
     # call function to be tested
     maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
-    print(maxVel, rangeVel, timeVel)
+#    print(maxVel, rangeVel, timeVel)
     assert maxVel == pytest.approx(3.0, rel=1e-8)
     assert rangeVel == 7.
     assert timeVel == 8.
@@ -239,7 +239,7 @@ def test_extractFrontAndMeanValuesRadar():
 
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
-    print('mtiInfo', mtiInfo)
+#    print('mtiInfo', mtiInfo)
 
     assert mtiInfo['timeList'] == []
     assert mtiInfo['rangeList'] == [2]
@@ -256,7 +256,7 @@ def test_extractFrontAndMeanValuesRadar():
 
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
-    print('mtiInfo2', mtiInfo)
+#    print('mtiInfo2', mtiInfo)
 
     assert mtiInfo['timeList'] == []
     assert mtiInfo['rangeList'] == [np.nan]
@@ -273,7 +273,7 @@ def test_extractFrontAndMeanValuesRadar():
 
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
-    print('mtiInfo3', mtiInfo)
+#    print('mtiInfo3', mtiInfo)
 
     assert mtiInfo['timeList'] == []
     assert mtiInfo['rangeList'] == [3]
@@ -301,8 +301,8 @@ def test_setupThalwegTimeDiagram():
     # call function to be tested
     mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
 
-    print('mtiInfo', mtiInfo['betaPoint'], mtiInfo['betaPointAngle'],
-          mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
+#    print('mtiInfo', mtiInfo['betaPoint'], mtiInfo['betaPointAngle'],
+    #           mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
 
     assert len(mtiInfo['rangeGates']) == len(mtiInfo['rasterTransfo']['s'])
     assert np.isclose(mtiInfo['betaPoint'][1], -4000.)
@@ -331,7 +331,7 @@ def test_initializeRangeTime():
     mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
 
     # print('mtiInfo', mtiInfo)
-    print('dtRa', dtRangeTime, mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
+#    print('dtRa', dtRangeTime, mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
 
     assert np.isclose(mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'], 9.95742856)
     assert np.amax(dtRangeTime) <= 40.
@@ -363,7 +363,7 @@ def test_fetchRangeTimeInfo():
     mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, 1., dem['header'], fields,
                                                     mtiInfo)
 
-    print('mtiInfo', type(dtRangeTime))
+#    print('mtiInfo', type(dtRangeTime))
 
     assert np.array_equal(dtRangeTime, np.arange(2, 40, 1))
 
@@ -395,9 +395,9 @@ def test_extractFrontAndMeanValuesTT():
     # call function to be tested
     mtiInfo = dtAna.extractFrontAndMeanValuesTT(cfgRangeTime, flowF, dem['header'], mtiInfo)
 
-    print('mtiInfo', mtiInfo['rangeList'], mtiInfo['mti'])
-    print('raster', mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
-    print('mti', mtiInfo['rasterTransfo']['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])
+#    print('mtiInfo', mtiInfo['rangeList'], mtiInfo['mti'])
+#    print('raster', mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
+#    print('mti', mtiInfo['rasterTransfo']['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])
 
     assert np.array_equal(mtiInfo['mti'], np.ones((len(mtiInfo['rangeGates']),1)))
     assert mtiInfo['rangeList'] == [np.amax(mtiInfo['rasterTransfo']['s'] - mtiInfo['rasterTransfo']['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])]

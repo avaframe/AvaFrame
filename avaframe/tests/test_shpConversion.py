@@ -158,7 +158,7 @@ def test_removeFeature(capfd):
     assert testRes
 
     featureOut = shpConv.removeFeature(SHPdata, 0)
-    print(featureOut)
+#    print(featureOut)
     # extract feature 1
     assert featureOut['Name'] == ['line2']
 
@@ -265,9 +265,9 @@ def test_writeLine2SHPfile(tmp_path):
     lineDict = {'x': np.array([0, 1]), 'y': np.array([0, 1])}
     fileName = shpConv.writeLine2SHPfile(lineDict, 'myLine', linePath)
     lines = list(temp.glob(('*.shp')))
-    print(lines)
-    print(fileName)
-    print(temp)
+#    print(lines)
+#    print(fileName)
+#    print(temp)
     assert str(lines[0]) == str(linePath)
 
 
@@ -278,9 +278,9 @@ def test_writePoint2SHPfile(tmp_path):
     pointDict = {'x': np.array([0]), 'y': np.array([1])}
     fileName = shpConv.writePoint2SHPfile(pointDict, 'myPoint', pointpath)
     points = list(temp.glob(('*.shp')))
-    print(points)
-    print(fileName)
-    print(temp)
+#    print(points)
+#    print(fileName)
+#    print(temp)
     assert str(points[0]) == str(pointpath)
 
     pointDict = {'x': np.array([0, 10.]), 'y': np.array([1, 20.])}

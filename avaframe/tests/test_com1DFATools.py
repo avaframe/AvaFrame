@@ -58,11 +58,11 @@ def test_createSimDictFromCfgs(tmp_path):
     # call function to be tested
     simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, testPath)
 
-    for sim in simDict.keys():
-        print('simDict: ', sim, simDict[sim])
-    print('inputSimFiles', inputSimFiles)
-    print('simDFExisting', simDFExisting)
-    print('outDir', outDir)
+    # for sim in simDict.keys():
+#        print('simDict: ', sim, simDict[sim])
+#    print('inputSimFiles', inputSimFiles)
+#    print('simDFExisting', simDFExisting)
+#    print('outDir', outDir)
 
     assert simDFExisting == None
     assert len(simDict) == 16

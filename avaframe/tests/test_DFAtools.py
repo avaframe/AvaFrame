@@ -16,7 +16,7 @@ def test_normalize(capfd):
     norme = DFAtls.norm(x, y, z)
     norme2 = DFAtls.norm2(x, y, z)
     xn, yn, zn = DFAtls.normalize(x, y, z)
-    print(xn, yn, zn)
+#    print(xn, yn, zn)
     atol = 1e-10
     assert norme == np.sqrt(3.)
     assert norme2 == 3.
@@ -96,8 +96,8 @@ def test_getAreaMesh(capfd):
         dem = gT.getNormalMesh(dem, num=num)
         dem = DFAtls.getAreaMesh(dem, num)
         Area = dem['areaRaster']
-        print(np.sqrt((1+a*a+b*b)))
-        print(Area)
+#        print(np.sqrt((1+a*a+b*b)))
+#        print(Area)
         atol = 1e-10
         TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b))
                                * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)

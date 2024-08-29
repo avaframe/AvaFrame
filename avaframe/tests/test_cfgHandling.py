@@ -137,7 +137,7 @@ def test_filterSims(tmp_path):
 
     simNames = cfgHandling.filterSims(avaDir2, parametersDict, specDir=avaDir2)
     simNames = sorted(simNames)
-    print("SIMAMES", simNames)
+#    print("SIMAMES", simNames)
 
     assert len(simNames) == 4
     assert simNames == [

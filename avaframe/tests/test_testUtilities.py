@@ -58,7 +58,7 @@ def test_readAllBenchmarkDesDicts():
     inDir = dirName / '..' / '..' / 'benchmarks'
     testDictList = tU.readAllBenchmarkDesDicts(info=True, inDir=inDir)
 
-    print('testDictList', testDictList)
+#    print('testDictList', testDictList)
 
     assert isinstance(testDictList[0], dict)
 
@@ -121,5 +121,5 @@ def test_fetchBenchmarkResults():
     refFiles = tU.fetchBenchmarkResults(testName, resTypes=[], refDir=refDir)
 
     assert 'relAlr_1d389a011c_C_M_null_dfa' in str(refFiles[0])
-    print(refFiles)
+#    print(refFiles)
     assert len(refFiles) == 3

@@ -59,7 +59,7 @@ def test_cleanSingleAvaDir(tmp_path):
 
     # - non string variable
     notAString = initProj.cleanSingleAvaDir(2)
-    print(notAString)
+#    print(notAString)
     assert notAString == 'avaDir is NOT a string or PurePath'
 
     # create test directories and touch log files

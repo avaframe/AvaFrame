@@ -20,7 +20,7 @@ def test_getAimecInputs(capfd):
     avalancheDir = pathlib.Path(dirname, '..', 'data', 'avaParabola')
     pathDict = {}
     pathDict = aT.readAIMECinputs(avalancheDir, pathDict, True, dirName='com1DFA')
-    print(pathDict)
+#    print(pathDict)
     assert 'avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp' in str(pathDict['profileLayer'])
     assert 'avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp' in str(pathDict['splitPointSource'])
     assert 'avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc' in str(pathDict['demSource'])
@@ -97,18 +97,18 @@ def test_analyzeArea(tmp_path):
         if index != pathDict['refSimRowHash']:
             inputsDF, newRasters, timeMass, contourDict = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDF,
                                                                         newRasters, timeMass, index, contourDict, {})
-    print(inputsDF['sRunout'])
-    print(inputsDF['xRunout'])
-    print(inputsDF['yRunout'])
+#    print(inputsDF['sRunout'])
+#    print(inputsDF['xRunout'])
+#    print(inputsDF['yRunout'])
     assert (inputsDF['sRunout'][0] == 449) and (
             inputsDF['xRunout'][1] == 419) and (
             inputsDF['yRunout'][0] == 31) and (
             inputsDF['maxpprCrossMax'][1] == 1)
-    print(inputsDF['TP'])
-    print(inputsDF['FN'])
-    print(inputsDF['FP'])
-    print(inputsDF['TN'])
-    print(inputsDF['TN']+inputsDF['FP']+inputsDF['FN']+inputsDF['TP'])
+#    print(inputsDF['TP'])
+#    print(inputsDF['FN'])
+#    print(inputsDF['FP'])
+#    print(inputsDF['TN'])
+#    print(inputsDF['TN']+inputsDF['FP']+inputsDF['FN']+inputsDF['TP'])
     assert (inputsDF['TP'][1] == 780) and (
             inputsDF['FN'][1] == 1670) and (
             inputsDF['FP'][1] == 200) and (inputsDF['TN'][1] == 7350)

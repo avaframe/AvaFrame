@@ -44,7 +44,7 @@ def test_resetMassPerParticle():
     # call function to be tested
     particles = pI.resetMassPerParticle(cfg, particles, dem, relRaster, relThField)
 
-    print('particles new mass', particles['mIni'])
+#    print('particles new mass', particles['mIni'])
     testMass = np.ones(16)
     testMass[0:8] = 25.
     testMass[8:] = 6.25
@@ -74,10 +74,10 @@ def test_createReleaseBuffer():
     yL1 = releaseL['y'][releaseL['Start'][0]:releaseL['Start'][0]+releaseL['Length'][0]]
     yL2 = releaseL['y'][releaseL['Start'][1]:releaseL['Start'][1]+releaseL['Length'][1]]
 
-    print('xl1', xL1)
-    print('xl2', xL2)
-    print('yl1', yL1)
-    print('yl2', yL2)
+#    print('xl1', xL1)
+#    print('xl2', xL2)
+#    print('yl1', yL1)
+#    print('yl2', yL2)
 
     assert len(np.where(xL1 > 3.)[0]) == 0
     assert len(np.where(xL1 < -2)[0]) == 0

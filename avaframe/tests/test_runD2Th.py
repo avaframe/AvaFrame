@@ -34,7 +34,7 @@ def test_runD2Th(tmp_path):
     demPath = dirName / ".." / "data" / "avaInclinedPlane" / "Inputs" / "DEM_IP_Topo.asc"
     demPath2 = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     shutil.copy(demPath, demPath2)
-    print('DEMPATH', demPath2)
+#    print('DEMPATH', demPath2)
 
     # test depth
     testDepth = np.ones((401, 1001))
@@ -51,7 +51,7 @@ def test_runD2Th(tmp_path):
     thicknessField = IOf.readRaster(thFile)
     thickness = thicknessField['rasterData']
 
-    print('min ', np.amin(thickness), 'max ', np.amax(thickness), 'mean ', np.mean(thickness))
-    print('value', 1. * np.cos(np.deg2rad(34.)))
+#    print('min ', np.amin(thickness), 'max ', np.amax(thickness), 'mean ', np.mean(thickness))
+#    print('value', 1. * np.cos(np.deg2rad(34.)))
     assert np.isclose(np.mean(thickness), 1. * np.cos(np.deg2rad(34.)))
 

@@ -84,7 +84,7 @@ def test_addSurfaceParalleCoord(tmp_path):
     tol = 1e-8
     sParaSol = np.array([0, 5, 8, 13, 18])
     testRes = np.allclose(rasterTransfo['sParallel'], sParaSol, atol=tol)
-    print(rasterTransfo['sParallel'])
+#    print(rasterTransfo['sParallel'])
     assert (testRes)
 
 
@@ -137,7 +137,7 @@ def test_addReferenceAnalysisTODF(tmp_path):
     # call function to be tested
     referenceDF = aT.addReferenceAnalysisTODF(referenceDF, refFile, refDataDict)
 
-    print('referenceDF ', referenceDF)
+#    print('referenceDF ', referenceDF)
 
 
     for item in ['sRunout', 'lRunout', 'xRunout', 'yRunout']:
@@ -209,7 +209,7 @@ def test_computeRunoutLine(tmp_path):
     runoutLine = aT.computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, '', 'line',
                                       name='testRaster', basedOnMax=True)
 
-    print('runoutLine', runoutLine)
+#    print('runoutLine', runoutLine)
 
     assert len(np.where(np.isnan(runoutLine['s']) == False)[0]) == 14
     assert len(np.where(np.isnan(runoutLine['l']) == False)[0]) == 14
@@ -235,7 +235,7 @@ def test_computeRunoutLine(tmp_path):
     runoutLine = aT.computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, '', 'line',
                                       name='', basedOnMax=False)
 
-    print('runoutLine', runoutLine)
+#    print('runoutLine', runoutLine)
 
     assert len(np.where(np.isnan(runoutLine['s']) == False)[0]) == 5
     assert len(np.where(np.isnan(runoutLine['l']) == False)[0]) == 5
@@ -259,7 +259,7 @@ def test_computeRunoutLine(tmp_path):
     runoutLine = aT.computeRunoutLine(cfgSetup, rasterTransfo, transformedRasters, '', 'line',
                                       name='', basedOnMax=False)
 
-    print('runoutLine', runoutLine)
+#    print('runoutLine', runoutLine)
 
     assert len(np.where(np.isnan(runoutLine['s']) == False)[0]) == 0
     assert len(np.where(np.isnan(runoutLine['l']) == False)[0]) == 0

@@ -98,7 +98,7 @@ def test_getIntersection(capfd):
                                                                                   xCrown, yCrown, zCrown,
                                                                                   xTangent, yTangent, zTangent,
                                                                                   nDamPoints)
-    print(xT, yT, zT)
+#    print(xT, yT, zT)
     assert intersection == 1
     assert xF == 0
     assert yF == 0
@@ -184,11 +184,11 @@ def test_initializeWallLines(capfd):
     wallLineDict = {'x': np.array([0., 0., 0., 1., 2.]), 'y': np.array([2., 1., 0., 0., 0.]),
                     'z': np.array([10., 10., 10., 10., 10.]), 'fileName': 'test.shp', 'Name': 'dam', 'slope': 45}
     wallLineDict = damCom1DFA.initializeWallLines(cfg['GENERAL'], dem, wallLineDict)
-    print(wallLineDict)
-    print(wallLineDict['cellsCrossed'])
-    print(wallLineDict['xTangent'])
-    print(wallLineDict['yTangent'])
-    print(wallLineDict['zTangent'])
+#    print(wallLineDict)
+#    print(wallLineDict['cellsCrossed'])
+#    print(wallLineDict['xTangent'])
+#    print(wallLineDict['yTangent'])
+#    print(wallLineDict['zTangent'])
 
     assert wallLineDict['dam'] == 1
     assert wallLineDict['nPoints'] == 5
@@ -247,7 +247,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == -2
@@ -268,7 +268,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == -1
@@ -291,7 +291,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == 0
     assert yNew+originalHeader['yllcenter'] == 0
@@ -313,7 +313,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == pytest.approx(-2, abs=atol)
@@ -336,7 +336,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)
     assert yNew+originalHeader['yllcenter'] == pytest.approx(-5/3, abs=atol)
@@ -380,7 +380,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-6
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)
@@ -425,7 +425,7 @@ def test_getWallInteraction(capfd):
         wallLineDict['xTangent'], wallLineDict['yTangent'], wallLineDict['zTangent'],
         ncols, nrows, csz, interpOption, restitutionCoefficient, 2,
         dem['Nx'], dem['Ny'], dem['Nz'], dem['rasterData'], np.zeros((nrows, ncols)))
-    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
+#    print(xNew, yNew, zNew, uxNew, uyNew, uzNew)
     atol = 1e-10
     assert fI == 1
     assert xNew+originalHeader['xllcenter'] == pytest.approx(0, abs=atol)

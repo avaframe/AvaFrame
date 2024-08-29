@@ -21,7 +21,7 @@ def test_mainDfa2Aimec(tmp_path):
     cfg['AIMECSETUP'] = {'varParList': 'releaseScenario', 'ascendingOrder': 'True'}
     cfg['FLAGS'] = {'flagMass': 'True'}
     inputDF, resTypeList = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA', cfg)
-    print('path', dirPath)
+#    print('path', dirPath)
     # get path dictionary for test
     pathDTest = {}
     pathDTest['ppr'] = [pathData / 'release1HS_0dcd58fc86_ent_dfa_ppr.asc',
@@ -32,8 +32,8 @@ def test_mainDfa2Aimec(tmp_path):
                         pathData / 'release2HS_3d519adab0_ent_dfa_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_0dcd58fc86_ent_dfa.txt',
                             testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_3d519adab0_ent_dfa.txt']
-    print(inputDF['ppr'].to_list())
-    print(pathDTest['ppr'])
+#    print(inputDF['ppr'].to_list())
+#    print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
     assert not diff
     diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
@@ -69,8 +69,8 @@ def test_dfaComp2Aimec(tmp_path):
                         pathDataComp / 'release1HX_0a452280a5_ent_dfa_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFARef' / massNameRef,
                             testPath / 'Outputs' / 'com1DFAComp' / massNameComp]
-    print(inputDF['ppr'].to_list())
-    print(pathDTest['ppr'])
+#    print(inputDF['ppr'].to_list())
+#    print(pathDTest['ppr'])
     diff = set(inputDF['ppr'].to_list()) ^ set(pathDTest['ppr'])
     assert not diff
     diff = set(inputDF['pft'].to_list()) ^ set(pathDTest['pft'])
@@ -82,7 +82,7 @@ def test_dfaComp2Aimec(tmp_path):
 
     with pytest.raises(ValueError) as e:
         assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release2HX', 'release1HX')
-        print(e)
+#        print(e)
     assert ('Found no simulation matching the reference criterion release2HX, there should be one') in str(e.value)
 
 
@@ -98,7 +98,7 @@ def test_getRefMB():
     # call function to be tested
     inputDF = dfa2Aimec.getRefMB(avaTestName, inputDF, simName)
 
-    print('pathDict', inputDF)
+#    print('pathDict', inputDF)
 
     assert 'mass_release1HS_ent_dfa_3d519adab0' in str(inputDF['massBal'].to_list()[0])
 
@@ -129,7 +129,7 @@ def test_getMBInfo():
                             index=[0, 1])
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
-    print('pathDict', pathDict)
+#    print('pathDict', pathDict)
     assert 'mass_release1HS_0dcd58fc86_ent_dfa' in str(inputsDF['massBal'][0])
     assert 'mass_release2HS_3d519adab0_ent_dfa' in str(inputsDF['massBal'][1])
 
@@ -139,7 +139,7 @@ def test_getMBInfo():
                             index=[0])
     inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
-    print('pathDict2', inputsDF)
+#    print('pathDict2', inputsDF)
     assert 'mass_release1HS_0dcd58fc86_ent_dfa' in str(inputsDF['massBal'][0])
     assert 'mass_release2HS_3d519adab0_ent_dfa' not in str(inputsDF['massBal'][0])
 
@@ -185,10 +185,10 @@ def test_getCompDirs():
     # call function to be tested
     inputDirRef, inputDirComp, pathDict = dfa2Aimec.getCompDirs(avaDir, cfg['AIMECSETUP'])
 
-    print('inputDirRef', inputDirRef)
-    print('inputDirComp', inputDirComp)
-    print('pathDict', pathDict)
-    print('refModule', pathDict['compType'][1])
+#    print('inputDirRef', inputDirRef)
+#    print('inputDirComp', inputDirComp)
+#    print('pathDict', pathDict)
+#    print('refModule', pathDict['compType'][1])
 
     assert str(inputDirRef) == str(avaDir / 'Outputs' / 'com1DFAOrig' / 'peakFiles')
     assert str(inputDirComp) == str(avaDir / 'Outputs' / 'com1DFA' / 'peakFiles')

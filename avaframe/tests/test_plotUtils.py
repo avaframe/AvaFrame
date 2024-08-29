@@ -21,8 +21,8 @@ def test_constrainPlotsToData():
     # call function to be tested
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(inputData, cellSize, extentOption=False)
 
-    print('rows', rowsMin, rowsMax)
-    print('cols', colsMin, colsMax)
+#    print('rows', rowsMin, rowsMax)
+#    print('cols', colsMin, colsMax)
 
     assert rowsMin == 3
     assert rowsMax == 7
@@ -35,9 +35,9 @@ def test_constrainPlotsToData():
                                                                           extentOption=True,
                                                                           constrainedData=True)
 
-    print('rows', rowsMinPlot, rowsMaxPlot)
-    print('cols', colsMinPlot, colsMaxPlot)
-    print('dataConstrained', dataConstrained)
+#    print('rows', rowsMinPlot, rowsMaxPlot)
+#    print('cols', colsMinPlot, colsMaxPlot)
+#    print('dataConstrained', dataConstrained)
     dataConstrainedTest = np.zeros((5, 8))
     dataConstrainedTest[1:4, 1:7] = 4.
 
@@ -70,8 +70,8 @@ def test_putAvaNameOnPlot(tmp_path):
     # call function to be tested
     infoText = pU.putAvaNameOnPlot(ax, avaDir)
     infoText2 = pU.putAvaNameOnPlot(ax, avaDirL)
-    print('info', infoText)
-    print('info2', infoText2)
+#    print('info', infoText)
+#    print('info2', infoText2)
 
     assert infoText == (datetime.datetime.now().strftime("%d.%m.%y")  + '; ' + avaDir.stem)
     assert infoText2 == (datetime.datetime.now().strftime("%d.%m.%y") + ';' + 'avaTest;avaTest2')
@@ -80,8 +80,8 @@ def test_putAvaNameOnPlot(tmp_path):
     # call function to be tested
     infoText = pU.putAvaNameOnPlot(ax, avaDir, date=False)
     infoText2 = pU.putAvaNameOnPlot(ax, avaDirL, date=False)
-    print('info', infoText)
-    print('info2', infoText2)
+#    print('info', infoText)
+#    print('info2', infoText2)
 
     assert infoText == (avaDir.stem)
     assert infoText2 == ('avaTest;avaTest2')
@@ -171,8 +171,8 @@ def test_getColors4Scatter(tmp_path):
     nSamples = np.size(values)
     unitSC = ''
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
-    print('colorSC', colorSC)
-    print('displayColorBar', displayColorBar)
+#    print('colorSC', colorSC)
+#    print('displayColorBar', displayColorBar)
 
     assert np.allclose(colorSC, np.array([0.5, 0.5, 0.5, 0.5, 0.5]))
     assert displayColorBar is False
@@ -182,11 +182,11 @@ def test_getColors4Scatter(tmp_path):
     nSamples = np.size(values)
     unitSC = ''
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
-    print('itemsList', itemsList)
-    print('colorSC', colorSC)
-    print('ticksSC', ticksSC)
-    print('normSC', normSC)
-    print('displayColorBar', displayColorBar)
+#    print('itemsList', itemsList)
+#    print('colorSC', colorSC)
+#    print('ticksSC', ticksSC)
+#    print('normSC', normSC)
+#    print('displayColorBar', displayColorBar)
 
     assert np.allclose(colorSC, np.array([1., 2., 3., 3., 2., 2.]))
     assert itemsList == ['a', 'b', 'c']
@@ -198,11 +198,11 @@ def test_getColors4Scatter(tmp_path):
     nSamples = np.size(values)
     unitSC = 'm'
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
-    print('itemsList', itemsList)
-    print('colorSC', colorSC)
-    print('ticksSC', ticksSC)
-    print('normSC', normSC)
-    print('displayColorBar', displayColorBar)
+#    print('itemsList', itemsList)
+#    print('colorSC', colorSC)
+#    print('ticksSC', ticksSC)
+#    print('normSC', normSC)
+#    print('displayColorBar', displayColorBar)
 
     assert np.allclose(colorSC, np.array([1,  2,  3, -1,  0,  5]))
     assert itemsList == ''
@@ -238,7 +238,7 @@ def test_addHillShadeContours(tmp_path):
     colsMinPlot = colsMin * header['cellsize'] + xllcenter
     colsMaxPlot = (colsMax) * header['cellsize'] + xllcenter
     extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
-    print('EXT', extent)
+#    print('EXT', extent)
     fig, ax = plt.subplots()
     ls, CS = pU.addHillShadeContours(ax, field1, header['cellsize'], extent, colors=["gray"], onlyContours=False)
 
@@ -250,7 +250,7 @@ def test_addHillShadeContours(tmp_path):
     ymin = header['yllcenter']
     ymax = header['yllcenter']  + header['cellsize']*(header['nrows'])
     extent2 = [xmin, xmax, ymin, ymax]
-    print('extent2 is', extent2)
+#    print('extent2 is', extent2)
     with pytest.raises(AssertionError) as e:
         assert pU.addHillShadeContours(ax, field1, header['cellsize'], extent2, colors=["gray"], onlyContours=False)
     assert 'Extent of dem data for hillshade and provided extent' in str(e.value)

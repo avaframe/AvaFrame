@@ -63,7 +63,7 @@ def test_copyAimecPlots(tmp_path):
     # call function to be tested
     plotPaths = gR.copyAimecPlots(plotFiles, testName, outDir, plotPaths)
     testFile = outDir / 'avaTest__release1HX_ent_dfa_3f8d2d9327_pft.png'
-    print(plotPaths)
+#    print(plotPaths)
     assert str(plotPaths['aimec plot 1']) == str(testFile)
     assert len(plotPaths) == 2
 

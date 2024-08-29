@@ -56,10 +56,10 @@ def test_getGeneralConfig():
 
     dirPath = pathlib.Path(__file__).parents[0]
     nameFile = dirPath / 'data' / 'testCfg.ini'
-    print(nameFile)
+#    print(nameFile)
     # test with both a default and local .ini file
     cfg2 = cfgUtils.getGeneralConfig(nameFile=nameFile)
-    print(cfg2["MAIN"]["avalancheDir"])
+#    print(cfg2["MAIN"]["avalancheDir"])
     sections = cfg2.sections()
 
     assert sections == ['MAIN', 'FLAGS']

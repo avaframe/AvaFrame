@@ -12,25 +12,25 @@ def test_getSphKernelRadiusTimeStep(capfd):
     dem = {'header': {'cellsize': 1}, 'headerNeighbourGrid': {'cellsize': 2}}
 
     dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
-    print(dtStable)
+#    print(dtStable)
     assert dtStable == 0.01
 
     cfg['GENERAL']['constrainCFL'] = 'True'
     dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
-    print(dtStable)
+#    print(dtStable)
     assert dtStable == 0.01
 
     dem['header']['cellsize'] = 2
     dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
-    print(dtStable)
+#    print(dtStable)
     assert dtStable == 0.02
 
     dem['header']['cellsize'] = 3
     dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
-    print(dtStable)
+#    print(dtStable)
     assert dtStable == 0.02
 
     cfg['GENERAL']['cMax'] = '0.02'
     dtStable = tD.getSphKernelRadiusTimeStep(dem, cfg['GENERAL'])
-    print(dtStable)
+#    print(dtStable)
     assert dtStable == 0.04

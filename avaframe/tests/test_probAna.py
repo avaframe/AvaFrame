@@ -43,7 +43,7 @@ def test_probAna(tmp_path):
     # provide optional filter criteria for simulations
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
-    print('PARAMETERSDIC', parametersDict)
+#    print('PARAMETERSDIC', parametersDict)
 
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, 'com1DFA', parametersDict=parametersDict, inputDir='')
@@ -94,7 +94,7 @@ def test_createComModConfig(tmp_path):
     # call function to be tested
     cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     # load cfg from file
     cfgMu = configparser.ConfigParser()
@@ -103,8 +103,8 @@ def test_createComModConfig(tmp_path):
     cfgMu.read(cfgFiles[0])
     cfgRelTh.read(cfgFiles[1])
 
-    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
-          cfgRelTh['GENERAL']['relTh'])
+#    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
+    #           cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
     assert cfgMu['GENERAL']['relTh'] == ''
@@ -128,8 +128,8 @@ def test_createComModConfig(tmp_path):
     cfgMu.read(cfgFiles[0])
     cfgRelTh.read(cfgFiles[1])
 
-    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
-          cfgRelTh['GENERAL']['relTh'])
+#    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
+    #           cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
     assert np.isclose(cfgMu['GENERAL'].getfloat('relTh'), 2.)
@@ -153,13 +153,13 @@ def test_createComModConfig(tmp_path):
     # call function to be tested
     cfgFiles, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     for cfgF in cfgFiles:
         cfgTest = configparser.ConfigParser()
         cfgTest.read(cfgF)
-        print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
-            cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
+#        print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+        #             cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
 
         assert cfgTest['GENERAL']['relThFromShp'] == 'False'
         assert cfgTest['GENERAL'].getfloat('relTh') <= 3.
@@ -184,14 +184,14 @@ def test_createComModConfig(tmp_path):
     # call function to be tested
     cfgFiles2, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
-    print('cfgFiles', cfgFiles2)
+#    print('cfgFiles', cfgFiles2)
 
     cfgTest2 = configparser.ConfigParser()
     cfgTest2.read(cfgFiles2[0])
     cfgTest21 = configparser.ConfigParser()
     cfgTest21.read(cfgFiles2[40])
-    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
-        cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
+#    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+    #         cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
 
     assert cfgTest2['GENERAL']['relThFromShp'] == 'True'
     assert cfgTest2['GENERAL']['relTh'] == ''
@@ -217,7 +217,7 @@ def test_createComModConfig(tmp_path):
     # call function to be tested
     cfgFiles3, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
-    print('cfgFiles', cfgFiles3)
+#    print('cfgFiles', cfgFiles3)
 
     cfgTest3 = configparser.ConfigParser()
     cfgTest3.read(cfgFiles3[1])
@@ -239,12 +239,12 @@ def test_createComModConfig(tmp_path):
     # call function to be tested
     cfgFiles4, outDir = pA.createComModConfig(cfgProb, avaDir, com1DFA)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     cfgTest4 = configparser.ConfigParser()
     cfgTest4.read(cfgFiles4[0])
-    print('cfgTest', cfgTest4['GENERAL']['relThFromShp'], cfgTest4['GENERAL']['relTh'],
-        cfgTest4['GENERAL']['relThPercentVariation'], cfgTest4['GENERAL']['musamosat'])
+#    print('cfgTest', cfgTest4['GENERAL']['relThFromShp'], cfgTest4['GENERAL']['relTh'],
+    #         cfgTest4['GENERAL']['relThPercentVariation'], cfgTest4['GENERAL']['musamosat'])
 
     assert cfgTest4['GENERAL']['relThFromShp'] == 'True'
     assert cfgTest4['GENERAL']['relTh'] == ''
@@ -372,7 +372,7 @@ def test_updateCfgRange():
     # call function
     cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
-    print('value', cfgNew['GENERAL']['relThPercentVariation'])
+#    print('value', cfgNew['GENERAL']['relThPercentVariation'])
 
     assert cfgNew['GENERAL']['musamosat'] == '0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
@@ -411,7 +411,7 @@ def test_updateCfgRange():
     # call function
     cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName, varDict[varName])
 
-    print('cfgNEW', cfgNew['GENERAL']['relThRangeVariation'])
+#    print('cfgNEW', cfgNew['GENERAL']['relThRangeVariation'])
 
     assert cfgNew['GENERAL']['musamosat'] == '0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
@@ -612,7 +612,7 @@ def test_createCfgFiles(tmp_path):
 
     cfgFiles = pA.createCfgFiles([paramValuesD], com1DFA, cfgProb, cfgPath='')
 
-    print(cfgFiles)
+#    print(cfgFiles)
 
     cfgTest1 = configparser.ConfigParser()
     cfgTest1.read(cfgFiles[0])
@@ -746,12 +746,12 @@ def test_cfgFilesGlobalApproach(tmp_path):
     # call function to be tested
     cfgFiles = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     cfgTest = configparser.ConfigParser()
     cfgTest.read(cfgFiles[0])
-    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
-        cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
+#    print('cfgTest', cfgTest['GENERAL']['relThFromShp'], cfgTest['GENERAL']['relTh'],
+    #         cfgTest['GENERAL']['relThPercentVariation'], cfgTest['GENERAL']['musamosat'])
 
     assert cfgTest['GENERAL']['relThFromShp'] == 'False'
     assert cfgTest['GENERAL']['relTh'] == '2.2719559079879'
@@ -769,12 +769,12 @@ def test_cfgFilesGlobalApproach(tmp_path):
     # call function to be tested
     cfgFiles2 = pA.cfgFilesGlobalApproach(avaDir, cfgProb, com1DFA, outDir)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     cfgTest1 = configparser.ConfigParser()
     cfgTest1.read(cfgFiles2[0])
-    print('cfgTest', cfgTest1['GENERAL']['relThFromShp'], cfgTest1['GENERAL']['relTh'],
-        cfgTest1['GENERAL']['relThPercentVariation'], cfgTest1['GENERAL']['musamosat'])
+#    print('cfgTest', cfgTest1['GENERAL']['relThFromShp'], cfgTest1['GENERAL']['relTh'],
+    #         cfgTest1['GENERAL']['relThPercentVariation'], cfgTest1['GENERAL']['musamosat'])
 
     assert cfgTest1['GENERAL']['relThFromShp'] == 'True'
     assert cfgTest1['GENERAL']['relTh'] == ''
@@ -809,7 +809,7 @@ def test_cfgFilesLocalApproach(tmp_path):
     # call function to be tested
     cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     # load cfg from file
     cfgMu = configparser.ConfigParser()
@@ -818,8 +818,8 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgMu.read(cfgFiles[0])
     cfgRelTh.read(cfgFiles[1])
 
-    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
-          cfgRelTh['GENERAL']['relTh'])
+#    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
+    #           cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
     assert cfgMu['GENERAL']['relTh'] == ''
@@ -845,7 +845,7 @@ def test_cfgFilesLocalApproach(tmp_path):
     # call function to be tested
     cfgFiles = pA.cfgFilesLocalApproach(variationsDict, cfgProb, com1DFA, outDir)
 
-    print('cfgFiles', cfgFiles)
+#    print('cfgFiles', cfgFiles)
 
     # load cfg from file
     cfgMu = configparser.ConfigParser()
@@ -854,8 +854,8 @@ def test_cfgFilesLocalApproach(tmp_path):
     cfgMu.read(cfgFiles[0])
     cfgRelTh.read(cfgFiles[1])
 
-    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
-          cfgRelTh['GENERAL']['relTh'])
+#    print(cfgMu['GENERAL']['musamosat'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['musamosat'],
+    #           cfgRelTh['GENERAL']['relTh'])
 
     assert cfgMu['GENERAL']['musamosat'] == '0.155$60$2'
     assert np.isclose(cfgMu['GENERAL'].getfloat('relTh'), 2.)

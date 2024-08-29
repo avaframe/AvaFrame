@@ -63,8 +63,8 @@ def test_placeParticles():
     ypartTest = np.asarray(
         [5.86378022, 7.20901433, 3.74122857, 7.24440576, 5.83618727, 2.97948968, 4.70919833])
 
-    print('xpart', xpart)
-    print('ypart', ypart)
+#    print('xpart', xpart)
+#    print('ypart', ypart)
     assert nPart == 7.0
     assert np.isclose(mPart, 1.6428571428571428)
     assert np.allclose(xpart, xpartTest)
@@ -78,8 +78,8 @@ def test_placeParticles():
     xpart, ypart, mPart, nPart, aPart = particleTools.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK,
                                                                      rng, cfg['GENERAL'], ratioArea)
 
-    print('xpart', xpart)
-    print('ypart', ypart)
+#    print('xpart', xpart)
+#    print('ypart', ypart)
 
     assert nPart == 4.0
     assert -2.0 < xpart[0] < 0.0
@@ -138,18 +138,18 @@ def test_splitPartMass(capfd):
     particles['mTot'] = np.sum(particles['m'])
     particles['nID'] = 10
     particles = particleTools.splitPartMass(particles, cfg['GENERAL'])
-    print(particles)
+#    print(particles)
     massNew = np.array([1, 1, 1.4, 1.8, 1, 0.8, 2.5, 1, 1, 1,
                         1, 1.8, 0.8, 2.5])
     xNew = np.array([0., 0.60105772, 2., 2.46476277, 4., 4.64317518, 5.36921687, 7., 8., 9.,
                      1.39894228, 3.53523723, 5.35682482, 6.63078313])
     res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3, 5, 6])
-    print(particles['m'])
-    print(particles['x'])
-    print(massNew)
-    print(particles['nID'])
-    print(particles['parentID'])
-    print(particles['ID'])
+#    print(particles['m'])
+#    print(particles['x'])
+#    print(massNew)
+#    print(particles['nID'])
+#    print(particles['parentID'])
+#    print(particles['ID'])
     atol = 1e-10
     assert particles['nPart'] == 14
     assert np.allclose(particles['m'], massNew, atol=atol)
@@ -216,8 +216,8 @@ def test_readPartFromPickle(tmp_path):
     Particles2, TimeStepInfo2 = particleTools.readPartFromPickle(
         inDir, flagAvaDir=True)
 
-    print('Particles', Particles)
-    print('TimeStepInfo', TimeStepInfo)
+#    print('Particles', Particles)
+#    print('TimeStepInfo', TimeStepInfo)
 
     assert np.array_equal(Particles[0]['x'], particlesTestDict['x'])
     assert TimeStepInfo == [0.]
@@ -254,8 +254,8 @@ def test_savePartToCsv(tmp_path):
     DF2 = pd.read_csv(partCsv2)
     velMag = np.sqrt(4**2 + 4**2 + 4**2)
 
-    print('csv df1', DF1.to_string())
-    print('csv df2', DF2.to_string())
+#    print('csv df1', DF1.to_string())
+#    print('csv df2', DF2.to_string())
 
     assert np.array_equal(DF1['X'], (np.asarray([12., 13., 14.])))
     assert np.array_equal(DF1['Y'], (np.asarray([13., 16., 17.])))
