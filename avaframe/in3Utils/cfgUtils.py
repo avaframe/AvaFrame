@@ -278,7 +278,15 @@ def compareTwoConfigs(defCfg, locCfg, toPrint=False):
     locCfgD = convertConfigParserToDict(locCfg)
 
     # Get the difference info
-    cfgDiff = DeepDiff(defCfgD, locCfgD)
+    # this is the deepdiff > 8.0 version
+    # TODO: remove this again in the future when deepdiff > 8.0 is wider
+    # established
+    try:
+        cfgDiff = DeepDiff(defCfgD, locCfgD, threshold_to_diff_deeper=0)
+    # for older deepdiff versions which don't know threshold_to_diff_deeper
+    except ValueError:
+        cfgDiff = DeepDiff(defCfgD, locCfgD)
+
 
     # Combine them, different keys are just added, for the same keys, the
     # local (right) value is used
