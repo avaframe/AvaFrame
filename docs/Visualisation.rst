@@ -28,3 +28,36 @@ in ParaView
   for all exported time steps
 
 * it is also possible to save an animation over all time steps
+
+
+Gallery
+-------
+
+This page contains example plots and pointers to the relevant plotting functions/modules. This is more to show which
+type of plots exists, not to show all available plots!
+
+**Currently work in progress**
+
+.. list-table:: Example plots (click to view bigger version)
+   :widths: 30 30 30
+   :header-rows: 0
+
+   * - .. image:: _static/gallery/avaAlr_ROC.png
+                :target: _static/gallery/avaAlr_ROC.png
+     - .. image:: _static/gallery/DEMplot3D.png
+                :target: _static/gallery/DEMplot3D.png
+     - .. image:: _static/gallery/ContourComparisonAIMEC.png
+                :target: _static/gallery/ContourComparisonAIMEC.png
+   * -
+     - DEM plot; runscripts/runPlotTopo.py
+     - Contour comparison; ana3Aimec/
+   * - .. image:: _static/gallery/RunoutComparison.png
+                :target: _static/gallery/RunoutComparison.png
+     - .. image:: _static/gallery/VariableComparison.png
+                :target: _static/gallery/VariableComparison.png
+     - .. image:: _static/gallery/ThalwegTime.png
+                :target: _static/gallery/ThalwegTime.png
+   * - Runout line comparison
+     - Variable comparison
+     - Thalweg time
+
