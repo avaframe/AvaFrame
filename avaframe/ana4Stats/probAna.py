@@ -408,8 +408,10 @@ def probAnalysis(avaDir, cfg, modName, parametersDict='', inputDir='', probConf=
                 if fileData['header']['nrows'] != nRows or fileData['header']['ncols'] != nCols:
                     log.warning('datasets used to create probMap do not match in extent - remeshing: %s to cellSize %s' %
                         (fileName, header['cellsize']))
-                    data, _ = gT.resizeData(fileData, refData)
-                data = np.flipud(fileData['rasterData'])
+                    dataRead, _ = gT.resizeData(fileData, refData)
+                else:
+                    dataRead = fileData['rasterData']
+                data = np.flipud(dataRead)
 
                 # fetch contourline info
                 xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(refData['header'])
