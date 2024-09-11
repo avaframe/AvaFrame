@@ -18,7 +18,7 @@ import shutil
 import pathlib
 
 
-def test_probAna(tmp_path):
+def test_probAnalysis(tmp_path):
     """ test probAna function to compute mask for parameter exceeding threshold """
 
     # set input directory
@@ -72,6 +72,27 @@ def test_probAna(tmp_path):
 
     # Test
     assert (testRes2 is True)
+
+
+    # set input directory
+    avaName2 = 'avaTest2'
+    avaTestDir2 = 'avaProbTest'
+    dirPath2 = pathlib.Path(__file__).parents[0]
+    avaDir2 = dirPath / 'data' / avaTestDir2
+    inputDir2 = pathlib.Path(tmp_path, avaName2)
+    shutil.copytree(avaDir2, inputDir2)
+
+    cfg2 = configparser.ConfigParser()
+    cfg2.optionxform = str
+    cfg2['GENERAL'] = {'peakVar': 'ppr', 'unit': 'kPa','peakLim': '1.0'}
+    cfg2['PLOT'] = {'name': 'probability map', 'cmapType': 'prob', 'levels': '0.95', 'unit': 'fraction',
+                   'zoomBuffer': 250., 'contrainBuffer': 10., 'meshCellSizeThreshold': 0.001}
+    modName = 'com1DFA'
+
+    # call function to be tested
+    analysisPerformed, contourDict = pA.probAnalysis(inputDir2, cfg2, modName, parametersDict='', inputDir='', probConf='', simDFActual='')
+
+    assert analysisPerformed is True
 
 
 def test_createComModConfig(tmp_path):
