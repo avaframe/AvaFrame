@@ -484,7 +484,7 @@ def checkConvertReleaseShp2Tif(modelPaths):
             #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
-            raise ValueError(_errMsg)  
+            raise ValueError(_errMsg)
         else:
             _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
             log.error(_errMsg)
