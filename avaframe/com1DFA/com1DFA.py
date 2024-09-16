@@ -316,6 +316,8 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
 
     if cfgMain["FLAGS"].getboolean("createReport"):
         # write report
+        reportDictList = gR.checkAndCleanReportDictOnWinIssue872(reportDictList)
+
         gR.writeReport(reportDir, reportDictList, cfgMain["FLAGS"].getboolean("reportOneFile"), plotDict)
 
     return dem, plotDict, reportDictList, simDFNew
