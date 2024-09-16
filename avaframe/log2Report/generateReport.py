@@ -233,3 +233,39 @@ def writeReport(outDir, reportDictList, reportOneFile, plotDict='', standaloneRe
 
                 # Write report file
                 writeReportFile(reportD, pfile)
+
+
+def checkAndCleanReportDictOnWinIssue872(reportDictList):
+    """ Check report dict for inconsistencies in simName. Sometimes the simName is not
+     properly set in the dict report. This is a dirty fix!! (see issue 872). S
+
+        Parameters
+        ----------
+        reportDictList : list
+            of report dictionaries from simulations
+
+        Returns
+        -------
+        reportDictList : list
+            checked and cleaned reportDict
+    """
+
+    for k, listItem in enumerate(reportDictList):
+        simName = listItem['simName']['name']
+        if '_AF_' in simName:
+            nameParts = simName.split('_AF_')
+        else:
+            nameParts = simName.split('_')
+
+        # This is the proper simName
+        simNameClean = nameParts[0]
+
+        if listItem['Simulation Parameters']['Release Area Scenario'] != simNameClean:
+            reportDictList[k]['Simulation Parameters']['Release Area Scenario'] = simNameClean
+            log.warning("Ran into windows QGis simName report problem, set release area scenario to simName.")
+
+        if listItem['Release Area']['Release area scenario'] != simNameClean:
+            reportDictList[k]['Release Area']['Release area scenario'] = simNameClean
+            log.warning("Ran into windows QGis simName report problem, set release area scenario to simName.")
+
+    return reportDictList
