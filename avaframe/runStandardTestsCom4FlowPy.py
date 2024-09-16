@@ -30,8 +30,8 @@ def compareRasters(path, pathRef):
     rasterRef = readRasters(pathRef)
     diff = rasterRef - raster
     equal = np.array_equal(rasterRef, raster)
-    closeArray = np.isclose(raster, rasterRef , rtol=1e-04, equal_nan=True)
-    closePercent = np.count_nonzero(closeArray[np.logical_or(raster>0, rasterRef>0)]) / rasterRef[np.logical_or(raster>0, rasterRef>0)].size
+    closeArray = np.isclose(raster, rasterRef, rtol=1e-04, equal_nan=True)
+    closePercent = np.count_nonzero(closeArray[np.logical_or(raster > 0, rasterRef > 0)]) / rasterRef[np.logical_or(raster > 0, rasterRef > 0)].size
     return diff, equal, closePercent
 
 
@@ -124,7 +124,6 @@ for test in testList:
             message = f'{testName}: for {variable}: rasters are equal \n'
         else:
             message = f'{testName}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4) \n'
-        
         log.info(message)
         with open(reportFile, 'a') as pfile:
-           pfile.write(message )
+            pfile.write(message)
