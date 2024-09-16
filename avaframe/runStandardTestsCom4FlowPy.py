@@ -19,15 +19,15 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def read_raster(path):
+def readRasters(path):
     raster = rasterio.open(path)
     output = raster.read(1)
     return output
 
 
-def compare(path, pathRef):
-    raster = read_raster(path)
-    rasterRef = read_raster(pathRef)
+def compareRasters(path, pathRef):
+    raster = readRasters(path)
+    rasterRef = readRasters(pathRef)
     diff = rasterRef - raster
     equal = np.array_equal(rasterRef, raster)
     closeArray = np.isclose(raster, rasterRef , rtol=1e-04, equal_nan=True)
@@ -36,7 +36,7 @@ def compare(path, pathRef):
 
 
 # Which result types for comparison plots
-outputVariable = ['FP_travel_angle', 'z_delta']
+outputVariable = ['fpTravelAngle', 'zdelta']
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTestsCom4FlowPy'
@@ -103,6 +103,9 @@ for test in testList:
     cfgPath["tempDir"] = cfgPath["workDir"] / "temp"
     fU.makeADir(cfgPath["tempDir"])
     cfgPath["deleteTemp"] = "False"
+    cfgPath["uid"] = cfgUtils.cfgHash(cfg)
+    cfgPath["timeString"] = ""
+    cfgPath["outputFiles"] = "zDelta|travelLength|fpTravelAngle|flux"
 
     # Set timing
     startTime = time.time()
@@ -113,9 +116,9 @@ for test in testList:
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
     for variable in outputVariable:
-        pathRasterRef = refDir / ('%s.tif' % variable)
-        pathRaster = compDir / ('%s.tif' % variable)
-        diff, eq, close = compare(pathRaster, pathRasterRef)
+        pathRasterRef = refDir / (f'com4_{cfgPath["uid"]}__{variable}.tif')
+        pathRaster = compDir / (f'com4_{cfgPath["uid"]}__{variable}.tif')
+        diff, eq, close = compareRasters(pathRaster, pathRasterRef)
 
         if eq and np.sum(abs(diff[diff != 0])) == 0:
             message = f'{testName}: for {variable}: rasters are equal \n'
