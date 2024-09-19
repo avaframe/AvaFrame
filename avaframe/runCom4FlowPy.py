@@ -82,7 +82,7 @@ def main():
         # check if simulation with same uid already has results folder
         if os.path.isdir(cfgPath["resDir"]):
             log.info("folder with same name already exists - aborting")
-            log.info("simulation results folder with same .ini parameters already exists")
+            log.info("simulation results folder with same .ini parameters already exists: simulation {}".format(uid))
             sys.exit(1)
         else:
             fU.makeADir(cfgPath["resDir"])
@@ -121,14 +121,14 @@ def main():
             os.makedirs(workDir / "res_{}".format(uid))  # (time_string))
             res_dir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
-            print("folder with same name already exists - aborting")
-            print("simulation results folder with same .ini parameters already exists")
+            log.info("folder with same name already exists - aborting")
+            log.info("simulation results folder with same .ini parameters already exists: simulation {}".format(uid))
             sys.exit(1)
         try:
             os.makedirs(workDir / res_dir / "temp")
             temp_dir = workDir / res_dir / "temp"
         except FileExistsError:
-            print("temp folder already exists - aborting")
+            log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
         log = logUtils.initiateLogger(res_dir, logName)
 
