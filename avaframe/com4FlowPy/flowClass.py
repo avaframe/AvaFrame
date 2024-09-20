@@ -146,9 +146,26 @@ class Cell:
                 self.forestIntCount += parent.forestIntCount
 
     def add_os(self, flux):
+        """
+        Adds flux
+        
+        Parameters
+        -----------
+        flux: float
+            added flux
+        """
         self.flux += flux
 
     def add_parent(self, parent):
+        """
+        Adds parent to parents list 
+        and optionally the forest interaction value of the parent
+        
+        Parameters
+        -----------
+        parent: class Cell
+            added parent
+        """
         self.lOfParents.append(parent)
         if self.forestInteraction:
             # check if new/ younger parent has a lower forest interaction number
@@ -248,6 +265,9 @@ class Cell:
             self.r_t = self.tan_beta**self.exp / np.sum(self.tan_beta**self.exp)
 
     def calc_persistence(self):
+        """
+        calculates persistence flow direction
+        """
         self.persistence = np.zeros_like(self.dem_ng)
         if self.is_start:
             self.persistence += 1
@@ -301,7 +321,14 @@ class Cell:
                         self.persistence[1, 0] += 0.707 * maxweight
 
     def calc_distribution(self):
+        """
+        calculates flux and zdelta that is distributed to the adjacent cells
 
+        Returns
+        -----------
+        tuple
+            list of row, col, flux, zdelta of adjacent cells that receive flux/zdelta
+        """
         self.calc_z_delta()
         self.calc_persistence()
         self.persistence *= self.no_flow
