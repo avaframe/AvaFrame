@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+    Functions to handle raster files.
+"""
+
 import rasterio
 import sys
 import logging
@@ -9,7 +13,19 @@ log = logging.getLogger(__name__)
 
 
 def read_header(input_file):
-    # Reads in the header of the raster file, input: filepath
+    """
+    Reads in the header of the raster file
+
+    Parameters
+    -----------
+    input_file: str
+        directory to raster file
+
+    Returns
+    -----------
+    header: dict
+        header of raster
+    """
 
     raster = rasterio.open(input_file)
     if raster is None:
@@ -27,6 +43,21 @@ def read_header(input_file):
 
 
 def read_raster(input_file):
+    """
+    Reads in a raster file
+
+    Parameters
+    -----------
+    input_file: str
+        directory to raster file
+
+    Returns
+    -----------
+    my_array: np.array
+        raster that is read in
+    header: dict
+        header of raster
+    """
 
     header = read_header(input_file)
     raster = rasterio.open(input_file)
@@ -36,12 +67,18 @@ def read_raster(input_file):
 
 
 def output_raster(file, file_out, raster):
-    """Input is the original file, path to new file, raster_data
+    """
+    Saves raster
 
-    Input parameters:
-        file        the path to the file to reference on, mostly DEM on where
-                    Calculations were done
-        file_out    path for the outputfile, possible extends are .asc or .tif"""
+    Parameters
+    -----------
+    file: str
+        directory to raster file to reference on, mostly DEM
+    file_out: str
+        path for the outputfile, possible extends are .asc or .tif
+    raster: np.array
+        raster (array) that is saved
+    """
 
     raster_trans = rasterio.open(file)
     try:
