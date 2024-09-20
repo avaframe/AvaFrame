@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Functions for calculations at the 'cell level' (vgl. D'Amboise et al., 2022)
+"""
+
 import numpy as np
 import math
 
-
 class Cell:
-    """This is the com4FlowPy 'Cell ' class
-    This class handles the calculation at the 'cell level' (vgl. D'Amboise et al., 2022)
-    """
-
     def __init__(
         self,
         rowindex, colindex,
@@ -19,7 +18,7 @@ class Cell:
         startcell,
         FSI=None, forestParams=None,
     ):
-        """constructor for the Cell class
+        """constructor for the Cell class that describes a raster cell that is hit by the GMF.
         the constructor function is called every time a new instance of type 'Cell' is
         initialized.
         NOTE/TODO: parent can be of different data types still, maybe split into two separate variables
@@ -146,9 +145,26 @@ class Cell:
                 self.forestIntCount += parent.forestIntCount
 
     def add_os(self, flux):
+        """
+        Adds flux to 'existing' flux
+
+        Parameters
+        -----------
+        flux: float
+            added flux
+        """
         self.flux += flux
 
     def add_parent(self, parent):
+        """
+        Adds parent to parents list
+        and optionally the forest interaction value of the parent
+
+        Parameters
+        -----------
+        parent: class Cell
+            added parent
+        """
         self.lOfParents.append(parent)
         if self.forestInteraction:
             # check if new/ younger parent has a lower forest interaction number
@@ -157,9 +173,9 @@ class Cell:
                 self.forestIntCount = parent.forestIntCount + self.isForest
 
     def calc_fp_travelangle(self):
-        """function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
-        the trave-angle along the shortest flow-path is equivalent to the maximum travel angle along all paths from
-        the startcell to this cell.
+        """function calculates the travel-angle along the shortest flow-path from the start-cell
+        to the current cell. The travel-angle along the shortest flow-path is equivalent to the
+        maximum travel angle along all paths from the startcell to this cell.
         """
         _ldistMin = []  #
         _dh = self.startcell.altitude - self.altitude  # elevation difference from cell to start-cell
@@ -171,6 +187,8 @@ class Cell:
         self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
+        """ function calculates the travel-angle between the start cell and the current cell.
+        """
         _dx = abs(self.startcell.colindex - self.colindex)
         _dy = abs(self.startcell.rowindex - self.rowindex)
         _dh = self.startcell.altitude - self.altitude
@@ -180,7 +198,7 @@ class Cell:
 
     def calc_z_delta(self):
         """
-        function calculates zDelta to the eligible neighbours
+        function calculates zDelta (velocity line height) to the eligible neighbours
         NOTE: forestFriction related mechanics are implemented here!
         """
         self.z_delta_neighbour = np.zeros((3, 3))
@@ -235,6 +253,8 @@ class Cell:
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
 
     def calc_tanbeta(self):
+        """calculates the normalized terrain based routing
+        """
         _ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 1, 1], [self._SQRT2, 1, self._SQRT2]])
         _distance = _ds * self.cellsize
 
@@ -248,6 +268,9 @@ class Cell:
             self.r_t = self.tan_beta**self.exp / np.sum(self.tan_beta**self.exp)
 
     def calc_persistence(self):
+        """
+        calculates persistence-based routing
+        """
         self.persistence = np.zeros_like(self.dem_ng)
         if self.is_start:
             self.persistence += 1
@@ -301,7 +324,14 @@ class Cell:
                         self.persistence[1, 0] += 0.707 * maxweight
 
     def calc_distribution(self):
+        """
+        calculates flux and zdelta that is distributed to the adjacent cells
 
+        Returns
+        -----------
+        tuple
+            list of row, col, flux, zdelta of adjacent cells that receive flux/zdelta
+        """
         self.calc_z_delta()
         self.calc_persistence()
         self.persistence *= self.no_flow
