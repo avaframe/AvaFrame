@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 def com4FlowPyMain(cfgPath, cfgSetup):
-    """com4FlowPy main function - handles:
+    """com4FlowPy main function performs the model run and writes results to disk:
         * reading of input data and model Parameters
         * calculation
         * writing of result files
@@ -42,13 +42,12 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     already been created (workDir, tempDir)
 
     Parameters
-    ----------
-    cfgPath:  dictionary with paths from .ini file
-    cfgSetup: configparser.SectionProxy Object with "GENERAL" model configs from .ini file
+    -----------
+    cfgPath: configparser.SectionProxy Object
+        contains paths to input data (from .ini file)
+    cfgSetup: configparser.SectionProxy Object
+        "GENERAL" model configs (from .ini file)
 
-    Returns
-    ----------
-    nothing - performs model run and writes results to disk
     """
     _startTime = datetime.now().replace(microsecond=0)  # used for timing model runtime
 
@@ -63,11 +62,16 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
     modelParameters["forestInteraction"] = cfgSetup.getboolean("forestInteraction")
+    # modelParameters["infra"]  = cfgSetup["infra"]
+    # modelParameters["forest"] = cfgSetup["forest"]
+
+    # Flags for use of dynamic input parameters
     modelParameters["varUmaxBool"] = cfgSetup.getboolean("variableUmaxLim")
     modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
     modelParameters["varExponentBool"] = cfgSetup.getboolean("variableExponent")
-    # modelParameters["infra"]  = cfgSetup["infra"]
-    # modelParameters["forest"] = cfgSetup["forest"]
+
+    # Flag for use of old flux distribution version
+    modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
 
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
@@ -200,9 +204,18 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
 
 def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
-    """
-    just used to move this chunk of code out of the main function
-    only performs logging at the start of the simulation
+    """performs logging at the start of the simulation
+
+    Parameters
+    -----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    forestParams: dict
+        input parameters regarding forest interaction (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    MPOptions: dict
+        contains parameters for multiprocessing (from .ini - file)
     """
     # Start of Calculation (logging...)
     log.info("==================================")
@@ -255,9 +268,15 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
 
 
 def checkInputLayerDimensions(modelParameters, modelPaths):
-    """
-    check if all layers have the same size
+    """check if all input layers have the same size
     and can be read from the provided paths
+
+    Parameters
+    -----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
     """
     # Check if Layers have same size!!!
     try:
@@ -316,9 +335,9 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         if modelParameters["varExponentBool"]:
             _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
             if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
-                log.info("variable Alpha Layer ok!")
+                log.info("variable exponent Layer ok!")
             else:
-                log.error("Error: variable Alpha Layer doesn't match DEM!")
+                log.error("Error: variable exponent Layer doesn't match DEM!")
                 sys.exit(1)
 
         log.info("========================")
@@ -331,6 +350,25 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
 
 def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):
+    """divides all used input layers into tiles
+    and saves the tiles in the temp folder
+
+    Parameters
+    -----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    rasterAttributes: dict
+        contains (header) information about the rasters (that are the same for all rasters)
+    tilingParameters: dict
+        parameters relevant for tiling (from .ini - file)
+
+    Returns
+    -----------
+    nTiles: tuple
+        number of tiles
+    """
 
     _tileCOLS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
     _tileROWS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
@@ -364,6 +402,21 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
     """wrapper around fc.run()
     handles passing of model paths, configurations to fc.run()
     also responsible for processing input-data tiles in sequence
+
+    Parameters
+    -----------
+    nTiles: tuple
+        number of tiles
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    rasterAttributes: dict
+        contains (header) information about the rasters (that are the same for all rasters)
+    forestParams: dict
+        input parameters regarding forest interaction (from .ini - file)
+    MPOptions: dict
+        contains parameters for multiprocessing (from .ini - file)
     """
 
     optList = []
@@ -388,6 +441,13 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
 def mergeAndWriteResults(modelPaths, modelOptions):
     """function handles merging of results for all tiles inside the temp Folder
     and also writing result files to the resultDir
+
+    Parameters
+    -----------
+    modelPaths: dict
+        contains paths to input files
+    modelOptions: dict
+        contains model input parameters (from .ini - file)
     """
     _uid = modelPaths["uid"]
     _outputs = set(modelPaths['outputFileList'])
@@ -400,6 +460,8 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
     cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
     zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum")
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum")
     fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
     travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
@@ -429,6 +491,12 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if 'zDeltaSum' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF),
         zDeltaSum)
+    if 'routFluxSum' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_routFluxSum{}".format(_uid, _ts, _oF),
+        routFluxSum)
+    if 'depFluxSum' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_depFluxSum{}".format(_uid, _ts, _oF),
+        depFluxSum)
     if 'fpTravelAngle' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid,
         _ts, _oF), fpTa)
@@ -457,14 +525,15 @@ def mergeAndWriteResults(modelPaths, modelOptions):
 def checkConvertReleaseShp2Tif(modelPaths):
     """function checks if release area is a .shp file and tries to convert to tif in that case
 
-    Parameters:
-    ---------------
-    modelPaths: {} - dict with modelPaths
+    Parameters
+    -----------
+    modelPaths: dict
+        contains modelPaths
 
-    Returns:
-    ---------------
-    modelPaths: {} - dict with added ["releasePathWork"]
-
+    Returns
+    -----------
+    modelPaths: dict
+        contains paths including ["releasePathWork"]
     """
     # the release is a shp polygon, we need to convert it to a raster
     # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
@@ -481,7 +550,7 @@ def checkConvertReleaseShp2Tif(modelPaths):
             #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
-            raise ValueError(_errMsg)  
+            raise ValueError(_errMsg)
         else:
             _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
             log.error(_errMsg)
@@ -507,10 +576,15 @@ def checkConvertReleaseShp2Tif(modelPaths):
 
 def deleteTempFolder(tempFolderPath):
     """delete tempFolder containing the pickled np.arrays of the input data and output data tiles.
-        - should be called after all merged model results are written to disk.
+    should be called after all merged model results are written to disk.
     performs a few checks to make sure the folder is indeed a com4FlowPy tempFolder, i.e.
         - does not contain subfolders
         - no other file-extensions than '.npy' and ''
+
+    Parameters
+    -----------
+    tempFolderPath: str
+        path to temp folder
     """
 
     log.info("+++++++++++++++++++++++")

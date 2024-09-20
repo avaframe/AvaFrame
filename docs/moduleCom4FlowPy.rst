@@ -233,15 +233,18 @@ deleted after completion of the model run (can be useful for calculation of larg
 Output
 -------
 
-All outputs are in the .tif raster format in the same resolution and extent as the input raster layers.
+All outputs are in the .tif or in .asc raster format in the same resolution and extent as the input raster layers.
 
-- ``z_delta.tif``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
-- ``flux.tif``: The maximum routing flux of all paths for every raster cell
-- ``z_delta_sum.tif``: z_delta summed up over all paths on every raster cell
-- ``cell_counts.tif``: number of paths that route flux through a raster cell
-- ``FP_travel_angle.tif``: the gamma angle along the flow path
-- ``SL_travel_angle.tif``: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
-- ``forestInteraction.tif``: only if ``forestInteraction = True``: minimum number of forested raster cells a path runs through
+- ``z_delta``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
+- ``flux``: The maximum routing flux of all paths for every raster cell
+- ``z_delta_sum``: z_delta summed up over all paths on every raster cell
+- ``cell_counts``: number of paths that route flux through a raster cell
+- ``FP_travel_angle``: the gamma angle along the flow path
+- ``SL_travel_angle``: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
+- ``travelLength``: the travel length along the flow path
+- ``routFluxSum``: routing flux summed up over all paths
+- ``depFluxSum``: deposited flux summed up over all paths
+- ``forestInteraction``: only if ``forestInteraction = True``: minimum number of forested raster cells a path runs through
 
 .. Note::
   * **please interpret** ``cell_counts.tif`` **with caution, since absolute cell_count values do currently not reflect the number of release-cells which route flux through a cell - we are currently fixing the implementation of this feature**
