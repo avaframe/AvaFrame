@@ -17,7 +17,7 @@ Installation
 
 
   Advanced (Script) 
-    If you want to contribute and develop AvaFrame, head over to :ref:`advancedUsage:Advanced (Script) Installation`.
+    If you want to contribute and develop AvaFrame, head over to :ref:`advancedUsage:Advanced Usage (Script)`.
     Use this if you want to:
 
     - work on the code itself

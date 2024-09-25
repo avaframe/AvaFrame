@@ -1,10 +1,14 @@
 Advanced Usage (Script)
 =======================
 
-After the installation, the next sections describe on how to get started. The sections configuration and logging
+After the installation, the next sections describe how to get started. The sections configuration and logging
 describe the general methods we use, this is helpful to understand how you can change model parameters and similar. 
 
 .. include:: developinstall.rst
+
+--------------------------
+
+.. include:: developinstallwin.rst
 
 --------------------------
 
@@ -69,3 +73,22 @@ Testing
 - :py:mod:`runScripts.runComparisonModules`
 - :py:mod:`runScripts.runFetchBench`
 - :py:mod:`runScripts.runWriteDesDict`
+
+------------------------------
+
+Update AvaFrame
+------------------------------
+
+To update go to your avaframe repository [YOURDIR]/Avaframe,  pull the latest changes via::
+
+  git pull
+
+and repeat the compilation step from above::
+
+  python setup.py build_ext --inplace
+
+If there are updates on the requirements inside ``setup.py``, it might be necessary to run::
+
+  pip install -e .
+
+again to get the additional requirements installed.
