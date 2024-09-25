@@ -21,7 +21,7 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
         path to raster that is tiled
     fNameOut: str
         name of saved raster file
-    dirName: str 
+    dirName: str
         path to folder, where tiled raster is saved (temp - folder)
     xDim: int
         size of one tile in x dimension (number of raster columns)

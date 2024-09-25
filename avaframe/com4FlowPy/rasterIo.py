@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 def read_header(input_file):
     """
     Reads in the header of the raster file
-    
+
     Parameters
     -----------
     input_file: str
@@ -41,7 +41,7 @@ def read_header(input_file):
 def read_raster(input_file):
     """
     Reads in a raster file
-    
+
     Parameters
     -----------
     input_file: str
@@ -65,7 +65,7 @@ def read_raster(input_file):
 def output_raster(file, file_out, raster):
     """
     Saves raster
-    
+
     Parameters
     -----------
     file: str

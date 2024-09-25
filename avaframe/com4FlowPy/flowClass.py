@@ -148,7 +148,7 @@ class Cell:
     def add_os(self, flux):
         """
         Adds flux
-        
+    
         Parameters
         -----------
         flux: float
@@ -158,9 +158,9 @@ class Cell:
 
     def add_parent(self, parent):
         """
-        Adds parent to parents list 
+        Adds parent to parents list
         and optionally the forest interaction value of the parent
-        
+
         Parameters
         -----------
         parent: class Cell
