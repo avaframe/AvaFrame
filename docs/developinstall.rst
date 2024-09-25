@@ -1,12 +1,11 @@
-Advanced (Script) Installation 
+Advanced Installation (Linux)
 ------------------------------
 
 This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
 machines** (Ubuntu/Manjaro/Arch) with recent Python versions > 3.8.
 These instructions assume you are familiar with working in a terminal. This
-guide is currently described for *Linux* only, but expert users should be able
-to adapt it to *Windows*.
+guide is described for **Linux**. For *Windows*, see :ref:`developinstallwin:Advanced Installation (Windows)`.
 
 Requirements
 ^^^^^^^^^^^^
@@ -60,20 +59,3 @@ Test it by starting ``python`` and do an ``import avaframe``. If no error comes
 up, you are good to go.
 
 Head over to :ref:`gettingstarted:First run` for the next steps.
-
-Update AvaFrame
-^^^^^^^^^^^^^^^
-
-To update go to your avaframe repository [YOURDIR]/Avaframe,  pull the latest changes via::
-
-  git pull
-
-and repeat the compilation step from above::
-  
-  python setup.py build_ext --inplace
-
-If there are updates on the requirements inside ``setup.py``, it might be necessary to run::
-
-  pip install -e . 
-
-again to get the additional requirements installed. 

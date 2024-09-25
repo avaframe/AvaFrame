@@ -52,6 +52,7 @@ projection:
 
 * release area scenario as (multi-) polygon shapefile (in Inputs/REL; multiple features are possible)
 
+  - the release area polygon must not contain any "holes" or inner rings
   - the release area name should not contain an underscore, if so '_AF' is added.
   - recommended attributes are *name*, *thickness* (see :ref:`moduleCom1DFA:Release-, entrainment thickness settings`)
     and *ci95* (see :ref:`moduleAna4Stats:probAna - Probability maps`)
@@ -65,11 +66,13 @@ and the following files are optional:
 
   - marks the (multiple) areas where entrainment can occur.
   - attribute *thickness* (see :ref:`moduleCom1DFA:Release-, entrainment thickness settings`)
+  - must not contain any "holes" or inner rings
 
 
 * one resistance area (multi-) polygon shapefile (in Inputs/RES)
 
   - marks the (multiple) areas where resistance is considered
+  - resistance areas must not contain any "holes" or inner rings
 
 
 * one secondary release area (multi-) polygon shapefile (in Inputs/SECREL)
@@ -77,6 +80,7 @@ and the following files are optional:
   - can have multiple release areas, each as one feature
   - same setup as the release area scenario (see above)
   - features will release as soon as at least one particle enters its area
+  - release area polygons must not contain any "holes" or inner rings
 
 
 

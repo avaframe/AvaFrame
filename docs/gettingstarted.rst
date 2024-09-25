@@ -92,7 +92,7 @@ the module you want to use (for example ``com1DFACfg.ini`` for module com1DFA).
 If you want to use different settings, create a ``local_`` copy of the ``.ini``
 file and modify the desired parameters.
 
-More information about the configuration can be found here: :ref:`configuration:Configuration`
+More information about the configuration can be found here: :ref:`advancedUsage:Configuration`
 
 Building your run script
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,5 +1,5 @@
 Configuration
-==================
+------------------------------
 
 In order to set the configurations required by all the modules within Avaframe, the python module
 `configparser <https://docs.python.org/3/library/configparser.html>`_ is used.
@@ -53,7 +53,7 @@ In the configuration file itself, there are multiple options to vary a parameter
   single value can be added by appending ``&4.0`` for example
   
 Override configuration
----------------------------
+^^^^^^^^^^^^^^
  
 If tools of one module, let's call this module **A** for now, are called from another module **B**, there is the option to include an *collectionName_A_override* section in the
 configuration file of module **B**. In this case, the default configuration of module **A** is read and the parameters in the *A_override* section 
