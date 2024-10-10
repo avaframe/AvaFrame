@@ -203,6 +203,17 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     """
     just used to move this chunk of code out of the main function
     only performs logging at the start of the simulation
+
+    Parameters
+    ----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    forestParams: dict
+        input parameters regarding forest interaction (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    MPOptions: dict
+        contains parameters for multiprocessing (from .ini - file)
     """
     # Start of Calculation (logging...)
     log.info("==================================")
@@ -258,6 +269,13 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
     """
     check if all layers have the same size
     and can be read from the provided paths
+
+    Parameters
+    ----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
     """
     # Check if Layers have same size!!!
     try:
@@ -331,6 +349,26 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
 
 def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):
+    """
+    divides all used input layers into tiles
+    ans saves the tiles in the temp folder
+
+    Parameters
+    ----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    rasterAttributes: dict
+        contains (header) information about the rasters (that are the same for all rasters)
+    tilingParameters: dict
+        parameters relevant for tiling (from .ini - file)
+
+    Returns
+    ----------
+    nTiles: tuple
+        number of tiles
+    """
 
     _tileCOLS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
     _tileROWS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
@@ -364,6 +402,21 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
     """wrapper around fc.run()
     handles passing of model paths, configurations to fc.run()
     also responsible for processing input-data tiles in sequence
+
+    Parameters
+    ----------
+    nTiles: tuple
+        number of tiles
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    rasterAttributes: dict
+        contains (header) information about the rasters (that are the same for all rasters)
+    forestParams: dict
+        input parameters regarding forest interaction (from .ini - file)
+    MPOptions: dict
+        contains parameters for multiprocessing (from .ini - file)
     """
 
     optList = []
@@ -388,6 +441,13 @@ def performModelCalculation(nTiles, modelParameters, modelPaths, rasterAttribute
 def mergeAndWriteResults(modelPaths, modelOptions):
     """function handles merging of results for all tiles inside the temp Folder
     and also writing result files to the resultDir
+
+    Parameters
+    ----------
+    modelPaths: dict
+        contains paths to input files
+    modelOptions: dict
+        contains model input parameters (from .ini - file)
     """
     _uid = modelPaths["uid"]
     _outputs = set(modelPaths['outputFileList'])
@@ -464,7 +524,6 @@ def checkConvertReleaseShp2Tif(modelPaths):
     Returns:
     ---------------
     modelPaths: {} - dict with added ["releasePathWork"]
-
     """
     # the release is a shp polygon, we need to convert it to a raster
     # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
@@ -481,7 +540,7 @@ def checkConvertReleaseShp2Tif(modelPaths):
             #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
-            raise ValueError(_errMsg)  
+            raise ValueError(_errMsg) 
         else:
             _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
             log.error(_errMsg)
@@ -511,6 +570,11 @@ def deleteTempFolder(tempFolderPath):
     performs a few checks to make sure the folder is indeed a com4FlowPy tempFolder, i.e.
         - does not contain subfolders
         - no other file-extensions than '.npy' and ''
+
+    Parameters
+    ----------
+    tempFolderPath: str
+        path to temp folder
     """
 
     log.info("+++++++++++++++++++++++")
