@@ -25,7 +25,7 @@ colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
-def writeABtoSHP(pathDict, resAB):
+def writeABtoSHP(pathDict, resAB, smallAva='False'):
     """ Write com2AB results to shapefile
 
     Parameters
@@ -34,6 +34,8 @@ def writeABtoSHP(pathDict, resAB):
         dictionary with saveOutPath (path to output directory)
     resAB : dict
         dict with com2AB results
+    smallAva: str
+        indicator if smallAvalanche setup is used
 
     Returns
     -------
@@ -41,7 +43,11 @@ def writeABtoSHP(pathDict, resAB):
         path to shapefile
     """
 
-    saveOutFile = pathlib.Path(pathDict['saveOutPath']) / 'com2AB_Results'
+    if smallAva.lower() == 'true':
+        saveOutFile = pathlib.Path(pathDict['saveOutPath']) / 'com2AB_Results_small'
+    else:
+        saveOutFile = pathlib.Path(pathDict['saveOutPath']) / 'com2AB_Results'
+
 
     # open shapefile writer with point shapetype
     w = shapefile.Writer(str(saveOutFile), shapeType=1)
@@ -108,6 +114,33 @@ def readABresults(saveOutPath, name, flags):
 def writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDictList):
     """ Loops on the given Avapath, runs AlpahBeta Postprocessing
     plots Results and Write Results
+
+    Parameters
+    ----------
+    pathDict: dict
+        with info about input and output dirs and folders
+    dem : dict
+        DEM dictionary
+    splitPoint: dict
+        with shape of splitpoints
+    eqParams: dict
+        with equations parameters k1 to k4 and SD; also indicates parameter set
+    resAB: dict
+        with full results
+    cfgMain: configParser object
+        main configuration
+    reportDictList: list
+        with infos for report file
+
+    Returns
+    ----------
+    reportDictList: list
+        updated with filennames etc
+    FileNamePlot_ext: str
+        name of plot
+    FileNameWrite_ext: str
+        name of output file
+
     """
     saveOutPath = pathDict['saveOutPath']
     flags = cfgMain['FLAGS']
@@ -159,7 +192,18 @@ def plotPath(avaProfile, dem, splitPoint, flags):
 
 
 def plotProfile(avaProfile, eqParams, saveOutPath):
-    """ Plot and or save profile results depending on plotting options"""
+    """ Plot and or save profile results depending on plotting options
+
+    Parameters
+    ----------
+    avaProfile: dict
+        with profile and information
+    eqParams: dict
+        with equation parameters k1 to k4, SD, and parameter set
+    saveOutPath: PosixPath
+        to output directory
+
+    """
     s = avaProfile['s']
     z = avaProfile['z']
     indBetaPoint = avaProfile['indBetaPoint']
@@ -210,7 +254,12 @@ def plotProfile(avaProfile, eqParams, saveOutPath):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.grid(linestyle=':', color='0.9')
     plt.legend(frameon=False)
-    savename = avaProfile['name'] + '_AlphaBeta'
+
+    if eqParams['parameterSet'].lower() == 'small avalanches':
+        savename = avaProfile['name'] + '_AlphaBeta_small'
+    else:
+        savename = avaProfile['name'] + '_AlphaBeta'
+
     outputFileName = pU.saveAndOrPlot({'pathResult': saveOutPath}, savename, fig)
 
     return outputFileName
@@ -268,7 +317,11 @@ def WriteResults(avaProfile, eqParams, saveOutPath):
 
     # write results to txt file
     FileName_ext = ''
-    FileName_ext = pathlib.Path(saveOutPath, name + '_AB_results.txt')
+    if eqParams['parameterSet'].lower() == 'small avalanches':
+        FileName_ext = pathlib.Path(saveOutPath, name + '_AB_results_small.txt')
+    else:
+        FileName_ext = pathlib.Path(saveOutPath, name + '_AB_results.txt')
+
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Profile name %s\n' % name)
         outfile.write('Parameter Set %s\n' % parameterSet)

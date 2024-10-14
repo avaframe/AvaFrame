@@ -74,7 +74,7 @@ def runCom2AB(avalancheDir='', smallAva=False):
         log.info('Small avalanche setting override from runCom2AB (forced to true)')
 
     pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
-    abShpFile = outAB.writeABtoSHP(pathDict, resAB)
+    abShpFile = outAB.writeABtoSHP(pathDict, resAB, cfgAB['ABSETUP']['smallAva'])
 
     # Analyse/ plot/ write results #
     reportDictList = []
