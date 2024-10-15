@@ -531,7 +531,7 @@ the avalanche mass (:cite:`SaGr2009`).
 
 The default configuration also provides two additional calibrations for small-
 (< 25.000 :math:`m^3` release volume) and medium-sized (< 60.000 :math:`m^3` release volume)
-avalanches. A further constraint is the altitude of runout below 1500m msl for both.
+avalanches. A further constraint is the altitude of runout below 1600m msl for both.
 
 Wet snow friction type
 """"""""""""""""""""""""
