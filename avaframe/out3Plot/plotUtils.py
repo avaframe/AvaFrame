@@ -223,7 +223,13 @@ cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 cmapEnergy = {"cmap": cmapE, "colors": colorsE, "levels": levE}
 
 # for zdelta
-cmapZdelta = {"cmap": copy.copy(cmapCrameri.lipari), "colors": [], "levels": []}
+# Remark FSO: the try except comes from cmcrameri v1.5 not having lipari, but it is still
+# widely used (Okt 2024). TODO: remove in future versions
+try:
+    cmapZdelta = {"cmap": copy.copy(cmapCrameri.lipari), "colors": [], "levels": []}
+except AttributeError:
+    cmapZdelta = {"cmap": copy.copy(cmapCrameri.lapaz), "colors": [], "levels": []}
+
 
 colorMaps = {
     "ppr": cmapPres,
