@@ -11,7 +11,7 @@ Glossary
    :cite:`DQ1981` and relates to existing guidelines provided and used by
    Avalanche Associations and Warning Services (Canadian Avalanche Association
    :cite:`CAA_OGRS2016` , American Avalanche Association (AAA)
-   :cite:`AAA_SWAG2016` or the European Avalanche Warning Services (EAWS)).
+   :cite:`AAA_SWAG2016` or the European Avalanche Warning Services (:cite:`EAWS.2024`)).
    The glossary has the goal to follow common conventions used in publications
    and related projects.
 
@@ -19,25 +19,40 @@ Glossary
     :sorted:
 
     alpha point
+        see :term:`runout point`
+
+        The alpha point describes the furthest point of the runout of an avalanche :term:`event` 
+        and marks the end of the avalanche deposition.
+
     alpha angle
-        The alpha point is the point of the furthest reach of an avalanche
-        (visible deposition or affected area). The alpha angle is the angle between the
-        line connecting the release point and the alpha point and the
-        horizontally projected :term:`travel length` along the :term:`thalweg`
-        (see :term:`travel length` and :term:`runout angle`). The alpha angle is also
-        termed the angle of reach or the :term:`runout angle`.
+        see :term:`runout angle`
+
+        The alpha angle is the angle between the :term:`origin point` and the :term:`runout
+        point`. It describes the general inclination between the release of the avalanche to the
+        furthest point of the deposition. The alpha angle is based on the :term:`runout length`
+        and the altitude difference between the :term:`origin point` and the :term:`runout point`.
+        It is an important element in avalanche simulation and modeling (e.g. alpha-beta model,
+        FlowPy simulations). The alpha angle is also termed the angle of reach or the :term:`runout angle`.
 
     beta point
-    beta angle
+        see :term:`deposition point`
+
         The boundary between the :term:`transition` and :term:`deposition` zone (start of
-        deposition) is often called beta point and associated to a certain
-        slope threshold of the :term:`thalweg`. The corresponding :term:`travel angle` is
-        referred  to as beta angle. For major avalanche :term:`path` (s) that may produce
-        avalanches of :term:`size` 4-5, the beta point is associated to the 10° Point
-        (or beta_10), i.e. the point where the slope angle of the :term:`thalweg`
-        decreases below 10°. For avalanche :term:`path` (s) with :term:`event` (s) of avalanche :term:`size`
-        1-3 the beta point may accordingly be associated to larger :term:`thalweg`
-        slope angles (i.e. up to 30°, see start of :term:`transition`).
+        deposition) is often called beta point or :term:`deposition point` and associated
+        with a certain slope threshold of the :term:`thalweg`. For major avalanche :term:`path` that may produce
+        avalanches of :term:`size` 4-5, the beta point is associated with the 10° Point
+        (or beta_10), i.e., the point where the slope angle of the :term:`thalweg`
+        decreases below 10°. For avalanche :term:`path` with :term:`event` of avalanche :term:`size`
+        1-3, the beta point may accordingly be associated with larger :term:`thalweg`
+        slope angles (i.e., up to 30°, see start of :term:`transition`).
+
+    beta angle
+        see :term:`travel angle`
+
+        The beta angle describes the general incliniation along the :term:`thalweg` between the 
+        :term:`origin point` and the :term:`deposition point`. The corresponding :term:`travel angle` is
+        referred to as beta angle. It is an important concept in avalanche modeling and simulation. 
+        The travel angle increases with decreasing avalanche :term:`size`.
 
     coordinate transformation
         Coordinate transformations refer to the operation of changing
@@ -88,13 +103,12 @@ Glossary
         One or multiple avalanche events or corresponding simulation scenarios
         are associated to a certain avalanche :term:`path` and have distinct criteria
         and characteristics such as avalanche :term:`size`, :term:`release area` (s),
-        or :term:`runout area`. These properties are
-        morphologically connected to the different zones (:term:`origin`, :term:`transition`,
-        :term:`deposition`) of an avalanche :term:`path` and allow to define other
-        associated properties, such as :term:`alpha angle` or :term:`runout length` that are
-        defined in combination with the avalanche :term:`thalweg`. Besides observed and
-        documented avalanche events, design events of particular :term:`return period` (s)
-        are of particular interest for engineering applications.
+        or :term:`runout area`. These properties are morphologically connected to the 
+        different zones (:term:`zone of origin`, :term:`zone of transition`, :term:`zone of deposition`)
+        of an avalanche :term:`path` and allow to define other associated properties, such as :term:`alpha angle`
+        or :term:`runout length` that are defined in combination with the avalanche :term:`thalweg`.
+        Besides observed and documented avalanche events, design events of particular 
+        :term:`return period` (s) are of particular interest for engineering applications.
 
     flow variables
         Flow variables include :term:`thickness`, :term:`velocity`, or :term:`density` and are
@@ -123,12 +137,11 @@ Glossary
         and terrain traps below).
 
     thalweg
-        The thalweg is defined by the main flow direction of an avalanche
-        :term:`path` of one or multiple,  i.e. not regarding a specific
-        :term:`event` or :term:`scenario`. avalanche :term:`event` (s).
-        Technically it is the two-dimensional
-        terrain representation, displaying the terrain altitude along the
-        horizontally projected :term:`travel length`.
+        The thalweg is defined as the line representing the main flow direction of all potential avalanche
+        events within a specific avalanche :term:`path`. The thalweg is delineated according to the terrain 
+        characteristics and is independent of a specific :term:`event`. Technically it is the two
+        dimensional terrain representation along the horizontally projected :term:`travel length` and the 
+        altitude difference. 
 
     thickness
         Release, :term:`entrainment`, flow, or deposition thickness refers to the
@@ -143,24 +156,26 @@ Glossary
         angle difference of the slope and the normal.
 
     travel angle
+        The travel angle describes the general inclination between the :term:`origin point` and the current location of interest. 
+        It is calculated based on the :term:`travel lenght` and the altitude difference between the :term:`origin point` and the
+        point of interest. Important travel angles are the :term:`beta angle` and the :term:`alpha angle`. 
+
     travel length
         Travel lengths are measured as horizontally projected travel length
-        (:math:`s_{XY}`) along the :term:`thalweg` and are associated with the
-        corresponding travel angle, measured between the line connecting the current
-        location with the uppermost point of the release and the horizontal
-        plane. Alternatively, the surface parallel travel length
-        (:math:`s_{XYZ}`) may be defined as the three-dimensional length
-        travelled by the avalanche.
+        (:math:`s_{XY}`) along the :term:`thalweg`, measured between the current
+        location with the uppermost point of the release, :term:`origin point`.
+        Alternatively, the surface parallel travel length (:math:`s_{XYZ}`) may be
+        defined as the three-dimensional length travelled by the avalanche.
 
     path
         The avalanche path summarizes the total catchment and is divided into
-        different zones (zone of :term:`origin`, :term:`transition`, :term:`deposition`)
+        different zones (:term:`zone of origin`, :term:`zone of transition`, :term:`zone of deposition`)
         with different criteria and characteristics. An inherent property of the avalanche path is the
         :term:`thalweg` and the associated avalanche :term:`event`.
 
     powder snow
-        Powder snow avalanches (PSA) refer to the :term:`form of movement` in the zone of
-        :term:`transition`, referring to the dust or suspension cloud in avalanches.
+        Powder snow avalanches (PSA) refer to the :term:`form of movement` in the 
+        :term:`zone of transition`, referring to the dust or suspension cloud in avalanches.
         PSA are associated with cold, dry cohesionless snow. Mixed types of
         movement are often observed, combining different flow regimes and their
         transitions, e.g., ‘powder avalanche with flow component’.
@@ -173,28 +188,49 @@ Glossary
         estimates, which are associated to the occurrence probability.
 
     release area
-        Potential release areas are located in the zone of :term:`origin`. Each documented
+        Potential release areas are located in the :term:`zone of origin`. Each documented
         :term:`event` or simulation :term:`scenario` is associated to one or more primary
         and/or secondary release areas, that can further be described by the :term:`manner of starting`.
 
     runout area
+        see :term:`zone of deposition`
+
     runout angle
+        The runout angle, also referred to as :term:`alpha angle`, describes the general inclination of the
+        the avalanche event from the :term:`origin point` to the :term:`runout point`.
+
     runout length
-    runout point
-        Runout lengths and angles are intricately linked to the :term:`alpha point`, utilizing the
+        Runout lengths is intricately linked to the :term:`alpha point`, utilizing the
         :term:`projection` to the :term:`thalweg`. In the same manner as :term:`travel length`, run out lengths
         are measured as horizontally projected lengths along the :term:`thalweg`, from
-        the uppermost point of the :term:`release area` to furthest reach of the runout
-        area. The runout may refer to visible deposition (associated to dense
-        flow), damages or the impacted and affected area (associated to air
-        blast or :term:`powder snow`) in the zone of :term:`deposition` and is usually defined
-        via flow :term:`thickness`, velocity, kinetic energy or impact pressure
-        thresholds.
+        the uppermost point of the :term:`release area` (:term:`origin point`) to furthest reach of the runout
+        area (:term:`runout point`).
 
-    size
-        Avalanche size refers to the magnitude or intensity of an :term:`event`, classified by destructive
-        potential, :term:`runout length` and dimension according to the EAWS size
-        classification, which is closely related to the CAA destructive size.
+    runout point
+        The runout point is also referred to as :term:`alpha point`. It describes the furthest point of the runout,
+        and marks the outer most end of the avalanche deposit. The runout may refer to visible deposition
+        (associated to dense flow), damages or the impacted and affected area (associated to air
+        blast or :term:`powder snow`) in the zone of :term:`deposition` and is usually defined
+        via flow :term:`thickness`, velocity, kinetic energy or impact pressure thresholds.
+
+    destructive size
+        The destructive size refers to the magnitude or intensity of an :term:`event`, according to the EAWS size classification, which is closely
+        related to the CAA destructive size. Thereby the size refers to the destructive potential, :term:`runout length`,  volumn or mass 
+        of each avalanche event. 
+
+    relative size
+        The relative size refers to the size of an avalanche in relation to the :term:`thalweg`. The classification scheme was developed 
+        by the AAA and relys on the horizontal extent, vertical depth of the fracture, volumn and mass of the deposited snow as well as the
+        runout length of the avalanche event. Thereby the largest possible event along a :term:`thalweg` is classified with R5.
+
+    Dmax
+        Dmax is the size of the maximum potential avalanche event size in an infinite time series of avalanches 
+        within the terrain of a given avalanche path. This maximum potential avalanche event corresponds with the 
+        relative size R5 (major or maximum, relative to path) of the relative avalanche size classification 
+        (American Avalanche Association, 2016). Therefore Dmax is defined accordingly to the destructive size
+        (accoridng to the avalanche size classifications of the Canadian Avalanche Association and the European
+        Avalanche Warning Services) of the R5 event. 
+        
 
     velocity
         Flow velocities are usually measured in a surface parallel direction.
@@ -205,28 +241,39 @@ Glossary
         the avalanche and is usually associated to :term:`dense flow` type of movement
         in the :term:`transition` zone of the avalanche.
 
-    origin
-        see :term:`zone of origin`
+    origin point
+        see also :term:`zone of origin`
+
+        The origin point describes the highest possible release point along a :term:`thalweg` within the terrain.
 
     zone of origin
         The zone of origin delineates the area, in which typical :term:`release area` (s) are located, and an avalanche's
         appearance is characterized by the :term:`manner of starting`. The uppermost
-        possible point is referred to as start of origin.
+        possible point is referred to as :term:`origin point`.
 
-    transition
-        see :term:`zone of transition`
+    transition point
+        see also :term:`zone of transition`
+
+        The transition point describes the transition between the zone of origin and the zone of transition.
+        It marks the lowest point of the release area. It is generally assumed that the transition occurs at
+        a slope angle of approximately 30°.
 
     zone of transition
-        The zone of transition is the area between zone of :term:`origin` and
-        zone of :term:`deposition` along the :term:`thalweg`. The :term:`form
+        The zone of transition is the area between :term:`zone of origin` and
+        :term:`zone of deposition` along the :term:`thalweg`. The :term:`form
         of movement` is linked to the :term:`flow variables`. The start of
-        transition links the zone of :term:`origin` and transition and is usually
+        transition links the :term:`zone of origin` and transition and is usually
         associated with a slope inclination of about 28-30°.
 
-    deposition
-        see :term:`zone of deposition`
+    deposition point
+        see also :term:`zone of deposition`
+
+        The deposition point describes the point along the thalweg where an avalanche event starts to decelerates
+        due to increased friction and terrain characteristics. The point of deposition marks the end of the travel
+        track and the beginning of the deposition area. It is located between the :term:`zone of transit` and the 
+        :term:`zone of deposition`. It is also known as the :term:`beta point`.
 
     zone of deposition
         The zone of deposition is where the :term:`runout area` of the avalanche is located and where the
-        avalanche stops due to frictional energy dissipation. The boundary with
-        the :term:`transition` zone (start of deposition) is often called :term:`beta point`.
+        avalanche stops due to frictional energy dissipation. Whithin this zone the avalanche deposit is to be found.
+        The boundary with the :term:`zone of transition` is often called :term:`beta point`.
