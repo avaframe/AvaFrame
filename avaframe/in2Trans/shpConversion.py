@@ -478,7 +478,7 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     w.field('name', 'C')
     if isinstance(pointDict['x'], (float, np.float64)) and isinstance(pointDict['y'], (float, np.float64)):
         w.point(pointDict['x'], pointDict['y'])
-    elif isinstance(pointDict['x'], (np.array)) and isinstance(pointDict['y'], (np.array)):
+    elif isinstance(pointDict['x'], (np.ndarray)) and isinstance(pointDict['y'], (np.ndarray)):
         if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
             message = 'Length of pointDict is not allowed to exceed one'
             log.error(message)
