@@ -475,11 +475,19 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     fileName = str(fileName)
     w = shapefile.Writer(fileName)
     w.field('name', 'C')
-    if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
-        message = 'Length of pointDict is not allowed to exceed one'
+    if isinstance(pointDict['x'], (float, np.float64)) and isinstance(pointDict['y'], (float, np.float64)):
+        w.point(pointDict['x'], pointDict['y'])
+    elif isinstance(pointDict['x'], (np.array)) and isinstance(pointDict['y'], (np.array)):
+        if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
+            message = 'Length of pointDict is not allowed to exceed one'
+            log.error(message)
+            raise ValueError(message)
+        else:
+            w.point(pointDict['x'][0], pointDict['y'][0])
+    else:
+        message = 'Format of point is neither float nor array of length 1'
         log.error(message)
-        raise ValueError(message)
-    w.point(pointDict['x'][0], pointDict['y'][0])
+        raise TypeError(message)
     w.record(pointName)
     w.close()
     return fileName
