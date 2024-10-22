@@ -41,13 +41,13 @@ def test_getDFAPathFromPart():
     particlesList = [{'nPart': 5, 'm': weights, 'x': values, 'y': values, 'z': values,
                       'trajectoryLengthXY': values, 'trajectoryLengthXYCor': values,
                       'ux': values, 'uy': values, 'uz': values}]
-    avaProfile = DFAPathGeneration.getDFAPathFromPart(particlesList, addVelocityInfo=False)
+    avaProfile = DFAPathGeneration.getMassAvgPathFromPart(particlesList, addVelocityInfo=False)
 #    print(avaProfile)
     for prop in ['x', 'y', 'z', 's', 'sCor']:
         assert avaProfile[prop] == 3
         assert avaProfile[prop + 'std'] == 1.5
 
-    avaProfile = DFAPathGeneration.getDFAPathFromPart(particlesList, addVelocityInfo=True)
+    avaProfile = DFAPathGeneration.getMassAvgPathFromPart(particlesList, addVelocityInfo=True)
 #    print(avaProfile)
     for prop in ['x', 'y', 'z', 's', 'sCor']:
         assert avaProfile[prop] == 3

@@ -155,8 +155,8 @@ cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list("cmapAvaframeCont", 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
 # and http://hclwizard.org:3000/hclwizard/
-# multi sequential colormap for pressure
 
+# multi sequential colormap for pressure
 levP = list(fU.splitIniValueToArraySteps(cfgPlotUtils["pressureColorLevels"]))
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
@@ -168,17 +168,17 @@ levT = list(fU.splitIniValueToArraySteps(cfgPlotUtils["thicknessColorLevels"]))
 colorsT = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
 cmapT = copy.copy(cmapCrameri.lajolla)
 
-# multi sequential colormap for speed
+# multi sequential colormap for velocity
 levS = list(fU.splitIniValueToArraySteps(cfgPlotUtils["speedColorLevels"]))
-# Batflow color map
+# Batlow color map
 colorsS = ["#FFCEF4", "#FFA7A8", "#C19A1B", "#578B21", "#007054", "#004960", "#201158"]
 cmapS = copy.copy(cmapCrameri.batlow.reversed())
 
 # multi sequential colormap for Travel Angle
 levTA = list(fU.splitIniValueToArraySteps(cfgPlotUtils["travelAngleColorLevels"]))
-# Batflow color map
-colorsTA = ["#FFCEF4", "#FFA7A8", "#C19A1B", "#578B21", "#007054", "#004960", "#201158"]
-cmapTA = copy.copy(cmapCrameri.lapaz)
+# Nuuk color map
+colorsTA = ['#fefeb2', '#d2d184', '#bab98d', '#a0a598', '#6f878d', '#386982', '#05598c']
+cmapTA = copy.copy(cmapCrameri.nuuk.reversed())
 
 # colormap used if no resType provided
 cmapNN = copy.copy(cmapCrameri.imola.reversed())
@@ -216,7 +216,7 @@ cmapThickness = {"cmap": cmapT, "colors": colorsT, "levels": levT}
 
 cmapSpeed = {"cmap": cmapS, "colors": colorsS, "levels": levS}
 
-cmapTravelAngle = {"cmap": cmapTA, "colors": colorsTA}
+cmapTravelAngle = {"cmap": cmapTA, "colors": colorsTA, "levels": levTA}
 
 cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 
