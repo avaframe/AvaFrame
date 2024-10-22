@@ -99,7 +99,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
 
         # ++++++++++ GENERATE PATH +++++++++++
         # postprocess to extract path and energy line
-        avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, addVelocityInfo=True)
+        avaProfileMass = DFAPath.getMassAvgPathFromPart(particlesList, addVelocityInfo=True)
         # make a copy because extendDFAPathKernel might modify avaProfileMass
         avaProfileMassExt = DFAPath.extendDFAPath(DFAPathGenerationCfg['PATH'], avaProfileMass.copy(), dem,
                                                   particlesList[0])

@@ -33,8 +33,8 @@ def mainEnergyLineTest(avalancheDir, energyLineTestCfg, com1DFACfg, simName, dem
     """
     log.info('Energy line test for simulation: %s' % simName)
     pathFromPart = energyLineTestCfg['energyLineTest'].getboolean('pathFromPart')
-    avaProfileMass, particlesIni = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem,
-                                                               addVelocityInfo=True)
+    avaProfileMass, particlesIni = DFAPath.generateMassAveragePath(avalancheDir, pathFromPart, simName, dem,
+                                                                   addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
