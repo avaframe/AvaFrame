@@ -69,7 +69,7 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
         # read field
         fieldName = ['FT', 'FM']
         if addVelocityInfo:
-            fieldName.append['FV']
+            fieldName.append('FV')
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, fieldName, simName=simName,
                                                                flagAvaDir=True, comModule='com1DFA')
         # get fields header
@@ -78,7 +78,7 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
         csz = fieldHeader['cellsize']
         # we want the origin to be in (0, 0) as it is in the avaProfile that comes in
         X, Y = gT.makeCoordinateGrid(0, 0, csz, ncols, nrows)
-        indNonZero = np.where(fieldsList[0]['FD'] > 0)
+        indNonZero = np.where(fieldsList[0]['FT'] > 0)
         # convert this data in a particles style (dict with x, y, z info)
         particlesIni = {'x': X[indNonZero], 'y': Y[indNonZero]}
         particlesIni, _ = gT.projectOnRaster(dem, particlesIni)
@@ -152,7 +152,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
     """ compute mass averaged path from fields
 
     Also returns the averaged velocity and kinetic energy associated
-    The dem and fieldsList (FT, FV and FM) need to have identical dimentions and cell size.
+    The dem and fieldsList (FT, FM and FV) need to have identical dimensions and cell size.
     If FV is not provided, information about velocity and kinetic energy is not computed
 
     Parameters
@@ -584,7 +584,7 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
     avalancheDir: pathlib
         avalanche directory pathlib path
     simDFrow: pandas series
-        row of the siulation dataframe coresponding to the current simulation analyzed
+        row of the simulation dataframe corresponding to the current simulation analyzed
     splitPoint: dict
         point dictionary
     avaProfileMass: dict
@@ -593,8 +593,10 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
         com1DFA simulation dictionary
     Returns
     --------
-    avaProfile: dict
-        resampled path profile
+    pathShpFile: str
+        File path to the saved shapefile for the mass-averaged path.
+    pointShpFile: str
+        File path to the saved shapefile for the split point.
     """
     # put path back in original location
     if splitPoint != '':
@@ -623,6 +625,7 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
         if inProjection.is_file():
             shutil.copy(inProjection, splitAB.with_suffix('.prj'))
         log.info('Saved split point to: %s', splitAB)
+    return str(pathAB), str(splitAB)
 
 
 def weightedAvgAndStd(values, weights):
