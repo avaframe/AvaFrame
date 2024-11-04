@@ -192,9 +192,9 @@ def run(optTuple):
     if varUmaxBool:
         varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
         if optTuple[2]["varUmaxType"].lower() == 'umax':
-            varUmaxArray[varUmaxArray>0] = varUmaxArray[varUmaxArray>0]**2 / 2 / 9.81
+            varUmaxArray[varUmaxArray>0] = varUmaxArray[varUmaxArray>0] ** 2 / 2 / 9.81
         elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
-            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")   
+            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
     else:
         varUmaxArray = None
 
@@ -577,7 +577,7 @@ def calculation(args):
                 for k in range(len(row)):
                     dem_ng = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
 
-                    # This bit handles edge cases and noData-values in the DEM!! this is an important piece of 
+                    # This bit handles edge cases and noData-values in the DEM!! this is an important piece of
                     # code, sinceno-data handling is expected (by some users/applications) to behave like here:
                     # i.e. if nodata in the 3x3 neighbourhood --> no calculation
                     if (nodata in dem_ng) or np.size(dem_ng) < 9:
