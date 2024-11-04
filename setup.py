@@ -23,6 +23,8 @@ import numpy
 sys.path.append(str(Path(__file__).parent))
 from avaframe.version import getVersion
 
+from Cython.Build import cythonize
+
 DISTNAME = "avaframe"
 LICENSE = "EUPL"
 AUTHOR = "AvaFrame Contributors"
@@ -67,17 +69,12 @@ req_packages = [
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-
-# Decide whether a cythonization of the pyx-file is required.
-# if no .c files are found build_ext is required
-use_cython = not list(Path().glob("**/*.c"))
-
+# Cython part
 setup_options = {}
-if use_cython:
-    print("Package is built with cythonization.")
-    setup_options = {"build_ext": {"inplace": True}}
+print("Package is built with cythonization.")
+setup_options = {"build_ext": {"inplace": True}}
 
-ext = ".pyx" if use_cython else ".c"
+ext = ".pyx"
 
 extensions = [
     Extension(
@@ -97,10 +94,7 @@ extensions = [
     ),
 ]
 
-if use_cython:
-    from Cython.Build import cythonize
-
-    extensions = cythonize(extensions, compiler_directives={"linetrace": True}, language_level=3)
+extensions = cythonize(extensions, compiler_directives={"linetrace": True}, language_level=3)
 
 setup(
     # Project info
