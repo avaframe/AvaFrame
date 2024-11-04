@@ -120,11 +120,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
-  try:
-    cdef long long[:] ID = particles['ID']
-  except ValueError:
-    cdef long[:] ID = particles['ID']
-
+  cdef long[:] ID = particles['ID']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
@@ -699,10 +695,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int restitutionCoefficient = dam['restitutionCoefficient']
   cdef int nIterDam = dam['nIterDam']
   cdef int nDamPoints = dam['nPoints']
-  try:
-    cdef long long[:] cellsCrossed = dam['cellsCrossed']
-  except ValueError:
-    cdef long[:] cellsCrossed = dam['cellsCrossed']
+  cdef long[:] cellsCrossed = dam['cellsCrossed']
   cdef double[:] xFootArray = dam['x']
   cdef double[:] yFootArray = dam['y']
   cdef double[:] zFootArray = dam['z']
