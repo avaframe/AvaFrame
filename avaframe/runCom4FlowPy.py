@@ -98,9 +98,11 @@ def main():
             log.info('could not write  config to {}/{}.json'.format(cfgPath['outDir'], uid))
             log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
-        cfgPath["thalwegDir"] = cfgPath["resDir"] / "thalwegData"
-        fU.makeADir(cfgPath["thalwegDir"])
-
+        if cfgSetup["calcThalweg"] == "True":
+            cfgPath["thalwegDir"] = cfgPath["resDir"] / "thalwegData"
+            fU.makeADir(cfgPath["thalwegDir"])            
+        else:
+            cfgPath["thalwegDir"] = ""
         cfgPath["deleteTemp"] = "False"
 
         cfgPath["uid"] = uid
@@ -133,12 +135,15 @@ def main():
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-        try:
-            os.makedirs(workDir / res_dir / "thalwegData")
-            thalwegDir = workDir / res_dir / "thalwegData"
-        except FileExistsError:
-            log.info("thalweg folder for simualtion {} already exists - aborting".format(uid))
-            sys.exit(1)
+        if cfgSetup["calcThalweg"] is True:
+            try:
+                os.makedirs(workDir / res_dir / "thalwegData")
+                thalwegDir = workDir / res_dir / "thalwegData"
+            except FileExistsError:
+                log.info("thalweg folder for simualtion {} already exists - aborting".format(uid))
+                sys.exit(1)
+        else:
+            thalwegDir = ""
         log = logUtils.initiateLogger(res_dir, logName)
 
         # writing config to .json file
@@ -151,7 +156,10 @@ def main():
             log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
         cfgPath["workDir"] = pathlib.Path(workDir)
-        cfgPath["thalwegDir"] = pathlib.Path(thalwegDir)
+        if cfgSetup["calcThalweg"] is True:
+            cfgPath["thalwegDir"] = pathlib.Path(thalwegDir)
+        else:
+            cfgPath["thalwegDir"] = None
         cfgPath["outDir"] = pathlib.Path(res_dir)
         cfgPath["resDir"] = cfgPath["outDir"]
         cfgPath["tempDir"] = pathlib.Path(temp_dir)

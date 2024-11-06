@@ -7,6 +7,21 @@ class Path:
     '''Class contains a path, containing one startcell  and corresponding child cells'''
 
     def __init__(self, dem, startcellRow, startcellCol, genList, rasterAttributes):
+        """ initializes a GMF path, that belongs to a startcell
+
+        Parameters
+        ----------
+        dem: numpy array
+            Digital elevation model
+        startcellRow: int
+            Row index of startcell
+        startcellCol: int
+            Column index of startcell
+        genList: list
+            contains all cells that belong to the path (per generation an extra list)
+        rasterAttributes: dict
+            contains information about the input rasters
+        """
         self.dem = dem
         self.cellsize = rasterAttributes["cellsize"]
         self.xllcorner = rasterAttributes["xllcenter"] - self.cellsize / 2
@@ -44,14 +59,29 @@ class Path:
         self.flux_gen = []
 
     def indizesToCoords(self, cols, rows):
+        """calculates the row and column indices to the x and y coordinates
+
+        Parameters
+        ----------
+        cols: numpy array
+            column indices of cells belonging to path
+        rows: numpy array
+            row indices of cells belonging to path
+
+        Returns
+        ----------
+        x: numpy array
+            x coordinates (in m) of cells belonging to path
+        y: numpy array
+            y coordinates (in m) of cells belonging to path
+        """
         x = cols * self.cellsize + self.xllcorner
         y = self.yllcorner + (self.nrows - rows) * self.cellsize
         return x,y
 
 
     def getVariablesGeneration(self):
-        '''
-            write LISTS with size and format of genList 
+        '''write lists with size and format of genList containing specific parameters
             (the main list contains lists for every generation)
         '''
         for gen, cellList in enumerate(self.genList):
@@ -88,9 +118,8 @@ class Path:
         
     
     def getPathArrays(self):
-        ''' 
-            write ARRAYS with size of dem containing the variable values of every path
-            value 0 means, the path does not hit the cell
+        '''write arrays with size of dem containing the maximum of the variable values of every path
+           value 0 means, the path does not hit the cell
         '''
         for gen, cellList in enumerate(self.genList):
             for cell in cellList:
@@ -105,19 +134,20 @@ class Path:
 
     
     def calcThalwegCenterof(self, variable, variableCo):
-        '''
-        Parameters:
+        '''calculates for a specific variable the center of a specific variable (thalweg)
 
+        Parameters
+        ----------
         variable: list
             variable, which is centered (in format genList)
         variableCo: list
             center of variableCo is calculated (variable is weighted) (in format genList)
 
-        Return:
-
-        variableSum: np.array
+        Returns
+        ----------
+        variableSum: numpy array
             sum of variable per generation
-        coVar: np.array
+        coVar: numpy array
             centered variable (per generation)
         '''
         coVar = np.zeros(len(self.genList))
@@ -137,10 +167,10 @@ class Path:
     def getCenterofs(self, variables):
         '''
         calculate sum of variable for every iteration step/ generation and
-        center of energy & flux for the following variables:
+        center of energy, flux and zDelta for the following variables:
 
-        Parameters:
-
+        Parameters
+        ----------
         variables: list
             List of variables that should be weighted (with center of energy and flux)
         '''
@@ -155,54 +185,24 @@ class Path:
             sumE, coE = self.calcThalwegCenterof(values, self.flowEnergyGeneration) # center of energy of every variable
             sumZd, coZd = self.calcThalwegCenterof(values, self.zDeltaGeneration) # center of energy of every variable
 
-
             setattr(self, f'{varName}SumGen', sumF)
             setattr(self, f'{varName}CoF', coF)
             setattr(self, f'{varName}CoE', coE)
             setattr(self, f'{varName}CoZd', coZd)
 
 
-    def calcRunoutAngle(self):
-        '''
-        Calculate runout angle of thalweg
-        '''
-
-        self.dropHeightCoE = max(self.altitudeCoE)-min(self.altitudeCoE)
-        self.travelLengthCoE = max(self.travelLengthCoE)
-        if self.dropHeightCoE > 0:
-            self.runoutAngleCoE = np.rad2deg(np.arctan(self.dropHeightCoE / self.travelLengthCoE))
-        else:
-            self.runoutAngleCoE = np.nan
-        self.dropHeightCoF = max(self.altitudeCoF)-min(self.altitudeCoF)
-        self.travelLengthCoF = max(self.travelLengthCoF)
-        if self.dropHeightCoF > 0:
-            self.runoutAngleCoF = np.rad2deg(np.arctan(self.dropHeightCoF / self.travelLengthCoF))
-        else:
-            self.runoutAngleCoF = np.nan
-
-
-    def stoppingCriteria(self):
-        self.calcRunoutAngle()
-        if np.isclose(self.runoutAngleCoE, self.alpha):
-            self.StoppingAlpha = True
-        else:
-            self.StoppingAlpha = False
-
-        if max(self.zDeltaCoE) == self.maxZDelta:  #TODO: max(self.zDeltaCoE) oder max(self.zDeltaGeneration)??
-            self.StoppingVmax = True
-        else:
-            self.StoppingVmax = False
-
-
     def saveDict(self, saveDir, centerOfs, variables):
         """
         save thalweg data. (One file per thalweg)
 
-        Parameters:
+        Parameters
         ------------
         saveDir: pathlib.PosixPath
             directory, in which the thalweg data is saved
-
+        centerOfs: list
+            contains the center-of-variable names that are saved
+        variables: list
+            contains the variable names that are saved
         """
         thalwegData = {'alpha': round(self.alpha,1),
                     'exponent': self.exp,
@@ -231,14 +231,18 @@ class Path:
                     value = getattr(self, f'{varName}{co}')
                 thalwegData[f'{varName}'] = value
 
-            #self.stoppingCriteria()
-            #thalwegData['StoppingAlpha'] = self.StoppingAlpha
-            #thalwegData['StoppingVmax'] = self.StoppingVmax
             with open(saveDir / (f"thalwegData_{co}_{self.startcellRow}_{self.startcellCol}.pickle"), 'wb') as handle:
                 pickle.dump(thalwegData, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
     def calcAndSaveThalwegData(self, thalwegParameters):
+        """main function for paths & thalwegs: calculates the thalweg and saves the data
+        
+        Parameters:
+        ------------
+        thalwegParameters: dict
+            contains information to calculate and save the thalweg data (from .ini file)
+        """
         saveDir = thalwegParameters["thalwegDir"]
         cos = eval(thalwegParameters["thalwegCenterOf"])
         variables = eval(thalwegParameters["thalwegVariables"])

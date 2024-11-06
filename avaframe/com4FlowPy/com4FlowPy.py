@@ -185,13 +185,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         raise ValueError(_errMsg)
 
     rasterAttributes["cellsize"] = demHeader["cellsize"]
-<<<<<<< HEAD
-=======
-    rasterAttributes["nodata"] = demHeader["nodata_value"]
-    rasterAttributes["nrows"] = demHeader["nrows"]
     rasterAttributes["xllcenter"] = demHeader["xllcenter"]
     rasterAttributes["yllcenter"] = demHeader["yllcenter"]
->>>>>>> 0908ba2b (thalweg format)
+    rasterAttributes["nrows"] = demHeader["nrows"]
 
     # tile input layers and write tiles (pickled np.arrays) to temp Folder
     nTiles, rasterAttributes = tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters)
