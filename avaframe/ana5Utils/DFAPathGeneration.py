@@ -530,8 +530,10 @@ def getSplitPoint(cfg, avaProfile, parabolicFit):
                       'z': z[indSplitPoint], 'zPara': zPara[indSplitPoint], 's': sNew[indSplitPoint]}
     except IndexError:
         noSplitPointFoundMessage = ('Automated split point generation failed as no point where slope is less than %s°'
-                                    'was found, provide the split point manually.' % cfg.getfloat('slopeSplitPoint'))
-        splitPoint = ''
+                                    'was found, setting split point at the top. Correct split point manually.'
+                                    % cfg.getfloat('slopeSplitPoint'))
+        splitPoint = {'x': avaProfile['x'][0], 'y': avaProfile['y'][0],
+                      'z': z[0], 'zPara': zPara[0], 's': sNew[0], 'isTopSplitPoint': True}
         log.warning(noSplitPointFoundMessage)
     if debugPlot:
         angleProf, tmpProf, dsProf = gT.prepareAngleProfile(cfg.getfloat('slopeSplitPoint'), avaProfile)

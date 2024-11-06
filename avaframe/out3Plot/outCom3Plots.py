@@ -146,7 +146,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
              label='_bottom extension', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='g'), pe.Normal()])
     ax1.plot(avaProfileMass['x'][indStart:indEnd+1], avaProfileMass['y'][indStart:indEnd+1], '-y.', zorder=20,
              label='_Center of mass path', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    if splitPoint != '':
+    if not splitPoint.get('isTopSplitPoint', False):
         ax1.plot(splitPoint['x'], splitPoint['y'], 'P', color='r', label='_Split point', zorder=20)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
@@ -172,7 +172,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
              label='_Center of mass path slope', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
     minY, _ = ax3.get_ylim()
     minX, _ = ax3.get_xlim()
-    if splitPoint != '':
+    if not splitPoint.get('isTopSplitPoint', False):
         ax3.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='_Split point')
         ax3.text(splitPoint['s'], minY, "%.2f m" % (splitPoint['s']), color='r', ha="right", va="bottom")
     ax3.axhline(y=cfgPath.getfloat('slopeSplitPoint'), color='r', linewidth=1, linestyle='-.',
@@ -199,7 +199,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
              label='Center of mass path / profile / angle',
              lw=1, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
     ax2.plot(sPara, zPara, '-k', label='Parabolic fit')
-    if splitPoint != '':
+    if not splitPoint.get('isTopSplitPoint', False):
         ax2.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='Split point')
         ax2.axhline(y=splitPoint['z'], color='r', linewidth=1, linestyle='-.', label='_Split point')
         minY, _ = ax2.get_ylim()
