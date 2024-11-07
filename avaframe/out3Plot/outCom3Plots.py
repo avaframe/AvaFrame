@@ -153,8 +153,8 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     ax1.axis('equal')
     ax1.set_ylim([rowsMin, rowsMax])
     ax1.set_xlim([colsMin, colsMax])
-    l1 = ax1.legend()
-    l1.set_zorder(40)
+    #ax1.legend()
+    #l1.set_zorder(40)
     ax1.set_title('Avalanche thalweg')
     pU.putAvaNameOnPlot(ax1, avalancheDir)
 
@@ -181,11 +181,11 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     ax3.text(minX, cfgPath.getfloat('slopeSplitPoint'), "%.0f°" % (cfgPath.getfloat('slopeSplitPoint')), color='r', ha="left", va="bottom")
     ax3.axhline(y=10, color='0.8', linewidth=1, linestyle='-.', label='_Beta angle (10°)')
     ax3.text(minX, 10, "%.0f°" % (10), color='0.8', ha="left", va="bottom")
-    # ax3.axvline(x=avaProfileMass['s'][indStart], color='b', linewidth=1, linestyle='-.', label='Start of profile')
-    # ax3.axvline(x=avaProfileMass['s'][indEnd], color='g', linewidth=1, linestyle='-.', label='End of profile')
+    #ax3.axvline(x=avaProfileMass['s'][indStart], color='b', linewidth=1, linestyle='-.', label='Start of profile')
+    #ax3.axvline(x=avaProfileMass['s'][indEnd], color='g', linewidth=1, linestyle='-.', label='End of profile')
     ax3.set_xlabel('$s_{xy}$ [m]')
     ax3.set_ylabel('slope angle [°]')
-    ax3.legend()
+    #ax3.legend()
     ax3.set_title('Avalanche thalweg profile slope')
 
     # make profile plot, zoomed out

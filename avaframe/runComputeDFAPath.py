@@ -143,7 +143,8 @@ if __name__ == "__main__":
     parser.add_argument('avadir', metavar='avalancheDir', type=str, nargs='?', default='',
                         help='the avalanche directory')
     parser.add_argument('--runDFA', action="store_true",
-                        help='run Com1DFA with adjusted parameters to generate usable example results')
+                        help='set flag to run com1DFA with cfg override to generate usable example results before'
+                             ' generating path')
 
     args = parser.parse_args()
     runComputeDFAPath(str(args.avadir), bool(args.runDFA))
