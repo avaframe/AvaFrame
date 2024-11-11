@@ -35,7 +35,7 @@ def runComputeDFAPath(avalancheDir='', runDFAModule=False):
     avalancheDir: str
         path to avalanche directory (setup e.g. with init scripts)
     runDFAModule: bool
-        if com1DFA should be run to create required DFA results; overrides ini setting
+        True if com1DFA should be run to create required DFA results before path generation; overrides ini setting
 
     Returns
     -------
@@ -135,7 +135,7 @@ def runComputeDFAPath(avalancheDir='', runDFAModule=False):
     endTime = time.time()
     log.info('Took %6.1f seconds to calculate.' % (endTime - startTime))
 
-    return massAvgPath,splitPoint
+    return str(massAvgPath), str(splitPoint)
 
 
 if __name__ == "__main__":
