@@ -4,19 +4,18 @@
 import time
 import pathlib
 import argparse
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
 
-def process_avalanche_directory_com1DFA(args):
+def process_avadir_com1DFA(cfgMain, avalancheDir):
     """Function to process com1DFA in each avalanche directory in parallel."""
-    cfgMain, avadir = args
-    avalancheDir = pathlib.Path(avadir)  # Use `avadir` directly here to define avalancheDir
+    avalancheDir = pathlib.Path(avalancheDir)
 
-    #Initialize log for each process
+    # Initialize log for each process
     log = logUtils.initiateLogger(avalancheDir, logName='runCom1DFA')
     log.info('PROCESS CALLED BY REGIONAL RUN')
     log.info('Current avalanche: %s', avalancheDir)
@@ -36,14 +35,12 @@ def process_avalanche_directory_com1DFA(args):
 
 def runRegional(avalancheDir='', outDir=''):
     """
-
     Parameters
     ----------
     avalancheDir:
         input directory which should contain multiple valid avalanche directories, i.e. the regional directory!
     outDir:
         here the output directory may be set
-
 
     Returns
     -------
@@ -75,15 +72,19 @@ def runRegional(avalancheDir='', outDir=''):
         log.info(f"'{avadir.name}'")
 
     # Prepare arguments for each process
-    process_args = [(cfgMain, avadir) for avadinull_dfa_pfv.ascr in avaDirs]
+    # Run processes in parallel using ProcessPoolExecutor
+    with ProcessPoolExecutor() as executor:
+        # Submit each avalanche directory to the executor
+        futures = {executor.submit(process_avadir_com1DFA, cfgMain, avadir): avadir for avadir in avaDirs}
 
-    # Run processes in parallel using multiprocessing.Pool
-    with Pool() as pool:
-        results = pool.map(process_avalanche_directory_com1DFA, process_args)
-
-    # Log results for each directory
-    for result_dir, status in results:
-        log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}")
+        # Log results as each future completes
+        for future in as_completed(futures):
+            avadir = futures[future]
+            try:
+                result_dir, status = future.result()
+                log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}")
+            except Exception as e:
+                log.error(f"Error processing {avadir}: {e}")
 
     #todo:  gather the outputs and copy them to the outDir - then clean original output location? alternatively,
     #todo:  copy them directly to new OutDir/'Outputs' in the Regional folder, should introduce some options here
