@@ -451,6 +451,11 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if 'travelLength' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
         _ts, _oF), travelLength)
+    if 'velocityMax' in _outputs:
+        # TODO: calculate velocity somewhere else??
+        vel = zDelta ** 2 / 2 / 9.81
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_velocityMax{}".format(_uid,
+        _ts, _oF), vel)
 
     # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
     # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
