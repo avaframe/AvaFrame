@@ -60,4 +60,11 @@ type of plots exists, not to show all available plots!
    * - Runout line comparison
      - Variable comparison
      - Thalweg time
+   * - .. image:: _static/gallery/ValongThalweg.png
+                :target: _static/gallery/ValongThalweg.png
+     -
+     -
+   * - Velocity along thalweg; outAIMEC -> plotVelThAlongThalweg
+     -
+     -
 
