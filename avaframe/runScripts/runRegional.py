@@ -4,11 +4,35 @@
 import time
 import pathlib
 import argparse
+from multiprocessing import Pool
 
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
+
+def process_avalanche_directory_com1DFA(args):
+    """Function to process com1DFA in each avalanche directory in parallel."""
+    cfgMain, avadir = args
+    avalancheDir = pathlib.Path(avadir)  # Use `avadir` directly here to define avalancheDir
+
+    #Initialize log for each process
+    log = logUtils.initiateLogger(avalancheDir, logName='runCom1DFA')
+    log.info('PROCESS CALLED BY REGIONAL RUN')
+    log.info('Current avalanche: %s', avalancheDir)
+
+    # Update cfgMain to reflect the current avalancheDir
+    cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
+
+    # Clean input directory of old work and output files from module
+    initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
+
+    # Create com1DFA configuration for the current avalanche directory
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False, onlyDefault=False)
+
+    # Run com1DFA in the current avalanche directory
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgCom1DFA)
+    return avalancheDir, "Success"
 
 def runRegional(avalancheDir='', outDir=''):
     """
@@ -27,10 +51,14 @@ def runRegional(avalancheDir='', outDir=''):
         path to output directory
     """
 
+    # Start logging
+    log = logUtils.initiateLogger(avalancheDir, logName='runRegional')
+    log.info('MAIN SCRIPT')
+
     # Time the whole routine
     startTime = time.time()
 
-    # Load avalanche directory from general configuration file
+    # Load the (REGIONAL) avalanche directory from general configuration file
     # More information about the configuration can be found here
     # on the Configuration page in the documentation
     cfgMain = cfgUtils.getGeneralConfig()
@@ -39,34 +67,28 @@ def runRegional(avalancheDir='', outDir=''):
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
 
-    # Start logging
-    log = logUtils.initiateLogger(avalancheDir, logName='runRegional')
-    log.info('MAIN SCRIPT')
-
-    # List avalanche directories that contain an 'Inputs' folder
-    avaDirs = [dir for dir in pathlib.Path(avalancheDir).iterdir() if dir.is_dir() and (dir / "Inputs").is_dir()]
+    # List avalanche directories that contain an 'Inputs' folder - logic is that they are valid avaFolders
+    avaDirs = [avadir for avadir in pathlib.Path(avalancheDir).iterdir() if avadir.is_dir() and (avadir / "Inputs").is_dir()]
     log.info(f"Found a total of '{len(avaDirs)}' avalanche directories in '{avalancheDir}'.")
     log.info(f"Processing the following directories:")
-    for dir in avaDirs:
-        log.info(f"'{dir.name}'")
+    for avadir in avaDirs:
+        log.info(f"'{avadir.name}'")
 
-    ### iterate through each avadir and run the e.g. com1DFA process
-    for dir in avaDirs:
-        avalancheDir = dir
-        log.info(f"PROCESSING DIRECTORY: {avalancheDir.relative_to(pathlib.Path(avalancheDir).parent)}")
+    # Prepare arguments for each process
+    process_args = [(cfgMain, avadir) for avadinull_dfa_pfv.ascr in avaDirs]
 
-        # Update the avalancheDir in the configuration for com1DFA to use
-        cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
+    # Run processes in parallel using multiprocessing.Pool
+    with Pool() as pool:
+        results = pool.map(process_avalanche_directory_com1DFA, process_args)
 
-        # Clean input directory of old work and output files from module
-        initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
-        # create com1DFA configuration
-        cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False, onlyDefault=False)
-        # Run com1DFA in the current avalanche directory
-        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgCom1DFA)
+    # Log results for each directory
+    for result_dir, status in results:
+        log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}")
 
-    #todo:gather the outputs and copy them to the outDir - then clean original output location? alternatively,
-    #copy them directly to new OutDir/'Outputs' in the Regional folder
+    #todo:  gather the outputs and copy them to the outDir - then clean original output location? alternatively,
+    #todo:  copy them directly to new OutDir/'Outputs' in the Regional folder, should introduce some options here
+
+    #todo: maybe down the line we could write a small report, i.e. which avalanche took the longest to calculate, how long did it take on average, etc...
 
     # Print time needed
     endTime = time.time()
