@@ -1353,10 +1353,10 @@ def plotVelThAlongThalweg(pathDict, rasterTransfo, pftCrossMax, pfvCrossMax, cfg
 
     # draw the horizontal and vertical lines for angle computation
     ax2.vlines(x=sXY[indVelStart], ymin=z[indVelZero], ymax=z[indVelStart],
-               color='silver', linestyle='--', linewidth=1.5, label=(r'$\Delta s_{xy} = %.1f$$m$' % deltas))
+               color='silver', linestyle='--', linewidth=1.5, label=(r'$\Delta z = %.1f$$m$' % deltaz))
     ax2.hlines(y=z[indVelZero], xmin=sXY[indVelStart],
                xmax=sXY[indVelZero],
-               color='grey', linestyle='--', linewidth=1.5, label=(r'$\Delta z = %.1f$$m$' % deltaz))
+               color='grey', linestyle='--', linewidth=1.5, label=(r'$\Delta s_{xy} = %.1f$$m$' % deltas))
 
     X = [rasterTransfo['s'][indVelStart], rasterTransfo['s'][indVelZero]]
     Y = [rasterTransfo['z'][indVelStart], rasterTransfo['z'][indVelZero]]
