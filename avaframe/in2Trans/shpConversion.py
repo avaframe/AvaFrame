@@ -302,11 +302,15 @@ def readLine(fname, defname, dem):
         Lx = (coordx[i] - header["xllcenter"]) / header["cellsize"]
         Ly = (coordy[i] - header["yllcenter"]) / header["cellsize"]
         if (Ly < 0) or (Ly > header["nrows"] - 1) or (Lx < 0) or (Lx > header["ncols"] - 1):
-            log.error(fname)
-            raise ValueError("This shape file exceeds dem extent. This is not allowed")
+            msg = (f"Shape file %exceeds DEM extend" % fname)
+            log.error(msg)
+            raise ValueError(msg)
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
             log.error(fname)
             raise ValueError("This shape file is at least partially outside of DEM, this is not allowed!")
+            msg = (f"Shape file %s exceeds DEM extend" % fname)
+            log.error(msg)
+            raise ValueError(msg)
     return Line
 
 
@@ -344,9 +348,13 @@ def readPoints(fname, dem):
         Lx = (Pointx[i] - header["xllcenter"]) / header["cellsize"]
         Ly = (Pointy[i] - header["yllcenter"]) / header["cellsize"]
         if Ly < 0 or Ly > header["nrows"] - 1 or Lx < 0 or Lx > header["ncols"] - 1:
-            raise ValueError("The split point is not on the dem. Try with another split point")
+            msg = "The split point is not on the dem. Try with another split point"
+            log.error(msg)
+            raise ValueError(msg)
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
-            raise ValueError("Nan Value encountered. Try with another split point")
+            msg = 'Nan Value encountered. Try with another split point'
+            log.error(msg)
+            raise ValueError()
     return Points
 
 
