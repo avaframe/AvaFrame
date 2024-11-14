@@ -173,7 +173,9 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
     avaProfile, projSplitPoint = geoTrans.prepareLineStrict(dem, avaPath, distance, splitPoint)
 
     if np.isnan(np.sum(avaProfile['z'])):
-        raise ValueError('The resampled avalanche path exceeds the dem extent. Try with another path')
+        msg = "The resampled avalanche path exceeds the dem extent. Try with another path"
+        log.error(msg)
+        raise ValueError(msg)
 
     # Sanity check if first element of avaProfile[3,:]
     # (i.e z component) is highest:
@@ -312,6 +314,7 @@ def calcABAngles(avaProfile, eqParameters, dsMin):
         indBetaPoint = geoTrans.findAngleProfile(tmp, ds, dsMin)
     except IndexError:
         noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
+        log.error(noBetaFoundMessage)
         raise IndexError(noBetaFoundMessage)
     if debugPlot:
         debPlot.plotSlopeAngle(s, angle, indBetaPoint)
