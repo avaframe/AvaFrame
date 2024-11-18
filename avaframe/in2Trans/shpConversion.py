@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 
 def SHP2Array(infile, defname=None):
-    """ Read shapefile and convert it to a python dictionary
+    """Read shapefile and convert it to a python dictionary
 
     The dictionary contains the name of the paths in the shape file, the np array with
     the coordinates of the feature points (all stacked in the same array)
@@ -80,7 +80,7 @@ def SHP2Array(infile, defname=None):
     shps = sf.shapes()
 
     SHPdata = {}
-    SHPdata['sks'] = sks
+    SHPdata["sks"] = sks
     Name = []
     thicknessList = []
     idList = []
@@ -94,8 +94,13 @@ def SHP2Array(infile, defname=None):
     start = 0
     nParts = []
 
-    for n, item in enumerate(shps):
+    for n, (item, rec) in enumerate(zip(shps, sf.records())):
         pts = item.points
+        # if feature has no points - ignore
+        if len(pts) < 1:
+            log.warning("Feature %d in %s no points found - ignored" % (n, infile.name))
+            continue
+
         # is there a z coordinate?
         try:
             # for dams
@@ -111,27 +116,27 @@ def SHP2Array(infile, defname=None):
             for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
                 # get entity name
                 name = name.lower()
-                if (name == 'name'):
+                if name == "name":
                     layername = str(value)
-                if (name == 'thickness') or (name == 'd0'):
+                if (name == "thickness") or (name == "d0"):
                     thickness = value
-                if (name == 'ci95'):
+                if name == "ci95":
                     ci95 = value
-                if (name == 'slope'):
+                if name == "slope":
                     # for dams
                     slope = value
-                if (name == 'rho'):
+                if name == "rho":
                     rho = value
-                if (name == 'sks'):
+                if name == "sks":
                     sks = value
-                if (name == 'iso'):
+                if name == "iso":
                     iso = value
-                if (name == 'layer'):
+                if name == "layer":
                     layerN = value
             # if name is still empty go through file again and take Layer instead
-            if ((type(layername) is bytes) or (layername is None)):
+            if (type(layername) is bytes) or (layername is None):
                 for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
-                    if (name == 'Layer'):
+                    if name == "Layer":
                         layername = value
 
         # if layer still not defined, use generic
@@ -139,39 +144,35 @@ def SHP2Array(infile, defname=None):
             layername = defname
 
         Name.append(layername)
-        log.debug('SHPConv: Found layer %s', layername)
+        log.debug("SHPConv: Found layer %s", layername)
         thicknessList.append(str(thickness))
         ci95List.append(str(ci95))
         layerNameList.append(layerN)
+        idList.append(str(rec.oid))
 
         Start = np.append(Start, start)
         length = len(pts)
         Length = np.append(Length, length)
         start += length
 
-        for (pt, z) in zip(pts, zs):
+        for pt, z in zip(pts, zs):
             Coordx = np.append(Coordx, pt[0])
             Coordy = np.append(Coordy, pt[1])
             Coordz = np.append(Coordz, z)
 
-    # get unique ID of features in shapefile
-    for rec in sf.records():
-        id = rec.oid
-        idList.append(str(id))
-
-    SHPdata['Name'] = Name
-    SHPdata['thickness'] = thicknessList
-    SHPdata['slope'] = slope
-    SHPdata['Start'] = Start
-    SHPdata['Length'] = Length
-    SHPdata['x'] = Coordx
-    SHPdata['y'] = Coordy
-    SHPdata['z'] = Coordz
-    SHPdata['id'] = idList
-    SHPdata['ci95'] = ci95List
-    SHPdata['layerName'] = layerNameList
-    SHPdata['nParts'] = nParts
-    SHPdata['nFeatures'] = len(Start)
+    SHPdata["Name"] = Name
+    SHPdata["thickness"] = thicknessList
+    SHPdata["slope"] = slope
+    SHPdata["Start"] = Start
+    SHPdata["Length"] = Length
+    SHPdata["x"] = Coordx
+    SHPdata["y"] = Coordy
+    SHPdata["z"] = Coordz
+    SHPdata["id"] = idList
+    SHPdata["ci95"] = ci95List
+    SHPdata["layerName"] = layerNameList
+    SHPdata["nParts"] = nParts
+    SHPdata["nFeatures"] = len(Start)
 
     sf.close()
 
@@ -179,7 +180,7 @@ def SHP2Array(infile, defname=None):
 
 
 def getSHPProjection(infile):
-    """ Fetch projection from shp file
+    """Fetch projection from shp file
 
     Parameters
     ----------
@@ -192,20 +193,20 @@ def getSHPProjection(infile):
         projection string (if available, None if not)
     """
     # get coordinate system
-    prjfile = infile.with_suffix('.prj')
+    prjfile = infile.with_suffix(".prj")
     if prjfile.is_file():
-        prjf = open(prjfile, 'r')
+        prjf = open(prjfile, "r")
         sks = prjf.readline()
         prjf.close()
         return sks
     else:
-        message = ('No projection layer for shp file %s' % infile)
+        message = "No projection layer for shp file %s" % infile
         log.warning(message)
         return None
 
 
 def readThickness(infile, defname=None):
-    """ Read shapefile and fetch info on features' ids and thickness values
+    """Read shapefile and fetch info on features' ids and thickness values
 
     Parameters
     ----------
@@ -250,9 +251,9 @@ def readThickness(infile, defname=None):
             for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
                 # get entity name
                 name = name.lower()
-                if (name == 'thickness') or (name == 'd0'):
+                if (name == "thickness") or (name == "d0"):
                     thickness = value
-                if (name == 'ci95'):
+                if name == "ci95":
                     ci95 = value
 
         thicknessList.append(str(thickness))
@@ -269,7 +270,7 @@ def readThickness(infile, defname=None):
 
 
 def readLine(fname, defname, dem):
-    """ Read line from  .shp
+    """Read line from  .shp
     Use SHP2Array to read the shape file.
     Check if the lines are laying inside the dem extend
 
@@ -291,26 +292,26 @@ def readLine(fname, defname, dem):
         Line['Length'] : list of length of each line in Coord
     """
 
-    log.debug('Reading avalanche path : %s ', str(fname))
-    header = dem['header']
-    rasterDEM = dem['rasterData']
+    log.debug("Reading avalanche path : %s ", str(fname))
+    header = dem["header"]
+    rasterDEM = dem["rasterData"]
     Line = SHP2Array(fname, defname)
-    coordx = Line['x']
-    coordy = Line['y']
+    coordx = Line["x"]
+    coordy = Line["y"]
     for i in range(len(coordx)):
-        Lx = (coordx[i] - header['xllcenter']) / header['cellsize']
-        Ly = (coordy[i] - header['yllcenter']) / header['cellsize']
-        if ((Ly < 0) or (Ly > header['nrows']-1) or (Lx < 0) or (Lx > header['ncols']-1)):
+        Lx = (coordx[i] - header["xllcenter"]) / header["cellsize"]
+        Ly = (coordy[i] - header["yllcenter"]) / header["cellsize"]
+        if (Ly < 0) or (Ly > header["nrows"] - 1) or (Lx < 0) or (Lx > header["ncols"] - 1):
             log.error(fname)
-            raise ValueError('This shape file exceeds dem extent. This is not allowed')
+            raise ValueError("This shape file exceeds dem extent. This is not allowed")
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
             log.error(fname)
-            raise ValueError('This shape file is at least partially outside of DEM, this is not allowed!')
+            raise ValueError("This shape file is at least partially outside of DEM, this is not allowed!")
     return Line
 
 
 def readPoints(fname, dem):
-    """ Read points from  .shp
+    """Read points from  .shp
     Use SHP2Array to read the shape file.
     Check if the points are laying inside the dem extend
 
@@ -332,25 +333,25 @@ def readPoints(fname, dem):
         Line['Length'] : list of length of each point in Coord
     """
 
-    log.debug('Reading split point : %s ', str(fname))
-    header = dem['header']
-    rasterDEM = dem['rasterData']
-    defname = 'SHP'
+    log.debug("Reading split point : %s ", str(fname))
+    header = dem["header"]
+    rasterDEM = dem["rasterData"]
+    defname = "SHP"
     Points = SHP2Array(fname, defname)
-    Pointx = Points['x']
-    Pointy = Points['y']
+    Pointx = Points["x"]
+    Pointy = Points["y"]
     for i in range(len(Pointx)):
-        Lx = (Pointx[i] - header['xllcenter']) / header['cellsize']
-        Ly = (Pointy[i] - header['yllcenter']) / header['cellsize']
-        if (Ly < 0 or Ly > header['nrows']-1 or Lx < 0 or Lx > header['ncols']-1):
-            raise ValueError('The split point is not on the dem. Try with another split point')
+        Lx = (Pointx[i] - header["xllcenter"]) / header["cellsize"]
+        Ly = (Pointy[i] - header["yllcenter"]) / header["cellsize"]
+        if Ly < 0 or Ly > header["nrows"] - 1 or Lx < 0 or Lx > header["ncols"] - 1:
+            raise ValueError("The split point is not on the dem. Try with another split point")
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
-            raise ValueError('Nan Value encountered. Try with another split point')
+            raise ValueError("Nan Value encountered. Try with another split point")
     return Points
 
 
 def removeFeature(featureIn, nFeature2Remove):
-    """ Remove feature number nFeature2Remove from featureIn
+    """Remove feature number nFeature2Remove from featureIn
 
     Parameters
     ----------
@@ -364,30 +365,30 @@ def removeFeature(featureIn, nFeature2Remove):
     featureOut : dict
         shape file dicionary without feature nFeature2Remove
     """
-    StartRel = featureIn['Start']
-    LengthRel = featureIn['Length']
-    thickness = featureIn['thickness']
+    StartRel = featureIn["Start"]
+    LengthRel = featureIn["Length"]
+    thickness = featureIn["thickness"]
     featureOut = copy.deepcopy(featureIn)
     start = StartRel[nFeature2Remove]
     end = start + LengthRel[nFeature2Remove]
     # remove feature
-    featureOut['x'] = np.delete(featureIn['x'], np.arange(int(start), int(end)))
-    featureOut['y'] = np.delete(featureIn['y'], np.arange(int(start), int(end)))
-    if 'z' in featureIn.keys():
-        featureOut['z'] = np.delete(featureIn['z'], np.arange(int(start), int(end)))
+    featureOut["x"] = np.delete(featureIn["x"], np.arange(int(start), int(end)))
+    featureOut["y"] = np.delete(featureIn["y"], np.arange(int(start), int(end)))
+    if "z" in featureIn.keys():
+        featureOut["z"] = np.delete(featureIn["z"], np.arange(int(start), int(end)))
 
-    del featureOut['Name'][nFeature2Remove]
-    StartRel = featureOut['Start']
+    del featureOut["Name"][nFeature2Remove]
+    StartRel = featureOut["Start"]
     StartRel[nFeature2Remove:] = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
-    featureOut['Start'] = np.delete(StartRel, nFeature2Remove)
-    featureOut['Length'] = np.delete(LengthRel, nFeature2Remove)
-    featureOut['thickness'] = np.delete(thickness, nFeature2Remove)
+    featureOut["Start"] = np.delete(StartRel, nFeature2Remove)
+    featureOut["Length"] = np.delete(LengthRel, nFeature2Remove)
+    featureOut["thickness"] = np.delete(thickness, nFeature2Remove)
 
     return featureOut
 
 
 def extractFeature(featureIn, nFeature2Extract):
-    """ Extract feature nFeature2Extract from featureIn
+    """Extract feature nFeature2Extract from featureIn
 
     Parameters
     ----------
@@ -401,28 +402,28 @@ def extractFeature(featureIn, nFeature2Extract):
     featureOut : dict
         shape file dicionary with feature nFeature2Extract
     """
-    NameRel = featureIn['Name']
-    StartRel = featureIn['Start']
-    LengthRel = featureIn['Length']
-    thickness = featureIn['thickness']
+    NameRel = featureIn["Name"]
+    StartRel = featureIn["Start"]
+    LengthRel = featureIn["Length"]
+    thickness = featureIn["thickness"]
     featureOut = copy.deepcopy(featureIn)
     # extract feature
-    featureOut['Name'] = [NameRel[nFeature2Extract]]
-    featureOut['Start'] = np.array([0])
-    featureOut['Length'] = np.array([LengthRel[nFeature2Extract]])
-    featureOut['thickness'] = np.array([thickness[nFeature2Extract]])
+    featureOut["Name"] = [NameRel[nFeature2Extract]]
+    featureOut["Start"] = np.array([0])
+    featureOut["Length"] = np.array([LengthRel[nFeature2Extract]])
+    featureOut["thickness"] = np.array([thickness[nFeature2Extract]])
     start = StartRel[nFeature2Extract]
     end = start + LengthRel[nFeature2Extract]
-    featureOut['x'] = featureIn['x'][int(start):int(end)]
-    featureOut['y'] = featureIn['y'][int(start):int(end)]
-    if 'z' in featureIn.keys():
-        featureOut['z'] = featureIn['z'][int(start):int(end)]
+    featureOut["x"] = featureIn["x"][int(start) : int(end)]
+    featureOut["y"] = featureIn["y"][int(start) : int(end)]
+    if "z" in featureIn.keys():
+        featureOut["z"] = featureIn["z"][int(start) : int(end)]
 
     return featureOut
 
 
-def writeLine2SHPfile(lineDict, lineName, fileName, header=''):
-    """ write a line to shapefile
+def writeLine2SHPfile(lineDict, lineName, fileName, header=""):
+    """write a line to shapefile
 
     Parameters
     ----------
@@ -442,14 +443,14 @@ def writeLine2SHPfile(lineDict, lineName, fileName, header=''):
         path where the line has been saved
     """
     fileName = str(fileName)
-    line = np.zeros((np.size(lineDict['x']), 2))
-    line[:, 0] = lineDict['x']
-    line[:, 1] = lineDict['y']
+    line = np.zeros((np.size(lineDict["x"]), 2))
+    line[:, 0] = lineDict["x"]
+    line[:, 1] = lineDict["y"]
     if header:
-        line[:, 0] = line[:, 0] + header['xllcenter']
-        line[:, 1] = line[:, 1] + header['yllcenter']
+        line[:, 0] = line[:, 0] + header["xllcenter"]
+        line[:, 1] = line[:, 1] + header["yllcenter"]
     w = shapefile.Writer(fileName)
-    w.field('name', 'C')
+    w.field("name", "C")
     w.line([line])
     w.record(lineName)
     w.close()
@@ -457,7 +458,7 @@ def writeLine2SHPfile(lineDict, lineName, fileName, header=''):
 
 
 def writePoint2SHPfile(pointDict, pointName, fileName):
-    """ write a point to shapefile
+    """write a point to shapefile
 
     Parameters
     ----------
@@ -474,12 +475,12 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     """
     fileName = str(fileName)
     w = shapefile.Writer(fileName)
-    w.field('name', 'C')
-    if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
-        message = 'Length of pointDict is not allowed to exceed one'
+    w.field("name", "C")
+    if len(pointDict["x"]) > 1 or len(pointDict["y"]) > 1:
+        message = "Length of pointDict is not allowed to exceed one"
         log.error(message)
         raise ValueError(message)
-    w.point(pointDict['x'][0], pointDict['y'][0])
+    w.point(pointDict["x"][0], pointDict["y"][0])
     w.record(pointName)
     w.close()
     return fileName
