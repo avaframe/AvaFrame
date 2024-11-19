@@ -788,6 +788,8 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=Fals
     # if cell size of raster is different from desired meshCellSize - look for remeshed raster or remesh
     if np.abs(meshCellSize - headerRaster['cellsize']) > meshCellSizeThreshold:
         pathToRaster = geoTrans.remeshRaster(rasterFile, cfgSim, onlySearch=onlySearch)
+        if typeIndicator == 'FRIC':
+            pathToRaster = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToRaster)
     else:
         log.info('Raster of type %s taken from Inputs/' % typeIndicator)
         if typeIndicator == "RELTH":

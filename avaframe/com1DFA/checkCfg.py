@@ -65,7 +65,7 @@ def checkCellSizeKernelRadius(cfg):
     return cfg
 
 
-def checkCfgFrictionModel(cfg, relVolume=''):
+def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=''):
     """ check which friction model is chosen and if friction model parameters are of valid type
         if samosATAuto - check if
 
@@ -139,5 +139,18 @@ def checkCfgFrictionModel(cfg, relVolume=''):
                 raise ValueError(message)
             else:
                 log.info('Friction model parameter used: %s with value %s' % (frictP, cfg['GENERAL'][frictP]))
+
+    # if spatialVoellmy check if mu and xi file are provided
+    if frictModel.lower() == 'spatialvoellmy':
+        if inputSimFiles['muFile'] == None:
+            message = 'No file for mu found'
+            log.error(message)
+            raise FileNotFoundError(message)
+        elif inputSimFiles['xiFile'] == None:
+            message = 'No file for xi found'
+            log.error(message)
+            raise FileNotFoundError(message)
+        else:
+            log.info('Mu field initialized from: %s and xi field from: %s' % (inputSimFiles['muFile'].name, inputSimFiles['xiFile'].name))
 
     return cfg
