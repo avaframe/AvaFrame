@@ -59,8 +59,9 @@ def test_checkCfgFrictionModel():
     cfg = {'GENERAL': {'frictModel': 'samosAT', 'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
         'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '4.13',
         'muvoellmy': '4000.', 'xsivoellmy': '4000.'}}
+    inputSimFiles = {}
 
-    cfg = checkCfg.checkCfgFrictionModel(cfg)
+    cfg = checkCfg.checkCfgFrictionModel(cfg, inputSimFiles)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
     assert float(cfg['GENERAL']['musamosat']) == 0.155
@@ -76,7 +77,7 @@ def test_checkCfgFrictionModel():
         'kappasamosat': '0.43', 'Rsamosat': '0.05', 'Bsamosat': '9.13',
         'muvoellmy': '4000.', 'xsivoellmy': 'nan'}}
 
-    cfg = checkCfg.checkCfgFrictionModel(cfg)
+    cfg = checkCfg.checkCfgFrictionModel(cfg, inputSimFiles)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
     assert float(cfg['GENERAL']['musamosat']) == 0.155
@@ -93,7 +94,7 @@ def test_checkCfgFrictionModel():
 
     # call function to be tested
     with pytest.raises(ValueError) as e:
-        assert checkCfg.checkCfgFrictionModel(cfg)
+        assert checkCfg.checkCfgFrictionModel(cfg, inputSimFiles)
     assert 'Friction model used samosAT, but Bsamosat is nan - not valid' in str(e.value)
 
     cfg = {'GENERAL': {'frictModel': 'samosAT', 'musamosat': '0.155', 'tau0samosat': '0', 'Rs0samosat': '0.222',
@@ -102,7 +103,7 @@ def test_checkCfgFrictionModel():
 
     # call function to be tested
     with pytest.raises(ValueError) as e:
-        assert checkCfg.checkCfgFrictionModel(cfg)
+        assert checkCfg.checkCfgFrictionModel(cfg, inputSimFiles)
     assert 'Friction model used samosAT, but test is not of valid' in str(e.value)
 
 
@@ -115,7 +116,7 @@ def test_checkCfgFrictionModel():
         'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
         'meshCellSize': '5'}}
 
-    cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=24999.)
+    cfg = checkCfg.checkCfgFrictionModel(cfg, inputSimFiles, relVolume=24999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosATSmall'
     assert float(cfg['GENERAL']['musamosatsmall']) == 0.22
@@ -136,7 +137,7 @@ def test_checkCfgFrictionModel():
         'Bsamosatmedium': '4.23', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
         'meshCellSize': '5'}}
 
-    cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=26999.)
+    cfg = checkCfg.checkCfgFrictionModel(cfg, inputSimFiles, relVolume=26999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosATMedium'
     assert float(cfg['GENERAL']['musamosatmedium']) == 0.17
@@ -157,7 +158,7 @@ def test_checkCfgFrictionModel():
         'Bsamosatmedium': '4.13', 'volClassSmall': '25000.', 'volClassMedium': '60000.',
         'meshCellSize': '5'}}
 
-    cfg = checkCfg.checkCfgFrictionModel(cfg, relVolume=74999.)
+    cfg = checkCfg.checkCfgFrictionModel(cfg, inputSimFiles, relVolume=74999.)
 
     assert cfg['GENERAL']['frictModel'] == 'samosAT'
     assert float(cfg['GENERAL']['musamosat']) == 0.155

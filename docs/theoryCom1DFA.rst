@@ -486,6 +486,11 @@ in order to take advantage of both. This leads to the following friction law:
 
 where :math:`\xi` is the turbulent friction term. This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`.
 
+
+There is also the option to use spatially variable values for the friction parameters :math:`\mu =f(x, y)` and :math:`\xi =f(x, y)`.
+For this option, raster files with values for :math:`\mu` and :math:`\xi` need to be provided as input data covering the same extent as the digital elevation model.
+
+
 VoellmyMinShear friction model
 """""""""""""""""""""""""""""""
 In order to increase the friction force and make the avalanche flow stop on steeper slopes than with the Voellmy friction relation, a minimum shear stress can be added to the Voellmy friction relation. This minimum value defines a shear stress under which the snowpack doesn’t move, and induces a strong flow deceleration. This expression of the basal layer friction model also resembles the one used in the swiss RAMMS model, where the Voellmy model is modified by adding a yield stress supposed to account for the snow cohesion (https://ramms.slf.ch/en/modules/debrisflow/theory/friction-parameters.html).

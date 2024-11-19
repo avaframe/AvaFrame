@@ -678,6 +678,8 @@ def prepareInputData(inputSimFiles, cfg):
         "resistanceArea": resistanceArea,
         "entResInfo": entResInfo,
         "relThField": relThFieldData,
+        "muFile": inputSimFiles["muFile"],
+        "xiFile": inputSimFiles["xiFile"],
     }
 
     return demOri, inputSimLines
@@ -788,7 +790,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "type": "columns",
             "model": "Voellmy",
             "mu": cfgGen["muvoellmy"],
-            "xsi": cfgGen["xsivoellmy"],
+            "xi": cfgGen["xsivoellmy"],
         }
     elif cfgGen["frictModel"].lower() == "coulomb":
         reportST["Friction model"] = {"type": "columns", "model": "Coulomb", "mu": cfgGen["mucoulomb"]}
@@ -797,7 +799,15 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "type": "columns",
             "model": "wetsnow",
             "mu": cfgGen["mu0wetsnow"],
-            "xsi": cfgGen["mu0wetsnow"],
+            "xi": cfgGen["mu0wetsnow"],
+        }
+    elif cfgGen["frictModel"].lower() == "spatialvoellmy":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "spatialVoellmy",
+            "mu file": inputSimLines['muFile'].name,
+            "xi file": inputSimLines['xiFile'].name,
+
         }
 
     # check if secondary release area
@@ -1048,7 +1058,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     particles, fields = initializeFields(cfg, dem, particles, releaseLine)
 
-    reportAreaInfo['Release area info']["Model release volume [m3]"] = "%.2f" % (particles['mTot'] / cfgGen.getfloat('rho'))
+    reportAreaInfo["Release area info"]["Model release volume [m3]"] = "%.2f" % (
+        particles["mTot"] / cfgGen.getfloat("rho")
+    )
 
     # initialize Dam
     damLine = inputSimLines["damLine"]
@@ -1108,6 +1120,15 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     fields["cResRaster"] = cResRaster
     fields["detRaster"] = detRaster
+
+    for fric in ['mu', 'xi']:
+        if inputSimLines[fric+'File'] == None:
+            fields[fric+'Field'] = np.asarray([[np.nan],[np.nan]])
+        else:
+            fricFieldPath = dP.checkRasterMeshSize(cfg, inputSimLines[fric+'File'], "FRIC")
+            fricField = IOf.readRaster(fricFieldPath)
+            fields[fric+'Field'] = fricField['rasterData']
+
     return particles, fields, dem, reportAreaInfo
 
 
@@ -1727,6 +1748,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         "samosatmedium",
         "voellmyminshear",
         "coulombminshear",
+        "spatialvoellmy",
     ]
     frictModel = cfgGen["frictModel"].lower()
     frictType = frictModelsList.index(frictModel) + 1
@@ -2098,8 +2120,10 @@ def writeMBFile(infoDict, avaDir, logName):
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
         mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
-            mFile.write("%.02f,    %.06f,    %.06f,    %.06f\n" % (t[m], massTotal[m], massEntrained[m],
-                                                                    massDetrained[m]))
+            mFile.write(
+                "%.02f,    %.06f,    %.06f,    %.06f\n"
+                % (t[m], massTotal[m], massEntrained[m], massDetrained[m])
+            )
 
 
 def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
@@ -2619,7 +2643,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
 
         # only keep friction model parameters that are used
-        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, relVolume=relVolume)
+        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, inputSimFiles, relVolume=relVolume)
 
         # set frictModelIndicator, this needs to happen AFTER checkCfgFrictModel
         frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
@@ -2828,12 +2852,14 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
         totalVolume = relVolume + secondaryRelVolume
         log.info(
             "release volume is: %.2f m3 and secondary release volume is: %.2f m3 - total volume: %.2f m3 - based on %.2f meter grid"
-            % (relVolume, secondaryRelVolume, totalVolume, demVol['header']['cellsize'])
+            % (relVolume, secondaryRelVolume, totalVolume, demVol["header"]["cellsize"])
         )
 
         relVolume = relVolume + secondaryRelVolume
     else:
-        log.info("%.2f meter grid based release volume is: %.2f m3" % (demVol['header']['cellsize'], relVolume))
+        log.info(
+            "%.2f meter grid based release volume is: %.2f m3" % (demVol["header"]["cellsize"], relVolume)
+        )
 
     return relVolume
 
