@@ -82,7 +82,7 @@ def runRegional(avalancheDir='', outDir=''):
             avadir = futures[future]
             try:
                 result_dir, status = future.result()
-                log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}")
+                log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}") #after ... s?
             except Exception as e:
                 log.error(f"Error processing {avadir}: {e}")
 
