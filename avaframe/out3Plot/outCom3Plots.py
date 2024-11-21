@@ -223,7 +223,7 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     ax2.set_title('Avalanche thalweg profile')
 
     outFileName = '_'.join([simName, 'DFAPath'])
-    outDir = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath')
+    outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana5Utils', 'DFAPath')
     plt.tight_layout()
     outPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
     return outPath

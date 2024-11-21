@@ -26,7 +26,7 @@ from avaframe.in3Utils import cfgHandling
 from avaframe.out3Plot import outCom3Plots
 
 
-def runComputeDFAPath(avalancheDir='', runDFAModule=False):
+def runAna5DFAPathGeneration(avalancheDir='', runDFAModule=False):
     """
     Run DFA path generation in the default configuration with only an avalanche directory as input.
 
@@ -49,7 +49,7 @@ def runComputeDFAPath(avalancheDir='', runDFAModule=False):
     startTime = time.time()
 
     # log file name; leave empty to use default runLog.log
-    logName = 'runComputeDFAPath'
+    logName = 'runAna5DFAPathGeneration'
 
     # Load avalanche directory from general configuration file
     # More information about the configuration can be found here
@@ -83,7 +83,7 @@ def runComputeDFAPath(avalancheDir='', runDFAModule=False):
         # and override with settings from DFAPath config
         com1DFACfg, cfgDFAPath = cfgHandling.applyCfgOverride(com1DFACfg, cfgDFAPath, com1DFA,
                                                                      addModValues=False)
-        outDir = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath')
+        outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana5Utils', 'DFAPath')
         fU.makeADir(outDir)
         # write configuration to file
         com1DFACfgFile = outDir / 'com1DFAPathGenerationCfg.ini'
@@ -147,4 +147,4 @@ if __name__ == "__main__":
                              ' generating path')
 
     args = parser.parse_args()
-    runComputeDFAPath(str(args.avadir), bool(args.runDFA))
+    runAna5DFAPathGeneration(str(args.avadir), bool(args.runDFA))
