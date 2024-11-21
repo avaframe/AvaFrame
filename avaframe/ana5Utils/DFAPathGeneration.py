@@ -611,7 +611,7 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
     relName = simName.split('_')[0]
     inProjection = pathlib.Path(avalancheDir, 'Inputs', 'REL', relName + '.prj')
     # save profile in Inputs
-    pathAB = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath', 'massAvgPath_%s_AB_aimec' % simName)
+    pathAB = pathlib.Path(avalancheDir, 'Outputs', 'ana5Utils', 'DFAPath', 'massAvgPath_%s_AB_aimec' % simName)
     name = 'massAvaPath'
     shpConv.writeLine2SHPfile(avaProfileMass, name, pathAB)
     if inProjection.is_file():
@@ -621,7 +621,7 @@ def saveSplitAndPath(avalancheDir, simDFrow, splitPoint, avaProfileMass, dem):
         log.warning(message)
     log.info('Saved path to: %s', pathAB)
     if splitPoint != '':
-        splitAB = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath', 'splitPointParabolicFit_%s_AB_aimec' % simName)
+        splitAB = pathlib.Path(avalancheDir, 'Outputs', 'ana5Utils', 'DFAPath', 'splitPointParabolicFit_%s_AB_aimec' % simName)
         name = 'parabolaSplitPoint'
         shpConv.writePoint2SHPfile(splitPoint, name, splitAB)
         if inProjection.is_file():
