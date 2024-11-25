@@ -16,7 +16,7 @@ class Cell:
         dem_ng, cellsize,
         flux, z_delta, parent,
         alpha, exp, flux_threshold, max_z_delta,
-        startcell,
+        startcell, fluxDistOldVersionBool=False,
         FSI=None, forestParams=None,
     ):
         """constructor for the Cell class
@@ -39,12 +39,15 @@ class Cell:
         self.no_flow = np.ones_like(self.dem_ng)
 
         self.flux = flux
+        self.fluxDep = 0
         self.z_delta = z_delta
 
         self.alpha = float(alpha)
         self.exp = int(exp)
         self.max_z_delta = float(max_z_delta)
         self.flux_threshold = float(flux_threshold)
+
+        self.fluxDistOldVersionBool = fluxDistOldVersionBool
 
         self.tanAlpha = np.tan(np.deg2rad(self.alpha))  # moved to constructor, so this doesn't have to be calculated on
         # every iteration of calc_z_delta(self)
@@ -331,8 +334,11 @@ class Cell:
         # still above threshold
         # NOTE: this only works if "0 < n < 8" AND "0 < m < 8", the case where
         # "0<n<8" AND "m=0" is not handled!!! (in this case flux is "lost")
-        count = ((0 < self.dist) & (self.dist < threshold)).sum()
-        # count = (self.dist >= threshold).sum() #this is the correct way to calculate count
+        
+        if self.fluxDistOldVersionBool:
+            count = ((0 < self.dist) & (self.dist < threshold)).sum()
+        else:
+            count = (self.dist >= threshold).sum() #this is the correct way to calculate count
         # TODO: make this the default, but keep option to use "old" version with minor Bug for backward compatibility of
         # model results
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
@@ -343,7 +349,8 @@ class Cell:
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist)) / count
-
+        if count == 0: # TODO: not 100% sure if this is right
+            self.fluxDep = self.flux
         row_local, col_local = np.where(self.dist > threshold)
 
         return (

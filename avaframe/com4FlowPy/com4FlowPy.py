@@ -63,11 +63,16 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
     modelParameters["forestBool"] = cfgSetup.getboolean("forest")
     modelParameters["forestInteraction"] = cfgSetup.getboolean("forestInteraction")
+    # modelParameters["infra"]  = cfgSetup["infra"]
+    # modelParameters["forest"] = cfgSetup["forest"]
+
+    # Flags for use of dynamic input parameters
     modelParameters["varUmaxBool"] = cfgSetup.getboolean("variableUmaxLim")
     modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
     modelParameters["varExponentBool"] = cfgSetup.getboolean("variableExponent")
-    # modelParameters["infra"]  = cfgSetup["infra"]
-    # modelParameters["forest"] = cfgSetup["forest"]
+
+    # Flag for use of old flux distribution version
+    modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
 
     # Tiling Parameters used for calculation of large model-domains
     tilingParameters = {}
@@ -316,9 +321,9 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         if modelParameters["varExponentBool"]:
             _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
             if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
-                log.info("variable Alpha Layer ok!")
+                log.info("variable exponent Layer ok!")
             else:
-                log.error("Error: variable Alpha Layer doesn't match DEM!")
+                log.error("Error: variable exponent Layer doesn't match DEM!")
                 sys.exit(1)
 
         log.info("========================")
@@ -400,6 +405,8 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
     cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
     zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum")
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum")
     fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
     travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
@@ -429,6 +436,12 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if 'zDeltaSum' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF),
         zDeltaSum)
+    if 'routFluxSum' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_routFluxSum{}".format(_uid, _ts, _oF),
+        routFluxSum)
+    if 'depFluxSum' in _outputs:
+        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_depFluxSum{}".format(_uid, _ts, _oF),
+        depFluxSum)
     if 'fpTravelAngle' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid,
         _ts, _oF), fpTa)
