@@ -77,6 +77,8 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=''):
         -------------
         cfg: dict
             configuration settings
+        inputSimFiles: dict
+            info about available input files for simulation
         relVolume: float
             The release volume; optional - only needed if samosATAuto is set
 
@@ -142,11 +144,11 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=''):
 
     # if spatialVoellmy check if mu and xi file are provided
     if frictModel.lower() == 'spatialvoellmy':
-        if inputSimFiles['muFile'] == None:
+        if inputSimFiles['muFile'] is None:
             message = 'No file for mu found'
             log.error(message)
             raise FileNotFoundError(message)
-        elif inputSimFiles['xiFile'] == None:
+        elif inputSimFiles['xiFile'] is None:
             message = 'No file for xi found'
             log.error(message)
             raise FileNotFoundError(message)
