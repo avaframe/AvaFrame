@@ -42,12 +42,12 @@ def runSplitInputs(avalancheDir=''):
     # Step 1: Create the central list
     folder_list = si.createFolderList(input_shapefile)
 
-    # Step 2: Create directories
+    # Step 2: Set up ava directories
     log.info("Running folder initialization for each entry...")
     si.createFoldersForReleaseAreas(folder_list, output_dir)
     log.info("Finished folder initialization")
 
-    # Step 3: Split and move release areas
+    # Step 3: Split and move release areas to each directory
     log.info("Splitting and moving release areas...")
     si.splitAndMoveReleaseAreas(folder_list, input_shapefile, output_dir)
     log.info("Finished splitting and moving release areas")
@@ -60,7 +60,7 @@ def runSplitInputs(avalancheDir=''):
     # Print time needed
     endTime = time.time()
     log.info(f"Completed splitting input data into '{len(folder_list)}' individual folders after "
-             f"{time.time() - startTime:.1f} seconds.")
+             f"{endTime - startTime:.1f} seconds.")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run split inputs for avalanche directories")

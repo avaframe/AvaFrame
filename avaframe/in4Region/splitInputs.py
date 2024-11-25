@@ -21,7 +21,7 @@ def createFolderList(input_shapefile):
 
         for shape_record in src.iterShapeRecords():  # Use iterShapeRecords to access both geometry and attributes
             properties = dict(zip(field_names, shape_record.record))
-            folder_name = properties.get('name', '').strip() or f"unnamed_rel_scenario_{unnamed_count}"
+            folder_name = properties.get('name', '').strip() or f"unnamedRelScenario{unnamed_count}"
             if not properties.get('name', '').strip():
                 unnamed_count += 1
 
@@ -41,8 +41,8 @@ def createFoldersForReleaseAreas(folder_list, output_dir):
         folder_name = entry['folder_name']
         ava_folder_path = output_dir / folder_name
 
-        initializeFolderStruct(str(ava_folder_path), removeExisting=False)
-        log.info(f"Created folder structure for '{folder_name}'.")
+        initializeFolderStruct(str(ava_folder_path), removeExisting=True)
+        #log.info(f"Created folder structure for '{folder_name}'.")
 
 
 def splitAndMoveReleaseAreas(folder_list, input_shapefile, output_dir):
@@ -79,13 +79,15 @@ def splitDEMByCenterpointAndMove(folder_list, input_dem, output_dir):
     x_origin = header["xllcenter"]
     y_origin = header["yllcenter"]
 
+    log.info(f"DEM Header: {header}")
+
     for entry in folder_list:
         folder_name = entry['folder_name']
         geometry = entry['geometry']
         center = geometry.centroid
 
-        # Calculate bounding box indices for the clipping
-        buffer_size = 2500  # 5x5 km -> 2.5 km buffer in each direction #ToDO: move to config
+        # Calculate bounding box indices for clipping
+        buffer_size = 2500  # buffer in each direction
         xmin, ymin, xmax, ymax = (
             center.x - buffer_size,
             center.y - buffer_size,
@@ -93,25 +95,47 @@ def splitDEMByCenterpointAndMove(folder_list, input_dem, output_dir):
             center.y + buffer_size,
         )
 
+        #log.info(f"Bounding box for '{folder_name}': xmin={xmin}, ymin={ymin}, xmax={xmax}, ymax={ymax}")
+
         # Convert bounding box to grid indices
-        col_start = int((xmin - x_origin) / cellsize)
-        col_end = int((xmax - x_origin) / cellsize)
-        row_start = int((y_origin - ymax) / cellsize)
-        row_end = int((y_origin - ymin) / cellsize)
+        col_start = max(0, int((xmin - x_origin) / cellsize))
+        col_end = min(header["ncols"], int((xmax - x_origin) / cellsize))
+        # Calculate row indices
+        row_start = max(0, int((y_origin + header["nrows"] * cellsize - ymax) / cellsize))
+        row_end = min(header["nrows"], int((y_origin + header["nrows"] * cellsize - ymin) / cellsize))
 
-        # Clip the raster data
-        clipped_raster = raster[row_start:row_end, col_start:col_end]
+        #log.info(f"Computed grid indices before adjustment for '{folder_name}': "
+        #         f"col_start={col_start}, col_end={col_end}, row_start={row_start}, row_end={row_end}")
 
-        # Update header for clipped DEM
-        clipped_header = header.copy()
-        clipped_header["ncols"] = clipped_raster.shape[1]
-        clipped_header["nrows"] = clipped_raster.shape[0]
-        clipped_header["xllcenter"] = xmin + cellsize / 2
-        clipped_header["yllcenter"] = ymin + cellsize / 2
+        # Flip rows for bottom-left origin
+        row_start, row_end = header["nrows"] - row_end, header["nrows"] - row_start
+
+        # Validate grid indices
+        if col_start >= col_end or row_start >= row_end:
+            log.warning(f"Invalid clipping bounds for '{folder_name}'. Skipping.")
+            continue
+
+        # Clip DEM section
+        dem_clipped = raster[row_start:row_end, col_start:col_end]
+
+        log.info(f"Clipped DEM for '{folder_name}' with '{len(dem_clipped)}' rows and '{len(dem_clipped[0])}' columns")
+
+        # Prepare header for clipped DEM
+        clipped_header = {
+            "ncols": col_end - col_start,
+            "nrows": row_end - row_start,
+            "xllcenter": x_origin + col_start * cellsize,
+            "yllcenter": y_origin + row_start * cellsize,
+            "cellsize": cellsize,
+            "nodata_value": header["nodata_value"],
+        }
+
+        # Define output path
+        dem_output_path = output_dir / folder_name / "Inputs" / f"{folder_name}_DEM.asc"
 
         # Save clipped DEM
-        ava_folder_path = output_dir / folder_name
-        dem_output_path = ava_folder_path / 'Inputs' / 'DEM_clipped.asc'
-        ascUtils.writeResultToAsc(clipped_header, clipped_raster, dem_output_path)
-
-        log.info(f"Clipped and moved DEM for '{folder_name}' to '{dem_output_path}'.")
+        try:
+            ascUtils.writeResultToAsc(clipped_header, dem_clipped, dem_output_path, flip=True)
+            log.info(f"Clipped DEM saved to '{dem_output_path}'.")
+        except Exception as e:
+            log.error(f"Failed to save clipped DEM for '{folder_name}': {e}")

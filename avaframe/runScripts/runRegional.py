@@ -27,7 +27,7 @@ def process_avadir_com1DFA(cfgMain, avalancheDir):
     initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
 
     # Create com1DFA configuration for the current avalanche directory
-    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False, onlyDefault=False)
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='runRegionalCfg.ini', toPrint=False, onlyDefault=False)
 
     # Run com1DFA in the current avalanche directory
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgCom1DFA)
@@ -82,7 +82,8 @@ def runRegional(avalancheDir='', outDir=''):
             avadir = futures[future]
             try:
                 result_dir, status = future.result()
-                log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}") #after ... s?
+                log.info(f"{status} in directory: {result_dir.relative_to(pathlib.Path(avalancheDir))}"
+                         f" after {time.time() - startTime:.1f} seconds")
             except Exception as e:
                 log.error(f"Error processing {avadir}: {e}")
 
