@@ -484,7 +484,7 @@ in order to take advantage of both. This leads to the following friction law:
 where :math:`\xi` is the turbulent friction term. This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`.
 
 
-There is also the option to use spatially variable values for the friction parameters :math:`\mu =f(x, y)` and :math:`\xi =f(x, y)`.
+It is also possible to use spatially variable values for the friction parameters :math:`\mu =f(x, y)` and :math:`\xi =f(x, y)`.
 For this option, raster files with values for :math:`\mu` and :math:`\xi` need to be provided as input data covering the same extent as the digital elevation model.
 
 
