@@ -173,6 +173,7 @@ def run(optTuple):
     varUmaxBool = optTuple[2]["varUmaxBool"]
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
+    fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
@@ -206,7 +207,7 @@ def run(optTuple):
     if varUmaxBool:
         varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
         if optTuple[2]["varUmaxType"].lower() == 'umax':
-            varUmaxArray[varUmaxArray > 0] = varUmaxArray[varUmaxArray > 0]**2 / 2 / 9.81
+            varUmaxArray[varUmaxArray > 0] = varUmaxArray[varUmaxArray > 0] ** 2 / 2 / 9.81
         elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
             log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
     else:
@@ -221,6 +222,15 @@ def run(optTuple):
         varExponentArray = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
         varExponentArray = None
+
+    varParams = {
+        'varUmaxBool': varUmaxBool,
+        'varUmaxArray': varUmaxArray,
+        'varAlphaBool': varAlphaBool,
+        'varAlphaArray': varAlphaArray,
+        'varExponentBool': varExponentBool,
+        'varExponentArray': varExponentArray,
+    }
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -245,14 +255,12 @@ def run(optTuple):
         results = pool.map(
             calculation,
             [
-                [
+                [   # TODO: write in dicts:
                     dem, infra, release_sub,
                     alpha, exp, flux_threshold, max_z_delta,
                     nodata, cellsize,
                     infraBool, forestBool,
-                    varUmaxBool, varUmaxArray,
-                    varAlphaBool, varAlphaArray,
-                    varExponentBool, varExponentArray,
+                    varParams, fluxDistOldVersionBool,
                     forestArray, forestParams,
                 ]
                 for release_sub in release_list
@@ -271,6 +279,8 @@ def run(optTuple):
     fluxArray = np.zeros_like(dem, dtype=np.float32)
     countArray = np.zeros_like(dem, dtype=np.int32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     backcalc = np.zeros_like(dem, dtype=np.int32)
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
@@ -282,6 +292,8 @@ def run(optTuple):
     fluxList = []
     ccList = []
     zDeltaSumList = []
+    routFluxSumList = []
+    depFluxSumList = []
     backcalcList = []
     fpTravelAngleList = []
     slTravelAngleList = []
@@ -300,8 +312,10 @@ def run(optTuple):
         fpTravelAngleList.append(res[5])
         slTravelAngleList.append(res[6])
         travelLengthList.append(res[7])
+        routFluxSumList.append(res[8])
+        depFluxSumList.append(res[9])
         if forestInteraction:
-            forestIntList.append(res[8])
+            forestIntList.append(res[10])
 
     logging.info("Calculation finished, getting results.")
     for i in range(len(zDeltaList)):
@@ -309,6 +323,8 @@ def run(optTuple):
         fluxArray = np.maximum(fluxArray, fluxList[i])
         countArray += ccList[i]
         zDeltaSumArray += zDeltaSumList[i]
+        routFluxSumArray += routFluxSumList[i]
+        depFluxSumArray += depFluxSumList[i]
         backcalc = np.maximum(backcalc, backcalcList[i])
         fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
         slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
@@ -321,6 +337,8 @@ def run(optTuple):
     # Save Calculated tiles
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
     np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
+    np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), routFluxSumArray)
+    np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
@@ -352,14 +370,10 @@ def calculation(args):
         - args[8] (float) - cellsize of rasters
         - args[9] (bool) -  flag for calculation with/without infrastructure
         - args[10] (bool) - flag for calculation with/without forest
-        - args[11] (bool) - flag for calculation with/without dynamic uMax/zDeltaMax
-        - args[12] (numpy array) - contains Umax values in locations of startcells
-        - args[13] (bool) - flag for calculation with/without dynamic alpha angle
-        - args[14] (numpy array) - contains alpha values in locations of startcells
-        - args[15] (bool) - flag for calculation with/without dynamic exponent
-        - args[16] (numpy array) - contains exponent values in locations of startcells
-        - args[17] (numpy array) - contains forest information (None if forestBool=False)
-        - args[18] (dict) - contains parameters for forest interaction models (None if forestBool=False)
+        - args[11] (dict) - contains flags and numpy arrays for variable input parameters (Alpha, exp, uMax)
+        - args[12] (bool) - flag for computing flux distribution with old version
+        - args[13] (numpy array) - contains forest information (None if forestBool=False)
+        - args[14] (dict) - contains parameters for forest interaction models (None if forestBool=False)
 
     Returns
     -----------
@@ -379,6 +393,10 @@ def calculation(args):
         maximum of sl travel-angle in every cell
     travelLengthArray: numpy array
         maximum of travel length in every cell
+    routFluxSumArray:numpy array
+        sum of routing flux in every cell
+    depFluxSumArray:numpy array
+        sum of deposition flux in every cell
     forestIntArray: numpy array
         minimum of the count a forested cell is hit (only returned if args[18]["forestInteraction"]==True)
 
@@ -401,16 +419,17 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
-    varUmaxBool = args[11]
-    varUmaxArray = args[12]
-    varAlphaBool = args[13]
-    varAlphaArray = args[14]
-    varExponentBool = args[15]
-    varExponentArray = args[16]
+    varUmaxBool = args[11]['varUmaxBool']
+    varUmaxArray = args[11]['varUmaxArray']
+    varAlphaBool = args[11]['varAlphaBool']
+    varAlphaArray = args[11]['varAlphaArray']
+    varExponentBool = args[11]['varExponentBool']
+    varExponentArray = args[11]['varExponentArray']
+    fluxDistOldVersionBool = args[12]
 
     if forestBool:
-        forestArray = args[17]
-        forestParams = args[18]
+        forestArray = args[13]
+        forestParams = args[14]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -419,6 +438,8 @@ def calculation(args):
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     fluxArray = np.zeros_like(dem, dtype=np.float32)
     countArray = np.zeros_like(dem, dtype=np.int32)
 
@@ -468,7 +489,7 @@ def calculation(args):
             dem_ng, cellsize,
             1, 0, None,
             alpha, exp, flux_threshold, max_z_delta,
-            startcell=True,
+            startcell=True, fluxDistOldVersionBool=fluxDistOldVersionBool,
             FSI=forestArray[row_idx, col_idx] if isinstance(forestArray, np.ndarray) else None,
             forestParams=forestParams,
         )
@@ -526,13 +547,15 @@ def calculation(args):
                             flux[k], z_delta[k],
                             cell,
                             alpha, exp, flux_threshold, max_z_delta,
-                            startcell,
+                            startcell, fluxDistOldVersionBool=fluxDistOldVersionBool,
                             FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
                             forestParams=forestParams,
                                      ))
 
             zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
             fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
+            routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
+            depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
             zDeltaSumArray[cell.rowindex, cell.colindex] += cell.z_delta
             fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.max_gamma)
@@ -575,10 +598,10 @@ def calculation(args):
     gc.collect()
     if forestInteraction:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, forestIntArray
+            travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
     else:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray
+            travelLengthArray, routFluxSumArray, depFluxSumArray
 
 
 def enoughMemoryAvailable(limit=0.05):
