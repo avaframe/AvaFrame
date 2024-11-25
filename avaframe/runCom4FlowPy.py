@@ -356,8 +356,8 @@ def checkOutputFilesFormat(strOutputFiles):
     try:
         setA = set(strOutputFiles.split('|'))
         setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength',
-                    'slTravelAngle', 'flux', 'zDeltaSum'])
-        # if there is at least 1 correct ouputfile defined, we use the string provided in the .ini file
+                    'slTravelAngle', 'flux', 'zDeltaSum', 'routFluxSum', 'depFluxSum'])
+        # if there is at least 1 correct outputfile defined, we use the string provided in the .ini file
         if (setA & setB):
             return strOutputFiles
         else:
