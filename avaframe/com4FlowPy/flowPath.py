@@ -47,6 +47,7 @@ class Path:
 
         self.zDeltaGeneration = []
         self.fluxGeneration = []
+        self.depFluxGeneration = []
         self.travelLengthGeneration = []
         self.flowEnergyGeneration = []
         self.rowGeneration = []
@@ -81,6 +82,7 @@ class Path:
     def getVariablesGeneration(self):
         '''write lists with size and format of genList containing specific parameters
             (the main list contains lists for every generation)
+            TODO: only calculate 'important'/output arrays
         '''
         for gen, cellList in enumerate(self.genList):
             cellListZDelta = []
@@ -91,11 +93,12 @@ class Path:
             cellListCol = []
             cellListAlt = []
             cellListGamma = []
-            cellListFlux_gen = []
+            cellListDepFlux = []
 
             for cell in cellList:
                 cellListZDelta.append(cell.z_delta)
                 cellListFlux.append(cell.flux)
+                cellListDepFlux.append(cell.fluxDep)
                 cellListMinDistance.append(cell.min_distance)
                 cellListFlowEnergy.append(cell.flowEnergy)
                 cellListRow.append(cell.rowindex)
@@ -106,6 +109,7 @@ class Path:
 
             self.zDeltaGeneration.append(cellListZDelta)
             self.fluxGeneration.append(cellListFlux)
+            self.depFluxGeneration.append(cellListDepFlux)
             self.travelLengthGeneration.append(cellListMinDistance)
             self.flowEnergyGeneration.append(cellListFlowEnergy)
             self.rowGeneration.append(cellListRow)
@@ -118,6 +122,7 @@ class Path:
     def getPathArrays(self):
         '''write arrays with size of dem containing the maximum of the variable values of every path
            value 0 means, the path does not hit the cell
+           TODO: only calculate 'important'/output arrays
         '''
         for gen, cellList in enumerate(self.genList):
             for cell in cellList:
@@ -176,8 +181,15 @@ class Path:
         self.getVariablesGeneration()
 
         for varName in variables:
-            if varName in ['s', 'z', 'x', 'y' , 'fluxSum', 'flowEnergyArray', 'zDeltaArray', 'fluxArray']:
+            if varName in ['s', 'z', 'x', 'y' , 'flowEnergyArray', 'zDeltaArray', 'fluxArray']:
                 continue
+            if varName == 'depFluxSum':
+                variables.append('depFlux')
+                continue
+            if varName == 'fluxSum':
+                variables.append('flux')
+                continue
+
             values = getattr(self, f'{varName}Generation')
             sumF, coF = self.calcThalwegCenterof(values, self.fluxGeneration) # center of flux of every variable
             sumE, coE = self.calcThalwegCenterof(values, self.flowEnergyGeneration) # center of energy of every variable
