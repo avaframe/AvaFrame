@@ -33,6 +33,7 @@ class Path:
         self.genList = genList
         self.startcellRow = startcellRow
         self.startcellCol = startcellCol
+        self.numberGen = len(genList)
 
         self.dropHeight = 0
         self.travelLength = 0
@@ -230,6 +231,7 @@ class Path:
                     'exponent': self.exp,
                     'zDeltaMax': round(self.maxZDelta,1),
                     'crs': self.crs,
+                    'numberGen': self.numberGen,
                     }
         variables = variables
         centerOfs = centerOfs
