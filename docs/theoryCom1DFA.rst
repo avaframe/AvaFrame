@@ -42,7 +42,7 @@ and split the area integral into :
 ..   :label: area-integral
 
 :math:`F_i^{\text{ent}}` represents the force required to break the
-entrained snow from the ground and to compress it (since the dense-flow
+entrained snow from the ground (the dense-flow
 bulk density is usually larger than the density of the entrained snow,
 i.e. :math:`\rho_{\text{ent}}<\rho`) and :math:`F_i^{\text{res}}`
 represents the resistance force due to obstacles (for example trees).
@@ -142,8 +142,10 @@ the flow thickness,
 Entrainment:
 """""""""""""
 
-The snow entrainment is either due to plowing at the front of the avalanche or to erosion
-at the bottom. The entrainment rate at the front :math:`\dot{q}^{\text{plo}}` can be expressed as a function of the
+The Snow entrainment processes are plowing at the front of the avalanche and erosion
+at the bottom. Please note: com1DFA uses one or the other process, not both at the same time (default: erosion). The
+other process is set to zero.
+The entrainment rate at the front :math:`\dot{q}^{\text{plo}}` can be expressed as a function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow thickness :math:`h_{\text{ent}}`), the velocity of the avalanche at the
 front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
@@ -174,11 +176,11 @@ This leads in the mass balance :eq:`mass-balance1` to :
    :label: mass-balance2
 
 The force :math:`F_i^{\text{ent}}` required to break the entrained snow
-from the ground and to compress it is expressed as a function of the required
+from the ground is expressed as a function of the required
 breaking energy per fracture surface unit :math:`e_s`
 (:math:`J.m^{-2}`), the deformation energy per entrained mass element
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow thickness
-(:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
+(:cite:`Sa2007,SaFeFr2008,FiKoFeGrKl2015`):
 
 .. math:: 
    F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d),
@@ -186,7 +188,8 @@ breaking energy per fracture surface unit :math:`e_s`
       
 where :math:`q^{\text{ent}}` refers to the entrainable mass per surface area (:math:`kg.m^{-2}`)
 defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depending on whether entrainment is due to ploughing
-or erision, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively :math:`\dot{q}^{\text{ero}}`, over time. 
+or erosion, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively
+:math:`\dot{q}^{\text{ero}}`, over time.
 
 Detrainment:
 """""""""""""
