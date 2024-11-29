@@ -486,7 +486,8 @@ def calculation(args):
                         # mass, row, col  = list(zip(*sorted(zip( mass, row, col), reverse=False)))
                         z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                         # Sort this lists by elh, to start with the highest cell
-
+                    
+                    '''
                     # check if cell already exists
                     for i in range(len(cellList)):  # Check if Cell already exists
                         k = 0
@@ -502,6 +503,7 @@ def calculation(args):
                                 z_delta = np.delete(z_delta, k)
                             else:
                                 k += 1
+                    '''
 
                     for i in range(len(childList)):  # Check if Cell already exists in childList
                         k = 0

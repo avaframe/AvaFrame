@@ -85,7 +85,7 @@ class Path:
             (the main list contains lists for every generation)
             TODO: only calculate 'important'/output arrays
         '''
-        for gen, cellList in enumerate(self.genList):
+        for cellList in self.genList:
             cellListZDelta = []
             cellListFlux = []
             cellListMinDistance = []
