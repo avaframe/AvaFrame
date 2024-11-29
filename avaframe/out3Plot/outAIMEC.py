@@ -793,7 +793,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
     outFileName = '_'.join(['Results', projectName, str(runoutResType), 'lim', str(thresholdValue), 'w',
-                           str(domainWidth)]) + 'resAnalysisDF' + '.csv'
+                           str(domainWidth)]) + 'resAnalysisDF'
     outname = os.path.join(pathResult, outFileName)
     outFileNameStats = '_'.join(['Results', projectName, str(runoutResType), 'lim', str(thresholdValue), 'w',
                                 str(domainWidth)]) + 'stats.csv'
@@ -802,7 +802,8 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     # check if folder exists / create
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
-    resAnalysisDF.to_csv(outname)
+    resAnalysisDF.to_csv(outname + '.csv')
+    resAnalysisDF.to_pickle(outname + '.pkl')
 
     if not os.path.exists(os.path.dirname(outnameStats)):
         os.makedirs(os.path.dirname(outnameStats))

@@ -1122,7 +1122,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     fields["detRaster"] = detRaster
 
     for fric in ['mu', 'xi']:
-        if inputSimLines[fric+'File'] == None:
+        if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
             fields[fric+'Field'] = np.asarray([[np.nan],[np.nan]])
         else:
             fricFieldPath = dP.checkRasterMeshSize(cfg, inputSimLines[fric+'File'], "FRIC")
