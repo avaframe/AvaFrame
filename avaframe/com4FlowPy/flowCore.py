@@ -449,22 +449,6 @@ def calculation(args):
                         z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
                         # Sort this lists by elh, to start with the highest cell
 
-                    # check if cell already exists
-                    for i in range(len(cellList)):  # Check if Cell already exists
-                        k = 0
-                        while k < len(row):
-                            if row[k] == cellList[i].rowindex and col[k] == cellList[i].colindex:
-                                cellList[i].add_os(flux[k])
-                                cellList[i].add_parent(cell)
-                                if z_delta[k] > cellList[i].z_delta:
-                                    cellList[i].z_delta = z_delta[k]
-                                row = np.delete(row, k)
-                                col = np.delete(col, k)
-                                flux = np.delete(flux, k)
-                                z_delta = np.delete(z_delta, k)
-                            else:
-                                k += 1
-
                     for i in range(len(childList)):  # Check if Cell already exists in childList
                         k = 0
                         while k < len(row):
