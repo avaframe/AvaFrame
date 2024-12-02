@@ -60,7 +60,7 @@ def runProbAna(avalancheDir="", modName=""):
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
-    if modName != "":
+    if modName == "":
         modName = cfgProb["GENERAL"]["modName"]
 
     # perform probability analysis
