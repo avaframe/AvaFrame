@@ -73,6 +73,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # Flag for use of old flux distribution version
     modelParameters["fluxDistOldVersionBool"] = cfgSetup.getboolean("fluxDistOldVersion")
+
+    modelParameters["entrainmentBool"] = cfgSetup.getboolean("entrainment")
     modelParameters["calcGeneration"] = cfgSetup.getboolean("calcGeneration")
     modelParameters["calcThalweg"] = cfgSetup.getboolean("calcThalweg")
     modelParameters["thalwegCenterOf"] = cfgSetup.get("thalwegCenterOf")

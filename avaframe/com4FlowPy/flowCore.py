@@ -160,6 +160,7 @@ def run(optTuple):
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
     fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
+    entrainmentBool = optTuple[2]["entrainmentBool"]
     calcGeneration = optTuple[2]["calcGeneration"]
     calcThalweg = optTuple[2]["calcThalweg"]
     if calcThalweg:
@@ -229,6 +230,17 @@ def run(optTuple):
         'varExponentArray': varExponentArray,
     }
 
+    calcParams = {
+        'infraBool': infraBool,
+        'forestBool': forestBool,
+        'varParams': varParams,
+        'fluxDistOldVersionBool': fluxDistOldVersionBool,
+        'calcGeneration': calcGeneration,
+        'calcThalweg': calcThalweg,
+        'thalwegParameters': thalwegParameters,
+        'entrainmentBool': entrainmentBool
+    }
+
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
     release[release < 0] = 0
@@ -256,10 +268,8 @@ def run(optTuple):
                     dem, infra, release_sub,
                     alpha, exp, flux_threshold, max_z_delta,
                     rasterAttributes,
-                    infraBool, forestBool,
-                    varParams, fluxDistOldVersionBool,
+                    calcParams,
                     forestArray, forestParams,
-                    calcGeneration, calcThalweg, thalwegParameters,
                 ]
                 for release_sub in release_list
             ],
@@ -386,26 +396,27 @@ def calculation(args):
     max_z_delta = args[6]
 
     rasterAttributes = args[7]
-    infraBool = args[8]
-    forestBool = args[9]
-    varUmaxBool = args[10]['varUmaxBool']
-    varUmaxArray = args[10]['varUmaxArray']
-    varAlphaBool = args[10]['varAlphaBool']
-    varAlphaArray = args[10]['varAlphaArray']
-    varExponentBool = args[10]['varExponentBool']
-    varExponentArray = args[10]['varExponentArray']
-    fluxDistOldVersionBool = args[11]
-    calcGeneration = args[14]
-    calcThalweg = args[15]
-    thalwegParameters = args[16]
+    infraBool = args[8]['infraBool']
+    forestBool = args[8]['forestBool']
+    varUmaxBool = args[8]['varParams']['varUmaxBool']
+    varUmaxArray = args[8]['varParams']['varUmaxArray']
+    varAlphaBool = args[8]['varParams']['varAlphaBool']
+    varAlphaArray = args[8]['varParams']['varAlphaArray']
+    varExponentBool = args[8]['varParams']['varExponentBool']
+    varExponentArray = args[8]['varParams']['varExponentArray']
+    fluxDistOldVersionBool = args[8]['fluxDistOldVersionBool']
+    entrainmentBool = args[8]['entrainmentBool']
+    calcGeneration = args[8]['calcGeneration']
+    calcThalweg = args[8]['calcThalweg']
+    thalwegParameters = args[8]['thalwegParameters']
     
 
     nodata = rasterAttributes["nodata"]
     cellsize = rasterAttributes["cellsize"]
 
     if forestBool:
-        forestArray = args[12]
-        forestParams = args[13]
+        forestArray = args[9]
+        forestParams = args[10]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -437,13 +448,21 @@ def calculation(args):
     # start = datetime.now().replace(microsecond=0)
     # NOTE-TODO: row_list, col_list are tuples - rethink variable naming
     row_list, col_list = get_start_idx(dem, release)
-
+    entrainedCells = []
     startcell_idx = 0
     while startcell_idx < len(row_list):
 
         processedCells = {}  # dictionary of cells that have been processed already
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
+
+        # do not compute the path of an already collected cell
+        # (when computing without entrainment: entrainedCells is empty and the path
+        # of every startcell is computed)
+        if (row_idx,col_idx) in entrainedCells:
+            startcell_idx += 1
+            continue
+
         dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
         if varUmaxBool and varUmaxArray is not None:
             if varUmaxArray[row_idx, col_idx] > 0 and varUmaxArray[row_idx, col_idx] <= 8848:
@@ -519,6 +538,16 @@ def calculation(args):
                                 z_delta = np.delete(z_delta, k)
                             else:
                                 k += 1
+
+                    if entrainmentBool:
+                        for r, c in zip(row_list, col_list):
+                            for k in range(len(row)):
+                                if row[k] == r and col[k] == c:
+                                    flux = list(flux)
+                                    flux[k] += 1
+                                    entrainedCells.append((r,c))
+                                else:
+                                    continue
 
                     for k in range(len(row)):
                         dem_ng = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
@@ -619,6 +648,16 @@ def calculation(args):
                             z_delta = np.delete(z_delta, k)
                         else:
                             k += 1
+
+                if entrainmentBool:
+                        for r, c in zip(row_list, col_list):
+                            for k in range(len(row)):
+                                if row[k] == r and col[k] == c:
+                                    flux[k] += 1
+                                    entrainedCells.append((r,c))
+                                else:
+                                    continue
+
                 for k in range(len(row)):
                     dem_ng = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
 
