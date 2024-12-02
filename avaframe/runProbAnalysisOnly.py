@@ -19,7 +19,7 @@ from avaframe.out3Plot import outQuickPlot as oP
 from avaframe.out3Plot import statsPlots as sP
 
 
-def runProbAna(avalancheDir="", modName="com1DFA"):
+def runProbAna(avalancheDir="", modName=""):
     """Run a com1DFA probability analysis with parameters and only an
     avalanche directory as input
 
@@ -60,6 +60,8 @@ def runProbAna(avalancheDir="", modName="com1DFA"):
 
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
+    if modName != "":
+        modName = cfgProb["GENERAL"]["modName"]
 
     # perform probability analysis
     anaPerformed, contourDict = probAna.probAnalysis(
