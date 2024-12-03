@@ -495,6 +495,8 @@ def calculation(args):
             cellList = [startcell]  # list of parents for current iteration
             genList = [cellList]    # list of all cells (which are calculated), oreganised in generations
             childList = []          # list of childs of the current iteration
+            countArrayPath = np.zeros_like(dem, dtype=np.int32)
+            cellCountValue = 1
 
             for gen, cellList in enumerate(genList):
                 for idx, cell in enumerate(cellList):
@@ -546,6 +548,7 @@ def calculation(args):
                                     flux = list(flux)
                                     flux[k] += 1
                                     entrainedCells.append((r,c))
+                                    cellCountValue += 1
                                 else:
                                     continue
 
@@ -558,14 +561,6 @@ def calculation(args):
                         if (nodata in dem_ng) or np.size(dem_ng) < 9:
                             continue
 
-                        # if the current child cell is already in processedCells
-                        # just add +1 to the visit-counter, else add it to the
-                        # processedCells dictionary with visit-count = 1
-                        if (row[k], col[k]) in processedCells:
-                            processedCells[(row[k], col[k])] += 1
-                        else:
-                            processedCells[(row[k], col[k])] = 1
-
                         childList.append(Cell(
                                     row[k], col[k],
                                     dem_ng, cellsize,
@@ -576,17 +571,8 @@ def calculation(args):
                                     FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
                                     forestParams=forestParams,
                                             ))
-                if len(childList) > 0:
-                    cellList = childList
-                    genList.append(cellList)
-                    childList = []
 
-            if calcThalweg:
-                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList, rasterAttributes)
-                path.calcAndSaveThalwegData(thalwegParameters)
 
-            for gen, cellList in enumerate(genList):
-                for cell in cellList:
                     routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
                     depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
                     zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
@@ -598,8 +584,7 @@ def calculation(args):
                                                                         cell.sl_gamma)
                     travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
                                                                         cell.min_distance)
-                    if processedCells[(cell.rowindex, cell.colindex)] == 1:
-                        countArray[cell.rowindex, cell.colindex] += int(1)
+                    countArrayPath[cell.rowindex, cell.colindex] = cellCountValue
 
                     # Backcalculation
                     if infraBool:
@@ -620,6 +605,18 @@ def calculation(args):
                         else:
                             forestIntArray[cell.rowindex, cell.colindex] = max(forestIntArray[cell.rowindex, cell.colindex],
                                                                             cell.forestIntCount)
+
+                if len(childList) > 0:
+                    cellList = childList
+                    genList.append(cellList)
+                    childList = []
+
+            if calcThalweg:
+                path = Path(dem, row_list[startcell_idx], col_list[startcell_idx], genList, rasterAttributes)
+                path.calcAndSaveThalwegData(thalwegParameters)
+
+            countArray = np.add(countArray, countArrayPath)
+
         else:
             cellList = []
             cellList.append(startcell)
