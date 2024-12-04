@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Functions to handle the raster tiles.
+"""
+
 import logging
 import pickle
 import gc
@@ -12,6 +16,26 @@ log = logging.getLogger(__name__)
 
 
 def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
+    """
+    divides a raster into tiles and saves the tiles
+
+    Parameters
+    -----------
+    fNameIn : str
+        path to raster that is tiled
+    fNameOut: str
+        name of saved raster file
+    dirName: str
+        path to folder, where tiled raster is saved (temp - folder)
+    xDim: int
+        size of one tile in x dimension (number of raster columns)
+    yDim: int
+        size of one tile in y dimension (number of raster rows)
+    U: int
+        size of tile overlapping (number of raster cells)
+    isInit: bool
+        if isInit is True, edges are assigned to -9999 (default: False)
+    """
 
     # if not os.path.exists(dirName):
     #    os.makedirs(dirName)
@@ -156,7 +180,7 @@ def mergeRaster(inDirPath, fName, method='max'):
     method provided through the function parameters
 
     Parameters
-    ----------
+    -----------
     inDirPath: str
         Path to the temporary files, that are results for each tile
     fName : str
@@ -167,7 +191,7 @@ def mergeRaster(inDirPath, fName, method='max'):
         if the minimum is < 0, then 0 is used
 
     Returns
-    -------
+    -----------
     mergedRas : numpy array
         merged raster
     """
