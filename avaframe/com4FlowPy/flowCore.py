@@ -192,7 +192,7 @@ def run(optTuple):
     if varUmaxBool:
         varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
         if optTuple[2]["varUmaxType"].lower() == 'umax':
-            varUmaxArray[varUmaxArray>0] = varUmaxArray[varUmaxArray>0] ** 2 / 2 / 9.81
+            varUmaxArray[varUmaxArray > 0] = varUmaxArray[varUmaxArray > 0] ** 2 / 2 / 9.81
         elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
             log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
     else:
