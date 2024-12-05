@@ -65,9 +65,9 @@ def runAna5DFAPathGeneration(avalancheDir='', runDFAModule=''):
     # already did some calculations you might want to clean it::
     initProj.cleanModuleFiles(avalancheDir, DFAPathGeneration, deleteOutput=True)
 
-    # Run or load DFA results depending on runDFAModule=True or False
-    if runDFAModule != '':
-        runDFAModule = bool(runDFAModule)
+    # Run or load DFA results depending on runDFAModule bool in command call
+    if args.runDFA is not None:
+        runDFAModule = args.runDFA.lower() == 'true'
     else:
         runDFAModule = cfgDFAPath['GENERAL'].getboolean('runDFAModule')
 
@@ -86,8 +86,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run computeDFAPath workflow')
     parser.add_argument('avadir', metavar='avalancheDir', type=str, nargs='?', default='',
                         help='the avalanche directory')
-    parser.add_argument('--runDFA', action="store_true",
-                        help='add to override ini setting and set runDFAModule as True')
+    parser.add_argument('-runDFA', type=str, choices=['true', 'false'], default='',
+                        help='add to override ini setting to run DFA module')
 
     args = parser.parse_args()
-    runAna5DFAPathGeneration(str(args.avadir), bool(args.runDFA))
+    runAna5DFAPathGeneration(str(args.avadir), str(args.runDFA))
