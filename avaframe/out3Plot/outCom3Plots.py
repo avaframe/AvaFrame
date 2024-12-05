@@ -127,16 +127,15 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
     angleProf, tmpProf, dsProf = geoTrans.prepareAngleProfile(cfgPath.getfloat('slopeSplitPoint'), avaProfileMass,
                                                               raiseWarning=False)
 
-
-    # create figures and plots
+    # Create figures and plots
     fig = plt.figure(figsize=(pU.figW*2, pU.figH*1.5))
-    # make the bird view plot
+
+    # make the top-down view plot
     ax1 = plt.subplot2grid((2, 2), (1, 0), colspan=1)
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['pta'], 5, extentOption=True,
                                                                  constrainedData=False, buffer='')
     ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pta'], 'pta')
     cbar0.ax.set_ylabel('peak travel angle')
-
     # add DEM hillshade with contour lines
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='hillshade', extent=extent)
     # add path
@@ -146,84 +145,65 @@ def generateCom1DFAPathPlot(avalancheDir, cfgPath, avaProfileMass, dem, paraboli
              label='_bottom extension', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='g'), pe.Normal()])
     ax1.plot(avaProfileMass['x'][indStart:indEnd+1], avaProfileMass['y'][indStart:indEnd+1], '-y.', zorder=20,
              label='_Center of mass path', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    if splitPoint != '':
+    if not splitPoint.get('isTopSplitPoint', False): #if not a top split point
         ax1.plot(splitPoint['x'], splitPoint['y'], 'P', color='r', label='_Split point', zorder=20)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
     ax1.axis('equal')
     ax1.set_ylim([rowsMin, rowsMax])
     ax1.set_xlim([colsMin, colsMax])
-    l1 = ax1.legend()
-    l1.set_zorder(40)
     ax1.set_title('Avalanche thalweg')
     pU.putAvaNameOnPlot(ax1, avalancheDir)
 
-
     # plot angle of profile and parabola
-    ax3 = plt.subplot2grid((2, 2), (1, 1), colspan=1)
+    ax2 = plt.subplot2grid((2, 2), (1, 1), colspan=1)
     # add path
-    ax3.plot(sPara, anglePara, 'k', lw=1, label='_parabolic fit')
-
-    ax3.plot(avaProfileMass['s'][:indStart+1], angleProf[:indStart+1], 'y.',
+    ax2.plot(sPara, anglePara, 'k', lw=1, label='_parabolic fit')
+    ax2.plot(avaProfileMass['s'][:indStart+1], angleProf[:indStart+1], 'y.',
              label='_top extension', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='b'), pe.Normal()])
-    ax3.plot(avaProfileMass['s'][indEnd:], angleProf[indEnd:], 'y.',
+    ax2.plot(avaProfileMass['s'][indEnd:], angleProf[indEnd:], 'y.',
              label='_bottom extension', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='g'), pe.Normal()])
-    ax3.plot(avaProfileMass['s'][indStart:indEnd+1], angleProf[indStart:indEnd+1], 'y.',
+    ax2.plot(avaProfileMass['s'][indStart:indEnd+1], angleProf[indStart:indEnd+1], 'y.',
              label='_Center of mass path slope', lw=2, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    minY, _ = ax3.get_ylim()
-    minX, _ = ax3.get_xlim()
-    if splitPoint != '':
-        ax3.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='_Split point')
-        ax3.text(splitPoint['s'], minY, "%.2f m" % (splitPoint['s']), color='r', ha="right", va="bottom")
-    ax3.axhline(y=cfgPath.getfloat('slopeSplitPoint'), color='r', linewidth=1, linestyle='-.',
+    minY, _ = ax2.get_ylim()
+    minX, _ = ax2.get_xlim()
+    if not splitPoint.get('isTopSplitPoint', False): #if not a top split point
+        ax2.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='_Split point')
+        ax2.text(splitPoint['s'], minY, "%.2f m" % (splitPoint['s']), color='r', ha="right", va="bottom")
+    ax2.axhline(y=cfgPath.getfloat('slopeSplitPoint'), color='r', linewidth=1, linestyle='-.',
                 label='_Split point angle (%.0f°)' % cfgPath.getfloat('slopeSplitPoint'))
-
-    ax3.text(minX, cfgPath.getfloat('slopeSplitPoint'), "%.0f°" % (cfgPath.getfloat('slopeSplitPoint')), color='r', ha="left", va="bottom")
-    ax3.axhline(y=10, color='0.8', linewidth=1, linestyle='-.', label='_Beta angle (10°)')
-    ax3.text(minX, 10, "%.0f°" % (10), color='0.8', ha="left", va="bottom")
-    # ax3.axvline(x=avaProfileMass['s'][indStart], color='b', linewidth=1, linestyle='-.', label='Start of profile')
-    # ax3.axvline(x=avaProfileMass['s'][indEnd], color='g', linewidth=1, linestyle='-.', label='End of profile')
-    ax3.set_xlabel('$s_{xy}$ [m]')
-    ax3.set_ylabel('slope angle [°]')
-    ax3.legend()
-    ax3.set_title('Avalanche thalweg profile slope')
+    ax2.text(minX, cfgPath.getfloat('slopeSplitPoint'), "%.0f°" % (cfgPath.getfloat('slopeSplitPoint')), color='r', ha="left", va="bottom")
+    ax2.axhline(y=10, color='0.8', linewidth=1, linestyle='-.', label='_Beta angle (10°)')
+    ax2.text(minX, 10, "%.0f°" % (10), color='0.8', ha="left", va="bottom")
+    ax2.set_xlabel('$s_{xy}$ [m]')
+    ax2.set_ylabel('slope angle [°]')
+    ax2.set_title('Avalanche thalweg profile slope')
 
     # make profile plot, zoomed out
-    ax2 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
+    ax3 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
     # plot mass averaged center of mass
-    ax2.plot(avaProfileMass['s'][:indStart+1], avaProfileMass['z'][:indStart+1], '-y.', label='top extension',
+    ax3.plot(avaProfileMass['s'][:indStart+1], avaProfileMass['z'][:indStart+1], '-y.', label='top extension',
              lw=1, path_effects=[pe.Stroke(linewidth=3, foreground='b'), pe.Normal()])
-    ax2.plot(avaProfileMass['s'][indEnd:], avaProfileMass['z'][indEnd:], '-y.', label='bottom extension',
+    ax3.plot(avaProfileMass['s'][indEnd:], avaProfileMass['z'][indEnd:], '-y.', label='bottom extension',
              lw=1, path_effects=[pe.Stroke(linewidth=3, foreground='g'), pe.Normal()])
-    ax2.plot(avaProfileMass['s'][indStart:indEnd+1], avaProfileMass['z'][indStart:indEnd+1], '-y.',
+    ax3.plot(avaProfileMass['s'][indStart:indEnd+1], avaProfileMass['z'][indStart:indEnd+1], '-y.',
              label='Center of mass path / profile / angle',
              lw=1, path_effects=[pe.Stroke(linewidth=3, foreground='k'), pe.Normal()])
-    ax2.plot(sPara, zPara, '-k', label='Parabolic fit')
-    if splitPoint != '':
-        ax2.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='Split point')
-        ax2.axhline(y=splitPoint['z'], color='r', linewidth=1, linestyle='-.', label='_Split point')
-        minY, _ = ax2.get_ylim()
-        minX, _ = ax2.get_xlim()
-        ax2.text(splitPoint['s'], minY, "%.2f m" % (splitPoint['s']), color='r', ha="left", va="bottom")
-        ax2.text(minX, splitPoint['z'], "%.2f m" % (splitPoint['z']), color='r', ha="left", va="bottom")
-
-    # add runout line
-    s = avaProfileMass['s'][[indStart, indEnd]]
-    # ax2.plot(s, z0-np.tan(runOutAngleRad)*s, '-b', label='com1dfa center of mass runout line (%.2f°)' % runOutAngleDeg)
-    # ax2.axvline(x=s[0], color='b', linewidth=1, linestyle='-.', label='Start of profile')
-    # ax2.axvline(x=s[-1], color='g', linewidth=1, linestyle='-.', label='End of profile')
-    zLim = ax2.get_ylim()
-    sLim = ax2.get_xlim()
-
-    ax2.set_xlabel('$s_{xy}$ [m]')
-    ax2.set_ylabel('z [m]')
-    ax2.set_xlim(sLim)
-    ax2.set_ylim(zLim)
-    ax2.legend()
-    ax2.set_title('Avalanche thalweg profile')
+    ax3.plot(sPara, zPara, '-k', label='Parabolic fit')
+    if not splitPoint.get('isTopSplitPoint', False): #if not a top split point
+        ax3.axvline(x=splitPoint['s'], color='r', linewidth=1, linestyle='-.', label='Split point')
+        ax3.axhline(y=splitPoint['z'], color='r', linewidth=1, linestyle='-.', label='_Split point')
+        minY, _ = ax3.get_ylim()
+        minX, _ = ax3.get_xlim()
+        ax3.text(splitPoint['s'], minY, "%.2f m" % (splitPoint['s']), color='r', ha="left", va="bottom")
+        ax3.text(minX, splitPoint['z'], "%.2f m" % (splitPoint['z']), color='r', ha="left", va="bottom")
+    ax3.set_xlabel('$s_{xy}$ [m]')
+    ax3.set_ylabel('z [m]')
+    ax3.legend()
+    ax3.set_title('Avalanche thalweg profile')
 
     outFileName = '_'.join([simName, 'DFAPath'])
-    outDir = pathlib.Path(avalancheDir, 'Outputs', 'DFAPath')
+    outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana5Utils', 'DFAPath')
     plt.tight_layout()
     outPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
     return outPath
