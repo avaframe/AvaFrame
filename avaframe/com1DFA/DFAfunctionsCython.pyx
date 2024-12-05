@@ -127,6 +127,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
   cdef double[:, :] entrEnthRaster = fields['entrEnthRaster']
+  cdef double[:, :] muRaster = fields['muField']
+  cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef int[:] indXDEM = particles['indXDEM']
@@ -147,6 +149,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
+  cdef double muVoellmyRaster, xsiVoellmyRaster
   # variables for interpolation
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
@@ -289,6 +292,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           elif frictType == 8:
             # coulomb MinShear friction type
             tau = muCoulombMinShear * sigmaB + tau0CoulombMinShear
+          elif frictType == 9:
+            muVoellmyRaster = muRaster[indCellY, indCellX]
+            xsiVoellmyRaster = xsiRaster[indCellY, indCellX]
+            # Voellmy with optional spatially variable mu and xi values provided as rasters
+            tau = muVoellmyRaster * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyRaster
           else:
             tau = 0.0
 

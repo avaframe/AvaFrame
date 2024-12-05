@@ -3,6 +3,7 @@
 """
 
 import logging
+
 # Load modules
 import os
 import pathlib
@@ -17,6 +18,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
+
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import in1DataPlots
@@ -256,6 +258,14 @@ def getInputDataCom1DFA(avaDir):
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
+    # check if frictionParameter file  is available
+    muFile, entResInfo["mu"] = getAndCheckInputFiles(inputDir, "RASTERS", "mu parameter data", fileExt="asc",
+                                                     fileSuffix='_mu')
+
+    # check if frictionParameter file  is available
+    xiFile, entResInfo["xi"] = getAndCheckInputFiles(inputDir, "RASTERS", "xi parameter data", fileExt="asc",
+                                                     fileSuffix='_xi')
+
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
         "demFile": demFile,
@@ -266,12 +276,14 @@ def getInputDataCom1DFA(avaDir):
         "damFile": damFile,
         "entResInfo": entResInfo,
         "relThFile": relThFile,
+        "muFile": muFile,
+        "xiFile": xiFile,
     }
 
     return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix=''):
+def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix=""):
     """Fetch fileExt files and check if they exist and if it is not more than one
 
     Raises error if there is more than one fileExt file.
@@ -299,7 +311,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     available = "No"
     # Initialise secondary release areas
     inDir = pathlib.Path(inputDir, folder)
-    if fileSuffix == '':
+    if fileSuffix == "":
         OutputFile = list(inDir.glob("*.%s" % fileExt))
     else:
         OutputFile = list(inDir.glob("*%s.%s" % (fileSuffix, fileExt)))
@@ -436,6 +448,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
 
     return cfgInitial
 
+
 def initializeRelTh(cfg, dOHeader):
     """check for relThFile and load to dict (if relTh is read from file)
 
@@ -481,6 +494,7 @@ def initializeRelTh(cfg, dOHeader):
         relThFieldData = ""
 
     return relThFieldData, relThFile
+
 
 def initializeDEM(avaDir, demPath=""):
     """check for dem and load to dict

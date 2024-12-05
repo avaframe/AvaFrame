@@ -32,6 +32,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["demFile"] = avaDir / "Inputs" / "avaAlr.asc"
     inputSimFiles["entFile"] = avaDir / "Inputs" / "ENT" / "entAlr.shp"
     inputSimFiles["relThFile"] = ""
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "ent", "avalancheDir": str(avaDir)}
     cfg["GENERAL"]["relThFromFile"] = "False"
@@ -63,6 +65,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
     inputSimFiles["relThFile"] = None
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["avalancheDir"] = str(avaDir)
     cfg["GENERAL"]["relThFromFile"] = "False"
@@ -70,7 +74,7 @@ def test_prepareInputData(tmp_path):
     cfg["INPUT"]["relThFile"] = ""
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
-#    print("inputSimLines", inputSimLines)
+    #    print("inputSimLines", inputSimLines)
 
     assert inputSimLines["entLine"] is None
     assert inputSimLines["resLine"]["Start"] == np.asarray([0.0])
@@ -86,6 +90,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"]["relThFile"] = ""
@@ -109,12 +115,14 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["INPUT"]["relThFile"] = str(dirName / "data" / "relThFieldTestFile.asc")
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
-#    print("inputSimLines", inputSimLines)
+    #    print("inputSimLines", inputSimLines)
 
     assert inputSimLines["entLine"] is None
     assert inputSimLines["resLine"]["Start"] == np.asarray([0.0])
@@ -131,6 +139,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     testField = np.zeros((10, 10))
     testFile = pathlib.Path(tmp_path, "testFile2.asc")
     testHeader = {
@@ -162,6 +172,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
     inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel2.asc"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -174,7 +186,7 @@ def test_prepareInputData(tmp_path):
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
-#    print("inputSimLines", inputSimLines)
+    #    print("inputSimLines", inputSimLines)
 
     assert inputSimLines["entLine"] is None
     assert inputSimLines["resLine"] == None
@@ -199,6 +211,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
     inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel2.asc"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -213,7 +227,7 @@ def test_prepareInputData(tmp_path):
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
-#    print("inputSimLines", inputSimLines)
+    #    print("inputSimLines", inputSimLines)
 
     assert inputSimLines["entLine"] is None
     assert inputSimLines["resLine"] == None
@@ -234,6 +248,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
     inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel.asc"
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -257,6 +273,8 @@ def test_prepareInputData(tmp_path):
     relFile = testDir / "data" / "testForHoles" / "relAlr2.shp"
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["relThFile"] = ""
+    inputSimFiles["muFile"] = None
+    inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "null", "avalancheDir": str(avaDir)}
     cfg["INPUT"] = {"DEM": "avaAlr.asc"}
@@ -365,7 +383,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     #      cfg["GENERAL"]["secondaryRelThFromShp"],
     #      cfg["GENERAL"]["secondaryRelTh0"],
     #  )
-#    print("inputSimLines", inputSimLines2)
+    #    print("inputSimLines", inputSimLines2)
     assert relName2 == "release1PF_test"
     assert inputSimLines2["entResInfo"]["flagSecondaryRelease"] == "Yes"
     assert inputSimLines2["releaseLine"]["thickness"] == [0.5, 1.0]
@@ -648,8 +666,8 @@ def test_initializeMassEnt():
     testData[0:11, 0:11] = 1.0 * 200.0
     testEnt = np.zeros((nrows, ncols))
     testEnt[0:11, 0:11] = -10.0 * 2050.0
-#    print("data", testData)
-#    print("ent", entrMassRaster, entLine)
+    #    print("data", testData)
+    #    print("ent", entrMassRaster, entLine)
 
     assert np.array_equal(entrMassRaster, testData)
     assert np.array_equal(entrEnthRaster, testEnt)
@@ -709,8 +727,8 @@ def test_initializeResistance():
     testArray = np.zeros((nrows, ncols))
     testArray[0:11, 0:11] = 0.003
 
-#    print("cResRaster", cResRaster)
-#    print("reportAreaInfo", reportAreaInfo)
+    #    print("cResRaster", cResRaster)
+    #    print("reportAreaInfo", reportAreaInfo)
 
     assert np.array_equal(cResRaster, testArray)
     assert np.array_equal(detRaster, np.zeros((nrows, ncols)))
@@ -963,7 +981,7 @@ def test_appendFieldsParticles():
     fieldsList, particlesList = com1DFA.appendFieldsParticles(
         fieldsListIn, particlesListIn, particles, fields, resTypes
     )
-#    print("fieldsList", fieldsList[1])
+    #    print("fieldsList", fieldsList[1])
 
     assert np.array_equal(fieldsList[1]["ppr"], np.ones((3, 3)))
     assert np.array_equal(fieldsList[1]["pfv"], np.ones((3, 3)))
@@ -1009,7 +1027,7 @@ def test_releaseSecRelArea():
     dem["originalHeader"] = dem["header"].copy()
     dem["header"]["xllcenter"] = 0.0
     dem["header"]["yllcenter"] = 0.0
-#    print("dem", dem)
+    #    print("dem", dem)
     secRelRaster2 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
     secRelRaster2[6:8, 7] = 1.0
     secRelRaster3 = np.zeros((demHeader["nrows"], demHeader["ncols"]))
@@ -1048,7 +1066,7 @@ def test_releaseSecRelArea():
     particles, zPartArray0New = com1DFA.releaseSecRelArea(
         cfg["GENERAL"], particlesIn, fields, dem, zPartArray0
     )
-#    print("particles IN pytest 1", particles)
+    #    print("particles IN pytest 1", particles)
 
     # call function to be tested test 2
     particlesIn2 = {"secondaryReleaseInfo": secondaryReleaseInfo2}
@@ -1071,7 +1089,7 @@ def test_releaseSecRelArea():
 
     pEnt = -10.0 * 2050 + 9.81 * 1.0
 
-#    print("particles IN pytest socond", particles2)
+    #    print("particles IN pytest socond", particles2)
     assert particles["nPart"] == 6
     assert np.array_equal(particles["x"], np.asarray([6.0, 7.0, 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles["totalEnthalpy"], np.asarray([6.0, 7.0, pEnt, pEnt, pEnt, pEnt]))
@@ -1274,7 +1292,7 @@ def test_initializeParticles():
     #    print("there is an extra key in particles: ", particles.keys() - set(dictKeys))
     assert all(key in particles for key in dictKeys)
 
-#    print("particles", particles)
+    #    print("particles", particles)
 
     assert particles["nPart"] == 9
     assert np.array_equal(particles["x"], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
@@ -1305,7 +1323,7 @@ def test_initializeParticles():
     #    print("there is an extra key in particles: ", particles.keys() - set(dictKeys))
     assert all(key in particles for key in dictKeys)
 
-#    print("particles", particles)
+    #    print("particles", particles)
 
     assert particles["nPart"] == 9
     assert np.array_equal(particles["x"], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
@@ -1333,7 +1351,7 @@ def test_writeMBFile(tmp_path):
     mbFilePath = avaDir / "Outputs" / "com1DFA" / "mass_simTestName.txt"
     mbInfo = np.loadtxt(mbFilePath, delimiter=",", skiprows=1)
 
-#    print("mbInfo", mbInfo)
+    #    print("mbInfo", mbInfo)
 
     assert np.array_equal(mbInfo[:, 0], infoDict["timeStep"])
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
@@ -1403,8 +1421,8 @@ def test_savePartToPickle(tmp_path):
     particlesRead1 = pickle.load(open(picklePath1, "rb"))
     particlesRead2 = pickle.load(open(picklePath2, "rb"))
 
-#    print("particklesRead1", particlesRead1)
-#    print("particklesRead2", particlesRead2)
+    #    print("particklesRead1", particlesRead1)
+    #    print("particklesRead2", particlesRead2)
 
     assert np.array_equal(particlesRead1["x"], particles1["x"])
     assert np.array_equal(particlesRead1["y"], particles1["y"])
@@ -1423,8 +1441,8 @@ def test_savePartToPickle(tmp_path):
     picklePath3 = outDir / "particles_simNameTest3_0000.0000.pickle"
     particlesRead3 = pickle.load(open(picklePath3, "rb"))
 
-#    print("particklesRead3", particlesRead3)
-#    print("particklesRead2", particlesRead2)
+    #    print("particklesRead3", particlesRead3)
+    #    print("particklesRead2", particlesRead2)
 
     assert np.array_equal(particlesRead3["x"], particles1["x"])
     assert np.array_equal(particlesRead3["y"], particles1["y"])
@@ -1483,9 +1501,9 @@ def test_exportFields(tmp_path):
     pprFinal = ppr + 0.006
     pftt10 = pft + 2
 
-#    print("field1", fieldFinal)
-#    print("pprFinal", pprFinal)
-#    print("fields", fieldsListTest)
+    #    print("field1", fieldFinal)
+    #    print("pprFinal", pprFinal)
+    #    print("fields", fieldsListTest)
 
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pftt10)
@@ -1503,7 +1521,7 @@ def test_exportFields(tmp_path):
     fieldDirTSteps = outDir2 / "peakFiles" / "timeSteps"
     fieldFiles = list(fieldDirTSteps.glob("*.asc"))
     fieldsListTest2 = []
-#    print("fields file", fieldFiles)
+    #    print("fields file", fieldFiles)
 
     for f in fieldFiles:
         fieldsListTest2.append(f.name)
@@ -1540,11 +1558,11 @@ def test_initializeFields():
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
 
-#    print("particles", particles)
-#    print("fields", fields)
-#    print("compute KE", fields["computeKE"])
-#    print("compute TA", fields["computeTA"])
-#    print("compute P", fields["computeP"])
+    #    print("particles", particles)
+    #    print("fields", fields)
+    #    print("compute KE", fields["computeKE"])
+    #    print("compute TA", fields["computeTA"])
+    #    print("compute P", fields["computeP"])
 
     assert len(fields) == 17
     assert fields["computeTA"] is False
@@ -1689,8 +1707,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
 
     for key in testDict[simName1]:
-#        print(simDict)
-#        print(simDict[simName1][key])
+        #        print(simDict)
+        #        print(simDict[simName1][key])
         assert simDict[simName1][key] == testDict[simName1][key]
 
     for section in testCfg.sections():
@@ -1770,14 +1788,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
         }
     }
 
-#    print(simDict2)
-#    print(testDict2)
+    #    print(simDict2)
+    #    print(testDict2)
     for key in testDict2[simName2]:
         assert simDict2[simName2][key] == testDict2[simName2][key]
 
     for section in testCfg2.sections():
         for key in testCfg2[section]:
-#            print("section", section, "key", key)
+            #            print("section", section, "key", key)
             assert simDict2[simName2]["cfgSim"][section][key] == testCfg2[section][key]
 
     # What if a simulation already exists
@@ -1867,6 +1885,8 @@ def test_initializeSimulation(tmp_path):
         "resLine": "",
         "relThField": "",
         "damLine": None,
+        "muFile": None,
+        "xiFile": None,
     }
     # set release thickness read from file or not
     logName = "simLog"
@@ -1876,10 +1896,10 @@ def test_initializeSimulation(tmp_path):
         cfg, outDir, demOri, inputSimLines, logName
     )
 
-#    print("particles", particles)
-#    print("fields", fields)
-#    print("dem", dem)
-#    print("reportAreaInfo", reportAreaInfo)
+    #    print("particles", particles)
+    #    print("fields", fields)
+    #    print("dem", dem)
+    #    print("reportAreaInfo", reportAreaInfo)
 
     pEnt = -10.0 * 2050.0 + 9.81 * 1.0
     assert np.array_equal(particles["y"], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
@@ -1913,6 +1933,8 @@ def test_initializeSimulation(tmp_path):
         "Name": ["secRel1"],
         "thickness": [0.5],
         "thicknessSource": ["ini File"],
+        "muFile": None,
+        "xiFile": None,
     }
 
     relThField = np.zeros((12, 12)) + 0.5
@@ -1925,9 +1947,9 @@ def test_initializeSimulation(tmp_path):
         cfg, outDir, demOri, inputSimLines, logName
     )
 
-#    print("secRel", particles2["secondaryReleaseInfo"])
-#    print("particles", particles2)
-#    print("fields", fields2["pft"])
+    #    print("secRel", particles2["secondaryReleaseInfo"])
+    #    print("particles", particles2)
+    #    print("fields", fields2["pft"])
 
     assert np.sum(fields2["pfv"]) == 0.0
     assert np.sum(fields2["pft"]) != np.sum(fields["pft"])
@@ -2012,7 +2034,7 @@ def test_runCom1DFA(tmp_path, caplog):
         "totalEnthalpy",
         "nExitedParticles",
         "dmDet",
-        "massDetrained"
+        "massDetrained",
     ]
 
     # read one particles dictionary
@@ -2039,7 +2061,7 @@ def test_runCom1DFA(tmp_path, caplog):
 
     assert len(particlesList) == 12
 
-#    print(simDF["simName"])
+    #    print(simDF["simName"])
     outDir = avaDir / "Outputs" / "com1DFA"
     for ext in ["ppr", "pft", "pfv"]:
         assert (outDir / "peakFiles" / ("%s_%s.asc" % (simDF["simName"].iloc[0], ext))).is_file()
@@ -2069,8 +2091,8 @@ def test_runOrLoadCom1DFA(tmp_path, caplog):
     avalancheDir = testDir / ".." / ".." / "benchmarks" / "avaHockeyChannelPytest"
     cfgMain = configparser.ConfigParser()
     dem, simDF, resTypeList = com1DFA.runOrLoadCom1DFA(avalancheDir, cfgMain, runDFAModule=False, cfgFile="")
-#    print(simDF.index)
-#    print(simDF.columns)
+    #    print(simDF.index)
+    #    print(simDF.columns)
     assert "pft" in resTypeList
     assert "pfv" in resTypeList
     assert "ppr" in resTypeList

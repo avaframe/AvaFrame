@@ -246,3 +246,19 @@ You can check out the markdown-style report of the comparison at:
 ``tests/reports/standardTestsReportPy.md``.
 
 
+How to add a friction model
+----------------------------
+In :py:mod:`com1DFA`, different friction models can be chosen to perform the snow avalanche flow simulations.
+These are used to represent the basal shear stress, see :ref:`theoryCom1DFA:Friction Model`.
+In oder to add a new friction model, the following modifications have to be made to the source code:
+
+* in :py:mod:`com1DFA.com1DFACfg.ini` add new friction model and corresponding parameters
+* in :py:func:`com1DFA.com1DFA.DFAIterate` add name of new friction model in ``frictModelList`` - only lowerCase
+* in :py:func:`com1DFA.DFAfunctionsCython.computeForceC` add new friction model with corresponding ``fricType`
+* in :py:func:`com1DFA.com1DFA.createReportDict` add new friction model info as dictionary that is then included in report
+* in :ref:`theoryCom1DFA:Friction Model` add a description to the documentation
+* in :py:mod:`tests.test_com1DFA` add a pytest addressing the new functionality
+
+
+
+

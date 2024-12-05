@@ -41,6 +41,7 @@ folder structure described below.
         POINTS/   - split points
         LINES/    - avalanche paths
         SECREL/   - secondary release areas
+        RASTERS/  - friction parameter fields
       Outputs/
       Work/
 
@@ -81,6 +82,14 @@ and the following files are optional:
   - same setup as the release area scenario (see above)
   - features will release as soon as at least one particle enters its area
   - release area polygons must not contain any "holes" or inner rings
+
+* raster files for the Voellmy friction parameters :math:`\mu` and :math:`\xi` (in Inputs/RASTERS)
+
+  - spatial field of :math:`\mu` and :math:`\xi` values with same extent as DEM
+  - file names need to end with ``_mu.asc`` and ``_xi.asc``
+  - only one file per parameter allowed
+  - if ``meshCellSize`` is different from simulation ``meshCellSize`` fields will be remeshed
+  - only used if ``frictionModel`` is set to ``spatialVoellmy``
 
 
 
