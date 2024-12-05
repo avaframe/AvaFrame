@@ -38,14 +38,6 @@ class Path:
         self.dropHeight = 0
         self.travelLength = 0
 
-        self.zDeltaArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.flowEnergyArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.fluxArray = np.zeros_like(self.dem, dtype=np.float32)
-        '''
-        self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
-        self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
-        '''
-
         self.zDeltaGeneration = []
         self.fluxGeneration = []
         self.depFluxGeneration = []
@@ -125,12 +117,23 @@ class Path:
            value 0 means, the path does not hit the cell
            TODO: only calculate 'important'/output arrays
         '''
+        self.zDeltaArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.flowEnergyArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.fluxArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.routFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.depFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
+        '''
+        self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
+        self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
+        '''
         for gen, cellList in enumerate(self.genList):
             for cell in cellList:
                 self.zDeltaArray[cell.rowindex, cell.colindex] = max(self.zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
                 self.flowEnergyArray[cell.rowindex, cell.colindex] = max(self.flowEnergyArray[cell.rowindex, cell.colindex], cell.flowEnergy)
                 self.fluxArray[cell.rowindex, cell.colindex] = max(self.fluxArray[cell.rowindex, cell.colindex], cell.flux)
-                
+                self.routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
+                self.depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
+
                 '''
                 self.travel_length_array[cell.rowindex, cell.colindex] = max(self.travel_length_array[cell.rowindex, cell.colindex], cell.min_distance)
                 self.generation_array[cell.rowindex, cell.colindex] = gen
@@ -182,7 +185,7 @@ class Path:
         self.getVariablesGeneration()
 
         for varName in variables:
-            if varName in ['s', 'z', 'x', 'y' , 'flowEnergyArray', 'zDeltaArray', 'fluxArray']:
+            if varName in ['s', 'z', 'x', 'y' , 'flowEnergyArray', 'zDeltaArray', 'fluxArray', 'routFluxSumArray', 'depFluxSumArray']:
                 continue
             if varName == 'depFluxSum':
                 variables.append('depFlux')
@@ -244,7 +247,7 @@ class Path:
                     setattr(self, f'x{co}', x)
                     setattr(self, f'y{co}', y) 
 
-                if varName in ['flowEnergyArray', 'zDeltaArray', 'fluxArray']:
+                if varName in ['flowEnergyArray', 'zDeltaArray', 'fluxArray', 'routFluxSumArray', 'depFluxSumArray']:
                     self.getPathArrays()
                     value = getattr(self, f'{varName}')
                 elif varName == 'z':
