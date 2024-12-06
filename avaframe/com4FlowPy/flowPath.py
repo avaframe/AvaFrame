@@ -50,6 +50,16 @@ class Path:
         #self.pathArea = 0
         self.flux_gen = []
 
+        self.zDeltaArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.flowEnergyArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.fluxArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.routFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
+        self.depFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
+        '''
+        self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
+        self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
+        '''
+
     def indizesToCoords(self, cols, rows):
         """calculates the row and column indices to the x and y coordinates
 
@@ -116,16 +126,7 @@ class Path:
         '''write arrays with size of dem containing the maximum of the variable values of every path
            value 0 means, the path does not hit the cell
            TODO: only calculate 'important'/output arrays
-        '''
-        self.zDeltaArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.flowEnergyArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.fluxArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.routFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
-        self.depFluxSumArray = np.zeros_like(self.dem, dtype=np.float32)
-        '''
-        self.travel_length_array = np.zeros_like(self.dem, dtype=np.float32)
-        self.generation_array = np.full_like(self.dem, np.nan, dtype=np.float32)
-        '''
+        '''      
         for gen, cellList in enumerate(self.genList):
             for cell in cellList:
                 self.zDeltaArray[cell.rowindex, cell.colindex] = max(self.zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
@@ -248,7 +249,8 @@ class Path:
                     setattr(self, f'y{co}', y) 
 
                 if varName in ['flowEnergyArray', 'zDeltaArray', 'fluxArray', 'routFluxSumArray', 'depFluxSumArray']:
-                    self.getPathArrays()
+                    if np.any(getattr(self, f'{varName}')) == False:
+                        self.getPathArrays()
                     value = getattr(self, f'{varName}')
                 elif varName == 'z':
                     value = getattr(self, f'altitude{co}')
