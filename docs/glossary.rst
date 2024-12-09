@@ -79,8 +79,7 @@ Glossary
 
     dense flow
         Dense flow is a :term:`form of movement` in the :term:`zone of transition` of the
-        avalanche. Dense Flow Avalanches (DFA) flow along the ground
-. Mixed types of movement are often observed,
+        avalanche. Dense Flow Avalanches (DFA) flow along the ground. Mixed types of movement are often observed,
         combining different flow regimes and their partial or complete
         transitions, e.g. ‘mixed flow and powder avalanches’ or ‘flow avalanche
         with powder component’, towards the evolution of a fluidized layer in
@@ -142,7 +141,7 @@ Glossary
         terrain traps), 'complex' (exposure to multiple overlapping avalanche
         :term:`path` (s), large expanses of steep, open terrain, multiple starting zones,
         and terrain traps below) and 'extreme' (exposure to very steep faces with cliffs, spines, couloirs, crevasses
-or sustained overhead hazard).
+        or sustained overhead hazard).
 
     thalweg
         The thalweg is defined as the line representing the main flow direction of all potential avalanche
