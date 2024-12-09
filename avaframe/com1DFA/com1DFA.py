@@ -1308,7 +1308,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     # where nID is the number of already used IDs
     # (enable tracking of particles even if particles are added or removed)
     # unique identifier for each particle
-    particles["ID"] = np.arange(particles["nPart"])
+    particles["ID"] = np.arange(particles["nPart"],dtype = np.int64)
     # keep track of the identifier (usefull to add identifier to newparticles)
     particles["nID"] = particles["nPart"]
     # keep track of parents (usefull for new particles created after splitting)
@@ -2157,7 +2157,6 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     """
     # get forces
     startTime = time.time()
-
     # loop version of the compute force
     log.debug("Compute Force C")
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType)
