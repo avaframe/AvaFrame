@@ -1641,12 +1641,10 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     detrainment = cfg.getboolean("detrainment")
     detWithoutRes = cfg.getboolean("detWithoutRes")
 
-    # TODO: if we keep the ResCoulomb - resistance types,
-    # we should initialize the Coulomb-Value (as the resistamce parameter)
     ResModel = cfg["ResistanceModel"].lower()
-    if ResModel in ["cres", "crescoulomb"]:
+    if ResModel == "cres":
         cRes = cfg.getfloat("cRes")
-    if ResModel in ["cresh", "creshcoulomb"]:
+    if ResModel == "cresh":
         cRes = cfg.getfloat("cResH")
     # read dem header
     header = dem["originalHeader"]
@@ -1761,14 +1759,10 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     log.debug("Friction Model used: %s, %s" % (frictModelsList[frictType - 1], frictType))
 
     # turn resistance model into integer
-    # TODO: the different resistance parameters are tested experimentally
-    # TODO: unnecessary options should be removed
     ResModel = cfgGen["ResistanceModel"].lower()
     ResModelsList = [
         "cres",
         "cresh",
-        "crescoulomb",
-        "creshcoulomb"
     ]
     resistanceType = ResModelsList.index(ResModel) + 1
     log.debug("Resistance Model used: %s, %s" % (ResModelsList[resistanceType - 1], resistanceType))
