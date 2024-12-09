@@ -235,12 +235,12 @@ Output
 
 All outputs are in the .tif or in .asc raster format in the same resolution and extent as the input raster layers.
 
-- ``z_delta``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
+- ``zdelta``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
 - ``flux``: The maximum routing flux of all paths for every raster cell
-- ``z_delta_sum``: z_delta summed up over all paths on every raster cell
-- ``cell_counts``: number of paths that route flux through a raster cell
-- ``FP_travel_angle``: the gamma angle along the flow path
-- ``SL_travel_angle``: Saves the gamma angle, while the distances are calculated via a straight line from the release cell to the current cell
+- ``zDeltaSum``: z_delta summed up over all paths on every raster cell
+- ``cellCounts``: number of paths/release cells that route flux through a raster cell
+- ``fpTravelAngle``: the gamma angle along the flow path
+- ``slTravelAngle``: gamma angle calculated along a straight-line between release cell and current cell
 - ``travelLength``: the travel length along the flow path
 - ``routFluxSum``: routing flux summed up over all paths
 - ``depFluxSum``: deposited flux summed up over all paths
