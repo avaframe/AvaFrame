@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Functions to handle the raster tiles.
+"""
+
 import logging
 import pickle
 import gc
@@ -12,6 +16,26 @@ log = logging.getLogger(__name__)
 
 
 def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
+    """
+    divides a raster into tiles and saves the tiles
+
+    Parameters
+    -----------
+    fNameIn : str
+        path to raster that is tiled
+    fNameOut: str
+        name of saved raster file
+    dirName: str
+        path to folder, where tiled raster is saved (temp - folder)
+    xDim: int
+        size of one tile in x dimension (number of raster columns)
+    yDim: int
+        size of one tile in y dimension (number of raster rows)
+    U: int
+        size of tile overlapping (number of raster cells)
+    isInit: bool
+        if isInit is True, edges are assigned to -9999 (default: False)
+    """
 
     # if not os.path.exists(dirName):
     #    os.makedirs(dirName)
@@ -165,6 +189,7 @@ def mergeRaster(inDirPath, fName, method='max'):
         method, how the tiles should be merged (default: max)
         method 'min' calculates the minimum of input raster tiles,
         if the minimum is < 0, then 0 is used
+        method 'sum' calculates the sum of the raster tiles
 
     Returns
     -------
@@ -181,6 +206,8 @@ def mergeRaster(inDirPath, fName, method='max'):
     mergedRas = np.zeros((extL[0], extL[1]))
     # create Raster with original size
     mergedRas[:, :] = np.nan
+    if method == 'sum':
+        mergedRas[:,:] = 0
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
@@ -198,6 +225,10 @@ def mergeRaster(inDirPath, fName, method='max'):
                     np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
                     np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
                     np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
+            if method == 'sum':
+                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.add(
+                    mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
+                )
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
     return mergedRas

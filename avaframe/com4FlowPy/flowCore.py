@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Calculation functions (raster level)
+"""
+
 import sys
 import numpy as np
 import logging
@@ -24,13 +28,19 @@ def get_start_idx(dem, release):
     """Sort Release Pixels by altitude and return the result as lists for the
     Rows and Columns, starting with the highest altitude
 
-    Input parameters:
-        dem         Digital Elevation Model to gain information about altitude
-        release     The release layer, release pixels need int value > 0
+    Parameters
+    -----------
+    dem: numpy array
+        Digital Elevation Model to gain information about altitude
+    release: numpy array
+        The release layer, release pixels need int value > 0
 
-    Output parameters:
-        row_list    Row index of release pixels sorted by altitude
-        col_list    Column index of release pixels sorted by altitude
+    Returns
+    -----------
+    row_list: list
+        Row indices of release pixels sorted by altitude
+    col_list: list
+        Column indices of release pixels sorted by altitude
     """
     row_list, col_list = np.where(release > 0)  # Gives back the indices of the release areas
     if len(row_list) > 0:
@@ -60,12 +70,15 @@ def split_release(release, pieces):
 
     Parameters
     -----------
-    release: np.array - assumes a binary 0|1 array with  release pixels designated by '1'
-    pieces:  int - number of chunck in which the release layer should be split
+    release: np.array
+        a binary 0|1 array with release pixels designated by '1'
+    pieces:  int
+        number of chunck in which the release layer should be split
 
     Returns
     -----------
-    release_list:    A list with the tiles(arrays) in it [array0, array1, ..]
+    release_list:   list
+        contains the tiles(arrays) [array0, array1, ..]
     """
 
     # Flatten the array and compute the cumulative sum
@@ -103,12 +116,15 @@ def back_calculation(back_cell):
     """Here the back calculation from a run out pixel that hits a infrastructure
     to the release pixel is performed.
 
-    Input parameters:
-        hit_cell_list        All cells that hit a Infrastructure
+    Parameters
+    -----------
+    back_cell:  class-object cell
+        cell that hit a Infrastructure
 
-    Output parameters:
-        Back_list   List of pixels that are on the way to the start cell
-                    Maybe change it to array like DEM?
+    Returns
+    -----------
+    back_list: list
+        List of cells that are on the way to the start cell TODO:Maybe change it to array like DEM?
     """
 
     back_list = []
@@ -126,23 +142,22 @@ def back_calculation(back_cell):
 
 def run(optTuple):
     """This is a wrapper around calculation() for performing model runs for a single tile of the model domain
-    using multiprocessing across multiple CPUs
+    using multiprocessing across multiple CPUs and for saving results for processed tile to temp folder
+    (modelPaths["tempFolder"])
 
-    Parameters:
-    ----------
-    optTuple: tuple with all necessary model information
-        - optTuple[0] - int - i index of the processed tile (for loading correct data for tiles)
-        - optTuple[1] - int - j index of the processed tile (for loading correct data for tiles)
+    Parameters
+    -----------
+    optTuple: tuple
+        with all necessary model information:
 
-        - optTuple[2] - {} - dict containing modelParameters
-        - optTuple[3] - {} - dict containing modelPaths
-        - optTuple[4] - {} - dict containing rasterAttributes
-        - optTuple[5] - {} - dict containing forestParameters
-        - optTuple[6] - {} - dict containing MPOptions
+        - optTuple[0] (int) - i index of the processed tile (for loading correct data for tiles)
+        - optTuple[1] (int) - j index of the processed tile (for loading correct data for tiles)
+        - optTuple[2] (dict) - containing modelParameters
+        - optTuple[3] (dict) - containing modelPaths
+        - optTuple[4] (dict) - containing rasterAttributes
+        - optTuple[5] (dict) - containing forestParameters
+        - optTuple[6] (dict) - containing MPOptions
 
-    Returns:
-    ----------
-    Nothing --> saves results for processed tile to temp folder (modelPaths["tempFolder"])
     """
 
     log = logging.getLogger(__name__)
@@ -158,6 +173,7 @@ def run(optTuple):
     varUmaxBool = optTuple[2]["varUmaxBool"]
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
+    fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
@@ -191,9 +207,9 @@ def run(optTuple):
     if varUmaxBool:
         varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
         if optTuple[2]["varUmaxType"].lower() == 'umax':
-            varUmaxArray[varUmaxArray>0] = varUmaxArray[varUmaxArray>0]**2 / 2 / 9.81
+            varUmaxArray[varUmaxArray > 0] = varUmaxArray[varUmaxArray > 0] ** 2 / 2 / 9.81
         elif optTuple[2]["varUmaxType"].lower() != 'zdeltalim':
-            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")   
+            log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
     else:
         varUmaxArray = None
 
@@ -206,6 +222,15 @@ def run(optTuple):
         varExponentArray = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
         varExponentArray = None
+
+    varParams = {
+        'varUmaxBool': varUmaxBool,
+        'varUmaxArray': varUmaxArray,
+        'varAlphaBool': varAlphaBool,
+        'varAlphaArray': varAlphaArray,
+        'varExponentBool': varExponentBool,
+        'varExponentArray': varExponentArray,
+    }
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
@@ -230,14 +255,12 @@ def run(optTuple):
         results = pool.map(
             calculation,
             [
-                [
+                [   # TODO: write in dicts:
                     dem, infra, release_sub,
                     alpha, exp, flux_threshold, max_z_delta,
                     nodata, cellsize,
                     infraBool, forestBool,
-                    varUmaxBool, varUmaxArray,
-                    varAlphaBool, varAlphaArray,
-                    varExponentBool, varExponentArray,
+                    varParams, fluxDistOldVersionBool,
                     forestArray, forestParams,
                 ]
                 for release_sub in release_list
@@ -256,6 +279,8 @@ def run(optTuple):
     fluxArray = np.zeros_like(dem, dtype=np.float32)
     countArray = np.zeros_like(dem, dtype=np.int32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     backcalc = np.zeros_like(dem, dtype=np.int32)
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
@@ -267,6 +292,8 @@ def run(optTuple):
     fluxList = []
     ccList = []
     zDeltaSumList = []
+    routFluxSumList = []
+    depFluxSumList = []
     backcalcList = []
     fpTravelAngleList = []
     slTravelAngleList = []
@@ -285,8 +312,10 @@ def run(optTuple):
         fpTravelAngleList.append(res[5])
         slTravelAngleList.append(res[6])
         travelLengthList.append(res[7])
+        routFluxSumList.append(res[8])
+        depFluxSumList.append(res[9])
         if forestInteraction:
-            forestIntList.append(res[8])
+            forestIntList.append(res[10])
 
     logging.info("Calculation finished, getting results.")
     for i in range(len(zDeltaList)):
@@ -294,6 +323,8 @@ def run(optTuple):
         fluxArray = np.maximum(fluxArray, fluxList[i])
         countArray += ccList[i]
         zDeltaSumArray += zDeltaSumList[i]
+        routFluxSumArray += routFluxSumList[i]
+        depFluxSumArray += depFluxSumList[i]
         backcalc = np.maximum(backcalc, backcalcList[i])
         fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
         slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
@@ -306,6 +337,8 @@ def run(optTuple):
     # Save Calculated tiles
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
     np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
+    np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), routFluxSumArray)
+    np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
@@ -321,23 +354,52 @@ def calculation(args):
     """This is the core function where all the data handling and calculation is
     done.
 
-    Input parameters:
-        dem         The digital elevation model
-        header      The header of the elevation model
-        infra       The infra layer
-        release     The list of release arrays
-        alpha
-        exp
-        flux_threshold
-        max_z_delta
+    Parameters
+    -----------
+    args: list
+        contains the following model input data:
 
-    Output parameters:
-        z_delta     Array like DEM with the max. kinetic Energy Height for every
-                    pixel
-        fluxArray  Array with max. concentration factor saved
-        countArray Array with the number of hits for every pixel
-        elh_sum     Array with the sum of Energy Line Height
-        back_calc   Array with back calculation, still to do!!!
+        - args[0] (np.array) - The digital elevation model
+        - args[1] (np.array) - The infrastructure layer
+        - args[2] (np.array) - cells with value 1 are PRAs
+        - args[3] (float) - alpha angle
+        - args[4] (float) - exponent
+        - args[5] (float) - threshold of minimum flux
+        - args[6] (float) - maximum of zDelta
+        - args[7] (float) - nodata values of rasters
+        - args[8] (float) - cellsize of rasters
+        - args[9] (bool) -  flag for calculation with/without infrastructure
+        - args[10] (bool) - flag for calculation with/without forest
+        - args[11] (dict) - contains flags and numpy arrays for variable input parameters (Alpha, exp, uMax)
+        - args[12] (bool) - flag for computing flux distribution with old version
+        - args[13] (numpy array) - contains forest information (None if forestBool=False)
+        - args[14] (dict) - contains parameters for forest interaction models (None if forestBool=False)
+
+    Returns
+    -----------
+    zDeltaArray: numpy array
+        the maximum of kinetic velocity height (zDelta) in every raster cell
+    fluxArray: numpy array
+        the maximum of flux in every cell
+    countArray: numpy array
+        the number of hits (GMF paths) in every cell
+    zDeltaSumArray: numpy array
+        the sum of kinetic velocity height (zDelta) in every raster cell
+    backcalc: numpy array
+          Array with back calculation, still TODO!!!
+    fpTravelAngleArray: numpy array
+        maximum of flow-path travel-angle in every cell
+    slTravelAngleArray: numpy array
+        maximum of sl travel-angle in every cell
+    travelLengthArray: numpy array
+        maximum of travel length in every cell
+    routFluxSumArray:numpy array
+        sum of routing flux in every cell
+    depFluxSumArray:numpy array
+        sum of deposition flux in every cell
+    forestIntArray: numpy array
+        minimum of the count a forested cell is hit (only returned if args[18]["forestInteraction"]==True)
+
     """
 
     # check if there's enough RAM available (default value set to 5%)
@@ -357,16 +419,17 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
-    varUmaxBool = args[11]
-    varUmaxArray = args[12]
-    varAlphaBool = args[13]
-    varAlphaArray = args[14]
-    varExponentBool = args[15]
-    varExponentArray = args[16]
+    varUmaxBool = args[11]['varUmaxBool']
+    varUmaxArray = args[11]['varUmaxArray']
+    varAlphaBool = args[11]['varAlphaBool']
+    varAlphaArray = args[11]['varAlphaArray']
+    varExponentBool = args[11]['varExponentBool']
+    varExponentArray = args[11]['varExponentArray']
+    fluxDistOldVersionBool = args[12]
 
     if forestBool:
-        forestArray = args[17]
-        forestParams = args[18]
+        forestArray = args[13]
+        forestParams = args[14]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
@@ -375,6 +438,8 @@ def calculation(args):
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     fluxArray = np.zeros_like(dem, dtype=np.float32)
     countArray = np.zeros_like(dem, dtype=np.int32)
 
@@ -424,7 +489,7 @@ def calculation(args):
             dem_ng, cellsize,
             1, 0, None,
             alpha, exp, flux_threshold, max_z_delta,
-            startcell=True,
+            startcell=True, fluxDistOldVersionBool=fluxDistOldVersionBool,
             FSI=forestArray[row_idx, col_idx] if isinstance(forestArray, np.ndarray) else None,
             forestParams=forestParams,
         )
@@ -482,13 +547,15 @@ def calculation(args):
                             flux[k], z_delta[k],
                             cell,
                             alpha, exp, flux_threshold, max_z_delta,
-                            startcell,
+                            startcell, fluxDistOldVersionBool=fluxDistOldVersionBool,
                             FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
                             forestParams=forestParams,
                                      ))
 
             zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
             fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
+            routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
+            depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
             zDeltaSumArray[cell.rowindex, cell.colindex] += cell.z_delta
             fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.max_gamma)
@@ -531,10 +598,10 @@ def calculation(args):
     gc.collect()
     if forestInteraction:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, forestIntArray
+            travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
     else:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray
+            travelLengthArray, routFluxSumArray, depFluxSumArray
 
 
 def enoughMemoryAvailable(limit=0.05):
@@ -543,12 +610,14 @@ def enoughMemoryAvailable(limit=0.05):
 
     Parameters
     -----------
-    limit: float (between 0 and 1) - default at 0.05 (i.e. 5%)
+    limit: float
+        available RAM memory limit (between 0 and 1) - default at 0.05 (i.e. 5%)
 
     Returns
     -----------
-    'True' if more than the defined memory-limit is still available
-    'False' if less than the defined memory-limit is available
+    bool
+        'True' if more than the defined memory-limit is still available;
+        'False' if less than the defined memory-limit is available
     """
 
     log = logging.getLogger(__name__)
@@ -573,28 +642,34 @@ def calculateMultiProcessingOptions(nRel, nCPU, procPerCPU=1, maxChunks=500, chu
     trouble with RAM issues ...
 
     NOTE: this is still a quick'n'dirty hack, it might make sense to have a more sophisticated approach for optimization
-          of CPU and RAM resource usage during multiprocessing depending on e.g.:
-              - size of the numpy arrays that are processed (depending on tileSize and rasterResolution)
-              - density of release areas in the tile
-              - total available RAM and CPUs on the machine
-              - (other com4FlowPy Parameterization)
+    of CPU and RAM resource usage during multiprocessing depending on e.g.:
+        - size of the numpy arrays that are processed (depending on tileSize and rasterResolution)
+        - density of release areas in the tile
+        - total available RAM and CPUs on the machine
+        - (other com4FlowPy Parameterization)
 
     Parameters
     -----------
-    nRel: int - number of release Pixels inside the tile (i.e. all cells/pixels with values >=1 in 'release')
-    nCPU: int - number of available CPUs (as defined in the .ini files)
-    procPerCPU: int - number of processes to be spawned per CPU (default = 1) - might be set higher for increased
-                      performance
+    nRel: int
+        number of release Pixels inside the tile (i.e. all cells/pixels with values >=1 in 'release')
+    nCPU: int
+        number of available CPUs (as defined in the .ini files)
+    procPerCPU: int
+        number of processes to be spawned per CPU (default = 1) - might be set higher for increased performance
+    maxChunks: int
+        hard limit to the maximum number of chunks that is used --> a larger number of chunks will very
+        probably increase performance in terms of maximising CPU workload (especially with large numbers of
+        nCPU) but also cause higher RAM consumption (in the current multiprocessing implementation)
+    chunkSize: int
+        default number of release pixels per chunk in cases where the chunk-size is not constrained by
+        nCPU*procPerCPU or maxChunks
 
-    maxChunks: int - hard limit to the maximum number of chunks that is used --> a larger number of chunks will very
-               probably increase performance in terms of maximising CPU workload (especially with large numbers of
-               nCPU) but also cause higher RAM consumption (in the current multiprocessing implementation)
-    chunkSize: int - default number of release pixels per chunk in cases where the chunk-size is not constrained by
-               nCPU*procPerCPU or maxChunks
     Returns
     -----------
-    nChunks: int - the number of chunks into which the release layer/array is split for multiprocessing
-    nProcesses: int - the number of processes used in Pool.map() inside run()
+    nChunks: int
+        the number of chunks into which the release layer/array is split for multiprocessing
+    nProcesses: int
+        the number of processes used in Pool.map() inside run()
     """
     nProcesses = int(nCPU * procPerCPU)
     # check if release is empty - if so, there's no reason to split
@@ -619,15 +694,17 @@ def handleMemoryAvailability(recheckInterval=30):
     and handle the situation if not
 
     NOTE: currently only time.sleep() is called to delay the subprocess for a defined time and then re-check
-          memory availability.
-          other possible options:
-              - log message and abort model run?
+    memory availability.
+    other possible options:
+        - log message and abort model run?
     NOTE: The implementation with time.sleep() can cause an "infinite loop" in time-sleep if for some
-          reason memory is not freed after a sensible amount of time.altzone
-          Memory consumption is dependend on tile-sizes and number of Chunks/tile ...
+    reason memory is not freed after a sensible amount of time.altzone
+    Memory consumption is dependend on tile-sizes and number of Chunks/tile ...
+
     Parameters
     -----------
-    recheckInterval: int - delay time for the process after which memory availability is re-checked
+    recheckInterval: int
+        delay time (in seconds) for the process after which memory availability is re-checked
     """
     while not enoughMemoryAvailable():
         time.sleep(recheckInterval)
