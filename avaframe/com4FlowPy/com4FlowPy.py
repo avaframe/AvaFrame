@@ -213,7 +213,7 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     forestParams: dict
         input parameters regarding forest interaction (from .ini - file)
     modelPaths: dict
-        contains paths to input files
+        paths to input files, workDir, resDir, outputFileFormat, etc. (from .ini - file)
     MPOptions: dict
         contains parameters for multiprocessing (from .ini - file)
     """
@@ -255,6 +255,9 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
+        log.info("------------------------")
+    if modelParameters["fluxDistOldVersionBool"]:
+        log.info("Calculation using old (BUGGY!!) version of flux distribution!")
         log.info("------------------------")
     for param, value in MPOptions.items():
         log.info(f"{'%s:'%param : <20}{value : <5}")
@@ -350,8 +353,13 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
 
 def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):
-    """divides all used input layers into tiles
-    and saves the tiles in the temp folder
+    """computes the number of tiles (_tileCols, _tileRows) and tileOverlap (_U)
+    based on input layer dimensions and tilingParameters,
+    divides all used input layers into tiles
+    and saves the tiles to the temp folder
+
+    the function is a wrapper around the code in splitAndMerge.py,
+    where the actual tiling is handled.
 
     Parameters
     -----------
@@ -367,9 +375,10 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
     Returns
     -----------
     nTiles: tuple
-        number of tiles
+        nTiles[0]: maximum index of tiles along rows
+        nTiles[1]: maximum index of tiles along columns
+        actual number of tiles = (nTiles[0] + 1) * (nTiles[1] + 1)
     """
-
     _tileCOLS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
     _tileROWS = int(tilingParameters["tileSize"] / rasterAttributes["cellsize"])
     _U = int(tilingParameters["tileOverlap"] / rasterAttributes["cellsize"])
@@ -458,10 +467,10 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     # Merge calculated tiles
     zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
-    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count")
-    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum")
-    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum")
-    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum")
+    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method='sum')
+    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
     fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
     travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
@@ -507,9 +516,6 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
         _ts, _oF), travelLength)
 
-    # TODO: List of result files, which are produced should be specified also in the .ini file!!!!
-    # NOTE: Probably good to have "default" output files (z_delta,FP_travel_angle,cell_counts)
-    #      and only write other output files if set accordingly
     # NOTE:
     # if not modelOptions["infraBool"]:  # if no infra
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)

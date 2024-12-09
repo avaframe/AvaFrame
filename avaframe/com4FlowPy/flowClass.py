@@ -167,7 +167,7 @@ class Cell:
         Parameters
         -----------
         parent: class Cell
-            added parent
+            Cell object to add to the list of parent cells 'lOfParents'
         """
         self.lOfParents.append(parent)
         if self.forestInteraction:
@@ -191,7 +191,11 @@ class Cell:
         self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
-        """ function calculates the travel-angle between the start cell and the current cell.
+        """function calculates the travel-angle between the start cell and the current cell
+        using the shortest connection or straight line (sl) between the two cells.
+        The travel angle calculated with this shortest horizontal distance 'sl_gamma' is always
+        larger or equal to the travel angle  'max_gamma', which is calculated along the
+        (potentially curved) flow path (fp). (vgl. Meißl, 1998)
         """
         _dx = abs(self.startcell.colindex - self.colindex)
         _dy = abs(self.startcell.rowindex - self.rowindex)
@@ -202,7 +206,7 @@ class Cell:
 
     def calc_z_delta(self):
         """
-        function calculates zDelta (velocity line height) to the eligible neighbours
+        function calculates zDelta (velocity or energy line height) to the eligible neighbours
         NOTE: forestFriction related mechanics are implemented here!
         """
         self.z_delta_neighbour = np.zeros((3, 3))
@@ -367,20 +371,32 @@ class Cell:
         # "0<n<8" AND "m=0" is not handled!!! (in this case flux is "lost")
 
         if self.fluxDistOldVersionBool:
+            """
+            legacy version of code (pre 01-2025) WITH BUG (is used if self.fluxDistOldVersionBool)
+            here 'count' returns the number of neighbor/child cells that receive flux > 0, but
+            below the flux_threshold.
+            """
             count = ((0 < self.dist) & (self.dist < threshold)).sum()
         else:
-            count = (self.dist >= threshold).sum()  # this is the correct way to calculate count
-        # TODO: make this the default, but keep option to use "old" version with minor Bug for backward compatibility of
-        # model results
+            """
+            default/correct version with FIXED BUG (used if self.fluxDistOldVersionBool == False)
+            her 'count' returns the number of neighbor/child cells which receive
+            flux >= the flux_threshold.
+            """
+            count = (self.dist >= threshold).sum()
+        # massToDistribute ~ sum of flux of child cells below the flux_threshold
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
-        """Checking if flux is distributed to a field that isn't taking in account, when then distribute it equally to
-         the other fields"""
+
         if mass_to_distribute > 0 and count > 0:
+            # local flux redistribution to eligible child cells
             self.dist[self.dist > threshold] += mass_to_distribute / count
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
+            # correction/flux conservation for potential rounding losses
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist)) / count
-        if count == 0:  # TODO: not 100% sure if this is right
+        if count == 0:
+            # if all child cells are below flux_threshold, the flux is deposited
+            # TODO: check alternatives (e.g. 'global' redistribution or within generations)
             self.fluxDep = self.flux
         row_local, col_local = np.where(self.dist > threshold)
 
