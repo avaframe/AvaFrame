@@ -777,21 +777,6 @@ def test_initializeResistance():
     assert reportAreaInfo["resistance"] == "No"
     assert reportAreaInfo["detrainment"] == "Yes"
 
-    cfg["GENERAL"] = {"cRes": 0.003,
-                      "ResistanceModel": "cResCoulomb",
-                     "detK": 10.0, 
-                      "detrainment": False, 
-                      "detWithoutRes": False}
-    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
-        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
-    )
-    assert np.array_equal(cResRaster, testArray)
-    assert np.array_equal(detRaster, np.zeros((nrows, ncols)))
-    assert np.sum(detRaster) == 0.0
-    assert np.sum(cResRaster) == 0.363
-    assert reportAreaInfo["resistance"] == "Yes"
-    assert reportAreaInfo["detrainment"] == "No"
-
     cfg["GENERAL"] = {"cResH": 0.003,
                       "ResistanceModel": "cResH",
                        "detK": 10.0, 
@@ -800,18 +785,6 @@ def test_initializeResistance():
     cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
     )
-    assert np.array_equal(cResRaster, testArray)
-    assert np.sum(cResRaster) == 0.363
-    assert reportAreaInfo["resistance"] == "Yes"
-
-    cfg["GENERAL"] = {"cResH": 0.003,
-                      "ResistanceModel": "cResHCoulomb",
-                       "detK": 10.0, 
-                      "detrainment": False, 
-                      "detWithoutRes": False}         
-    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
-        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
-    )         
     assert np.array_equal(cResRaster, testArray)
     assert np.sum(cResRaster) == 0.363
     assert reportAreaInfo["resistance"] == "Yes"
