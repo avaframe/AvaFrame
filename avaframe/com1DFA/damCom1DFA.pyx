@@ -559,7 +559,7 @@ def initializeWallLines(cfg, dem, wallLineDict, savePath=''):
   else:
     # crete a dummy dict (needed so that cython runs)
     wallLineDict = {'dam': 0, 'cellsCrossed': np.zeros((dem['header']['ncols']*dem['header']['nrows'])).astype(
-        np.int32)}
+        np.int64)}
     for key in ['x', 'y', 'z', 'xCrown', 'yCrown', 'zCrown', 'xTangent', 'yTangent', 'zTangent']:
       wallLineDict[key] = np.ones((1))*1.0
     for key in ['nPoints', 'height', 'slope', 'restitutionCoefficient', 'nIterDam']:
