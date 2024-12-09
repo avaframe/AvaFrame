@@ -3,6 +3,7 @@
 
 """
     Functions to handle the raster tiles.
+     Tiling is intended to manage processing of large(r) computational domains.
 """
 
 import logging
@@ -180,7 +181,7 @@ def mergeRaster(inDirPath, fName, method='max'):
     method provided through the function parameters
 
     Parameters
-    -----------
+    ----------
     inDirPath: str
         Path to the temporary files, that are results for each tile
     fName : str
@@ -189,9 +190,10 @@ def mergeRaster(inDirPath, fName, method='max'):
         method, how the tiles should be merged (default: max)
         method 'min' calculates the minimum of input raster tiles,
         if the minimum is < 0, then 0 is used
+        method 'sum' calculates the sum of the raster tiles
 
     Returns
-    -----------
+    -------
     mergedRas : numpy array
         merged raster
     """
@@ -204,7 +206,8 @@ def mergeRaster(inDirPath, fName, method='max'):
 
     mergedRas = np.zeros((extL[0], extL[1]))
     # create Raster with original size
-    mergedRas[:, :] = np.nan
+    if method != 'sum':
+        mergedRas[:, :] = np.nan
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
@@ -222,6 +225,10 @@ def mergeRaster(inDirPath, fName, method='max'):
                     np.where((mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]] >= 0) & (smallRas >= 0),
                     np.fmin(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas),
                     np.fmax(mergedRas[pos[0][0]:pos[0][1], pos[1][0]:pos[1][1]], smallRas))
+            if method == 'sum':
+                mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]] = np.add(
+                    mergedRas[pos[0][0]: pos[0][1], pos[1][0]: pos[1][1]], smallRas
+                )
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
     return mergedRas

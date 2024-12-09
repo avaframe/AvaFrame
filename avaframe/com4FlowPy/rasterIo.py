@@ -14,17 +14,18 @@ log = logging.getLogger(__name__)
 
 def read_header(input_file):
     """
-    Reads in the header of the raster file
+    Reads the header of the raster file
+    raster file should be readable by rasterio (e.g. .tif, .asc)
 
     Parameters
     -----------
     input_file: str
-        directory to raster file
+        path to raster file
 
     Returns
     -----------
     header: dict
-        header of raster
+        header of raster file in style of ASCII-Rasters
     """
 
     raster = rasterio.open(input_file)
@@ -49,14 +50,14 @@ def read_raster(input_file):
     Parameters
     -----------
     input_file: str
-        directory to raster file
+        path to raster file
 
     Returns
     -----------
     my_array: np.array
-        raster that is read in
+        numpy array with values read in from the raster file
     header: dict
-        header of raster
+        header of raster file in style of ASCII-Rasters
     """
 
     header = read_header(input_file)
@@ -66,21 +67,21 @@ def read_raster(input_file):
     return my_array, header
 
 
-def output_raster(file, file_out, raster):
+def output_raster(referenceFile, file_out, raster):
     """
     Saves raster
 
     Parameters
     -----------
-    file: str
-        directory to raster file to reference on, mostly DEM
+    referenceFile: str
+        path to raster file to reference on, mostly DEM
     file_out: str
         path for the outputfile, possible extends are .asc or .tif
     raster: np.array
         raster (array) that is saved
     """
 
-    raster_trans = rasterio.open(file)
+    raster_trans = rasterio.open(referenceFile)
     try:
         crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
     except:
