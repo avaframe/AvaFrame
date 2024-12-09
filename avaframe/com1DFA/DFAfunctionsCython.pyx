@@ -120,7 +120,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
-  cdef long[:] ID = particles['ID']
+  cdef long long[:] ID = particles['ID']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']

@@ -877,7 +877,7 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
     xArray = (lineDict["x"] - xllc) / csz
     yArray = (lineDict["y"] - yllc) / csz
     # loop on line points
-    cellsCrossed = np.zeros((ncols * nrows))
+    cellsCrossed = np.zeros((ncols * nrows),dtype=np.int32)
     for i in range(np.size(xArray) - 1):
         xA = xArray[i]
         xB = xArray[i + 1]
@@ -919,7 +919,7 @@ def getCellsAlongLine(header, lineDict, addBuffer=True):
             cellsCrossed[indCell] = 1
             if addBuffer:
                 cellsCrossed, _, _ = getNeighborCells(indX, indY, ncols, nrows, cellsCrossed)
-    lineDict["cellsCrossed"] = cellsCrossed.astype(int)
+    lineDict["cellsCrossed"] = cellsCrossed
     return lineDict
 
 
