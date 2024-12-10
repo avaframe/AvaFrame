@@ -217,6 +217,14 @@ coefficient :math:`c_{\text{res}}` that depends on the structure of the obstacle
 
 Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. Please check out previous documentation versions for details.
 
+Another option for computing resistance force :math:`F_i^{\text{res}}` can be chosen that is independent of the effective height :math:`h^{\text{eff}}`:
+
+- .. math::
+   F_i^{\text{res}} = -c_{\text{resH}}\,\rho_0\,A\,
+    \overline{u}^2\,
+    \frac{\overline{u}_i}{\|\overline{u}\|}
+    
+with characteristic coefficient :math:`c_{\text{resH}}`.
 
 
 Surface integral forces:
