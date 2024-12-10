@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+    Functions for calculations at the 'cell level' (vgl. D'Amboise et al., 2022)
+"""
+
 import numpy as np
 import math
 
 
 class Cell:
-    """This is the com4FlowPy 'Cell ' class
-    This class handles the calculation at the 'cell level' (vgl. D'Amboise et al., 2022)
-    """
-
     def __init__(
         self,
         rowindex, colindex,
         dem_ng, cellsize,
         flux, z_delta, parent,
         alpha, exp, flux_threshold, max_z_delta,
-        startcell,
+        startcell, fluxDistOldVersionBool=False,
         FSI=None, forestParams=None,
     ):
-        """constructor for the Cell class
+        """constructor for the Cell class that describes a raster cell that is hit by the GMF.
         the constructor function is called every time a new instance of type 'Cell' is
         initialized.
         NOTE/TODO: parent can be of different data types still, maybe split into two separate variables
@@ -39,12 +39,15 @@ class Cell:
         self.no_flow = np.ones_like(self.dem_ng)
 
         self.flux = flux
+        self.fluxDep = 0
         self.z_delta = z_delta
 
         self.alpha = float(alpha)
         self.exp = int(exp)
         self.max_z_delta = float(max_z_delta)
         self.flux_threshold = float(flux_threshold)
+
+        self.fluxDistOldVersionBool = fluxDistOldVersionBool
 
         self.tanAlpha = np.tan(np.deg2rad(self.alpha))  # moved to constructor, so this doesn't have to be calculated on
         # every iteration of calc_z_delta(self)
@@ -146,9 +149,26 @@ class Cell:
                 self.forestIntCount += parent.forestIntCount
 
     def add_os(self, flux):
+        """
+        Adds flux to 'existing' flux
+
+        Parameters
+        -----------
+        flux: float
+            added flux
+        """
         self.flux += flux
 
     def add_parent(self, parent):
+        """
+        Adds parent to parents list
+        and optionally the forest interaction value of the parent
+
+        Parameters
+        -----------
+        parent: class Cell
+            added parent
+        """
         self.lOfParents.append(parent)
         if self.forestInteraction:
             # check if new/ younger parent has a lower forest interaction number
@@ -157,9 +177,9 @@ class Cell:
                 self.forestIntCount = parent.forestIntCount + self.isForest
 
     def calc_fp_travelangle(self):
-        """function calculates the travel-angle along the shortest flow-path from the start-cell to the current cell
-        the trave-angle along the shortest flow-path is equivalent to the maximum travel angle along all paths from
-        the startcell to this cell.
+        """function calculates the travel-angle along the shortest flow-path from the start-cell
+        to the current cell. The travel-angle along the shortest flow-path is equivalent to the
+        maximum travel angle along all paths from the startcell to this cell.
         """
         _ldistMin = []  #
         _dh = self.startcell.altitude - self.altitude  # elevation difference from cell to start-cell
@@ -171,6 +191,8 @@ class Cell:
         self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
+        """ function calculates the travel-angle between the start cell and the current cell.
+        """
         _dx = abs(self.startcell.colindex - self.colindex)
         _dy = abs(self.startcell.rowindex - self.rowindex)
         _dh = self.startcell.altitude - self.altitude
@@ -180,7 +202,7 @@ class Cell:
 
     def calc_z_delta(self):
         """
-        function calculates zDelta to the eligible neighbours
+        function calculates zDelta (velocity line height) to the eligible neighbours
         NOTE: forestFriction related mechanics are implemented here!
         """
         self.z_delta_neighbour = np.zeros((3, 3))
@@ -235,6 +257,8 @@ class Cell:
         self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
 
     def calc_tanbeta(self):
+        """calculates the normalized terrain based routing
+        """
         _ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 1, 1], [self._SQRT2, 1, self._SQRT2]])
         _distance = _ds * self.cellsize
 
@@ -248,6 +272,9 @@ class Cell:
             self.r_t = self.tan_beta**self.exp / np.sum(self.tan_beta**self.exp)
 
     def calc_persistence(self):
+        """
+        calculates persistence-based routing
+        """
         self.persistence = np.zeros_like(self.dem_ng)
         if self.is_start:
             self.persistence += 1
@@ -301,7 +328,14 @@ class Cell:
                         self.persistence[1, 0] += 0.707 * maxweight
 
     def calc_distribution(self):
+        """
+        calculates flux and zdelta that is distributed to the adjacent cells
 
+        Returns
+        -----------
+        tuple
+            list of row, col, flux, zdelta of adjacent cells that receive flux/zdelta
+        """
         self.calc_z_delta()
         self.calc_persistence()
         self.persistence *= self.no_flow
@@ -331,8 +365,11 @@ class Cell:
         # still above threshold
         # NOTE: this only works if "0 < n < 8" AND "0 < m < 8", the case where
         # "0<n<8" AND "m=0" is not handled!!! (in this case flux is "lost")
-        count = ((0 < self.dist) & (self.dist < threshold)).sum()
-        # count = (self.dist >= threshold).sum() #this is the correct way to calculate count
+
+        if self.fluxDistOldVersionBool:
+            count = ((0 < self.dist) & (self.dist < threshold)).sum()
+        else:
+            count = (self.dist >= threshold).sum()  # this is the correct way to calculate count
         # TODO: make this the default, but keep option to use "old" version with minor Bug for backward compatibility of
         # model results
         mass_to_distribute = np.sum(self.dist[self.dist < threshold])
@@ -343,7 +380,8 @@ class Cell:
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist)) / count
-
+        if count == 0:  # TODO: not 100% sure if this is right
+            self.fluxDep = self.flux
         row_local, col_local = np.where(self.dist > threshold)
 
         return (
