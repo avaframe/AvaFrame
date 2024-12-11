@@ -35,7 +35,7 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
     return avalancheDir, "Success"
 
 def findAvaDirs(Dir):
-    """Function to find all valid avalanche directories within a directory."""
+    """Function to find all valid avalanche directories within a directory based on if there is an "Inputs" folder."""
 
     avaDirs = [avaDir for avaDir in pathlib.Path(Dir).iterdir() if avaDir.is_dir() and
                (avaDir / "Inputs").is_dir()]
@@ -45,39 +45,55 @@ def findAvaDirs(Dir):
 
     return avaDirs
 
+def moveOrCopyFile(src, dst, copy=False):
+    """Function to move or copy a file from a source location to a destination location
+
+    Parameters
+    ----------
+    src: path object
+        the source location
+    dst: path object
+        destination location
+    copy: bool
+        whether to copy or move the file
+    """
+    if copy:
+        shutil.copy(str(src), str(dst))
+        log.debug(f"Copied {src} to {dst}")
+    else:
+        shutil.move(str(src), str(dst))
+        log.debug(f"Moved {src} to {dst}")
+
 def moveOrCopyPeakFiles(cfgCom7, avalancheDir, avaDirs):
-    """Function to move or copy peak files from each avalanche directory to a single directory."""
+    """Function to move or copy peak files from each avalanche directory to a directory called allPeakFiles.
+    Also copy all timeSteps to an allTimeSteps directory"""
 
-    allPeakFilesDir = pathlib.Path(avalancheDir, 'allPeakFiles')
-    if allPeakFilesDir.exists():
-        shutil.rmtree(str(allPeakFilesDir))
-    allPeakFilesDir.mkdir(parents=True, exist_ok=True)
-
-    allTimeStepsDir = allPeakFilesDir / 'allTimeSteps'
-    if allTimeStepsDir.exists():
-        shutil.rmtree(str(allTimeStepsDir))
-    allTimeStepsDir.mkdir(parents=True, exist_ok=True)
-
-    # Get setting from cfg
+    # Get settings from cfg
     copyPeakFiles = cfgCom7['GENERAL'].getboolean('copyPeakFiles')
 
+    fileOperation = moveOrCopyFile
+    fileOperationKwargs = {'copy': copyPeakFiles}
+
+    # Set up allPeakFilesDir and allTimeStepsDir
+    allPeakFilesDir = pathlib.Path(avalancheDir, 'allPeakFiles')
+    if allPeakFilesDir.exists():
+        shutil.rmtree(str(allPeakFilesDir)) #remove it if it already exists
+    allPeakFilesDir.mkdir(parents=True, exist_ok=True)
+    allTimeStepsDir = allPeakFilesDir / 'allTimeSteps'
+    if allTimeStepsDir.exists():
+        shutil.rmtree(str(allTimeStepsDir)) #remove it if it already exists
+    allTimeStepsDir.mkdir(parents=True, exist_ok=True)
+
+    # Move or copy the peak files and time steps
     for avadir in avaDirs:
         peakFilesDir = pathlib.Path(avadir, 'Outputs', 'com1DFA', 'peakFiles')
         if peakFilesDir.is_dir():
-            for file in peakFilesDir.iterdir():
-                if file.is_file():  # Only move files, not directories
-                    if copyPeakFiles:
-                        shutil.copy(str(file), str(allPeakFilesDir))
-                        log.info(f"Copied {file.name} to {allPeakFilesDir}")
-                    else:
-                        shutil.move(str(file), str(allPeakFilesDir))
-                        log.info(f"Moved {file.name} to {allPeakFilesDir}")
+            for file in peakFilesDir.glob('*.asc'):
+                fileOperation(file, allPeakFilesDir, **fileOperationKwargs)
+
             timeStepsDir = peakFilesDir / 'timeSteps'
             if timeStepsDir.is_dir():
-                for file in timeStepsDir.iterdir():
-                    if copyPeakFiles:
-                        shutil.copy(str(file), str(allTimeStepsDir))
-                        log.debug(f"Copied {file.name} to {allTimeStepsDir}")
-                    else:
-                        shutil.move(str(file), str(allTimeStepsDir))
-                        log.debug(f"Moved {file.name} to {allTimeStepsDir}")
+                for file in timeStepsDir.glob('*.asc'):
+                    fileOperation(file, allTimeStepsDir, **fileOperationKwargs)
+
+    return allPeakFilesDir, allTimeStepsDir
