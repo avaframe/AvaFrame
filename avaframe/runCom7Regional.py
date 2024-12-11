@@ -47,7 +47,7 @@ def runCom7Regional(avalancheDir=''):
     # List valid avalanche directories within the regional directory
     avaDirs = com7Regional.findAvaDirs(regionalDir)
 
-    # Get number of processes to perform #ToDo: get nVariations as well, adjust log output
+    # Get number of processes to perform #ToDo: get nVariations as well, adjust log output. need to adjust function?
     nProcesses = cfgUtils.getNumberOfProcesses(cfgMain, len(avaDirs))
 
     # Set nCPU for com1 to 1 to avoid dual parallelization, i.e. each subAvaDir variation is processed sequentially
@@ -72,8 +72,15 @@ def runCom7Regional(avalancheDir=''):
     # called (allPeakFiles) in the main regional folder. Clear them if they already exist
     # Keep in mind, this is only com1DFA specific for now, also keep in mind that the information where it comes from
     # is lost when it's moved (i.e. things like layer rename is no longer possible when they are imported to QGIS)
+    # preliminary feature until an "import output rasters" is added to QGIS
     if cfgCom7['GENERAL'].getboolean('movePeakFiles'):
-        com7Regional.moveOrCopyPeakFiles(cfgCom7, regionalDir, avaDirs)
+        allPeakFilesDir, allTimeStepsDir = com7Regional.moveOrCopyPeakFiles(cfgCom7, regionalDir, avaDirs)
+
+        copyPeakFiles = cfgCom7['GENERAL'].getboolean('copyPeakFiles')
+        log.info(f"{'Copied' if copyPeakFiles else 'Moved'} peakFiles to "
+                  f"{allPeakFilesDir}")
+        log.info(f"{'Copied' if copyPeakFiles else 'Moved'} timeSteps to "
+                  f"{allTimeStepsDir}")
 
     # Print time needed
     endTime = time.time()
