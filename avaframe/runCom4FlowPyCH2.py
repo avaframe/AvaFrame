@@ -431,8 +431,6 @@ if __name__ == "__main__":
     #praThresholds = ['001', '010', '020', '030', '040', '050', '060', '070', '080', '090']
     praThresholds = ['001', '020', '040', '050', '060', '070']
 
-
-    """
     wsScenPath = f'/home/christoph/OneDrive/24125_CAIROS-local/testing/AOI_Sella/flowPy/processing/pyShed1250_8_praThXXX_praSeg500_125000_1'
 
 
@@ -451,5 +449,3 @@ if __name__ == "__main__":
                     raise FileExistsError(f'get yout shit toghetter! not found {avaScenName}')
                 
                 main(avalancheDir=avaScenName)
-    """
-    main(avalancheDir='data/avaParabChannelPaperFP2')
