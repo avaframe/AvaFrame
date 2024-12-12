@@ -35,11 +35,9 @@ Running the Code
 - In order to run :py:mod:`com4FlowPy` you need to install ``rasterio`` and ``gdal`` separately, since they are not included in the general AvaFrame requirements (--> on Linux distributions inside the ``avaframe_env`` ``conda`` environment ``pip install rasterio`` should usually suffice).
 
 If you have trouble installing ``GDAL`` or ``rasterio`` on Windows use these links to
-get the required version directly from their website, first install ``GDAL`` and then ``rasterio``.
+get the required version directly from their website, first install ``rasterio``:
 
-- ``GDAL``: https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
-
-- ``rasterio``: https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
+https://rasterio.readthedocs.io/en/stable/installation.html#easy-installation
 
 Once the required libraries are installed the model runs via the ``runCom4FlowPy.py`` script. 
 
