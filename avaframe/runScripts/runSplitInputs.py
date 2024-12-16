@@ -44,26 +44,34 @@ def runSplitInputs(avalancheDir=''):
 
     # Step 1: Create the central list
     folderList = sI.createFolderList(inputShp)
+    # Group folders with identical "name" attributes before the first underscore and update folder list
+    folderListGrouped = sI.groupFoldersByName(folderList)
 
     # Step 2: Set up ava directories
     log.info("Running folder initialization for each entry...")
-    sI.createFoldersForReleaseAreas(folderList, outputDir)
+    sI.createFoldersForReleaseAreas(folderListGrouped, outputDir)
     log.info("Finished folder initialization")
 
     # Step 3: Split and move release areas to each directory
     log.info("Splitting and moving release areas...")
-    sI.splitAndMoveReleaseAreas(folderList, inputShp, outputDir)
+    sI.splitAndMoveReleaseAreas(folderListGrouped, inputShp, outputDir)
     log.info("Finished splitting and moving release areas")
 
     # Step 4: Clip and move DEM
     if cfg['GENERAL'].getboolean('splitDEM'):
         log.info("Clipping and moving DEM...")
-        sI.splitDEMByCenterpointAndMove(folderList, inputDEM, outputDir, cfg)
+        sI.splitDEMByCenterpointAndMove(folderListGrouped, inputDEM, outputDir, cfg)
         log.info("Finished clipping and moving of DEM")
+
+    # Step 5: Separate by "scenarios"
+    #if cfg['GENERAL'].getboolean('splitScenarios'):
+    #    log.info("Separating by scenarios...")
+    #    sI.separateByScenarios(folderListGrouped, outputDir)
+    #    log.info("Finished separating by scenarios")
 
     # Print time needed
     endTime = time.time()
-    log.info(f"Completed splitting input data into '{len(folderList)}' individual folders after "
+    log.info(f"Completed splitting input data into '{len(folderListGrouped)}' individual folders after "
              f"{endTime - startTime:.1f} seconds.")
 
 if __name__ == '__main__':
