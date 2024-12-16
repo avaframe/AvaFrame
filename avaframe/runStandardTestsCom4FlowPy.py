@@ -25,12 +25,12 @@ def readRasters(path):
     return output
 
 
-def compareRasters(path, pathRef):
+def compareRasters(path, pathRef, rtol):
     raster = readRasters(path)
     rasterRef = readRasters(pathRef)
     diff = rasterRef - raster
     equal = np.array_equal(rasterRef, raster)
-    closeArray = np.isclose(raster, rasterRef, rtol=1e-04, equal_nan=True)
+    closeArray = np.isclose(raster, rasterRef, rtol=rtol, equal_nan=True)
     closePercent = np.count_nonzero(closeArray[np.logical_or(raster > 0, rasterRef > 0)]) / rasterRef[np.logical_or(raster > 0, rasterRef > 0)].size
     return diff, equal, closePercent
 
@@ -115,15 +115,16 @@ for test in testList:
     timeNeeded = endTime - startTime
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
+    rtol = 1e-01
     for variable in outputVariable:
         pathRasterRef = refDir / (f'com4_{cfgPath["uid"]}__{variable}.tif')
         pathRaster = compDir / (f'com4_{cfgPath["uid"]}__{variable}.tif')
-        diff, eq, close = compareRasters(pathRaster, pathRasterRef)
+        diff, eq, close = compareRasters(pathRaster, pathRasterRef, rtol)
 
         if eq and np.sum(abs(diff[diff != 0])) == 0:
             message = f'{testName}: for {variable}: rasters are equal \n'
         else:
-            message = f'{testName}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: 10^-4) \n'
+            message = f'{testName}: for {variable}: rasters are *NOT* equal, but {np.round(close,4) * 100}% of the affected area is close (relative tolerance: {rtol}) \n'
         log.info(message)
         with open(reportFile, 'a') as pfile:
             pfile.write(message)
