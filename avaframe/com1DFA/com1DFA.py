@@ -149,6 +149,7 @@ def com1DFAMain(cfgMain, cfgInfo=""):
     for key in simDict:
         log.info("Simulation: %s" % key)
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
+        adaptDemPlot = simDict[key]["cfgSim"]["GENERAL"].getboolean("adaptDemPlot")
 
     # initialize reportDict list
     reportDictList = list()
@@ -186,7 +187,8 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         timeNeeded = "%.2f" % (time.time() - startTime)
         log.info("Overall (parallel) com1DFA computation took: %s s " % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
-
+        
+        dem = com1DFATools.chooseDemPlot(dem, adaptedDemBackground=adaptDemPlot)
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
             simDF,
@@ -217,7 +219,7 @@ def com1DFACoreTask(simDict, inputSimFiles, avalancheDir, outDir, cuSim):
     # load configuration object for current sim
     cfg = simDict[cuSim]["cfgSim"]
 
-    # check configuraton for consistency
+    # check configuraton for consistency and plausibility
     checkCfg.checkCfgConsistency(cfg)
 
     # fetch simHash for current sim
@@ -315,6 +317,7 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # create plots and report
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
     fU.makeADir(reportDir)
+
     # Generate plots for all peakFiles
     if exportData:
         plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
@@ -893,6 +896,7 @@ def initializeMesh(cfg, demOri, num):
     # set origin to 0, 0 for computations, store original origin
     dem = setDEMoriginToZero(demOri)
     dem["originalHeader"] = demOri["header"].copy()
+    dem["originalRasterData"] = dem["rasterData"].copy()
 
     # read dem header
     headerDEM = dem["header"]
@@ -1351,6 +1355,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["yllcenter"] = dem["originalHeader"]["yllcenter"]
     particles["nExitedParticles"] = 0.0
     particles["dmDet"] = np.zeros(np.shape(hPartArray))
+    particles["dmEnt"] = np.zeros(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):
@@ -1396,6 +1401,14 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     if debugPlot:
         debPlot.plotPartIni(particles, dem)
 
+    # space for deposited particles TODO: extra dict for them?
+    particles["stoppedParticles"] = {
+        "x": np.empty(0),
+        "y": np.empty(0),
+        "m": np.empty(0),
+        "ID": np.empty(0),
+        "velocityMag": np.empty(0),
+    }
     return particles
 
 
@@ -1469,6 +1482,10 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
+    fields["hDetrained"] = np.zeros((nrows, ncols))
+    fields["hStopped"] = np.zeros((nrows, ncols))
+    fields["hEntrained"] = np.zeros((nrows, ncols))
+    fields["demAdapted"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
@@ -1836,6 +1853,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     timeM = []
     massEntrained = []
     massDetrained = []
+    massStopped = []
     massTotal = []
     pfvTimeMax = []
 
@@ -1903,7 +1921,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         startTime = time.time()
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
         # Perform computations
-        particles, fields, zPartArray0, tCPU = computeEulerTimeStep(
+        particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
             cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
         )
         # set max values of fields to dataframe
@@ -1919,6 +1937,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         # write mass balance info
         massEntrained.append(particles["massEntrained"])
         massDetrained.append(particles["massDetrained"])
+        massStopped.append(particles["massStopped"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
         pfvTimeMax.append(np.nanmax(fields["FV"]))
@@ -1993,7 +2012,6 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         nIter0 = nIter0 + 1
         tCPUtimeLoop = time.time() - startTime
         tCPU["timeLoop"] = tCPU["timeLoop"] + tCPUtimeLoop
-
     tCPU["nIter"] = nIter
     log.info("Ending computation at time t = %f s", t - dt)
     log.debug("Saving results for time step t = %f s", t - dt)
@@ -2030,6 +2048,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     infoDict = {
         "massEntrained": massEntrained,
         "massDetrained": massDetrained,
+        "massStopped": massStopped,
         "timeStep": timeM,
         "massTotal": massTotal,
         "tCPU": tCPU,
@@ -2267,6 +2286,7 @@ def writeMBFile(infoDict, avaDir, logName):
     t = infoDict["timeStep"]
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
+    massStopped = infoDict["massStopped"]
     massTotal = infoDict["massTotal"]
     massDetrainedTotal = np.zeros(len(massDetrained))
     for m in range(1, len(massDetrained)):
@@ -2279,16 +2299,17 @@ def writeMBFile(infoDict, avaDir, logName):
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained, detrained\n")
+        mFile.write("time, current, entrained, detrained, stopped\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f\n"
+                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f,    %.06f\n"
                 % (
                     t[m],
                     massTotal[m],
                     massEntrained[m],
                     massDetrained[m],
                     massDetrainedTotal[m],
+                    massStopped[m],
                 )
             )
 
@@ -2323,6 +2344,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         fields dictionary at t + dt
     tCPU : dict
         computation time dictionary
+    dem: dict
+        dictionary with dem information including the adapted DEM
     """
 
     # update cRes and detK rasters according to thresholds of FV and FT
@@ -2407,10 +2430,22 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if fields["computeTA"]:
         particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    
+    # adapt DEM considering erosion and deposition
+    # only adapt DEM when in one grid cell the changing height > 0.1 m
+    adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(fields['hStop'] > 0.1)
+    adaptDet = cfg.getboolean("adaptSfcDetrainment") and  np.any(fields['hDet'] > 0.1)
+    adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(fields['hEro'] > 0.1)
+    if particles["t"] > 0:
+        if adaptStop or adaptDet or adaptEnt:
+            demAdapted, fields = adaptDEM(dem, fields, cfg)
+            del dem
+            dem = demAdapted
+
     tCPUField = time.time() - startTime
     tCPU["timeField"] = tCPU["timeField"] + tCPUField
 
-    return particles, fields, zPartArray0, tCPU
+    return particles, fields, zPartArray0, tCPU, dem
 
 
 def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
@@ -2696,6 +2731,12 @@ def exportFields(
         if resType == "FTDet":
             dmDet = fields["dmDet"]
             resField = dmDet / (cfg["GENERAL"].getfloat("rho") * dem["areaRaster"])
+        elif TSave != "final" and resType == "hDetrained":
+            resField = fields["hDet"]
+        elif TSave != "final" and resType == "hEntrained":
+            resField = fields["hEro"]
+        elif TSave != "final" and resType == "hStopped":
+            resField = fields["hStop"]
         else:
             resField = fields[resType]
         if resType == "ppr":
@@ -3198,3 +3239,60 @@ def saveContToPickle(contourDictXY, outDir, cuSimName):
     fi = open(outDir / ("contourDictXY_%s.pickle" % (cuSimName)), "wb")
     pickle.dump(contourDictXY, fi)
     fi.close()
+
+
+def adaptDEM(dem, fields, cfg):
+    """ adapt topography in respect to erosion and deposition
+
+    Parameters
+    dem: dict
+        dictionary with info on DEM data
+    fields : dict
+        fields dictionary
+    cfg: dict
+        configuration settings
+
+    Returns
+    ---------
+    demAdapted: dict
+        dictionary with info on DEM data containing adapted topography
+    fieldsAdapted : dict
+        fields dictionary containing adapted DEM
+    """
+
+    ZDEM = dem["rasterData"].copy()
+    hDet = fields["hDet"]
+    hStop = fields["hStop"]
+    hEro = fields["hEro"]
+    ZDEMadapt = ZDEM
+    demAdapted = {}
+    demAdapted["originalHeader"] = dem["originalHeader"].copy()
+    demAdapted["originalRasterData"] = dem["originalRasterData"].copy()
+    demAdapted["header"] = dem["header"].copy()
+    demAdapted["headerNeighbourGrid"] = dem["headerNeighbourGrid"].copy()
+    demAdapted["damLine"] = dem["damLine"].copy()
+    fieldsAdapted = fields.copy()
+
+    _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
+
+    if cfg.getboolean("adaptSfcStopped"):
+        # compute thickness to depth
+        depthStop = hStop / NzNormed
+        ZDEMadapt += depthStop
+    if cfg.getboolean("adaptSfcDetrainment"):
+        # compute thickness to depth
+        depthDet = hDet / NzNormed
+        ZDEMadapt += depthDet
+    if cfg.getboolean("adaptSfcEntrainment"):
+        # compute thickness to depth
+        depthEnt = hEro / NzNormed
+        ZDEMadapt += depthEnt
+
+    demAdapted["rasterData"] = ZDEMadapt
+    fieldsAdapted["demAdapted"] = ZDEMadapt
+    
+    num = cfg.getfloat("methodMeshNormal")
+    demAdapted = geoTrans.getNormalMesh(demAdapted, num=num)
+    demAdapted = DFAtls.getAreaMesh(demAdapted, num)
+
+    return demAdapted, fieldsAdapted

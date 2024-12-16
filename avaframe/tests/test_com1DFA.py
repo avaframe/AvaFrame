@@ -21,6 +21,10 @@ import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
 from avaframe.in2Trans.rasterUtils import transformFromASCHeader
 from avaframe.in3Utils import cfgUtils
+import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.com1DFA.DFAtools as DFAtls
+
+
 
 
 def test_prepareInputData(tmp_path):
@@ -1339,6 +1343,7 @@ def test_initializeParticles():
         "entTempRef": "-10.",
         "cpIce": "2050.",
         "TIni": "-10.",
+        "rhoEnt": "200.",
     }
     demHeader = {}
     demHeader["cellsize"] = 1
@@ -1420,6 +1425,8 @@ def test_initializeParticles():
         "velocityMag",
         "nExitedParticles",
         "tPlot",
+        "dmEnt",
+        "stoppedParticles",
     ]
 
     # call function to be tested
@@ -1544,6 +1551,7 @@ def test_writeMBFile(tmp_path):
     infoDict["massDetrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massTotal"] = np.asarray([60.0, 60.0, 70.0, 90.0, 120.0])
     infoDict["pfvTimeMax"] = np.asarray([0, 0, 0, 0, 0])
+    infoDict["massStopped"] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0])
     avaName = "data/avaTest"
     avaDir = pathlib.Path(tmp_path, avaName)
     logName = "simTestName"
@@ -1560,12 +1568,14 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
+    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
     assert mbInfo.shape[0] == 5
     assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
     infoDict["massTotal"] = np.asarray([60.0, 50.0, 50.0, 20.0, 20.0])
+    infoDict["massStopped"] = np.asarray([10.0, 10.0, 10.0, 50.0, 0.0])
 
     com1DFA.writeMBFile(infoDict, avaDir, logName)
     mbFilePath = avaDir / "Outputs" / "com1DFA" / "mass_simTestName.txt"
@@ -1575,12 +1585,14 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
+    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
     assert mbInfo.shape[0] == 5
     assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 20, 0, 0, 10])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
     infoDict["massTotal"] = np.asarray([60.0, 70.0, 70.0, 40.0, 50.0])
+    infoDict["massStopped"] = np.asarray([0, 10, 0, 30, 0])
 
     com1DFA.writeMBFile(infoDict, avaDir, logName)
     mbFilePath = avaDir / "Outputs" / "com1DFA" / "mass_simTestName.txt"
@@ -1590,6 +1602,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
+    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
     assert mbInfo.shape[0] == 5
     assert mbInfo.shape[1] == 5
 
@@ -1800,11 +1813,13 @@ def test_initializeFields():
         "uz": np.asarray([0.0, 0.0, 0.0]),
         "m": np.asarray([10.0, 10.0, 10.0]),
         "dmDet": np.asarray([0.0, 0.0, 0.0]),
+        "dmEnt": np.asarray([0.0, 0.0, 0.0]),
         "trajectoryAngle": np.asarray([0.0, 0.0, 0.0]),
+        "stoppedParticles": {"m": np.empty(0), "x": np.empty(0), "y": np.empty(0)},
     }
     cfg = configparser.ConfigParser()
     cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
-    cfg["GENERAL"] = {"rho": "200.", "interpOption": "2", "resType": "ppr|pft|pfv"}
+    cfg["GENERAL"] = {"rho": "200.", "interpOption": "2", "resType": "ppr|pft|pfv", "rhoEnt": 200}
 
     dem["originalHeader"] = dem["header"]
     dem["header"]["xllcenter"] = 0.0
@@ -1819,7 +1834,7 @@ def test_initializeFields():
     #    print("compute TA", fields["computeTA"])
     #    print("compute P", fields["computeP"])
 
-    assert len(fields) == 17
+    assert len(fields) == 24
     assert fields["computeTA"] is False
     assert fields["computeKE"] is False
     assert fields["computeP"]
@@ -1836,12 +1851,19 @@ def test_initializeFields():
     assert np.sum(fields["FT"]) != 0.0
     assert np.sum(fields["FM"]) != 0.0
     assert np.sum(fields["dmDet"]) == 0.0
+    assert np.sum(fields["hDetrained"]) == 0.0
+    assert np.sum(fields["hStopped"]) == 0.0
+    assert np.sum(fields["hEntrained"]) == 0.0
+    assert np.sum(fields["demAdapted"]) == 0.0
+    assert np.sum(fields["hDet"]) == 0.0
+    assert np.sum(fields["hStop"]) == 0.0
+    assert np.sum(fields["hEro"]) == 0.0
 
     cfg["REPORT"] = {"plotFields": "pft|pfv"}
-    cfg["GENERAL"] = {"resType": "pke|pta|pft|pfv", "rho": "200.", "interpOption": "2"}
+    cfg["GENERAL"] = {"resType": "pke|pta|pft|pfv", "rho": "200.", "interpOption": "2", "rhoEnt": 200}
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
-    assert len(fields) == 17
+    assert len(fields) == 24
     assert fields["computeTA"]
     assert fields["computeKE"]
     assert fields["computeP"] is False
@@ -2412,6 +2434,9 @@ def test_runCom1DFA(tmp_path, caplog):
         "dmDet",
         "massDetrained",
         "tPlot",
+        "dmEnt",
+        "massStopped",
+        "stoppedParticles"
     ]
 
     # read one particles dictionary
@@ -2595,3 +2620,126 @@ def test_fetchRelVolume(tmp_path):
     relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
 
     assert relVolume == 38.0
+
+def test_adaptDEM():
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"methodMeshNormal": 1,
+                        "adaptSfcStopped": 0,
+                        "adaptSfcDetrainment": 0,
+                        "adaptSfcEntrainment": 0}
+
+    header = {
+        "nrows": 5,
+        "ncols": 5,
+        "cellsize": 5,
+    }
+
+    data = np.array([[1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],])
+    dem = {
+        "header": header,
+        "rasterData": data,
+        "originalHeader": {},
+        "originalRasterData": data,
+        "headerNeighbourGrid": {},
+        "damLine": {},
+    }
+
+    fields = {
+        "hDet": np.zeros_like(data),
+        "hStop": np.zeros_like(data),
+        "hEro": np.zeros_like(data),
+        "demAdapted": data,
+    }
+    
+    dem = geoTrans.getNormalMesh(dem, num=cfg["GENERAL"].getfloat("methodMeshNormal"))
+    dem = DFAtls.getAreaMesh(dem, cfg["GENERAL"].getfloat("methodMeshNormal"))
+
+    _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
+    
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+    for key in demAdapted.keys():
+        assert np.all(demAdapted[key] == dem[key])
+    for key in fieldsAdapted.keys():
+        assert np.all(fieldsAdapted[key] == fields[key])
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"methodMeshNormal": 1,
+                        "adaptSfcStopped": 1,
+                        "adaptSfcDetrainment": 1,
+                        "adaptSfcEntrainment": 1}
+    
+    # all rasters for depth changes are zero
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+    for key in demAdapted.keys():
+        assert np.all(demAdapted[key] == dem[key])
+    for key in fieldsAdapted.keys():
+        assert np.all(fieldsAdapted[key] == fields[key])
+
+    fields["hDet"] += 1
+
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+
+    for key in demAdapted.keys():
+        if key == "rasterData":
+            assert np.all(demAdapted[key] == dem[key] + 1 / NzNormed)
+        elif key == "header":
+            assert np.all(demAdapted[key] == dem[key])
+
+
+    for key in fieldsAdapted.keys():
+        if key == "demAdapted":
+            assert np.all(fieldsAdapted[key] == fields[key] + 1 / NzNormed)
+        else:
+            assert np.all(fieldsAdapted[key] == fields[key])
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"methodMeshNormal": 1,
+                        "adaptSfcStopped": 1,
+                        "adaptSfcDetrainment": 0,
+                        "adaptSfcEntrainment": 1}
+    
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+
+    for key in demAdapted.keys():
+        assert np.all(demAdapted[key] == dem[key])
+    for key in fieldsAdapted.keys():
+        assert np.all(fieldsAdapted[key] == fields[key])
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"methodMeshNormal": 1,
+                        "adaptSfcStopped": 1,
+                        "adaptSfcDetrainment": 1,
+                        "adaptSfcEntrainment": 1}
+    
+    fields["hEro"] -= 1
+
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+
+    for key in demAdapted.keys():
+        assert np.all(demAdapted[key] == dem[key])
+    for key in fieldsAdapted.keys():
+        assert np.all(fieldsAdapted[key] == fields[key])
+
+    fields["hEro"] = np.zeros_like(fields["hDet"])
+    fields["hDet"] =  np.array([[0, 0, 0, 0, 0],
+                                [0, 0, 0, 0, 0],
+                                [1, 1, 1, 1, 1],
+                                [0, 0, 0, 0, 0],
+                                [0, 0, 0, 0, 0],])
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])    
+
+    assert np.all(demAdapted["rasterData"] == np.array([[1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.] + 1 / NzNormed[2],
+                                                [1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.]])
+    )
+    assert np.any(demAdapted["Nx"] != dem["Nx"])
+    assert np.any(demAdapted["Ny"] != dem["Ny"])
+    assert np.all(demAdapted["Nz"] == dem["Nz"])
+    assert np.any(dem["areaRaster"] != demAdapted["areaRaster"])
