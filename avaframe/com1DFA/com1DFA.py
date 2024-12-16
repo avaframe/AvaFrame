@@ -1413,6 +1413,8 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
+    fields["hDep"] = np.zeros((nrows, ncols))
+    fields["hEro"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):

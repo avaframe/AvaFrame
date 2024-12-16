@@ -131,6 +131,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
+  cdef double[:, :] hDep = fields['hDep']
+  cdef double[:, :] hEro = fields['hEro']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
@@ -351,6 +353,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         if frictType == 4 and dm > 0.0:
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
+        # compute erosion height 
+        hEro[indCellY, indCellX] += - dm / areaEntrPart / rhoEnt
 
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
@@ -366,6 +370,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         m = m + dmDet
         mass[k] = m
         dMDet[k] = dmDet
+        # compute deposited thickness (dmDet < 0; hDep > 0)
+        hDep[indCellY, indCellX] += - dmDet / areaPart / rho
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -407,6 +413,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
   fields['entrMassRaster'] = np.asarray(entrMassRaster)
+  fields['hDep'] = np.asarray(hDep)
+  fields['hEro'] = np.asarray(hEro)
 
   return particles, force, fields
 
@@ -464,6 +472,7 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
           areaEntrPart = entrMassCell / rhoEnt
 
   return dm, areaEntrPart
+
 
 cpdef double computeDetMass(double dt, double detCell,
                                               double areaPart, double uMag):
