@@ -166,6 +166,10 @@ Other particles properties are also initialized here:
     
     - ``dmDet`` - detrained mass of particle [kg]
 
+    - ``dmEnt`` - entrained mass of particle [kg]
+
+    - ``stoppedParticles`` - dictionary with particles (containing x-, y-coordinates, mass and ID) that are stopped (mass or velocity is zero) and deleted from the particles in each time step
+
 For more details, see :py:func:`com1DFA.com1DFA.initializeParticles`.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`

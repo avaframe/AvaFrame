@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 def checkCfgConsistency(cfg):
     """ Check the provided configuration for necessary consistency/relation between
-        parameters for com1DFA.
+        parameters for com1DFA and for plausibility.
 
     Parameters
     -----------
@@ -36,7 +36,17 @@ def checkCfgConsistency(cfg):
         else:
             log.debug('Ata parameters are consistent')
 
-    return True
+    num = float(cfg['GENERAL']['methodMeshNormal'])
+    if num not in [1, 4, 6, 8]:
+            # raise an error
+            message = ('The methodMeshNormal set in the ini file does NOT have a plausible value. '
+            'Please set the parameter either to 1, 4, 6 or 8.')
+            log.error(message)
+            raise AssertionError(message)
+    else:
+        log.debug('MethodMeshNormal value is plausible')
+
+    return True    
 
 
 def checkCellSizeKernelRadius(cfg):
