@@ -29,17 +29,37 @@ number of modeled release-cells.
 The motivational background and concepts behind the model, as well as a list of references can be found under
 :ref:`theoryCom4FlowPy:com4FlowPy theory`.
 
-Running the Code
+
+Additional installation requirements and running the code
 ----------------
 
-- In order to run :py:mod:`com4FlowPy` you need to install ``rasterio`` and ``gdal`` separately, since they are not included in the general AvaFrame requirements (--> on Linux distributions inside the ``avaframe_env`` ``conda`` environment ``pip install rasterio`` should usually suffice).
+In order to run :py:mod:`com4FlowPy` you need to separately install the ``rasterio`` package, which is not included in the general AvaFrame requirements.
+On Linux distributions inside the ``avaframe_env`` `conda environment
+<https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_ it should usually work with:
 
-If you have trouble installing ``GDAL`` or ``rasterio`` on Windows use these links to
-get the required version directly from their website, first install ``rasterio``:
+  ::
 
-https://rasterio.readthedocs.io/en/stable/installation.html#easy-installation
+    pip install rasterio
+    
 
-Once the required libraries are installed the model runs via the ``runCom4FlowPy.py`` script. 
+Running ``pip install rasterio`` inside the newly created ``avaframe_env`` `conda environment
+<https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_
+is now (status: December 2024) also the recommended way to install ``rasterio`` on Windows.
+
+If this does not work, alternatively you can try installing ``rasterio`` via ``conda`` from the ``conda-forge`` channel.
+
+Additional (albeit not straight-forward) information can be found on:
+ - https://rasterio.readthedocs.io/en/stable/installation.html
+ - https://github.com/conda-forge/rasterio-feedstock
+ 
+Once the rasterio package is installed you can test :py:mod:`com4FlowPy` by:
+ 1. setting ``avalancheDir = data/avaFlowPy`` inside ``local_avaframeCfg.ini`` in the ``avaframe`` directory (if you don't already hava a ``local_avaFrameCfg.ini`` create it by copying and renaming the ``avaframeCfg.ini`` -- also see :ref:`moduleCom4FlowPy:Configuration`.)
+ 2. running within the ``avaframe`` directory:
+ 
+  ::
+
+    python runCom4FlowPy.py
+     
 
 Configuration
 ----------------
