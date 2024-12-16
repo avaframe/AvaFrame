@@ -295,6 +295,10 @@ The result types that can be chosen to be exported are (all correspond to fields
 * TA - travel angle
 * dmDet - detrained mass
 * FTDet - thickness of detrained mass computed based on dmDet / (rho * area of cell)
+* hDetrained - detrained thickness
+* hStopped - stopped thickness 
+* hEntrained - entrained thickness
+* demAdapted - adapted DEM considering stopping/ detrainment/ entrainment
 * particles (:ref:`com1DFAAlgorithm:Particle properties`)
 
 Have a look at the designated subsection Output in ``com1DFA/com1DFACfg.ini``.

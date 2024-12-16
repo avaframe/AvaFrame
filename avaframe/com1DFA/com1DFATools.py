@@ -449,3 +449,27 @@ def updateResCoeffFields(fields, cfg, t, dem):
     fields["detRaster"] = detRaster
 
     return fields
+
+
+def chooseDemPlot(dem, adaptedDemBackground=False):
+    """
+    choose the DEM (rasterData) that is used for report plots
+
+    Parameters
+    -----------
+    adaptedDemBackground: bool
+        if True the adapted DEM is used as background in the plots
+    
+    Returns
+    -------
+    demPlot: dict
+        contains the rasterdata that should be used in report plots as background
+    """
+
+    demPlot = dem.copy()
+    # choose if the input DEM or the adapted DEM is used as background
+    if adaptedDemBackground:
+        demPlot['rasterData'] = dem['rasterData']
+    else:
+        demPlot['rasterData'] = dem["originalRasterData"]
+    return demPlot
