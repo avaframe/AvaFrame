@@ -124,6 +124,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:] uzArray = particles['uz']
   cdef long long[:] ID = particles['ID']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
+  cdef double[:] xDepositedArray = particles['depositedParticles']['x']
+  cdef double[:] yDepositedArray = particles['depositedParticles']['y']
+  cdef double[:] hDepositedArray = particles['depositedParticles']['h']
+  cdef double[:] mDepositedArray = particles['depositedParticles']['m']
+  cdef double[:] dmDepositedArray = particles['depositedParticles']['dm']
+  cdef double[:] idDepositedArray = particles['depositedParticles']['ID']
+  cdef double[:] uMagDepositedArray = particles['depositedParticles']['velocityMag']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
@@ -133,6 +140,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
+  cdef double[:, :] hDep = np.zeros_like(dem['rasterData'])
+  cdef double[:, :] hEro = np.zeros_like(dem['rasterData'])
+  cdef double[:, :] hDeposited = fields['hDeposited']
+  cdef double[:, :] hEroded = fields['hEroded']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
@@ -147,7 +158,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
-  cdef double dmDet, detCell, areaDetPart
+  cdef double dmDet, detCell, areaDetPart, hDepCell, hEroCell
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -353,6 +364,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         if frictType == 4 and dm > 0.0:
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
+        # compute erosion height 
+        hEroCell = - dm / areaEntrPart / rhoEnt
+        hEro[indCellY, indCellX] += hEroCell
+        hEroded[indCellY, indCellX] += hEroCell
 
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
@@ -368,6 +383,15 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         m = m + dmDet
         mass[k] = m
         dMDet[k] = dmDet
+        xDepositedArray = np.append(xDepositedArray, xArray[k])
+        yDepositedArray = np.append(yDepositedArray, yArray[k])
+        hDepositedArray = np.append(hDepositedArray, hArray[k])
+        mDepositedArray = np.append(mDepositedArray, mass[k])
+        idDepositedArray = np.append(idDepositedArray, ID[k])
+        # compute deposited thickness (dmDet < 0; hDep > 0)
+        hDepCell = - dmDet / areaPart / rho
+        hDep[indCellY, indCellX] += hDepCell
+        hDeposited[indCellY, indCellX] += hDepCell
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -394,6 +418,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   particles['dmDet'] = np.asarray(dMDet)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
 
+  particles['depositedParticles']['x'] = np.asarray(xDepositedArray)
+  particles['depositedParticles']['y'] = np.asarray(yDepositedArray)
+  particles['depositedParticles']['h'] = np.asarray(hDepositedArray)
+  particles['depositedParticles']['m'] = np.asarray(mDepositedArray)
+  particles['depositedParticles']['dm'] = np.asarray(dmDepositedArray)
+  particles['depositedParticles']['ID'] = np.asarray(idDepositedArray)
+
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -409,6 +440,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
   fields['entrMassRaster'] = np.asarray(entrMassRaster)
+  fields['hDep'] = np.asarray(hDep)
+  fields['hEro'] = np.asarray(hEro)
+  fields['hDeposited'] = np.asarray(hDeposited)
+  fields['hEroded'] = np.asarray(hEroded)
 
   return particles, force, fields
 
@@ -466,6 +501,7 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
           areaEntrPart = entrMassCell / rhoEnt
 
   return dm, areaEntrPart
+
 
 cpdef double computeDetMass(double dt, double detCell,
                                               double areaPart, double uMag):
@@ -687,6 +723,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] sArray = particles['trajectoryLengthXY']
   cdef double[:] sCorArray = particles['trajectoryLengthXYCor']
   cdef double[:] lArray = particles['trajectoryLengthXYZ']
+  cdef double[:] hArray = particles['h']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] zArray = particles['z']
@@ -701,6 +738,15 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double peakKinEne = particles['peakKinEne']
   cdef double peakForceSPH = particles['peakForceSPH']
   cdef double totKForceSPH = particles['forceSPHIni']
+  cdef long long[:] ID = particles['ID']
+  #read deposited particles
+  cdef double[:] xDepositedArray = particles['depositedParticles']['x']
+  cdef double[:] yDepositedArray = particles['depositedParticles']['y']
+  cdef double[:] hDepositedArray = particles['depositedParticles']['h']
+  cdef double[:] mDepositedArray = particles['depositedParticles']['m']
+  cdef double[:] dmDepositedArray = particles['depositedParticles']['dm']
+  cdef double[:] idDepositedArray = particles['depositedParticles']['ID']
+  cdef double[:] uMagDepositedArray = particles['depositedParticles']['velocityMag']
   # read fields
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
@@ -793,10 +839,25 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     else:
       dtStop = dt
 
+    uMagNew = DFAtlsC.norm(uxNew, uyNew, uzNew)
+
     # update mass (already done un computeForceC)
     mNew = m
     massEntrained = massEntrained + dM[k]
     massDetrained = massDetrained + dMDet[k]
+
+    # deposit particles with velocity = 0 or mass = 0
+    if uMagNew == 0 or mNew == 0:
+      xDepositedArray = np.append(xDepositedArray, xArray[k])
+      yDepositedArray = np.append(yDepositedArray, yArray[k])
+      hDepositedArray = np.append(hDepositedArray, hArray[k])
+      mDepositedArray = np.append(mDepositedArray, mass[k])
+      idDepositedArray = np.append(idDepositedArray, ID[k])
+      uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
+      keepParticle[k] = 0  # particle is deleted
+      nRemove = nRemove + 1
+      continue
+
     # update position
     if centeredPosition:
       xNew = x + dtStop * 0.5 * (ux + uxNew)
@@ -973,6 +1034,13 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
 
+  particles['depositedParticles']['x'] = np.asarray(xDepositedArray)
+  particles['depositedParticles']['y'] = np.asarray(yDepositedArray)
+  particles['depositedParticles']['h'] = np.asarray(hDepositedArray)
+  particles['depositedParticles']['m'] = np.asarray(mDepositedArray)
+  particles['depositedParticles']['dm'] = np.asarray(dmDepositedArray)
+  particles['depositedParticles']['ID'] = np.asarray(idDepositedArray)
+
   if typeStop == 1:
     # typeStop = 1 for initialisation step where particles are redistributed to reduce SPH force
     # here stop criterion based on SPHForce
@@ -1016,7 +1084,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     else:
       log.debug('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 
-  # remove particles that are not located on the mesh any more
+  # remove particles that are not located on the mesh any more or mass or velocity = 0 (TODO)
   if nRemove > 0:
     mask = np.array(np.asarray(keepParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', snowSlide=snowSlide)
@@ -2144,3 +2212,23 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   particles['m'] = np.asarray(mass)
 
   return particles, force
+
+
+def adaptDEM(dem, fields):
+
+  header = dem['header']
+  cdef int nrows = header['nrows']
+  cdef int ncols = header['ncols']
+  cdef double[:, :] ZDEM = dem['rasterData']
+  cdef double[:, :] hDep = fields['hDep']
+  cdef double[:, :] hEro = fields['hEro']
+  cdef double[:, :] ZDEMadapt = np.zeros_like(ZDEM)
+
+  for i in range(ncols):
+    for j in range(nrows):
+      ZDEMadapt[j, i] = ZDEM[j, i] + hDep[j, i] + hEro[j, i]
+  
+  dem['rasterData'] = np.asarray(ZDEMadapt)
+  fields['demAdapted'] = np.asarray(ZDEMadapt)
+
+  return dem, fields

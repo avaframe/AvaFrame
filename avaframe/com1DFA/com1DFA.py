@@ -1339,6 +1339,16 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     if debugPlot:
         debPlot.plotPartIni(particles, dem)
 
+    # space for deposited particles TODO: extra dict for them?
+    particles["depositedParticles"] = {
+        "x": np.empty(0),
+        "y": np.empty(0),
+        "h": np.empty(0),
+        "m": np.empty(0),
+        "dm": np.empty(0),
+        "ID": np.empty(0),
+        "velocityMag": np.empty(0),
+    }
     return particles
 
 
@@ -1412,6 +1422,9 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
+    fields["hDeposited"] = np.zeros((nrows, ncols))
+    fields["hEroded"] = np.zeros((nrows, ncols))
+    fields["demAdapted"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
@@ -2245,6 +2258,10 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if fields["computeTA"]:
         particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    
+    # adapt DEM considering erosion and deposition
+    dem, fields = DFAfunC.adaptDEM(dem, fields)
+    
     tCPUField = time.time() - startTime
     tCPU["timeField"] = tCPU["timeField"] + tCPUField
 
