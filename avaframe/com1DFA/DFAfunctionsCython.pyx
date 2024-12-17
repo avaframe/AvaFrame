@@ -131,8 +131,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
-  cdef double[:, :] hDep = fields['hDep']
-  cdef double[:, :] hEro = fields['hEro']
+  cdef double[:, :] hDep = np.zeros_like(dem['rasterData'])
+  cdef double[:, :] hEro = np.zeros_like(dem['rasterData'])
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
