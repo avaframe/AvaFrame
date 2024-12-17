@@ -133,6 +133,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef double[:, :] hDep = np.zeros_like(dem['rasterData'])
   cdef double[:, :] hEro = np.zeros_like(dem['rasterData'])
+  cdef double[:, :] hDeposited = fields['hDeposited']
+  cdef double[:, :] hEroded = fields['hEroded']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
@@ -147,7 +149,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
-  cdef double dmDet, detCell, areaDetPart
+  cdef double dmDet, detCell, areaDetPart, hDepCell, hEroCell
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -354,7 +356,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
         # compute erosion height 
-        hEro[indCellY, indCellX] += - dm / areaEntrPart / rhoEnt
+        hEroCell = - dm / areaEntrPart / rhoEnt
+        hEro[indCellY, indCellX] += hEroCell
+        hEroded[indCellY, indCellX] += hEroCell
 
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
@@ -371,7 +375,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         mass[k] = m
         dMDet[k] = dmDet
         # compute deposited thickness (dmDet < 0; hDep > 0)
-        hDep[indCellY, indCellX] += - dmDet / areaPart / rho
+        hDepCell = - dmDet / areaPart / rho
+        hDep[indCellY, indCellX] += hDepCell
+        hDeposited[indCellY, indCellX] += hDepCell
+        
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -415,6 +422,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   fields['entrMassRaster'] = np.asarray(entrMassRaster)
   fields['hDep'] = np.asarray(hDep)
   fields['hEro'] = np.asarray(hEro)
+  fields['hDeposited'] = np.asarray(hDeposited)
+  fields['hEroded'] = np.asarray(hEroded)
 
   return particles, force, fields
 
@@ -2139,3 +2148,23 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   particles['m'] = np.asarray(mass)
 
   return particles, force
+
+
+def adaptDEM(dem, fields):
+
+  header = dem['header']
+  cdef int nrows = header['nrows']
+  cdef int ncols = header['ncols']
+  cdef double[:, :] ZDEM = dem['rasterData']
+  cdef double[:, :] hDep = fields['hDep']
+  cdef double[:, :] hEro = fields['hEro']
+  cdef double[:, :] ZDEMadapt = np.zeros_like(ZDEM)
+
+  for i in range(ncols):
+    for j in range(nrows):
+      ZDEMadapt[j, i] = ZDEM[j, i] + hDep[j, i] + hEro[j, i]
+  
+  dem['rasterData'] = np.asarray(ZDEMadapt)
+  fields['demAdapted'] = np.asarray(ZDEMadapt)
+
+  return dem, fields
