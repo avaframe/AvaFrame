@@ -207,7 +207,7 @@ def mergeRaster(inDirPath, fName, method='max'):
     # create Raster with original size
     mergedRas[:, :] = np.nan
     if method == 'sum':
-        mergedRas[:,:] = 0
+        mergedRas[:, :] = 0
 
     for i in range(nTiles[0] + 1):
         for j in range(nTiles[1] + 1):
