@@ -1,13 +1,14 @@
-"""Run script for running simulations in parallel based on input from a regional folder containing
- multiple avaFolders"""
+"""
+Run script for running simulations in parallel based on input from a regional folder containing
+multiple avaFolders
+"""
 
 import time
 import pathlib
 import argparse
-import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from avaframe.com7Regional import com7Regional
+from avaframe.com7Regional import com7Regional as com7
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -15,7 +16,7 @@ def runCom7Regional(avalancheDir=''):
     """
     Parameters
     ----------
-    avalancheDir:
+    avalancheDir: str
         input directory which should contain multiple valid avalanche directories, i.e. the regional directory!
 
     Returns
@@ -34,20 +35,20 @@ def runCom7Regional(avalancheDir=''):
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
 
-    # Set the regional directory
-    regionalDir = os.path.join(avalancheDir, 'Regional')
+    # Define the regional directory
+    regionalDir = pathlib.Path(avalancheDir) / 'Regional'
 
-    # Start logging
-    log = logUtils.initiateLogger(regionalDir, logName='runCom7Regional')
+    # Start logging, log to regional directory
+    log = logUtils.initiateLogger(str(regionalDir), logName='runCom7Regional')
     log.info('MAIN SCRIPT')
 
-    #Load regional configuration
-    cfgCom7 = cfgUtils.getModuleConfig(com7Regional, fileOverride='', toPrint=False, onlyDefault=False)
+    # Load module configuration
+    cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
 
     # List valid avalanche directories within the regional directory
-    avaDirs = com7Regional.findAvaDirs(regionalDir)
+    avaDirs = com7.findAvaDirs(regionalDir)
 
-    # Get number of processes to perform #ToDo: get nVariations as well, adjust log output. need to adjust function?
+    # Get number of processes to perform #ToDo: somehow get nVariations as well so we can display total amount of sims
     nProcesses = cfgUtils.getNumberOfProcesses(cfgMain, len(avaDirs))
 
     # Set nCPU for com1 to 1 to avoid dual parallelization, i.e. each subAvaDir variation is processed sequentially
@@ -56,7 +57,7 @@ def runCom7Regional(avalancheDir=''):
     # Process each avalanche directory within the regional folder in parallel
     with ProcessPoolExecutor(max_workers=nProcesses) as executor:
         # Submit each avalanche directory to the executor
-        futures = {executor.submit(com7Regional.processAvaDirCom1Regional, cfgMain, cfgCom7, avaDir):
+        futures = {executor.submit(com7.processAvaDirCom1Regional, cfgMain, cfg, avaDir):
                        avaDir for avaDir in avaDirs}
         # Log results as each future completes
         for future in as_completed(futures):
@@ -73,10 +74,10 @@ def runCom7Regional(avalancheDir=''):
     # Keep in mind, this is only com1DFA specific for now, also keep in mind that the information where it comes from
     # is lost when it's moved (i.e. things like layer rename is no longer possible when they are imported to QGIS)
     # preliminary feature until an "import output rasters" is added to QGIS
-    if cfgCom7['GENERAL'].getboolean('movePeakFiles'):
-        allPeakFilesDir, allTimeStepsDir = com7Regional.moveOrCopyPeakFiles(cfgCom7, regionalDir, avaDirs)
+    if cfg['GENERAL'].getboolean('movePeakFiles'):
+        allPeakFilesDir, allTimeStepsDir = com7.moveOrCopyPeakFiles(cfg, regionalDir, avaDirs)
 
-        copyPeakFiles = cfgCom7['GENERAL'].getboolean('copyPeakFiles')
+        copyPeakFiles = cfg['GENERAL'].getboolean('copyPeakFiles')
         log.info(f"{'Copied' if copyPeakFiles else 'Moved'} peakFiles to "
                   f"{allPeakFilesDir}")
         log.info(f"{'Copied' if copyPeakFiles else 'Moved'} timeSteps to "
