@@ -64,12 +64,12 @@ def moveOrCopyFile(src, dst, copy=False):
         shutil.move(str(src), str(dst))
         log.debug(f"Moved {src} to {dst}")
 
-def moveOrCopyPeakFiles(cfgCom7, avalancheDir, avaDirs):
+def moveOrCopyPeakFiles(cfg, avalancheDir, avaDirs):
     """Function to move or copy peak files from each avalanche directory to a directory called allPeakFiles.
     Also copy all timeSteps to an allTimeSteps directory"""
 
-    # Get settings from cfg
-    copyPeakFiles = cfgCom7['GENERAL'].getboolean('copyPeakFiles')
+    # Get setting from cfg
+    copyPeakFiles = cfg['GENERAL'].getboolean('copyPeakFiles')
 
     fileOperation = moveOrCopyFile
     fileOperationKwargs = {'copy': copyPeakFiles}
