@@ -1125,8 +1125,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
             fields[fric+'Field'] = np.asarray([[np.nan],[np.nan]])
         else:
-            fricFieldPath = dP.checkRasterMeshSize(cfg, inputSimLines[fric+'File'], "FRIC")
-            fricField = IOf.readRaster(fricFieldPath)
+            fricField = IOf.readRaster(pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Inputs', cfg['INPUT']['%sFile' % fric]))
             fields[fric+'Field'] = fricField['rasterData']
 
     return particles, fields, dem, reportAreaInfo
@@ -2631,14 +2630,22 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
         cfgSim["INPUT"]["DEM"] = pathToDem
+        if cfgSim["GENERAL"]["relThFromFile"] == "True" or cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+            dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
 
         # check if RELTH in Inputs has desired mesh size
         # if "relThFromFile" in cfgSim["GENERAL"]:
         if cfgSim["GENERAL"]["relThFromFile"] == "True":
-            pathToRelTh = dP.checkRasterMeshSize(cfgSim, inputSimFiles["relThFile"], "RELTH")
+            pathToRelTh = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['relThFile'], dem, 'RELTH')
             cfgSim["INPUT"]["relThFile"] = pathToRelTh
         else:
             cfgSim["INPUT"]["relThFile"] = ""
+
+        # check if spatialVoellmy is chosen that friction fields have correct extent
+        if cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+            for fric in ['mu', 'xi']:
+                pathToFric = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['%sFile' % fric], dem, fric)
+                cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
