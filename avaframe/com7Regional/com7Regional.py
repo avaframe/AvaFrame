@@ -18,7 +18,7 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
     log.info('COM1DFA PROCESS CALLED BY REGIONAL RUN')
     log.info('Current avalanche: %s', avalancheDir)
 
-    # Update cfgMain to reflect the current avalancheDir
+    # Update cfgMain setting to reflect the current avalancheDir
     cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
 
     # Clean input directory of old work and output files from module
