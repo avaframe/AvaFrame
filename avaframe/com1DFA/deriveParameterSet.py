@@ -799,6 +799,75 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=Fals
 
     return pathToRaster
 
+def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
+    """ check if extent of inputFile is within resizeThreshold of dem, if so resize and save to remeshedRasters
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings
+        inputFile: pathlib Path
+            path to inputFile
+        dem: dict
+            dictionary with info on DEM
+        fileType: str
+            name of fileType
+    """
+
+    inputField = IOf.readRaster(inputFile)
+    cellSizeOld = inputField['header']['cellsize']
+    demHeader = dem['header']
+    cT = float(cfg['GENERAL']['resizeThreshold'])
+
+    # compute difference of llcenter and urcenter - used for warning
+    diffX0 = inputField['header']['xllcenter'] - demHeader['xllcenter']
+    diffY0 = inputField['header']['yllcenter'] - demHeader['yllcenter']
+    diffX1 = ((inputField['header']['xllcenter']+ inputField['header']['ncols']* inputField['header']['cellsize']) -
+              (demHeader['xllcenter']+demHeader['ncols']*demHeader['cellsize']))
+    diffY1 = ((inputField['header']['yllcenter']+ inputField['header']['nrows']* inputField['header']['cellsize']) -
+              (demHeader['yllcenter']+demHeader['nrows']*demHeader['cellsize']))
+
+    if diffX0 > cT*demHeader['cellsize'] or diffY0 > cT*demHeader['cellsize']:
+        message = 'Lower left center coordinates of DEM and %s file are not within threshold' % fileType
+        log.error(message)
+        raise AssertionError
+    elif diffX1 > cT*demHeader['cellsize'] or diffY1 > cT*demHeader['cellsize']:
+        message = 'Upper right center coordinates of DEM and %s file are not within threshold' % fileType
+        log.error(message)
+        raise AssertionError
+
+    # resize data, project data from inputFile onto computational domain
+    inputField['rasterData'], _ = geoTrans.resizeData(inputField, dem)
+
+    # add warning
+    log.warning('Friction field %s interpolated onto DEM extent and corresponding spatial resolution, '
+                'cellSize changed from %.2f to %.2f; difference of llcenter was in x: %.2f, in y: %.2f m'
+                'and urcenter was in x: %.2f, in y %.2f' %
+                (fileType, cellSizeOld, dem['header']['cellsize'], diffX0, diffY0, diffX1, diffY1))
+
+
+    inputField[fileType+'Field'] = inputField['rasterData']
+
+    # save remeshed raster
+    # first check if remeshed raster is available
+    _, _, allRasterNames = geoTrans.searchRemeshedRaster(inputFile.stem, cfg)
+
+    # prepare for saving new raster
+    pathToRaster = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
+    fU.makeADir(pathToRaster)
+    outFile = pathToRaster / ("%s_remeshed%s%.2f.asc" % (inputFile.stem, fileType, dem["header"][
+        "cellsize"]))
+    if outFile.name in allRasterNames:
+        message = "Name for saving remeshedRaster already used: %s" % outFile.name
+        log.error(message)
+        raise FileExistsError(message)
+
+    IOf.writeResultToAsc(dem["header"], inputField["rasterData"], outFile, flip=True)
+    log.info("Saved remeshed raster to %s" % outFile)
+    pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
+
+    return pathRaster
+
 
 def writeToCfgLine(values):
     """ write an array of values to a string of values separated by | for configuration

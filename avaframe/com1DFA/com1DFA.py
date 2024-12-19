@@ -1125,20 +1125,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
             fields[fric+'Field'] = np.asarray([[np.nan],[np.nan]])
         else:
-            fricField = IOf.readRaster(inputSimLines[fric+'File'])
-            gI.checkExtentDEM(cfgGen, dem, fricField)
-            cellSizeOld = fricField['header']['cellsize']
-            diffX0 = fricField['header']['xllcenter'] - dem['originalHeader']['xllcenter']
-            diffY0 = fricField['header']['yllcenter'] - dem['originalHeader']['yllcenter']
-            diffX1 = ((fricField['header']['xllcenter']+ fricField['header']['ncols']* fricField['header']['cellsize']) -
-                      (dem['originalHeader']['xllcenter']+dem['originalHeader']['ncols']*dem['originalHeader']['cellsize']))
-            diffY1 = ((fricField['header']['yllcenter']+ fricField['header']['nrows']* fricField['header']['cellsize']) -
-                      (dem['originalHeader']['yllcenter']+dem['originalHeader']['nrows']*dem['originalHeader']['cellsize']))
-            fricField['rasterData'], _ = geoTrans.resizeData(fricField, dem, fric)
-            log.warning('Friction field %s interpolated onto DEM extent and corresponding spatial resolution, '
-                        'cellSize changed from %.2f to %.2f; difference of llcenter was in x: %.2f, in y: %.2f m'
-                        'and urcenter was in x: %.2f, in y %.2f' %
-                        (fric, cellSizeOld, dem['header']['cellsize'], diffX0, diffY0, diffX1, diffY1))
+            fricField = IOf.readRaster(pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Inputs', cfg['INPUT']['%sFile' % fric]))
             fields[fric+'Field'] = fricField['rasterData']
 
     return particles, fields, dem, reportAreaInfo
@@ -2628,6 +2615,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
         cfgSim["INPUT"]["DEM"] = pathToDem
+        dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
 
         # check if RELTH in Inputs has desired mesh size
         # if "relThFromFile" in cfgSim["GENERAL"]:
@@ -2636,6 +2624,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgSim["INPUT"]["relThFile"] = pathToRelTh
         else:
             cfgSim["INPUT"]["relThFile"] = ""
+
+        # check if spatialVoellmy is chosen that friction fields have correct extent
+        if cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+            for fric in ['mu', 'xi']:
+                pathToFric = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['%sFile' % fric], dem, fric)
+                cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
