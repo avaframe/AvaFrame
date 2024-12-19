@@ -5,10 +5,12 @@ import configparser
 import numpy as np
 import pandas as pd
 import pytest
+import pathlib
 
 # Local imports
 import avaframe.com1DFA.deriveParameterSet as dP
-
+import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 def test_getVariationDict(caplog):
     """test creating a variation dictionary"""
@@ -595,3 +597,69 @@ def test_splitVariationToArraySteps():
     itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
 
     assert np.array_equal(itemsArray, ["4$normaldistribution$3$0.1$95$ci95$10000"])
+
+
+def test_checkExtentAndCellSize(tmp_path):
+    """ test if inputFile has close enough extent to DEM file and if so resize if required """
+
+    # setup required inputs
+    testDir = pathlib.Path(tmp_path, "test")
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'resizeThreshold': 3., 'meshCellSize': 1., 'meshCellSizeThreshold': 0.0001}
+    cfg['GENERAL']['avalancheDir'] = str(testDir)
+    inDir = testDir / 'Inputs'
+    inDirR = inDir / 'RASTERS'
+    fU.makeADir(inDirR)
+
+    demField = np.ones((4, 5))
+    dem = {'header': {'nrows': 4, 'ncols': 5, 'xllcenter': 1, 'yllcenter': 5, 'cellsize': 1, 'nodata_value': -9999},
+           'rasterData': demField}
+
+    inputFile = inDirR / 'inputFile.asc'
+    headerInput = {'nrows': 4, 'ncols': 5, 'xllcenter': 1.2, 'yllcenter': 4.3,
+                              'cellsize': 1, 'nodata_value': -9999}
+    inField = np.ones((4, 5))
+    inField[2,2] = 10.
+    IOf.writeResultToAsc(headerInput, inField, inputFile, flip=False)
+
+    testFile = dP.checkExtentAndCellSize(cfg, inputFile, dem, 'mu')
+    print('testFiel', testFile)
+
+    newRaster = IOf.readRaster((inDir / testFile))
+    print('newRaster', newRaster['rasterData'])
+    print('inField', inField)
+
+    assert 'remeshedmu1.00' in testFile
+    assert newRaster['header']['nrows'] == 4
+    assert newRaster['rasterData'].shape[1] == 5
+    assert newRaster['header']['xllcenter'] == 1.
+    assert newRaster['header']['yllcenter'] == 5.
+
+    inputFile2 = inDirR / 'inputFile1.asc'
+    headerInput2 = {'nrows': 4, 'ncols': 5, 'xllcenter': 1., 'yllcenter': 5.,
+                   'cellsize': 1, 'nodata_value': -9999}
+    inField2 = np.ones((4, 5))
+    inField2[2,2] = 10.
+    IOf.writeResultToAsc(headerInput2, inField2, inputFile2, flip=False)
+
+    testFile2 = dP.checkExtentAndCellSize(cfg, inputFile2, dem, 'mu')
+    print('test 2', testFile2)
+    newRaster2 = IOf.readRaster((inDir / testFile))
+
+    assert 'remeshedmu1.00' not in testFile2
+    assert 'RASTERS' in testFile2
+    assert newRaster['header']['nrows'] == 4
+    assert newRaster['rasterData'].shape[1] == 5
+    assert newRaster['header']['xllcenter'] == 1.
+    assert newRaster['header']['yllcenter'] == 5.
+
+    inputFile2 = inDirR / 'inputFile1.asc'
+    headerInput2= {'nrows': 5, 'ncols': 5, 'xllcenter': 10., 'yllcenter': 5.,
+                    'cellsize': 1, 'nodata_value': -9999}
+    inField2 = np.ones((5, 5))
+    inField2[2,2] = 10.
+    IOf.writeResultToAsc(headerInput2, inField2, inputFile2, flip=False)
+
+    with pytest.raises(AssertionError) as e:
+        assert dP.checkExtentAndCellSize(cfg, inputFile2, dem, 'mu')
+    assert "Lower left center coordinates of DEM and " in str(e.value)
