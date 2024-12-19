@@ -35,15 +35,15 @@ def runCom7Regional(avalancheDir=''):
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
 
-    # Define the regional directory
-    regionalDir = pathlib.Path(avalancheDir) / 'Regional'
-
-    # Start logging, log to regional directory
-    log = logUtils.initiateLogger(str(regionalDir), logName='runCom7Regional')
+    # Start logging
+    log = logUtils.initiateLogger(str(avalancheDir), logName='runCom7Regional')
     log.info('MAIN SCRIPT')
 
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
+
+    # Define the regional directory
+    regionalDir = pathlib.Path(avalancheDir) / 'Regional'
 
     # List valid avalanche directories within the regional directory
     avaDirs = com7.findAvaDirs(regionalDir)
@@ -51,7 +51,8 @@ def runCom7Regional(avalancheDir=''):
     # Get number of processes to perform #ToDo: somehow get nVariations as well so we can display total amount of sims
     nProcesses = cfgUtils.getNumberOfProcesses(cfgMain, len(avaDirs))
 
-    # Set nCPU for com1 to 1 to avoid dual parallelization, i.e. each subAvaDir variation is processed sequentially
+    # Set nCPU for com1 to 1 to avoid dual parallelization, i.e. each subAvaDir variation is
+    # processed sequentially. Preliminary solution for now.
     cfgMain['MAIN']['nCPU'] = '1'
 
     # Process each avalanche directory within the regional folder in parallel
