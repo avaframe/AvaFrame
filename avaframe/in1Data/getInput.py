@@ -328,6 +328,39 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     return OutputFile, available
 
 
+def checkExtentDEM(cfg, dem, rasterData, fileType):
+    """ check if extent of rasterFile is identical to extent of demFile
+        if extent is different - error
+
+        Parameters
+        --------------
+        cfg: configparser object
+            configuration settings here resizeThreshold
+        dem: dictionary
+           dictionary with info on DEM, header of original demFile dem['originalHeader']
+        rasterData: dictionary
+            dictionary with info on rasterFile, header and rasterdata
+        fileType: str
+            indication of rasterData file type
+    """
+
+    demHeader = dem['header']
+    demHeader['xllcenter'] = dem['originalHeader']['xllcenter']
+    demHeader['yllcenter'] = dem['originalHeader']['yllcenter']
+    rasterHeader = rasterData['header']
+    cT = cfg.getfloat('resizeThreshold')
+
+    if (np.abs(demHeader['xllcenter']-rasterHeader['xllcenter']) > cT*demHeader['cellsize'] or
+            np.abs(demHeader['yllcenter'] - rasterHeader['yllcenter']) > cT*demHeader['cellsize']):
+        message = 'Lower left center coordinates of DEM and %s file are not identical' % fileType
+        log.error(message)
+        raise AssertionError
+    elif (np.abs(demHeader['ncols']*demHeader['cellsize']- rasterHeader['ncols']*rasterHeader['cellsize']) > cT*demHeader['cellsize'] and
+          np.abs(demHeader['nrows']*demHeader['cellsize'] - rasterHeader['nrows']*rasterHeader['cellsize']) > cT*demHeader['cellsize']):
+        message = 'Extent of DEM and %s file is not identical' % fileType
+        log.error(message)
+        raise AssertionError
+
 def getThicknessInputSimFiles(inputSimFiles):
     """add thickness of shapefiles to dictionary
 

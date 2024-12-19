@@ -1125,8 +1125,20 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
             fields[fric+'Field'] = np.asarray([[np.nan],[np.nan]])
         else:
-            fricFieldPath = dP.checkRasterMeshSize(cfg, inputSimLines[fric+'File'], "FRIC")
-            fricField = IOf.readRaster(fricFieldPath)
+            fricField = IOf.readRaster(inputSimLines[fric+'File'])
+            gI.checkExtentDEM(cfgGen, dem, fricField)
+            cellSizeOld = fricField['header']['cellsize']
+            diffX0 = fricField['header']['xllcenter'] - dem['originalHeader']['xllcenter']
+            diffY0 = fricField['header']['yllcenter'] - dem['originalHeader']['yllcenter']
+            diffX1 = ((fricField['header']['xllcenter']+ fricField['header']['ncols']* fricField['header']['cellsize']) -
+                      (dem['originalHeader']['xllcenter']+dem['originalHeader']['ncols']*dem['originalHeader']['cellsize']))
+            diffY1 = ((fricField['header']['yllcenter']+ fricField['header']['nrows']* fricField['header']['cellsize']) -
+                      (dem['originalHeader']['yllcenter']+dem['originalHeader']['nrows']*dem['originalHeader']['cellsize']))
+            fricField['rasterData'], _ = geoTrans.resizeData(fricField, dem, fric)
+            log.warning('Friction field %s interpolated onto DEM extent and corresponding spatial resolution, '
+                        'cellSize changed from %.2f to %.2f; difference of llcenter was in x: %.2f, in y: %.2f m'
+                        'and urcenter was in x: %.2f, in y %.2f' %
+                        (fric, cellSizeOld, dem['header']['cellsize'], diffX0, diffY0, diffX1, diffY1))
             fields[fric+'Field'] = fricField['rasterData']
 
     return particles, fields, dem, reportAreaInfo
