@@ -61,14 +61,18 @@ def runCom7Regional(avalancheDir=''):
         futures = {executor.submit(com7.processAvaDirCom1Regional, cfgMain, cfg, avaDir):
                        avaDir for avaDir in avaDirs}
         # Log results as each future completes
+        nSuccesses = 0
         for future in as_completed(futures):
             avaDir = futures[future]
             try:
                 resultDir, status = future.result()
                 log.info(f"{status} in directory: {resultDir.relative_to(pathlib.Path(regionalDir))}"
                          f" at {time.time() - startTime:.1f} s")
+                if status == "Success":
+                    nSuccesses += 1
             except Exception as e:
                 log.error(f"Error processing {avaDir}: {e}")
+    log.info(f"Processing complete. Success in '{nSuccesses}' out of '{len(avaDirs)}' directories.")
 
     # Move or copy files from the 'Outputs/com1DFA/peakFiles' folder from each of the subfolders (avaDir) to a folder
     # called (allPeakFiles) in the main regional folder. Clear them if they already exist
