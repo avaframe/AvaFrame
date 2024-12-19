@@ -153,6 +153,7 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=''):
             log.error(message)
             raise FileNotFoundError(message)
         else:
-            log.info('Mu field initialized from: %s and xi field from: %s' % (inputSimFiles['muFile'].name, inputSimFiles['xiFile'].name))
+            log.info('Mu field initialized from: %s and xi field from: %s and read from: %s, %s' %
+                     (inputSimFiles['muFile'].name, inputSimFiles['xiFile'].name, cfg['INPUT']['muFile'], cfg['INPUT']['xiFile']))
 
     return cfg
