@@ -2620,7 +2620,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check if RELTH in Inputs has desired mesh size
         # if "relThFromFile" in cfgSim["GENERAL"]:
         if cfgSim["GENERAL"]["relThFromFile"] == "True":
-            pathToRelTh = dP.checkRasterMeshSize(cfgSim, inputSimFiles["relThFile"], "RELTH")
+            pathToRelTh = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['relThFile'], dem, 'RELTH')
             cfgSim["INPUT"]["relThFile"] = pathToRelTh
         else:
             cfgSim["INPUT"]["relThFile"] = ""
