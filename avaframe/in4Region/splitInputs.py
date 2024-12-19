@@ -1,5 +1,4 @@
 """Helper functions for splitting avalanche input data into individual folders"""
-import os
 import logging
 import shapefile  # pyshp
 from shapely.geometry import shape, Point, box, MultiPolygon
@@ -76,7 +75,8 @@ def splitInputsMain(inputDir, outputDir, cfg):
 
 def readShapefile(src):
     """Read the fields, properties, and geometries of an input shapefile.
-    To be used in combination with shapefile.Reader.
+    To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
+    the srs, shapeTypes, bounds, numFeatures and metadata if needed
 
     Parameters
     ----------
@@ -112,7 +112,7 @@ def createFolderList(inputShp):
         fields, fieldNames, properties, geometries = readShapefile(src)
 
         for i, (properties, geometry) in enumerate(zip(properties, geometries)):
-            folderName = properties.get('name', '').strip() or f"unnamedRelScenario{str(unnamedCount).zfill(5)}"
+            folderName = properties.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
             if not properties.get('name', '').strip():
                 unnamedCount += 1
 
@@ -134,12 +134,14 @@ def groupFoldersByName(folderList):
         if not any(e['folderName'] == name for e in folderListByName):
             folderListByName.append({
                 'folderName': name,
-                'features': [entry]
+                'properties': [entry['properties']],
+                'geometries': [entry['geometry']]
             })
         else:
             for e in folderListByName:
                 if e['folderName'] == name:
-                    e['features'].append(entry)
+                    e['properties'].append(entry['properties'])
+                    e['geometries'].append(entry['geometry'])
 
     log.info(f"Grouped '{len(folderList)}' avalanche directories with identical names before first underscore. "
              f"Updated folder list contains '{len(folderListByName)}' entries")
@@ -157,10 +159,9 @@ def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
             # Group entries with the same name
             if name not in featuresByName:
                 featuresByName[name] = []
-            # add properties and geometries
-            for prop, geom in zip(properties, geometries):
-                if prop.get('name', '').split('_')[0] == name:
-                    featuresByName[name].append((prop, geom))
+            # add corresponding properties and geometries
+            for i, properties in enumerate(entry['properties']):
+                featuresByName[name].append((properties, geometries[i]))
 
         # Write shapefiles to their respective folders
         for name, features in featuresByName.items():
@@ -168,15 +169,17 @@ def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
             with shapefile.Writer(str(shpOutPath)) as dst:
                 for field in fields: #write fields
                     dst.field(*field)
-                for feature in features: #write geometry
-                    dst.shape(feature[1])
-                    record = [feature[0].get(fieldName, '') for fieldName in fieldNames]
+                for i, feature in enumerate(features):
+                    properties = feature[0]
+                    geometry = [e['geometries'][i] for e in folderList if e['folderName'] == name][0]
+                    dst.shape(geometry)
+                    record = [properties.get(fieldName, '') for fieldName in fieldNames]
                     dst.record(*record)
 
             log.debug(f"Saved release area to '{shpOutPath}'.")
 
 def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
-    #Todo: Currently splits around centerpoint of the last feature in a group - improve
+    #Todo: Currently splits around centerpoint of the first feature in a group - improve
     """Clip the DEM around each release scenario's centerpoint and move it to respective folders."""
     # Read input DEM
     demData = ascUtils.readRaster(inputDEM)
@@ -190,8 +193,8 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
     # Find centerpoint
     for entry in folderList:
         folderName = entry['folderName']
-        for feature in entry['features']:
-            geometry = feature['geometry']
+        for properties in entry['properties']:
+            geometry = entry['geometries'][0] #first geometry in list
             center = geometry.centroid
 
             # Calculate bounding box indices for clipping
@@ -252,7 +255,8 @@ def splitByScenarios(folderList, outputDir):
         with shapefile.Reader(str(inputShp)) as src:
             fields, fieldNames, properties, geometries = readShapefile(src)
             # Get the scenario attribute values
-            if 'scenario' in fieldNames:
+            if 'scenario' in fieldNames: #Check if scenario attribute exists
+                # Create scenario dictionary
                 scenarios = {}
                 for shapeRecord in src.iterShapeRecords():
                     properties = dict(zip(fieldNames, shapeRecord.record))
@@ -266,31 +270,27 @@ def splitByScenarios(folderList, outputDir):
                             scenarios[scenario] = []
                         scenarios[scenario].append(shapeRecord)
                 src.close()
+                # Check if all scenarios are empty
+                all_null = all(scenario == 'NULL' for scenario in scenarios)
                 # Write the scenario shapefiles
                 for scenario, records in scenarios.items():
-                    # Handle empty scenario values, write them as 'name_NULL'
-                    if scenario == 'NULL':
-                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / (folder[
-                            'folderName'] + "NULL")
-                        with shapefile.Writer(str(outputShp)) as dst:
-                            for field in fields:  # write fields
-                                dst.field(*field)
-                            for record in records:  # write geometry
-                                dst.shape(record.shape)
-                                dst.record(*record.record)
-                        dst.close()
+                    if all_null:
+                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
+                    elif scenario == 'NULL':
+                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_NULL"
                     else:
-                        scenarioName = f"{folder['folderName']}_SC{scenario}"
-                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / scenarioName
-                        with shapefile.Writer(str(outputShp)) as dst:
-                            for field in fields:  # write fields
-                                if field[0] != 'scenario':  # skip scenario attribute
-                                    dst.field(*field)
-                            for record in records:  # write geometry
-                                dst.shape(record.shape)
-                                recordValues = [record.record[i] for i, field in enumerate(fieldNames) if field != 'scenario']
-                                dst.record(*recordValues)
-                        for file in inputShp.parent.rglob(inputShp.stem + '.*'): # Delete original shapefile
-                            file.unlink()
+                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_{scenario}"
+                    with shapefile.Writer(str(outputShp)) as dst:
+                        for field in fields:  # write fields
+                            if field[0] != 'scenario':  # skip scenario attribute
+                                dst.field(*field)
+                        for record in records:  # write geometry
+                            dst.shape(record.shape)
+                            recordValues = [record.record[i] for i, field in enumerate(fieldNames) if
+                                            field != 'scenario']
+                            dst.record(*recordValues)
+                for file in inputShp.parent.rglob(inputShp.stem + '.*'):  # Delete original shapefile
+                        file.unlink()
             else:
+                src.close()
                 log.info(f"No 'scenario' attribute found in '{inputShp}'. Skipping.")
