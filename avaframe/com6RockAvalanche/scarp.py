@@ -28,16 +28,18 @@ def runScarpAnalysis(configFile):
     """
     config = configparser.ConfigParser()
     config.read(configFile)
-
+   
     # Read input parameters from the configuration file
     elevation = config['INPUT']['elevation']
     perimeterInput = config['INPUT']['perimeter']
+    shapefilePath = config['INPUT'].get('shapefile', '').strip()
+    perimeterShapefilePath = config['INPUT'].get('perimeter_shapefile', '').strip()
+    features = config['INPUT'].get('features', '')
+    
     elevScarp = config['OUTPUT']['elevscarp']
     hRelease = config['OUTPUT']['hrelease']
+    
     method = config['SETTINGS']['method'].lower()
-    features = config['SETTINGS'].get('features', '')
-    shapefilePath = config['SETTINGS'].get('shapefile', '').strip()
-    perimeterShapefilePath = config['SETTINGS'].get('perimeter_shapefile', '').strip()
 
     # Initialize feature parameters
     planeFeatures = []
