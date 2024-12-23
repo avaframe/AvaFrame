@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import shapely as shp
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 # Local imports
@@ -522,7 +522,7 @@ def test_remeshData(tmp_path):
     data = getIPZ(z0, 15, 20, 5)
     rasterDict = {"header": headerInfo, "rasterData": data}
     # outFile = os.path.join(tmp_path, 'test.asc')
-    # IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
+    # IOf.writeResultToRaster(headerInfo, data, outFile, flip=False)
     atol = 1.0e-10
     dataNew = geoTrans.remeshData(rasterDict, 2.0, larger=False)
     dataRaster = dataNew["rasterData"]
@@ -587,7 +587,7 @@ def test_remeshDEM(tmp_path):
     fU.makeADir(avaDir)
     fU.makeADir((avaDir / "Inputs"))
     avaDEM = avaDir / "Inputs" / "avaAlr.asc"
-    IOf.writeResultToAsc(headerInfo, data, avaDEM, flip=True)
+    IOf.writeResultToRaster(headerInfo, data, avaDEM, flip=True)
 
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
@@ -654,7 +654,7 @@ def test_remeshDEM(tmp_path):
 
     dataMod = IOf.readRaster(inputDEM)
     dataMod["header"]["cellsize"] = 9.0
-    IOf.writeResultToAsc(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
+    IOf.writeResultToRaster(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
 
     with pytest.raises(FileExistsError) as e:
         assert geoTrans.remeshRaster(avaDEM1, cfg)

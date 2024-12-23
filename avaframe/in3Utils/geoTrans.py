@@ -14,7 +14,7 @@ import matplotlib.path as mpltPath
 from shapely import LineString, Point, distance, MultiPoint
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.com1DFA import particleTools
 
@@ -278,10 +278,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
 
     # create header of remeshed DEM
     # set new header
-    headerRemeshed = {}
-    headerRemeshed["xllcenter"] = header["xllcenter"]
-    headerRemeshed["yllcenter"] = header["yllcenter"]
-    headerRemeshed["nodata_value"] = header["nodata_value"]
+    headerRemeshed = header
     headerRemeshed["cellsize"] = cellSizeNew
     headerRemeshed["ncols"] = ncolsNew
     headerRemeshed["nrows"] = nrowsNew
@@ -339,16 +336,19 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
     # save remeshed raster
     pathToRaster = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
     fU.makeADir(pathToRaster)
-    outFile = pathToRaster / ("%s_remeshed%s%.2f.asc" % (rasterFile.stem, typeIndicator, remeshedRaster["header"][
+
+    outFile = pathToRaster / ("%s_remeshed%s%.2f" % (rasterFile.stem, typeIndicator, remeshedRaster["header"][
     "cellsize"]))
+
+    # TODO: make sure to only check basename -> maybe separate function?
     if outFile.name in allRasterNames:
         message = "Name for saving remeshedRaster already used: %s" % outFile.name
         log.error(message)
         raise FileExistsError(message)
 
-    IOf.writeResultToAsc(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
-    log.info("Saved remeshed raster to %s" % outFile)
-    pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
+    writtenFile = IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
+    log.info("Saved remeshed raster to %s" % writtenFile)
+    pathRaster = str(pathlib.Path("remeshedRasters", writtenFile.name))
 
     return pathRaster
 
@@ -391,7 +391,7 @@ def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
         rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
         allRasterNames = [d.name for d in rasterFiles]
         for rasterF in rasterFiles:
-            headerRaster = IOf.readASCheader(rasterF)
+            headerRaster = IOf.readRasterHeader(rasterF)
             if abs(meshCellSize - headerRaster["cellsize"]) < meshCellSizeThreshold and rasterName in rasterF.stem:
                 log.info("Remeshed Raster found: %s cellSize: %.5f" % (rasterF.name, headerRaster["cellsize"]))
                 rasterFound = True

@@ -12,7 +12,7 @@ from scipy.interpolate import griddata
 import pathlib
 
 from avaframe.in3Utils import geoTrans
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -611,25 +611,38 @@ def pyramid(cfg):
 
 def writeDEM(cfg, z, outDir):
     """ Write topography information to file """
-    nameExt = cfg['TOPO']['demType']
+    from rasterio.crs import CRS
+    nameExt = cfg["TOPO"]["demType"]
     nRows = z.shape[0]
     nCols = z.shape[1]
 
     # Read lower left center coordinates, cellsize and noDATA value
-    xllcenter = float(cfg['DEMDATA']['xl'])
-    yllcenter = float(cfg['DEMDATA']['yl'])
-    cellsize = float(cfg['TOPO']['dx'])
-    noDATA = float(cfg['DEMDATA']['nodata_value'])
-    demName = cfg['DEMDATA']['demName']
+    xllcenter = float(cfg["DEMDATA"]["xl"])
+    yllcenter = float(cfg["DEMDATA"]["yl"])
+    cellsize = float(cfg["TOPO"]["dx"])
+    noDATA = float(cfg["DEMDATA"]["nodata_value"])
+    demName = cfg["DEMDATA"]["demName"]
 
-    # Save elevation data to .asc file and add header lines
-    demFile = outDir / ('%s_%s_Topo.asc' % (demName, nameExt))
-    demHeader = {'ncols': nCols, 'nrows': nRows, 'xllcenter': xllcenter, 'yllcenter': yllcenter, 'cellsize': cellsize,
-                 'nodata_value': noDATA}
-    IOf.writeResultToAsc(demHeader, z, demFile, flip=False)
+    # Save elevation data to file and add header lines
+    demFile = outDir / ("%s_%s_Topo" % (demName, nameExt))
+    demHeader = {"ncols": nCols,
+                 "nrows": nRows,
+                 "xllcenter": xllcenter,
+                 "yllcenter": yllcenter,
+                 "cellsize": cellsize,
+                 "nodata_value": noDATA}
+
+    transform = IOf.transformFromASCHeader(demHeader)
+    demHeader["transform"] = transform
+    demHeader["driver"] = "AAIGrid"
+    # set blank CRS TODO: maybe set default from main cfg?
+    demHeader["crs"] = CRS()
+    # demHeader["crs"] = CRS.from_epsg(31287)
+
+    IOf.writeResultToRaster(demHeader, z, demFile, flip=False)
 
     # Log info here
-    log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, demName, nameExt))
+    log.info("DEM written to: %s/%s_%s_Topo" % (outDir, demName, nameExt))
 
 
 def generateTopo(cfg, avalancheDir):

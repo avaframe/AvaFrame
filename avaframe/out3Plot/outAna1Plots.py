@@ -7,7 +7,7 @@ import logging
 import copy
 
 # local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI

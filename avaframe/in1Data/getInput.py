@@ -14,7 +14,7 @@ import shapely as shp
 
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.deriveParameterSet as dP
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -63,29 +63,20 @@ def getDEMPath(avaDir):
     Returns
     -------
     demFile : str (first element of list)
-        full path to DEM .asc file
+        full path to DEM .asc/.tif file
     """
 
-    # if more than one .asc file found throw error
+    # if more than one .asc / .tif file found throw error
     inputDir = pathlib.Path(avaDir, "Inputs")
-    demFile = list(inputDir.glob("*.asc"))
+    demFile = list(inputDir.glob("*.tif")) + list(inputDir.glob("*.asc"))
+
     if len(demFile) > 1:
-        message = "There should be exactly one topography .asc file in %s/Inputs/" % avaDir
+        message = "There should be exactly one topography .asc/.tif file in %s/Inputs/" % avaDir
         log.error(message)
         raise AssertionError(message)
 
-    # if is no .asc file found - throw error
-    filesFound = list(inputDir.glob("*.*"))
-    if len(demFile) == 0 and len(filesFound):
-        for fileF in filesFound:
-            message = (
-                "DEM file format not correct in %s/Inputs/ - only .asc is allowed but %s is provided"
-                % (avaDir, fileF.name)
-            )
-            log.error(message)
-            raise AssertionError(message)
     elif len(demFile) == 0:
-        message = "No topography .asc file in %s/Inputs/" % avaDir
+        message = "No topography .asc / .tif file in %s/Inputs/" % avaDir
         log.error(message)
         raise FileNotFoundError(message)
 

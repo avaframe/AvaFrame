@@ -22,7 +22,7 @@ from avaframe.out3Plot import outParticlesAnalysis as oPartAna
 from avaframe.com1DFA import com1DFA
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import logUtils
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 from avaframe.in3Utils import cfgHandling

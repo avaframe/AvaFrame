@@ -39,7 +39,7 @@ import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.com1DFA.DFAToolsCython as DFAtllsC
 import avaframe.com1DFA.damCom1DFA as damCom1DFA
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
@@ -2437,9 +2437,9 @@ def readFields(inDir, resType, simName="", flagAvaDir=True, comModule="com1DFA",
     for r in resType:
         # search for all files within directory
         if simName:
-            name = "*" + simName + "*_" + r + "*.asc"
+            name = "*" + simName + "*_" + r + "*.*"
         else:
-            name = "*_" + r + "*.asc"
+            name = "*_" + r + "*.*"
         FieldsNameList = list(inDir.glob(name))
         timeListTemp = [float(element.stem.split("_t")[-1]) for element in FieldsNameList]
         FieldsNameList = [x for _, x in sorted(zip(timeListTemp, FieldsNameList))]
@@ -2509,23 +2509,23 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 # convert from J/cell to kJ/m²
                 # (by dividing the peak kinetic energy per cell by the real area of the cell)
                 resField = resField * 0.001 / dem["areaRaster"]
-            dataName = logName + "_" + resType + "_" + "t%.2f" % (Tsave[countTime]) + ".asc"
+            dataName = logName + "_" + resType + "_" + "t%.2f" % (Tsave[countTime])
             # create directory
             outDirPeak = outDir / "peakFiles" / "timeSteps"
             fU.makeADir(outDirPeak)
             outFile = outDirPeak / dataName
-            IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
+            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
             if countTime == numberTimes:
                 log.debug(
                     "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
                     % (resType, Tsave[countTime])
                 )
-                dataName = logName + "_" + resType + ".asc"
+                dataName = logName + "_" + resType
                 # create directory
                 outDirPeakAll = outDir / "peakFiles"
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
-                IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
+                IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
             else:
                 log.debug(
                     "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
