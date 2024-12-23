@@ -14,7 +14,7 @@ import pathlib
 # Local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.geoTrans as gT
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.com1DFA.com1DFA as com1DFA

@@ -4,7 +4,7 @@ import pathlib
 import pytest
 
 # Local imports
-import avaframe.in2Trans.ascUtils as ascUtils
+import avaframe.in2Trans.rasterUtils as ascUtils
 import avaframe.in2Trans.shpConversion as shpConv
 
 

@@ -13,7 +13,7 @@ from datetime import datetime
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import geoTrans as gT
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.version import getVersion
 # import analysis modules
 from avaframe.ana1Tests import energyLineTest
@@ -131,7 +131,7 @@ def rotateDFAResults(avalancheDir, simDF, rowSimHash, resTypeList, thetaRef, com
         outDir = avalancheDir / 'Outputs' / comRotated / 'peakFiles'
         fU.makeADir(outDir)
         outFileName = outDir / fName.name
-        IOf.writeResultToAsc(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
+        IOf.writeResultToRaster(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
 
 def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName, flagMass):

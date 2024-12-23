@@ -40,6 +40,7 @@ folder structure described below.
         ENT/      - entrainment areas
         POINTS/   - split points
         LINES/    - avalanche paths
+        POLYGONS/ - crop shapes
         SECREL/   - secondary release areas
         RASTERS/  - friction parameter fields
       Outputs/
@@ -90,6 +91,12 @@ and the following files are optional:
   - only one file per parameter allowed
   - if ``meshCellSize`` is different from simulation ``meshCellSize`` fields will be remeshed
   - only used if ``frictionModel`` is set to ``spatialVoellmy``
+
+* one ``_cropshape.shp`` shape file (in Inputs/POLYGONS)
+
+  - provides a polygon located inside the DEM to define area for report plots of peak fields (bounds of polygon)
+  - if not provided peak fields are shown for the extent where peak field values are nonzero
+
 
 
 
@@ -219,6 +226,8 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
 * raster files of the peak values for pressure, flow thickness and flow velocity (*Outputs/com1DFA/peakFiles*)
 * raster files of the peak values for pressure, flow thickness and flow velocity for the initial time step (*Outputs/com1DFA/peakFiles/timeSteps*)
 * markdown report including figures for all simulations (*Outputs/com1DFA/reports*)
+    - if a ``_cropshape.shp`` file provided in Inputs/POLYGONS, plots are cropped to the rectangular bounds of the polygon
+    - if ``showOnlineBackground = True`` in avaFrameCfg.ini and a suitable ``mapProvider`` is set, peak fields are plotted onto the corresponding map
 * mass log files of all simulations (*Outputs/com1DFA*)
 * configuration files for all simulations (*Outputs/com1DFA/configurationFiles*)
 

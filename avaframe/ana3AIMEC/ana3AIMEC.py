@@ -10,7 +10,7 @@ import pathlib
 from avaframe.in2Trans import shpConversion
 from avaframe.ana3AIMEC import aimecTools
 from avaframe.ana3AIMEC import dfa2Aimec
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import geoTrans
@@ -64,7 +64,8 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir='', demFileName=''):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef,
                 'demFileName': demFileName}
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'), dirName=anaMod)
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'),
+                                          dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])

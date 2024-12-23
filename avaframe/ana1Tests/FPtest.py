@@ -12,7 +12,7 @@ import pathlib
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 
@@ -52,7 +52,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     relThPath = pathlib.Path(avaDir, 'Inputs', 'RELTH')
     fU.makeADir(relThPath)
     relThFile = relThPath / 'releaseThickness.asc'
-    IOf.writeResultToAsc(demOri['header'], relTh, relThFile, flip=True)
+    IOf.writeResultToRaster(demOri['header'], relTh, relThFile, flip=True)
 
     return relDict
 
