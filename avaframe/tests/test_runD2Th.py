@@ -12,7 +12,7 @@ import shutil
 
 from avaframe.runScripts import runD2Th
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 
 def test_runD2Th(tmp_path):

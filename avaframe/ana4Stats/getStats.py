@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 

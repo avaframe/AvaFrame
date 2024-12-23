@@ -11,7 +11,7 @@ import copy
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 import avaframe.in1Data.getInput as gI

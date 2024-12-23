@@ -14,7 +14,11 @@ import pathlib
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
+
+import rasterio
+import rasterio.plot
+import contextily as ctx
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -70,13 +74,15 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     for sName in peakFilesDF["simName"]:
         plotDict[sName] = {}
 
+    # TODO get from data
+    srcCrs = rasterio.crs.CRS.from_epsg(31287)
+
     # Loop through peakFiles and generate plot
     for m in range(len(peakFilesDF["names"])):
 
         # Load names and paths of peakFiles
         name = peakFilesDF["names"][m]
         fileName = peakFilesDF["files"][m]
-        avaName = peakFilesDF["avaName"][m]
         resType = peakFilesDF["resType"][m]
         log.debug("now plot %s:" % (fileName))
 
@@ -95,6 +101,11 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
 
             # add peak field data now
             ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
+
+            # TODO for testing
+            if cfgFLAGS["showOnlineBackground"]:
+                providers = ctx.providers.flatten()
+                ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
 
             # add title, labels and ava Info
             title = str("%s" % name)
@@ -154,8 +165,6 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
     # Set extent of peak file
     ny = data.shape[0]
     nx = data.shape[1]
-    Ly = ny * cellSize
-    Lx = nx * cellSize
 
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
@@ -176,8 +185,14 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
         ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
                         alpha=alpha)
     else:
-        im1 = ax.imshow(dataConstrained, cmap=cmap, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
-            alpha=alpha)
+        im1 = ax.imshow(dataConstrained,
+                        cmap=cmap,
+                        norm=norm,
+                        extent=extentCellCorners,
+                        origin="lower",
+                        aspect="equal",
+                        zorder=4,
+                        alpha=alpha)
         if len(np.nonzero(data)[0]) > 0.:
             pU.addColorBar(im1, ax, ticks, unit)
 

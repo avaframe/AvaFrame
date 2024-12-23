@@ -5,7 +5,7 @@ Run conversion from depth to thickness using DEM
 import pathlib
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in1Data import getInput as gI
 import avaframe.in2Trans.transfromFields as tF
 import avaframe.out3Plot.outTransformPlots as oT

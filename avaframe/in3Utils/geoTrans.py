@@ -14,7 +14,7 @@ import matplotlib.path as mpltPath
 from shapely import LineString, Point, distance, MultiPoint
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.com1DFA import particleTools
 

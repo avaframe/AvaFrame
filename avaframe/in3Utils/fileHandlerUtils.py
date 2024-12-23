@@ -12,7 +12,7 @@ import pandas as pd
 import shutil
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

@@ -11,7 +11,7 @@ import pathlib
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger

@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initialiseDirs as iD
 from avaframe.in1Data import getInput as gI
 from avaframe.in2Trans import shpConversion as sP
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

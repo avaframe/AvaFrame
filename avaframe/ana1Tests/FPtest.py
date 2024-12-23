@@ -12,7 +12,7 @@ import pathlib
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 

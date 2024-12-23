@@ -12,7 +12,7 @@ from scipy.interpolate import griddata
 import pathlib
 
 from avaframe.in3Utils import geoTrans
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

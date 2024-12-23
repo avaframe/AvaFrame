@@ -13,7 +13,7 @@ from cmcrameri import cm as cmapCrameri
 import matplotlib as mpl
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU

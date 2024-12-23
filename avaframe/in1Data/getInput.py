@@ -14,7 +14,7 @@ import shapely as shp
 
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.deriveParameterSet as dP
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans

@@ -14,7 +14,7 @@ import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in1Data.computeFromDistribution as cP
 import avaframe.com1DFA.deriveParameterSet as dP
 from avaframe.in3Utils import geoTrans as gT

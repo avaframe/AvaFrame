@@ -11,7 +11,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 from avaframe.in1Data import getInput as gI
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.com1DFA.particleTools as particleTools
 
 

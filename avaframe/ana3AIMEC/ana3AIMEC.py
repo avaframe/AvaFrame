@@ -10,7 +10,7 @@ import pathlib
 from avaframe.in2Trans import shpConversion
 from avaframe.ana3AIMEC import aimecTools
 from avaframe.ana3AIMEC import dfa2Aimec
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import geoTrans

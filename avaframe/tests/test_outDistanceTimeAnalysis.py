@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 # Local imports
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as oAna
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgUtils
 
 

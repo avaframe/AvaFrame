@@ -39,7 +39,7 @@ import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.com1DFA.DFAToolsCython as DFAtllsC
 import avaframe.com1DFA.damCom1DFA as damCom1DFA
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot

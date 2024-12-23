@@ -13,7 +13,7 @@ from datetime import datetime
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import geoTrans as gT
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.version import getVersion
 # import analysis modules
 from avaframe.ana1Tests import energyLineTest

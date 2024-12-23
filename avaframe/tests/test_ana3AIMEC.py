@@ -8,7 +8,7 @@ import shutil
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
 import avaframe.ana3AIMEC.aimecTools as aT
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.com1DFA import particleTools as paT
 from avaframe.in3Utils import cfgUtils
 

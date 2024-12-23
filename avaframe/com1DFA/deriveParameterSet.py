@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 
 import avaframe.in1Data.computeFromDistribution as cP
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI

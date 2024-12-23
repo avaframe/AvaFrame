@@ -14,7 +14,7 @@ import pathlib
 # local imports
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgHandling
 import avaframe.in1Data.getInput as gI
 import avaframe.com1DFA.deriveParameterSet as dP

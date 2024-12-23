@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from cmcrameri import cm as cmapCameri
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 
 def test_constrainPlotsToData():

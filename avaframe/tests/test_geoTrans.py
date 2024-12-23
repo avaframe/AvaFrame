@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import shapely as shp
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 # Local imports

@@ -13,7 +13,7 @@ import shutil
 import numpy as np
 import pytest
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA

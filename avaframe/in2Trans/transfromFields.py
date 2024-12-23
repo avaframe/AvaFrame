@@ -10,7 +10,7 @@ import pathlib
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
 from avaframe.in3Utils import geoTrans as gT
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
