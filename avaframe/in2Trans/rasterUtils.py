@@ -4,11 +4,75 @@
 """
 
 import logging
-
+import rasterio
 import numpy as np
 
 # create local logger
 log = logging.getLogger(__name__)
+
+
+def readRaster(fname, noDataToNan=True):
+    """Read raster file in .asc or .tif format
+
+    Parameters
+    -----------
+
+    fname: pathlib object
+        path to ascii/tif file
+    noDataToNan: bool
+        if True convert nodata_values to nan and set nodata_value to nan
+
+    Returns
+    --------
+    data: dict
+        -headerInfo: class
+            information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
+        -rasterdata : 2D numpy array
+                2D numpy array of ascii matrix
+    """
+
+    log.debug("Reading raster file : %s", fname)
+
+    # with rasterio.open(fname, 'r+') as raster:
+    raster = rasterio.open(fname)
+    rasterData = raster.read(1).astype(np.float64)
+    header = {}
+    header["ncols"] = raster.width
+    header["nrows"] = raster.height
+    header["cellsize"] = raster.transform[0]
+    # TODO maker sure xllcenter is correct here or if this needs transformation as in readASCheader
+    header["xllcenter"] = (raster.transform * (0, 0))[0] + header["cellsize"] / 2.0
+    header["yllcenter"] = (raster.transform * (0, raster.height))[1] + header["cellsize"] / 2.0
+    header["nodata_value"] = raster.nodata
+    header["crs"] = raster.crs
+
+    raster.close()
+
+    # FSO: for testing whether we got all cases of llcenter vs llcornen. Header2 contains old setup
+    header2 = readASCheader(fname)
+    if (header["yllcenter"] - header2["yllcenter"]) > 0.1:
+        message = "Header llcenter mismatch between direct file reading and rasterio"
+        log.error(message)
+        raise ValueError(message)
+
+    data = {}
+    data["header"] = header
+    if noDataToNan:
+        rasterData[rasterData == header["nodata_value"]] = np.nan
+        data["header"]["nodata_value"] = np.nan
+    data["rasterData"] = np.flipud(rasterData)
+
+    # elif fname.suffix == ".tif":
+    #     with rasterio.open(fname, 'r+') as raster:
+    #         header = {}
+    #         header["ncols"] = raster.width
+    #         header["nrows"] = raster.height
+    #         header["xllcorner"] = (raster.transform * (0, 0))[0]
+    #         header["yllcorner"] = (raster.transform * (0, raster.height))[1]
+    #         header["cellsize"] = raster.transform[0]
+    #         header["noDataValue"] = raster.nodata
+
+    return data
 
 
 def readASCheader(fname):
@@ -110,38 +174,6 @@ def readASCdata2numpyArray(fName):
     return rasterdata
 
 
-def readRaster(fname, noDataToNan=True):
-    """Read raster file (.asc)
-
-    Parameters
-    -----------
-
-    fname: str or pathlib object
-        path to ascii file
-    noDataToNan: bool
-        if True convert nodata_values to nan and set nodata_value to nan
-
-    Returns
-    --------
-    data: dict
-        -headerInfo: class
-            information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
-        -rasterdata : 2D numpy array
-                2D numpy array of ascii matrix
-    """
-
-    log.debug("Reading dem : %s", fname)
-    header = readASCheader(fname)
-    rasterdata = readASCdata2numpyArray(fname)
-
-    data = {}
-    data["header"] = header
-    if noDataToNan:
-        rasterdata[rasterdata == header["nodata_value"]] = np.nan
-        data["header"]["nodata_value"] = np.nan
-    data["rasterData"] = np.flipud(rasterdata)
-
-    return data
 
 
 def writeResultToAsc(header, resultArray, outFileName, flip=False):

@@ -68,7 +68,7 @@ def getDEMPath(avaDir):
 
     # if more than one .asc file found throw error
     inputDir = pathlib.Path(avaDir, "Inputs")
-    demFile = list(inputDir.glob("*.asc"))
+    demFile = list(inputDir.glob("*.tif"))
     if len(demFile) > 1:
         message = "There should be exactly one topography .asc file in %s/Inputs/" % avaDir
         log.error(message)
