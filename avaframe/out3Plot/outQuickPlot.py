@@ -380,7 +380,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     raster = IOf.readRaster(datafiles[0], noDataToNan=True)
     rasterRef = IOf.readRaster(datafiles[1], noDataToNan=True)
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
-    header = IOf.readASCheader(datafiles[0])
+    header = IOf.readRasterHeader(datafiles[0])
     cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot
@@ -428,7 +428,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     # Load data
     raster = IOf.readRaster(datafile, noDataToNan=True)
     data1 = raster['rasterData']
-    header = IOf.readASCheader(datafile)
+    header = IOf.readRasterHeader(datafile)
     cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot

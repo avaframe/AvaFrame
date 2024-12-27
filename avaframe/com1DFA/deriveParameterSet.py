@@ -779,7 +779,7 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=Fals
     """
 
     # read header of raster file
-    headerRaster = IOf.readASCheader(rasterFile)
+    headerRaster = IOf.readRasterHeader(rasterFile)
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])

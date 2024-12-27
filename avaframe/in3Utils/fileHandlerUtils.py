@@ -592,7 +592,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             data['resType'].append(infoParts[4+j])
             data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:(4+j)])))
 
-            header = IOf.readASCheader(datafiles[m])
+            header = IOf.readRasterHeader(datafiles[m])
             data['cellSize'].append(header['cellsize'])
             if len(infoParts) == (6+j):
                 data['timeStep'].append(infoParts[5+j])
@@ -609,7 +609,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             data['resType'].append(infoParts[3])
             data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 
-            header = IOf.readASCheader(datafiles[m])
+            header = IOf.readRasterHeader(datafiles[m])
             data['cellSize'].append(header['cellsize'])
             if len(infoParts) == 5:
                 data['timeStep'].append(infoParts[4])
@@ -717,7 +717,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
                 raise AssertionError(message)
 
             # add info about the cell size
-            header = IOf.readASCheader(file)
+            header = IOf.readRasterHeader(file)
             dataDF.loc[simName, 'cellSize'] = header['cellsize']
         # add full path to resType
         dataDF.loc[simName, resType] = pathlib.Path(file)

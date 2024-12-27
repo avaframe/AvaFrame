@@ -52,7 +52,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     relThPath = pathlib.Path(avaDir, 'Inputs', 'RELTH')
     fU.makeADir(relThPath)
     relThFile = relThPath / 'releaseThickness.asc'
-    IOf.writeResultToAsc(demOri['header'], relTh, relThFile, flip=True)
+    IOf.writeResultToRaster(demOri['header'], relTh, relThFile, flip=True)
 
     return relDict
 

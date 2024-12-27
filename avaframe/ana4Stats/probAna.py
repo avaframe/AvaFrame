@@ -380,7 +380,7 @@ def probAnalysis(avaDir, cfg, modName, parametersDict='', inputDir='', probConf=
         raise FileNotFoundError(message)
 
     # get header info from peak files - this should be the same for all peakFiles
-    header = IOf.readASCheader(peakFilesDF['files'][0])
+    header = IOf.readRasterHeader(peakFilesDF['files'][0])
     refData = IOf.readRaster(peakFilesDF['files'][0])
     nRows = header['nrows']
     nCols = header['ncols']
@@ -439,7 +439,7 @@ def probAnalysis(avaDir, cfg, modName, parametersDict='', inputDir='', probConf=
                                                cfg['GENERAL']['peakVar'],
                                                cfg['GENERAL']['peakLim'])
     outFile = outDir / outFileName
-    IOf.writeResultToAsc(header, probMap, outFile)
+    IOf.writeResultToRaster(header, probMap, outFile)
     log.info('Prob result written to %s' % outFile)
     analysisPerformed = True
 

@@ -346,7 +346,7 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
         log.error(message)
         raise FileExistsError(message)
 
-    IOf.writeResultToAsc(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
+    IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
     log.info("Saved remeshed raster to %s" % outFile)
     pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
 
@@ -391,7 +391,7 @@ def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
         rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
         allRasterNames = [d.name for d in rasterFiles]
         for rasterF in rasterFiles:
-            headerRaster = IOf.readASCheader(rasterF)
+            headerRaster = IOf.readRasterHeader(rasterF)
             if abs(meshCellSize - headerRaster["cellsize"]) < meshCellSizeThreshold and rasterName in rasterF.stem:
                 log.info("Remeshed Raster found: %s cellSize: %.5f" % (rasterF.name, headerRaster["cellsize"]))
                 rasterFound = True

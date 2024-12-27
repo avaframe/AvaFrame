@@ -168,7 +168,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     demExt = os.path.splitext(modelPaths["demPath"])[1]
     if demExt in ['.asc', '.ASC']:
-        demHeader = IOf.readASCheader(modelPaths["demPath"])
+        demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         rasterAttributes["nodata"] = demHeader["nodata_value"]
     elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
         demHeader = io.read_header(modelPaths["demPath"])
@@ -266,7 +266,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         ext = os.path.splitext(modelPaths["demPath"])[1]
 
         if ext in ['.asc', '.ASC']:
-            _demHeader = IOf.readASCheader(modelPaths["demPath"])
+            _demHeader = IOf.readRasterHeader(modelPaths["demPath"])
             _relHeader = io.read_header(modelPaths["releasePathWork"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
             _demHeader = io.read_header(modelPaths["demPath"])
@@ -475,7 +475,7 @@ def checkConvertReleaseShp2Tif(modelPaths):
 
         if ext in ['.asc', '.ASC']:
             dem = IOf.readRaster(modelPaths["demPath"])
-            demHeader = IOf.readASCheader(modelPaths["demPath"])
+            demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
             #dem = io.read_raster(modelPaths["demPath"])
             #demHeader = io.read_header(modelPaths["demPath"])

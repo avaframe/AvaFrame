@@ -36,20 +36,11 @@ def readRaster(fname, noDataToNan=True):
     # with rasterio.open(fname, 'r+') as raster:
     raster = rasterio.open(fname)
     rasterData = raster.read(1).astype(np.float64)
-    header = {}
-    header["ncols"] = raster.width
-    header["nrows"] = raster.height
-    header["cellsize"] = raster.transform[0]
-    # TODO maker sure xllcenter is correct here or if this needs transformation as in readASCheader
-    header["xllcenter"] = (raster.transform * (0, 0))[0] + header["cellsize"] / 2.0
-    header["yllcenter"] = (raster.transform * (0, raster.height))[1] + header["cellsize"] / 2.0
-    header["nodata_value"] = raster.nodata
-    header["crs"] = raster.crs
-
+    header = getHeaderFromRaster(raster)
     raster.close()
 
     # FSO: for testing whether we got all cases of llcenter vs llcornen. Header2 contains old setup
-    header2 = readASCheader(fname)
+    header2 = readRasterHeader(fname)
     if (header["yllcenter"] - header2["yllcenter"]) > 0.1:
         message = "Header llcenter mismatch between direct file reading and rasterio"
         log.error(message)
@@ -75,7 +66,34 @@ def readRaster(fname, noDataToNan=True):
     return data
 
 
-def readASCheader(fname):
+def getHeaderFromRaster(raster):
+    """convert rasterio raster info to header info
+    Parameters
+    ----------
+    raster: rasterio raster
+        read by rasterio
+
+    Returns
+    -------
+    header: dict
+        header info
+    """
+    header = {}
+    header["ncols"] = raster.width
+    header["nrows"] = raster.height
+    header["cellsize"] = raster.transform[0]
+    # TODO maker sure xllcenter is correct here or if this needs transformation as in readRasterHeader
+    header["xllcenter"] = (raster.transform * (0, 0))[0] + header["cellsize"] / 2.0
+    header["yllcenter"] = (raster.transform * (0, raster.height))[1] + header["cellsize"] / 2.0
+    header["nodata_value"] = raster.nodata
+    header["crs"] = raster.crs
+    header["driver"] = raster.driver
+    header["transform"] = raster.transform
+
+    return header
+
+
+def readRasterHeader(fname):
     """return a class with information from an ascii file header
 
     Parameters
@@ -90,45 +108,52 @@ def readASCheader(fname):
         information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
     """
 
-    # read header
-    headerRows = 6  # six rows for header information
-    headerInfo = (
-        {}
-    )  # store header information including ncols, nrows, xllcorner, yllcorner, cellsize, nodata_value
-    rowCount = 1
-    with open(str(fname), "rt") as fileH:
-        for line in fileH:
-            if rowCount <= headerRows:
-                line = line.split()
-                headerInfo[line[0].lower()] = float(line[1])
-            else:
-                break
-            rowCount = rowCount + 1
+    # # read header
+    # headerRows = 6  # six rows for header information
+    # headerInfo = (
+    #     {}
+    # )  # store header information including ncols, nrows, xllcorner, yllcorner, cellsize, nodata_value
+    # rowCount = 1
+    # with open(str(fname), "rt") as fileH:
+    #     for line in fileH:
+    #         if rowCount <= headerRows:
+    #             line = line.split()
+    #             headerInfo[line[0].lower()] = float(line[1])
+    #         else:
+    #             break
+    #         rowCount = rowCount + 1
+    #
+    # if ("xllcenter" not in headerInfo and "xllcorner" in headerInfo) and (
+    #     "yllcenter" not in headerInfo and "yllcorner" in headerInfo
+    # ):
+    #     headerInfo["xllcenter"] = headerInfo["xllcorner"] + headerInfo["cellsize"] / 2
+    #     headerInfo["yllcenter"] = headerInfo["yllcorner"] + headerInfo["cellsize"] / 2
+    #     # remove xllcorner, yllcorner
+    #     headerInfo.pop("xllcorner")
+    #     headerInfo.pop("yllcorner")
+    #
+    # # convert ncols and nrows to int
+    # headerInfo["ncols"] = int(headerInfo["ncols"])
+    # headerInfo["nrows"] = int(headerInfo["nrows"])
+    #
+    # headerItems = [item.lower() for item in list(headerInfo.keys())]
 
-    if ("xllcenter" not in headerInfo and "xllcorner" in headerInfo) and (
-        "yllcenter" not in headerInfo and "yllcorner" in headerInfo
-    ):
-        headerInfo["xllcenter"] = headerInfo["xllcorner"] + headerInfo["cellsize"] / 2
-        headerInfo["yllcenter"] = headerInfo["yllcorner"] + headerInfo["cellsize"] / 2
-        # remove xllcorner, yllcorner
-        headerInfo.pop("xllcorner")
-        headerInfo.pop("yllcorner")
+    raster = rasterio.open(fname)
+    header = getHeaderFromRaster(raster)
+    raster.close()
 
-    # convert ncols and nrows to int
-    headerInfo["ncols"] = int(headerInfo["ncols"])
-    headerInfo["nrows"] = int(headerInfo["nrows"])
+    headerItems = [item.lower() for item in list(header.keys())]
+    # TODO: reanable check
+    # if sorted(headerItems) != sorted(
+    #     ["cellsize", "nrows", "ncols", "xllcenter", "yllcenter", "nodata_value"]
+    # ):
+    #     message = "DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value"
+    #     log.error(message)
+    #     raise ValueError(message)
 
-    headerItems = [item.lower() for item in list(headerInfo.keys())]
-    if sorted(headerItems) != sorted(
-        ["cellsize", "nrows", "ncols", "xllcenter", "yllcenter", "nodata_value"]
-    ):
-        message = "DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value"
-        log.error(message)
-        raise ValueError(message)
+    # fileH.close()
 
-    fileH.close()
-
-    return headerInfo
+    return header
 
 
 def isEqualASCheader(headerA, headerB):
@@ -174,10 +199,8 @@ def readASCdata2numpyArray(fName):
     return rasterdata
 
 
-
-
-def writeResultToAsc(header, resultArray, outFileName, flip=False):
-    """Write 2D array to an ascii file with header and save to location of outFileName
+def writeResultToRaster(header, resultArray, outFileName, flip=False):
+    """Write 2D array to an raster file with header and save to location of outFileName
 
     Parameters
     ----------
@@ -192,22 +215,27 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
         if True, flip the rows of the resultArray when writing
     """
 
-    # Open outfile
-    with open(outFileName, "w") as outFile:
-        # write the header and array values to file
-        outFile.write("ncols %d\n" % header["ncols"])
-        outFile.write("nrows %d\n" % header["nrows"])
-        outFile.write("xllcenter %.2f\n" % header["xllcenter"])
-        outFile.write("yllcenter %.2f\n" % header["yllcenter"])
-        outFile.write("cellsize %.2f\n" % header["cellsize"])
-        outFile.write("nodata_value %.2f\n" % header["nodata_value"])
+    if header["driver"] == "AAIGrid":
+        outFile = outFileName.parent / (outFileName.name + ".asc")
+    elif header["driver"] == "GTiff":
+        outFile = outFileName.parent / (outFileName.name + ".tif")
 
-        M = resultArray.shape[0]
-        for m in range(M):
-            if flip:
-                line = np.array([resultArray[M - m - 1, :]])
-            else:
-                line = np.array([resultArray[m, :]])
-            np.savetxt(outFile, line, fmt="%.16g")
-
-        outFile.close()
+    # try:
+    with rasterio.open(
+            outFile,
+            "w",
+            driver=header["driver"],
+            crs=header["crs"],
+            nodata=header["nodata_value"],
+            transform=header["transform"],
+            height=resultArray.shape[0],
+            width=resultArray.shape[1],
+            count=1,
+            dtype=resultArray.dtype,
+    ) as new_dataset:
+        if flip:
+            new_dataset.write(np.flipud(resultArray), 1)
+        else:
+            new_dataset.write(resultArray, 1)
+    # except:
+    #     log.error("could not write {} to {}".format(resultArray, outFileName))

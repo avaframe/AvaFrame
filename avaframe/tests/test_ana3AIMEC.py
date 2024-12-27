@@ -360,13 +360,13 @@ def test_fullAimecAnalysis(tmp_path):
                  'xllcenter': xllcenter, 'yllcenter': yllcenter}
     demData = np.tile(np.flip(np.arange(12)), (10,1))
     demName = avaDir / 'Inputs' / 'testDEM.asc'
-    IOf.writeResultToAsc(demHeader, demData, demName, flip=True)
+    IOf.writeResultToRaster(demHeader, demData, demName, flip=True)
 
     res1 = np.zeros((nRows, nCols))
     res1[3:7, 3:8] = 10.
     res1[3:7, 7:10] = 7.
     res1File = avaDir / 'testOutputs' / 'test1_01T_null_fullDEM_pft.asc'
-    IOf.writeResultToAsc(demHeader, res1, res1File, flip=True)
+    IOf.writeResultToRaster(demHeader, res1, res1File, flip=True)
 
     xllcenter = 5.
     yllcenter = 10.
@@ -378,7 +378,7 @@ def test_fullAimecAnalysis(tmp_path):
     res2[1:5, 2:7] = 10.
     res2[1:5, 6:9] = 7.
     resFile2 = avaDir / 'testOutputs' / 'test1_01T_null_partDEM_pft.asc'
-    IOf.writeResultToAsc(demHeader2, res2, resFile2, flip=True)
+    IOf.writeResultToRaster(demHeader2, res2, resFile2, flip=True)
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC, onlyDefault=True)
     cfgSetup = cfg['AIMECSETUP']
@@ -412,7 +412,7 @@ def test_fullAimecAnalysis(tmp_path):
     res2[1:5, 2:7] = 10.
     res2[1:5, 6:9] = 6.
     resFile2 = avaDir / 'testOutputs' / 'test1_01T_null_partDEM_pft.asc'
-    IOf.writeResultToAsc(demHeader2, res2, resFile2, flip=True)
+    IOf.writeResultToRaster(demHeader2, res2, resFile2, flip=True)
 
     rasterTransfo, resAnalysisDF, plotDict, newRasters, pathDict = ana3AIMEC.fullAimecAnalysis(avaDir, cfg,
                                                                                                inputDir=testDir,

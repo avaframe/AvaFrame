@@ -279,7 +279,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         raster = IOf.readRaster(data, noDataToNan=True)
         dataPlot = raster['rasterData']
-        header = IOf.readASCheader(data)
+        header = IOf.readRasterHeader(data)
         cellSize = header['cellsize']
 
         # load correspoding DEM check for matching cellsize

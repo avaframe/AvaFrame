@@ -987,7 +987,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
         "nodata_value": demOri["header"]["nodata_value"],
         "cellsize": csz,
     }
-    IOf.writeResultToAsc(headerRelTh, relTh, relThFileName, flip=True)
+    IOf.writeResultToRaster(headerRelTh, relTh, relThFileName, flip=True)
     return relDict
 
 

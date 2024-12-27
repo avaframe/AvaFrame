@@ -48,7 +48,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
 
         # write thickness to file
         outFile = outDir / pName
-        IOf.writeResultToAsc(thicknessDict["header"], thicknessDict["rasterData"], outFile, flip=True)
+        IOf.writeResultToRaster(thicknessDict["header"], thicknessDict["rasterData"], outFile, flip=True)
 
 
 if __name__ == "__main__":

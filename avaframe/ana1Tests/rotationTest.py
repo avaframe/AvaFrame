@@ -131,7 +131,7 @@ def rotateDFAResults(avalancheDir, simDF, rowSimHash, resTypeList, thetaRef, com
         outDir = avalancheDir / 'Outputs' / comRotated / 'peakFiles'
         fU.makeADir(outDir)
         outFileName = outDir / fName.name
-        IOf.writeResultToAsc(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
+        IOf.writeResultToRaster(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
 
 def initializeRotationTestReport(avalancheDir, resTypeList, comModule, refSimName, flagMass):

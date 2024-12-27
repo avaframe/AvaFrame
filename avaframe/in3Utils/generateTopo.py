@@ -626,7 +626,7 @@ def writeDEM(cfg, z, outDir):
     demFile = outDir / ('%s_%s_Topo.asc' % (demName, nameExt))
     demHeader = {'ncols': nCols, 'nrows': nRows, 'xllcenter': xllcenter, 'yllcenter': yllcenter, 'cellsize': cellsize,
                  'nodata_value': noDATA}
-    IOf.writeResultToAsc(demHeader, z, demFile, flip=False)
+    IOf.writeResultToRaster(demHeader, z, demFile, flip=False)
 
     # Log info here
     log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, demName, nameExt))
