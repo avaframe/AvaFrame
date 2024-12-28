@@ -539,7 +539,9 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     # Load input datasets from input directory
     if isinstance(inputDir, pathlib.Path) is False:
         inputDir = pathlib.Path(inputDir)
-    datafiles = list(inputDir.glob('*.asc'))
+
+    # TODO: what if asc and tif?
+    datafiles = list(inputDir.glob('*.asc')) + list(inputDir.glob('*.tif'))
 
     # Sort datafiles by name
     datafiles = sorted(datafiles)

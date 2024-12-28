@@ -178,29 +178,8 @@ def isEqualASCheader(headerA, headerB):
         and (a["cellsize"] == b["cellsize"])
     )
 
-
-def readASCdata2numpyArray(fName):
-    """Read ascii matrix as numpy array
-
-    Parameters
-    -----------
-
-    fname: str or pathlib object
-        path to ascii file
-
-    Returns
-    --------
-    -rasterdata : 2D numpy array
-            2D numpy array of ascii matrix
-    """
-    infile = open(fName, "r")
-    rasterdata = np.loadtxt(fName, skiprows=6)
-    infile.close()
-    return rasterdata
-
-
 def writeResultToRaster(header, resultArray, outFileName, flip=False):
-    """Write 2D array to an raster file with header and save to location of outFileName
+    """Write 2D array to a raster file with header and save to location of outFileName
 
     Parameters
     ----------
@@ -213,6 +192,11 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
         path incl. name of file to be written
     flip: boolean
         if True, flip the rows of the resultArray when writing
+
+    Returns
+    -------
+    outFile: path
+        to file being written
     """
 
     if header["driver"] == "AAIGrid":
@@ -221,21 +205,23 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
         outFile = outFileName.parent / (outFileName.name + ".tif")
 
     # try:
-    with rasterio.open(
-            outFile,
-            "w",
-            driver=header["driver"],
-            crs=header["crs"],
-            nodata=header["nodata_value"],
-            transform=header["transform"],
-            height=resultArray.shape[0],
-            width=resultArray.shape[1],
-            count=1,
-            dtype=resultArray.dtype,
-    ) as new_dataset:
-        if flip:
-            new_dataset.write(np.flipud(resultArray), 1)
-        else:
-            new_dataset.write(resultArray, 1)
+    rasterOut = rasterio.open(
+        outFile,
+        "w",
+        driver=header["driver"],
+        crs=header["crs"],
+        nodata=header["nodata_value"],
+        transform=header["transform"],
+        height=resultArray.shape[0],
+        width=resultArray.shape[1],
+        count=1,
+        dtype=resultArray.dtype,
+    )
+    if flip:
+        rasterOut.write(np.flipud(resultArray), 1)
+    else:
+        rasterOut.write(resultArray, 1)
+    rasterOut.close()
     # except:
     #     log.error("could not write {} to {}".format(resultArray, outFileName))
+    return outFile

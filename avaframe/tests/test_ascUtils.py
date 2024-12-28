@@ -28,11 +28,3 @@ def test_isEqualASCheader(capfd):
     assert equal
 
 
-def test_readASCdata2numpyArray(capfd):
-    '''Simple test for module readRasterHeader'''
-    dirname = pathlib.Path(__file__).parents[0]
-    DGMSource = dirname / '..'/'data'/'avaSlide'/'Inputs'/'slideTopo.asc'
-    data = IOf.readASCdata2numpyArray(DGMSource)
-
-    assert((data[0][0] == 1752.60) and (data[2][1] == 1749.10)
-           and (data[0][3] == 1742.10))

@@ -103,7 +103,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
 
             # TODO for testing
-            if cfgFLAGS["showOnlineBackground"]:
+            if cfgFLAGS.getboolean("showOnlineBackground"):
                 providers = ctx.providers.flatten()
                 ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
 
