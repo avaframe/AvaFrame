@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use("agg")
 from matplotlib import pyplot as plt
 import pathlib
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
@@ -19,6 +20,7 @@ import avaframe.in2Trans.rasterUtils as IOf
 import rasterio
 import rasterio.plot
 import contextily as ctx
+import geopandas as gpd
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -48,6 +50,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     # Load all infos on simulations
     avaDir = pathlib.Path(avaDir)
     inputDir = avaDir / "Outputs" / modName / "peakFiles"
+    inDir = avaDir / 'Inputs'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     if demData == "":
@@ -84,6 +87,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         name = peakFilesDF["names"][m]
         fileName = peakFilesDF["files"][m]
         resType = peakFilesDF["resType"][m]
+        simType = peakFilesDF['simType'][m]
+
         log.debug("now plot %s:" % (fileName))
 
         plotName = outDir / ("%s.%s" % (name, pU.outputFormat))
@@ -106,6 +111,22 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             if cfgFLAGS.getboolean("showOnlineBackground"):
                 providers = ctx.providers.flatten()
                 ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
+
+            # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
+            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "CROPSHAPE", "cropFile", fileExt="shp")
+            if cropInfo != 'No':
+                focus = gpd.read_file(cropFile)
+                focus.plot(ax=ax, zorder=12, edgecolor="red", linewidth=2, facecolor="none", alpha=0)
+                extent = focus.total_bounds
+                ax.set_xlim(extent[0], extent[2])
+                ax.set_ylim(extent[1], extent[3])
+
+            # if resistance area is considered in simulation, show extent of resistance area
+            if 'res' in simType:
+                resFile, resInfo = gI.getAndCheckInputFiles(inDir, "RES", "Resistance", fileExt="shp")
+                if resInfo != 'No':
+                    resarea = gpd.read_file(resFile)
+                    resarea.plot(ax=ax, zorder=12, edgecolor="green", linewidth=2, facecolor="none", alpha=0.8)
 
             # add title, labels and ava Info
             title = str("%s" % name)
@@ -194,7 +215,11 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
                         zorder=4,
                         alpha=alpha)
         if len(np.nonzero(data)[0]) > 0.:
-            pU.addColorBar(im1, ax, ticks, unit)
+            # add Colorbar
+            fig = ax.get_figure()
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            fig.colorbar(im1, cax=cax)
 
     return ax, rowsMinPlot, colsMinPlot
 
