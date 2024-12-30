@@ -53,16 +53,6 @@ def readRaster(fname, noDataToNan=True):
         data["header"]["nodata_value"] = np.nan
     data["rasterData"] = np.flipud(rasterData)
 
-    # elif fname.suffix == ".tif":
-    #     with rasterio.open(fname, 'r+') as raster:
-    #         header = {}
-    #         header["ncols"] = raster.width
-    #         header["nrows"] = raster.height
-    #         header["xllcorner"] = (raster.transform * (0, 0))[0]
-    #         header["yllcorner"] = (raster.transform * (0, raster.height))[1]
-    #         header["cellsize"] = raster.transform[0]
-    #         header["noDataValue"] = raster.nodata
-
     return data
 
 
