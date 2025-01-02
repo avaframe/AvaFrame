@@ -743,7 +743,7 @@ def computeRelStats(line, dem):
         log.debug("minimum elevation: %.2f" % np.nanmin(zArray))
         log.debug("mean slope: %.2f" % np.nanmean(slopeArray))
 
-    return lineDict
+    returnsymotion-prefix)b lineDict
 
 
 def computeAreasFromLines(line):

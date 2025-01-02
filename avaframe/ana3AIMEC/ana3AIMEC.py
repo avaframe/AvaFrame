@@ -64,7 +64,8 @@ def fullAimecAnalysis(avalancheDir, cfg, inputDir='', demFileName=''):
     pathDict = {'refSimRowHash': refSimRowHash, 'refSimName': refSimName, 'compType': ['singleModule', anaMod],
                 'colorParameter': colorParameter, 'resTypeList': resTypeList, 'valRef': valRef,
                 'demFileName': demFileName}
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'), dirName=anaMod)
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, cfgSetup.getboolean('defineRunoutArea'),
+                                          dirName=anaMod)
     pathDict = aimecTools.checkAIMECinputs(cfgSetup, pathDict)
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])

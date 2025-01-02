@@ -33,7 +33,6 @@ def readRaster(fname, noDataToNan=True):
 
     log.debug("Reading raster file : %s", fname)
 
-    # with rasterio.open(fname, 'r+') as raster:
     raster = rasterio.open(fname)
     rasterData = raster.read(1).astype(np.float64)
     header = getHeaderFromRaster(raster)
@@ -82,6 +81,34 @@ def getHeaderFromRaster(raster):
 
     return header
 
+
+def transformFromASCHeader(header):
+    """convert header info to raster transform info
+
+    Parameters
+    ----------
+    header: dict
+        header info
+
+    Returns
+    -------
+    transfrom: dict
+        rasterio transform info
+    """
+    # rasterio requires west, north
+    # rasterio.transform.from_origin(west, north, xsize, ysize)
+    xllCenter = header["xllcenter"]
+    yllCenter = header["yllcenter"]
+    cellSize = header["cellsize"]
+    nRows = header["nrows"]
+
+    transform = rasterio.transform.from_origin(xllCenter,
+                                               yllCenter + nRows * cellSize,
+                                               cellSize,
+                                               cellSize)
+    # crs = rasterio.crs.CRS.from_epsg(31287)
+
+    return transform  # , crs
 
 def readRasterHeader(fname):
     """return a class with information from an ascii file header

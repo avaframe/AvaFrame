@@ -398,7 +398,8 @@ def test_fullAimecAnalysis(tmp_path):
     # rasterio requires west, north
     # rasterio.transform.from_origin(west, north, xsize, ysize)
     transform = rasterio.transform.from_origin(xllcenter, yllcenter + nRows * cellSize, cellSize, cellSize)
-    crs = rasterio.crs.CRS.from_epsg(31287)
+    # crs = rasterio.crs.CRS.from_epsg(31287)
+    crs = rasterio.crs.CRS()
 
     demHeader = {
         "cellsize": cellSize,
@@ -412,13 +413,13 @@ def test_fullAimecAnalysis(tmp_path):
         "transform": transform,
     }
     demData = np.tile(np.flip(np.arange(12)), (10, 1))
-    demName = avaDir / "Inputs" / "testDEM.asc"
+    demName = avaDir / "Inputs" / "testDEM"
     IOf.writeResultToRaster(demHeader, demData, demName, flip=True)
 
     res1 = np.zeros((nRows, nCols))
     res1[3:7, 3:8] = 10.0
     res1[3:7, 7:10] = 7.0
-    res1File = avaDir / "testOutputs" / "test1_01T_null_fullDEM_pft.asc"
+    res1File = avaDir / "testOutputs" / "test1_01T_null_fullDEM_pft"
     IOf.writeResultToRaster(demHeader, res1, res1File, flip=True)
 
     xllcenter = 5.0
@@ -428,7 +429,7 @@ def test_fullAimecAnalysis(tmp_path):
     # rasterio requires west, north
     # rasterio.transform.from_origin(west, north, xsize, ysize)
     transform = rasterio.transform.from_origin(xllcenter, yllcenter + nRows * cellSize, cellSize, cellSize)
-    crs = rasterio.crs.CRS.from_epsg(31287)
+    crs = rasterio.crs.CRS()
 
     demHeader2 = {
         "cellsize": cellSize,
@@ -445,7 +446,7 @@ def test_fullAimecAnalysis(tmp_path):
     res2 = np.zeros((nRows, nCols))
     res2[1:5, 2:7] = 10.0
     res2[1:5, 6:9] = 7.0
-    resFile2 = avaDir / "testOutputs" / "test1_01T_null_partDEM_pft.asc"
+    resFile2 = avaDir / "testOutputs" / "test1_01T_null_partDEM_pft"
     IOf.writeResultToRaster(demHeader2, res2, resFile2, flip=True)
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC, onlyDefault=True)
@@ -474,6 +475,10 @@ def test_fullAimecAnalysis(tmp_path):
     yllcenter = 10.0
     nRows = 8
     nCols = 10
+
+    transform = rasterio.transform.from_origin(xllcenter, yllcenter + nRows * cellSize, cellSize, cellSize)
+    crs = rasterio.crs.CRS()
+
     demHeader2 = {
         "cellsize": cellSize,
         "nrows": nRows,
@@ -481,11 +486,15 @@ def test_fullAimecAnalysis(tmp_path):
         "nodata_value": nodata_value,
         "xllcenter": xllcenter,
         "yllcenter": yllcenter,
+        "driver": "AAIGrid",
+        "crs": crs,
+        "transform": transform,
     }
+
     res2 = np.zeros((nRows, nCols))
     res2[1:5, 2:7] = 10.0
     res2[1:5, 6:9] = 6.0
-    resFile2 = avaDir / "testOutputs" / "test1_01T_null_partDEM_pft.asc"
+    resFile2 = avaDir / "testOutputs" / "test1_01T_null_partDEM_pft"
     IOf.writeResultToRaster(demHeader2, res2, resFile2, flip=True)
 
     rasterTransfo, resAnalysisDF, plotDict, newRasters, pathDict = ana3AIMEC.fullAimecAnalysis(

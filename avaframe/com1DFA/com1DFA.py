@@ -2433,9 +2433,9 @@ def readFields(inDir, resType, simName="", flagAvaDir=True, comModule="com1DFA",
     for r in resType:
         # search for all files within directory
         if simName:
-            name = "*" + simName + "*_" + r + "*.asc"
+            name = "*" + simName + "*_" + r + "*.*"
         else:
-            name = "*_" + r + "*.asc"
+            name = "*_" + r + "*.*"
         FieldsNameList = list(inDir.glob(name))
         timeListTemp = [float(element.stem.split("_t")[-1]) for element in FieldsNameList]
         FieldsNameList = [x for _, x in sorted(zip(timeListTemp, FieldsNameList))]

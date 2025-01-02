@@ -79,9 +79,9 @@ def readAIMECinputs(avalancheDir, pathDict, defineRunoutArea, dirName='com1DFA')
     refDir = pathlib.Path(avalancheDir, 'Inputs')
     # check for DEM
     if 'demFileName' not in pathDict.keys():
-        demSource = list(refDir.glob('*.asc'))
+        demSource = list(refDir.glob('*.asc')) + list(refDir.glob('*.shp'))
     elif pathDict['demFileName'] == '':
-        demSource = list(refDir.glob('*.asc'))
+        demSource = list(refDir.glob('*.asc')) + list(refDir.glob('*.shp'))
     else:
         demSource = list(refDir.glob(pathDict['demFileName']))
     try:
