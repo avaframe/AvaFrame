@@ -113,7 +113,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                 ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
 
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
-            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "CROPSHAPE", "cropFile", fileExt="shp")
+            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="cropshape.shp")
             if cropInfo != 'No':
                 focus = gpd.read_file(cropFile)
                 focus.plot(ax=ax, zorder=12, edgecolor="red", linewidth=2, facecolor="none", alpha=0)
@@ -121,12 +121,15 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                 ax.set_xlim(extent[0], extent[2])
                 ax.set_ylim(extent[1], extent[3])
 
-            # if resistance area is considered in simulation, show extent of resistance area
-            if 'res' in simType:
-                resFile, resInfo = gI.getAndCheckInputFiles(inDir, "RES", "Resistance", fileExt="shp")
-                if resInfo != 'No':
-                    resarea = gpd.read_file(resFile)
-                    resarea.plot(ax=ax, zorder=12, edgecolor="green", linewidth=2, facecolor="none", alpha=0.8)
+            # if entrainment or resistance area is considered in simulation, show extent of entrainment or resistance area
+            colorOutline = {'ent': 'white', 'res': 'green'}
+            for sType in ['ent', 'res']:
+                if sType in simType:
+                    sFile, sInfo = gI.getAndCheckInputFiles(inDir, sType.upper(), sType, fileExt="shp")
+                    if sInfo != 'No':
+                        sarea = gpd.read_file(sFile)
+                        sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
+                                   label=('%s area' % sType), alpha=0.8)
 
             # add title, labels and ava Info
             title = str("%s" % name)
