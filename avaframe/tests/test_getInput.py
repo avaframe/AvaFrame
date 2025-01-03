@@ -89,27 +89,14 @@ def test_getDEMPath(tmp_path):
 
     with pytest.raises(AssertionError) as e:
         assert getInput.getDEMPath(avaTestDir)
-    assert str(e.value) == "There should be exactly one topography .asc file in %s/Inputs/" % (avaTestDir)
 
-    # call function to be tested
-    avaDirTest2 = pathlib.Path(tmp_path, 'avaTest')
-    avaDirTest2Inputs = avaDirTest2 / 'Inputs'
-    fU.makeADir(avaDirTest2Inputs)
-    inputFile = avaDirInputs / 'DEM_HS_Topo.asc'
-    testFile = avaDirTest2Inputs / 'DEM_HS_Topo2.txt'
-    shutil.copyfile(inputFile, testFile)
-
-    with pytest.raises(AssertionError) as e:
-        assert getInput.getDEMPath(avaDirTest2)
-    assert str(e.value) == "DEM file format not correct in %s/Inputs/ - only .asc is allowed but %s is provided" % (avaDirTest2, testFile.name)
+    assert str(e.value) == "There should be exactly one topography .asc/.tif file in %s/Inputs/" % (avaTestDir)
 
     # call function to be tested
     avaDirTest3 = pathlib.Path(tmp_path, 'avaTest2')
-
-
     with pytest.raises(FileNotFoundError) as e:
         assert getInput.getDEMPath(avaDirTest3)
-    assert str(e.value) == "No topography .asc file in %s/Inputs/" % (avaDirTest3)
+    assert str(e.value) == "No topography .asc / .tif file in %s/Inputs/" % (avaDirTest3)
 
 
 def test_getInputData(tmp_path):
@@ -431,6 +418,7 @@ def test_createReleaseStats(tmp_path):
 
     [z, name_ext, outDir] = generateTopo.generateTopo(cfgGenTop, testPath)
 
+    print(testPath)
     # setup release line
     lineDict = {'x': np.asarray([100., 100., 150., 200., 200., 150., 100.]),
                 'y': np.asarray([100., 150., 150., 150., 100., 100., 100])}
@@ -448,7 +436,14 @@ def test_createReleaseStats(tmp_path):
 
     assert relDFDict['releaseIP']['release feature'].iloc[0] == 'release1'
     assert np.isclose(relDFDict['releaseIP']['slope [deg]'].iloc[0], 27.5)
+    print(20 * "-")
+    print(relDFDict['releaseIP']['MaxZ [m]'].iloc[0], zMax)
+    print(20 * "-")
     assert np.isclose(relDFDict['releaseIP']['MaxZ [m]'].iloc[0], zMax)
+
+    print(20 * "-")
+    print(relDFDict['releaseIP']['MinZ [m]'].iloc[0], zMin)
+    print(20 * "-")
     assert np.isclose(relDFDict['releaseIP']['MinZ [m]'].iloc[0], zMin)
     assert np.isclose(relDFDict['releaseIP']['projected area [ha]'].iloc[0], 0.5151)
     assert np.isclose(relDFDict['releaseIP']['actual area [ha]'].iloc[0],0.58071)

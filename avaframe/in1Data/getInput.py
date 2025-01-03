@@ -72,7 +72,6 @@ def getDEMPath(avaDir):
 
     if len(demFile) > 1:
         message = "There should be exactly one topography .asc/.tif file in %s/Inputs/" % avaDir
-        message = message + "\n Found %s" % demFile
         log.error(message)
         raise AssertionError(message)
 
@@ -743,7 +742,7 @@ def computeRelStats(line, dem):
         log.debug("minimum elevation: %.2f" % np.nanmin(zArray))
         log.debug("mean slope: %.2f" % np.nanmean(slopeArray))
 
-    returnsymotion-prefix)b lineDict
+    return lineDict
 
 
 def computeAreasFromLines(line):

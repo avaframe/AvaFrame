@@ -623,7 +623,7 @@ def writeDEM(cfg, z, outDir):
     noDATA = float(cfg["DEMDATA"]["nodata_value"])
     demName = cfg["DEMDATA"]["demName"]
 
-    # Save elevation data to .asc file and add header lines
+    # Save elevation data to file and add header lines
     demFile = outDir / ("%s_%s_Topo" % (demName, nameExt))
     demHeader = {"ncols": nCols,
                  "nrows": nRows,
@@ -637,6 +637,7 @@ def writeDEM(cfg, z, outDir):
     demHeader["driver"] = "AAIGrid"
     # set blank CRS TODO: maybe set default from main cfg?
     demHeader["crs"] = CRS()
+    # demHeader["crs"] = CRS.from_epsg(31287)
 
     IOf.writeResultToRaster(demHeader, z, demFile, flip=False)
 
