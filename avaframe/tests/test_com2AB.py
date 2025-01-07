@@ -136,7 +136,8 @@ def test_com2ABMain(capfd):
         flags = cfg['FLAGS']
         # run main routine
         pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
-        eqOut = resAB[name]
+        for key in resAB:
+            eqOut = resAB[key]
 
         # open ref data
         flags['fullOut'] = 'True'
