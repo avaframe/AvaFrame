@@ -1,7 +1,8 @@
-"""Helper functions for splitting avalanche input data into individual folders"""
+"""Module for splitting and organizing avalanche input data."""
+
 import logging
 import shapefile  # pyshp
-from shapely.geometry import shape, Point, box, MultiPolygon
+from shapely.geometry import shape
 from avaframe.in2Trans import ascUtils
 import pathlib
 
@@ -11,20 +12,30 @@ from avaframe.in3Utils.initializeProject import initializeFolderStruct
 log = logging.getLogger(__name__)
 
 def splitInputsMain(inputDir, outputDir, cfg):
-    """Main function for splitting inputs
+    """Process and organize avalanche input data into individual folders.
 
     Parameters
     ----------
-    inputDir: pathlib.Path object
-        path to input directory
-    outputDir: pathlib.Path object
-        path to output directory
-    cfg: dict
-        configuration settings
+    inputDir : pathlib.Path object
+        Path to input directory containing release areas (REL) and DEM files
+    outputDir : pathlib.Path object
+        Path to output directory where organized folders will be created
+    cfg : dict
+        Configuration settings containing:
+        - GENERAL.splitDEM : bool, whether to split DEM
+        - GENERAL.bufferSize : float, buffer size for DEM clipping
 
     Returns
     -------
     none
+
+    Notes
+    -----
+    Expected input directory structure:
+    inputDir/
+    ├── REL/
+    │   └── release_areas.shp (with optional .prj)
+    └── dem_file.asc
     """
     # Fetch the necessary input
     inputRELDir = inputDir / 'REL'
@@ -32,7 +43,7 @@ def splitInputsMain(inputDir, outputDir, cfg):
     if not inputShp:
         log.error(f"No shapefile found in {inputRELDir}.")
         return
-    inputDEM = next(inputDir.glob("*.asc"), None)
+    inputDEM = next(inputDir.glob("*.asc"), None) #ToDo: needs adjustment once we include tif files as well
     if not inputDEM:
         log.error(f"No DEM file found in {inputDir}.")
         return
@@ -73,14 +84,16 @@ def splitInputsMain(inputDir, outputDir, cfg):
     splitByScenarios(folderListGrouped, outputDir)
     log.info("Finished separating by scenarios")
 
-def readShapefile(src):
-    """Read the fields, properties, and geometries of an input shapefile.
+def readShapefile(inputShp):
+    """Read the fields, properties, geometries, and spatial reference of an input shapefile.
     To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
-    the srs, shapeTypes, bounds, numFeatures and metadata if needed
+    shapeTypes, bounds, numFeatures and metadata if needed
+
+    # ToDo: maybe move to some other module since its generally useful, e.g. in1Data, in2Trans -> shapeUtils.py
 
     Parameters
     ----------
-    src: shapefile.Reader
+    inputShp: pathlib.Path object
         the input shapefile
 
     Returns
@@ -93,40 +106,110 @@ def readShapefile(src):
         a list of dictionaries containing the properties of each feature
     geometries: list
         a list of geometry objects
+    srs: str
+        the spatial reference system fetched from eventual .prj file
     """
+    with shapefile.Reader(str(inputShp)) as src:
+        fields = src.fields[1:]  # Skip deletion flag
+        fieldNames = [field[0] for field in fields]
+        properties = []
+        geometries = []
+        for shapeRecord in src.iterShapeRecords():
+            properties.append(dict(zip(fieldNames, shapeRecord.record)))
+            geometries.append(shape(shapeRecord.shape.__geo_interface__))
 
-    fields = src.fields[1:]  # Skip deletion flag
-    fieldNames = [field[0] for field in fields]
-    properties = []
-    geometries = []
-    for shapeRecord in src.iterShapeRecords():
-        properties.append(dict(zip(fieldNames, shapeRecord.record)))
-        geometries.append(shape(shapeRecord.shape.__geo_interface__))
-    return fields, fieldNames, properties, geometries
+        srs = None
+        # Check if .prj file exists and read it
+        srsfile = inputShp.with_suffix('.prj')
+        if srsfile.is_file():
+            with open(srsfile, 'r') as f:
+                srs = f.read().strip()
+            log.debug(f"Found and read .prj file: {srsfile}")
+        else:
+            log.debug(f"No .prj file found at: {srsfile}")
+
+    return fields, fieldNames, properties, geometries, srs
+
+def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
+    """Write features to a shapefile with given fields and properties.
+
+    Parameters
+    ----------
+    outputPath: pathlib.Path object
+        path where the shapefile will be written
+    fields: list
+        the fields of the shapefile
+    fieldNames: list
+        the names of the fields
+    features: list
+        list of tuples containing (properties, geometry) for each feature
+    srs: str, optional
+        the spatial reference system for the .prj file
+
+    Returns
+    -------
+    none
+    """
+    with shapefile.Writer(str(outputPath)) as dst:
+        for field in fields:
+            dst.field(*field)
+        for properties, geometry in features:
+            dst.shape(geometry)
+            record = [properties.get(fieldName, '') for fieldName in fieldNames]
+            dst.record(*record)
+    
+    if srs is not None:
+        prjOutPath = outputPath.with_suffix('.prj')
+        with open(prjOutPath, 'w') as prjFile:
+            prjFile.write(srs)
+        log.debug(f"Wrote projection file to '{prjOutPath}'")
+    
+    log.debug(f"Saved shapefile to '{outputPath}'.")
 
 def createFolderList(inputShp):
-    """Create a list of entries of each feature in the input shapefile."""
+    """Create a list of entries from each feature in the input shapefile.
+
+    Parameters
+    ----------
+    inputShp: pathlib.Path object
+        path to input shapefile
+
+    Returns
+    -------
+    folderList: list
+        list of dictionaries containing folderName, properties, and geometry for each feature
+    """
     folderList = []
     unnamedCount = 1
-    with shapefile.Reader(inputShp) as src:
-        fields, fieldNames, properties, geometries = readShapefile(src)
+    fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
 
-        for i, (properties, geometry) in enumerate(zip(properties, geometries)):
-            folderName = properties.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
-            if not properties.get('name', '').strip():
-                unnamedCount += 1
+    for i, (properties, geometry) in enumerate(zip(properties, geometries)):
+        folderName = properties.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
+        if not properties.get('name', '').strip():
+            unnamedCount += 1
 
-            folderList.append({
-                'folderName': folderName,
-                'properties': properties,
-                'geometry': geometry,
-            })
+        folderList.append({
+            'folderName': folderName,
+            'properties': properties,
+            'geometry': geometry,
+        })
 
     log.info(f"Created initial folder list with '{len(folderList)}' entries.")
     return folderList
 
 def groupFoldersByName(folderList):
-    """Group entries in the folderList by name. Return an updated folderList"""
+    """Group entries in the folderList by name before the first underscore.
+
+    Parameters
+    ----------
+    folderList: list
+        list of dictionaries containing folderName, properties, and geometry for each feature
+
+    Returns
+    -------
+    folderListByName: list
+        list of dictionaries with entries grouped by name, containing folderName, properties list, and geometries list
+    """
     folderListByName = []
 
     for entry in folderList:
@@ -148,39 +231,61 @@ def groupFoldersByName(folderList):
     return folderListByName
 
 def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
-    """Split release areas into individual shapefiles and write them to their respective folders."""
+    """Split release areas into individual shapefiles and write them to their respective folders.
+
+    Parameters
+    ----------
+    folderList: list
+        list of dictionaries containing folderName, properties list, and geometries list
+    inputShp: pathlib.Path object
+        path to input shapefile
+    outputDir: pathlib.Path object
+        path to output directory where folders will be created
+
+    Returns
+    -------
+    none
+    """
     # Read the input shapefile
-    with shapefile.Reader(inputShp) as src:
-        fields, fieldNames, properties, geometries = readShapefile(src)
+    fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
 
-        featuresByName = {}
-        for entry in folderList:
-            name = entry['folderName'].split('_')[0] # Get release area name before first underscore
-            # Group entries with the same name
-            if name not in featuresByName:
-                featuresByName[name] = []
-            # add corresponding properties and geometries
-            for i, properties in enumerate(entry['properties']):
-                featuresByName[name].append((properties, geometries[i]))
+    featuresByName = {}
+    for entry in folderList:
+        name = entry['folderName'].split('_')[0] # Get release area name before first underscore
+        # Group entries with the same name
+        if name not in featuresByName:
+            featuresByName[name] = []
+        # add corresponding properties and geometries
+        for i, properties in enumerate(entry['properties']):
+            featuresByName[name].append((properties, entry['geometries'][i]))
 
-        # Write shapefiles to their respective folders
-        for name, features in featuresByName.items():
-            shpOutPath = outputDir / name / "Inputs" / "REL" / name
-            with shapefile.Writer(str(shpOutPath)) as dst:
-                for field in fields: #write fields
-                    dst.field(*field)
-                for i, feature in enumerate(features):
-                    properties = feature[0]
-                    geometry = [e['geometries'][i] for e in folderList if e['folderName'] == name][0]
-                    dst.shape(geometry)
-                    record = [properties.get(fieldName, '') for fieldName in fieldNames]
-                    dst.record(*record)
-
-            log.debug(f"Saved release area to '{shpOutPath}'.")
+    # Write shapefiles to their respective folders
+    for name, features in featuresByName.items():
+        shpOutPath = outputDir / name / "Inputs" / "REL" / name
+        writeShapefile(shpOutPath, fields, fieldNames, features, srs)
+        log.debug(f"Saved release area to '{shpOutPath}'.")
 
 def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
-    #Todo: Currently splits around centerpoint of the first feature in a group - improve
-    """Clip the DEM around each release scenario's centerpoint and move it to respective folders."""
+    """Clip the DEM around each release scenario's centerpoint and move to respective folders.
+    
+    Currently splits around centerpoint of the first feature in a group. ToDo: improve splitting logic
+
+    Parameters
+    ----------
+    folderList: list
+        list of dictionaries containing folderName, properties list, and geometries list
+    inputDEM: pathlib.Path object
+        path to input DEM file (.asc format)
+    outputDir: pathlib.Path object
+        path to output directory where clipped DEMs will be saved
+    cfg: dict
+        configuration settings containing GENERAL.bufferSize for clipping extent
+
+    Returns
+    -------
+    demOutPath: pathlib.Path object
+        path to the last clipped DEM file
+    """
     # Read input DEM
     demData = ascUtils.readRaster(inputDEM)
     header = demData['header']
@@ -225,7 +330,7 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
         clippedDEM = raster[rowStart:rowEnd, colStart:colEnd]
         log.debug(f"Clipped DEM for '{folderName}' with '{len(clippedDEM)}' rows and '{len(clippedDEM[0])}' columns")
 
-        # Prepare header for clipped DEM
+        # Prepare header for clipped DEM #ToDo: needs adjustment once we include tif files
         clippedDEMHeader = {
             "ncols": colEnd - colStart,
             "nrows": rowEnd - rowStart,
@@ -248,49 +353,61 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
     return demOutPath
 
 def splitByScenarios(folderList, outputDir):
-    """Use the scenario attribute to separate by scenarios"""
-    # Read the split shapefiles
+    """Split release areas into separate shapefiles based on their scenario attribute.
+
+    Parameters
+    ----------
+    folderList: list
+        list of dictionaries containing folderName, properties list, and geometries list
+    outputDir: pathlib.Path object
+        path to output directory where scenario shapefiles will be created
+
+    Returns
+    -------
+    none
+
+    Notes
+    -----
+    - If a feature has no scenario attribute or it's empty, it will be marked as 'NULL'
+    - Original shapefiles are deleted after splitting
+    - Preserves the srs from the original shapefile
+    """
+    # Loop through each folder
     for folder in folderList:
         inputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / folder['folderName']
-        with shapefile.Reader(str(inputShp)) as src:
-            fields, fieldNames, properties, geometries = readShapefile(src)
-            # Get the scenario attribute values
-            if 'scenario' in fieldNames: #Check if scenario attribute exists
-                # Create scenario dictionary
-                scenarios = {}
-                for shapeRecord in src.iterShapeRecords():
-                    properties = dict(zip(fieldNames, shapeRecord.record))
-                    scenarioValues = properties.get('scenario', '').split(',')
-                    for scenario in scenarioValues:
-                        # Check if scenario value is empty and set flag
-                        if scenario.strip() == '':
-                            scenario = 'NULL'
-                        # If scenario is not in scenarios dict, add it
-                        if scenario not in scenarios:
-                            scenarios[scenario] = []
-                        scenarios[scenario].append(shapeRecord)
-                src.close()
-                # Check if all scenarios are empty
-                all_null = all(scenario == 'NULL' for scenario in scenarios)
-                # Write the scenario shapefiles
-                for scenario, records in scenarios.items():
-                    if all_null:
-                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
-                    elif scenario == 'NULL':
-                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_NULL"
-                    else:
-                        outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_{scenario}"
-                    with shapefile.Writer(str(outputShp)) as dst:
-                        for field in fields:  # write fields
-                            if field[0] != 'scenario':  # skip scenario attribute
-                                dst.field(*field)
-                        for record in records:  # write geometry
-                            dst.shape(record.shape)
-                            recordValues = [record.record[i] for i, field in enumerate(fieldNames) if
-                                            field != 'scenario']
-                            dst.record(*recordValues)
-                for file in inputShp.parent.rglob(inputShp.stem + '.*'):  # Delete original shapefile
-                        file.unlink()
-            else:
-                src.close()
-                log.info(f"No 'scenario' attribute found in '{inputShp}'. Skipping.")
+        fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
+        # Get the scenario attribute values
+        if 'scenario' in fieldNames: #Check if scenario attribute exists
+            # Create scenario dictionary
+            scenarios = {}
+            for shapeRecord in shapefile.Reader(str(inputShp)).iterShapeRecords():
+                properties = dict(zip(fieldNames, shapeRecord.record))
+                scenarioValues = properties.get('scenario', '').split(',')
+                for scenario in scenarioValues:
+                    # Check if scenario value is empty and set flag
+                    if scenario.strip() == '':
+                        scenario = 'NULL'
+                    # If scenario is not in scenarios dict, add it
+                    if scenario not in scenarios:
+                        scenarios[scenario] = []
+                    scenarios[scenario].append(shapeRecord)
+            # Write the scenario shapefiles
+            for scenario, records in scenarios.items():
+                if all(scenario == 'NULL' for scenario in scenarios):
+                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
+                elif scenario == 'NULL':
+                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_NULL"
+                else:
+                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_{scenario}"
+                # Filter out the scenario attribute and remove it
+                shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
+                filteredFields = [field for field in fields if field[0] != 'scenario']
+                filteredFieldNames = [name for name in fieldNames if name != 'scenario']
+
+                writeShapefile(outputShp, filteredFields, filteredFieldNames, shapeFeatures, srs)
+
+            # Delete original shapefile after all scenarios have been written
+            for file in inputShp.parent.rglob(inputShp.stem + '.*'):
+                file.unlink()
+        else:
+            log.info(f"No 'scenario' attribute found in '{inputShp}'. Skipping.")

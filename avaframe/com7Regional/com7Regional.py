@@ -1,3 +1,5 @@
+"""Module for handling regional avalanche simulations."""
+
 import pathlib
 import shutil
 import logging
@@ -11,7 +13,22 @@ from avaframe.in3Utils import logUtils
 log = logging.getLogger(__name__)
 
 def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
-    """Function to call com1DFA in each avalanche directory with regional override settings."""
+    """Run com1DFA simulation in a specific avalanche directory with regional settings.
+
+    Parameters
+    ----------
+    cfgMain : configparser.ConfigParser
+        Main configuration settings
+    cfgCom7 : configparser.ConfigParser
+        Regional configuration settings with potential overrides
+    avalancheDir : pathlib.Path or str
+        Path to the avalanche directory to process
+
+    Returns
+    -------
+    tuple
+        (avalancheDir, status) where status is "Success" if simulation completed
+    """
 
     # Initialize log for each process
     log = logUtils.initiateLogger(avalancheDir, logName='runCom1DFA')
@@ -35,27 +52,42 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
     return avalancheDir, "Success"
 
 def findAvaDirs(Dir):
-    """Function to find all valid avalanche directories within a directory based on if there is an "Inputs" folder."""
+    """Find all valid avalanche directories within a given directory.
 
-    avaDirs = [avaDir for avaDir in pathlib.Path(Dir).iterdir() if avaDir.is_dir() and
-               (avaDir / "Inputs").is_dir()]
-    log.info(f"Found a total of '{len(avaDirs)}' avalanche directories in '{Dir}':")
+    A directory is considered a valid avalanche directory if it contains an "Inputs" folder.
+
+    Parameters
+    ----------
+    Dir : pathlib.Path or str
+        Path to the directory to search in
+
+    Returns
+    -------
+    list
+        List of pathlib.Path objects pointing to valid avalanche directories
+
+    Notes
+    -----
+    Logs the total number and names of found avalanche directories
+    """
+    avaDirs = [pathlib.Path(p).parent for p in pathlib.Path(Dir).glob("*/Inputs")]
+    log.info(f"Found a total of '{len(avaDirs)}' avalanche directories in: {Dir}:")
     for avaDir in avaDirs:
         log.info(f"'{avaDir.name}'")
 
     return avaDirs
 
 def moveOrCopyFile(src, dst, copy=False):
-    """Function to move or copy a file from a source location to a destination location
+    """Move or copy a file from source to destination location.
 
     Parameters
     ----------
-    src: path object
-        the source location
-    dst: path object
-        destination location
-    copy: bool
-        whether to copy or move the file
+    src : pathlib.Path or str
+        Source file location
+    dst : pathlib.Path or str
+        Destination file location
+    copy : bool, optional
+        If True, copy the file; if False, move it (default: False)
     """
     if copy:
         shutil.copy(str(src), str(dst))
@@ -65,8 +97,26 @@ def moveOrCopyFile(src, dst, copy=False):
         log.debug(f"Moved {src} to {dst}")
 
 def moveOrCopyPeakFiles(cfg, avalancheDir, avaDirs):
-    """Function to move or copy peak files from each avalanche directory to a directory called allPeakFiles.
-    Also copy all timeSteps to an allTimeSteps directory"""
+    """Consolidate peak files from multiple avalanche directories.
+
+    Creates two directories:
+    1. allPeakFiles: Contains peak files from all avalanche directories
+    2. allPeakFiles/allTimeSteps: Contains time step files from all avalanche directories
+
+    Parameters
+    ----------
+    cfg : configparser.ConfigParser
+        Configuration containing GENERAL.copyPeakFiles setting
+    avalancheDir : pathlib.Path or str
+        Base directory where allPeakFiles will be created
+    avaDirs : list
+        List of avalanche directories to process
+
+    Returns
+    -------
+    tuple
+        (allPeakFilesDir, allTimeStepsDir) paths to the created directories
+    """
 
     # Get setting from cfg
     copyPeakFiles = cfg['GENERAL'].getboolean('copyPeakFiles')
