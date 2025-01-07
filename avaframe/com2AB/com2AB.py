@@ -68,7 +68,7 @@ def setEqParameters(cfg):
 def com2ABMain(cfg, avalancheDir):
     """ Main AlphaBeta model function
 
-    Loops on the given AvaPaths and runs com2AB to compute AlpahBeta model
+    Loops on the given AvaPaths and runs com2AB to compute AlphaBeta model
 
     Parameters
     ----------
@@ -103,7 +103,8 @@ def com2ABMain(cfg, avalancheDir):
     # Read input data for ALPHABETA
     dem = IOf.readRaster(pathDict['demSource'])
     # read line (may contain multiple lines)
-    fullAvaPath = shpConv.readLine(pathDict['profileLayer'], pathDict['defaultName'], dem)
+    defaultName = 'line' #set generic name in case no 'Name' attribute exist
+    fullAvaPath = shpConv.readLine(pathDict['profileLayer'], defaultName, dem)
     splitPoint = shpConv.readPoints(pathDict['splitPointSource'], dem)
 
     # Read input setup
@@ -114,7 +115,7 @@ def com2ABMain(cfg, avalancheDir):
     LengthAva = fullAvaPath['Length']
     # loop on each feature in the shape file
     for i in range(len(NameAva)):
-        name = NameAva[i]
+        name = NameAva[i] + str(i + 1) if NameAva[i] == defaultName else NameAva[i]
         start = StartAva[i]
         end = start + LengthAva[i]
         # extract individual line
@@ -140,7 +141,7 @@ def com2ABMain(cfg, avalancheDir):
 
 
 def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
-    """ Compute AlpahBeta model for a given avapath
+    """ Compute AlphaBeta model for a given AvaPath
 
     Call calcABAngles to compute the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
@@ -191,7 +192,7 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
 
 
 def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
-    """ Fetch inputs for AlpahBeta model
+    """ Fetch inputs for AlphaBeta model
 
     Get path to AlphaBeta model inputs (dem raster, avalanche path and split points)
 
@@ -266,9 +267,6 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
         # log.info('Creating output folder %s', saveOutPath)
         saveOutPath.mkdir(parents=True, exist_ok=True)
     pathDict['saveOutPath'] = saveOutPath
-
-    defaultName = avalancheDir.stem
-    pathDict['defaultName'] = defaultName
 
     return pathDict
 
