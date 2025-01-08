@@ -243,7 +243,6 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
         "Remeshed data extent difference x: %f and y %f"
         % (xGrid[-1, -1] - xGridNew[-1, -1], yGrid[-1, -1] - yGridNew[-1, -1])
     )
-
     if remeshOption == "griddata":
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
@@ -288,6 +287,65 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     return remeshedRaster
 
 
+def remeshDataRio(cfg, rasterFile, cellSizeNew, writeTif=False):
+    """ resample raster data using rasterio to change effective cell size to cellSizeNew by specifying an output array
+        of specified size
+
+        Parameters
+        -------------
+        cfg: configparser object
+            configuration, here used path to avalancheDir
+        rasterFile: pathlib Path
+            path to file with raster data options asci or tif
+        cellSizeNew: float
+            desired spatial resolution of new raster dataset, cellsize
+
+        Returns
+        ---------
+        remeshedRaster: dict
+            dictionary with header and rasterdata with new cellSize
+        writeTif: bool
+            write resampling dataset to tif
+
+     """
+
+    # open raster data
+    with rasterio.open(rasterFile, 'r+') as src:
+
+        # read actual cell size and compute scaling factor
+        scaleFactorX = src.res[0] / cellSizeNew
+        scaleFactorY = src.res[1] / cellSizeNew
+        log.info('Cell size for %s is changed from %.2f to new cell size of %.1f' % (rasterFile.name, src.res[0], cellSizeNew))
+
+        profile = src.profile.copy()
+        # Read the first band
+        data = src.read(out_shape=(src.count, int(src.height * scaleFactorY),
+                                  int(src.width * scaleFactorX)),resampling=Resampling.cubic)
+
+        # scale image transform
+        transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
+        profile.update({"height": data.shape[-2],
+                        "width": data.shape[-1],
+                        "transform": transform})
+
+        # save resampled dataset to tif
+        if writeTif:
+            outFile = pathlib.Path(avaDir, 'Inputs', 'remeshedRasters', ("%s_resampled_%.2fm.tif" % (rasterFile.stem, cellSizeNew)))
+            with rasterio.open(outFile, "w", **profile) as src2:
+                src2.write(data)
+
+        # create header of resampled data
+        # set new header
+        headerRemeshed = {}
+        headerRemeshed["cellsize"] = cellSizeNew
+        headerRemeshed["transform"] = transform
+        headerRemeshed["ncols"] = data[0].shape[1]
+        headerRemeshed["nrows"] = data[0].shape[0]
+        # create remeshed raster dictionary
+        remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
+
+        return remeshedRaster
+
 def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
     """change raster cell size by reprojecting on a new grid - first check if remeshed raster available
 
@@ -331,7 +389,9 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
 
     # start remesh
     log.info("Remeshing the input raster (of cell size %.2g m) to a cell size of %.2g m" % (cszRaster, cszRasterNew))
-    remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+    #remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+    log.info("Using rasterio resampling")
+    remeshedRaster = remeshDataRio(rasterFile, cszRasterNew)
 
     # save remeshed raster
     pathToRaster = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
