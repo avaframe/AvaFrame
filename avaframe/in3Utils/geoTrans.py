@@ -317,34 +317,30 @@ def remeshDataRio(cfg, rasterFile, cellSizeNew):
         scaleFactorY = src.res[1] / cellSizeNew
         log.info('Cell size for %s is changed from %.2f to new cell size of %.1f' % (rasterFile.name, src.res[0], cellSizeNew))
 
-        profile = src.profile.copy()
         # Read the first band
         data = src.read(out_shape=(src.count, int(src.height * scaleFactorY),
                                   int(src.width * scaleFactorX)),resampling=Resampling.cubic)
 
         # scale image transform
         transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
-        profile.update({"height": data.shape[-2],
-                        "width": data.shape[-1],
-                        "transform": transform})
 
-        # create header of resampled data
-        # set new header
-        headerRemeshed = {}
-        headerRemeshed["cellsize"] = transform[0]
-        headerRemeshed["transform"] = transform
-        headerRemeshed["ncols"] = data[0].shape[1]
-        headerRemeshed["nrows"] = data[0].shape[0]
-        headerRemeshed['xllcenter'] = (transform * (0, 0))[0] + headerRemeshed["cellsize"] / 2.0
-        headerRemeshed["yllcenter"] = (transform * (0, headerRemeshed['nrows']))[1] + headerRemeshed["cellsize"] / 2.0
-        headerRemeshed["nodata_value"] = src.nodata
-        headerRemeshed["crs"] = src.crs
-        headerRemeshed["driver"] = src.driver
+    # create header of resampled data
+    # set new header
+    headerRemeshed = {}
+    headerRemeshed["cellsize"] = transform[0]
+    headerRemeshed["transform"] = transform
+    headerRemeshed["ncols"] = data[0].shape[1]
+    headerRemeshed["nrows"] = data[0].shape[0]
+    headerRemeshed['xllcenter'] = (transform * (0, 0))[0] + headerRemeshed["cellsize"] / 2.0
+    headerRemeshed["yllcenter"] = (transform * (0, headerRemeshed['nrows']))[1] + headerRemeshed["cellsize"] / 2.0
+    headerRemeshed["nodata_value"] = src.nodata
+    headerRemeshed["crs"] = src.crs
+    headerRemeshed["driver"] = src.driver
 
-        # create remeshed raster dictionary
-        remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
+    # create remeshed raster dictionary
+    remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
 
-        return remeshedRaster
+    return remeshedRaster
 
 def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, legacy=False):
     """change raster cell size by reprojecting on a new grid - first check if remeshed raster available
