@@ -19,7 +19,9 @@ from shapely import LineString, Point, distance, MultiPoint
 # Local imports
 import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.rasterUtils as rU
 from avaframe.com1DFA import particleTools
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -290,14 +292,12 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     return remeshedRaster
 
 
-def remeshDataRio(cfg, rasterFile, cellSizeNew):
+def remeshDataRio(rasterFile, cellSizeNew):
     """ resample raster data using rasterio to change effective cell size to cellSizeNew by specifying an output array
         of specified size, default resampling option is set to cubic
 
         Parameters
         -------------
-        cfg: configparser object
-            configuration, here used path to avalancheDir
         rasterFile: pathlib Path
             path to file with raster data options asci or tif
         cellSizeNew: float
@@ -324,21 +324,16 @@ def remeshDataRio(cfg, rasterFile, cellSizeNew):
         # scale image transform
         transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
 
-    # create header of resampled data
-    # set new header
-    headerRemeshed = {}
-    headerRemeshed["cellsize"] = transform[0]
-    headerRemeshed["transform"] = transform
-    headerRemeshed["ncols"] = data[0].shape[1]
-    headerRemeshed["nrows"] = data[0].shape[0]
-    headerRemeshed['xllcenter'] = (transform * (0, 0))[0] + headerRemeshed["cellsize"] / 2.0
-    headerRemeshed["yllcenter"] = (transform * (0, headerRemeshed['nrows']))[1] + headerRemeshed["cellsize"] / 2.0
-    headerRemeshed["nodata_value"] = src.nodata
-    headerRemeshed["crs"] = src.crs
-    headerRemeshed["driver"] = src.driver
+        # create header of resampled data
+        # set new header
+        headerRemeshed = rU.getHeaderFromRaster(src)
+        headerRemeshed["cellsize"] = transform[0]
+        headerRemeshed["transform"] = transform
+        headerRemeshed["ncols"] = data[0].shape[1]
+        headerRemeshed["nrows"] = data[0].shape[0]
 
-    # create remeshed raster dictionary
-    remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
+        # create remeshed raster dictionary
+        remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
 
     return remeshedRaster
 
@@ -393,7 +388,7 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, lega
         flipArg = True
     else:
         log.info("Using rasterio resampling")
-        remeshedRaster = remeshDataRio(cfgSim['GENERAL'], rasterFile, cszRasterNew)
+        remeshedRaster = remeshDataRio(rasterFile, cszRasterNew)
         flipArg = False
 
     # save remeshed raster
@@ -451,6 +446,7 @@ def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
     # check if Raster is available
     if pathToRasters.is_dir():
         # look for rasters and check if cellSize within tolerance and origin matches
+        # TODO: also look for remeshed tif files
         rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
         allRasterNames = [d.name for d in rasterFiles]
         for rasterF in rasterFiles:
