@@ -38,13 +38,6 @@ def readRaster(fname, noDataToNan=True):
     header = getHeaderFromRaster(raster)
     raster.close()
 
-    # FSO: for testing whether we got all cases of llcenter vs llcornen. Header2 contains old setup
-    header2 = readRasterHeader(fname)
-    if (header["yllcenter"] - header2["yllcenter"]) > 0.1:
-        message = "Header llcenter mismatch between direct file reading and rasterio"
-        log.error(message)
-        raise ValueError(message)
-
     data = {}
     data["header"] = header
     if noDataToNan:
@@ -71,7 +64,6 @@ def getHeaderFromRaster(raster):
     header["ncols"] = raster.width
     header["nrows"] = raster.height
     header["cellsize"] = raster.transform[0]
-    # TODO maker sure xllcenter is correct here or if this needs transformation as in readRasterHeader
     header["xllcenter"] = (raster.transform * (0, 0))[0] + header["cellsize"] / 2.0
     header["yllcenter"] = (raster.transform * (0, raster.height))[1] + header["cellsize"] / 2.0
     header["nodata_value"] = raster.nodata
@@ -125,50 +117,10 @@ def readRasterHeader(fname):
         information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
     """
 
-    # # read header
-    # headerRows = 6  # six rows for header information
-    # headerInfo = (
-    #     {}
-    # )  # store header information including ncols, nrows, xllcorner, yllcorner, cellsize, nodata_value
-    # rowCount = 1
-    # with open(str(fname), "rt") as fileH:
-    #     for line in fileH:
-    #         if rowCount <= headerRows:
-    #             line = line.split()
-    #             headerInfo[line[0].lower()] = float(line[1])
-    #         else:
-    #             break
-    #         rowCount = rowCount + 1
-    #
-    # if ("xllcenter" not in headerInfo and "xllcorner" in headerInfo) and (
-    #     "yllcenter" not in headerInfo and "yllcorner" in headerInfo
-    # ):
-    #     headerInfo["xllcenter"] = headerInfo["xllcorner"] + headerInfo["cellsize"] / 2
-    #     headerInfo["yllcenter"] = headerInfo["yllcorner"] + headerInfo["cellsize"] / 2
-    #     # remove xllcorner, yllcorner
-    #     headerInfo.pop("xllcorner")
-    #     headerInfo.pop("yllcorner")
-    #
-    # # convert ncols and nrows to int
-    # headerInfo["ncols"] = int(headerInfo["ncols"])
-    # headerInfo["nrows"] = int(headerInfo["nrows"])
-    #
-    # headerItems = [item.lower() for item in list(headerInfo.keys())]
-
     raster = rasterio.open(fname)
     header = getHeaderFromRaster(raster)
     raster.close()
 
-    headerItems = [item.lower() for item in list(header.keys())]
-    # TODO: reanable check
-    # if sorted(headerItems) != sorted(
-    #     ["cellsize", "nrows", "ncols", "xllcenter", "yllcenter", "nodata_value"]
-    # ):
-    #     message = "DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value"
-    #     log.error(message)
-    #     raise ValueError(message)
-
-    # fileH.close()
 
     return header
 

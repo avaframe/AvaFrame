@@ -8,6 +8,9 @@ import numpy as np
 import scipy as sp
 import scipy.interpolate
 import shapely as shp
+import rasterio
+import rasterio.warp
+from rasterio.enums import Resampling
 import copy
 from scipy.interpolate import splprep, splev
 import matplotlib.path as mpltPath
@@ -16,7 +19,9 @@ from shapely import LineString, Point, distance, MultiPoint
 # Local imports
 import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.rasterUtils as rU
 from avaframe.com1DFA import particleTools
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -243,7 +248,6 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
         "Remeshed data extent difference x: %f and y %f"
         % (xGrid[-1, -1] - xGridNew[-1, -1], yGrid[-1, -1] - yGridNew[-1, -1])
     )
-
     if remeshOption == "griddata":
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
@@ -282,13 +286,86 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     headerRemeshed["cellsize"] = cellSizeNew
     headerRemeshed["ncols"] = ncolsNew
     headerRemeshed["nrows"] = nrowsNew
+    xllcenter = header["xllcenter"]
+    yllcenter = header["yllcenter"]
+    transform = rasterio.transform.from_origin(xllcenter - cellSizeNew / 2.0,
+                                               (yllcenter - cellSizeNew / 2.0) + nrowsNew * cellSizeNew,
+                                               cellSizeNew, cellSizeNew)
+    headerRemeshed["transform"] = transform
     # create remeshed raster dictionary
     remeshedRaster = {"rasterData": zNew, "header": headerRemeshed}
 
     return remeshedRaster
 
 
-def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
+def remeshDataRio(rasterFile, cellSizeNew, larger=True):
+    """ resample raster data using rasterio to change effective cell size to cellSizeNew by specifying an output array
+        of specified size, default resampling option is set to cubic
+
+        Parameters
+        -------------
+        rasterFile: pathlib Path
+            path to file with raster data options asci or tif
+        cellSizeNew: float
+            desired spatial resolution of new raster dataset, cellsize
+        larger: Boolean
+            if true (default) output grid is at least as big as the input
+
+        Returns
+        ---------
+        remeshedRaster: dict
+            dictionary with header and rasterdata with new cellSize
+     """
+    # open raster data
+    src = rasterio.open(rasterFile, 'r')
+
+    # First part is to be able to replicate our own remeshing
+    header = rU.getHeaderFromRaster(src)
+    _, _, width, height = makeCoordGridFromHeader(header, cellSizeNew=cellSizeNew, larger=larger)
+
+    targetTransform = rasterio.transform.from_origin(header['xllcenter'] - cellSizeNew / 2.0,
+                                                     (header['yllcenter'] - cellSizeNew / 2.0) + height *
+                                                     cellSizeNew,
+                                                     cellSizeNew,
+                                                     cellSizeNew)
+
+    # Check if crs is none, as warp.reproject NEEDS a valid crs
+    # If none is available, set any. The original is taken again when
+    # the header is reset lower down
+    # TODO: require a default crs in config
+    if src.crs is None:
+        srcCrs = rasterio.crs.CRS.from_epsg(31287)
+    else:
+        srcCrs = src.crs
+
+    data, transform = rasterio.warp.reproject(source=src.read(),
+                                              destination=np.empty((src.count, height,
+                                                                    width)) * np.nan,
+                                              src_transform=src.transform,
+                                              dst_transform=targetTransform,
+                                              src_crs=srcCrs,
+                                              dst_crs=srcCrs,
+                                              dst_nodata=src.nodata,
+                                              resampling=Resampling.cubic)
+
+    data = np.where(data == src.nodata, np.nan, data)
+    # create header of resampled data
+    # set new header
+    headerRemeshed = rU.getHeaderFromRaster(src)
+    src.close()
+
+    headerRemeshed["cellsize"] = transform[0]
+    headerRemeshed["transform"] = transform
+    headerRemeshed["ncols"] = data[0].shape[1]
+    headerRemeshed["nrows"] = data[0].shape[0]
+    headerRemeshed["nodata_value"] = 'nan'
+
+    # create remeshed raster dictionary
+    remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
+
+    return remeshedRaster
+
+def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, legacy=False):
     """change raster cell size by reprojecting on a new grid - first check if remeshed raster available
 
     the new raster is as big or smaller as the original raster and saved to Inputs/remeshedRasters as
@@ -308,6 +385,8 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
         type of raster, possible options DEM or RELTH
     onlySearch: bool
         if True - only searching for remeshed DEM but not remeshing if not found
+    legacy: bool
+        if True use old resampling options (griddata and RectBivariateSpline)
 
     Returns
     -------
@@ -331,7 +410,14 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
 
     # start remesh
     log.info("Remeshing the input raster (of cell size %.2g m) to a cell size of %.2g m" % (cszRaster, cszRasterNew))
-    remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+    if legacy:
+        remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+        log.info('Legacy option used for remeshing')
+        flipArg = True
+    else:
+        log.info("Using rasterio resampling")
+        remeshedRaster = remeshDataRio(rasterFile, cszRasterNew, larger=False)
+        flipArg = False
 
     # save remeshed raster
     pathToRaster = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
@@ -340,13 +426,8 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
     outFile = pathToRaster / ("%s_remeshed%s%.2f" % (rasterFile.stem, typeIndicator, remeshedRaster["header"][
     "cellsize"]))
 
-    # TODO: make sure to only check basename -> maybe separate function?
-    if outFile.name in allRasterNames:
-        message = "Name for saving remeshedRaster already used: %s" % outFile.name
-        log.error(message)
-        raise FileExistsError(message)
-
-    writtenFile = IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
+    writtenFile = IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile,
+                                          flip=flipArg)
     log.info("Saved remeshed raster to %s" % writtenFile)
     pathRaster = str(pathlib.Path("remeshedRasters", writtenFile.name))
 
@@ -388,7 +469,7 @@ def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
     # check if Raster is available
     if pathToRasters.is_dir():
         # look for rasters and check if cellSize within tolerance and origin matches
-        rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
+        rasterFiles = list(pathToRasters.glob("*remeshed%s*" % typeIndicator))
         allRasterNames = [d.name for d in rasterFiles]
         for rasterF in rasterFiles:
             headerRaster = IOf.readRasterHeader(rasterF)

@@ -250,6 +250,7 @@ def getInputDataCom1DFA(avaDir):
     demFile = getDEMPath(avaDir)
 
     # check if frictionParameter file  is available
+    # TODO: enable this with geotiff
     muFile, entResInfo["mu"] = getAndCheckInputFiles(inputDir, "RASTERS", "mu parameter data", fileExt="asc",
                                                      fileSuffix='_mu')
 
