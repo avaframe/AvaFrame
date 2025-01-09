@@ -42,8 +42,8 @@ def runCom7Regional(avalancheDir=''):
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
 
-    # Define the regional directory
-    regionalDir = pathlib.Path(avalancheDir) / 'Regional'
+    # Define the regional directory in relation to the avalanche directory #ToDo: move to config?
+    regionalDir = pathlib.Path(avalancheDir) / 'Outputs' / 'in4Region'/ 'SplitInputs'
 
     # List valid avalanche directories within the regional directory
     avaDirs = com7.findAvaDirs(regionalDir)
@@ -74,11 +74,8 @@ def runCom7Regional(avalancheDir=''):
                 log.error(f"Error processing {avaDir}: {e}")
     log.info(f"Processing complete. Success in '{nSuccesses}' out of '{len(avaDirs)}' directories.")
 
-    # Move or copy files from the 'Outputs/com1DFA/peakFiles' folder from each of the subfolders (avaDir) to a folder
-    # called (allPeakFiles) in the main regional folder. Clear them if they already exist
-    # Keep in mind, this is only com1DFA specific for now, also keep in mind that the information where it comes from
-    # is lost when it's moved (i.e. things like layer rename is no longer possible when they are imported to QGIS)
-    # preliminary feature until an "import output rasters" is added to QGIS
+    # Copy (or move) files from the 'Outputs/com1DFA/peakFiles' folder from each of the subfolders (avaDir) to a folder
+    # called 'allPeakFiles' in the main regional folder. Also copy (or move) 'timeSteps'
     if cfg['GENERAL'].getboolean('movePeakFiles'):
         allPeakFilesDir, allTimeStepsDir = com7.moveOrCopyPeakFiles(cfg, regionalDir, avaDirs)
 

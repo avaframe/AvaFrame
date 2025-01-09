@@ -2,7 +2,7 @@
 
 import logging
 import shapefile  # pyshp
-from shapely.geometry import shape
+from shapely.geometry import shape, box
 from avaframe.in2Trans import ascUtils
 import pathlib
 
@@ -35,6 +35,10 @@ def splitInputsMain(inputDir, outputDir, cfg):
     inputDir/
     ├── REL/
     │   └── release_areas.shp (with optional .prj)
+    ├── ENT/ (optional)
+    │   └── entrainment.shp (with optional .prj)
+    ├── RES/ (optional)
+    │   └── resistance.shp (with optional .prj)
     └── dem_file.asc
     """
     # Fetch the necessary input
@@ -54,7 +58,7 @@ def splitInputsMain(inputDir, outputDir, cfg):
     # Step 1: Create the central list
     log.info("Creating folder list...")
     folderList = createFolderList(inputShp)
-    # Group folders with identical "name" attributes before the first underscore and update the list
+    # Group folders based on "name" attribute - with identical "name" attributes before the first underscore and update the list
     folderListGrouped = groupFoldersByName(folderList)
     log.info("Finished creating folder list")
 
@@ -72,14 +76,16 @@ def splitInputsMain(inputDir, outputDir, cfg):
     log.info("Finished splitting and moving release areas")
 
     # Step 4: Clip and move DEM
-    if cfg['GENERAL'].getboolean('splitDEM'):
-        log.info("Clipping and moving DEM...")
-        clipDEMByCentroidAndMove(folderListGrouped, inputDEM, outputDir, cfg)
-        log.info("Finished clipping and moving of DEM")
+    log.info("Clipping and moving DEM...")
+    demExtent = clipDEMByCentroidAndMove(folderListGrouped, inputDEM, outputDir, cfg)
+    log.info("Finished clipping and moving of DEM")
 
-    # (Step 5: Clip and move ENT and RES... other input too?)
+    # Step 5: Clip and move ENT and RES
+    log.info("Clipping and moving ENT and RES...")
+    clipAndMoveEntRes(inputDir, outputDir, demExtent)
+    log.info("Finished clipping and moving ENT and RES")
 
-    # Step 6: Divide release areas into scenarios based on "scenario" attribute, if it exists
+    # Step 6: Divide release areas into scenarios based on "scenario" attribute
     log.info("Separating release area by scenario attribute...")
     splitByScenarios(folderListGrouped, outputDir)
     log.info("Finished separating by scenarios")
@@ -283,8 +289,8 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
 
     Returns
     -------
-    demOutPath: pathlib.Path object
-        path to the last clipped DEM file
+    tuple
+        (xmin, ymin, xmax, ymax) representing the DEM extent after clipping
     """
     # Read input DEM
     demData = ascUtils.readRaster(inputDEM)
@@ -295,6 +301,10 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
     xOrigin = header["xllcenter"]
     yOrigin = header["yllcenter"]
 
+    # Initialize extent variables
+    xMin, yMin = float('inf'), float('inf')
+    xMax, yMax = float('-inf'), float('-inf')
+
     # Find centerpoint
     for entry in folderList:
         folderName = entry['folderName']
@@ -304,19 +314,23 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
 
             # Calculate bounding box indices for clipping
             bufferSize = float(cfg['GENERAL']['bufferSize'])
-            xmin, ymin, xmax, ymax = (
-                center.x - bufferSize,
-                center.y - bufferSize,
-                center.x + bufferSize,
-                center.y + bufferSize,
-            )
+            currXMin = center.x - bufferSize
+            currYMin = center.y - bufferSize
+            currXMax = center.x + bufferSize
+            currYMax = center.y + bufferSize
+
+            # Update overall extent
+            xMin = min(xMin, currXMin)
+            yMin = min(yMin, currYMin)
+            xMax = max(xMax, currXMax)
+            yMax = max(yMax, currYMax)
 
         # Convert bounding box to grid indices
-        colStart = max(0, int((xmin - xOrigin) / cellsize))
-        colEnd = min(header["ncols"], int((xmax - xOrigin) / cellsize))
+        colStart = max(0, int((currXMin - xOrigin) / cellsize))
+        colEnd = min(header["ncols"], int((currXMax - xOrigin) / cellsize))
         # Calculate row indices
-        rowStart = max(0, int((yOrigin + header["nrows"] * cellsize - ymax) / cellsize))
-        rowEnd = min(header["nrows"], int((yOrigin + header["nrows"] * cellsize - ymin) / cellsize))
+        rowStart = max(0, int((yOrigin + header["nrows"] * cellsize - currYMax) / cellsize))
+        rowEnd = min(header["nrows"], int((yOrigin + header["nrows"] * cellsize - currYMin) / cellsize))
 
         # Flip rows for bottom-left origin
         rowStart, rowEnd = header["nrows"] - rowEnd, header["nrows"] - rowStart
@@ -346,11 +360,84 @@ def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
         # Save clipped DEM
         try:
             ascUtils.writeResultToAsc(clippedDEMHeader, clippedDEM, demOutPath, flip=True)
-            log.info(f"Clipped DEM saved to '{demOutPath}'.")
+            log.debug(f"Clipped DEM saved to: {demOutPath}.")
         except Exception as e:
-            log.error(f"Failed to save clipped DEM for '{folderName}': {e}")
+            log.error(f"Failed to save clipped DEM for: {folderName}: {e}")
 
-    return demOutPath
+    # Return the overall extent
+    return (xMin, yMin, xMax, yMax)
+
+def clipAndMoveEntRes(inputDir, outputDir, demExtent):
+    """Clip and move ENT and RES files based on DEM extent.
+    
+    Parameters
+    ----------
+    inputDir : pathlib.Path object
+        Path to input directory containing ENT and RES folders
+    outputDir : pathlib.Path object
+        Path to output directory where clipped files will be saved
+    demExtent : tuple
+        Overall DEM extent as (xmin, ymin, xmax, ymax), used only for logging
+
+    Returns
+    -------
+    none
+    """
+    # Process both ENT and RES directories
+    for dirType in ['ENT', 'RES']:
+        typeDir = inputDir / dirType
+        if not typeDir.exists():
+            log.warning(f"No {dirType} directory found in {inputDir}")
+            continue
+
+        # Find shapefile in directory
+        shpFile = next(typeDir.glob("*.shp"), None)
+        if not shpFile:
+            log.warning(f"No shapefile found in {typeDir}")
+            continue
+
+        # Read shapefile
+        fields, fieldNames, properties, geometries, srs = readShapefile(shpFile)
+
+        # Process each output directory (avalanche scenario)
+        for entry in outputDir.iterdir():
+            if not entry.is_dir():
+                continue
+
+            # Read the clipped DEM for this scenario to get its extent
+            demFile = entry / 'Inputs' / f"{entry.name}_DEM.asc"
+            if not demFile.exists():
+                log.warning(f"No DEM file found for {entry.name}, skipping {dirType} processing")
+                continue
+
+            # Get DEM extent for this scenario
+            demData = ascUtils.readRaster(demFile)
+            header = demData['header']
+            xMin = header['xllcenter']
+            yMin = header['yllcenter']
+            xMax = xMin + header['cellsize'] * header['ncols']
+            yMax = yMin + header['cellsize'] * header['nrows']
+            scenarioBbox = box(xMin, yMin, xMax, yMax)
+
+            # Clip geometries with scenario's DEM extent
+            clippedFeatures = []
+            for prop, geom in zip(properties, geometries):
+                if geom.intersects(scenarioBbox):
+                    clippedGeom = geom.intersection(scenarioBbox)
+                    if not clippedGeom.is_empty:
+                        clippedFeatures.append((prop, clippedGeom))
+
+            if not clippedFeatures:
+                log.debug(f"No {dirType} features intersect with DEM extent for {entry.name}")
+                continue
+
+            # Create output directory and save clipped shapefile
+            targetDir = entry / 'Inputs' / dirType
+            targetDir.mkdir(parents=True, exist_ok=True)
+            
+            outputPath = targetDir / f"{entry.name}_{dirType}.shp"
+            writeShapefile(outputPath, fields, fieldNames, clippedFeatures, srs)
+            log.debug(f"Clipped {dirType} shapefile saved to: {outputPath}")
 
 def splitByScenarios(folderList, outputDir):
     """Split release areas into separate shapefiles based on their scenario attribute.
@@ -368,14 +455,18 @@ def splitByScenarios(folderList, outputDir):
 
     Notes
     -----
-    - If a feature has no scenario attribute or it's empty, it will be marked as 'NULL'
-    - Original shapefiles are deleted after splitting
-    - Preserves the srs from the original shapefile
+    - If a feature has no scenario attribute or it's empty, it will be marked as 'NULL' and grouped together with other 'NULL' features
+    - Intermediate shapefiles are deleted or renamed after scenario splitting
     """
+    totalInputFiles = 0
+    totalScenarioFiles = 0
+
     # Loop through each folder
     for folder in folderList:
         inputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / folder['folderName']
         fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
+        totalInputFiles += 1
+        
         # Get the scenario attribute values
         if 'scenario' in fieldNames: #Check if scenario attribute exists
             # Create scenario dictionary
@@ -391,6 +482,7 @@ def splitByScenarios(folderList, outputDir):
                     if scenario not in scenarios:
                         scenarios[scenario] = []
                     scenarios[scenario].append(shapeRecord)
+            
             # Write the scenario shapefiles
             for scenario, records in scenarios.items():
                 if all(scenario == 'NULL' for scenario in scenarios):
@@ -399,15 +491,31 @@ def splitByScenarios(folderList, outputDir):
                     outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_NULL"
                 else:
                     outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_{scenario}"
+                
                 # Filter out the scenario attribute and remove it
                 shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
                 filteredFields = [field for field in fields if field[0] != 'scenario']
                 filteredFieldNames = [name for name in fieldNames if name != 'scenario']
-
+                
+                # Write the shapefile
                 writeShapefile(outputShp, filteredFields, filteredFieldNames, shapeFeatures, srs)
+                totalScenarioFiles += 1
 
-            # Delete original shapefile after all scenarios have been written
-            for file in inputShp.parent.rglob(inputShp.stem + '.*'):
-                file.unlink()
+            # Delete the intermediate shapefile
+            for ext in ['.shp', '.shx', '.dbf', '.prj']:
+                if (inputShp.with_suffix(ext)).exists():
+                    (inputShp.with_suffix(ext)).unlink()
         else:
-            log.info(f"No 'scenario' attribute found in '{inputShp}'. Skipping.")
+            # If no scenario attribute exists, just rename the file
+            outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
+            shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) 
+                           for record in shapefile.Reader(str(inputShp)).iterShapeRecords()]
+            writeShapefile(outputShp, fields, fieldNames, shapeFeatures, srs)
+            totalScenarioFiles += 1
+            
+            # Delete the intermediate shapefile
+            for ext in ['.shp', '.shx', '.dbf', '.prj']:
+                if (inputShp.with_suffix(ext)).exists():
+                    (inputShp.with_suffix(ext)).unlink()
+
+    log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
