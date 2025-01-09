@@ -258,7 +258,7 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
         yGrid = yGrid[mask]
         z = zCopy[mask]
         zNew = sp.interpolate.griddata(
-            (xGrid, yGrid), z, (xGridNew, yGridNew), method='linear', fill_value=header["nodata_value"]
+            (xGrid, yGrid), z, (xGridNew, yGridNew), method=interpMethod, fill_value=header["nodata_value"]
         )
     elif remeshOption == "RectBivariateSpline":
         if np.isnan(z).any():
@@ -283,9 +283,17 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     # create header of remeshed DEM
     # set new header
     headerRemeshed = header
+    print(header)
     headerRemeshed["cellsize"] = cellSizeNew
     headerRemeshed["ncols"] = ncolsNew
     headerRemeshed["nrows"] = nrowsNew
+    xllcenter = header["xllcenter"]
+    yllcenter = header["yllcenter"]
+    transform = rasterio.transform.from_origin(xllcenter - cellSizeNew / 2.0,
+                                               (yllcenter - cellSizeNew / 2.0) + nrowsNew * cellSizeNew,
+                                               cellSizeNew, cellSizeNew)
+    headerRemeshed["transform"] = transform
+    print(headerRemeshed)
     # create remeshed raster dictionary
     remeshedRaster = {"rasterData": zNew, "header": headerRemeshed}
 
@@ -313,16 +321,28 @@ def remeshDataRio(rasterFile, cellSizeNew):
     with rasterio.open(rasterFile, 'r') as src:
 
         # read actual cell size and compute scaling factor
-        scaleFactorX = src.res[0] / cellSizeNew
-        scaleFactorY = src.res[1] / cellSizeNew
+        scaleFactor = src.res[0] / cellSizeNew
         log.info('Cell size for %s is changed from %.2f to new cell size of %.1f' % (rasterFile.name, src.res[0], cellSizeNew))
 
         # Read the first band
-        data = src.read(out_shape=(src.count, int(src.height * scaleFactorY),
-                                  int(src.width * scaleFactorX)),resampling=Resampling.cubic)
+        data = src.read(
+            out_shape=(
+                src.count,
+                int(src.height * scaleFactor),
+                int(src.width * scaleFactor)
+            ),
+            resampling=Resampling.cubic
+        )
 
         # scale image transform
-        transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
+        # transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
+        transform = src.transform * src.transform.scale((1 / scaleFactor), (1 / scaleFactor))
+        # transform = src.transform * src.transform.scale(
+        #     (src.width / data.shape[-1]),
+        #     (src.height / data.shape[-2])
+        # )
+
+        print(transform)
 
         # create header of resampled data
         # set new header
@@ -404,7 +424,8 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, lega
         log.error(message)
         raise FileExistsError(message)
 
-    writtenFile = IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=flipArg)
+    writtenFile = IOf.writeResultToRaster(remeshedRaster["header"], remeshedRaster["rasterData"], outFile,
+                                          flip=flipArg)
     log.info("Saved remeshed raster to %s" % writtenFile)
     pathRaster = str(pathlib.Path("remeshedRasters", writtenFile.name))
 
