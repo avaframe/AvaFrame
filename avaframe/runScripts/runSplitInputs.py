@@ -8,8 +8,19 @@ from avaframe.in3Utils import cfgUtils, logUtils
 from avaframe.in4Region import splitInputs
 
 def runSplitInputs(avalancheDir=''):
-    """Main function to split input data for each release area feature with only an avalancheDir as input."""
+    """Main function to split input data for avalanche scenarios.
 
+    Parameters
+    ----------
+    avalancheDir : str
+        Path to the avalanche directory. If not provided, the function will
+        retrieve it from the general configuration file.
+    
+    Returns
+    -------
+    None
+
+    """
     # Time the whole routine
     startTime = time.time()
 
@@ -28,7 +39,7 @@ def runSplitInputs(avalancheDir=''):
     inputDir = pathlib.Path(avalancheDir) / 'Inputs'
 
     # Define the output directory
-    outputDir = pathlib.Path(avalancheDir) / 'Regional'
+    outputDir = pathlib.Path(avalancheDir) / 'Outputs' / 'in4Region'/ 'SplitInputs'
 
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(splitInputs)
