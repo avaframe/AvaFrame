@@ -13,7 +13,7 @@ import shutil
 import numpy as np
 import pytest
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
@@ -151,7 +151,7 @@ def test_prepareInputData(tmp_path):
         "yllcenter": 0.0,
         "nodata_value": 0.0,
     }
-    IOf.writeResultToAsc(testHeader, testField, testFile, flip=True)
+    IOf.writeResultToRaster(testHeader, testField, testFile, flip=True)
     inputSimFiles["relThFile"] = testFile
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
@@ -2148,7 +2148,7 @@ def test_fetchRelVolume(tmp_path):
     dem["rasterData"] = np.ones((10, 20))
     demPath = pathlib.Path(avaDir, "Inputs", "testDem.asc")
     fU.makeADir(pathlib.Path(avaDir, "Inputs"))
-    IOf.writeResultToAsc(dem["header"], dem["rasterData"], demPath, flip=False)
+    IOf.writeResultToRaster(dem["header"], dem["rasterData"], demPath, flip=False)
 
     # write relThField
     relThF = {
@@ -2166,7 +2166,7 @@ def test_fetchRelVolume(tmp_path):
         relThF["rasterData"][k, :] = k * 1
     relThField1 = pathlib.Path(avaDir, "Inputs", "RELTH", "relThField1.asc")
     fU.makeADir(pathlib.Path(avaDir, "Inputs", "RELTH"))
-    IOf.writeResultToAsc(relThF["header"], relThF["rasterData"], relThField1, flip=False)
+    IOf.writeResultToRaster(relThF["header"], relThF["rasterData"], relThField1, flip=False)
 
     cfg = {}
     # relTh read from shp

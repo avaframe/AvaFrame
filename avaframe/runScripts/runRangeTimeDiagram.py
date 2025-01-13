@@ -11,7 +11,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in1Data.getInput as gI
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
 

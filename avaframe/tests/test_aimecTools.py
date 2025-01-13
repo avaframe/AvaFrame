@@ -11,7 +11,7 @@ import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.ana3AIMEC.ana3AIMEC as anaAI
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 
 def test_fetchReferenceSimNo(tmp_path):

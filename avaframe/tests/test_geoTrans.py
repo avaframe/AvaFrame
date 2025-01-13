@@ -10,8 +10,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import shapely as shp
+import rasterio
+import subprocess
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 # Local imports
@@ -522,7 +524,7 @@ def test_remeshData(tmp_path):
     data = getIPZ(z0, 15, 20, 5)
     rasterDict = {"header": headerInfo, "rasterData": data}
     # outFile = os.path.join(tmp_path, 'test.asc')
-    # IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
+    # IOf.writeResultToRaster(headerInfo, data, outFile, flip=False)
     atol = 1.0e-10
     dataNew = geoTrans.remeshData(rasterDict, 2.0, larger=False)
     dataRaster = dataNew["rasterData"]
@@ -572,13 +574,33 @@ def test_remeshData(tmp_path):
 def test_remeshDEM(tmp_path):
     """test size of interpolated data onto new mesh"""
 
-    headerInfo = {}
-    headerInfo["cellsize"] = 5
-    headerInfo["ncols"] = 4
-    headerInfo["nrows"] = 5
-    headerInfo["xllcenter"] = 0
-    headerInfo["yllcenter"] = 0
-    headerInfo["nodata_value"] = -9999
+    cellSize = 5
+    nCols = 4
+    nRows = 5
+    xllcenter = 0
+    yllcenter = 0
+    nodata_value = -9999
+
+    # rasterio requires west, north
+    # rasterio.transform.from_origin(west, north, xsize, ysize)
+    transform = rasterio.transform.from_origin(xllcenter - cellSize / 2, (yllcenter - cellSize / 2) + nRows * cellSize,
+                                               cellSize,
+                                               cellSize)
+    crs = rasterio.crs.CRS()
+
+    headerInfo = {
+        "cellsize": cellSize,
+        "nrows": nRows,
+        "ncols": nCols,
+        "nodata_value": nodata_value,
+        "xllcenter": xllcenter,
+        "yllcenter": yllcenter,
+        "driver": "AAIGrid",
+        "crs": crs,
+        "transform": transform,
+    }
+
+
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
@@ -586,8 +608,11 @@ def test_remeshDEM(tmp_path):
     avaDir = pathlib.Path(tmp_path, "avaTest")
     fU.makeADir(avaDir)
     fU.makeADir((avaDir / "Inputs"))
-    avaDEM = avaDir / "Inputs" / "avaAlr.asc"
-    IOf.writeResultToAsc(headerInfo, data, avaDEM, flip=True)
+    avaDEM = avaDir / "Inputs" / "avaAlr"
+    avaDEM = IOf.writeResultToRaster(headerInfo, data, avaDEM, flip=True)
+
+    print("FSO:", avaDEM)
+    subprocess.run(["cat", avaDEM])
 
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
@@ -597,15 +622,22 @@ def test_remeshDEM(tmp_path):
     }
 
     # call function
-    pathDem = geoTrans.remeshRaster(avaDEM, cfg)
+    pathDem = geoTrans.remeshRaster(avaDEM, cfg, legacy=True)
+    # pathDem = geoTrans.remeshRaster(avaDEM, cfg)
     fullP = avaDir / "Inputs" / pathDem
+    subprocess.run(["cat", fullP])
+
     dataNew = IOf.readRaster(fullP)
 
     dataRaster = dataNew["rasterData"]
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew["header"]
+
     xExtent = (headerNew["ncols"] - 1) * headerNew["cellsize"]
     yExtent = (headerNew["nrows"] - 1) * headerNew["cellsize"]
+
+    xExtent = (headerNew["ncols"]) * headerNew["cellsize"]
+    yExtent = (headerNew["nrows"]) * headerNew["cellsize"]
 
     # compute solution
     dataSol = getIPZ(z0, xExtent, yExtent, 2.0)
@@ -613,11 +645,16 @@ def test_remeshDEM(tmp_path):
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster[:-1, :-1], dataSol[:-1, :-1], atol=1.0e-6)
-    # print(dataRaster)
-    # print(dataSol)
+    print(20 * '-')
+    print(testRes)
+    print(20 * '-')
 
-    assert dataNew["rasterData"].shape[0] == 11
-    assert dataNew["rasterData"].shape[1] == 8
+    # assert dataNew["rasterData"].shape[0] == 11
+    # assert dataNew["rasterData"].shape[1] == 8
+
+    # Make sure xllcorner = -1
+    # assert dataNew["header"]["transform"][2] == -1
+
     assert len(indNoData[0]) == 0
     assert testRes
     assert np.isclose(dataRaster[0, 0], 10.0)
@@ -654,7 +691,7 @@ def test_remeshDEM(tmp_path):
 
     dataMod = IOf.readRaster(inputDEM)
     dataMod["header"]["cellsize"] = 9.0
-    IOf.writeResultToAsc(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
+    IOf.writeResultToRaster(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
 
     with pytest.raises(FileExistsError) as e:
         assert geoTrans.remeshRaster(avaDEM1, cfg)

@@ -14,7 +14,7 @@ import pathlib
 # local imports
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgHandling
 import avaframe.in1Data.getInput as gI
 import avaframe.com1DFA.deriveParameterSet as dP
@@ -279,7 +279,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         raster = IOf.readRaster(data, noDataToNan=True)
         dataPlot = raster['rasterData']
-        header = IOf.readASCheader(data)
+        header = IOf.readRasterHeader(data)
         cellSize = header['cellsize']
 
         # load correspoding DEM check for matching cellsize

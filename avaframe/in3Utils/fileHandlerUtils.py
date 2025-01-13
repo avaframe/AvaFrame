@@ -12,7 +12,7 @@ import pandas as pd
 import shutil
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -539,7 +539,9 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     # Load input datasets from input directory
     if isinstance(inputDir, pathlib.Path) is False:
         inputDir = pathlib.Path(inputDir)
-    datafiles = list(inputDir.glob('*.asc'))
+
+    # TODO: what if asc and tif?
+    datafiles = list(inputDir.glob('*.asc')) + list(inputDir.glob('*.tif'))
 
     # Sort datafiles by name
     datafiles = sorted(datafiles)
@@ -592,7 +594,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             data['resType'].append(infoParts[4+j])
             data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:(4+j)])))
 
-            header = IOf.readASCheader(datafiles[m])
+            header = IOf.readRasterHeader(datafiles[m])
             data['cellSize'].append(header['cellsize'])
             if len(infoParts) == (6+j):
                 data['timeStep'].append(infoParts[5+j])
@@ -609,7 +611,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             data['resType'].append(infoParts[3])
             data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 
-            header = IOf.readASCheader(datafiles[m])
+            header = IOf.readRasterHeader(datafiles[m])
             data['cellSize'].append(header['cellsize'])
             if len(infoParts) == 5:
                 data['timeStep'].append(infoParts[4])
@@ -717,7 +719,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
                 raise AssertionError(message)
 
             # add info about the cell size
-            header = IOf.readASCheader(file)
+            header = IOf.readRasterHeader(file)
             dataDF.loc[simName, 'cellSize'] = header['cellsize']
         # add full path to resType
         dataDF.loc[simName, resType] = pathlib.Path(file)

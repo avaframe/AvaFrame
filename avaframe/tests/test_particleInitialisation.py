@@ -16,7 +16,7 @@ import shutil
 
 
 from avaframe.com1DFA import particleInitialisation as pI
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.damCom1DFA as damCom1DFA

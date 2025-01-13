@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from cmcrameri import cm as cmapCameri
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 
 def test_constrainPlotsToData():
@@ -223,12 +223,12 @@ def test_addHillShadeContours(tmp_path):
     header = {'cellsize': 1, 'xllcenter': 0, 'yllcenter': 0, 'nrows': 4, 'ncols': 4, 'nodata_value': -9999}
 
     outFileName = testDir / 'testDEM.asc'
-    IOf.writeResultToAsc(header, field1, outFileName, flip=False)
+    IOf.writeResultToRaster(header, field1, outFileName, flip=False)
 
 
     field2 = np.zeros((4,4)) +10.
     outFileName2 = testDir / 'testData.asc'
-    IOf.writeResultToAsc(header, field2, outFileName2, flip=False)
+    IOf.writeResultToRaster(header, field2, outFileName2, flip=False)
 
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(field2, header['cellsize'])
     xllcenter = header["xllcenter"]

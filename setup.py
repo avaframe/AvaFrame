@@ -62,6 +62,12 @@ req_packages = [
     "deepdiff",
     "deepmerge",
     "psutil",
+    # Next ones are for geotiff:
+    "rasterio",
+    "contextily",
+    "geopandas",
+    # For geopackage, TODO might not be needed
+    "fiona",
 ]
 
 

@@ -22,7 +22,7 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
 

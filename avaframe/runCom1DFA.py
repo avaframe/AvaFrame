@@ -59,7 +59,9 @@ def runCom1DFA(avalancheDir='', calibration=''):
     # Clean input directory(ies) of old work and output files
     # If you just created the ``avalancheDir`` this one should be clean but if you
     # already did some calculations you might want to clean it::
-    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
+    # TODO change back
+    # initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=True)
 
     # Set friction model according to cmd argument
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, toPrint=False)

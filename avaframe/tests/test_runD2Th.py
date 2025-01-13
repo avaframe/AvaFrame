@@ -12,7 +12,7 @@ import shutil
 
 from avaframe.runScripts import runD2Th
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 
 
 def test_runD2Th(tmp_path):
@@ -41,7 +41,7 @@ def test_runD2Th(tmp_path):
     outFile = pDir / 'release1IP_testID_C_L_null_dfa_pft.asc'
     testHeader ={'cellsize': 5., 'nrows': 401, 'ncols': 1001, 'xllcenter': 1000., 'yllcenter': -5000.,
                  'nodata_value': -9999}
-    IOf.writeResultToAsc(testHeader, testDepth, outFile, flip=True)
+    IOf.writeResultToRaster(testHeader, testDepth, outFile, flip=True)
 
     # call funct
     runD2Th.runD2Th(avaDir, comMod, resType, profileAxis, profileIndex)

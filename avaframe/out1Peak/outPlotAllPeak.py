@@ -10,11 +10,17 @@ import matplotlib
 matplotlib.use("agg")
 from matplotlib import pyplot as plt
 import pathlib
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
+
+import rasterio
+import rasterio.plot
+import contextily as ctx
+import geopandas as gpd
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -44,6 +50,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     # Load all infos on simulations
     avaDir = pathlib.Path(avaDir)
     inputDir = avaDir / "Outputs" / modName / "peakFiles"
+    inDir = avaDir / 'Inputs'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     if demData == "":
@@ -70,14 +77,18 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     for sName in peakFilesDF["simName"]:
         plotDict[sName] = {}
 
+    # TODO get from data
+    srcCrs = rasterio.crs.CRS.from_epsg(31287)
+
     # Loop through peakFiles and generate plot
     for m in range(len(peakFilesDF["names"])):
 
         # Load names and paths of peakFiles
         name = peakFilesDF["names"][m]
         fileName = peakFilesDF["files"][m]
-        avaName = peakFilesDF["avaName"][m]
         resType = peakFilesDF["resType"][m]
+        simType = peakFilesDF['simType'][m]
+
         log.debug("now plot %s:" % (fileName))
 
         plotName = outDir / ("%s.%s" % (name, pU.outputFormat))
@@ -95,6 +106,30 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
 
             # add peak field data now
             ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
+
+            # TODO for testing
+            if cfgFLAGS.getboolean("showOnlineBackground"):
+                providers = ctx.providers.flatten()
+                ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
+
+            # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
+            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="cropshape.shp")
+            if cropInfo != 'No':
+                focus = gpd.read_file(cropFile)
+                focus.plot(ax=ax, zorder=12, edgecolor="red", linewidth=2, facecolor="none", alpha=0)
+                extent = focus.total_bounds
+                ax.set_xlim(extent[0], extent[2])
+                ax.set_ylim(extent[1], extent[3])
+
+            # if entrainment or resistance area is considered in simulation, show extent of entrainment or resistance area
+            colorOutline = {'ent': 'white', 'res': 'green'}
+            for sType in ['ent', 'res']:
+                if sType in simType:
+                    sFile, sInfo = gI.getAndCheckInputFiles(inDir, sType.upper(), sType, fileExt="shp")
+                    if sInfo != 'No':
+                        sarea = gpd.read_file(sFile)
+                        sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
+                                   label=('%s area' % sType), alpha=0.8)
 
             # add title, labels and ava Info
             title = str("%s" % name)
@@ -154,8 +189,6 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
     # Set extent of peak file
     ny = data.shape[0]
     nx = data.shape[1]
-    Ly = ny * cellSize
-    Lx = nx * cellSize
 
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
@@ -176,10 +209,20 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
         ax.imshow(dataOneColor, cmap=oneColor, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
                         alpha=alpha)
     else:
-        im1 = ax.imshow(dataConstrained, cmap=cmap, norm=norm, extent=extentCellCorners, origin="lower", aspect="equal", zorder=4,
-            alpha=alpha)
+        im1 = ax.imshow(dataConstrained,
+                        cmap=cmap,
+                        norm=norm,
+                        extent=extentCellCorners,
+                        origin="lower",
+                        aspect="equal",
+                        zorder=4,
+                        alpha=alpha)
         if len(np.nonzero(data)[0]) > 0.:
-            pU.addColorBar(im1, ax, ticks, unit)
+            # add Colorbar
+            fig = ax.get_figure()
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            fig.colorbar(im1, cax=cax)
 
     return ax, rowsMinPlot, colsMinPlot
 

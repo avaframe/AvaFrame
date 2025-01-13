@@ -22,7 +22,7 @@ from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.in2Trans.shpConversion as shpConv
@@ -987,7 +987,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
         "nodata_value": demOri["header"]["nodata_value"],
         "cellsize": csz,
     }
-    IOf.writeResultToAsc(headerRelTh, relTh, relThFileName, flip=True)
+    IOf.writeResultToRaster(headerRelTh, relTh, relThFileName, flip=True)
     return relDict
 
 

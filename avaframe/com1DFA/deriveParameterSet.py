@@ -9,7 +9,7 @@ from datetime import datetime
 import numpy as np
 
 import avaframe.in1Data.computeFromDistribution as cP
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
@@ -779,7 +779,7 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator='DEM', onlySearch=Fals
     """
 
     # read header of raster file
-    headerRaster = IOf.readASCheader(rasterFile)
+    headerRaster = IOf.readRasterHeader(rasterFile)
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])

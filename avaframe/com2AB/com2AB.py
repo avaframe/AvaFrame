@@ -11,7 +11,8 @@ import pathlib
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
+import avaframe.in1Data.getInput as gI
 import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger
@@ -235,13 +236,7 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
         pathDict['profileLayer'] = path2Line
 
     # read DEM
-    refDir = avalancheDir / 'Inputs'
-    demSource = list(refDir.glob('*.asc'))
-    try:
-        assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s /Inputs/' % avalancheDir
-    except AssertionError:
-        raise
-    pathDict['demSource'] = demSource[0]
+    pathDict['demSource'] = gI.getDEMPath(avalancheDir)
 
     # read split points
     if path2SplitPoint == '':
