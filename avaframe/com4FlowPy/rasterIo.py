@@ -74,7 +74,7 @@ def output_raster(referenceFile, file_out, raster):
     Parameters
     -----------
     referenceFile: str
-        directory to raster file to reference on, mostly DEM
+        path to raster file to reference on, mostly DEM
     file_out: str
         path for the outputfile, possible extends are .asc or .tif
     raster: np.array

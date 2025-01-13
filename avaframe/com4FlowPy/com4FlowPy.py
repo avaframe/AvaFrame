@@ -167,6 +167,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # check if input layers have same x,y dimensions
     checkInputLayerDimensions(modelParameters, modelPaths)
 
+    # check if input parameters are within physically sensible ranges
+    checkInputParameterValues(modelParameters, modelPaths)
+
     # get information on cellsize and nodata value from demHeader
     rasterAttributes = {}
 
@@ -350,6 +353,57 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         log.error('Error occured: %s' % ex)
         # return
         sys.exit(1)
+
+
+def checkInputParameterValues(modelParameters, modelPaths):
+    """check if the input parameters alpha, uMaxLimit/ zDeltaMaxLimit, exponent
+    are within a physically sensible range
+
+    Parameters
+    -----------
+    modelParameters: dict
+        model input parameters (from .ini - file)
+    modelPaths: dict
+        contains paths to input files
+    """
+    alpha = modelParameters['alpha']
+    if (alpha < 0 or alpha > 90):
+        log.error("Error: Alpha value is not within a physically sensible range ([0,90]).")
+        sys.exit(1)
+
+    zDelta = modelParameters['max_z']
+    if (zDelta < 0 or zDelta > 8848):
+        log.error("Error: zDeltaMaxLimit value is not within a physically sensible range ([0,8848]).")
+        sys.exit(1)
+
+    exp = modelParameters['exp']
+    if exp < 0:
+        log.error("Error: Exponent value is not within a physically sensible range (> 0).")
+        sys.exit(1)
+
+    if modelParameters["varAlphaBool"]:
+        rasterValues, header = io.read_raster(modelPaths["varAlphaPath"])
+        rasterValues[rasterValues < 0] = np.nan  # handle different noData values
+        if np.all(rasterValues > 90, where=~np.isnan(rasterValues)):
+            log.error("Error: Alpha-raster values are not within a physically sensible range ([0,90]),\
+                 in respective startcells the general alpha angle is used.")
+
+    if modelParameters["varUmaxBool"]:
+        rasterValues, header = io.read_raster(modelPaths["varUmaxPath"])
+        rasterValues[rasterValues < 0] = np.nan
+        if modelParameters["varUmaxType"].lower() == 'umax':
+            rasterValues[rasterValues > 0] = rasterValues[rasterValues > 0] ** 2 / 2 / 9.81
+        if np.all(rasterValues > 8848, where=~np.isnan(rasterValues)):
+            log.error("Error: zDeltaMaxLimit-raster values are not within a physically sensible range ([0,8848]),\
+                 in respective startcells the general zDeltaMax value is used.")
+
+    if modelParameters["varExponentBool"]:
+        rasterValues, header = io.read_raster(modelPaths["varExponentPath"])
+        if np.all(rasterValues < 0, where=~np.isnan(rasterValues)):
+            log.error("Error: Exponent-raster values are not within a physically sensible range (> 0).")
+
+    log.info("Input parameters are within a physically sensible range.")
+    log.info("========================")
 
 
 def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):
