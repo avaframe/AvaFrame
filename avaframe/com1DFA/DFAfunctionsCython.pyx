@@ -854,6 +854,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       mDepositedArray = np.append(mDepositedArray, mass[k])
       idDepositedArray = np.append(idDepositedArray, ID[k])
       uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
+
       keepParticle[k] = 0  # particle is deleted
       nRemove = nRemove + 1
       continue
