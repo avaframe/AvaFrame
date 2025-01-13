@@ -14,6 +14,7 @@ import copy
 from scipy.interpolate import splprep, splev
 import matplotlib.path as mpltPath
 from shapely import LineString, Point, distance, MultiPoint
+from affine import Affine
 
 
 # Local imports
@@ -283,7 +284,6 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
     # create header of remeshed DEM
     # set new header
     headerRemeshed = header
-    print(header)
     headerRemeshed["cellsize"] = cellSizeNew
     headerRemeshed["ncols"] = ncolsNew
     headerRemeshed["nrows"] = nrowsNew
@@ -293,14 +293,13 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
                                                (yllcenter - cellSizeNew / 2.0) + nrowsNew * cellSizeNew,
                                                cellSizeNew, cellSizeNew)
     headerRemeshed["transform"] = transform
-    print(headerRemeshed)
     # create remeshed raster dictionary
     remeshedRaster = {"rasterData": zNew, "header": headerRemeshed}
 
     return remeshedRaster
 
 
-def remeshDataRio(rasterFile, cellSizeNew):
+def remeshDataRio(rasterFile, cellSizeNew, larger=True):
     """ resample raster data using rasterio to change effective cell size to cellSizeNew by specifying an output array
         of specified size, default resampling option is set to cubic
 
@@ -310,39 +309,36 @@ def remeshDataRio(rasterFile, cellSizeNew):
             path to file with raster data options asci or tif
         cellSizeNew: float
             desired spatial resolution of new raster dataset, cellsize
+        larger: Boolean
+            if true (default) output grid is at least as big as the input
 
         Returns
         ---------
         remeshedRaster: dict
             dictionary with header and rasterdata with new cellSize
      """
-
     # open raster data
     with rasterio.open(rasterFile, 'r') as src:
-
-        # read actual cell size and compute scaling factor
-        scaleFactor = src.res[0] / cellSizeNew
-        log.info('Cell size for %s is changed from %.2f to new cell size of %.1f' % (rasterFile.name, src.res[0], cellSizeNew))
-
-        # Read the first band
-        data = src.read(
-            out_shape=(
-                src.count,
-                int(src.height * scaleFactor),
-                int(src.width * scaleFactor)
-            ),
-            resampling=Resampling.cubic
+        # First part is to be able to replicate our own remeshing
+        header = rU.getHeaderFromRaster(src)
+        _, _, width, height = makeCoordGridFromHeader(
+            header, cellSizeNew=cellSizeNew, larger=larger
         )
+        targetTransform = rasterio.transform.from_origin(header['xllcenter'] - cellSizeNew / 2.0,
+                                                         (header['yllcenter'] - cellSizeNew / 2.0) + height *
+                                                         cellSizeNew,
+                                                         cellSizeNew,
+                                                         cellSizeNew)
 
-        # scale image transform
-        # transform = src.transform * src.transform.scale((1 / scaleFactorX), (1 / scaleFactorY))
-        transform = src.transform * src.transform.scale((1 / scaleFactor), (1 / scaleFactor))
-        # transform = src.transform * src.transform.scale(
-        #     (src.width / data.shape[-1]),
-        #     (src.height / data.shape[-2])
-        # )
-
-        print(transform)
+        data, transform = rasterio.warp.reproject(source=src.read(),
+                                                  destination=np.empty((src.count, height,
+                                                                        width)),
+                                                  src_transform=src.transform,
+                                                  dst_transform=targetTransform,
+                                                  src_crs=rasterio.crs.CRS.from_epsg(31287),  # src.crs,
+                                                  dst_crs=rasterio.crs.CRS.from_epsg(31287),  # src.crs,
+                                                  dst_nodata=src.nodata,
+                                                  resampling=Resampling.cubic)
 
         # create header of resampled data
         # set new header
@@ -388,8 +384,8 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, lega
     """
     # first check if remeshed raster is available
     pathRaster, rasterFound, allRasterNames = searchRemeshedRaster(rasterFile.stem, cfgSim)
-    if rasterFound or onlySearch:
-        return pathRaster
+    # if rasterFound or onlySearch:
+    #     return pathRaster
 
     # -------- if no remeshed raster found - remesh
     # fetch info on raster file
@@ -408,7 +404,7 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, lega
         flipArg = True
     else:
         log.info("Using rasterio resampling")
-        remeshedRaster = remeshDataRio(rasterFile, cszRasterNew)
+        remeshedRaster = remeshDataRio(rasterFile, cszRasterNew, larger=False)
         flipArg = False
 
     # save remeshed raster

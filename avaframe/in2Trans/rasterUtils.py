@@ -119,7 +119,6 @@ def readRasterHeader(fname):
 
     raster = rasterio.open(fname)
     header = getHeaderFromRaster(raster)
-    print(header)
     raster.close()
 
 
