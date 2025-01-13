@@ -381,29 +381,35 @@ def checkInputParameterValues(modelParameters, modelPaths):
         log.error("Error: Exponent value is not within a physically sensible range (> 0).")
         sys.exit(1)
 
+    _checkVarParams = True
+
     if modelParameters["varAlphaBool"]:
         rasterValues, header = io.read_raster(modelPaths["varAlphaPath"])
         rasterValues[rasterValues < 0] = np.nan  # handle different noData values
-        if np.all(rasterValues > 90, where=~np.isnan(rasterValues)):
-            log.error("Error: Alpha-raster values are not within a physically sensible range ([0,90]),\
+        if np.any(rasterValues > 90, where=~np.isnan(rasterValues)):
+            log.error("Error: Not all Alpha-raster values are within a physically sensible range ([0,90]),\
                  in respective startcells the general alpha angle is used.")
+            _checkVarParams = False
 
     if modelParameters["varUmaxBool"]:
         rasterValues, header = io.read_raster(modelPaths["varUmaxPath"])
         rasterValues[rasterValues < 0] = np.nan
         if modelParameters["varUmaxType"].lower() == 'umax':
-            rasterValues[rasterValues > 0] = rasterValues[rasterValues > 0] ** 2 / 2 / 9.81
-        if np.all(rasterValues > 8848, where=~np.isnan(rasterValues)):
-            log.error("Error: zDeltaMaxLimit-raster values are not within a physically sensible range ([0,8848]),\
-                 in respective startcells the general zDeltaMax value is used.")
+            _maxVal = 1500  # ~sqrt(8848*2*9.81)
+        else:
+            _maxVal = 8848
+        if np.any(rasterValues > _maxVal, where=~np.isnan(rasterValues)):
+            log.error("Error: Not all zDeltaMaxLimit-raster values are within a physically sensible range \
+                ([0, 8848 m] or [0, 1500 m/s]), in respective startcells the general zDeltaMax value is used.")
+            _checkVarParams = False
 
-    if modelParameters["varExponentBool"]:
-        rasterValues, header = io.read_raster(modelPaths["varExponentPath"])
-        if np.all(rasterValues < 0, where=~np.isnan(rasterValues)):
-            log.error("Error: Exponent-raster values are not within a physically sensible range (> 0).")
-
-    log.info("Input parameters are within a physically sensible range.")
-    log.info("========================")
+    if _checkVarParams:
+        log.info("All input parameters are within a physically sensible range.")
+        log.info("========================")
+    else:
+        log.info("NOT ALL variable input parameter rasters are within physically sensible ranges.")
+        log.info("!!PLEASE RE-CHECK Input Rasters and handle Results with Care!!")
+        log.info("========================")
 
 
 def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParameters):

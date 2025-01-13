@@ -444,7 +444,7 @@ def calculation(args):
     countArray = np.zeros_like(dem, dtype=np.int32)
 
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
-    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32) * 90  # sl = Straight Line
+    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # sl = Straight Line
 
     travelLengthArray = np.zeros_like(dem, dtype=np.float32)
 
