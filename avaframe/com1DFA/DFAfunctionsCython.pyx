@@ -366,8 +366,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
           totalEnthalpyArray[k] = totalEnthalpy / m
         # compute erosion height 
         hEroCell = - dm / areaEntrPart / rhoEnt
-        hEro[indCellY, indCellX] += hEroCell
-        hEroded[indCellY, indCellX] += hEroCell
+        hEro[indCellY, indCellX] = hEro[indCellY, indCellX] + hEroCell
+        hEroded[indCellY, indCellX] = hEroded[indCellY, indCellX] + hEroCell
 
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
@@ -390,8 +390,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         idDepositedArray = np.append(idDepositedArray, ID[k])
         # compute deposited thickness (dmDet < 0; hDep > 0)
         hDepCell = - dmDet / areaPart / rho
-        hDep[indCellY, indCellX] += hDepCell
-        hDeposited[indCellY, indCellX] += hDepCell
+        hDep[indCellY, indCellX] = hDep[indCellY, indCellX] + hDepCell
+        hDeposited[indCellY, indCellX] = hDeposited[indCellY, indCellX] + hDepCell
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -1084,7 +1084,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     else:
       log.debug('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 
-  # remove particles that are not located on the mesh any more or mass or velocity = 0 (TODO)
+  # remove particles that are not located on the mesh any more or mass = 0 or velocity = 0 (TODO)
   if nRemove > 0:
     mask = np.array(np.asarray(keepParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', snowSlide=snowSlide)
