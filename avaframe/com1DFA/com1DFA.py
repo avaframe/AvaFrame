@@ -1524,7 +1524,12 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
 
         # fetch secondary release areas
         secondaryReleaseInfo = geoTrans.prepareArea(
-            secondaryReleaseInfo, dem, np.sqrt(2), thList=secondaryReleaseInfo["thickness"], combine=False
+            secondaryReleaseInfo,
+            dem,
+            np.sqrt(2),
+            thList=secondaryReleaseInfo["thickness"],
+            combine=False,
+            checkOverlap=False
         )
         # remove overlaping parts of the secondary release area with the main release areas
         noOverlaprasterList = []
