@@ -174,10 +174,23 @@ def main():
 def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     """function is used to read necessary flowPy Inputs
     function is only called from '../runCom4FlowPy.py',
-    which in turn creates the necessary
-    'cfgPath' dictionary, that is passed to
+    which in turn creates the necessary 'cfgPath' dictionary, that is passed to
     the com4FlowPyMain() function in this file...
     TODO-20240418: check this function - this is still from MTo Flow-Py --> avaFrame port
+
+    Parameters
+    -----------
+    avalancheDir: str
+        directory to avalanche - folder
+    cfgFlowPy: configParser object
+        Configparser object containing FlowPy model parameters (from (local_)com4FlowPyCfg.ini)
+    log: logging object
+        initiated logger
+
+    Returns
+    -----------
+    cfgPath: dict
+        contains paths to input data
     """
 
     cfgPath = {}
@@ -343,21 +356,22 @@ def checkOutputFilesFormat(strOutputFiles):
     """check if outputFiles option is provided in proper format, else return
     default string in right format
 
-    Parameters:
+    Parameters
     ---------------
-    strOutputFiles: string - outputFiles string from (local_)com4FlowPy.ini
+    strOutputFiles: str
+        outputFiles string from (local_)com4FlowPy.ini
 
-    Returns:
+    Returns
     ---------------
-    strOutputFiles: string - returns the input if the format is ok, else default
-                    value string is returned
+    strOutputFiles: str
+        returns the input if the format is ok, else default value string is returned
     """
 
     try:
         setA = set(strOutputFiles.split('|'))
         setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength',
-                    'slTravelAngle', 'flux', 'zDeltaSum'])
-        # if there is at least 1 correct ouputfile defined, we use the string provided in the .ini file
+                    'slTravelAngle', 'flux', 'zDeltaSum', 'routFluxSum', 'depFluxSum'])
+        # if there is at least 1 correct outputfile defined, we use the string provided in the .ini file
         if (setA & setB):
             return strOutputFiles
         else:
@@ -372,15 +386,19 @@ def writeCfgJSON(cfg, uid, workDir):
     writes a JSON file containing all the input parameters from the configFile
     using the same uid as the simulation results
 
-    Parameters:
+    Parameters
     ---------------
-    cfg: configParser object - all the model configs are in here
-    uid: string - UID created based on the cfg object
-    workDir: string - workDirectory (place to write the .json file to)
+    cfg: configParser object
+        all the model configs are in here
+    uid: str
+        UID created based on the cfg object
+    workDir: str
+        workDirectory (place to write the .json file to)
 
-    Returns:
+    Returns
     ---------------
-    success: boolean/Exception - True if file is written successfully, else Exception
+    success: bool/Exception
+        True if file is written successfully, else Exception
 
     """
 

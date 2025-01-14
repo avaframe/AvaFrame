@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+    Functions to handle raster files.
+"""
+
 import rasterio
 import sys
 import logging
@@ -9,7 +13,20 @@ log = logging.getLogger(__name__)
 
 
 def read_header(input_file):
-    # Reads in the header of the raster file, input: filepath
+    """
+    Reads the header of the raster file
+    raster file should be readable by rasterio (e.g. .tif, .asc)
+
+    Parameters
+    -----------
+    input_file: str
+        path to raster file
+
+    Returns
+    -----------
+    header: dict
+        header of raster file in style of ASCII-Rasters
+    """
 
     raster = rasterio.open(input_file)
     if raster is None:
@@ -27,6 +44,21 @@ def read_header(input_file):
 
 
 def read_raster(input_file):
+    """
+    Reads in a raster file
+
+    Parameters
+    -----------
+    input_file: str
+        path to raster file
+
+    Returns
+    -----------
+    my_array: np.array
+        numpy array with values read in from the raster file
+    header: dict
+        header of raster file in style of ASCII-Rasters
+    """
 
     header = read_header(input_file)
     raster = rasterio.open(input_file)
@@ -35,15 +67,21 @@ def read_raster(input_file):
     return my_array, header
 
 
-def output_raster(file, file_out, raster):
-    """Input is the original file, path to new file, raster_data
+def output_raster(referenceFile, file_out, raster):
+    """
+    Saves raster
 
-    Input parameters:
-        file        the path to the file to reference on, mostly DEM on where
-                    Calculations were done
-        file_out    path for the outputfile, possible extends are .asc or .tif"""
+    Parameters
+    -----------
+    referenceFile: str
+        path to raster file to reference on, mostly DEM
+    file_out: str
+        path for the outputfile, possible extends are .asc or .tif
+    raster: np.array
+        raster (array) that is saved
+    """
 
-    raster_trans = rasterio.open(file)
+    raster_trans = rasterio.open(referenceFile)
     try:
         crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
     except:
