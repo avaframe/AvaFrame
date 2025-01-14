@@ -138,6 +138,6 @@ def moveOrCopyPeakFiles(cfg, avalancheDir, avaDirs):
         log.debug(f"{'Moved' if moveInsteadOfCopy else 'Copied'} {file} to {allTimeStepsDir}")
 
     action = "Moving" if moveInsteadOfCopy else "Copying"
-    log.info(f"{action} completed: {len(peakFiles)} peak files and {len(timeStepFiles)} timestep files processed")
+    log.debug(f"{action} completed: {len(peakFiles)} peak files and {len(timeStepFiles)} timestep files processed")
 
     return allPeakFilesDir, allTimeStepsDir

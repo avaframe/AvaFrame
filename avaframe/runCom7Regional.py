@@ -76,13 +76,13 @@ def runCom7Regional(avalancheDir=''):
 
     # Copy (or move) files from the 'Outputs/com1DFA/peakFiles' folder from each of the subfolders (avaDir) to a folder
     # called 'allPeakFiles' in the main regional folder. Also copy (or move) 'timeSteps'
-    if cfg['GENERAL'].getboolean('movePeakFiles'):
+    if cfg['GENERAL'].getboolean('copyPeakFiles'):
         allPeakFilesDir, allTimeStepsDir = com7.moveOrCopyPeakFiles(cfg, regionalDir, avaDirs)
 
-        copyPeakFiles = cfg['GENERAL'].getboolean('copyPeakFiles')
-        log.info(f"{'Copied' if copyPeakFiles else 'Moved'} peakFiles to "
+        moved = cfg['GENERAL'].getboolean('moveInsteadOfCopy')
+        log.info(f"{'Moved' if moved else 'Copied'} peakFiles to "
                   f"{allPeakFilesDir}")
-        log.info(f"{'Copied' if copyPeakFiles else 'Moved'} timeSteps to "
+        log.info(f"{'Moved' if moved else 'Copied'} timeSteps to "
                   f"{allTimeStepsDir}")
 
     # Print time needed

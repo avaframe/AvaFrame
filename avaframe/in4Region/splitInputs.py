@@ -1,10 +1,14 @@
-"""Module for splitting and organizing avalanche input data."""
+"""Module for splitting and organizing regional avalanche input data."""
 
 import logging
 import shapefile  # pyshp
-from shapely.geometry import shape, box
+from shapely.geometry import shape, box, Polygon
 from avaframe.in2Trans import ascUtils
 import pathlib
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Rectangle, Patch
+import matplotlib as mpl
 
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 
@@ -62,7 +66,7 @@ def splitInputsMain(inputDir, outputDir, cfg):
     folderListGrouped = groupFoldersByName(folderList)
     log.info("Finished creating folder list")
 
-    # Step 2: Set up ava directories
+    # Step 2: Set up avalanche directories
     log.info("Running folder initialization for each entry...")
     for entry in folderListGrouped:
         folderName = entry['folderName']
@@ -77,18 +81,23 @@ def splitInputsMain(inputDir, outputDir, cfg):
 
     # Step 4: Clip and move DEM
     log.info("Clipping and moving DEM...")
-    demExtent = clipDEMByCentroidAndMove(folderListGrouped, inputDEM, outputDir, cfg)
+    groupExtents = clipDEMByReleaseGroup(folderListGrouped, inputDEM, outputDir, cfg)
     log.info("Finished clipping and moving of DEM")
 
-    # Step 5: Clip and move ENT and RES
-    log.info("Clipping and moving ENT and RES...")
-    clipAndMoveEntRes(inputDir, outputDir, demExtent)
-    log.info("Finished clipping and moving ENT and RES")
+    # Step 5: Clip and move optional input (currently only ENT and RES)
+    log.info("Clipping and moving optional input...")
+    groupFeatures = clipAndMoveOptionalInput(inputDir, outputDir, groupExtents)
+    log.info("Finished clipping and moving optional input")
 
     # Step 6: Divide release areas into scenarios based on "scenario" attribute
     log.info("Separating release area by scenario attribute...")
     splitByScenarios(folderListGrouped, outputDir)
     log.info("Finished separating by scenarios")
+
+    # Step 7: Write report
+    log.info("Writing report...")
+    writeReport(folderListGrouped, inputDEM, outputDir, groupExtents, groupFeatures)
+    log.info("Finished writing report")
 
 def readShapefile(inputShp):
     """Read the fields, properties, geometries, and spatial reference of an input shapefile.
@@ -99,8 +108,8 @@ def readShapefile(inputShp):
 
     Parameters
     ----------
-    inputShp: pathlib.Path object
-        the input shapefile
+    inputShp : pathlib.Path
+        Path to input shapefile
 
     Returns
     -------
@@ -133,7 +142,7 @@ def readShapefile(inputShp):
             log.debug(f"Found and read .prj file: {srsfile}")
         else:
             log.debug(f"No .prj file found at: {srsfile}")
-
+            
     return fields, fieldNames, properties, geometries, srs
 
 def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
@@ -141,7 +150,7 @@ def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
 
     Parameters
     ----------
-    outputPath: pathlib.Path object
+    outputPath: pathlib.Path
         path where the shapefile will be written
     fields: list
         the fields of the shapefile
@@ -190,7 +199,7 @@ def createFolderList(inputShp):
     fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
 
     for i, (properties, geometry) in enumerate(zip(properties, geometries)):
-        folderName = properties.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
+        folderName = properties.get('name', '').strip() or f"noName{str(unnamedCount).zfill(5)}"
         if not properties.get('name', '').strip():
             unnamedCount += 1
 
@@ -271,118 +280,173 @@ def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
         writeShapefile(shpOutPath, fields, fieldNames, features, srs)
         log.debug(f"Saved release area to '{shpOutPath}'.")
 
-def clipDEMByCentroidAndMove(folderList, inputDEM, outputDir, cfg):
-    """Clip the DEM around each release scenario's centerpoint and move to respective folders.
+def checkFeatureIsolation(geometries, properties, bufferSize, groupName):
+    """Check if any feature in the group is isolated from all others.
     
-    Currently splits around centerpoint of the first feature in a group. ToDo: improve splitting logic
+    A feature is considered isolated if its buffered bounding box does not overlap
+    with any other feature's buffered bounding box in the group.
+    
+    Parameters
+    ----------
+    geometries: list
+        List of geometry objects to check
+    properties: list
+        List of dictionaries containing properties for each geometry
+    bufferSize: float
+        Buffer size to use when creating bounding boxes
+    groupName: str
+        Name of the group, used for error messages
+        
+    Raises
+    ------
+    ValueError
+        If any feature is isolated from all others in the group
+    """
+    # Skip check if only one feature
+    if len(geometries) <= 1:
+        log.debug(f"Group '{groupName}' has only one feature, proceeding without isolation check.")
+        return
+
+    # Create buffered bounding boxes for each feature
+    boundingBoxes = []
+    for geom in geometries:
+        center = geom.centroid
+        
+        # Calculate bounding box for this feature
+        currXMin = center.x - bufferSize
+        currYMin = center.y - bufferSize
+        currXMax = center.x + bufferSize
+        currYMax = center.y + bufferSize
+        
+        # Update group extent
+        boundingBoxes.append(box(currXMin, currYMin, currXMax, currYMax))
+
+    # Check each feature's bounding box against all others
+    for i, bbox in enumerate(boundingBoxes):
+        hasOverlap = False
+        for j, otherBbox in enumerate(boundingBoxes):
+            if i != j and bbox.intersects(otherBbox):
+                hasOverlap = True
+                break
+        
+        if not hasOverlap:
+            # Find feature name regardless of case (NAME, name, Name etc.)
+            featureProps = {key.lower(): value for key, value in properties[i].items()}
+            featureName = featureProps.get('name', f'unnamed feature {i+1}').strip()
+            
+            message = f"Feature '{featureName}' in group '{groupName}' is isolated from all other features - consider splitting into a separate group"
+            log.error(message)
+            raise ValueError(message)
+
+def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
+    """Clip the DEM to include all features in each release group.
 
     Parameters
     ----------
-    folderList: list
-        list of dictionaries containing folderName, properties list, and geometries list
-    inputDEM: pathlib.Path object
-        path to input DEM file (.asc format)
-    outputDir: pathlib.Path object
-        path to output directory where clipped DEMs will be saved
-    cfg: dict
-        configuration settings containing GENERAL.bufferSize for clipping extent
+    folderList : list
+        List of dictionaries containing folderName, and geometries list
+    inputDEM : pathlib.Path
+        Path to input DEM file
+    outputDir : pathlib.Path
+        Path to output directory where DEM will be saved
+    cfg : configparser object
+        Configuration settings
 
     Returns
     -------
-    tuple
-        (xmin, ymin, xmax, ymax) representing the DEM extent after clipping
+    dict
+        Dictionary with folderName as key and (xMin, xMax, yMin, yMax) as value,
+        containing the DEM clipping extents for each group
     """
+    # Get buffer size from config
+    bufferSize = cfg['GENERAL'].getfloat('bufferSize')
+    log.info(f"Using buffer size of '{bufferSize}' m")
+    
+    groupExtents = {}
+
     # Read input DEM
     demData = ascUtils.readRaster(inputDEM)
     header = demData['header']
     raster = demData['rasterData']
+    cellSize = header['cellsize']
+    xOrigin = header['xllcenter']
+    yOrigin = header['yllcenter']
+    nRows = header['nrows']
+    nCols = header['ncols']
 
-    cellsize = header["cellsize"]
-    xOrigin = header["xllcenter"]
-    yOrigin = header["yllcenter"]
-
-    # Initialize extent variables
-    xMin, yMin = float('inf'), float('inf')
-    xMax, yMax = float('-inf'), float('-inf')
-
-    # Find centerpoint
+    # Process each group
     for entry in folderList:
         folderName = entry['folderName']
-        for properties in entry['properties']:
-            geometry = entry['geometries'][0] #first geometry in list
-            center = geometry.centroid
+        geometries = entry['geometries']
 
-            # Calculate bounding box indices for clipping
-            bufferSize = float(cfg['GENERAL']['bufferSize'])
-            currXMin = center.x - bufferSize
-            currYMin = center.y - bufferSize
-            currXMax = center.x + bufferSize
-            currYMax = center.y + bufferSize
+        if not geometries:
+            message = f"No geometries found for {folderName}"
+            log.error(message)
+            raise ValueError(message)
 
-            # Update overall extent
-            xMin = min(xMin, currXMin)
-            yMin = min(yMin, currYMin)
-            xMax = max(xMax, currXMax)
-            yMax = max(yMax, currYMax)
+        # Get extent of all geometries in group
+        bounds = [geom.bounds for geom in geometries]
+        xMins, yMins, xMaxs, yMaxs = zip(*bounds)
+        
+        # Calculate extent with buffer
+        xMin = min(xMins) - bufferSize
+        xMax = max(xMaxs) + bufferSize
+        yMin = min(yMins) - bufferSize
+        yMax = max(yMaxs) + bufferSize
 
-        # Convert bounding box to grid indices
-        colStart = max(0, int((currXMin - xOrigin) / cellsize))
-        colEnd = min(header["ncols"], int((currXMax - xOrigin) / cellsize))
-        # Calculate row indices
-        rowStart = max(0, int((yOrigin + header["nrows"] * cellsize - currYMax) / cellsize))
-        rowEnd = min(header["nrows"], int((yOrigin + header["nrows"] * cellsize - currYMin) / cellsize))
+        # Store extent for this group
+        groupExtents[folderName] = (xMin, xMax, yMin, yMax)
+        
+        # Convert extent to grid indices
+        colStart = max(0, int((xMin - xOrigin) / cellSize))
+        colEnd = min(nCols, int((xMax - xOrigin) / cellSize) + 1)
+        
+        # Convert y-coordinates to row indices (flipped for bottom-left origin)
+        rowStart = max(0, int((yOrigin + nRows * cellSize - yMax) / cellSize))
+        rowEnd = min(nRows, int((yOrigin + nRows * cellSize - yMin) / cellSize) + 1)
+        
+        # Flip row indices for bottom-left origin
+        rowStart, rowEnd = nRows - rowEnd, nRows - rowStart
 
-        # Flip rows for bottom-left origin
-        rowStart, rowEnd = header["nrows"] - rowEnd, header["nrows"] - rowStart
+        # Clip the DEM data
+        clippedData = raster[rowStart:rowEnd, colStart:colEnd]
+        
+        # Create header for clipped DEM
+        clippedHeader = header.copy()
+        clippedHeader['ncols'] = colEnd - colStart
+        clippedHeader['nrows'] = rowEnd - rowStart
+        clippedHeader['xllcenter'] = xOrigin + colStart * cellSize
+        clippedHeader['yllcenter'] = yOrigin + rowStart * cellSize
+        
+        # Write clipped DEM
+        outputDEM = outputDir / folderName / 'Inputs' / f"{folderName}_DEM.asc"
+        ascUtils.writeResultToAsc(clippedHeader, clippedData, outputDEM, flip=True)
+        log.debug(f"Clipped DEM saved to: {outputDEM}")
 
-        # Validate grid indices
-        if colStart >= colEnd or rowStart >= rowEnd: # e.g. if the bounding box falls completely outside the DEM
-            log.warning(f"Invalid clipping bounds for '{folderName}'. Skipping.")
-            continue
+    return groupExtents
 
-        # Clip DEM section
-        clippedDEM = raster[rowStart:rowEnd, colStart:colEnd]
-        log.debug(f"Clipped DEM for '{folderName}' with '{len(clippedDEM)}' rows and '{len(clippedDEM[0])}' columns")
-
-        # Prepare header for clipped DEM #ToDo: needs adjustment once we include tif files
-        clippedDEMHeader = {
-            "ncols": colEnd - colStart,
-            "nrows": rowEnd - rowStart,
-            "xllcenter": xOrigin + colStart * cellsize,
-            "yllcenter": yOrigin + rowStart * cellsize,
-            "cellsize": cellsize,
-            "nodata_value": header["nodata_value"],
-        }
-
-        # Define output path
-        demOutPath = outputDir / folderName / "Inputs" / f"{folderName}_DEM.asc"
-
-        # Save clipped DEM
-        try:
-            ascUtils.writeResultToAsc(clippedDEMHeader, clippedDEM, demOutPath, flip=True)
-            log.debug(f"Clipped DEM saved to: {demOutPath}.")
-        except Exception as e:
-            log.error(f"Failed to save clipped DEM for: {folderName}: {e}")
-
-    # Return the overall extent
-    return (xMin, yMin, xMax, yMax)
-
-def clipAndMoveEntRes(inputDir, outputDir, demExtent):
-    """Clip and move ENT and RES files based on DEM extent.
+def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
+    """Clip and move ENT and RES files based on group DEM extent.
     
     Parameters
     ----------
-    inputDir : pathlib.Path object
+    inputDir : pathlib.Path
         Path to input directory containing ENT and RES folders
-    outputDir : pathlib.Path object
+    outputDir : pathlib.Path
         Path to output directory where clipped files will be saved
-    demExtent : tuple
-        Overall DEM extent as (xmin, ymin, xmax, ymax), used only for logging
+    groupExtents : dict
+        Dictionary with folderName as key and (xMin, xMax, yMin, yMax) as value,
+        containing the DEM clipping extents for each group
 
     Returns
     -------
-    none
+    dict
+        Dictionary containing clipped features for each group and type
+        {groupName: {'ENT': [...], 'RES': [...]}}
     """
+    # Initialize dictionary to store clipped features by group
+    groupFeatures = {}
+
     # Process both ENT and RES directories
     for dirType in ['ENT', 'RES']:
         typeDir = inputDir / dirType
@@ -399,33 +463,27 @@ def clipAndMoveEntRes(inputDir, outputDir, demExtent):
         # Read shapefile
         fields, fieldNames, properties, geometries, srs = readShapefile(shpFile)
 
-        # Process each output directory (avalanche scenario)
+        # Process each output directory
         for entry in outputDir.iterdir():
             if not entry.is_dir():
                 continue
 
-            # Read the clipped DEM for this scenario to get its extent
-            demFile = entry / 'Inputs' / f"{entry.name}_DEM.asc"
-            if not demFile.exists():
-                log.warning(f"No DEM file found for {entry.name}, skipping {dirType} processing")
-                continue
-
-            # Get DEM extent for this scenario
-            demData = ascUtils.readRaster(demFile)
-            header = demData['header']
-            xMin = header['xllcenter']
-            yMin = header['yllcenter']
-            xMax = xMin + header['cellsize'] * header['ncols']
-            yMax = yMin + header['cellsize'] * header['nrows']
+            # Get extent for this group
+            xMin, xMax, yMin, yMax = groupExtents[entry.name]
             scenarioBbox = box(xMin, yMin, xMax, yMax)
 
-            # Clip geometries with scenario's DEM extent
+            # Initialize group in dictionary if not exists
+            if entry.name not in groupFeatures:
+                groupFeatures[entry.name] = {'ENT': [], 'RES': []}
+
+            # Clip geometries with groups DEM extent
             clippedFeatures = []
             for prop, geom in zip(properties, geometries):
                 if geom.intersects(scenarioBbox):
                     clippedGeom = geom.intersection(scenarioBbox)
                     if not clippedGeom.is_empty:
                         clippedFeatures.append((prop, clippedGeom))
+                        groupFeatures[entry.name][dirType].append(clippedGeom)
 
             if not clippedFeatures:
                 log.debug(f"No {dirType} features intersect with DEM extent for {entry.name}")
@@ -439,15 +497,17 @@ def clipAndMoveEntRes(inputDir, outputDir, demExtent):
             writeShapefile(outputPath, fields, fieldNames, clippedFeatures, srs)
             log.debug(f"Clipped {dirType} shapefile saved to: {outputPath}")
 
+    return groupFeatures
+
 def splitByScenarios(folderList, outputDir):
     """Split release areas into separate shapefiles based on their scenario attribute.
 
     Parameters
     ----------
     folderList: list
-        list of dictionaries containing folderName, properties list, and geometries list
+        list of dictionaries containing folderName and list of geometries
     outputDir: pathlib.Path object
-        path to output directory where scenario shapefiles will be created
+        path to output directory
 
     Returns
     -------
@@ -519,3 +579,137 @@ def splitByScenarios(folderList, outputDir):
                     (inputShp.with_suffix(ext)).unlink()
 
     log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
+
+def writeReport(folderListGrouped, inputDEM, outputDir, groupExtents, groupFeatures):
+    """Write a visual report summarizing the split inputs operation.
+
+    Parameters
+    ----------
+    folderListGrouped : list
+        list of dictionaries containing folderName and list of geometries
+    inputDEM : pathlib.Path
+        path to input DEM file
+    outputDir : pathlib.Path
+        Path to output directory
+    groupExtents : dict
+        Dictionary containing the clipping extents for each group as (xMin, xMax, yMin, yMax)
+    groupFeatures : dict
+        Dictionary containing clipped features for each group and type
+
+    Returns
+    -------
+    none
+    """
+    # Set up the figure
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Read and plot DEM
+    demData = ascUtils.readRaster(inputDEM)
+    header = demData['header']
+    cellSize = header['cellsize']
+    xMin = header['xllcenter']
+    yMin = header['yllcenter']
+    xMax = xMin + cellSize * header['ncols']
+    yMax = yMin + cellSize * header['nrows']
+
+    log.debug(f"DEM header info: xMin={xMin}, xMax={xMax}, yMin={yMin}, yMax={yMax}")
+    log.debug(f"DEM shape: {demData['rasterData'].shape}")
+    log.debug(f"DEM min/max values: {np.nanmin(demData['rasterData']):.2f}, {np.nanmax(demData['rasterData']):.2f}")
+
+    # Plot DEM with correct extent
+    im = ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
+                  cmap='gray', alpha=0.5, origin='lower')
+    
+    # Create legend elements for map features
+    mapElements = [
+        Rectangle((0, 0), 1, 1, fill=False, linestyle='--', color='black',
+                 label='Clipping Extent'),
+        Patch(facecolor='black', alpha=1.0, label='Release Areas'),
+        Patch(facecolor='gray', alpha=0.3, hatch='///', label='Entrainment Areas'),
+        Patch(facecolor='gray', alpha=0.3, label='Resistance Areas')
+    ]
+
+    # Create legend elements for groups
+    groupElements = []
+
+    # Create colormap of distinctive colors
+    colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
+             '#a65628', '#f781bf', '#66c2a5', '#fc8d62', '#8da0cb',
+             '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3',
+             '#fb9a99', '#fdbf6f', '#cab2d6', '#ffff99', '#b15928',
+             '#67001f', '#d6604d', '#4393c3', '#053061', '#66c2a4',
+             '#5aae61', '#9970ab', '#762a83', '#fee090', '#bf812d']
+
+    # Process groups and plot them
+    for idx, group in enumerate(folderListGrouped):
+        folderName = group['folderName']
+        geometries = group['geometries']
+        color = colors[idx % len(colors)]  # Cycle through colors if more groups than colors
+        
+        # Get group extent
+        xMin, xMax, yMin, yMax = groupExtents[folderName]
+        log.debug(f"Group {folderName} extent: x[{xMin:.2f}, {xMax:.2f}], y[{yMin:.2f}, {yMax:.2f}]")
+        
+        # Plot release areas
+        for geom in geometries:
+            x, y = geom.exterior.xy
+            poly = plt.fill(x, y, alpha=1.0, color=color)
+
+        # Plot ENT areas if they exist
+        if folderName in groupFeatures and groupFeatures[folderName]['ENT']:
+            for geom in groupFeatures[folderName]['ENT']:
+                x, y = geom.exterior.xy
+                plt.fill(x, y, alpha=0.3, color=color, hatch='///')
+
+        # Plot RES areas if they exist
+        if folderName in groupFeatures and groupFeatures[folderName]['RES']:
+            for geom in groupFeatures[folderName]['RES']:
+                x, y = geom.exterior.xy
+                plt.fill(x, y, alpha=0.3, color=color)
+
+        # Plot clipping extent box
+        rect = Rectangle((xMin, yMin), xMax - xMin, yMax - yMin,
+                        fill=False, linestyle='--', color=color)
+        ax.add_patch(rect)
+
+        # Add group to legend
+        groupElements.append(Patch(facecolor=color, alpha=1.0,
+                                 label=folderName))
+
+    # Set equal aspect ratio
+    ax.set_aspect('equal')
+
+    # Format axis
+    ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(5))
+    ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(5))
+    ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
+
+    # Add title and labels
+    regionalDir = inputDEM.parent.parent.name
+    plt.title(f'Split Inputs Report - {regionalDir}')
+    plt.xlabel('X Coordinate')
+    plt.ylabel('Y Coordinate')
+    
+    # Create two-part legend
+    firstLegend = ax.legend(handles=mapElements, title='Map Features',
+                          bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.add_artist(firstLegend)
+    ax.legend(handles=groupElements, title='Groups',
+             bbox_to_anchor=(1.05, 0.6), loc='upper left')
+
+    plt.grid(True, linestyle='--', alpha=0.3)
+
+    # Set axis limits using global extent from groupExtents
+    globalExtent = (
+        min(e[0] for e in groupExtents.values()),
+        max(e[1] for e in groupExtents.values()),
+        min(e[2] for e in groupExtents.values()),
+        max(e[3] for e in groupExtents.values())
+    )
+    ax.set_xlim(globalExtent[0], globalExtent[1])
+    ax.set_ylim(globalExtent[2], globalExtent[3])
+    
+    # Adjust layout and save
+    plt.tight_layout()
+    plt.savefig(outputDir / f'splitInputsReport_{regionalDir}.png', dpi=300, bbox_inches='tight')
+    plt.close()
