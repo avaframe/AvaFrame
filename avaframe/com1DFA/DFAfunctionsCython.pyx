@@ -140,9 +140,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
-  cdef double[:, :] hDep = np.zeros_like(dem['rasterData'])
   cdef double[:, :] hEro = np.zeros_like(dem['rasterData'])
-  cdef double[:, :] hDeposited = fields['hDeposited']
   cdef double[:, :] hEroded = fields['hEroded']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
@@ -158,7 +156,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
-  cdef double dmDet, detCell, areaDetPart, hDepCell, hEroCell
+  cdef double dmDet, detCell, areaDetPart, hEroCell
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -390,10 +388,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         mDepositedArray = np.append(mDepositedArray, mass[k])
         idDepositedArray = np.append(idDepositedArray, ID[k])
         '''
-        # compute deposited thickness (dmDet < 0; hDep > 0)
-        hDepCell = - dmDet / areaPart / rho
-        hDep[indCellY, indCellX] = hDep[indCellY, indCellX] + hDepCell
-        hDeposited[indCellY, indCellX] = hDeposited[indCellY, indCellX] + hDepCell
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -442,9 +436,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
   fields['entrMassRaster'] = np.asarray(entrMassRaster)
-  fields['hDep'] = np.asarray(hDep)
   fields['hEro'] = np.asarray(hEro)
-  fields['hDeposited'] = np.asarray(hDeposited)
   fields['hEroded'] = np.asarray(hEroded)
 
   return particles, force, fields
@@ -1084,6 +1076,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
   if stop:
     particles['iterate'] = False
+    particles['depositedParticles'] = particles
+
     if typeStop == 1:
       log.debug('stopping initial particle distribution')
     else:
@@ -1219,6 +1213,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
   cdef double[:] trajectoryAngleArray = particles['trajectoryAngle']
+  cdef double[:] mDepositedArray = particles['depositedParticles']['m']
+  cdef double[:] xDepositedArray = particles['depositedParticles']['x']
+  cdef double[:] yDepositedArray = particles['depositedParticles']['y']
+
   cdef bint computeTA = fields['computeTA']
   cdef bint computeKE = fields['computeKE']
   cdef bint computeP = fields['computeP']
@@ -1228,10 +1226,12 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
-  cdef double[:, :] hDep = fields['hdep']
+  cdef double[:, :] hDep = np.zeros((nrows, ncols))
+  cdef double[:, :] hDeposited = fields['hDeposited']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] MassDepBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTBilinear = np.zeros((nrows, ncols))
@@ -1247,7 +1247,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
   cdef double m, dm, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
-  cdef int k, i
+  cdef double mDep, xDep, yDep
+  cdef int k, i, l
   cdef int indx, indy
   cdef int ind1[4]
   cdef int ind2[4]
@@ -1289,6 +1290,22 @@ def updateFieldsC(cfg, particles, dem, fields):
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + mwi * uy
       MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + mwi * uz
 
+  for l in range(len(mDepositedArray)):
+    xDep = xDepositedArray[l]
+    yDep = yDepositedArray[l]
+    mDep = - mDepositedArray[l]  # deposited mass is negativ for the flow
+
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = DFAtlsC.getCellAndWeights(xDep, yDep, ncols, nrows, csz, interpOption)
+    # for the travel angle we simply do a nearest interpolation
+    indx = <int>math.round(xDep / csz)
+    indy = <int>math.round(yDep / csz)
+  
+    for i in range(4):
+      indx = Lx0 + ind1[i]
+      indy = Ly0 + ind2[i]
+      mwi = mDep * w[i]
+      MassDepBilinear[indy, indx] = MassDepBilinear[indy, indx] + mwi
+
   for i in range(ncols):
     for j in range(nrows):
       m = MassBilinear[j, i]
@@ -1321,7 +1338,8 @@ def updateFieldsC(cfg, particles, dem, fields):
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
 
-        hDepBilinear[j, i] = - MassDetBilinear[j, i] / m * FTBilinear[j, i]
+        # height change due to detrainment and deposition
+        hDepBilinear[j, i] = - (MassDetBilinear[j, i] + MassDepBilinear[j, i]) / m * FTBilinear[j, i]
         hDep[j, i] = hDep[j, i] + hDepBilinear[j, i]
 
   fields['FM'] = np.asarray(MassBilinear)
