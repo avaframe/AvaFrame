@@ -733,14 +733,14 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double peakForceSPH = particles['peakForceSPH']
   cdef double totKForceSPH = particles['forceSPHIni']
   cdef long long[:] ID = particles['ID']
-  #read deposited particles
-  cdef double[:] xDepositedArray = particles['depositedParticles']['x']
-  cdef double[:] yDepositedArray = particles['depositedParticles']['y']
-  cdef double[:] hDepositedArray = particles['depositedParticles']['h']
-  cdef double[:] mDepositedArray = particles['depositedParticles']['m']
-  cdef double[:] dmDepositedArray = particles['depositedParticles']['dm']
-  cdef double[:] idDepositedArray = particles['depositedParticles']['ID']
-  cdef double[:] uMagDepositedArray = particles['depositedParticles']['velocityMag']
+  # deposited particles
+  cdef double[:] xDepositedArray = np.empty(0)
+  cdef double[:] yDepositedArray = np.empty(0)
+  cdef double[:] hDepositedArray = np.empty(0)
+  cdef double[:] mDepositedArray = np.empty(0)
+  cdef double[:] dmDepositedArray = np.empty(0)
+  cdef double[:] idDepositedArray = np.empty(0)
+  cdef double[:] uMagDepositedArray = np.empty(0)
   # read fields
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
@@ -1226,7 +1226,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
-  cdef double[:, :] hDep = np.zeros((nrows, ncols))
   cdef double[:, :] hDeposited = fields['hDeposited']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
@@ -1338,9 +1337,9 @@ def updateFieldsC(cfg, particles, dem, fields):
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
 
-        # height change due to detrainment and deposition
-        hDepBilinear[j, i] = - (MassDetBilinear[j, i] + MassDepBilinear[j, i]) / m * FTBilinear[j, i]
-        hDep[j, i] = hDep[j, i] + hDepBilinear[j, i]
+      # topography height change due to detrainment and deposition
+      hDepBilinear[j, i] = - (MassDetBilinear[j, i] + MassDepBilinear[j, i]) / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
+      hDeposited[j, i] = hDeposited[j, i] + hDepBilinear[j, i]
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
@@ -1351,7 +1350,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfv'] = np.asarray(PFV)
   fields['pft'] = np.asarray(PFT)
   fields['dmDet'] = np.asarray(DMDet)
-  fields['hDep'] = np.asarray(hDep)  # TODO: now is detrainment not considered
+  fields['hDep'] = np.asarray(hDepBilinear)
+  fields['hDeposited'] = np.asarray(hDeposited)
   if computeP:
     fields['ppr'] = np.asarray(PP)
     fields['P'] = np.asarray(PBilinear)
