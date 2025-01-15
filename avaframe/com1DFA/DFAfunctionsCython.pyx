@@ -791,7 +791,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv, uMagt0, uMagt1
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
-  cdef double massEntrained = 0, massDetrained = 0, massFlowing = 0, dissEm = 0
+  cdef double massEntrained = 0, massDetrained = 0, massStopped = 0, massFlowing = 0, dissEm = 0
   cdef int k, inter
   cdef int nRemove = 0
   cdef int nDeposit = 0
@@ -850,7 +850,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       mDepositedArray = np.append(mDepositedArray, mass[k])
       idDepositedArray = np.append(idDepositedArray, ID[k])
       uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
-
+      massStopped = massStopped + m
       notDepositParticle[k] = 0  # particle is deleted
       nDeposit = nDeposit + 1
       continue
@@ -1077,11 +1077,14 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   if stop:
     particles['iterate'] = False
     particles['depositedParticles'] = particles
+    massStopped = massStopped + massFlowing
 
     if typeStop == 1:
       log.debug('stopping initial particle distribution')
     else:
       log.debug('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
+
+  particles['massStopped'] = - massStopped
 
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
@@ -1090,6 +1093,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
   # remove particles that have mass = 0 or velocity = 0
   if nDeposit > 0:
+    k = 0
     while k < len(notDepositParticle):
       if keepParticle[k] == 0:
         notDepositParticle = np.delete(notDepositParticle, k)

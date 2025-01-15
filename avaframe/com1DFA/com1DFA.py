@@ -1797,6 +1797,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     timeM = []
     massEntrained = []
     massDetrained = []
+    massStopped = []
     massTotal = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
@@ -1861,6 +1862,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         # write mass balance info
         massEntrained.append(particles["massEntrained"])
         massDetrained.append(particles["massDetrained"])
+        massStopped.append(particles["massStopped"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
         # print progress to terminal
@@ -1960,6 +1962,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     infoDict = {
         "massEntrained": massEntrained,
         "massDetrained": massDetrained,
+        "massStopped": massStopped,
         "timeStep": timeM,
         "massTotal": massTotal,
         "tCPU": tCPU,
@@ -2149,17 +2152,18 @@ def writeMBFile(infoDict, avaDir, logName):
     t = infoDict["timeStep"]
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
+    massStopped = infoDict["massStopped"]
     massTotal = infoDict["massTotal"]
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained, detrained\n")
+        mFile.write("time, current, entrained, detrained, stopped\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,    %.06f\n"
-                % (t[m], massTotal[m], massEntrained[m], massDetrained[m])
+                "%.02f,    %.06f,    %.06f,    %.06f,    %.06f\n"
+                % (t[m], massTotal[m], massEntrained[m], massDetrained[m], massStopped[m])
             )
 
 
