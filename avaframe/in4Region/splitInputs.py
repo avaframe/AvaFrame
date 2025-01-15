@@ -2,21 +2,22 @@
 
 import logging
 import shapefile  # pyshp
-from shapely.geometry import shape, box, Polygon
-from avaframe.in2Trans import ascUtils
+from shapely.geometry import shape, box
 import pathlib
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.patches import Rectangle, Patch
 import matplotlib as mpl
+import time
 
+from avaframe.in2Trans import ascUtils
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 
 # create local logger
 log = logging.getLogger(__name__)
 
 def splitInputsMain(inputDir, outputDir, cfg):
-    """Process and organize avalanche input data into individual folders.
+    """Process and organize avalanche input data into individual avalanche directories based 
+    on release area's "name" and "scenario" attributes.
 
     Parameters
     ----------
@@ -26,7 +27,6 @@ def splitInputsMain(inputDir, outputDir, cfg):
         Path to output directory where organized folders will be created
     cfg : dict
         Configuration settings containing:
-        - GENERAL.splitDEM : bool, whether to split DEM
         - GENERAL.bufferSize : float, buffer size for DEM clipping
 
     Returns
@@ -61,27 +61,27 @@ def splitInputsMain(inputDir, outputDir, cfg):
 
     # Step 1: Create the central list
     log.info("Creating folder list...")
-    folderList = createFolderList(inputShp)
+    dirList = createDirList(inputShp)
     # Group folders based on "name" attribute - with identical "name" attributes before the first underscore and update the list
-    folderListGrouped = groupFoldersByName(folderList)
+    dirListGrouped = groupDirsByName(dirList)
     log.info("Finished creating folder list")
 
     # Step 2: Set up avalanche directories
     log.info("Running folder initialization for each entry...")
-    for entry in folderListGrouped:
-        folderName = entry['folderName']
-        initializeFolderStruct(str(outputDir / folderName), removeExisting=True)
-        log.debug(f"Created folder structure for '{folderName}'.")
+    for entry in dirListGrouped:
+        dirName = entry['dirName']
+        initializeFolderStruct(str(outputDir / dirName), removeExisting=True)
+        log.debug(f"Created folder structure for '{dirName}'.")
     log.info("Finished folder initialization")
 
     # Step 3: Split and move release areas to each directory
     log.info("Splitting and moving release areas...")
-    splitAndMoveReleaseAreas(folderListGrouped, inputShp, outputDir)
+    splitAndMoveReleaseAreas(dirListGrouped, inputShp, outputDir)
     log.info("Finished splitting and moving release areas")
 
     # Step 4: Clip and move DEM
     log.info("Clipping and moving DEM...")
-    groupExtents = clipDEMByReleaseGroup(folderListGrouped, inputDEM, outputDir, cfg)
+    groupExtents = clipDEMByReleaseGroup(dirListGrouped, inputDEM, outputDir, cfg)
     log.info("Finished clipping and moving of DEM")
 
     # Step 5: Clip and move optional input (currently only ENT and RES)
@@ -91,13 +91,14 @@ def splitInputsMain(inputDir, outputDir, cfg):
 
     # Step 6: Divide release areas into scenarios based on "scenario" attribute
     log.info("Separating release area by scenario attribute...")
-    splitByScenarios(folderListGrouped, outputDir)
+    splitByScenarios(dirListGrouped, outputDir)
     log.info("Finished separating by scenarios")
 
     # Step 7: Write report
-    log.info("Writing report...")
-    writeReport(folderListGrouped, inputDEM, outputDir, groupExtents, groupFeatures)
-    log.info("Finished writing report")
+    log.info("Writing reports...")
+    writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures)
+    writeScenarioReport(dirListGrouped, outputDir)
+    log.info("Finished writing reports")
 
 def readShapefile(inputShp):
     """Read the fields, properties, geometries, and spatial reference of an input shapefile.
@@ -139,9 +140,6 @@ def readShapefile(inputShp):
         if srsfile.is_file():
             with open(srsfile, 'r') as f:
                 srs = f.read().strip()
-            log.debug(f"Found and read .prj file: {srsfile}")
-        else:
-            log.debug(f"No .prj file found at: {srsfile}")
             
     return fields, fieldNames, properties, geometries, srs
 
@@ -177,11 +175,8 @@ def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
         prjOutPath = outputPath.with_suffix('.prj')
         with open(prjOutPath, 'w') as prjFile:
             prjFile.write(srs)
-        log.debug(f"Wrote projection file to '{prjOutPath}'")
-    
-    log.debug(f"Saved shapefile to '{outputPath}'.")
 
-def createFolderList(inputShp):
+def createDirList(inputShp):
     """Create a list of entries from each feature in the input shapefile.
 
     Parameters
@@ -191,67 +186,73 @@ def createFolderList(inputShp):
 
     Returns
     -------
-    folderList: list
-        list of dictionaries containing folderName, properties, and geometry for each feature
+    dirList: list
+        list of dictionaries containing dirName, properties, and geometry for each feature
     """
-    folderList = []
-    unnamedCount = 1
     fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
-
-    for i, (properties, geometry) in enumerate(zip(properties, geometries)):
-        folderName = properties.get('name', '').strip() or f"noName{str(unnamedCount).zfill(5)}"
-        if not properties.get('name', '').strip():
+    
+    # Create list of dictionaries for each feature
+    dirList = []
+    unnamedCount = 1
+    
+    # Debug: print available fields
+    if properties:
+        log.info(f"Available fields in shapefile: {list(properties[0].keys())}")
+    
+    for props, geom in zip(properties, geometries):
+        dirName = props.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
+        if not props.get('name', '').strip():
             unnamedCount += 1
-
-        folderList.append({
-            'folderName': folderName,
-            'properties': properties,
-            'geometry': geometry,
+            log.warning(f"No 'name' field or empty name found in {inputShp}, using '{dirName}'")
+        
+        dirList.append({
+            'dirName': dirName,
+            'properties': props,
+            'geometry': geom
         })
+    
+    return dirList
 
-    log.info(f"Created initial folder list with '{len(folderList)}' entries.")
-    return folderList
-
-def groupFoldersByName(folderList):
-    """Group entries in the folderList by name before the first underscore.
+def groupDirsByName(dirList):
+    """Group entries in the dirList by name before the first underscore.
 
     Parameters
     ----------
-    folderList: list
-        list of dictionaries containing folderName, properties, and geometry for each feature
+    dirList: list
+        list of dictionaries containing dirName, properties, and geometry for each feature
 
     Returns
     -------
-    folderListByName: list
-        list of dictionaries with entries grouped by name, containing folderName, properties list, and geometries list
+    dirListByName: list
+        list of dictionaries with entries grouped by name, containing dirName, properties list, and geometries list
     """
-    folderListByName = []
+    dirListByName = []
 
-    for entry in folderList:
-        name = entry['folderName'].split('_')[0] # Get release area name before first underscore
-        if not any(e['folderName'] == name for e in folderListByName):
-            folderListByName.append({
-                'folderName': name,
+    for entry in dirList:
+        name = entry['dirName'].split('_')[0] # Get release area name before first underscore
+        if not any(e['dirName'] == name for e in dirListByName):
+            dirListByName.append({
+                'dirName': name,
                 'properties': [entry['properties']],
                 'geometries': [entry['geometry']]
             })
         else:
-            for e in folderListByName:
-                if e['folderName'] == name:
+            for e in dirListByName:
+                if e['dirName'] == name:
                     e['properties'].append(entry['properties'])
                     e['geometries'].append(entry['geometry'])
 
-    log.info(f"Grouped '{len(folderList)}' avalanche directories with identical names before first underscore. "
-             f"Updated folder list contains '{len(folderListByName)}' entries")
-    return folderListByName
+    log.info(f"Grouped '{len(dirList)}' avalanche directories with identical names before first underscore. "
+             f"Updated folder list contains '{len(dirListByName)}' entries")
+    return dirListByName
 
-def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
+def splitAndMoveReleaseAreas(dirList, inputShp, outputDir):
     """Split release areas into individual shapefiles and write them to their respective folders.
 
     Parameters
     ----------
-    folderList: list
-        list of dictionaries containing folderName, properties list, and geometries list
+    dirList: list
+        list of dictionaries containing dirName, properties list, and geometries list
     inputShp: pathlib.Path object
         path to input shapefile
     outputDir: pathlib.Path object
@@ -265,8 +266,8 @@ def splitAndMoveReleaseAreas(folderList, inputShp, outputDir):
     fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
 
     featuresByName = {}
-    for entry in folderList:
-        name = entry['folderName'].split('_')[0] # Get release area name before first underscore
+    for entry in dirList:
+        name = entry['dirName'].split('_')[0] # Get release area name before first underscore
         # Group entries with the same name
         if name not in featuresByName:
             featuresByName[name] = []
@@ -338,13 +339,13 @@ def checkFeatureIsolation(geometries, properties, bufferSize, groupName):
             log.error(message)
             raise ValueError(message)
 
-def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
+def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     """Clip the DEM to include all features in each release group.
 
     Parameters
     ----------
-    folderList : list
-        List of dictionaries containing folderName, and geometries list
+    dirList : list
+        List of dictionaries containing dirName, and geometries list
     inputDEM : pathlib.Path
         Path to input DEM file
     outputDir : pathlib.Path
@@ -355,15 +356,9 @@ def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
     Returns
     -------
     dict
-        Dictionary with folderName as key and (xMin, xMax, yMin, yMax) as value,
-        containing the DEM clipping extents for each group
-    """
-    # Get buffer size from config
-    bufferSize = cfg['GENERAL'].getfloat('bufferSize')
-    log.info(f"Using buffer size of '{bufferSize}' m")
-    
-    groupExtents = {}
-
+        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value,
+        containing the DEM extents for each group
+    """    
     # Read input DEM
     demData = ascUtils.readRaster(inputDEM)
     header = demData['header']
@@ -375,27 +370,27 @@ def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
     nCols = header['ncols']
 
     # Process each group
-    for entry in folderList:
-        folderName = entry['folderName']
+    groupExtents = {}
+    for entry in dirList:
+        dirName = entry['dirName']
         geometries = entry['geometries']
-
+        
         if not geometries:
-            message = f"No geometries found for {folderName}"
+            message = f"No geometries found for {dirName}"
             log.error(message)
             raise ValueError(message)
-
+            
         # Get extent of all geometries in group
         bounds = [geom.bounds for geom in geometries]
         xMins, yMins, xMaxs, yMaxs = zip(*bounds)
         
         # Calculate extent with buffer
+        bufferSize = cfg['GENERAL'].getfloat('bufferSize')
         xMin = min(xMins) - bufferSize
         xMax = max(xMaxs) + bufferSize
         yMin = min(yMins) - bufferSize
         yMax = max(yMaxs) + bufferSize
-
-        # Store extent for this group
-        groupExtents[folderName] = (xMin, xMax, yMin, yMax)
+        groupExtents[dirName] = (xMin, xMax, yMin, yMax) # Store extent for this group
         
         # Convert extent to grid indices
         colStart = max(0, int((xMin - xOrigin) / cellSize))
@@ -407,7 +402,7 @@ def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
         
         # Flip row indices for bottom-left origin
         rowStart, rowEnd = nRows - rowEnd, nRows - rowStart
-
+        
         # Clip the DEM data
         clippedData = raster[rowStart:rowEnd, colStart:colEnd]
         
@@ -418,15 +413,24 @@ def clipDEMByReleaseGroup(folderList, inputDEM, outputDir, cfg):
         clippedHeader['xllcenter'] = xOrigin + colStart * cellSize
         clippedHeader['yllcenter'] = yOrigin + rowStart * cellSize
         
+        # Store DEM extents
+        xMinDEM = clippedHeader['xllcenter']
+        yMinDEM = clippedHeader['yllcenter']
+        xMaxDEM = xMinDEM + clippedHeader['ncols'] * cellSize
+        yMaxDEM = yMinDEM + clippedHeader['nrows'] * cellSize
+        groupExtents[dirName] = (xMinDEM, xMaxDEM, yMinDEM, yMaxDEM)
+        
         # Write clipped DEM
-        outputDEM = outputDir / folderName / 'Inputs' / f"{folderName}_DEM.asc"
+        outputDEM = outputDir / dirName / 'Inputs' / f"{dirName}_DEM.asc"
         ascUtils.writeResultToAsc(clippedHeader, clippedData, outputDEM, flip=True)
         log.debug(f"Clipped DEM saved to: {outputDEM}")
-
+    
     return groupExtents
 
 def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
     """Clip and move ENT and RES files based on group DEM extent.
+
+    #ToDo: extend to include other input types
     
     Parameters
     ----------
@@ -435,19 +439,17 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
     outputDir : pathlib.Path
         Path to output directory where clipped files will be saved
     groupExtents : dict
-        Dictionary with folderName as key and (xMin, xMax, yMin, yMax) as value,
+        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value,
         containing the DEM clipping extents for each group
 
     Returns
     -------
     dict
         Dictionary containing clipped features for each group and type
-        {groupName: {'ENT': [...], 'RES': [...]}}
+        {dirName: {'ENT': [...], 'RES': [...]}}
     """
-    # Initialize dictionary to store clipped features by group
     groupFeatures = {}
-
-    # Process both ENT and RES directories
+    # Process ENT and RES directories
     for dirType in ['ENT', 'RES']:
         typeDir = inputDir / dirType
         if not typeDir.exists():
@@ -463,12 +465,12 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
         # Read shapefile
         fields, fieldNames, properties, geometries, srs = readShapefile(shpFile)
 
-        # Process each output directory
+        # Process each output directory that has extents
         for entry in outputDir.iterdir():
-            if not entry.is_dir():
+            if not entry.is_dir() or entry.name not in groupExtents:
                 continue
 
-            # Get extent for this group
+            # Get extent
             xMin, xMax, yMin, yMax = groupExtents[entry.name]
             scenarioBbox = box(xMin, yMin, xMax, yMax)
 
@@ -489,23 +491,22 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
                 log.debug(f"No {dirType} features intersect with DEM extent for {entry.name}")
                 continue
 
-            # Create output directory and save clipped shapefile
+            # Create output directory and save clipped shp
             targetDir = entry / 'Inputs' / dirType
             targetDir.mkdir(parents=True, exist_ok=True)
-            
             outputPath = targetDir / f"{entry.name}_{dirType}.shp"
             writeShapefile(outputPath, fields, fieldNames, clippedFeatures, srs)
             log.debug(f"Clipped {dirType} shapefile saved to: {outputPath}")
 
     return groupFeatures
 
-def splitByScenarios(folderList, outputDir):
+def splitByScenarios(dirList, outputDir):
     """Split release areas into separate shapefiles based on their scenario attribute.
 
     Parameters
     ----------
-    folderList: list
-        list of dictionaries containing folderName and list of geometries
+    dirList: list
+        list of dictionaries containing dirName and list of geometries
     outputDir: pathlib.Path object
         path to output directory
 
@@ -522,8 +523,8 @@ def splitByScenarios(folderList, outputDir):
     totalScenarioFiles = 0
 
     # Loop through each folder
-    for folder in folderList:
-        inputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / folder['folderName']
+    for folder in dirList:
+        inputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / folder['dirName']
         fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
         totalInputFiles += 1
         
@@ -546,11 +547,11 @@ def splitByScenarios(folderList, outputDir):
             # Write the scenario shapefiles
             for scenario, records in scenarios.items():
                 if all(scenario == 'NULL' for scenario in scenarios):
-                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
+                    outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_REL"
                 elif scenario == 'NULL':
-                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_NULL"
+                    outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_NULL"
                 else:
-                    outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_{scenario}"
+                    outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_{scenario}"
                 
                 # Filter out the scenario attribute and remove it
                 shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
@@ -567,7 +568,7 @@ def splitByScenarios(folderList, outputDir):
                     (inputShp.with_suffix(ext)).unlink()
         else:
             # If no scenario attribute exists, just rename the file
-            outputShp = pathlib.Path(outputDir) / folder['folderName'] / "Inputs" / "REL" / f"{folder['folderName']}_REL"
+            outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_REL"
             shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) 
                            for record in shapefile.Reader(str(inputShp)).iterShapeRecords()]
             writeShapefile(outputShp, fields, fieldNames, shapeFeatures, srs)
@@ -580,29 +581,35 @@ def splitByScenarios(folderList, outputDir):
 
     log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
 
-def writeReport(folderListGrouped, inputDEM, outputDir, groupExtents, groupFeatures):
-    """Write a visual report summarizing the split inputs operation.
-
+def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures, reportType):
+    """Create a visual report showing the DEM extent with either basic or optional inputs.
+    
     Parameters
     ----------
-    folderListGrouped : list
-        list of dictionaries containing folderName and list of geometries
+    dirListGrouped : list
+        List of dictionaries containing dirName and list of geometries
     inputDEM : pathlib.Path
-        path to input DEM file
+        Path to input DEM file
     outputDir : pathlib.Path
-        Path to output directory
+        Path to output directory where the report will be saved
     groupExtents : dict
-        Dictionary containing the clipping extents for each group as (xMin, xMax, yMin, yMax)
+        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value,
+        containing the DEM clipping extents for each group
     groupFeatures : dict
         Dictionary containing clipped features for each group and type
-
+    reportType : str
+        Type of report to create, either 'basic' or 'optional'
+        - 'basic': Shows DEM extent and release areas only
+        - 'optional': Shows DEM extent with entrainment and resistance areas
+    
     Returns
     -------
-    none
+    pathlib.Path
+        Path to the generated report image
     """
-    # Set up the figure
+    # Set up figure
     fig, ax = plt.subplots(figsize=(10, 8))
-
+    
     # Read and plot DEM
     demData = ascUtils.readRaster(inputDEM)
     header = demData['header']
@@ -611,105 +618,202 @@ def writeReport(folderListGrouped, inputDEM, outputDir, groupExtents, groupFeatu
     yMin = header['yllcenter']
     xMax = xMin + cellSize * header['ncols']
     yMax = yMin + cellSize * header['nrows']
-
-    log.debug(f"DEM header info: xMin={xMin}, xMax={xMax}, yMin={yMin}, yMax={yMax}")
-    log.debug(f"DEM shape: {demData['rasterData'].shape}")
-    log.debug(f"DEM min/max values: {np.nanmin(demData['rasterData']):.2f}, {np.nanmax(demData['rasterData']):.2f}")
-
-    # Plot DEM with correct extent
-    im = ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
-                  cmap='gray', alpha=0.5, origin='lower')
+    ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
+              cmap='gray', alpha=0.5, origin='lower', zorder=1)
     
     # Create legend elements for map features
-    mapElements = [
-        Rectangle((0, 0), 1, 1, fill=False, linestyle='--', color='black',
-                 label='Clipping Extent'),
-        Patch(facecolor='black', alpha=1.0, label='Release Areas'),
-        Patch(facecolor='gray', alpha=0.3, hatch='///', label='Entrainment Areas'),
-        Patch(facecolor='gray', alpha=0.3, label='Resistance Areas')
-    ]
-
-    # Create legend elements for groups
-    groupElements = []
-
-    # Create colormap of distinctive colors
-    colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
-             '#a65628', '#f781bf', '#66c2a5', '#fc8d62', '#8da0cb',
-             '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3',
-             '#fb9a99', '#fdbf6f', '#cab2d6', '#ffff99', '#b15928',
-             '#67001f', '#d6604d', '#4393c3', '#053061', '#66c2a4',
-             '#5aae61', '#9970ab', '#762a83', '#fee090', '#bf812d']
-
+    mapElements = [Rectangle((0, 0), 1, 1, fill=False, linestyle='--', color='black',
+                           label='Clipped DEM Extent')]
+    
+    if reportType == 'basic':
+        mapElements.append(Patch(facecolor='black', alpha=1.0, label='Release Areas'))
+    else:  # optional
+        mapElements.extend([
+            Patch(facecolor='black', alpha=0.3, label='Entrainment Areas'),
+            Patch(facecolor='none', alpha=0.5, hatch='xxxx', label='Resistance Areas', edgecolor='black', linewidth=0.5)
+        ])
+    
     # Process groups and plot them
-    for idx, group in enumerate(folderListGrouped):
-        folderName = group['folderName']
-        geometries = group['geometries']
-        color = colors[idx % len(colors)]  # Cycle through colors if more groups than colors
+    groupElements = []
+    colors = ['#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF',
+              '#FF8000', '#FF0080', '#80FF00', '#00FF80', '#0080FF',
+              '#8000FF', '#FF3333', '#33FF33', '#3333FF', '#FF33FF',
+              '#33FFFF', '#FFB433', '#FF33B4', '#B4FF33', '#33FFB4',
+              '#33B4FF', '#B433FF', '#FF6666', '#66FF66', '#6666FF',
+              '#FF66FF', '#66FFFF', '#FFE666', '#FF66E6', '#E6FF66']
+    for idx, group in enumerate(dirListGrouped):
+        dirName = group['dirName']
+        color = colors[idx % len(colors)]
         
-        # Get group extent
-        xMin, xMax, yMin, yMax = groupExtents[folderName]
-        log.debug(f"Group {folderName} extent: x[{xMin:.2f}, {xMax:.2f}], y[{yMin:.2f}, {yMax:.2f}]")
+        # Plot DEM extent using groupExtents
+        if dirName in groupExtents:
+            xMin, xMax, yMin, yMax = groupExtents[dirName]
+            rect = Rectangle((xMin, yMin), xMax - xMin, yMax - yMin,
+                           fill=False, linestyle='--', color=color)
+            ax.add_patch(rect)
+            
+            if reportType == 'basic':
+                # Plot release areas
+                for geom in group['geometries']:
+                    x, y = geom.exterior.xy
+                    plt.fill(x, y, alpha=1.0, color=color)
+            else:
+                # Plot optional features
+                if dirName in groupFeatures:
+                    for geom in groupFeatures[dirName].get('ENT', []):
+                        x, y = geom.exterior.xy
+                        plt.fill(x, y, alpha=0.3, color=color, edgecolor='none')
+                    for geom in groupFeatures[dirName].get('RES', []):
+                        x, y = geom.exterior.xy
+                        plt.fill(x, y, alpha=0.5, color=color, hatch='xxxx', fill=False, edgecolor=color, linewidth=0.5)
         
-        # Plot release areas
-        for geom in geometries:
-            x, y = geom.exterior.xy
-            poly = plt.fill(x, y, alpha=1.0, color=color)
-
-        # Plot ENT areas if they exist
-        if folderName in groupFeatures and groupFeatures[folderName]['ENT']:
-            for geom in groupFeatures[folderName]['ENT']:
-                x, y = geom.exterior.xy
-                plt.fill(x, y, alpha=0.3, color=color, hatch='///')
-
-        # Plot RES areas if they exist
-        if folderName in groupFeatures and groupFeatures[folderName]['RES']:
-            for geom in groupFeatures[folderName]['RES']:
-                x, y = geom.exterior.xy
-                plt.fill(x, y, alpha=0.3, color=color)
-
-        # Plot clipping extent box
-        rect = Rectangle((xMin, yMin), xMax - xMin, yMax - yMin,
-                        fill=False, linestyle='--', color=color)
-        ax.add_patch(rect)
-
-        # Add group to legend
-        groupElements.append(Patch(facecolor=color, alpha=1.0,
-                                 label=folderName))
-
-    # Set equal aspect ratio
+        groupElements.append(Patch(facecolor=color, alpha=1.0, label=dirName))
+    
+    # Create two-part legend
+    groupElements.sort(key=lambda x: x.get_label().lower())
+    elementsLegend = ax.legend(handles=mapElements, title='Map Features',
+                           bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.add_artist(elementsLegend)
+    ax.legend(handles=groupElements, title='Groups',
+             bbox_to_anchor=(1.05, 0.6), loc='upper left')
+    
+    # Format plot; add title and labels
     ax.set_aspect('equal')
-
-    # Format axis
     ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(5))
     ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(5))
     ax.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter(useOffset=False))
-
-    # Add title and labels
     regionalDir = inputDEM.parent.parent.name
-    plt.title(f'Split Inputs Report - {regionalDir}')
+    reportName = 'Basic' if reportType == 'basic' else 'Optional'
+    plt.title(f'Split Inputs Report - {reportName} - {regionalDir}')
     plt.xlabel('X Coordinate')
     plt.ylabel('Y Coordinate')
-    
-    # Create two-part legend
-    firstLegend = ax.legend(handles=mapElements, title='Map Features',
-                          bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.add_artist(firstLegend)
-    ax.legend(handles=groupElements, title='Groups',
-             bbox_to_anchor=(1.05, 0.6), loc='upper left')
-
     plt.grid(True, linestyle='--', alpha=0.3)
-
-    # Set axis limits using global extent from groupExtents
-    globalExtent = (
-        min(e[0] for e in groupExtents.values()),
-        max(e[1] for e in groupExtents.values()),
-        min(e[2] for e in groupExtents.values()),
-        max(e[3] for e in groupExtents.values())
-    )
-    ax.set_xlim(globalExtent[0], globalExtent[1])
-    ax.set_ylim(globalExtent[2], globalExtent[3])
     
-    # Adjust layout and save
+    # Set axis limits based on DEM extents with a small margin
+    xMins = [ext[0] for ext in groupExtents.values()]
+    xMaxs = [ext[1] for ext in groupExtents.values()]
+    yMins = [ext[2] for ext in groupExtents.values()]
+    yMaxs = [ext[3] for ext in groupExtents.values()]
+    xMin, xMax = min(xMins), max(xMaxs)
+    yMin, yMax = min(yMins), max(yMaxs)
+    margin = 0.01
+    dx = (xMax - xMin) * margin
+    dy = (yMax - yMin) * margin
+    ax.set_xlim(xMin - dx, xMax + dx)
+    ax.set_ylim(yMin - dy, yMax + dy)
+    
     plt.tight_layout()
-    plt.savefig(outputDir / f'splitInputsReport_{regionalDir}.png', dpi=300, bbox_inches='tight')
+    reportPath = outputDir / f'visual_report_{reportType}.png'
+    plt.savefig(reportPath, dpi=300, bbox_inches='tight')
     plt.close()
+    
+    return reportPath
+
+def writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures):
+    """Write visual reports summarizing the split inputs operation.
+    
+    Creates two visual reports in PNG format:
+    1. Basic report showing DEM extent and release areas
+    2. Optional features report showing DEM extent with entrainment and resistance areas
+    
+    Parameters
+    ----------
+    dirListGrouped : list
+        List of dictionaries containing dirName and list of geometries
+    inputDEM : pathlib.Path
+        Path to input DEM file
+    outputDir : pathlib.Path
+        Path to output directory where reports will be saved
+    groupExtents : dict
+        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value,
+        containing the DEM clipping extents for each group
+    groupFeatures : dict
+        Dictionary containing clipped features for each group and type
+    
+    Returns
+    -------
+    none
+    """
+    # Create basic features report
+    basicPath = createVisualReport(dirListGrouped, inputDEM, outputDir, 
+                                 groupExtents, groupFeatures, 'basic')
+    log.info(f"Visual report (basic) written to: {basicPath}")
+    
+    # Create optional features report
+    optionalPath = createVisualReport(dirListGrouped, inputDEM, outputDir, 
+                                    groupExtents, groupFeatures, 'optional')
+    log.info(f"Visual report (optional) written to: {optionalPath}")
+
+def writeScenarioReport(dirListGrouped, outputDir):
+    """Create a report in txt format listing all scenarios and their associated features.
+    
+    Parameters
+    ----------
+    dirListGrouped : list
+        list of dictionaries containing dirName and list of geometries
+    outputDir : pathlib.Path
+        Path to output directory where the report will be saved
+    
+    Returns
+    -------
+    none
+    """
+    reportPath = outputDir / 'scenario_report.txt'
+    
+    with open(reportPath, 'w') as f:
+        f.write("SCENARIO REPORT\n")
+        f.write("==============\n")
+        f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        
+        # Process each group and their scenarios
+        for group in sorted(dirListGrouped, key=lambda x: x['dirName'].lower()):
+            dirName = group['dirName']
+            f.write(f"Group: {dirName}\n")
+            f.write("-" * (len(dirName) + 7) + "\n\n")
+            
+            relPath = pathlib.Path(outputDir) / dirName / "Inputs" / "REL"
+            scenarioFiles = sorted(relPath.glob(f"{dirName}_*.shp"), 
+                                 key=lambda x: x.stem.split('_')[-1])
+            
+            if not scenarioFiles:
+                f.write("No scenarios found\n\n")
+                continue
+            
+            # Write release areas for each scenario
+            for scenFile in scenarioFiles:
+                fields, fieldNames, properties, geometries, _ = readShapefile(scenFile)
+                scenName = scenFile.stem.split('_')[-1]
+                
+                f.write(f"Scenario: {scenName}\n")
+                f.write(f"No. of release areas: {len(geometries)}\n")
+                
+                if 'name' in fieldNames:
+                    nameIdx = fieldNames.index('name')
+                    with shapefile.Reader(str(scenFile)) as shp:
+                        records = sorted(shp.records(), key=lambda x: x[nameIdx].lower())
+                        for record in records:
+                            f.write(f"- {record[nameIdx]}\n")
+                else:
+                    for i in range(len(geometries)):
+                        f.write(f"- Release Area {i+1}\n")
+                f.write("\n")
+            
+            # Write total entrainment and resistance areas for the group
+            entPath = pathlib.Path(outputDir) / dirName / "Inputs" / "ENT"
+            resPath = pathlib.Path(outputDir) / dirName / "Inputs" / "RES"
+            
+            entFiles = list(entPath.glob(f"{dirName}_*.shp"))
+            if entFiles:
+                totalEnt = sum(len(readShapefile(ef)[3]) for ef in entFiles)
+                if totalEnt > 0:
+                    f.write(f"No. of entrainment areas: {totalEnt}\n")
+            
+            resFiles = list(resPath.glob(f"{dirName}_*.shp"))
+            if resFiles:
+                totalRes = sum(len(readShapefile(rf)[3]) for rf in resFiles)
+                if totalRes > 0:
+                    f.write(f"No. of resistance areas: {totalRes}\n")
+            
+            f.write("\n")
+    
+    log.info(f"Scenario report written to: {reportPath}")
