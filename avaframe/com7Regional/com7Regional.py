@@ -96,48 +96,42 @@ def moveOrCopyPeakFiles(cfg, avalancheDir, avaDirs):
     tuple
         (allPeakFilesDir, allTimeStepsDir) paths to the created directories
     """
-    # Get settings from cfg
-    copyPeakFiles = cfg['GENERAL'].getboolean('copyPeakFiles')
-    moveInsteadOfCopy = cfg['GENERAL'].getboolean('moveInsteadOfCopy', False)
-
-    if not copyPeakFiles:
+    if not cfg['GENERAL'].getboolean('copyPeakFiles'):
         log.info("copyPeakFiles is False - no files will be copied or moved")
         return None, None
 
-    # Set up directories
+    # Set up dirs
     allPeakFilesDir = pathlib.Path(avalancheDir, 'allPeakFiles')
-    if allPeakFilesDir.exists():
-        shutil.rmtree(str(allPeakFilesDir))  #remove it if it already exists #todo: developer convenience - remove
-    allPeakFilesDir.mkdir(parents=True, exist_ok=True)
-
     allTimeStepsDir = allPeakFilesDir / 'allTimeSteps'
-    if allTimeStepsDir.exists():
-        shutil.rmtree(str(allTimeStepsDir))  #remove it if it already exists #todo: developer convenience - remove
-    allTimeStepsDir.mkdir(parents=True, exist_ok=True)
+    
+    # Create fresh dirs, remove old ones
+    for dirPath in [allPeakFilesDir, allTimeStepsDir]:
+        if dirPath.exists():
+            shutil.rmtree(str(dirPath))
+        dirPath.mkdir(parents=True, exist_ok=True)
 
-    # Gather and process files
-    peakFiles = []
-    timeStepFiles = []
+    # Set file operation based on settings (move or copy)
+    fileOp = shutil.move if cfg['GENERAL'].getboolean('moveInsteadOfCopy', False) else shutil.copy
+    opName = 'Moving' if fileOp == shutil.move else 'Copying'
+
+    # Process files
+    nFiles = {'peak': 0, 'timestep': 0}
     for avaDir in avaDirs:
         peakFilesDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-        if peakFilesDir.is_dir():
-            peakFiles.extend(list(peakFilesDir.glob('*.asc')))
+        if not peakFilesDir.is_dir():
+            continue
             
-            timeStepsDir = peakFilesDir / 'timeSteps'
-            if timeStepsDir.is_dir():
-                timeStepFiles.extend(list(timeStepsDir.glob('*.asc')))
-    
-    fileOp = shutil.move if moveInsteadOfCopy else shutil.copy
-    
-    for file in peakFiles:
-        fileOp(str(file), str(allPeakFilesDir))
-        log.debug(f"{'Moved' if moveInsteadOfCopy else 'Copied'} {file} to {allPeakFilesDir}")
+        for file in peakFilesDir.glob('*.asc'):
+            fileOp(str(file), str(allPeakFilesDir))
+            nFiles['peak'] += 1
+            log.debug(f"{opName} {file} to {allPeakFilesDir}")
+        
+        timeStepsDir = peakFilesDir / 'timeSteps'
+        if timeStepsDir.is_dir():
+            for file in timeStepsDir.glob('*.asc'):
+                fileOp(str(file), str(allTimeStepsDir))
+                nFiles['timestep'] += 1
+                log.debug(f"{opName} {file} to {allTimeStepsDir}")
 
-    for file in timeStepFiles:
-        fileOp(str(file), str(allTimeStepsDir))
-        log.debug(f"{'Moved' if moveInsteadOfCopy else 'Copied'} {file} to {allTimeStepsDir}")
-
-    action = "Moving" if moveInsteadOfCopy else "Copying"
-    log.debug(f"{action} completed: {len(peakFiles)} peak files and {len(timeStepFiles)} timestep files processed")
-
+    log.debug(f"{opName} completed: {nFiles['peak']} peak files and {nFiles['timestep']} timestep files processed")
     return allPeakFilesDir, allTimeStepsDir
