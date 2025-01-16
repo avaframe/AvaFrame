@@ -233,22 +233,31 @@ deleted after completion of the model run (can be useful for calculation of larg
 Output
 -------
 
-All outputs are in the .tif or in .asc raster format in the same resolution and extent as the input raster layers.
+All outputs are written in *'.tif'* or in *'.asc'* raster format (controlable via the ``outputFileFormat`` option in ``(local)local_com4FlowPyCfg.ini``, default is *'.tif'*) in the same resolution and extent as the input raster layers.
+You can customize which output rasters are written at the end of the model run by selecting the desired output files through the ``outputFiles`` option in ``(local)local_com4FlowPyCfg.ini``.
+
+By default the following four output layers are written to disk at the end of the model run:
 
 - ``zdelta``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
+- ``cellCounts``: number of paths/release cells that route flux through a raster cell
+- ``travelLength``: the travel length along the flow path
+- ``fpTravelAngle``: the gamma angle along the flow path
+
+In addition these output layers are also available:
+
 - ``flux``: The maximum routing flux of all paths for every raster cell
 - ``zDeltaSum``: z_delta summed up over all paths on every raster cell
-- ``cellCounts``: number of paths/release cells that route flux through a raster cell
-- ``fpTravelAngle``: the gamma angle along the flow path
 - ``slTravelAngle``: gamma angle calculated along a straight-line between release cell and current cell
-- ``travelLength``: the travel length along the flow path
 - ``routFluxSum``: routing flux summed up over all paths
 - ``depFluxSum``: deposited flux summed up over all paths
-- ``forestInteraction``: only if ``forestInteraction = True``: minimum number of forested raster cells a path runs through
+
+If ``forestInteraction = True`` this layer will be written automatically (no need to separately define in ``outputFiles``):
+
+- ``forestInteraction``: minimum number of forested raster cells a path runs through
 
 .. Note::
-  * **please interpret** ``cell_counts.tif`` **with caution, since absolute cell_count values do currently not reflect the number of release-cells which route flux through a cell - we are currently fixing the implementation of this feature**
-  * we are also working on making the output files configurable via the ``com4FlowPyCfg.ini`` file for improved flexibility (different output files might be desirable for different applications)
+  * **please interpret the current** ``zDeltaSum.tif`` **output with caution!**
+  * dividing ``zDeltaSum.tif`` by ``cellCounts`` will currently not yield average values for :math:`z^{\delta}_{max}` !!
 
  .. Model Parameterisation
  .. ------------------------
