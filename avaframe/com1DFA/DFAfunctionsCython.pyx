@@ -140,8 +140,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:, :] xsiRaster = fields['xiField']
   cdef double[:, :] detRaster = fields['detRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
-  cdef double[:, :] hEro = np.zeros_like(dem['rasterData'])
-  cdef double[:, :] hEroded = fields['hEroded']
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
@@ -156,7 +154,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
-  cdef double dmDet, detCell, areaDetPart, hEroCell
+  cdef double dmDet, detCell, areaDetPart
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -362,10 +360,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         if frictType == 4 and dm > 0.0:
           # update specific enthalpy of particle
           totalEnthalpyArray[k] = totalEnthalpy / m
-        # compute erosion height 
-        hEroCell = - dm / areaEntrPart / rhoEnt
-        hEro[indCellY, indCellX] = hEro[indCellY, indCellX] + hEroCell
-        hEroded[indCellY, indCellX] = hEroded[indCellY, indCellX] + hEroCell
 
       # adding detrainment analogous to entrainment
       detCell = detRaster[indCellY, indCellX]
@@ -412,6 +406,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
   particles['dmDet'] = np.asarray(dMDet)
+  particles['dmEnt'] = np.asarray(dM)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
   '''
   particles['depositedParticles']['x'] = np.asarray(xDepositedArray)
@@ -435,9 +430,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
     if entrMassCell < 0:
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
-  fields['entrMassRaster'] = np.asarray(entrMassRaster)
-  fields['hEro'] = np.asarray(hEro)
-  fields['hEroded'] = np.asarray(hEroded)
 
   return particles, force, fields
 
@@ -1199,6 +1191,7 @@ def updateFieldsC(cfg, particles, dem, fields):
  """
   # read input parameters
   cdef double rho = cfg.getfloat('rho')
+  cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef int interpOption = cfg.getint('interpOption')
   header = dem['header']
   cdef int nrows = header['nrows']
@@ -1211,6 +1204,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] massDet = particles['dmDet']
+  cdef double[:] massEnt = particles['dmEnt']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] uxArray = particles['ux']
@@ -1231,10 +1225,12 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
   cdef double[:, :] hDeposited = fields['hDeposited']
+  cdef double[:, :] hEroded = fields['hEroded']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDepBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] MassEntBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTBilinear = np.zeros((nrows, ncols))
@@ -1247,9 +1243,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] kineticEnergy = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   cdef double[:, :] hDepBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] hEroBilinear = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
-  cdef double m, dm, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
+  cdef double m, dm, demEnt, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
   cdef double mDep, xDep, yDep
   cdef int k, i, l
   cdef int indx, indy
@@ -1270,6 +1267,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     uz = uzArray[k]
     m = mass[k]
     dm = massDet[k]
+    dmEnt = massEnt[k]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -1287,8 +1285,10 @@ def updateFieldsC(cfg, particles, dem, fields):
       indy = Ly0 + ind2[i]
       mwi = m * w[i]
       dmwi = dm * w[i]
+      dmEntWi = dmEnt * w[i]
       MassBilinear[indy, indx] = MassBilinear[indy, indx] + mwi
       MassDetBilinear[indy, indx] = MassDetBilinear[indy, indx] + dmwi  # PS TODO: sinnvoll???
+      MassEntBilinear[indy, indx] = MassEntBilinear[indy, indx] + dmEntWi 
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + mwi * ux
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + mwi * uy
       MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + mwi * uz
@@ -1344,6 +1344,8 @@ def updateFieldsC(cfg, particles, dem, fields):
       # topography height change due to detrainment and deposition
       hDepBilinear[j, i] = - (MassDetBilinear[j, i] + MassDepBilinear[j, i]) / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
       hDeposited[j, i] = hDeposited[j, i] + hDepBilinear[j, i]
+      hEroBilinear[j, i] = - MassEntBilinear[j, i] / (areaRaster[j, i] * rhoEnt)
+      hEroded[j, i] = hEroded[j, i] + hEroBilinear[j, i]
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
@@ -1355,7 +1357,9 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pft'] = np.asarray(PFT)
   fields['dmDet'] = np.asarray(DMDet)
   fields['hDep'] = np.asarray(hDepBilinear)
+  fields['hEro'] = np.asarray(hEroBilinear)
   fields['hDeposited'] = np.asarray(hDeposited)
+  fields['hEroded'] = np.asarray(hEroded)
   if computeP:
     fields['ppr'] = np.asarray(PP)
     fields['P'] = np.asarray(PBilinear)
