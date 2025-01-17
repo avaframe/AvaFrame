@@ -526,20 +526,27 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     log.info("-------------------------")
 
     # Merge calculated tiles
-    zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
-    flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
-    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method='sum')
-    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
-    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
-    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
-    fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
-    slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
-    travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
-
-    if modelOptions["infraBool"]:
+    if 'zDelta' in _outputs:
+        zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
+    if 'flux' in _outputs:
+        flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
+    if 'cellCounts' in _outputs:
+        cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method='sum')
+    if 'zDeltaSum' in _outputs:
+        zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
+    if 'routFluxSum' in _outputs:
+        routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
+    if 'depFluxSum' in _outputs:
+        depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
+    if 'fpTravelAngle' in _outputs:
+        fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
+    if 'slTravelAngle' in _outputs:
+        slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
+    if 'travelLength' in _outputs:
+        travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
+    if modelOptions["infraBool"] and 'backcalc' in _outputs:
         backcalc = SPAM.mergeRaster(modelPaths["tempDir"], "res_backcalc")
-
-    if modelOptions["forestInteraction"]:
+    if modelOptions["forestInteraction"] and 'forestInteraction' in _outputs:
         forestInteraction = SPAM.mergeRaster(modelPaths["tempDir"], "res_forestInt", method='min')
 
     # Write Output Files to Disk
@@ -581,10 +588,10 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     # if not modelOptions["infraBool"]:  # if no infra
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
-    if modelOptions["infraBool"]:  # if infra
+    if modelOptions["infraBool"] and 'backcalc' in _outputs:  # if infra
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_backcalculation{}".format(_uid,
                          _ts, _oF), backcalc)
-    if modelOptions["forestInteraction"]:
+    if modelOptions["forestInteraction"] and 'forestInteraction' in _outputs:
         io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_forestInteraction{}".format(_uid,
                          _ts, _oF), forestInteraction)
 
