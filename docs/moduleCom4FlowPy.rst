@@ -233,8 +233,8 @@ deleted after completion of the model run (can be useful for calculation of larg
 Output
 -------
 
-All outputs are written in *'.tif'* or in *'.asc'* raster format (controlable via the ``outputFileFormat`` option in ``(local)local_com4FlowPyCfg.ini``, default is *'.tif'*) in the same resolution and extent as the input raster layers.
-You can customize which output rasters are written at the end of the model run by selecting the desired output files through the ``outputFiles`` option in ``(local)local_com4FlowPyCfg.ini``.
+All outputs are written in *'.tif'* or in *'.asc'* raster format (controlable via the ``outputFileFormat`` option in ``(local_)com4FlowPyCfg.ini``, default is *'.tif'*) in the same resolution and extent as the input raster layers.
+You can customize which output rasters are written at the end of the model run by selecting the desired output files through the ``outputFiles`` option in ``(local_)com4FlowPyCfg.ini``.
 
 By default the following four output layers are written to disk at the end of the model run:
 
@@ -254,10 +254,6 @@ In addition these output layers are also available:
 If ``forestInteraction = True`` this layer will be written automatically (no need to separately define in ``outputFiles``):
 
 - ``forestInteraction``: minimum number of forested raster cells a path runs through
-
-.. Note::
-  * **please interpret the current** ``zDeltaSum.tif`` **output with caution!**
-  * dividing ``zDeltaSum.tif`` by ``cellCounts`` will currently not yield average values for :math:`z^{\delta}_{max}` !!
 
  .. Model Parameterisation
  .. ------------------------

@@ -20,7 +20,7 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out3Plot import statsPlots as sPlot
 from avaframe.in3Utils import cfgUtils
-from avaframe.in2Trans import ascUtils as iOf
+from avaframe.in2Trans import rasterUtils as iOf
 from avaframe.in2Trans import shpConversion as shpConv
 from avaframe.in3Utils import geoTrans as gT
 

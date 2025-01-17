@@ -1,38 +1,23 @@
-"""Tests for module com2AB"""
-import avaframe.in2Trans.ascUtils as IOf
+"""Tests for module in2Trans rasterUtils"""
+
+import avaframe.in2Trans.rasterUtils as IOf
 import pathlib
 import pytest
 
 
 def test_readASCheader(capfd):
-    '''Simple test for module readASCheader'''
+    """Simple test for module readRasterHeader"""
     dirname = pathlib.Path(__file__).parents[0]
-    DGMSource = dirname / '..'/'data'/'avaSlide'/'Inputs'/'slideTopo.asc'
-    header = IOf.readASCheader(DGMSource)
-    assert((header['ncols'] == 419) and (header['nrows'] == 201) and
-           (header['cellsize'] == 5))
-
-    with pytest.raises(ValueError) as e:
-        DGMSource = dirname /'data'/'testReadAsc.asc'
-        assert IOf.readASCheader(DGMSource)
-    assert str(e.value) == ("DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value")
+    DGMSource = dirname / ".." / "data" / "avaSlide" / "Inputs" / "slideTopo.asc"
+    header = IOf.readRasterHeader(DGMSource)
+    assert (header["ncols"] == 419) and (header["nrows"] == 201) and (header["cellsize"] == 5)
 
 
 def test_isEqualASCheader(capfd):
-    '''Simple test for module readASCheader'''
+    """Simple test for module readRasterHeader"""
     dirname = pathlib.Path(__file__).parents[0]
-    DGMSource = dirname / '..'/'data'/'avaSlide'/'Inputs'/'slideTopo.asc'
-    headerA = IOf.readASCheader(DGMSource)
-    headerB = IOf.readASCheader(DGMSource)
+    DGMSource = dirname / ".." / "data" / "avaSlide" / "Inputs" / "slideTopo.asc"
+    headerA = IOf.readRasterHeader(DGMSource)
+    headerB = IOf.readRasterHeader(DGMSource)
     equal = IOf.isEqualASCheader(headerA, headerB)
     assert equal
-
-
-def test_readASCdata2numpyArray(capfd):
-    '''Simple test for module readASCheader'''
-    dirname = pathlib.Path(__file__).parents[0]
-    DGMSource = dirname / '..'/'data'/'avaSlide'/'Inputs'/'slideTopo.asc'
-    data = IOf.readASCdata2numpyArray(DGMSource)
-
-    assert((data[0][0] == 1752.60) and (data[2][1] == 1749.10)
-           and (data[0][3] == 1742.10))

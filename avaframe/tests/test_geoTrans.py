@@ -1,4 +1,5 @@
 """Tests for module geoTrans"""
+
 import configparser
 import logging
 import math
@@ -10,8 +11,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import shapely as shp
+import rasterio
+import subprocess
 
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 # Local imports
@@ -337,7 +340,7 @@ def test_prepareArea():
 
     line5 = geoTrans.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
 
-#    print("line5", line5)
+    #    print("line5", line5)
 
     # test 4
     releaseLine4 = {
@@ -372,13 +375,13 @@ def test_prepareArea():
     testRaster6[3, 1:4] = 7.8
     testRaster6[1:4, 3] = 7.8
 
-#    print("line Raster", line["rasterData"])
-#    print("testRaster", testRaster)
-#    print("line Raster", line2["rasterData"])
-#    print("testRaster", testRaster2)
-#    print("test 4 line Raster", line4["rasterData"])
-#    print("testRaster", testList)
-#    print("test raster 6", testRaster6)
+    #    print("line Raster", line["rasterData"])
+    #    print("testRaster", testRaster)
+    #    print("line Raster", line2["rasterData"])
+    #    print("testRaster", testRaster2)
+    #    print("test 4 line Raster", line4["rasterData"])
+    #    print("testRaster", testList)
+    #    print("test raster 6", testRaster6)
 
     assert np.array_equal(line["rasterData"], testRaster)
     assert np.array_equal(line2["rasterData"], testRaster2)
@@ -496,7 +499,7 @@ def test_checkParticlesInRelease():
     }
     particles2 = geoTrans.checkParticlesInRelease(particles2, releaseLine, 0.01)
 
-#    print("particles", particles, particles2)
+    #    print("particles", particles, particles2)
     assert np.array_equal(particles["x"], np.asarray([2.4, 9.7, 10.02]))
     assert np.array_equal(particles["y"], np.asarray([2.4, 9.7, 10.2]))
     assert particles["mTot"] == (1.4 + 1.7 + 1.4)
@@ -507,78 +510,33 @@ def test_checkParticlesInRelease():
     assert particles2["nPart"] == 4
 
 
-def test_remeshData(tmp_path):
-    """test shape of interpolated data onto new mesh"""
-
-    headerInfo = {}
-    headerInfo["cellsize"] = 5
-    headerInfo["ncols"] = 4
-    headerInfo["nrows"] = 5
-    headerInfo["xllcenter"] = 0
-    headerInfo["yllcenter"] = 0
-    headerInfo["nodata_value"] = -9999
-    # create an inclined plane
-    z0 = 10
-    data = getIPZ(z0, 15, 20, 5)
-    rasterDict = {"header": headerInfo, "rasterData": data}
-    # outFile = os.path.join(tmp_path, 'test.asc')
-    # IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
-    atol = 1.0e-10
-    dataNew = geoTrans.remeshData(rasterDict, 2.0, larger=False)
-    dataRaster = dataNew["rasterData"]
-    indNoData = np.where(dataRaster == -9999)
-    headerNew = dataNew["header"]
-    xExtent = (headerNew["ncols"] - 1) * headerNew["cellsize"]
-    yExtent = (headerNew["nrows"] - 1) * headerNew["cellsize"]
-
-    # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew["cellsize"])
-
-    # compare solution to result from function
-    testRes = np.allclose(dataRaster, dataSol, atol=atol)
-
-    assert dataNew["rasterData"].shape[0] == 11
-    assert dataNew["rasterData"].shape[1] == 8
-    assert len(indNoData[0]) == 0
-    assert np.isclose(dataNew["rasterData"][0, 0], 10.0)
-    assert testRes
-
-    dataNew = geoTrans.remeshData(
-        rasterDict,
-        2.0,
-        remeshOption="RectBivariateSpline",
-        interpMethod="cubic",
-        larger=False,
-    )
-    dataRaster = dataNew["rasterData"]
-    indNoData = np.where(dataRaster == -9999)
-    headerNew = dataNew["header"]
-    xExtent = (headerNew["ncols"] - 1) * headerNew["cellsize"]
-    yExtent = (headerNew["nrows"] - 1) * headerNew["cellsize"]
-
-    # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew["cellsize"])
-
-    # compare solution to result from function
-    testRes = np.allclose(dataRaster, dataSol, atol=atol)
-
-    assert dataNew["rasterData"].shape[0] == 11
-    assert dataNew["rasterData"].shape[1] == 8
-    assert len(indNoData[0]) == 0
-    assert np.isclose(dataNew["rasterData"][0, 0], 10.0)
-    assert testRes
-
-
 def test_remeshDEM(tmp_path):
     """test size of interpolated data onto new mesh"""
 
-    headerInfo = {}
-    headerInfo["cellsize"] = 5
-    headerInfo["ncols"] = 4
-    headerInfo["nrows"] = 5
-    headerInfo["xllcenter"] = 0
-    headerInfo["yllcenter"] = 0
-    headerInfo["nodata_value"] = -9999
+    cellSize = 5
+    nCols = 4
+    nRows = 5
+    xllcenter = 0
+    yllcenter = 0
+    nodata_value = -9999
+
+    transform = rasterio.transform.from_origin(
+        xllcenter - cellSize / 2, (yllcenter - cellSize / 2) + nRows * cellSize, cellSize, cellSize
+    )
+    crs = rasterio.crs.CRS()
+
+    headerInfo = {
+        "cellsize": cellSize,
+        "nrows": nRows,
+        "ncols": nCols,
+        "nodata_value": nodata_value,
+        "xllcenter": xllcenter,
+        "yllcenter": yllcenter,
+        "driver": "AAIGrid",
+        "crs": crs,
+        "transform": transform,
+    }
+
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
@@ -586,8 +544,8 @@ def test_remeshDEM(tmp_path):
     avaDir = pathlib.Path(tmp_path, "avaTest")
     fU.makeADir(avaDir)
     fU.makeADir((avaDir / "Inputs"))
-    avaDEM = avaDir / "Inputs" / "avaAlr.asc"
-    IOf.writeResultToAsc(headerInfo, data, avaDEM, flip=True)
+    avaDEM = avaDir / "Inputs" / "avaAlr"
+    avaDEM = IOf.writeResultToRaster(headerInfo, data, avaDEM, flip=True)
 
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
@@ -597,42 +555,47 @@ def test_remeshDEM(tmp_path):
     }
 
     # call function
-    pathDem = geoTrans.remeshRaster(avaDEM, cfg)
+    pathDem = geoTrans.remeshRaster(avaDEM, cfg, legacy=False)
     fullP = avaDir / "Inputs" / pathDem
+
     dataNew = IOf.readRaster(fullP)
 
     dataRaster = dataNew["rasterData"]
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew["header"]
+
     xExtent = (headerNew["ncols"] - 1) * headerNew["cellsize"]
     yExtent = (headerNew["nrows"] - 1) * headerNew["cellsize"]
 
     # compute solution
     dataSol = getIPZ(z0, xExtent, yExtent, 2.0)
-    # dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster[:-1, :-1], dataSol[:-1, :-1], atol=1.0e-6)
-    # print(dataRaster)
-    # print(dataSol)
-
     assert dataNew["rasterData"].shape[0] == 11
     assert dataNew["rasterData"].shape[1] == 8
+    # Make sure xllcorner = -1
+    assert dataNew["header"]["transform"][2] == -1
     assert len(indNoData[0]) == 0
     assert testRes
     assert np.isclose(dataRaster[0, 0], 10.0)
 
-    # copy data
+    # Test with bigger, precomputed DEM
+    # copy reference result
     avaName = "avaParabola"
     dirPath = pathlib.Path(__file__).parents[0]
     inputDir1 = dirPath / ".." / "data" / avaName
     inputDEM = dirPath / "data" / "remeshedDEM8.00.asc"
+
     avaDir1 = pathlib.Path(tmp_path, avaName)
     avaDEM = avaDir1 / "Inputs" / "remeshedRasters" / "DEM_PF_Topo_remeshedDEM8.00.asc"
     shutil.copytree(inputDir1, avaDir1)
+    #
     inputsAVA = avaDir1 / "Inputs" / "remeshedRasters"
     fU.makeADir(inputsAVA)
     shutil.copy(inputDEM, avaDEM)
+
+    # copy input data for remeshing
     inputDEM1 = inputDir1 / "Inputs" / "DEM_PF_Topo.asc"
     avaDEM1 = avaDir1 / "Inputs" / "DEM_PF_Topo.asc"
     shutil.copy(inputDEM1, avaDEM1)
@@ -642,23 +605,16 @@ def test_remeshDEM(tmp_path):
     # call function
     pathDem2 = geoTrans.remeshRaster(avaDEM1, cfg)
     fullP2 = avaDir1 / "Inputs" / pathDem2
+
     dataNew2 = IOf.readRaster(fullP2)
-    dataRaster2 = dataNew2["rasterData"]
     dataSol = IOf.readRaster(inputDEM)
+
     # compare solution to result from function
-    testRes2 = np.allclose(dataRaster2, dataSol["rasterData"], atol=1.0e-6)
+    testRes2 = np.allclose(dataNew2["rasterData"], dataSol["rasterData"], atol=1.0e-6)
 
     assert dataNew2["rasterData"].shape[0] == dataSol["header"]["nrows"]
     assert dataNew2["rasterData"].shape[1] == dataSol["header"]["ncols"]
     assert testRes2
-
-    dataMod = IOf.readRaster(inputDEM)
-    dataMod["header"]["cellsize"] = 9.0
-    IOf.writeResultToAsc(dataMod["header"], dataMod["rasterData"], avaDEM, flip=True)
-
-    with pytest.raises(FileExistsError) as e:
-        assert geoTrans.remeshRaster(avaDEM1, cfg)
-    assert str(e.value) == ("Name for saving remeshedRaster already used: %s" % avaDEM.name)
 
 
 def test_isCounterClockWise():
@@ -914,7 +870,7 @@ def test_findSplitPoint():
 
     # call function
     projPoint = geoTrans.findSplitPoint(avaProfile, pointsDict)
-#    print("avaProfile s", (avaProfile["s"]), "s", s)
+    #    print("avaProfile s", (avaProfile["s"]), "s", s)
 
     assert projPoint["x"] == 2.0
     assert projPoint["y"] == 0.0
@@ -994,7 +950,7 @@ def test_computeAlongLineDistance():
             )
         )
 
-#    print("distancePoints", distancePoints2)
+    #    print("distancePoints", distancePoints2)
     for ind, d in enumerate(distancePoints2):
         assert d == s2[ind]
     assert np.isclose(np.rad2deg(np.arcsin(2.0 / distancePoints2[1])), 45.0)
@@ -1015,7 +971,7 @@ def test_computeAlongLineDistance():
                 + (avaProfile["z"][i + 1] - avaProfile["z"][i]) ** 2
             )
         )
-#    print("distancePoints3", distancePoints3)
+    #    print("distancePoints3", distancePoints3)
     for ind, d in enumerate(distancePoints3):
         assert d == s3[ind]
     assert distancePoints3[1] == np.sqrt(12)
@@ -1058,8 +1014,8 @@ def test_snapPtsToLine():
 
     snappedP1 = dbData["geom_rel_event_pt3d_epsg:31287_snapped"].iloc[0]
     snappedP2 = dbData["geom_event_pt3d_epsg:31287_snapped"].iloc[0]
-#    print("snapped", snappedP1.x)
-#    print("xLine", xLine[1])
+    #    print("snapped", snappedP1.x)
+    #    print("xLine", xLine[1])
 
     assert np.isclose(snappedP1.x, xLine[1])
     assert np.isclose(snappedP1.y, yLine[1])
@@ -1132,69 +1088,88 @@ def test_prepareLine():
     assert np.isclose(avaProfile["y"][-1], 8.0)
     assert np.allclose(avaProfile["s"], np.append(0, diffXY.cumsum()))
 
+
 def test_getNormalMesh(capfd):
-    '''projectOnRaster'''
+    """projectOnRaster"""
     a = 2
     b = 1
     cellsize = 1
     m = 10
     n = 15
-    x = np.linspace(0, m-1, m)
-    y = np.linspace(0, n-1, n)
+    x = np.linspace(0, m - 1, m)
+    y = np.linspace(0, n - 1, n)
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     header = {}
-    header['ncols'] = m
-    header['nrows'] = n
-    header['cellsize'] = cellsize
+    header["ncols"] = m
+    header["nrows"] = n
+    header["cellsize"] = cellsize
     dem = {}
-    dem['header'] = header
+    dem["header"] = header
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
-        dem['rasterData'] = Z
+        dem["rasterData"] = Z
         dem = geoTrans.getNormalMesh(dem, num)
-        Nx = dem['Nx']
-        Ny = dem['Ny']
-        Nz = dem['Nz']
+        Nx = dem["Nx"]
+        Ny = dem["Ny"]
+        Nz = dem["Nz"]
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
-#        print(Nx)
-#        print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
-#        print(Ny)
-#        print((-b*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
-#        print(Nz)
-#        print((np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
+        #        print(Nx)
+        #        print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
+        #        print(Ny)
+        #        print((-b*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
+        #        print(Nz)
+        #        print((np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
 
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y))
-                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(
+            Nx[1: n - 1, 1: m - 1],
+            (-a * np.ones(np.shape(Y)) / np.sqrt(1 + a * a + b * b))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-b*np.ones(np.shape(Y))
-                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(
+            Ny[1: n - 1, 1: m - 1],
+            (-b * np.ones(np.shape(Y)) / np.sqrt(1 + a * a + b * b))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (np.ones(np.shape(Y))
-                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(
+            Nz[1: n - 1, 1: m - 1],
+            (np.ones(np.shape(Y)) / np.sqrt(1 + a * a + b * b))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNZ
 
-        dem['rasterData'] = Z1
+        dem["rasterData"] = Z1
         dem = geoTrans.getNormalMesh(dem, num)
-        Nx = dem['Nx']
-        Ny = dem['Ny']
-        Nz = dem['Nz']
+        Nx = dem["Nx"]
+        Ny = dem["Ny"]
+        Nz = dem["Nz"]
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
 
-#        print(Nx)
-#        print((-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
-#        print(Ny)
-#        print((-2*b*Y / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
-#        print(Nz)
-#        print((1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
+        #        print(Nx)
+        #        print((-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
+        #        print(Ny)
+        #        print((-2*b*Y / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
+        #        print(Nz)
+        #        print((1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a
-                                                                 * a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(
+            Nx[1: n - 1, 1: m - 1],
+            (-2 * a * X / np.sqrt(1 + 4 * a * a * X * X + 4 * b * b * Y * Y))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-2*b*Y / np.sqrt(1 + 4*a
-                                                                 * a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(
+            Ny[1: n - 1, 1: m - 1],
+            (-2 * b * Y / np.sqrt(1 + 4 * a * a * X * X + 4 * b * b * Y * Y))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a
-                                                            * X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(
+            Nz[1: n - 1, 1: m - 1],
+            (1 / np.sqrt(1 + 4 * a * a * X * X + 4 * b * b * Y * Y))[1: n - 1, 1: m - 1],
+            atol=atol,
+        )
         assert TestNZ

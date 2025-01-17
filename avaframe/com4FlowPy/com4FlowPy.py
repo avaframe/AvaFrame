@@ -20,7 +20,7 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
 # com4FlowPy Libraries
@@ -130,7 +130,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"] = cfgSetup.getfloat("velThForDetrain")  # float(cfgSetup["velThForDetrain"])
         # 'forestFrictionLayer' parameter
         forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
-        forestParams["nSkipForest"] = cfgSetup.getint("skipForestCells")
+        # skipForestDist - no forest friciton effect assumed while distance along path <= skipForestDist
+        forestParams["skipForestDist"] = cfgSetup.getfloat("skipForestDist")
 
     else:
         modelPaths["forestPath"] = ""
@@ -175,7 +176,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     demExt = os.path.splitext(modelPaths["demPath"])[1]
     if demExt in ['.asc', '.ASC']:
-        demHeader = IOf.readASCheader(modelPaths["demPath"])
+        demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         rasterAttributes["nodata"] = demHeader["nodata_value"]
     elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
         demHeader = io.read_header(modelPaths["demPath"])
@@ -291,7 +292,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
         ext = os.path.splitext(modelPaths["demPath"])[1]
 
         if ext in ['.asc', '.ASC']:
-            _demHeader = IOf.readASCheader(modelPaths["demPath"])
+            _demHeader = IOf.readRasterHeader(modelPaths["demPath"])
             _relHeader = io.read_header(modelPaths["releasePathWork"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
             _demHeader = io.read_header(modelPaths["demPath"])
@@ -610,10 +611,8 @@ def checkConvertReleaseShp2Tif(modelPaths):
 
         if ext in ['.asc', '.ASC']:
             dem = IOf.readRaster(modelPaths["demPath"])
-            demHeader = IOf.readASCheader(modelPaths["demPath"])
+            demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            #dem = io.read_raster(modelPaths["demPath"])
-            #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
             raise ValueError(_errMsg)

@@ -36,7 +36,7 @@ jobs:
           build-requirements: 'cython numpy'
       - name: Publish wheels to PyPI
         run: |
-          pip install twine --break-system-packages
+          pip install -U pkginfo packaging twine --break-system-packages
           twine upload dist/*-manylinux*.whl
         continue-on-error: true
 
@@ -69,6 +69,8 @@ jobs:
       - name: upload source distribution
         run: |
           pip install twine
+          pip install -U pkginfo
+          pip install -U packaging
           twine upload dist/*
         continue-on-error: true
 
@@ -103,5 +105,7 @@ jobs:
       - name: upload wheel
         run: |
           pip install twine
+          pip install -U pkginfo
+          pip install -U packaging
           twine upload dist/*
         continue-on-error: true

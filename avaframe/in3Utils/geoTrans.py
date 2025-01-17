@@ -8,15 +8,19 @@ import numpy as np
 import scipy as sp
 import scipy.interpolate
 import shapely as shp
+import rasterio
+import rasterio.warp
+from rasterio.enums import Resampling
 import copy
 from scipy.interpolate import splprep, splev
 import matplotlib.path as mpltPath
 from shapely import LineString, Point, distance, MultiPoint
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.rasterUtils as rU
 from avaframe.com1DFA import particleTools
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -144,7 +148,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear", getXYField=
         dx[mask] = np.round(Lx[mask])
         dy[mask] = np.round(Ly[mask])
         z[mask] = Z[dy[mask].astype("int"), dx[mask].astype("int")]
-        zField[dy[mask].astype("int"), dx[mask].astype("int")] = 1.
+        zField[dy[mask].astype("int"), dx[mask].astype("int")] = 1.0
     elif interp == "bilinear":
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
@@ -154,16 +158,15 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear", getXYField=
         f22[mask] = Z[Ly1[mask].astype("int"), Lx1[mask].astype("int")]
         # using bilinear interpolation on the cell
         z = f11 * (1 - dx) * (1 - dy) + f21 * dx * (1 - dy) + f12 * (1 - dx) * dy + f22 * dx * dy
-        zField[Ly0[mask].astype("int"), Lx0[mask].astype("int")] = 1.
-        zField[Ly1[mask].astype("int"), Lx0[mask].astype("int")] = 1.
-        zField[Ly0[mask].astype("int"), Lx1[mask].astype("int")] = 1.
-        zField[Ly1[mask].astype("int"), Lx1[mask].astype("int")] = 1.
+        zField[Ly0[mask].astype("int"), Lx0[mask].astype("int")] = 1.0
+        zField[Ly1[mask].astype("int"), Lx0[mask].astype("int")] = 1.0
+        zField[Ly0[mask].astype("int"), Lx1[mask].astype("int")] = 1.0
+        zField[Ly1[mask].astype("int"), Lx1[mask].astype("int")] = 1.0
 
     if getXYField:
         return z, zField
     else:
         return z, ioob
-
 
 
 def resizeData(raster, rasterRef):
@@ -184,7 +187,7 @@ def resizeData(raster, rasterRef):
     dataRef : 2D numpy array
         reference data
     """
-    if IOf.isEqualASCheader(raster["header"], rasterRef["header"]):
+    if rU.isEqualASCheader(raster["header"], rasterRef["header"]):
         return raster["rasterData"], rasterRef["rasterData"]
     else:
         headerRef = rasterRef["header"]
@@ -243,7 +246,6 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
         "Remeshed data extent difference x: %f and y %f"
         % (xGrid[-1, -1] - xGridNew[-1, -1], yGrid[-1, -1] - yGridNew[-1, -1])
     )
-
     if remeshOption == "griddata":
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
@@ -278,27 +280,106 @@ def remeshData(rasterDict, cellSizeNew, remeshOption="griddata", interpMethod="c
 
     # create header of remeshed DEM
     # set new header
-    headerRemeshed = {}
-    headerRemeshed["xllcenter"] = header["xllcenter"]
-    headerRemeshed["yllcenter"] = header["yllcenter"]
-    headerRemeshed["nodata_value"] = header["nodata_value"]
+    headerRemeshed = header
     headerRemeshed["cellsize"] = cellSizeNew
     headerRemeshed["ncols"] = ncolsNew
     headerRemeshed["nrows"] = nrowsNew
+    xllcenter = header["xllcenter"]
+    yllcenter = header["yllcenter"]
+    transform = rasterio.transform.from_origin(
+        xllcenter - cellSizeNew / 2.0,
+        (yllcenter - cellSizeNew / 2.0) + nrowsNew * cellSizeNew,
+        cellSizeNew,
+        cellSizeNew,
+    )
+    headerRemeshed["transform"] = transform
     # create remeshed raster dictionary
     remeshedRaster = {"rasterData": zNew, "header": headerRemeshed}
 
     return remeshedRaster
 
 
-def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
+def remeshDataRio(rasterFile, cellSizeNew, larger=True):
+    """resample raster data using rasterio to change effective cell size to cellSizeNew by specifying an output array
+    of specified size, default resampling option is set to cubic
+
+    Parameters
+    -------------
+    rasterFile: pathlib Path
+        path to file with raster data options asci or tif
+    cellSizeNew: float
+        desired spatial resolution of new raster dataset, cellsize
+    larger: Boolean
+        if true (default) output grid is at least as big as the input
+
+    Returns
+    ---------
+    remeshedRaster: dict
+        dictionary with header and rasterdata with new cellSize
+    """
+    # open raster data
+    src = rasterio.open(rasterFile, "r")
+
+    # First part is to be able to replicate our own remeshing
+    header = rU.getHeaderFromRaster(src)
+    _, _, width, height = makeCoordGridFromHeader(header, cellSizeNew=cellSizeNew, larger=larger)
+
+    targetTransform = rasterio.transform.from_origin(
+        header["xllcenter"] - cellSizeNew / 2.0,
+        (header["yllcenter"] - cellSizeNew / 2.0) + height * cellSizeNew,
+        cellSizeNew,
+        cellSizeNew,
+    )
+
+    # Check if crs is none, as warp.reproject NEEDS a valid crs
+    # If none is available, set any. The original is taken again when
+    # the header is reset lower down
+    # TODO: require a default crs in config
+    if src.crs is None:
+        srcCrs = rasterio.crs.CRS.from_epsg(31287)
+    else:
+        srcCrs = src.crs
+
+    data, transform = rasterio.warp.reproject(
+        source=src.read(),
+        destination=np.empty((src.count, height, width)) * np.nan,
+        src_transform=src.transform,
+        dst_transform=targetTransform,
+        src_crs=srcCrs,
+        dst_crs=srcCrs,
+        dst_nodata=src.nodata,
+        resampling=Resampling.cubic,
+    )
+
+    data = np.where(data == src.nodata, np.nan, data)
+    # create header of resampled data
+    # set new header
+    headerRemeshed = rU.getHeaderFromRaster(src)
+    src.close()
+
+    headerRemeshed["cellsize"] = transform[0]
+    headerRemeshed["transform"] = transform
+    headerRemeshed["ncols"] = data[0].shape[1]
+    headerRemeshed["nrows"] = data[0].shape[0]
+    headerRemeshed["nodata_value"] = np.nan
+
+    # create remeshed raster dictionary
+    remeshedRaster = {"rasterData": data[0], "header": headerRemeshed}
+
+    return remeshedRaster
+
+
+def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False, legacy=False):
     """change raster cell size by reprojecting on a new grid - first check if remeshed raster available
 
     the new raster is as big or smaller as the original raster and saved to Inputs/remeshedRasters as
     remeshedTYPEINDICATORcellSize
 
-    Interpolation is based on griddata with a cubic method. Here would be the place
+    Interpolation is based on rasterio rsampling with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
+
+    We provide the legacy option via the legacy parameter, then the
+    interpolation is based on griddata with a cubic method.
 
     Parameters
     ----------
@@ -311,6 +392,8 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
         type of raster, possible options DEM or RELTH
     onlySearch: bool
         if True - only searching for remeshed DEM but not remeshing if not found
+    legacy: bool
+        if True use old resampling options (griddata and RectBivariateSpline)
 
     Returns
     -------
@@ -325,7 +408,7 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
 
     # -------- if no remeshed raster found - remesh
     # fetch info on raster file
-    raster = IOf.readRaster(rasterFile)
+    raster = rU.readRaster(rasterFile)
     headerRaster = raster["header"]
     # read raster header info
     cszRaster = headerRaster["cellsize"]
@@ -333,22 +416,34 @@ def remeshRaster(rasterFile, cfgSim, typeIndicator="DEM", onlySearch=False):
     cszRasterNew = float(cfgSim["GENERAL"]["meshCellSize"])
 
     # start remesh
-    log.info("Remeshing the input raster (of cell size %.2g m) to a cell size of %.2g m" % (cszRaster, cszRasterNew))
-    remeshedRaster = remeshData(raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False)
+    log.info(
+        "Remeshing the input raster (of cell size %.2g m) to a cell size of %.2g m"
+        % (cszRaster, cszRasterNew)
+    )
+    if legacy:
+        remeshedRaster = remeshData(
+            raster, cszRasterNew, remeshOption="griddata", interpMethod="cubic", larger=False
+        )
+        log.info("Legacy option used for remeshing")
+        flipArg = True
+    else:
+        log.info("Using rasterio resampling")
+        remeshedRaster = remeshDataRio(rasterFile, cszRasterNew, larger=False)
+        flipArg = False
 
     # save remeshed raster
     pathToRaster = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", "remeshedRasters")
     fU.makeADir(pathToRaster)
-    outFile = pathToRaster / ("%s_remeshed%s%.2f.asc" % (rasterFile.stem, typeIndicator, remeshedRaster["header"][
-    "cellsize"]))
-    if outFile.name in allRasterNames:
-        message = "Name for saving remeshedRaster already used: %s" % outFile.name
-        log.error(message)
-        raise FileExistsError(message)
 
-    IOf.writeResultToAsc(remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=True)
-    log.info("Saved remeshed raster to %s" % outFile)
-    pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
+    outFile = pathToRaster / (
+            "%s_remeshed%s%.2f" % (rasterFile.stem, typeIndicator, remeshedRaster["header"]["cellsize"])
+    )
+
+    writtenFile = rU.writeResultToRaster(
+        remeshedRaster["header"], remeshedRaster["rasterData"], outFile, flip=flipArg
+    )
+    log.info("Saved remeshed raster to %s" % writtenFile)
+    pathRaster = str(pathlib.Path("remeshedRasters", writtenFile.name))
 
     return pathRaster
 
@@ -388,18 +483,24 @@ def searchRemeshedRaster(rasterName, cfgSim, typeIndicator="DEM"):
     # check if Raster is available
     if pathToRasters.is_dir():
         # look for rasters and check if cellSize within tolerance and origin matches
-        rasterFiles = list(pathToRasters.glob("*remeshed%s*.asc" % typeIndicator))
+        rasterFiles = list(pathToRasters.glob("*remeshed%s*" % typeIndicator))
         allRasterNames = [d.name for d in rasterFiles]
         for rasterF in rasterFiles:
-            headerRaster = IOf.readASCheader(rasterF)
-            if abs(meshCellSize - headerRaster["cellsize"]) < meshCellSizeThreshold and rasterName in rasterF.stem:
-                log.info("Remeshed Raster found: %s cellSize: %.5f" % (rasterF.name, headerRaster["cellsize"]))
+            headerRaster = rU.readRasterHeader(rasterF)
+            if (
+                    abs(meshCellSize - headerRaster["cellsize"]) < meshCellSizeThreshold
+                    and rasterName in rasterF.stem
+            ):
+                log.info(
+                    "Remeshed Raster found: %s cellSize: %.5f" % (rasterF.name, headerRaster["cellsize"])
+                )
                 rasterFound = True
                 pathRaster = str(pathlib.Path("remeshedRasters", rasterF.name))
                 continue
             else:
                 log.debug(
-                    "Remeshed raster found %s with cellSize %.2f - not used" % (rasterF, headerRaster["cellsize"])
+                    "Remeshed raster found %s with cellSize %.2f - not used"
+                    % (rasterF, headerRaster["cellsize"])
                 )
 
     else:
@@ -1242,8 +1343,8 @@ def checkParticlesInRelease(particles, line, radius):
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask) - np.sum(Mask)
     if nRemove > 0:
-        particles = particleTools.removePart(particles, Mask, nRemove, '')
-        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
+        particles = particleTools.removePart(particles, Mask, nRemove, "")
+        log.debug("removed %s particles because they are not within the release polygon" % (nRemove))
 
     return particles
 
@@ -1572,75 +1673,74 @@ def snapPtsToLine(dbData, projstr, lineName, pointsList):
                 "y": [dbData.loc[index, ("%s_%s" % (pt, projstr))].y],
             }
 
-            indSplit = findClosestPoint(xycoor[0,:], xycoor[1,:], pointsDict)
+            indSplit = findClosestPoint(xycoor[0, :], xycoor[1, :], pointsDict)
             projPoint = shp.Point(xycoor[0, indSplit], xycoor[1, indSplit], zcoor[indSplit])
             dbData.loc[index, (pt + "_" + projstr + "_snapped")] = projPoint
 
     return dbData
 
 
-
 def getNormalMesh(dem, num=4):
-    """ Compute normal to surface at grid points
+    """Compute normal to surface at grid points
 
-        Get the normal vectors to the surface defined by a DEM.
-        Either by adding the normal vectors of the adjacent triangles for each
-        points (using 4, 6 or 8 adjacent triangles). Or use the next point in
-        x direction and the next in y direction to define two vectors and then
-        compute the cross product to get the normal vector
+    Get the normal vectors to the surface defined by a DEM.
+    Either by adding the normal vectors of the adjacent triangles for each
+    points (using 4, 6 or 8 adjacent triangles). Or use the next point in
+    x direction and the next in y direction to define two vectors and then
+    compute the cross product to get the normal vector
 
-        - moved from com1DFA/DFAtools
+    - moved from com1DFA/DFAtools
 
-        Normal computation on rectangular grid explanation for num parameter
-        4 triangles method        6 triangles method         8 triangles method
-        +----U----UR---+---+--... +----+----+----+---+--... +----+----+----+---+--...
-        |   /|\   |   /|          |   /| 2 /|   /|          |\ 2 | 3 /|   /|           Y
-        |  / | \  |  / |          |  / |  / |  / |          | \  |  / |  / |           ^
-        | /  |  \ | /  | /        | /  | /  | /  | /        |  \ | /  | /  | /         |
-        |/ 1 | 2 \|/   |/         |/ 1 |/ 3 |/   |/         | 1 \|/ 4 |/   |/          |
-        +----P----L----+---+--... +----*----+----+---+--... +----*----+----+----+--... +-----> X
-        |\ 4 | 3 /|   /|          | 6 /| 4 /|   /|          | 8 /|\ 5 |   /|
-        | \  |  / |  / |          |  / |  / |  / |          |  / | \  |  / |
-        |  \ | /  | /  | /        | /  | /  | /  | /        | /  |  \ | /  | /
-        |   \|/   |/   |/         |/ 5 |/   |/   |/         |/ 7 | 6 \|/   |/
-        +----+----+----+---+--... +----+----+----+---+--... +----+----+----+---+--...
-        |   /|   /|   /|          |   /|   /|   /|          |   /|   /|   /|
-        4 Options available : -1: simple cross product method (with the diagonals P-UR and U-L)
-                              -4: 4 triangles method
-                              -6: 6 triangles method
-                              -8: 8 triangles method
+    Normal computation on rectangular grid explanation for num parameter
+    4 triangles method        6 triangles method         8 triangles method
+    +----U----UR---+---+--... +----+----+----+---+--... +----+----+----+---+--...
+    |   /|\   |   /|          |   /| 2 /|   /|          |\ 2 | 3 /|   /|           Y
+    |  / | \  |  / |          |  / |  / |  / |          | \  |  / |  / |           ^
+    | /  |  \ | /  | /        | /  | /  | /  | /        |  \ | /  | /  | /         |
+    |/ 1 | 2 \|/   |/         |/ 1 |/ 3 |/   |/         | 1 \|/ 4 |/   |/          |
+    +----P----L----+---+--... +----*----+----+---+--... +----*----+----+----+--... +-----> X
+    |\ 4 | 3 /|   /|          | 6 /| 4 /|   /|          | 8 /|\ 5 |   /|
+    | \  |  / |  / |          |  / |  / |  / |          |  / | \  |  / |
+    |  \ | /  | /  | /        | /  | /  | /  | /        | /  |  \ | /  | /
+    |   \|/   |/   |/         |/ 5 |/   |/   |/         |/ 7 | 6 \|/   |/
+    +----+----+----+---+--... +----+----+----+---+--... +----+----+----+---+--...
+    |   /|   /|   /|          |   /|   /|   /|          |   /|   /|   /|
+    4 Options available : -1: simple cross product method (with the diagonals P-UR and U-L)
+                          -4: 4 triangles method
+                          -6: 6 triangles method
+                          -8: 8 triangles method
 
-        Parameters
-        ----------
-            dem: dict
-                header :
-                    dem header (cellsize, ncols, nrows)
-                rasterData : 2D numpy array
-                    elevation at grid points
-            num: int
-                chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
-                1 to use the simple cross product method (with the diagonals)
-
-        Returns
-        -------
+    Parameters
+    ----------
         dem: dict
-            dem dict updated with:
-                Nx: 2D numpy array
-                    x component of the normal vector field on grid points
-                Ny: 2D numpy array
-                    y component of the normal vector field on grid points
-                Nz: 2D numpy array
-                    z component of the normal vector field on grid points
-                outOfDEM: 2D boolean numpy array
-                    True if the cell is out the dem, False otherwise
+            header :
+                dem header (cellsize, ncols, nrows)
+            rasterData : 2D numpy array
+                elevation at grid points
+        num: int
+            chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
+            1 to use the simple cross product method (with the diagonals)
+
+    Returns
+    -------
+    dem: dict
+        dem dict updated with:
+            Nx: 2D numpy array
+                x component of the normal vector field on grid points
+            Ny: 2D numpy array
+                y component of the normal vector field on grid points
+            Nz: 2D numpy array
+                z component of the normal vector field on grid points
+            outOfDEM: 2D boolean numpy array
+                True if the cell is out the dem, False otherwise
     """
     # read dem header
-    header = dem['header']
-    ncols = header['ncols']
-    nrows = header['nrows']
-    csz = header['cellsize']
+    header = dem["header"]
+    ncols = header["ncols"]
+    nrows = header["nrows"]
+    csz = header["cellsize"]
     # read rasterData
-    z = dem['rasterData']
+    z = dem["rasterData"]
     n, m = np.shape(z)
     Nx = np.ones((n, m))
     Ny = np.ones((n, m))
@@ -1650,144 +1750,197 @@ def getNormalMesh(dem, num=4):
         # filling the inside of the matrix
         # normal calculation with 4 triangles
         # (Zl - Zr) / csz
-        Nx[1:n-1, 1:m-1] = (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
+        Nx[1: n - 1, 1: m - 1] = (z[1: n - 1, 0: m - 2] - z[1: n - 1, 2:m]) / csz
         # (Zd - Zu) * csz
-        Ny[1:n-1, 1:m-1] = (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) / csz
+        Ny[1: n - 1, 1: m - 1] = (z[0: n - 2, 1: m - 1] - z[2:n, 1: m - 1]) / csz
         Nz = 2 * Nz
         # filling the first col of the matrix
         # -2*(Zr - Zp) / csz
-        Nx[1:n-1, 0] = - 2*(z[1:n-1, 1] - z[1:n-1, 0]) / csz
+        Nx[1: n - 1, 0] = -2 * (z[1: n - 1, 1] - z[1: n - 1, 0]) / csz
         # (Zd - Zu) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]) / csz
+        Ny[1: n - 1, 0] = (z[0: n - 2, 0] - z[2:n, 0]) / csz
         # filling the last col of the matrix
         # 2*(Zl - Zp) / csz
-        Nx[1:n-1, m-1] = 2*(z[1:n-1, m-2] - z[1:n-1, m-1]) / csz
+        Nx[1: n - 1, m - 1] = 2 * (z[1: n - 1, m - 2] - z[1: n - 1, m - 1]) / csz
         # (Zd - Zu) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]) / csz
+        Ny[1: n - 1, m - 1] = (z[0: n - 2, m - 1] - z[2:n, m - 1]) / csz
         # filling the first row of the matrix
         # (Zl - Zr) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]) / csz
+        Nx[0, 1: m - 1] = (z[0, 0: m - 2] - z[0, 2:m]) / csz
         # -2*(Zu - Zp) / csz
-        Ny[0, 1:m-1] = - 2*(z[1, 1:m-1] - z[0, 1:m-1]) / csz
+        Ny[0, 1: m - 1] = -2 * (z[1, 1: m - 1] - z[0, 1: m - 1]) / csz
         # filling the last row of the matrix
         # (Zl - Zr) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]) / csz
+        Nx[n - 1, 1: m - 1] = (z[n - 1, 0: m - 2] - z[n - 1, 2:m]) / csz
         # 2*(Zd - Zp) / csz
-        Ny[n-1, 1:m-1] = 2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) / csz
+        Ny[n - 1, 1: m - 1] = 2 * (z[n - 2, 1: m - 1] - z[n - 1, 1: m - 1]) / csz
         # filling the corners of the matrix
         Nx[0, 0] = -(z[0, 1] - z[0, 0]) / csz
         Ny[0, 0] = -(z[1, 0] - z[0, 0]) / csz
         Nz[0, 0] = 1
-        Nx[n-1, 0] = -(z[n-1, 1] - z[n-1, 0]) / csz
-        Ny[n-1, 0] = (z[n-2, 0] - z[n-1, 0]) / csz
-        Nz[n-1, 0] = 1
-        Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
-        Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
-        Nz[0, m-1] = 1
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]) / csz
-        Nz[n-1, m-1] = 1
+        Nx[n - 1, 0] = -(z[n - 1, 1] - z[n - 1, 0]) / csz
+        Ny[n - 1, 0] = (z[n - 2, 0] - z[n - 1, 0]) / csz
+        Nz[n - 1, 0] = 1
+        Nx[0, m - 1] = (z[0, m - 2] - z[0, m - 1]) / csz
+        Ny[0, m - 1] = -(z[1, m - 1] - z[0, m - 1]) / csz
+        Nz[0, m - 1] = 1
+        Nx[n - 1, m - 1] = (z[n - 1, m - 2] - z[n - 1, m - 1]) / csz
+        Ny[n - 1, m - 1] = (z[n - 2, m - 1] - z[n - 1, m - 1]) / csz
+        Nz[n - 1, m - 1] = 1
 
     if num == 6:
         # filling the inside of the matrix
         # normal calculation with 6 triangles
         # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) / csz
-        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
-                            - z[2:n, 2:m] + z[0:n-2, 0:m-2]
-                            + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
+        Nx[1: n - 1, 1: m - 1] = (
+                                         2 * (z[1: n - 1, 0: m - 2] - z[1: n - 1, 2:m])
+                                         - z[2:n, 2:m]
+                                         + z[0: n - 2, 0: m - 2]
+                                         + z[2:n, 1: m - 1]
+                                         - z[0: n - 2, 1: m - 1]
+                                 ) / csz
         # (2*(Zd - Zu) - Zur + Zdl - Zl + Zr) / csz
-        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
-                            - z[2:n, 2:m] + z[0:n-2, 0:m-2]
-                            - z[1:n-1, 0:m-2] + z[1:n-1, 2:m]) / csz
+        Ny[1: n - 1, 1: m - 1] = (
+                                         2 * (z[0: n - 2, 1: m - 1] - z[2:n, 1: m - 1])
+                                         - z[2:n, 2:m]
+                                         + z[0: n - 2, 0: m - 2]
+                                         - z[1: n - 1, 0: m - 2]
+                                         + z[1: n - 1, 2:m]
+                                 ) / csz
         Nz = 6 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur ) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1]) / csz
+        Nx[1: n - 1, 0] = (-2 * (z[1: n - 1, 1] - z[1: n - 1, 0]) + z[2:n, 0] - z[2:n, 1]) / csz
         # (Zd - Zu + Zr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[1:n-1, 1] - z[2:n, 1]) / csz
-        Nz[1:n-1, 0] = 3
+        Ny[1: n - 1, 0] = (z[0: n - 2, 0] - z[2:n, 0] + z[1: n - 1, 1] - z[2:n, 1]) / csz
+        Nz[1: n - 1, 0] = 3
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
+        Nx[1: n - 1, m - 1] = (
+                                      2 * (z[1: n - 1, m - 2] - z[1: n - 1, m - 1]) + z[0: n - 2, m - 2] - z[0: n - 2,
+                                                                                                           m - 1]
+                              ) / csz
         # (Zd - Zu + Zdl - Zl) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
-        Nz[1:n-1, m-1] = 3
+        Ny[1: n - 1, m - 1] = (
+                                      z[0: n - 2, m - 1] - z[2:n, m - 1] + z[0: n - 2, m - 2] - z[1: n - 1, m - 2]
+                              ) / csz
+        Nz[1: n - 1, m - 1] = 3
         # filling the first row of the matrix
         # (Zl - Zr + Zu - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 1:m-1] - z[1, 2:m]) / csz
+        Nx[0, 1: m - 1] = (z[0, 0: m - 2] - z[0, 2:m] + z[1, 1: m - 1] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m]) / csz
-        Nz[0, 1:m-1] = 3
+        Ny[0, 1: m - 1] = (-2 * (z[1, 1: m - 1] - z[0, 1: m - 1]) + z[0, 2:m] - z[1, 2:m]) / csz
+        Nz[0, 1: m - 1] = 3
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zd) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
+        Nx[n - 1, 1: m - 1] = (
+                                      z[n - 1, 0: m - 2] - z[n - 1, 2:m] + z[n - 2, 0: m - 2] - z[n - 2, 1: m - 1]
+                              ) / csz
         # (2*(Zd - Zp) + Zdl - Zl) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
-        Nz[n-1, 1:m-1] = 3
+        Ny[n - 1, 1: m - 1] = (
+                                      2 * (z[n - 2, 1: m - 1] - z[n - 1, 1: m - 1]) + z[n - 2, 0: m - 2] - z[n - 1,
+                                                                                                           0: m - 2]
+                              ) / csz
+        Nz[n - 1, 1: m - 1] = 3
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
         Ny[0, 0] = (z[0, 1] - z[1, 1] - (z[1, 0] - z[0, 0])) / csz
         Nz[0, 0] = 2
-        Nx[n-1, 0] = -(z[n-1, 1] - z[n-1, 0]) / csz
-        Ny[n-1, 0] = (z[n-2, 0] - z[n-1, 0]) / csz
-        Nz[n-1, 0] = 1
-        Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
-        Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
-        Nz[0, m-1] = 1
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
-        Nz[n-1, m-1] = 2
+        Nx[n - 1, 0] = -(z[n - 1, 1] - z[n - 1, 0]) / csz
+        Ny[n - 1, 0] = (z[n - 2, 0] - z[n - 1, 0]) / csz
+        Nz[n - 1, 0] = 1
+        Nx[0, m - 1] = (z[0, m - 2] - z[0, m - 1]) / csz
+        Ny[0, m - 1] = -(z[1, m - 1] - z[0, m - 1]) / csz
+        Nz[0, m - 1] = 1
+        Nx[n - 1, m - 1] = (z[n - 1, m - 2] - z[n - 1, m - 1] + z[n - 2, m - 2] - z[n - 2, m - 1]) / csz
+        Ny[n - 1, m - 1] = (z[n - 2, m - 1] - z[n - 1, m - 1] + z[n - 2, m - 2] - z[n - 1, m - 2]) / csz
+        Nz[n - 1, m - 1] = 2
 
     if num == 8:
         # filling the inside of the matrix
         # normal calculation with 8 triangles
         # (2*(Zl - Zr) + Zul - Zur + Zdl - Zdr) / csz
-        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) + z[2:n, 0:m-2] - z[2:n, 2:m]
-                            + z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
+        Nx[1: n - 1, 1: m - 1] = (
+                                         2 * (z[1: n - 1, 0: m - 2] - z[1: n - 1, 2:m])
+                                         + z[2:n, 0: m - 2]
+                                         - z[2:n, 2:m]
+                                         + z[0: n - 2, 0: m - 2]
+                                         - z[0: n - 2, 2:m]
+                                 ) / csz
         # (2*(Zd - Zu) - Zul - Zur + Zdl + Zdr) / csz
-        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) - z[2:n, 0:m-2] - z[2:n, 2:m]
-                            + z[0:n-2, 0:m-2] + z[0:n-2, 2:m]) / csz
+        Ny[1: n - 1, 1: m - 1] = (
+                                         2 * (z[0: n - 2, 1: m - 1] - z[2:n, 1: m - 1])
+                                         - z[2:n, 0: m - 2]
+                                         - z[2:n, 2:m]
+                                         + z[0: n - 2, 0: m - 2]
+                                         + z[0: n - 2, 2:m]
+                                 ) / csz
         Nz = 8 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur + Zd - Zdr) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
+        Nx[1: n - 1, 0] = (
+                                  -2 * (z[1: n - 1, 1] - z[1: n - 1, 0])
+                                  + z[2:n, 0]
+                                  - z[2:n, 1]
+                                  + z[0: n - 2, 0]
+                                  - z[0: n - 2, 1]
+                          ) / csz
         # (Zd - Zu + Zdr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[0:n-2, 1] - z[2:n, 1]) / csz
-        Nz[1:n-1, 0] = 4
+        Ny[1: n - 1, 0] = (z[0: n - 2, 0] - z[2:n, 0] + z[0: n - 2, 1] - z[2:n, 1]) / csz
+        Nz[1: n - 1, 0] = 4
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd + Zul - Zu) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2]
-                          - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
+        Nx[1: n - 1, m - 1] = (
+                                      2 * (z[1: n - 1, m - 2] - z[1: n - 1, m - 1])
+                                      + z[0: n - 2, m - 2]
+                                      - z[0: n - 2, m - 1]
+                                      + z[2:n, m - 2]
+                                      - z[2:n, m - 1]
+                              ) / csz
         # (Zd - Zu + Zdl - Zul) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[2:n, m-2]) / csz
-        Nz[1:n-1, m-1] = 4
+        Ny[1: n - 1, m - 1] = (
+                                      z[0: n - 2, m - 1] - z[2:n, m - 1] + z[0: n - 2, m - 2] - z[2:n, m - 2]
+                              ) / csz
+        Nz[1: n - 1, m - 1] = 4
         # filling the first row of the matrix
         # (Zl - Zr + Zul - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 0:m-2] - z[1, 2:m]) / csz
+        Nx[0, 1: m - 1] = (z[0, 0: m - 2] - z[0, 2:m] + z[1, 0: m - 2] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur + Zl - Zul) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
-        Nz[0, 1:m-1] = 4
+        Ny[0, 1: m - 1] = (
+                                  -2 * (z[1, 1: m - 1] - z[0, 1: m - 1])
+                                  + z[0, 2:m]
+                                  - z[1, 2:m]
+                                  + z[0, 0: m - 2]
+                                  - z[1, 0: m - 2]
+                          ) / csz
+        Nz[0, 1: m - 1] = 4
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zdr) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
+        Nx[n - 1, 1: m - 1] = (
+                                      z[n - 1, 0: m - 2] - z[n - 1, 2:m] + z[n - 2, 0: m - 2] - z[n - 2, 2:m]
+                              ) / csz
         # (2*(Zd - Zp) + Zdl - Zl + Zdr - Zr) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
-        Nz[n-1, 1:m-1] = 4
+        Ny[n - 1, 1: m - 1] = (
+                                      2 * (z[n - 2, 1: m - 1] - z[n - 1, 1: m - 1])
+                                      + z[n - 2, 0: m - 2]
+                                      - z[n - 1, 0: m - 2]
+                                      + z[n - 2, 2:m]
+                                      - z[n - 1, 2:m]
+                              ) / csz
+        Nz[n - 1, 1: m - 1] = 4
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
         Ny[0, 0] = (z[0, 1] - z[1, 1] - (z[1, 0] - z[0, 0])) / csz
         Nz[0, 0] = 2
-        Nx[n-1, 0] = (-(z[n-1, 1] - z[n-1, 0]) + z[n-2, 0] - z[n-2, 1]) / csz
-        Ny[n-1, 0] = (z[n-2, 1] - z[n-1, 1] + z[n-2, 0] - z[n-1, 0]) / csz
-        Nz[n-1, 0] = 2
-        Nx[0, m-1] = (z[1, m-2] - z[1, m-1] + z[0, m-2] - z[0, m-1]) / csz
-        Ny[0, m-1] = (-(z[1, m-1] - z[0, m-1]) + z[0, m-2] - z[1, m-2]) / csz
-        Nz[0, m-1] = 2
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]
-                        + z[n-2, m-2] - z[n-2, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]
-                        + z[n-2, m-2] - z[n-1, m-2]) / csz
-        Nz[n-1, m-1] = 2
+        Nx[n - 1, 0] = (-(z[n - 1, 1] - z[n - 1, 0]) + z[n - 2, 0] - z[n - 2, 1]) / csz
+        Ny[n - 1, 0] = (z[n - 2, 1] - z[n - 1, 1] + z[n - 2, 0] - z[n - 1, 0]) / csz
+        Nz[n - 1, 0] = 2
+        Nx[0, m - 1] = (z[1, m - 2] - z[1, m - 1] + z[0, m - 2] - z[0, m - 1]) / csz
+        Ny[0, m - 1] = (-(z[1, m - 1] - z[0, m - 1]) + z[0, m - 2] - z[1, m - 2]) / csz
+        Nz[0, m - 1] = 2
+        Nx[n - 1, m - 1] = (z[n - 1, m - 2] - z[n - 1, m - 1] + z[n - 2, m - 2] - z[n - 2, m - 1]) / csz
+        Ny[n - 1, m - 1] = (z[n - 2, m - 1] - z[n - 1, m - 1] + z[n - 2, m - 2] - z[n - 1, m - 2]) / csz
+        Nz[n - 1, m - 1] = 2
 
     if num == 1:
         # using the simple cross product
@@ -1796,22 +1949,28 @@ def getNormalMesh(dem, num=4):
         z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
         n2, m2 = np.shape(z2)
 
-        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1]) + (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
-        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1]) - (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
+        Nx = (
+                -((z2[0: n2 - 1, 1:m2] - z2[1:n2, 0: m2 - 1]) + (z2[1:n2, 1:m2] - z2[0: n2 - 1, 0: m2 - 1]))
+                * csz
+        )
+        Ny = (
+                -((z2[1:n2, 1:m2] - z2[0: n2 - 1, 0: m2 - 1]) - (z2[0: n2 - 1, 1:m2] - z2[1:n2, 0: m2 - 1]))
+                * csz
+        )
         Nz = 2 * Nz * csz * csz
 
         # Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
         # Ny = - (z2[1:n2, 0:m2-1] - z2[0:n2-1, 0:m2-1]) / csz
-        Ny[n-1, 0:m-1] = -Ny[n-1, 0:m-1]
-        Nx[0:n-1, m-1] = -Nx[0:n-1, m-1]
-        Ny[n-1, m-1] = -Ny[n-1, m-1]
-        Nx[n-1, m-1] = -Nx[n-1, m-1]
+        Ny[n - 1, 0: m - 1] = -Ny[n - 1, 0: m - 1]
+        Nx[0: n - 1, m - 1] = -Nx[0: n - 1, m - 1]
+        Ny[n - 1, m - 1] = -Ny[n - 1, m - 1]
+        Nx[n - 1, m - 1] = -Nx[n - 1, m - 1]
         # TODO, Try to replicate samosAT notmal computation
         # if method num=1 is used, the normals are computed at com1DFA (original) cell center
         # this corresponds to our cell vertex
         # Create com1DFA (original) vertex grid
-        x = np.linspace(-csz/2., (ncols-1)*csz - csz/2., ncols)
-        y = np.linspace(-csz/2., (nrows-1)*csz - csz/2., nrows)
+        x = np.linspace(-csz / 2.0, (ncols - 1) * csz - csz / 2.0, ncols)
+        y = np.linspace(-csz / 2.0, (nrows - 1) * csz - csz / 2.0, nrows)
         X, Y = np.meshgrid(x, y)
         # interpolate the normal from com1DFA (original) center to his vertex
         # this means from our vertex to our centers
@@ -1821,46 +1980,46 @@ def getNormalMesh(dem, num=4):
         Nz = NzCenter
 
     # if no normal available, put 0 for Nx and Ny and 1 for Nz
-    dem['Nx'] = np.where(np.isnan(Nx), 0., 0.5*Nx)
-    dem['Ny'] = np.where(np.isnan(Ny), 0., 0.5*Ny)
-    dem['Nz'] = 0.5*Nz
+    dem["Nx"] = np.where(np.isnan(Nx), 0.0, 0.5 * Nx)
+    dem["Ny"] = np.where(np.isnan(Ny), 0.0, 0.5 * Ny)
+    dem["Nz"] = 0.5 * Nz
     # build no data mask (used to find out of dem particles)
-    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(bool).flatten()
-    dem['outOfDEM'] = outOfDEM
+    outOfDEM = np.where(np.isnan(dem["rasterData"]), 1, 0).astype(bool).flatten()
+    dem["outOfDEM"] = outOfDEM
     return dem
 
 
 def getNormalArray(x, y, Nx, Ny, Nz, csz):
-    """ Interpolate vector field from grid to unstructured points
+    """Interpolate vector field from grid to unstructured points
 
-        Originally created to get the normal vector at location (x,y) given the
-        normal vector field on the grid. Grid has its origin in (0,0).
-        Can be used to interpolate any vector field.
-        Interpolation using a bilinear interpolation
+    Originally created to get the normal vector at location (x,y) given the
+    normal vector field on the grid. Grid has its origin in (0,0).
+    Can be used to interpolate any vector field.
+    Interpolation using a bilinear interpolation
 
-        Parameters
-        ----------
-            x: numpy array
-                location in the x location of desired interpolation
-            y: numpy array
-                location in the y location of desired interpolation
-            Nx: 2D numpy array
-                x component of the vector field at the grid nodes
-            Ny: 2D numpy array
-                y component of the vector field at the grid nodes
-            Nz: 2D numpy array
-                z component of the vector field at the grid nodes
-            csz: float
-                cellsize of the grid
+    Parameters
+    ----------
+        x: numpy array
+            location in the x location of desired interpolation
+        y: numpy array
+            location in the y location of desired interpolation
+        Nx: 2D numpy array
+            x component of the vector field at the grid nodes
+        Ny: 2D numpy array
+            y component of the vector field at the grid nodes
+        Nz: 2D numpy array
+            z component of the vector field at the grid nodes
+        csz: float
+            cellsize of the grid
 
-        Returns
-        -------
-            nx: numpy array
-                x component of the interpolated vector field at position (x, y)
-            ny: numpy array
-                y component of the interpolated vector field at position (x, y)
-            nz: numpy array
-                z component of the interpolated vector field at position (x, y)
+    Returns
+    -------
+        nx: numpy array
+            x component of the interpolated vector field at position (x, y)
+        ny: numpy array
+            y component of the interpolated vector field at position (x, y)
+        nz: numpy array
+            z component of the interpolated vector field at position (x, y)
     """
     nrow, ncol = np.shape(Nx)
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
@@ -1871,19 +2030,19 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
 
 
 def cellsAffectedLine(header, pointsXY, typePoints):
-    """ find which cells of data area affected by points
+    """find which cells of data area affected by points
 
-        Parameters
-        -----------
-        header: dict
-            info on array llcenter, nrows, ncols, cellsize
-        data: numpy nd array
-            data array
-        points: dict
-            dictionary with x, y coordinates
-        typePoints: str
-            type of coordinates in pointsXY, options: linestring, point
-        """
+    Parameters
+    -----------
+    header: dict
+        info on array llcenter, nrows, ncols, cellsize
+    data: numpy nd array
+        data array
+    points: dict
+        dictionary with x, y coordinates
+    typePoints: str
+        type of coordinates in pointsXY, options: linestring, point
+    """
 
     xllc = header["xllcenter"]
     yllc = header["yllcenter"]
@@ -1892,22 +2051,21 @@ def cellsAffectedLine(header, pointsXY, typePoints):
     y = np.linspace(yllc, yllc + (header["nrows"] - 1) * cellSize, header["nrows"])
     xx, yy = np.meshgrid(x, y)
 
-    linecoords = np.zeros((len(pointsXY['x']), 2))
-    linecoords[:,0] = pointsXY['x']
-    linecoords[:,1] = pointsXY['y']
+    linecoords = np.zeros((len(pointsXY["x"]), 2))
+    linecoords[:, 0] = pointsXY["x"]
+    linecoords[:, 1] = pointsXY["y"]
 
-    if typePoints.lower() == 'linestring':
+    if typePoints.lower() == "linestring":
         line = LineString(linecoords)
-    elif typePoints.lower() == 'point' and len(pointsXY['x']) == 1:
+    elif typePoints.lower() == "point" and len(pointsXY["x"]) == 1:
         line = Point(linecoords)
-    elif typePoints.lower() == 'point' and len(pointsXY['x']) < 1:
+    elif typePoints.lower() == "point" and len(pointsXY["x"]) < 1:
         line = MultiPoint(linecoords)
 
-
-    mask = np.zeros((header['nrows'], header['ncols']))
+    mask = np.zeros((header["nrows"], header["ncols"]))
     for ind, m in enumerate(xx[:, 0]):
         for ind2, k in enumerate(xx[0, :]):
             if distance(line, Point([xx[ind, ind2], yy[ind, ind2]])) <= np.sqrt(cellSize**2 + cellSize**2):
-                mask[ind, ind2] = 1.
+                mask[ind, ind2] = 1.0
 
     return mask, xx, yy

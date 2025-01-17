@@ -27,6 +27,7 @@ def readASCheader(fname):
     """
 
     # read header
+    log.warning("This function is deprecated. Look at rasterUtils for replacements.")
     headerRows = 6  # six rows for header information
     headerInfo = (
         {}
@@ -42,7 +43,7 @@ def readASCheader(fname):
             rowCount = rowCount + 1
 
     if ("xllcenter" not in headerInfo and "xllcorner" in headerInfo) and (
-        "yllcenter" not in headerInfo and "yllcorner" in headerInfo
+            "yllcenter" not in headerInfo and "yllcorner" in headerInfo
     ):
         headerInfo["xllcenter"] = headerInfo["xllcorner"] + headerInfo["cellsize"] / 2
         headerInfo["yllcenter"] = headerInfo["yllcorner"] + headerInfo["cellsize"] / 2
@@ -56,7 +57,7 @@ def readASCheader(fname):
 
     headerItems = [item.lower() for item in list(headerInfo.keys())]
     if sorted(headerItems) != sorted(
-        ["cellsize", "nrows", "ncols", "xllcenter", "yllcenter", "nodata_value"]
+            ["cellsize", "nrows", "ncols", "xllcenter", "yllcenter", "nodata_value"]
     ):
         message = "DEM header is not in correct format - needs to contain values for: cellsize, nrows, ncols, xllcenter(-corner), yllcenter(-corner), nodata_value"
         log.error(message)
@@ -79,14 +80,15 @@ def isEqualASCheader(headerA, headerB):
     --------
     boolean: True if header A and B are equal (disregrad the noData field)
     """
+    log.warning("This function is deprecated. Look at rasterUtils for replacements.")
     a = headerA
     b = headerB
     return (
-        (a["ncols"] == b["ncols"])
-        and (a["nrows"] == b["nrows"])
-        and (a["xllcenter"] == b["xllcenter"])
-        and (a["yllcenter"] == b["yllcenter"])
-        and (a["cellsize"] == b["cellsize"])
+            (a["ncols"] == b["ncols"])
+            and (a["nrows"] == b["nrows"])
+            and (a["xllcenter"] == b["xllcenter"])
+            and (a["yllcenter"] == b["yllcenter"])
+            and (a["cellsize"] == b["cellsize"])
     )
 
 
@@ -104,6 +106,7 @@ def readASCdata2numpyArray(fName):
     -rasterdata : 2D numpy array
             2D numpy array of ascii matrix
     """
+    log.warning("This function is deprecated. Look at rasterUtils for replacements.")
     infile = open(fName, "r")
     rasterdata = np.loadtxt(fName, skiprows=6)
     infile.close()
@@ -130,6 +133,7 @@ def readRaster(fname, noDataToNan=True):
                 2D numpy array of ascii matrix
     """
 
+    log.warning("This function is deprecated. Look at rasterUtils for replacements.")
     log.debug("Reading dem : %s", fname)
     header = readASCheader(fname)
     rasterdata = readASCdata2numpyArray(fname)
@@ -161,6 +165,7 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
     """
 
     # Open outfile
+    log.warning("This function is deprecated. Look at rasterUtils for replacements.")
     with open(outFileName, "w") as outFile:
         # write the header and array values to file
         outFile.write("ncols %d\n" % header["ncols"])

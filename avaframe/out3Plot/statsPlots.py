@@ -14,7 +14,7 @@ import pathlib
 # local imports
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in3Utils import cfgHandling
 import avaframe.in1Data.getInput as gI
 import avaframe.com1DFA.deriveParameterSet as dP
@@ -247,7 +247,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
     avaName = pathlib.PurePath(avaDir).name
 
     # fetch probabiltiy map datasets in inDir
-    dataFiles = list(inDir.glob('*.asc'))
+    dataFiles = list(inDir.glob('*.asc')) + list(inDir.glob("*.tif"))
     if dataFiles == []:
         message = 'No probability map dataset found in: %s' % (inDir)
         log.error(message)
@@ -279,7 +279,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
 
         raster = IOf.readRaster(data, noDataToNan=True)
         dataPlot = raster['rasterData']
-        header = IOf.readASCheader(data)
+        header = IOf.readRasterHeader(data)
         cellSize = header['cellsize']
 
         # load correspoding DEM check for matching cellsize
@@ -350,8 +350,6 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1, zorder=4)
         else:
             CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1, zorder=4)
-        for i in range(len(labels)):
-            CS.collections[i].set_label(labels[i])
 
         pU.addColorBar(im1, ax1, ticks, unit)
         title = str('%s' % cfg['name'])

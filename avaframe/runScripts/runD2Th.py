@@ -5,7 +5,7 @@ Run conversion from depth to thickness using DEM
 import pathlib
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in1Data import getInput as gI
 import avaframe.in2Trans.transfromFields as tF
 import avaframe.out3Plot.outTransformPlots as oT
@@ -19,7 +19,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
 
     # directory with peak files
     inDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles")
-    resFiles = list(inDir.glob("*_%s.asc" % resType))
+    resFiles = list(inDir.glob("*_%s.asc" % resType)) + list(inDir.glob("*_%s.tif" % resType))
 
     # create output directory
     outDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles", "transformed")
@@ -33,7 +33,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
         # convert depth to thickness using dem
         thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthToThickness(depthField, dem)
 
-        pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s.asc" % resType
+        pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s" % resType
 
         # create plot
         oT.plotDepthToThickness(
@@ -48,7 +48,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
 
         # write thickness to file
         outFile = outDir / pName
-        IOf.writeResultToAsc(thicknessDict["header"], thicknessDict["rasterData"], outFile, flip=True)
+        IOf.writeResultToRaster(thicknessDict["header"], thicknessDict["rasterData"], outFile, flip=True)
 
 
 if __name__ == "__main__":

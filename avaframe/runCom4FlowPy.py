@@ -22,7 +22,7 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
 
@@ -60,7 +60,7 @@ def main():
         initProj.cleanModuleFiles(avalancheDir, com4FlowPy, deleteOutput=False)
 
         # Start logging
-        log = logUtils.initiateLogger(avalancheDir, logName)
+        log = logUtils.initiateLogger(avalancheDir, logName+'_'+uid)
         log.info("==================================")
         log.info("MAIN SCRIPT")
         log.info("Current avalanche: %s", avalancheDir)
@@ -109,19 +109,26 @@ def main():
     # if customPaths == True --> check
     elif cfgCustomPaths["useCustomPaths"] == "True":
         # if "useCustomPaths" == True, we don't need the AvaDir Info for the
-        # creation of the simulaiton uid
+        # creation of the simulation uid
         uid = cfgUtils.cfgHash(cfg)
         cfgPath = {}
 
         # Handling Custom directory creation
         workDir = pathlib.Path(cfgCustomPaths["workDir"])
 
+        if not os.path.isdir(workDir):
+            try:
+                os.makedirs(workDir)
+            except Exception as e:
+                return e
+
+        log = logUtils.initiateLogger(workDir, logName+'_'+uid)
+
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
         try:
             os.makedirs(workDir / "res_{}".format(uid))  # (time_string))
             res_dir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
-            log.info("folder with same name already exists - aborting")
             log.info("simulation results folder with same .ini parameters already exists: simulation {}".format(uid))
             sys.exit(1)
         try:
@@ -130,7 +137,6 @@ def main():
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-        log = logUtils.initiateLogger(res_dir, logName)
 
         # writing config to .json file
         successToJSON = writeCfgJSON(cfg, uid, workDir)

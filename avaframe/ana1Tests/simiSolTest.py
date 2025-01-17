@@ -16,13 +16,16 @@ from scipy.integrate import ode
 import math
 import logging
 import pathlib
+import rasterio
+
+from avaframe.in2Trans.rasterUtils import transformFromASCHeader
 
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.in2Trans.shpConversion as shpConv
@@ -103,9 +106,7 @@ def mainSimilaritySol(simiSolCfg):
     # Early time solution
     t_early = np.arange(0, t1, dt_early)
     t_early = np.append(t_early, t1)
-    solSimi = calcEarlySol(
-        t_early, earthPressureCoefficients, x_0, zeta, delta, epsX, epsY
-    )
+    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, epsX, epsY)
 
     # Runge-Kutta integration away from the singularity
     # initial conditions
@@ -476,10 +477,7 @@ def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
     timeAdim = solSimi["timeAdim"]
     g_sol = solSimi["g_sol"]
     g_p_sol = solSimi["g_p_sol"]
-    u = U * (
-        AminusC * timeAdim[i]
-        + (x1 / L_x - AminusC / 2 * (timeAdim[i]) ** 2) * g_p_sol[i] / g_sol[i]
-    )
+    u = U * (AminusC * timeAdim[i] + (x1 / L_x - AminusC / 2 * (timeAdim[i]) ** 2) * g_p_sol[i] / g_sol[i])
 
     return u
 
@@ -698,16 +696,16 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # write error to resultsDF
 
         resDict = {}
-        resDict = {'timeStep': timeList}
-        resDict['hErrorL2'] = hEL2Array
-        resDict['vhErrorL2'] = vhEL2Array
-        resDict['hErrorLMax'] = hELMaxArray
-        resDict['vhErrorLMax'] = vhELMaxArray
+        resDict = {"timeStep": timeList}
+        resDict["hErrorL2"] = hEL2Array
+        resDict["vhErrorL2"] = vhEL2Array
+        resDict["hErrorLMax"] = hELMaxArray
+        resDict["vhErrorLMax"] = vhELMaxArray
         resultsDF = pd.DataFrame.from_dict(resDict)
-        resultsDF = resultsDF.set_index('timeStep')
+        resultsDF = resultsDF.set_index("timeStep")
 
         # save resultsDF to file
-        resultsDFPath = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'resultsSimiSolDF_%s.csv' % simHash)
+        resultsDFPath = pathlib.Path(avalancheDir, "Outputs", "com1DFA", "resultsSimiSolDF_%s.csv" % simHash)
         resultsDF.to_csv(resultsDFPath)
 
         # add result of error analysis
@@ -795,9 +793,7 @@ def analyzeResults(
     for t, field in zip(timeList, fieldsList):
         # get similartiy solution h, u at required time step
         indTime = np.searchsorted(solSimi["time"], t)
-        simiDict = getSimiSolParameters(
-            solSimi, fieldHeader, indTime, cfgSimi["SIMISOL"], relTh, gravAcc
-        )
+        simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi["SIMISOL"], relTh, gravAcc)
         cellSize = fieldHeader["cellsize"]
         cosAngle = simiDict["cos"]
         hSimi = simiDict["hSimi"]
@@ -828,16 +824,9 @@ def analyzeResults(
             hErrorLMaxArray[count] = hErrorLmax
             vhErrorL2Array[count] = vhErrorL2
             vhErrorLMaxArray[count] = vhErrorLmax
-        title = outAna1Plots.getTitleError(
-            cfgSimi["SIMISOL"].getboolean("relativError")
-        )
-        log.debug(
-            "L2 %s error on the Flow Thickness at t=%.2f s is : %.4f"
-            % (title, t, hErrorL2)
-        )
-        log.debug(
-            "L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2)
-        )
+        title = outAna1Plots.getTitleError(cfgSimi["SIMISOL"].getboolean("relativError"))
+        log.debug("L2 %s error on the Flow Thickness at t=%.2f s is : %.4f" % (title, t, hErrorL2))
+        log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         # Make all individual time step comparison plot
         if cfgSimi["SIMISOL"].getboolean("plotSequence"):
             outAna1Plots.saveSimiSolProfile(
@@ -865,14 +854,10 @@ def analyzeResults(
 
     # Create result plots
     tSave = cfgSimi["SIMISOL"].getfloat("tSave")
-    indT = min(
-        np.searchsorted(timeList, tSave), min(len(timeList) - 1, len(fieldsList) - 1)
-    )
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList) - 1, len(fieldsList) - 1))
     tSave = timeList[indT]
     indTime = np.searchsorted(solSimi["time"], tSave)
-    simiDict = getSimiSolParameters(
-        solSimi, fieldHeader, indTime, cfgSimi["SIMISOL"], relTh, gravAcc
-    )
+    simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi["SIMISOL"], relTh, gravAcc)
     outAna1Plots.plotSimiSolSummary(
         avalancheDir,
         timeList,
@@ -935,9 +920,11 @@ def getReleaseThickness(avaDir, cfg, demFile):
     # )
 
     # TODO: remesh DEM to actually reproduce the new remeshed DEM in the computations
-    remeshedDEM = geoTrans.remeshData(demOri, csz, remeshOption='griddata', interpMethod='cubic', larger=False)
-    nrows = remeshedDEM['header']['nrows']
-    ncols = remeshedDEM['header']['ncols']
+    remeshedDEM = geoTrans.remeshData(
+        demOri, csz, remeshOption="griddata", interpMethod="cubic", larger=False
+    )
+    nrows = remeshedDEM["header"]["nrows"]
+    ncols = remeshedDEM["header"]["ncols"]
 
     xllc = demOri["header"]["xllcenter"]
     yllc = demOri["header"]["yllcenter"]
@@ -986,8 +973,13 @@ def getReleaseThickness(avaDir, cfg, demFile):
         "yllcenter": yllc,
         "nodata_value": demOri["header"]["nodata_value"],
         "cellsize": csz,
+        "driver": "AAIGrid",
     }
-    IOf.writeResultToAsc(headerRelTh, relTh, relThFileName, flip=True)
+
+    headerRelTh["transform"] = transformFromASCHeader(headerRelTh)
+    headerRelTh["crs"] = rasterio.crs.CRS()
+
+    IOf.writeResultToRaster(headerRelTh, relTh, relThFileName.parent / relThFileName.stem, flip=True)
     return relDict
 
 
@@ -1032,12 +1024,7 @@ def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
         ind = np.where(((particles["y"] + yllc > -csz) & (particles["y"] + yllc < csz)))
         indFinal = int(nrows * 0.5) - 1
     elif axis == "yaxis":
-        ind = np.where(
-            (
-                (particles["x"] + xllc > xCenter - csz)
-                & (particles["x"] + xllc < xCenter + csz)
-            )
-        )
+        ind = np.where(((particles["x"] + xllc > xCenter - csz) & (particles["x"] + xllc < xCenter + csz)))
         indFinal = int(np.round((xCenter - xllc) / csz) + 1)
 
     x = particles["x"][ind] + xllc

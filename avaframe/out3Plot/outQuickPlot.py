@@ -13,7 +13,7 @@ from cmcrameri import cm as cmapCrameri
 import matplotlib as mpl
 
 # Local imports
-import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -310,11 +310,19 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
 
     refDir = fU.checkPathlib(refDir)
     compDir = fU.checkPathlib(compDir)
-    simRefFile = refDir / (simNameRef + '_' + suffix + '.asc')
-    simCompFile = compDir / (simNameComp + '_' + suffix + '.asc')
 
-    if not simRefFile.is_file() or not simCompFile.is_file():
-        log.error('File for result type: %s not found' % suffix)
+    # check if files exist either in .asc or .tif (asc is taken first)
+    simRefFile = refDir / (simNameRef + '_' + suffix + '.asc')
+    if not simRefFile.is_file():
+        simRefFile = refDir / (simNameRef + '_' + suffix + '.tif')
+        if not simRefFile.is_file():
+            log.error('simFile for result type: %s not found' % suffix)
+
+    simCompFile = compDir / (simNameComp + '_' + suffix + '.asc')
+    if not simCompFile.is_file():
+        simCompFile = compDir / (simNameComp + '_' + suffix + '.tif')
+        if not simCompFile.is_file():
+            log.error('compFile for result type: %s not found' % suffix)
 
     # Load data
     raster = IOf.readRaster(simCompFile, noDataToNan=True)
@@ -380,7 +388,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     raster = IOf.readRaster(datafiles[0], noDataToNan=True)
     rasterRef = IOf.readRaster(datafiles[1], noDataToNan=True)
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
-    header = IOf.readASCheader(datafiles[0])
+    header = IOf.readRasterHeader(datafiles[0])
     cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot
@@ -428,7 +436,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     # Load data
     raster = IOf.readRaster(datafile, noDataToNan=True)
     data1 = raster['rasterData']
-    header = IOf.readASCheader(datafile)
+    header = IOf.readRasterHeader(datafile)
     cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot
@@ -622,7 +630,7 @@ def plotAllContours(avaDir, modName, resType, level, specDir=''):
         raise AssertionError(message)
 
     # fetch all files for resType (file format needs to be of type _resType.asc)
-    pFiles = list(inDir.glob('*_%s.asc' % resType))
+    pFiles = list(inDir.glob('*_%s.*' % resType))
 
     # loop over all pFiles and create contourLines dictionary
     contourDict = {}

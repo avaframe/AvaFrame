@@ -43,13 +43,11 @@ def test_probAnalysis(tmp_path):
     # provide optional filter criteria for simulations
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
-#    print('PARAMETERSDIC', parametersDict)
-
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, 'com1DFA', parametersDict=parametersDict, inputDir='')
-    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs',
-                                       'ana4Stats',
-                                       'avaParabola_prob__ppr_lim1.0.asc'), skiprows=6)
+    outputPath = os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_prob__ppr_lim1.0.asc')
+    print(outputPath)
+    probTest = np.loadtxt(outputPath, skiprows=6)
 
     # Load reference solution
     probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_prob__ppr_lim1.0.txt'), skiprows=6)

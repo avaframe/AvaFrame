@@ -40,21 +40,24 @@ fully tested and might produce unwanted results.
 
 .. glossary::
    :sorted:
-  
+
+   Generate mass average path (ana5, com1)
+      Generates the mass average path from a dense flow simulation via module ana5Utils.
+
    Layer rename
-      Renames com1DFA result layers by adding the values of the given variable (from the configuration file)
+      Renames com1DFA result layers by adding the values of the given variable (from the configuration file).
 
    Probability analysis for directory (ana4)
       Runs the probability analysis on com1DFA results from a given avalanche directory without running any
-      simulations. Please provide the base avalanche directory (i.e. the one containing INPUT, OUTPUT, *.log etc)
+      simulations. Please provide the base avalanche directory (i.e. the one containing INPUT, OUTPUT, *.log etc).
 
    Probability run (ana4, com1)
-      Runs probability simulations via module com1DFA. The release shape HAS TO HAVE a ci95 field containing the 
-      95 percentile confidence interval (same unit as the release thickness). Multiple scenarios can be provided, 
+      Runs probability simulations via module com1DFA. The release shape HAS TO HAVE a ci95 field containing the
+      95 percentile confidence interval (same unit as the release thickness). Multiple scenarios can be provided,
       final map includes variations from all scenarios combined. Release thickness and SamosAT friction mu
       are being varied, 40 variations per scenario.
 
-   Release area stats(in1, com1)
+   Release area stats (in1, com1)
       Returns info for release area statistics in a csv file. See output of QGis processing for the location of
       the file. 
 

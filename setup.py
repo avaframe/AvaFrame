@@ -62,6 +62,12 @@ req_packages = [
     "deepdiff",
     "deepmerge",
     "psutil",
+    # Next ones are for geotiff:
+    "rasterio",
+    "contextily",
+    "geopandas",
+    # For geopackage, TODO might not be needed
+    "fiona",
 ]
 
 
@@ -103,6 +109,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     version=getVersion(),
+
     # The project's main homepage.
     url=URL,
     # Author details
