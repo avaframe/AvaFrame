@@ -383,8 +383,8 @@ def calculation(args):
         the maximum of flux in every cell
     countArray: numpy array
         the number of hits (GMF paths) in every cell
-    zDeltaSumArray: numpy array
-        the sum of kinetic velocity height (zDelta) in every raster cell
+    zDeltaPathList: list
+        containing the max zDelta Arrays of all paths
     backcalc: numpy array
           Array with back calculation, still TODO!!!
     fpTravelAngleArray: numpy array
@@ -438,6 +438,7 @@ def calculation(args):
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    zDeltaPathList = []
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     fluxArray = np.zeros_like(dem, dtype=np.float32)
@@ -466,6 +467,7 @@ def calculation(args):
     while startcell_idx < len(row_list):
 
         processedCells = {}  # dictionary of cells that have been processed already
+        zDeltaPathArray = np.zeros_like(dem, dtype=np.float32)
         cell_list = []
         row_idx = row_list[startcell_idx]
         col_idx = col_list[startcell_idx]
@@ -556,7 +558,7 @@ def calculation(args):
             fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
             routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
             depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
-            zDeltaSumArray[cell.rowindex, cell.colindex] += cell.z_delta
+            zDeltaPathArray[cell.rowindex, cell.colindex] = max(zDeltaPathArray[cell.rowindex, cell.colindex], cell.z_delta)
             fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.max_gamma)
             slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
@@ -590,11 +592,13 @@ def calculation(args):
             release[zDeltaArray > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
-
-        del cell_list, processedCells
+        zDeltaPathList.append(zDeltaPathArray)
+        del cell_list, processedCells, zDeltaPathArray
 
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
+    for zDeltaPathArray in zDeltaPathList:
+        zDeltaSumArray += zDeltaPathArray
     gc.collect()
     if forestInteraction:
         return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
