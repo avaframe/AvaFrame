@@ -55,8 +55,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # Flow-Py parameters
     modelParameters["alpha"] = cfgSetup.getfloat("alpha")  # float(cfgSetup["alpha"])
     modelParameters["exp"] = cfgSetup.getfloat("exp")  # float(cfgSetup["exp"])
-    modelParameters["flux_threshold"] = cfgSetup.getfloat("flux_threshold")  # float(cfgSetup["flux_threshold"])
-    modelParameters["max_z"] = cfgSetup.getfloat("max_z")  # float(cfgSetup["max_z"])
+    modelParameters["fluxThreshold"] = cfgSetup.getfloat("fluxThreshold")  # float(cfgSetup["fluxThreshold"])
+    modelParameters["maxZ"] = cfgSetup.getfloat("maxZ")  # float(cfgSetup["maxZ"])
 
     # Flags for use of Forest and/or Infrastructure
     modelParameters["infraBool"] = cfgSetup.getboolean("infra")
@@ -136,7 +136,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         modelPaths["forestPath"] = ""
         modelParameters["forestInteraction"] = False
 
-    # check if with u_max limit
+    # check if with uMax limit
     if modelParameters["varUmaxBool"]:
         modelParameters["varUmaxType"] = cfgSetup.get("varUmaxParameter")
         modelPaths["varUmaxPath"] = cfgPath["varUmaxPath"]
@@ -178,7 +178,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         demHeader = IOf.readASCheader(modelPaths["demPath"])
         rasterAttributes["nodata"] = demHeader["nodata_value"]
     elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
-        demHeader = io.read_header(modelPaths["demPath"])
+        demHeader = io.readHeader(modelPaths["demPath"])
         rasterAttributes["nodata"] = demHeader["noDataValue"]
     else:
         _errMsg = f"file format '{demExt}' for DEM is not supported, please provide '.tif' or '.asc'"
@@ -226,8 +226,8 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     log.info("==================================")
     log.info(f"{'Alpha Angle:' : <20}{modelParameters['alpha'] : <5}")
     log.info(f"{'Exponent:' : <20}{modelParameters['exp'] : <5}")
-    log.info(f"{'Flux Threshold:' : <20}{modelParameters['flux_threshold'] : <5}")
-    log.info(f"{'Max Z_delta:' : <20}{modelParameters['max_z'] : <5}")
+    log.info(f"{'Flux Threshold:' : <20}{modelParameters['fluxThreshold'] : <5}")
+    log.info(f"{'Max zDdelta:' : <20}{modelParameters['maxZ'] : <5}")
     log.info("------------------------")
     # Also log the used input-files
     log.info(f"{'DEM:' : <5}{'%s'%modelPaths['demPath'] : <5}")
@@ -292,10 +292,10 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
         if ext in ['.asc', '.ASC']:
             _demHeader = IOf.readASCheader(modelPaths["demPath"])
-            _relHeader = io.read_header(modelPaths["releasePathWork"])
+            _relHeader = io.readHeader(modelPaths["releasePathWork"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            _demHeader = io.read_header(modelPaths["demPath"])
-            _relHeader = io.read_header(modelPaths["releasePathWork"])
+            _demHeader = io.readHeader(modelPaths["demPath"])
+            _relHeader = io.readHeader(modelPaths["releasePathWork"])
         else:
             _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
             raise ValueError(_errMsg)
@@ -307,7 +307,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             sys.exit(1)
 
         if modelParameters["infraBool"]:
-            _infraHeader = io.read_header(modelPaths["infraPath"])
+            _infraHeader = io.readHeader(modelPaths["infraPath"])
             if _demHeader["ncols"] == _infraHeader["ncols"] and _demHeader["nrows"] == _infraHeader["nrows"]:
                 log.info("Infra Layer ok!")
             else:
@@ -315,7 +315,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["forestBool"]:
-            _forestHeader = io.read_header(modelPaths["forestPath"])
+            _forestHeader = io.readHeader(modelPaths["forestPath"])
             if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
                 log.info("Forest Layer ok!")
             else:
@@ -323,7 +323,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varUmaxBool"]:
-            _varUmaxHeader = io.read_header(modelPaths["varUmaxPath"])
+            _varUmaxHeader = io.readHeader(modelPaths["varUmaxPath"])
             if _demHeader["ncols"] == _varUmaxHeader["ncols"] and _demHeader["nrows"] == _varUmaxHeader["nrows"]:
                 log.info("uMax Limit Layer ok!")
             else:
@@ -331,7 +331,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varAlphaBool"]:
-            _varAlphaHeader = io.read_header(modelPaths["varAlphaPath"])
+            _varAlphaHeader = io.readHeader(modelPaths["varAlphaPath"])
             if _demHeader["ncols"] == _varAlphaHeader["ncols"] and _demHeader["nrows"] == _varAlphaHeader["nrows"]:
                 log.info("variable Alpha Layer ok!")
             else:
@@ -339,7 +339,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varExponentBool"]:
-            _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
+            _varExponentHeader = io.readHeader(modelPaths["varExponentPath"])
             if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
                 log.info("variable exponent Layer ok!")
             else:
@@ -371,7 +371,7 @@ def checkInputParameterValues(modelParameters, modelPaths):
         log.error("Error: Alpha value is not within a physically sensible range ([0,90]).")
         sys.exit(1)
 
-    zDelta = modelParameters['max_z']
+    zDelta = modelParameters['maxZ']
     if (zDelta < 0 or zDelta > 8848):
         log.error("Error: zDeltaMaxLimit value is not within a physically sensible range ([0,8848]).")
         sys.exit(1)
@@ -384,7 +384,7 @@ def checkInputParameterValues(modelParameters, modelPaths):
     _checkVarParams = True
 
     if modelParameters["varAlphaBool"]:
-        rasterValues, header = io.read_raster(modelPaths["varAlphaPath"])
+        rasterValues, header = io.readRaster(modelPaths["varAlphaPath"])
         rasterValues[rasterValues < 0] = np.nan  # handle different noData values
         if np.any(rasterValues > 90, where=~np.isnan(rasterValues)):
             log.error("Error: Not all Alpha-raster values are within a physically sensible range ([0,90]),\
@@ -392,7 +392,7 @@ def checkInputParameterValues(modelParameters, modelPaths):
             _checkVarParams = False
 
     if modelParameters["varUmaxBool"]:
-        rasterValues, header = io.read_raster(modelPaths["varUmaxPath"])
+        rasterValues, header = io.readRaster(modelPaths["varUmaxPath"])
         rasterValues[rasterValues < 0] = np.nan
         if modelParameters["varUmaxType"].lower() == 'umax':
             _maxVal = 1500  # ~sqrt(8848*2*9.81)
@@ -525,15 +525,15 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     log.info("-------------------------")
 
     # Merge calculated tiles
-    zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
+    zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_zDelta")
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
     cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method='sum')
-    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
-    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
-    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
+    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_zDeltaSum", method='sum')
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_routFluxSum", method='sum')
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_depFluxSum", method='sum')
     fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
-    travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
+    travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travelLength")
 
     if modelOptions["infraBool"]:
         backcalc = SPAM.mergeRaster(modelPaths["tempDir"], "res_backcalc")
@@ -549,42 +549,42 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     _ts = modelPaths["timeString"]
 
     if 'flux' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_flux{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_flux{}".format(_uid, _ts, _oF),
         flux)
     if 'zDelta' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zdelta{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zdelta{}".format(_uid, _ts, _oF),
         zDelta)
     if 'cellCounts' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_cellCounts{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_cellCounts{}".format(_uid, _ts, _oF),
         cellCounts)
     if 'zDeltaSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF),
         zDeltaSum)
     if 'routFluxSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_routFluxSum{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_routFluxSum{}".format(_uid, _ts, _oF),
         routFluxSum)
     if 'depFluxSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_depFluxSum{}".format(_uid, _ts, _oF),
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_depFluxSum{}".format(_uid, _ts, _oF),
         depFluxSum)
     if 'fpTravelAngle' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid,
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid,
         _ts, _oF), fpTa)
     if 'slTravelAngle' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_slTravelAngle{}".format(_uid,
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_slTravelAngle{}".format(_uid,
         _ts, _oF), slTa)
     if 'travelLength' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
         _ts, _oF), travelLength)
 
     # NOTE:
     # if not modelOptions["infraBool"]:  # if no infra
-        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
-        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
+        # io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / ("cellCounts%s" %(output_format)),cellCounts)
+        # io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / ("zDeltaSum%s" %(output_format)),zDeltaSum)
     if modelOptions["infraBool"]:  # if infra
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_backcalculation{}".format(_uid,
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_backcalculation{}".format(_uid,
                          _ts, _oF), backcalc)
     if modelOptions["forestInteraction"]:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_forestInteraction{}".format(_uid,
+        io.outputRaster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_forestInteraction{}".format(_uid,
                          _ts, _oF), forestInteraction)
 
 
@@ -612,8 +612,8 @@ def checkConvertReleaseShp2Tif(modelPaths):
             dem = IOf.readRaster(modelPaths["demPath"])
             demHeader = IOf.readASCheader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            #dem = io.read_raster(modelPaths["demPath"])
-            #demHeader = io.read_header(modelPaths["demPath"])
+            #dem = io.readRaster(modelPaths["demPath"])
+            #demHeader = io.readHeader(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
             raise ValueError(_errMsg)
@@ -631,8 +631,8 @@ def checkConvertReleaseShp2Tif(modelPaths):
         releaseAreaHeader = demHeader
         releaseArea = np.flipud(releaseLine["rasterData"])
         modelPaths["releasePathWork"] = modelPaths["workDir"] / "release.tif"
-        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.asc", releaseArea)
-        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.tif", releaseArea)
+        io.outputRaster(modelPaths["demPath"], modelPaths["workDir"] / "release.asc", releaseArea)
+        io.outputRaster(modelPaths["demPath"], modelPaths["workDir"] / "release.tif", releaseArea)
         del releaseLine
     else:
         modelPaths["releasePathWork"] = modelPaths["releasePath"]

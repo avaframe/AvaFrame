@@ -24,7 +24,7 @@ else:
 from avaframe.com4FlowPy.flowClass import Cell
 
 
-def get_start_idx(dem, release):
+def getStartIdx(dem, release):
     """Sort Release Pixels by altitude and return the result as lists for the
     Rows and Columns, starting with the highest altitude
 
@@ -37,22 +37,22 @@ def get_start_idx(dem, release):
 
     Returns
     -----------
-    row_list: list
+    rowList: list
         Row indices of release pixels sorted by altitude
-    col_list: list
+    colList: list
         Column indices of release pixels sorted by altitude
     """
-    row_list, col_list = np.where(release > 0)  # Gives back the indices of the release areas
-    if len(row_list) > 0:
-        altitude_list = []
-        for i in range(len(row_list)):
-            altitude_list.append(dem[row_list[i], col_list[i]])
-        altitude_list, row_list, col_list = list(zip(*sorted(zip(altitude_list, row_list, col_list), reverse=True)))
+    rowList, colList = np.where(release > 0)  # Gives back the indices of the release areas
+    if len(rowList) > 0:
+        altitudeList = []
+        for i in range(len(rowList)):
+            altitudeList.append(dem[rowList[i], colList[i]])
+        altitudeList, rowList, colList = list(zip(*sorted(zip(altitudeList, rowList, colList), reverse=True)))
         # Sort this lists by altitude
-    return row_list, col_list
+    return rowList, colList
 
 
-def split_release(release, pieces):
+def splitRelease(release, pieces):
     """Split the release layer in several tiles. The area is determined by
     the number of release pixels in it, so that every tile has the same amount
     of release pixels in it.
@@ -77,67 +77,67 @@ def split_release(release, pieces):
 
     Returns
     -----------
-    release_list:   list
+    releaseList:   list
         contains the tiles(arrays) [array0, array1, ..]
     """
 
     # Flatten the array and compute the cumulative sum
-    flat_release = release.flatten()
-    cumulative_sum = np.cumsum(flat_release)
+    _flatRelease = release.flatten()
+    _cumulativeSum = np.cumsum(_flatRelease)
 
-    total_sum = cumulative_sum[-1]
-    sum_per_split = total_sum / pieces
+    _totalSum = _cumulativeSum[-1]
+    _sumPerSplit = _totalSum / pieces
 
-    release_list = []
-    start_index = 0
+    releaseList = []
+    startIndex = 0
 
     for i in range(1, pieces):
         # Find the split point in the flattened array
-        split_index = np.searchsorted(cumulative_sum, sum_per_split * i)
+        _splitIndex = np.searchsorted(_cumulativeSum, _sumPerSplit * i)
 
         # Create a new array for this split
-        split_flat = np.zeros_like(flat_release)
-        split_flat[start_index:split_index] = flat_release[start_index:split_index]
+        _splitFlat = np.zeros_like(_flatRelease)
+        _splitFlat[startIndex:_splitIndex] = _flatRelease[startIndex:_splitIndex]
 
         # Reshape the flat array back to 2D and add to the list
-        release_list.append(split_flat.reshape(release.shape))
+        releaseList.append(_splitFlat.reshape(release.shape))
 
-        start_index = split_index
+        startIndex = _splitIndex
 
     # Handle the last piece
-    split_flat = np.zeros_like(flat_release)
-    split_flat[start_index:] = flat_release[start_index:]
-    release_list.append(split_flat.reshape(release.shape))
+    _splitFlat = np.zeros_like(_flatRelease)
+    _splitFlat[startIndex:] = _flatRelease[startIndex:]
+    releaseList.append(_splitFlat.reshape(release.shape))
 
-    return release_list
+    return releaseList
 
 
-def back_calculation(back_cell):
+def backCalculation(backCell):
     """Here the back calculation from a run out pixel that hits a infrastructure
     to the release pixel is performed.
 
     Parameters
     -----------
-    back_cell:  class-object cell
+    backCell:  class-object cell
         cell that hit a Infrastructure
 
     Returns
     -----------
-    back_list: list
+    backList: list
         List of cells that are on the way to the start cell TODO:Maybe change it to array like DEM?
     """
 
-    back_list = []
-    for parent in back_cell.lOfParents:
-        if parent not in back_list:
-            back_list.append(parent)
-    for cell in back_list:
+    backList = []
+    for parent in backCell.lOfParents:
+        if parent not in backList:
+            backList.append(parent)
+    for cell in backList:
         for parent in cell.lOfParents:
             # Check if parent already in list
-            if parent not in back_list:
-                back_list.append(parent)
+            if parent not in backList:
+                backList.append(parent)
 
-    return back_list
+    return backList
 
 
 def run(optTuple):
@@ -165,8 +165,8 @@ def run(optTuple):
     # Flow-Py parameters
     alpha = float(optTuple[2]["alpha"])
     exp = float(optTuple[2]["exp"])
-    flux_threshold = float(optTuple[2]["flux_threshold"])
-    max_z_delta = float(optTuple[2]["max_z"])
+    fluxThreshold = float(optTuple[2]["fluxThreshold"])
+    maxZdelta = float(optTuple[2]["maxZ"])
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
     forestInteraction = optTuple[2]["forestInteraction"]
@@ -248,7 +248,7 @@ def run(optTuple):
         chunkSize=MPOptions["chunkSize"],
     )
 
-    release_list = split_release(release, nChunks)
+    releaseList = splitRelease(release, nChunks)
     log.info("Multiprocessing starts, used Cores/Processes/Chunks: %i/%i/%i" % (MPOptions["nCPU"], nProcesses, nChunks))
 
     with Pool(processes=nProcesses) as pool:
@@ -256,14 +256,14 @@ def run(optTuple):
             calculation,
             [
                 [   # TODO: write in dicts:
-                    dem, infra, release_sub,
-                    alpha, exp, flux_threshold, max_z_delta,
+                    dem, infra, releaseSub,
+                    alpha, exp, fluxThreshold, maxZdelta,
                     nodata, cellsize,
                     infraBool, forestBool,
                     varParams, fluxDistOldVersionBool,
                     forestArray, forestParams,
                 ]
-                for release_sub in release_list
+                for releaseSub in releaseList
             ],
         )
         pool.close()
@@ -335,15 +335,15 @@ def run(optTuple):
                                     np.maximum(forestIntArray, forestIntList[i]))
 
     # Save Calculated tiles
-    np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
-    np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
-    np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), routFluxSumArray)
-    np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
+    np.save(tempDir / ("res_zDelta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
+    np.save(tempDir / ("res_zDeltaSum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
+    np.save(tempDir / ("res_routFluxSum_%s_%s" % (optTuple[0], optTuple[1])), routFluxSumArray)
+    np.save(tempDir / ("res_depFluxSum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
     np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), slTravelAngleArray)
-    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
+    np.save(tempDir / ("res_travelLength_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
     if forestInteraction:
@@ -413,8 +413,8 @@ def calculation(args):
     release = args[2]
     alpha = args[3]
     exp = args[4]
-    flux_threshold = args[5]
-    max_z_delta = args[6]
+    fluxThreshold = args[5]
+    maxZdelta = args[6]
     nodata = args[7]
     cellsize = args[8]
     infraBool = args[9]
@@ -452,85 +452,85 @@ def calculation(args):
     backcalc = np.zeros_like(dem, dtype=np.int32)
 
     if infraBool:
-        back_list = []
+        backList = []
 
     if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     # Core
     # start = datetime.now().replace(microsecond=0)
-    # NOTE-TODO: row_list, col_list are tuples - rethink variable naming
-    row_list, col_list = get_start_idx(dem, release)
+    # NOTE-TODO: rowList, colList are tuples - rethink variable naming
+    rowList, colList = getStartIdx(dem, release)
 
-    startcell_idx = 0
-    while startcell_idx < len(row_list):
+    startcellIdx = 0
+    while startcellIdx < len(rowList):
 
         processedCells = {}  # dictionary of cells that have been processed already
-        cell_list = []
-        row_idx = row_list[startcell_idx]
-        col_idx = col_list[startcell_idx]
-        dem_ng = dem[row_idx - 1: row_idx + 2, col_idx - 1: col_idx + 2]  # neighbourhood DEM
+        cellList = []
+        rowIdx = rowList[startcellIdx]
+        colIdx = colList[startcellIdx]
+        demNeighbours = dem[rowIdx - 1: rowIdx + 2, colIdx - 1: colIdx + 2]  # neighbourhood DEM
         if varUmaxBool and varUmaxArray is not None:
-            if varUmaxArray[row_idx, col_idx] > 0 and varUmaxArray[row_idx, col_idx] <= 8848:
-                max_z_delta = varUmaxArray[row_idx, col_idx]
+            if varUmaxArray[rowIdx, colIdx] > 0 and varUmaxArray[rowIdx, colIdx] <= 8848:
+                maxZdelta = varUmaxArray[rowIdx, colIdx]
         if varAlphaBool and varAlphaArray is not None:
-            if varAlphaArray[row_idx, col_idx] > 0 and varAlphaArray[row_idx, col_idx] <= 90:
-                alpha = varAlphaArray[row_idx, col_idx]
+            if varAlphaArray[rowIdx, colIdx] > 0 and varAlphaArray[rowIdx, colIdx] <= 90:
+                alpha = varAlphaArray[rowIdx, colIdx]
         if varExponentBool and varExponentArray is not None:
-            if varExponentArray[row_idx, col_idx] > 0:
-                exp = varExponentArray[row_idx, col_idx]
+            if varExponentArray[rowIdx, colIdx] > 0:
+                exp = varExponentArray[rowIdx, colIdx]
 
-        if (nodata in dem_ng) or np.size(dem_ng) < 9:
-            startcell_idx += 1
+        if (nodata in demNeighbours) or np.size(demNeighbours) < 9:
+            startcellIdx += 1
             continue
 
         startcell = Cell(
-            row_idx, col_idx,
-            dem_ng, cellsize,
+            rowIdx, colIdx,
+            demNeighbours, cellsize,
             1, 0, None,
-            alpha, exp, flux_threshold, max_z_delta,
+            alpha, exp, fluxThreshold, maxZdelta,
             startcell=True, fluxDistOldVersionBool=fluxDistOldVersionBool,
-            FSI=forestArray[row_idx, col_idx] if isinstance(forestArray, np.ndarray) else None,
+            FSI=forestArray[rowIdx, colIdx] if isinstance(forestArray, np.ndarray) else None,
             forestParams=forestParams,
         )
 
         # dictionary of all the cells that have been processed and the number of times the cell has been visited
         processedCells[(startcell.rowindex, startcell.colindex)] = 1
         # list of flowClass.Cell() Objects that is contains the "path" for each release-cell
-        cell_list.append(startcell)
+        cellList.append(startcell)
 
-        for idx, cell in enumerate(cell_list):
+        for idx, cell in enumerate(cellList):
 
-            row, col, flux, z_delta = cell.calc_distribution()
+            row, col, flux, zDelta = cell.calcDistribution()
 
             if len(flux) > 0:
                 # mass, row, col  = list(zip(*sorted(zip( mass, row, col), reverse=False)))
-                z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
+                zDelta, flux, row, col = list(zip(*sorted(zip(zDelta, flux, row, col), reverse=False)))
                 # Sort this lists by elh, to start with the highest cell
 
             # check if cell already exists
-            for i in range(idx, len(cell_list)):  # Check if Cell already exists
+            for i in range(idx, len(cellList)):  # Check if Cell already exists
                 k = 0
                 while k < len(row):
-                    if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
-                        cell_list[i].add_os(flux[k])
-                        cell_list[i].add_parent(cell)
-                        if z_delta[k] > cell_list[i].z_delta:
-                            cell_list[i].z_delta = z_delta[k]
+                    if row[k] == cellList[i].rowindex and col[k] == cellList[i].colindex:
+                        cellList[i].addFlux(flux[k])
+                        cellList[i].addParent(cell)
+                        if zDelta[k] > cellList[i].zDelta:
+                            cellList[i].zDelta = zDelta[k]
                         row = np.delete(row, k)
                         col = np.delete(col, k)
                         flux = np.delete(flux, k)
-                        z_delta = np.delete(z_delta, k)
+                        zDelta = np.delete(zDelta, k)
                     else:
                         k += 1
 
             for k in range(len(row)):
-                dem_ng = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
+                demNeighbours = dem[row[k] - 1: row[k] + 2, col[k] - 1: col[k] + 2]  # neighbourhood DEM
 
                 # This bit handles edge cases and noData-values in the DEM!! this is an important piece of code, since
                 # no-data handling is expected (by some users/applications) to behave like here:
                 # i.e. if nodata in the 3x3 neighbourhood --> no calculation
-                if (nodata in dem_ng) or np.size(dem_ng) < 9:
+                if (nodata in demNeighbours) or np.size(demNeighbours) < 9:
                     continue
 
                 # if the current child cell is already in processedCells
@@ -541,28 +541,28 @@ def calculation(args):
                 else:
                     processedCells[(row[k], col[k])] = 1
 
-                cell_list.append(Cell(
+                cellList.append(Cell(
                             row[k], col[k],
-                            dem_ng, cellsize,
-                            flux[k], z_delta[k],
+                            demNeighbours, cellsize,
+                            flux[k], zDelta[k],
                             cell,
-                            alpha, exp, flux_threshold, max_z_delta,
+                            alpha, exp, fluxThreshold, maxZdelta,
                             startcell, fluxDistOldVersionBool=fluxDistOldVersionBool,
                             FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
                             forestParams=forestParams,
                                      ))
 
-            zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
+            zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.zDelta)
             fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
             routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
             depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
-            zDeltaSumArray[cell.rowindex, cell.colindex] += cell.z_delta
+            zDeltaSumArray[cell.rowindex, cell.colindex] += cell.zDelta
             fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
-                                                                   cell.max_gamma)
+                                                                   cell.maxGamma)
             slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
-                                                                   cell.sl_gamma)
+                                                                   cell.slGamma)
             travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
-                                                                  cell.min_distance)
+                                                                  cell.minDistance)
             if processedCells[(cell.rowindex, cell.colindex)] == 1:
                 countArray[cell.rowindex, cell.colindex] += int(1)
 
@@ -573,7 +573,7 @@ def calculation(args):
                 # do backcalculation after the path calculation is finished
                 if infra[cell.rowindex, cell.colindex] > 0:
                     # backlist = []
-                    backList = back_calculation(cell)
+                    backList = backCalculation(cell)
 
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
@@ -589,11 +589,11 @@ def calculation(args):
         if infraBool:
             release[zDeltaArray > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
-            row_list, col_list = get_start_idx(dem, release)
+            rowList, colList = getStartIdx(dem, release)
 
-        del cell_list, processedCells
+        del cellList, processedCells
 
-        startcell_idx += 1
+        startcellIdx += 1
     # end = datetime.now().replace(microsecond=0)
     gc.collect()
     if forestInteraction:
@@ -637,7 +637,7 @@ def enoughMemoryAvailable(limit=0.05):
 
 def calculateMultiProcessingOptions(nRel, nCPU, procPerCPU=1, maxChunks=500, chunkSize=50):
     """compute required options for multiprocessing of calulation() function inside run() and accompanied splitting of
-    release cells into chunks in split_release().append
+    release cells into chunks in splitRelease().append
     The general idea is to make good use of available CPU resources to speed up calculations while not getting into
     trouble with RAM issues ...
 

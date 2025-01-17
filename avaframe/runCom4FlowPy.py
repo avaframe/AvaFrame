@@ -119,18 +119,18 @@ def main():
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
         try:
             os.makedirs(workDir / "res_{}".format(uid))  # (time_string))
-            res_dir = workDir / "res_{}".format(uid)   # (time_string)
+            resDir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
             log.info("folder with same name already exists - aborting")
             log.info("simulation results folder with same .ini parameters already exists: simulation {}".format(uid))
             sys.exit(1)
         try:
-            os.makedirs(workDir / res_dir / "temp")
-            temp_dir = workDir / res_dir / "temp"
+            os.makedirs(workDir / resDir / "temp")
+            tempDir = workDir / resDir / "temp"
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-        log = logUtils.initiateLogger(res_dir, logName)
+        log = logUtils.initiateLogger(resDir, logName)
 
         # writing config to .json file
         successToJSON = writeCfgJSON(cfg, uid, workDir)
@@ -142,9 +142,9 @@ def main():
             log.error("Exception occurred: %s", str(successToJSON), exc_info=True)
 
         cfgPath["workDir"] = pathlib.Path(workDir)
-        cfgPath["outDir"] = pathlib.Path(res_dir)
+        cfgPath["outDir"] = pathlib.Path(resDir)
         cfgPath["resDir"] = cfgPath["outDir"]
-        cfgPath["tempDir"] = pathlib.Path(temp_dir)
+        cfgPath["tempDir"] = pathlib.Path(tempDir)
         cfgPath["demPath"] = pathlib.Path(cfgCustomPaths["demPath"])
         cfgPath["releasePath"] = pathlib.Path(cfgCustomPaths["releasePath"])
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])

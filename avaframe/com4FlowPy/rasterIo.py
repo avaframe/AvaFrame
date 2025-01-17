@@ -12,14 +12,14 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def read_header(input_file):
+def readHeader(inputFile):
     """
     Reads the header of the raster file
     raster file should be readable by rasterio (e.g. .tif, .asc)
 
     Parameters
     -----------
-    input_file: str
+    inputFile: str
         path to raster file
 
     Returns
@@ -28,9 +28,9 @@ def read_header(input_file):
         header of raster file in style of ASCII-Rasters
     """
 
-    raster = rasterio.open(input_file)
+    raster = rasterio.open(inputFile)
     if raster is None:
-        print("Unable to open {}".format(input_file))
+        print("Unable to open {}".format(inputFile))
         sys.exit(1)
 
     header = {}
@@ -43,31 +43,31 @@ def read_header(input_file):
     return header
 
 
-def read_raster(input_file):
+def readRaster(inputFile):
     """
     Reads in a raster file
 
     Parameters
     -----------
-    input_file: str
+    inputFile: str
         path to raster file
 
     Returns
     -----------
-    my_array: np.array
+    readArray: np.array
         numpy array with values read in from the raster file
     header: dict
         header of raster file in style of ASCII-Rasters
     """
 
-    header = read_header(input_file)
-    raster = rasterio.open(input_file)
-    my_array = raster.read(1)
+    header = readHeader(inputFile)
+    raster = rasterio.open(inputFile)
+    readArray = raster.read(1)
 
-    return my_array, header
+    return readArray, header
 
 
-def output_raster(referenceFile, file_out, raster):
+def outputRaster(referenceFile, fileOut, raster):
     """
     Saves raster
 
@@ -75,29 +75,29 @@ def output_raster(referenceFile, file_out, raster):
     -----------
     referenceFile: str
         path to raster file to reference on, mostly DEM
-    file_out: str
+    fileOut: str
         path for the outputfile, possible extends are .asc or .tif
     raster: np.array
         raster (array) that is saved
     """
 
-    raster_trans = rasterio.open(referenceFile)
+    rasterTrans = rasterio.open(referenceFile)
     try:
-        crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
+        crs = rasterio.crs.CRS.from_dict(rasterTrans.crs.data)
     except:
         # crs = rasterio.crs.CRS.from_epsg(4326)
         crs = None
 
     _success = True
 
-    if file_out.suffix == ".asc":
+    if fileOut.suffix == ".asc":
         _driver = "AAIGrid"
-    elif file_out.suffix == ".tif":
+    elif fileOut.suffix == ".tif":
         _driver = "GTiff"
 
     try:
         with rasterio.open(
-            file_out,
+            fileOut,
             "w",
             driver=_driver,
             height=raster.shape[0],
@@ -105,18 +105,18 @@ def output_raster(referenceFile, file_out, raster):
             count=1,
             dtype=raster.dtype,
             crs=crs,
-            transform=raster_trans.transform,
+            transform=rasterTrans.transform,
             nodata=-9999,
-        ) as new_dataset:
-            new_dataset.write(raster, 1)
+        ) as newDataset:
+            newDataset.write(raster, 1)
     except:
         _success = False
-        log.error("could not write {} to {}".format(raster, file_out))
+        log.error("could not write {} to {}".format(raster, fileOut))
 
     try:
         if _success is True:
-            log.info("wrote file: {}".format(file_out))
+            log.info("wrote file: {}".format(fileOut))
         else:
-            log.info("failed to write file: {}".format(file_out))
+            log.info("failed to write file: {}".format(fileOut))
     except:
         pass

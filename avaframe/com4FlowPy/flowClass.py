@@ -13,9 +13,9 @@ class Cell:
     def __init__(
         self,
         rowindex, colindex,
-        dem_ng, cellsize,
-        flux, z_delta, parent,
-        alpha, exp, flux_threshold, max_z_delta,
+        demNeighbours, cellsize,
+        flux, zDelta, parent,
+        alpha, exp, fluxThreshold, maxZdelta,
         startcell, fluxDistOldVersionBool=False,
         FSI=None, forestParams=None,
     ):
@@ -23,40 +23,40 @@ class Cell:
         the constructor function is called every time a new instance of type 'Cell' is
         initialized.
         NOTE/TODO: parent can be of different data types still, maybe split into two separate variables
-                   * bool --> isStart
+                   * bool --> is_start
                    * Cell --> startCell
         """
         self.rowindex = rowindex  # index of the Cell in row-direction (i.e. local y-index in the calculation domain)
         self.colindex = colindex  # index of the Cell in column-direction (i.e. local x-index in the calculation domain)
-        self.dem_ng = dem_ng  # elevation values in the 3x3 neigbourhood around the Cell
-        self.altitude = dem_ng[1, 1]  # elevation value of the cell (central cell of 3x3 neighbourhood)
+        self.demNeighbours = demNeighbours  # elevation values in the 3x3 neigbourhood around the Cell
+        self.altitude = demNeighbours[1, 1]  # elevation value of the cell (central cell of 3x3 neighbourhood)
         self.cellsize = cellsize  # cellsize in meters
 
-        self.tan_beta = np.zeros_like(self.dem_ng)
-        self.dist = np.zeros_like(self.dem_ng)
-        self.persistence = np.zeros_like(self.dem_ng)
-        self.r_t = np.zeros_like(self.dem_ng)
-        self.no_flow = np.ones_like(self.dem_ng)
+        self.tanBeta = np.zeros_like(self.demNeighbours)
+        self.dist = np.zeros_like(self.demNeighbours)
+        self.persistence = np.zeros_like(self.demNeighbours)
+        self.rT = np.zeros_like(self.demNeighbours)
+        self.noFlow = np.ones_like(self.demNeighbours)
 
         self.flux = flux
         self.fluxDep = 0
-        self.z_delta = z_delta
+        self.zDelta = zDelta
 
         self.alpha = float(alpha)
         self.exp = int(exp)
-        self.max_z_delta = float(max_z_delta)
-        self.flux_threshold = float(flux_threshold)
+        self.maxZdelta = float(maxZdelta)
+        self.fluxThreshold = float(fluxThreshold)
 
         self.fluxDistOldVersionBool = fluxDistOldVersionBool
 
         self.tanAlpha = np.tan(np.deg2rad(self.alpha))  # moved to constructor, so this doesn't have to be calculated on
-        # every iteration of calc_z_delta(self)
+        # every iteration of calc_zDelta(self)
 
-        self.min_distance = 0  # minimal distance to start-cell (i.e. along shortest path) min_distance >=
-        self.max_distance = 0  # NOTE: self.max_distance is never used - maybe remove!?
-        self.min_gamma = 0  # NOTE: self.min_gamma (assumingly minimal travel angle to cell) never used - maybe remove!?
-        self.max_gamma = 0
-        self.sl_gamma = 0
+        self.minDistance = 0  # minimal distance to start-cell (i.e. along shortest path) minDistance >=
+        self.maxDistance = 0  # NOTE: self.maxDistance is never used - maybe remove!?
+        self.minGamma = 0  # NOTE: self.minGamma (assumingly minimal travel angle to cell) never used - maybe remove!?
+        self.maxGamma = 0
+        self.slGamma = 0
 
         self._SQRT2 = np.sqrt(2.0)
         self._RAD90 = np.deg2rad(90.0)
@@ -108,7 +108,7 @@ class Cell:
             # NOTE: This is a quick hack to check if all values for Detrainment are set to 0 (as provided in the
             #      .ini file)
             #      if this is the case, then the self.forest_detrainment function does not have to be called inside
-            #      self.calc_distribution
+            #      self.calcDistribution
             # TO-DO: clean this up and handle it better
             if (self.forestModule == "forestFriction") or (self.forestModule == "forestFrictionLayer"):
                 self.forestDetrainmentBool = False
@@ -148,7 +148,7 @@ class Cell:
             if self.forestInteraction:
                 self.forestIntCount += parent.forestIntCount
 
-    def add_os(self, flux):
+    def addFlux(self, flux):
         """
         Adds flux to 'existing' flux
 
@@ -159,7 +159,7 @@ class Cell:
         """
         self.flux += flux
 
-    def add_parent(self, parent):
+    def addParent(self, parent):
         """
         Adds parent to parents list
         and optionally the forest interaction value of the parent
@@ -176,7 +176,7 @@ class Cell:
             if parent.forestIntCount < (self.forestIntCount - self.isForest):
                 self.forestIntCount = parent.forestIntCount + self.isForest
 
-    def calc_fp_travelangle(self):
+    def calc_fpTravelangle(self):
         """function calculates the travel-angle along the shortest flow-path from the start-cell
         to the current cell. The travel-angle along the shortest flow-path is equivalent to the
         maximum travel angle along all paths from the startcell to this cell.
@@ -186,15 +186,15 @@ class Cell:
         for parent in self.lOfParents:
             _dx = abs(parent.colindex - self.colindex)
             _dy = abs(parent.rowindex - self.rowindex)
-            _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) * self.cellsize + parent.min_distance)
-        self.min_distance = np.amin(_ldistMin)
-        self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
+            _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) * self.cellsize + parent.minDistance)
+        self.minDistance = np.amin(_ldistMin)
+        self.maxGamma = np.rad2deg(np.arctan(_dh / self.minDistance))
 
-    def calc_sl_travelangle(self):
+    def calc_slTravelangle(self):
         """function calculates the travel-angle between the start cell and the current cell
         using the shortest connection or straight line (sl) between the two cells.
-        The travel angle calculated with this shortest horizontal distance 'sl_gamma' is always
-        larger or equal to the travel angle  'max_gamma', which is calculated along the
+        The travel angle calculated with this shortest horizontal distance 'slGamma' is always
+        larger or equal to the travel angle  'maxGamma', which is calculated along the
         (potentially curved) flow path (fp). (vgl. Meißl, 1998)
         """
         _dx = abs(self.startcell.colindex - self.colindex)
@@ -202,15 +202,15 @@ class Cell:
         _dh = self.startcell.altitude - self.altitude
 
         _ds = math.sqrt(_dx * _dx + _dy * _dy) * self.cellsize
-        self.sl_gamma = np.rad2deg(np.arctan(_dh / _ds))
+        self.slGamma = np.rad2deg(np.arctan(_dh / _ds))
 
-    def calc_z_delta(self):
+    def calc_zDelta(self):
         """
         function calculates zDelta (velocity or energy line height) to the eligible neighbours
         NOTE: forestFriction related mechanics are implemented here!
         """
-        self.z_delta_neighbour = np.zeros((3, 3))
-        self.z_gamma = self.altitude - self.dem_ng
+        self.zDeltaNeighbour = np.zeros((3, 3))
+        self.zGamma = self.altitude - self.demNeighbours
         ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 0, 1], [self._SQRT2, 1, self._SQRT2]])
 
         if self.forestBool:
@@ -234,13 +234,13 @@ class Cell:
                     #      ideally be handled by a separate release-area algorithm in the pre-processing
                     # NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment'
                     #      branch and not yet fully tested!!
-                    if self.z_delta < self.noFricitonEffectZdelta:
+                    if self.zDelta < self.noFricitonEffectZdelta:
                         # friction at rest v=0 would be applied to start cells
                         _rest = self.maxAddedFrictionForest * self.FSI
                         # rise over run
                         _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFricitonEffectZdelta)
-                        # y = mx + b, shere z_delta is the x
-                        friction = max(self.minAddedFrictionForest, _slope * self.z_delta + _rest)
+                        # y = mx + b, shere zDelta is the x
+                        friction = max(self.minAddedFrictionForest, _slope * self.zDelta + _rest)
 
                         _alpha_calc = self.alpha + max(0, friction)  # NOTE: not sure what this does, seems redundant!
                     else:
@@ -255,31 +255,31 @@ class Cell:
             # else simply use tanAlpha
             _tanAlpha = self.tanAlpha
 
-        self.z_alpha = ds * self.cellsize * _tanAlpha
-        self.z_delta_neighbour = self.z_delta + self.z_gamma - self.z_alpha
-        self.z_delta_neighbour[self.z_delta_neighbour < 0] = 0
-        self.z_delta_neighbour[self.z_delta_neighbour > self.max_z_delta] = self.max_z_delta
+        self.zAlpha = ds * self.cellsize * _tanAlpha
+        self.zDeltaNeighbour = self.zDelta + self.zGamma - self.zAlpha
+        self.zDeltaNeighbour[self.zDeltaNeighbour < 0] = 0
+        self.zDeltaNeighbour[self.zDeltaNeighbour > self.maxZdelta] = self.maxZdelta
 
-    def calc_tanbeta(self):
+    def calc_tanBeta(self):
         """calculates the normalized terrain based routing
         """
         _ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 1, 1], [self._SQRT2, 1, self._SQRT2]])
         _distance = _ds * self.cellsize
 
-        _beta = np.arctan((self.altitude - self.dem_ng) / _distance) + self._RAD90
-        self.tan_beta = np.tan(_beta / 2)
+        _beta = np.arctan((self.altitude - self.demNeighbours) / _distance) + self._RAD90
+        self.tanBeta = np.tan(_beta / 2)
 
-        self.tan_beta[self.z_delta_neighbour <= 0] = 0
-        self.tan_beta[self.persistence <= 0] = 0
-        self.tan_beta[1, 1] = 0
-        if abs(np.sum(self.tan_beta)) > 0:
-            self.r_t = self.tan_beta**self.exp / np.sum(self.tan_beta**self.exp)
+        self.tanBeta[self.zDeltaNeighbour <= 0] = 0
+        self.tanBeta[self.persistence <= 0] = 0
+        self.tanBeta[1, 1] = 0
+        if abs(np.sum(self.tanBeta)) > 0:
+            self.rT = self.tanBeta**self.exp / np.sum(self.tanBeta**self.exp)
 
     def calc_persistence(self):
         """
         calculates persistence-based routing
         """
-        self.persistence = np.zeros_like(self.dem_ng)
+        self.persistence = np.zeros_like(self.demNeighbours)
         if self.is_start:
             self.persistence += 1
         elif self.lOfParents[0].is_start:
@@ -289,9 +289,9 @@ class Cell:
                 dx = parent.colindex - self.colindex
                 dy = parent.rowindex - self.rowindex
 
-                self.no_flow[dy + 1, dx + 1] = 0  # 3x3 Matrix of ones, every parent gets a 0, no flow to a parent field
+                self.noFlow[dy + 1, dx + 1] = 0  # 3x3 Matrix of ones, every parent gets a 0, no flow to a parent field
 
-                maxweight = parent.z_delta
+                maxweight = parent.zDelta
                 # Old Calculation
                 if dx == -1:
                     if dy == -1:
@@ -331,7 +331,7 @@ class Cell:
                         self.persistence[0, 1] += 0.707 * maxweight
                         self.persistence[1, 0] += 0.707 * maxweight
 
-    def calc_distribution(self):
+    def calcDistribution(self):
         """
         calculates flux and zdelta that is distributed to the adjacent cells
 
@@ -340,10 +340,10 @@ class Cell:
         tuple
             list of row, col, flux, zdelta of adjacent cells that receive flux/zdelta
         """
-        self.calc_z_delta()
+        self.calc_zDelta()
         self.calc_persistence()
-        self.persistence *= self.no_flow
-        self.calc_tanbeta()
+        self.persistence *= self.noFlow
+        self.calc_tanBeta()
         # print(self.persistence)
 
         if not self.is_start:
@@ -351,19 +351,19 @@ class Cell:
             if self.forestBool and self.forestDetrainmentBool:
                 self.forest_detrainment()
 
-            self.calc_fp_travelangle()
-            self.calc_sl_travelangle()
+            self.calc_fpTravelangle()
+            self.calc_slTravelangle()
 
             # FOREST-Detrainment
             # here we subtract the detrainment from the flux before moving flux to new cells.
             if self.forestBool and self.forestDetrainmentBool:
                 # NOTE-TODO: check/test what the hard-coded 0.0003 does here or if this should be
-                # substituted by self.flux_threshold????
+                # substituted by self.fluxThreshold????
                 self.flux = max(0.0003, self.flux - self.detrainment)
 
-        threshold = self.flux_threshold
-        if np.sum(self.r_t) > 0:
-            self.dist = (self.persistence * self.r_t) / np.sum(self.persistence * self.r_t) * self.flux
+        threshold = self.fluxThreshold
+        if np.sum(self.rT) > 0:
+            self.dist = (self.persistence * self.rT) / np.sum(self.persistence * self.rT) * self.flux
 
         # This handles (local) flux re-distribution if n cells are below threshold, but lager 0 and m cells are
         # still above threshold
@@ -374,37 +374,37 @@ class Cell:
             """
             legacy version of code (pre 01-2025) WITH BUG (is used if self.fluxDistOldVersionBool)
             here 'count' returns the number of neighbor/child cells that receive flux > 0, but
-            below the flux_threshold.
+            below the fluxThreshold.
             """
             count = ((0 < self.dist) & (self.dist < threshold)).sum()
         else:
             """
             default/correct version with FIXED BUG (used if self.fluxDistOldVersionBool == False)
             her 'count' returns the number of neighbor/child cells which receive
-            flux >= the flux_threshold.
+            flux >= the fluxThreshold.
             """
             count = (self.dist >= threshold).sum()
-        # massToDistribute ~ sum of flux of child cells below the flux_threshold
-        mass_to_distribute = np.sum(self.dist[self.dist < threshold])
+        # massToDistribute ~ sum of flux of child cells below the fluxThreshold
+        massToDistribute = np.sum(self.dist[self.dist < threshold])
 
-        if mass_to_distribute > 0 and count > 0:
+        if massToDistribute > 0 and count > 0:
             # local flux redistribution to eligible child cells
-            self.dist[self.dist > threshold] += mass_to_distribute / count
+            self.dist[self.dist > threshold] += massToDistribute / count
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
             # correction/flux conservation for potential rounding losses
             self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist)) / count
         if count == 0:
-            # if all child cells are below flux_threshold, the flux is deposited
+            # if all child cells are below fluxThreshold, the flux is deposited
             # TODO: check alternatives (e.g. 'global' redistribution or within generations)
             self.fluxDep = self.flux
-        row_local, col_local = np.where(self.dist > threshold)
+        rowLocal, colLocal = np.where(self.dist > threshold)
 
         return (
-            self.rowindex - 1 + row_local,
-            self.colindex - 1 + col_local,
-            self.dist[row_local, col_local],
-            self.z_delta_neighbour[row_local, col_local],
+            self.rowindex - 1 + rowLocal,
+            self.colindex - 1 + colLocal,
+            self.dist[rowLocal, colLocal],
+            self.zDeltaNeighbour[rowLocal, colLocal],
         )
 
     def forest_detrainment(self):
@@ -421,4 +421,4 @@ class Cell:
         # rise over run (should be negative slope)
         slope = (_rest - self.minAddedDetrainmentForest) / (0 - _noDetrainmentEffectZdelta)
         # y=mx+b, where zDelta is x
-        self.detrainment = max(self.minAddedDetrainmentForest, slope * self.z_delta + _rest)
+        self.detrainment = max(self.minAddedDetrainmentForest, slope * self.zDelta + _rest)
