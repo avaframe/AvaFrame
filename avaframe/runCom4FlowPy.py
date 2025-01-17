@@ -60,7 +60,7 @@ def main():
         initProj.cleanModuleFiles(avalancheDir, com4FlowPy, deleteOutput=False)
 
         # Start logging
-        log = logUtils.initiateLogger(avalancheDir, logName)
+        log = logUtils.initiateLogger(avalancheDir, logName+'_'+uid)
         log.info("==================================")
         log.info("MAIN SCRIPT")
         log.info("Current avalanche: %s", avalancheDir)
@@ -109,12 +109,14 @@ def main():
     # if customPaths == True --> check
     elif cfgCustomPaths["useCustomPaths"] == "True":
         # if "useCustomPaths" == True, we don't need the AvaDir Info for the
-        # creation of the simulaiton uid
+        # creation of the simulaiton uid          
         uid = cfgUtils.cfgHash(cfg)
         cfgPath = {}
 
         # Handling Custom directory creation
         workDir = pathlib.Path(cfgCustomPaths["workDir"])
+
+        log = logUtils.initiateLogger(workDir, logName+'_'+uid)
 
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
         try:
@@ -130,8 +132,7 @@ def main():
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-        log = logUtils.initiateLogger(res_dir, logName)
-
+        
         # writing config to .json file
         successToJSON = writeCfgJSON(cfg, uid, workDir)
 
