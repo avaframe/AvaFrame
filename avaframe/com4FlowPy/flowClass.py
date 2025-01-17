@@ -250,6 +250,7 @@ class Cell:
                     _tanAlpha = self.tanAlphaFor
                 else:
                     _tanAlpha = self.tanAlpha
+            """
 
             if self.forestModule in ["forestFriction", "forestDetrainment"]:
                 if (not self.is_start) and (self.FSI > 0.) and (self.skipForestDist < self.minDistXYZ):
