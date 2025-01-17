@@ -149,7 +149,7 @@ greater than the global :math:`\alpha`.
 
 If ``forest = True`` there is an option to switch on ``forestInteraction``.
 The user-provided *forest_layer* is treated binary, which means that forest (``cell.isForest = 1``) is considered when values > 0, no forest is considered when values <= 0 (``cell.isForest = 0``).
-If ``forestInteraction = True``, an additional output Layer is computed, which represents the number of forested raster cells a path runs through. In this forest interaction layer, locations (raster cells) of paths are assigned to the number of forested cells previously hit. The output raster layer represents the i) **minimum** forest length within the path (that is from one release cell) and ii) the **minimum** value of overlapping paths. See an application and further description of the forestInteractionLayer in :cite:`SpHeMiFi2024`
+If ``forestInteraction = True`` and the ``outputFiles`` contain ``forestInteraction``, an additional output Layer is computed, which represents the number of forested raster cells a path runs through. In this forest interaction layer, locations (raster cells) of paths are assigned to the number of forested cells previously hit. The output raster layer represents the i) **minimum** forest length within the path (that is from one release cell) and ii) the **minimum** value of overlapping paths. See an application and further description of the forestInteractionLayer in :cite:`SpHeMiFi2024`
 
 
 iv) variable parameters
