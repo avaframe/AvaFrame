@@ -138,7 +138,7 @@ def main():
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-
+        
         # writing config to .json file
         successToJSON = writeCfgJSON(cfg, uid, workDir)
 
