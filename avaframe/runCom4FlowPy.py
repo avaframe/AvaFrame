@@ -117,7 +117,7 @@ def main(avalancheDir=''):
     # if customPaths == True --> check
     elif cfgCustomPaths["useCustomPaths"] == "True":
         # if "useCustomPaths" == True, we don't need the AvaDir Info for the
-        # creation of the simulation uid
+        # creation of the simulaiton uid          
         uid = cfgUtils.cfgHash(cfg)
         cfgPath = {}
 
@@ -145,7 +145,7 @@ def main(avalancheDir=''):
         except FileExistsError:
             log.info("temp folder for simualtion {} already exists - aborting".format(uid))
             sys.exit(1)
-
+        
         # writing config to .json file
         successToJSON = writeCfgJSON(cfg, uid, workDir)
 
