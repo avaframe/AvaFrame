@@ -116,6 +116,12 @@ def main():
         # Handling Custom directory creation
         workDir = pathlib.Path(cfgCustomPaths["workDir"])
 
+        if not os.path.isdir(workDir):
+            try:
+                os.makedirs(workDir)
+            except Exception as e:
+                return e
+
         log = logUtils.initiateLogger(workDir, logName+'_'+uid)
 
         timeString = datetime.now().strftime("%Y%m%d_%H%M%S")
