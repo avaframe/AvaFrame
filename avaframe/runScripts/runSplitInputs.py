@@ -5,7 +5,7 @@ import pathlib
 import argparse
 
 from avaframe.in3Utils import cfgUtils, logUtils
-from avaframe.in4Region import splitInputs
+from avaframe.com7Regional import splitInputs
 
 def runSplitInputs(avalancheDir=''):
     """Main function to split input data for avalanche scenarios.
@@ -39,7 +39,7 @@ def runSplitInputs(avalancheDir=''):
     inputDir = pathlib.Path(avalancheDir) / 'Inputs'
 
     # Define the output directory
-    outputDir = pathlib.Path(avalancheDir) / 'Outputs' / 'in4Region'/ 'SplitInputs'
+    outputDir = pathlib.Path(avalancheDir) / 'Outputs' / 'com7Regional'/ 'SplitInputs'
 
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(splitInputs)

@@ -54,7 +54,7 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
 
     # Initialize log for each process
     log = logUtils.initiateLogger(avalancheDir, logName='runCom1DFA')
-    log.info('COM1DFA PROCESS CALLED BY REGIONAL RUN')
+    log.info('COM1DFA PROCESS CALLED BY COM7REGIONAL RUN')
     log.info('Current avalanche: %s', avalancheDir)
 
     # Update cfgMain setting to reflect the current avalancheDir

@@ -17,12 +17,26 @@ def runCom7Regional(avalancheDir=''):
     Parameters
     ----------
     avalancheDir: str
-        input directory which should contain multiple valid avalanche directories, i.e. the regional directory!
+        input directory which should contain multiple valid avalanche directories within Outputs/com7Regional/SplitInputs
 
     Returns
     -------
     outDir: str
         path to output directory
+
+    Notes
+    -----
+    The function expects the following directory structure:
+    avalancheDir/
+    └── Outputs/
+        └── com7Regional/
+            └── SplitInputs/
+                ├── avalanche1/
+                ├── avalanche2/
+                └── ...
+
+    Where 'SplitInputs' directory contains multiple individual avalanche directories
+    that will be processed in parallel.
     """
 
     # Time the whole routine
@@ -42,8 +56,8 @@ def runCom7Regional(avalancheDir=''):
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
 
-    # Define the regional directory in relation to the avalanche directory #ToDo: move to config?
-    regionalDir = pathlib.Path(avalancheDir) / 'Outputs' / 'in4Region'/ 'SplitInputs'
+    # Define the regional directory in relation to the avalanche directory #ToDo: move to config? / make it more clear?
+    regionalDir = pathlib.Path(avalancheDir) / 'Outputs' / 'com7Regional'/ 'SplitInputs'
 
     # List valid avalanche directories within the regional directory
     avaDirs = com7.findAvaDirs(regionalDir)
@@ -74,8 +88,8 @@ def runCom7Regional(avalancheDir=''):
                 log.error(f"Error processing {avaDir}: {e}")
     log.info(f"Processing complete. Success in '{nSuccesses}' out of '{len(avaDirs)}' directories.")
 
-    # Copy (or move) files from the 'Outputs/com1DFA/peakFiles' folder from each of the subfolders (avaDir) to a folder
-    # called 'allPeakFiles' in the main regional folder. Also copy (or move) 'timeSteps'
+    # Copy (or move) files from the 'Outputs/com1DFA/peakFiles' directory from each of the subdirectories (avaDirs) to a directory
+    # called 'allPeakFiles' in the main regional directory. Also copy (or move) 'timeSteps' to allPeakFiles/allTimeSteps
     if cfg['GENERAL'].getboolean('copyPeakFiles'):
         allPeakFilesDir, allTimeStepsDir = com7.moveOrCopyPeakFiles(cfg, regionalDir, avaDirs)
 

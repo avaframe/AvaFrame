@@ -5,7 +5,7 @@ import shapefile  # pyshp
 from shapely.geometry import shape, box
 import pathlib
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Patch
+from matplotlib.patches import Patch, Rectangle
 import matplotlib as mpl
 import time
 
@@ -195,15 +195,11 @@ def createDirList(inputShp):
     dirList = []
     unnamedCount = 1
     
-    # Debug: print available fields
-    if properties:
-        log.info(f"Available fields in shapefile: {list(properties[0].keys())}")
-    
     for props, geom in zip(properties, geometries):
-        dirName = props.get('name', '').strip() or f"unnamedAvalanche{str(unnamedCount).zfill(5)}"
+        dirName = props.get('name', '').strip() or f"{str(unnamedCount).zfill(5)}"
         if not props.get('name', '').strip():
             unnamedCount += 1
-            log.warning(f"No 'name' field or empty name found in {inputShp}, using '{dirName}'")
+            log.info(f"No 'name' field or empty name found in {inputShp}, using '{dirName}'")
         
         dirList.append({
             'dirName': dirName,
@@ -608,7 +604,8 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
         Path to the generated report image
     """
     # Set up figure
-    fig, ax = plt.subplots(figsize=(10, 8))
+    plt.figure(figsize=(10, 8))
+    ax = plt.subplot(1, 1, 1)
     
     # Read and plot DEM
     demData = ascUtils.readRaster(inputDEM)
@@ -618,33 +615,18 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
     yMin = header['yllcenter']
     xMax = xMin + cellSize * header['ncols']
     yMax = yMin + cellSize * header['nrows']
-    ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
-              cmap='gray', alpha=0.5, origin='lower', zorder=1)
+    im = ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
+              cmap='binary_r', alpha=0.5, origin='lower', zorder=1)
     
-    # Create legend elements for map features
-    mapElements = [Rectangle((0, 0), 1, 1, fill=False, linestyle='--', color='black',
-                           label='Clipped DEM Extent')]
-    
-    if reportType == 'basic':
-        mapElements.append(Patch(facecolor='black', alpha=1.0, label='Release Areas'))
-    else:  # optional
-        mapElements.extend([
-            Patch(facecolor='black', alpha=0.3, label='Entrainment Areas'),
-            Patch(facecolor='none', alpha=0.5, hatch='xxxx', label='Resistance Areas', edgecolor='black', linewidth=0.5)
-        ])
-    
-    # Process groups and plot them
-    groupElements = []
     colors = ['#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF',
               '#FF8000', '#FF0080', '#80FF00', '#00FF80', '#0080FF',
               '#8000FF', '#FF3333', '#33FF33', '#3333FF', '#FF33FF',
-              '#33FFFF', '#FFB433', '#FF33B4', '#B4FF33', '#33FFB4',
+              '#33FFFF', '#FFE666', '#FF66E6', '#E6FF66', '#33FFB4',
               '#33B4FF', '#B433FF', '#FF6666', '#66FF66', '#6666FF',
               '#FF66FF', '#66FFFF', '#FFE666', '#FF66E6', '#E6FF66']
     for idx, group in enumerate(dirListGrouped):
         dirName = group['dirName']
         color = colors[idx % len(colors)]
-        
         # Plot DEM extent using groupExtents
         if dirName in groupExtents:
             xMin, xMax, yMin, yMax = groupExtents[dirName]
@@ -666,16 +648,30 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
                     for geom in groupFeatures[dirName].get('RES', []):
                         x, y = geom.exterior.xy
                         plt.fill(x, y, alpha=0.5, color=color, hatch='xxxx', fill=False, edgecolor=color, linewidth=0.5)
-        
-        groupElements.append(Patch(facecolor=color, alpha=1.0, label=dirName))
+            
+            # Place group label using groupExtents
+            plt.text(xMin, yMax, dirName, color=color, fontsize=8,
+                          transform=mpl.transforms.offset_copy(ax.transData, x=1, y=-7, units='points', fig=ax.figure))
+
+    # Create legend
+    mapElements = [Rectangle((0, 0), 1, 1, fill=False, linestyle='--', color='black',
+                           label='Clipped DEM Extent')]
+    if reportType == 'basic':
+        mapElements.append(Patch(facecolor='black', alpha=1.0, label='Release Areas'))
+    else:  # optional
+        mapElements.extend([
+            Patch(facecolor='black', alpha=0.3, label='Entrainment Areas'),
+            Patch(facecolor='none', alpha=0.5, hatch='xxxx', label='Resistance Areas', edgecolor='black', linewidth=0.5)
+        ])
+
+    plt.legend(handles=mapElements,
+                    title='Legend',
+                    loc='center left',
+                    bbox_to_anchor=(1, 0.5))
     
-    # Create two-part legend
-    groupElements.sort(key=lambda x: x.get_label().lower())
-    elementsLegend = ax.legend(handles=mapElements, title='Map Features',
-                           bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.add_artist(elementsLegend)
-    ax.legend(handles=groupElements, title='Groups',
-             bbox_to_anchor=(1.05, 0.6), loc='upper left')
+    # Add DEM colorbar
+    cax = ax.inset_axes([1.015, 0, 0.375, 0.02])  # [x, y, width, height]
+    plt.colorbar(im, cax=cax, orientation='horizontal', label='Elevation [m]')
     
     # Format plot; add title and labels
     ax.set_aspect('equal')
@@ -702,9 +698,8 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
     ax.set_xlim(xMin - dx, xMax + dx)
     ax.set_ylim(yMin - dy, yMax + dy)
     
-    plt.tight_layout()
-    reportPath = outputDir / f'visual_report_{reportType}.png'
-    plt.savefig(reportPath, dpi=300, bbox_inches='tight')
+    reportPath = outputDir / f'splitInputs_visualReport_{reportType}.png'
+    plt.savefig(reportPath, dpi=200, bbox_inches='tight')
     plt.close()
     
     return reportPath
@@ -758,7 +753,7 @@ def writeScenarioReport(dirListGrouped, outputDir):
     -------
     none
     """
-    reportPath = outputDir / 'scenario_report.txt'
+    reportPath = outputDir / 'splitInputs_scenario_report.txt'
     
     with open(reportPath, 'w') as f:
         f.write("SCENARIO REPORT\n")
