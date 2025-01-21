@@ -93,7 +93,7 @@ class Cell:
                 _vThFr = self.noFrictionEffectV
                 _vThDe = self.noDetrainmentEffectV
                 _sqrt2xG = self._SQRT2 * 9.81
-                self.noFricitonEffectZdelta = (_vThFr * _vThFr) / _sqrt2xG
+                self.noFrictionEffectZDelta = (_vThFr * _vThFr) / _sqrt2xG
                 self.noDetrainmentEffectZdelta = (_vThDe * _vThDe) / _sqrt2xG
 
             elif self.forestModule == "forestFrictionLayer":
@@ -134,7 +134,7 @@ class Cell:
             self.maxAddedDetrainmentForest = 0
             self.minAddedDetrainmentForest = 0
             self.noDetrainmentEffectV = 0
-            self.noFricitonEffectZdelta = 0
+            self.noFrictionEffectZDelta = 0
             self.noDetrainmentEffectZdelta = 0
 
         if type(startcell) == bool:  # if a boolean variable (i.e.'True') is passed to the constructor
@@ -239,56 +239,40 @@ class Cell:
         self.z_gamma = self.altitude - self.dem_ng
         ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 0, 1], [self._SQRT2, 1, self._SQRT2]])
 
-        if (not self.forestBool) and (not self.is_start):
-            self.calcDistMin()
-        elif (self.forestBool) and (not self.is_start):
-            self.calcDistMin(calc3D=True)
+        if (not self.is_start):
+            if (not self.forestBool):
+                self.calcDistMin()
+            else:
+                self.calcDistMin(calc3D=True)
             
         if self.forestBool:
 
             if self.forestModule == "forestFrictionLayer":
-                if (self.skipForestDist < self.minDistXYZ) and (not self.is_start):
+                if (not self.is_start) and (self.skipForestDist < self.minDistXYZ):
                     _tanAlpha = self.tanAlphaFor
                 else:
                     _tanAlpha = self.tanAlpha
-            
-            """
-            if self.forestModule == "forestFrictionLayer":
-                # default behavior - forest effect only neglected for start-cells
-                if (self.nSkipForestCells == 1) and (not self.is_start):
-                    _tanAlpha = self.tanAlphaFor
-                # forest effect also neglected for direct successors to the start-cell if nSkipForestCells==2
-                elif ((self.nSkipForestCells == 2) and (not self.is_start) and
-                      (True not in [x.is_start for x in self.lOfParents])):
-                    _tanAlpha = self.tanAlphaFor
-                else:
-                    _tanAlpha = self.tanAlpha
-            """
 
-            if (self.forestModule == "forestFriction") or (self.forestModule == "forestDetrainment"):
-                if (self.forestBool) and (self.FSI > 0.0) and (not self.is_start):
-                    if (self.skipForestDist < self.minDistXYZ):
-                        # if forestBool, we assume that forestFriciton is activated
-                        # and if FSI > 0 then we also calculate _tanAlpha with forestEffect
-                        # NOTE: We also don't assume a forest Effect on potential Start Zells, since this should
-                        #      ideally be handled by a separate release-area algorithm in the pre-processing
-                        # NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment'
-                        #      branch and not yet fully tested!!
-                        if self.z_delta < self.noFricitonEffectZdelta:
-                            # friction at rest v=0 would be applied to start cells
-                            _rest = self.maxAddedFrictionForest * self.FSI
-                            # rise over run
-                            _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFricitonEffectZdelta)
-                            # y = mx + b, shere z_delta is the x
-                            friction = max(self.minAddedFrictionForest, _slope * self.z_delta + _rest)
-                            _alpha_calc = self.alpha + max(0, friction)  # NOTE: not sure what this does, seems redundant!
-                        else:
-                            _alpha_calc = self.alpha + self.minAddedFrictionForest
-
-                        _tanAlpha = np.tan(np.deg2rad(_alpha_calc))
+            if self.forestModule in ["forestFriction", "forestDetrainment"]:
+                if (not self.is_start) and (self.FSI > 0.) and (self.skipForestDist < self.minDistXYZ):
+                    # if forestBool, we assume that forestFriciton is activated
+                    # and if FSI > 0 then we also calculate _tanAlpha with forestEffect
+                    # NOTE: We also don't assume a forest Effect on potential Start Zells, since this should
+                    #      ideally be handled by a separate release-area algorithm in the pre-processing
+                    # NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment'
+                    #      branch and not yet fully tested!!
+                    if self.z_delta < self.noFrictionEffectZDelta:
+                        # friction at rest v=0 would be applied to start cells
+                        _rest = self.maxAddedFrictionForest * self.FSI
+                        # rise over run
+                        _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFrictionEffectZDelta)
+                        # y = mx + b, shere z_delta is the x
+                        friction = max(self.minAddedFrictionForest, _slope * self.z_delta + _rest)
+                        _alpha_calc = self.alpha + max(0, friction)  # NOTE: not sure what this does, seems redundant!
                     else:
-                        _tanAlpha = self.tanAlpha
+                        _alpha_calc = self.alpha + self.minAddedFrictionForest
 
+                    _tanAlpha = np.tan(np.deg2rad(_alpha_calc))
                 else:
                     _tanAlpha = self.tanAlpha
 
