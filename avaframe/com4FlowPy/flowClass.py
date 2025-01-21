@@ -242,7 +242,7 @@ class Cell:
                 self.calcDistMin()
             else:
                 self.calcDistMin(calc3D=True)
-
+            
         if self.forestBool:
 
             if self.forestModule == "forestFrictionLayer":
