@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 def splitInputsMain(inputDir, outputDir, cfg):
     """Process and organize avalanche input data into individual avalanche directories based 
-    on release area's "name" and "scenario" attributes.
+    on release area's "group" and "scenario" attributes.
 
     Parameters
     ----------
@@ -59,11 +59,9 @@ def splitInputsMain(inputDir, outputDir, cfg):
     # Create the output directory
     outputDir.mkdir(parents=True, exist_ok=True)
 
-    # Step 1: Create the central list
-    log.info("Creating folder list...")
-    dirList = createDirList(inputShp)
-    # Group folders based on "name" attribute - with identical "name" attributes before the first underscore and update the list
-    dirListGrouped = groupDirsByName(dirList)
+    # Step 1: Create the directory list
+    log.info("Creating folder list based on REL 'group' attribute...")
+    dirListGrouped = createDirList(inputShp)
     log.info("Finished creating folder list")
 
     # Step 2: Set up avalanche directories
@@ -180,7 +178,7 @@ def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
             prjFile.write(srs)
 
 def createDirList(inputShp):
-    """Create a list of entries from each feature in the input shapefile.
+    """Create a list of entries from each feature in the input shapefile, grouped by the 'group' attribute.
 
     Parameters
     ----------
@@ -189,62 +187,46 @@ def createDirList(inputShp):
 
     Returns
     -------
-    dirList: list
-        list of dictionaries containing dirName, properties, and geometry for each feature
+    dirListGrouped: list
+        list of dictionaries containing dirName (group name), properties list, and geometries list,
+        where features are grouped by their 'group' attribute
     """
     fields, fieldNames, properties, geometries, srs = readShapefile(inputShp)
     
-    # Create list of dictionaries for each feature
-    dirList = []
+    # Create dictionary to store groups
+    groups = {}
     unnamedCount = 1
     
     for props, geom in zip(properties, geometries):
         propsLower = {key.lower(): value for key, value in props.items()} # Handle case sensitivity
-        dirName = propsLower.get('name', '').strip() or f"{str(unnamedCount).zfill(5)}"
-        if not propsLower.get('name', '').strip():
-            unnamedCount += 1
-            log.info(f"No 'name' field or empty name found in {inputShp}, using '{dirName}'")
         
-        dirList.append({
-            'dirName': dirName,
-            'properties': props,
-            'geometry': geom
-        })
+        # Get group name from 'group' attribute, fallback to unnamed if not present
+        groupName = propsLower.get('group', '').strip() or f"{str(unnamedCount).zfill(5)}"
+        if not propsLower.get('group', '').strip():
+            unnamedCount += 1
+            log.info(f"No 'group' field or empty group found in {inputShp}, using '{groupName}'")
+        
+        # Initialize group if not exists
+        if groupName not in groups:
+            groups[groupName] = {
+                'dirName': groupName,
+                'properties': [],
+                'geometries': []
+            }
+        
+        # Add feature to group
+        groups[groupName]['properties'].append(props)
+        groups[groupName]['geometries'].append(geom)
     
-    return dirList
+    # Convert dictionary to list and sort by dirName
+    dirListGrouped = list(groups.values())
+    dirListGrouped.sort(key=lambda x: x['dirName'].lower())
 
-def groupDirsByName(dirList):
-    """Group entries in the dirList by name before the first underscore.
-
-    Parameters
-    ----------
-    dirList: list
-        list of dictionaries containing dirName, properties, and geometry for each feature
-
-    Returns
-    -------
-    dirListByName: list
-        list of dictionaries with entries grouped by name, containing dirName, properties list, and geometries list
-    """
-    dirListByName = []
-
-    for entry in dirList:
-        name = entry['dirName'].split('_')[0] # Get release area name before first underscore
-        if not any(e['dirName'] == name for e in dirListByName):
-            dirListByName.append({
-                'dirName': name,
-                'properties': [entry['properties']],
-                'geometries': [entry['geometry']]
-            })
-        else:
-            for e in dirListByName:
-                if e['dirName'] == name:
-                    e['properties'].append(entry['properties'])
-                    e['geometries'].append(entry['geometry'])
-
-    log.info(f"Grouped '{len(dirList)}' avalanche directories with identical names before first underscore. "
-             f"Updated folder list contains '{len(dirListByName)}' entries")
-    return dirListByName
+    # Log total number of features
+    totalFeatures = sum(len(group['geometries']) for group in dirListGrouped)
+    log.info(f"Found '{totalFeatures}' features that were organized into '{len(dirListGrouped)}' groups")
+    
+    return dirListGrouped
 
 def splitAndMoveReleaseAreas(dirList, inputShp, outputDir):
     """Split release areas into individual shapefiles and write them to their respective folders.
@@ -267,7 +249,7 @@ def splitAndMoveReleaseAreas(dirList, inputShp, outputDir):
 
     featuresByName = {}
     for entry in dirList:
-        name = entry['dirName'].split('_')[0] # Get release area name before first underscore
+        name = entry['dirName'] # Get release area name
         # Group entries with the same name
         if name not in featuresByName:
             featuresByName[name] = []
