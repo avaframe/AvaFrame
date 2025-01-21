@@ -37,6 +37,9 @@ def findAvaDirs(Dir):
 def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
     """Run com1DFA simulation in a specific avalanche directory with regional settings.
 
+    Note: This function calls com1DFA within each avalanche directory within the input directory. 
+    If wanted it may be used as a template to call another operation within each directory, such as com2AB, ana5Utils, etc.
+
     Parameters
     ----------
     cfgMain : configparser.ConfigParser

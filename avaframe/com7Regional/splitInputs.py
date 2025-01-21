@@ -2,7 +2,7 @@
 
 import logging
 import shapefile  # pyshp
-from shapely.geometry import shape, box
+from shapely.geometry import shape, box, MultiPolygon
 import pathlib
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
@@ -131,6 +131,9 @@ def readShapefile(inputShp):
         properties = []
         geometries = []
         for shapeRecord in src.iterShapeRecords():
+            if shapeRecord.shape.shapeType == shapefile.NULL:
+                log.warning(f"Skipping NULL shape in {inputShp}")
+                continue
             properties.append(dict(zip(fieldNames, shapeRecord.record)))
             geometries.append(shape(shapeRecord.shape.__geo_interface__))
 
@@ -196,8 +199,9 @@ def createDirList(inputShp):
     unnamedCount = 1
     
     for props, geom in zip(properties, geometries):
-        dirName = props.get('name', '').strip() or f"{str(unnamedCount).zfill(5)}"
-        if not props.get('name', '').strip():
+        propsLower = {key.lower(): value for key, value in props.items()} # Handle case sensitivity
+        dirName = propsLower.get('name', '').strip() or f"{str(unnamedCount).zfill(5)}"
+        if not propsLower.get('name', '').strip():
             unnamedCount += 1
             log.info(f"No 'name' field or empty name found in {inputShp}, using '{dirName}'")
         
@@ -525,11 +529,11 @@ def splitByScenarios(dirList, outputDir):
         totalInputFiles += 1
         
         # Get the scenario attribute values
-        if 'scenario' in fieldNames: #Check if scenario attribute exists
+        if 'scenario' in map(str.lower, fieldNames):  # Check if scenario attribute exists
             # Create scenario dictionary
             scenarios = {}
             for shapeRecord in shapefile.Reader(str(inputShp)).iterShapeRecords():
-                properties = dict(zip(fieldNames, shapeRecord.record))
+                properties = {k.lower(): v for k, v in zip(fieldNames, shapeRecord.record)} # Handle case sensitivity
                 scenarioValues = properties.get('scenario', '').split(',')
                 for scenario in scenarioValues:
                     # Check if scenario value is empty and set flag
@@ -551,8 +555,8 @@ def splitByScenarios(dirList, outputDir):
                 
                 # Filter out the scenario attribute and remove it
                 shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
-                filteredFields = [field for field in fields if field[0] != 'scenario']
-                filteredFieldNames = [name for name in fieldNames if name != 'scenario']
+                filteredFields = [field for field in fields if field[0].lower() != 'scenario']
+                filteredFieldNames = [name for name in fieldNames if name.lower() != 'scenario']
                 
                 # Write the shapefile
                 writeShapefile(outputShp, filteredFields, filteredFieldNames, shapeFeatures, srs)
@@ -576,6 +580,24 @@ def splitByScenarios(dirList, outputDir):
                     (inputShp.with_suffix(ext)).unlink()
 
     log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
+
+def getExteriorCoords(geom):
+    """Get the exterior coordinates of a shapely geometry to handle both single and multi-polygon geometries.
+
+    Parameters
+    ----------
+    geom : shapely.geometry
+        The shapely geometry to get the exterior coordinates from.
+
+    Returns
+    -------
+    list
+        A list of tuples containing the x and y coordinates of the geometry exterior.
+    """
+    if isinstance(geom, MultiPolygon):
+        return [poly.exterior.xy for poly in geom.geoms]
+    else:
+        return [geom.exterior.xy]
 
 def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures, reportType):
     """Create a visual report showing the DEM extent with either basic or optional inputs.
@@ -637,17 +659,17 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
             if reportType == 'basic':
                 # Plot release areas
                 for geom in group['geometries']:
-                    x, y = geom.exterior.xy
-                    plt.fill(x, y, alpha=1.0, color=color)
+                    for x, y in getExteriorCoords(geom):
+                        plt.fill(x, y, alpha=1.0, color=color)
             else:
                 # Plot optional features
                 if dirName in groupFeatures:
                     for geom in groupFeatures[dirName].get('ENT', []):
-                        x, y = geom.exterior.xy
-                        plt.fill(x, y, alpha=0.3, color=color, edgecolor='none')
+                        for x, y in getExteriorCoords(geom):
+                            plt.fill(x, y, alpha=0.3, color=color, edgecolor='none')
                     for geom in groupFeatures[dirName].get('RES', []):
-                        x, y = geom.exterior.xy
-                        plt.fill(x, y, alpha=0.5, color=color, hatch='xxxx', fill=False, edgecolor=color, linewidth=0.5)
+                        for x, y in getExteriorCoords(geom):
+                            plt.fill(x, y, alpha=0.5, color=color, hatch='xxxx', fill=False, edgecolor=color, linewidth=0.5)
             
             # Place group label using groupExtents
             plt.text(xMin, yMax, dirName, color=color, fontsize=8,
@@ -782,8 +804,8 @@ def writeScenarioReport(dirListGrouped, outputDir):
                 f.write(f"Scenario: {scenName}\n")
                 f.write(f"No. of release areas: {len(geometries)}\n")
                 
-                if 'name' in fieldNames:
-                    nameIdx = fieldNames.index('name')
+                if 'name' in map(str.lower, fieldNames): # Handle case sensitivity
+                    nameIdx = [i for i, name in enumerate(fieldNames) if name.lower() == 'name'][0]
                     with shapefile.Reader(str(scenFile)) as shp:
                         records = sorted(shp.records(), key=lambda x: x[nameIdx].lower())
                         for record in records:
