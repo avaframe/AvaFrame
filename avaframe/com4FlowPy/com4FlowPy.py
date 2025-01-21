@@ -613,8 +613,6 @@ def checkConvertReleaseShp2Tif(modelPaths):
             dem = IOf.readRaster(modelPaths["demPath"])
             demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            #dem = io.read_raster(modelPaths["demPath"])
-            #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
             raise ValueError(_errMsg)
