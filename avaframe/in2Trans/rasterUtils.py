@@ -1,5 +1,5 @@
 """
-    ASCII file reader and handler
+    Raster (ascii and tif) file reader and handler
 
 """
 
@@ -12,7 +12,9 @@ log = logging.getLogger(__name__)
 
 
 def readRaster(fname, noDataToNan=True):
-    """Read raster file in .asc or .tif format
+    """Read raster file in .asc or .tif format.
+    Returns a dict with a header and the data in it.
+    Header is based on avaframe header info with llcenter info
 
     Parameters
     -----------
@@ -25,10 +27,11 @@ def readRaster(fname, noDataToNan=True):
     Returns
     --------
     data: dict
-        -headerInfo: class
-            information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value)
-        -rasterdata : 2D numpy array
-                2D numpy array of ascii matrix
+        -header: class
+            information that is stored in header (ncols, nrows, xllcenter, yllcenter, nodata_value, transform,
+            crs)
+        -rasterData : 2D numpy array
+                2D numpy array of raster matrix
     """
 
     log.debug("Reading raster file : %s", fname)
@@ -50,6 +53,7 @@ def readRaster(fname, noDataToNan=True):
 
 def getHeaderFromRaster(raster):
     """convert rasterio raster info to header info
+
     Parameters
     ----------
     raster: rasterio raster
@@ -94,13 +98,12 @@ def transformFromASCHeader(header):
     cellSize = header["cellsize"]
     nRows = header["nrows"]
 
-    transform = rasterio.transform.from_origin(xllCenter,
-                                               yllCenter + nRows * cellSize,
-                                               cellSize,
-                                               cellSize)
-    # crs = rasterio.crs.CRS.from_epsg(31287)
+    transform = rasterio.transform.from_origin(
+        xllCenter - cellSize / 2.0, (yllCenter - cellSize / 2.0) + nRows * cellSize, cellSize, cellSize
+    )
 
-    return transform  # , crs
+    return transform
+
 
 def readRasterHeader(fname):
     """return a class with information from an ascii file header
@@ -120,7 +123,6 @@ def readRasterHeader(fname):
     raster = rasterio.open(fname)
     header = getHeaderFromRaster(raster)
     raster.close()
-
 
     return header
 
@@ -147,6 +149,7 @@ def isEqualASCheader(headerA, headerB):
         and (a["cellsize"] == b["cellsize"])
     )
 
+
 def writeResultToRaster(header, resultArray, outFileName, flip=False):
     """Write 2D array to a raster file with header and save to location of outFileName
 
@@ -154,13 +157,14 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
     ----------
     header : class
         class with methods that give cellsize, nrows, ncols, xllcenter
-        yllcenter, nodata_value
+        yllcenter, nodata_value, driver, transfrom, crs
     resultArray : 2D numpy array
         2D numpy array of values that shall be written to file
     outFileName : str
         path incl. name of file to be written
     flip: boolean
-        if True, flip the rows of the resultArray when writing
+        if True, flip the rows of the resultArray when writing. AF considers the first line in a data array to be the
+        southernmost one. Some formats (e.g. tif) have the northernmost line first
 
     Returns
     -------

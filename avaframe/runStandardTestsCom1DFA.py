@@ -47,6 +47,9 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 #  valuesList = ['resistance']
 filterType = 'TAGS'
 valuesList = ['standardTest', 'standardTestSnowGlide']
+# filterType = 'AVANAME'
+# valuesList = ['avaAlr']
+
 testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='or')
 
 # Set directory for full standard test report

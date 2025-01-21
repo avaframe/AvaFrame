@@ -36,6 +36,7 @@ jobs:
         pip install flake8 pytest pytest-cov
         pip install numpy cython
         pip install setuptools
+        pip install pytest_mock
     # This compilation is necessary to have the .c file for the next step
     # Alternative is to include the .c file in the repo
     - name: Compile cython code
@@ -54,7 +55,7 @@ jobs:
       run: |
         pytest -ra --cov --cov-report=xml --cov-config=.coveragerc
     - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v8.0.0
+      uses: paambaati/codeclimate-action@v9.0.0
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_ID }}
     - name: Upload coverage to Codecov

@@ -432,9 +432,9 @@ def probAnalysis(avaDir, cfg, modName, parametersDict='', inputDir='', probConf=
              'threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
     log.info('%s peak fields added to analysis' % count)
 
-    # # Save to .asc file
+    # Save to raster file
     avaName = avaDir.name
-    outFileName = '%s_prob_%s_%s_lim%s.asc' % (avaName,
+    outFileName = '%s_prob_%s_%s_lim%s' % (avaName,
                                                probConf,
                                                cfg['GENERAL']['peakVar'],
                                                cfg['GENERAL']['peakLim'])

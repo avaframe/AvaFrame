@@ -6,6 +6,7 @@
 #  Load modules
 import numpy as np
 from avaframe.out1Peak import outPlotAllPeak as oP
+import avaframe.in2Trans.rasterUtils as rU
 import pytest
 import configparser
 import pathlib
@@ -22,7 +23,7 @@ def test_plotAllPeakFields(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir1
     peakFile1 = list(avaDir.glob(('*pft.asc')))[0]
     peakFile2 = list(avaDir.glob(('*pfv.asc')))[0]
-    demFile = dirPath / '..' / 'data' / 'avaAlr' / 'Inputs' / 'avaAlr.asc'
+    demFile = dirPath / '..' / 'data' / 'avaAlr' / 'Inputs' / 'avaAlr.tif'
     avaDirTmp1 = pathlib.Path(tmp_path, avaTestDir1)
     resultDir1 = avaDirTmp1 / 'Outputs' / 'com1DFA' / 'peakFiles'
     peakFileResult1 = resultDir1 / 'relAlr_125e697996_null_dfa_pft.asc'
@@ -30,7 +31,7 @@ def test_plotAllPeakFields(tmp_path):
     inputDir1 = avaDirTmp1 / 'Inputs'
     resultDir1.mkdir(parents=True)
     inputDir1.mkdir()
-    demInputFile1 = inputDir1 / 'avaAlr.asc'
+    demInputFile1 = inputDir1 / 'avaAlr.tif'
     shutil.copy(peakFile1, peakFileResult1)
     shutil.copy(peakFile2, peakFileResult2)
     shutil.copy(demFile, demInputFile1)
@@ -42,16 +43,13 @@ def test_plotAllPeakFields(tmp_path):
     inputDir2 = avaDirTmp2 / 'Inputs'
     resultDir2.mkdir(parents=True)
     inputDir2.mkdir()
-    demInputFile2 = inputDir2 / 'avaAlr.asc'
+    demInputFile2 = inputDir2 / 'avaAlr.tif'
     shutil.copy(peakFile1, peakFileResult1)
     shutil.copy(peakFile2, peakFileResult2)
     shutil.copy(demFile, demInputFile2)
 
     # initialise DEM
-    demData1 = np.loadtxt(demFile, skiprows=6)
-    demData = {}
-    demData['header'] = {'nodata_value': -9999}
-    demData['rasterData'] = demData1
+    demData = rU.readRaster(demFile)
 
     # initialise configparser
     cfg = configparser.ConfigParser()

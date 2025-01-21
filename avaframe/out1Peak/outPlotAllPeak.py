@@ -77,9 +77,6 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     for sName in peakFilesDF["simName"]:
         plotDict[sName] = {}
 
-    # TODO get from data
-    srcCrs = rasterio.crs.CRS.from_epsg(31287)
-
     # Loop through peakFiles and generate plot
     for m in range(len(peakFilesDF["names"])):
 
@@ -107,9 +104,15 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             # add peak field data now
             ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
 
-            # TODO for testing
+            # Add background map
             if cfgFLAGS.getboolean("showOnlineBackground"):
+                rasterInfo = IOf.readRaster(fileName, noDataToNan=True)
                 providers = ctx.providers.flatten()
+                srcCrs = rasterInfo['header']['crs']
+                if srcCrs is None:
+                    message = 'chosen basemap: %s not applicable for CRS: %s' % (str(cfgFLAGS["mapProvider"]), srcCrs)
+                    log.error(message)
+                    raise AssertionError(message)
                 ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
 
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
@@ -251,7 +254,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):
     if outDir.is_dir() is False:
         # create out dir if not already existing
         outDir.mkdir()
-    peakFiles = list(inputDir.glob("*.asc"))
+    peakFiles = list(inputDir.glob("*.asc")) + list(inputDir.glob("*.tif"))
 
     # Loop through peakFiles and generate plot
     for filename in peakFiles:

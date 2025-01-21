@@ -19,7 +19,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
 
     # directory with peak files
     inDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles")
-    resFiles = list(inDir.glob("*_%s.asc" % resType))
+    resFiles = list(inDir.glob("*_%s.asc" % resType)) + list(inDir.glob("*_%s.tif" % resType))
 
     # create output directory
     outDir = pathlib.Path(avaDir, "Outputs", comMod, "peakFiles", "transformed")
@@ -33,7 +33,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
         # convert depth to thickness using dem
         thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthToThickness(depthField, dem)
 
-        pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s.asc" % resType
+        pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s" % resType
 
         # create plot
         oT.plotDepthToThickness(

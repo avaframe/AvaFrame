@@ -247,7 +247,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
     avaName = pathlib.PurePath(avaDir).name
 
     # fetch probabiltiy map datasets in inDir
-    dataFiles = list(inDir.glob('*.asc'))
+    dataFiles = list(inDir.glob('*.asc')) + list(inDir.glob("*.tif"))
     if dataFiles == []:
         message = 'No probability map dataset found in: %s' % (inDir)
         log.error(message)

@@ -8,6 +8,8 @@ import logging
 import pathlib
 import pickle
 import shutil
+import rasterio
+import subprocess
 
 #  Load modules
 import numpy as np
@@ -17,6 +19,7 @@ import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
+from avaframe.in2Trans.rasterUtils import transformFromASCHeader
 from avaframe.in3Utils import cfgUtils
 
 
@@ -29,7 +32,7 @@ def test_prepareInputData(tmp_path):
     avaDir = dirName / ".." / "data" / "avaAlr"
     relFile = avaDir / "Inputs" / "REL" / "relAlr.shp"
     inputSimFiles["releaseScenario"] = relFile
-    inputSimFiles["demFile"] = avaDir / "Inputs" / "avaAlr.asc"
+    inputSimFiles["demFile"] = avaDir / "Inputs" / "avaAlr.tif"
     inputSimFiles["entFile"] = avaDir / "Inputs" / "ENT" / "entAlr.shp"
     inputSimFiles["relThFile"] = ""
     inputSimFiles["muFile"] = None
@@ -37,7 +40,7 @@ def test_prepareInputData(tmp_path):
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "ent", "avalancheDir": str(avaDir)}
     cfg["GENERAL"]["relThFromFile"] = "False"
-    cfg["INPUT"] = {"DEM": "avaAlr.asc"}
+    cfg["INPUT"] = {"DEM": "avaAlr.tif"}
     cfg["INPUT"]["relThFile"] = ""
 
     # call function to be tested
@@ -142,7 +145,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     testField = np.zeros((10, 10))
-    testFile = pathlib.Path(tmp_path, "testFile2.asc")
+    testFile = pathlib.Path(tmp_path, "testFile2")
+
     testHeader = {
         "ncols": 10,
         "nrows": 10,
@@ -150,12 +154,17 @@ def test_prepareInputData(tmp_path):
         "xllcenter": 0.0,
         "yllcenter": 0.0,
         "nodata_value": 0.0,
+        "driver": "AAIGrid",
     }
+    transform = rasterio.transform.from_origin(0 - 5 / 2, (0 - 5 / 2) + 10 * 5, 5, 5)
+    crs = rasterio.crs.CRS()
+    testHeader["transform"] = transform
+    testHeader["crs"] = crs
     IOf.writeResultToRaster(testHeader, testField, testFile, flip=True)
-    inputSimFiles["relThFile"] = testFile
+    inputSimFiles["relThFile"] = str(testFile) + ".asc"
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
-    cfg["INPUT"]["relThFile"] = str(testFile)
+    cfg["INPUT"]["relThFile"] = str(testFile) + ".asc"
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -277,7 +286,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["xiFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"secRelArea": "False", "simTypeActual": "null", "avalancheDir": str(avaDir)}
-    cfg["INPUT"] = {"DEM": "avaAlr.asc"}
+    cfg["INPUT"] = {"DEM": "avaAlr.tif"}
     cfg["INPUT"]["relThFile"] = ""
 
     with pytest.raises(AssertionError) as e:
@@ -690,11 +699,13 @@ def test_initializeResistance():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"cRes": 0.003,
-                      "ResistanceModel": "cRes",
-                       "detK": 10, 
-                      "detrainment": False, 
-                      "detWithoutRes": False}
+    cfg["GENERAL"] = {
+        "cRes": 0.003,
+        "ResistanceModel": "cRes",
+        "detK": 10,
+        "detrainment": False,
+        "detWithoutRes": False,
+    }
 
     nrows = 11
     ncols = 15
@@ -741,11 +752,13 @@ def test_initializeResistance():
     assert reportAreaInfo["resistance"] == "Yes"
     assert reportAreaInfo["detrainment"] == "No"
 
-    cfg["GENERAL"] = {"cRes": 0.003,
-                      "ResistanceModel": "cRes",
-                       "detK": 10.0, 
-                      "detrainment": True, 
-                      "detWithoutRes": False}
+    cfg["GENERAL"] = {
+        "cRes": 0.003,
+        "ResistanceModel": "cRes",
+        "detK": 10.0,
+        "detrainment": True,
+        "detWithoutRes": False,
+    }
     cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
     )
@@ -759,11 +772,13 @@ def test_initializeResistance():
     assert reportAreaInfo["resistance"] == "Yes"
     assert reportAreaInfo["detrainment"] == "Yes"
 
-    cfg["GENERAL"] = {"cRes": 0.003,
-                      "ResistanceModel": "cRes",
-                       "detK": 10.0, 
-                      "detrainment": True, 
-                      "detWithoutRes": True}
+    cfg["GENERAL"] = {
+        "cRes": 0.003,
+        "ResistanceModel": "cRes",
+        "detK": 10.0,
+        "detrainment": True,
+        "detWithoutRes": True,
+    }
     cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
     )
@@ -777,11 +792,13 @@ def test_initializeResistance():
     assert reportAreaInfo["resistance"] == "No"
     assert reportAreaInfo["detrainment"] == "Yes"
 
-    cfg["GENERAL"] = {"cResH": 0.003,
-                      "ResistanceModel": "cResH",
-                       "detK": 10.0, 
-                      "detrainment": False, 
-                      "detWithoutRes": False}
+    cfg["GENERAL"] = {
+        "cResH": 0.003,
+        "ResistanceModel": "cResH",
+        "detK": 10.0,
+        "detrainment": False,
+        "detWithoutRes": False,
+    }
     cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
     )
@@ -1489,6 +1506,13 @@ def test_exportFields(tmp_path):
     demHeader["xllcenter"] = 0
     demHeader["yllcenter"] = 0
     demHeader["nodata_value"] = -9999
+    demHeader["driver"] = "AAIGrid"
+
+    transform = transformFromASCHeader(demHeader)
+
+    demHeader["transform"] = transform
+    demHeader["crs"] = rasterio.crs.CRS()
+
     areaRaster = np.ones((5, 5))
     dem = {"originalHeader": demHeader, "areaRaster": areaRaster}
     outDir = pathlib.Path(tmp_path, "testDir")
@@ -1660,9 +1684,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
 
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / ".." / "data" / "avaAlr"
-    avaDEM = avaDir / "Inputs" / "avaAlr.asc"
+    avaDEM = avaDir / "Inputs" / "avaAlr.tif"
     avaDirTest = pathlib.Path(dirName, "data", "avaTest")
-    standardCfg["INPUT"]["DEM"] = "avaAlr.asc"
+    standardCfg["INPUT"]["DEM"] = "avaAlr.tif"
     standardCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
     relPath = pathlib.Path(avaDir, "Inputs", "REL", "relAlr.shp")
     inputSimFiles = {
@@ -1714,7 +1738,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entThCi95": "None",
         "releaseScenario": "relAlr",
     }
-    testCfg["INPUT"]["DEM"] = "avaAlr.asc"
+    testCfg["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg["INPUT"]["relThFile"] = ""
     testCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
 
@@ -1797,7 +1821,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entThCi95": "None",
         "releaseScenario": "relAlr",
     }
-    testCfg2["INPUT"]["DEM"] = "avaAlr.asc"
+    testCfg2["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg2["INPUT"]["relThFile"] = ""
     testCfg2["GENERAL"]["avalancheDir"] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
@@ -1865,7 +1889,7 @@ def test_initializeSimulation(tmp_path):
         "entTempRef": "-10.",
         "cpIce": "2050.",
         "TIni": "-10.",
-        "ResistanceModel": "cRes"
+        "ResistanceModel": "cRes",
     }
     # setup dem input
     demHeader = {}
@@ -2143,13 +2167,20 @@ def test_fetchRelVolume(tmp_path):
             "nrows": 10,
             "ncols": 20,
             "nodata_value": -9999,
+            "driver": "AAIGrid",
         }
     }
+
+    transform = transformFromASCHeader(dem["header"])
+    dem["header"]["transform"] = transform
+    dem["header"]["crs"] = rasterio.crs.CRS.from_epsg(31287)
+
     dem["rasterData"] = np.ones((10, 20))
     demPath = pathlib.Path(avaDir, "Inputs", "testDem.asc")
     fU.makeADir(pathlib.Path(avaDir, "Inputs"))
-    IOf.writeResultToRaster(dem["header"], dem["rasterData"], demPath, flip=False)
+    IOf.writeResultToRaster(dem["header"], dem["rasterData"], demPath.parent / demPath.stem, flip=False)
 
+    # subprocess.run(["cat", demPath])
     # write relThField
     relThF = {
         "header": {
@@ -2159,14 +2190,20 @@ def test_fetchRelVolume(tmp_path):
             "nrows": 10,
             "ncols": 20,
             "nodata_value": -9999,
+            "driver": "AAIGrid",
         }
     }
+    transform = transformFromASCHeader(relThF["header"])
+    relThF["header"]["transform"] = transform
+    relThF["header"]["crs"] = rasterio.crs.CRS.from_epsg(31287)
     relThF["rasterData"] = np.zeros((10, 20))
     for k in range(10):
         relThF["rasterData"][k, :] = k * 1
     relThField1 = pathlib.Path(avaDir, "Inputs", "RELTH", "relThField1.asc")
     fU.makeADir(pathlib.Path(avaDir, "Inputs", "RELTH"))
-    IOf.writeResultToRaster(relThF["header"], relThF["rasterData"], relThField1, flip=False)
+    IOf.writeResultToRaster(
+        relThF["header"], relThF["rasterData"], relThField1.parent / relThField1.stem, flip=False
+    )
 
     cfg = {}
     # relTh read from shp
