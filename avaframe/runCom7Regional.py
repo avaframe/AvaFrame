@@ -17,7 +17,7 @@ def runCom7Regional(avalancheDir=''):
     Parameters
     ----------
     avalancheDir: str
-        input directory which should contain multiple valid avalanche directories within Outputs/com7Regional/SplitInputs
+        input directory which should contain multiple valid avalanche directories within the regionalDir
 
     Returns
     -------
@@ -28,14 +28,12 @@ def runCom7Regional(avalancheDir=''):
     -----
     The function expects the following directory structure:
     avalancheDir/
-    └── Outputs/
-        └── com7Regional/
-            └── SplitInputs/
-                ├── avalanche1/
-                ├── avalanche2/
-                └── ...
+    └── regionalDir/
+        ├── avalanche1/
+        ├── avalanche2/
+        └── ...
 
-    Where 'SplitInputs' directory contains multiple individual avalanche directories
+    Where the 'regionalDir' contains multiple individual avalanche directories
     that will be processed in parallel.
     """
 
@@ -56,8 +54,9 @@ def runCom7Regional(avalancheDir=''):
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
 
-    # Define the regional directory in relation to the avalanche directory #ToDo: move to config? / make it more clear?
-    regionalDir = pathlib.Path(avalancheDir) / 'Outputs' / 'com7Regional'/ 'SplitInputs'
+    # Define the regional directory in relation to the avalanche directory
+    regionalDirFromCfg = str(cfg['GENERAL']['regionalDir'])
+    regionalDir = pathlib.Path(avalancheDir) / regionalDirFromCfg
 
     # List valid avalanche directories within the regional directory
     avaDirs = com7.findAvaDirs(regionalDir)
@@ -66,7 +65,7 @@ def runCom7Regional(avalancheDir=''):
     nProcesses = cfgUtils.getNumberOfProcesses(cfgMain, len(avaDirs))
 
     # Set nCPU for com1 to 1 to avoid dual parallelization, i.e. each subAvaDir variation is
-    # processed sequentially. Preliminary solution for now.
+    # processed sequentially. Preliminary solution for now, may be optimized.
     cfgMain['MAIN']['nCPU'] = '1'
 
     # Process each avalanche directory within the regional folder in parallel
