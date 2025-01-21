@@ -53,7 +53,7 @@ class Cell:
         # every iteration of calc_z_delta(self)
 
         self.min_distance = 0  # minimal distance to start-cell (i.e. along shortest path) min_distance >=
-        self.minDistXYZ = 0 # minimal distance to start-cell (Actual 3D lenght, not projected!!)
+        self.minDistXYZ = 0  # minimal distance to start-cell (Actual 3D lenght, not projected!!)
         self.max_distance = 0  # NOTE: self.max_distance is never used - maybe remove!?
         self.min_gamma = 0  # NOTE: self.min_gamma (assumingly minimal travel angle to cell) never used - maybe remove!?
         self.max_gamma = 0
@@ -180,11 +180,11 @@ class Cell:
 
     def calcDistMin(self, calc3D=False):
         """
-        function calculates the (projected horizontal, self.min_distance) and (3D, self.minDistXYZ) length 
+        function calculates the projected horizontal (self.min_distance) and 3D (self.minDistXYZ) length
         of the shortest flow path from the start-cell to the current cell.
         """
         if calc3D:
-            _ldistMin = []  #
+            _ldistMin = []
             _lDistMinXYZ = []
             for parent in self.lOfParents:
                 _dx = abs(parent.colindex - self.colindex) * self.cellsize
@@ -195,7 +195,7 @@ class Cell:
             self.min_distance = np.amin(_ldistMin)
             self.minDistXYZ = np.amin(_lDistMinXYZ)
         else:
-            _ldistMin = []  #
+            _ldistMin = []
             for parent in self.lOfParents:
                 _dx = abs(parent.colindex - self.colindex) * self.cellsize
                 _dy = abs(parent.rowindex - self.rowindex) * self.cellsize
@@ -238,7 +238,7 @@ class Cell:
                 self.calcDistMin()
             else:
                 self.calcDistMin(calc3D=True)
-            
+
         if self.forestBool:
 
             if self.forestModule == "forestFrictionLayer":
