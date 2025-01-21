@@ -130,7 +130,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"] = cfgSetup.getfloat("velThForDetrain")  # float(cfgSetup["velThForDetrain"])
         # 'forestFrictionLayer' parameter
         forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
-        #forestParams["nSkipForest"] = cfgSetup.getint("skipForestCells")
+        # skipForestDist - no forest friciton effect assumed while distance along path <= skipForestDist
         forestParams["skipForestDist"] = cfgSetup.getfloat("skipForestDist")
 
     else:
