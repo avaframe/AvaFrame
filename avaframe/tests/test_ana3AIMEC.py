@@ -1,6 +1,5 @@
 """ Tests for module ana3AIMEC """
 
-import numpy as np
 import pandas as pd
 import pathlib
 import shutil
@@ -13,6 +12,11 @@ import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.com1DFA import particleTools as paT
 from avaframe.in3Utils import cfgUtils
 import rasterio
+
+import pytest
+from unittest.mock import Mock, patch
+import numpy as np
+from avaframe.ana3AIMEC.ana3AIMEC import postProcessReference
 
 
 def test_getAimecInputs(capfd):
@@ -107,10 +111,10 @@ def test_analyzeArea(tmp_path):
     #    print(inputsDF['xRunout'])
     #    print(inputsDF['yRunout'])
     assert (
-            (inputsDF["sRunout"][0] == 449)
-            and (inputsDF["xRunout"][1] == 419)
-            and (inputsDF["yRunout"][0] == 31)
-            and (inputsDF["maxpprCrossMax"][1] == 1)
+        (inputsDF["sRunout"][0] == 449)
+        and (inputsDF["xRunout"][1] == 419)
+        and (inputsDF["yRunout"][0] == 31)
+        and (inputsDF["maxpprCrossMax"][1] == 1)
     )
     #    print(inputsDF['TP'])
     #    print(inputsDF['FN'])
@@ -118,10 +122,10 @@ def test_analyzeArea(tmp_path):
     #    print(inputsDF['TN'])
     #    print(inputsDF['TN']+inputsDF['FP']+inputsDF['FN']+inputsDF['TP'])
     assert (
-            (inputsDF["TP"][1] == 780)
-            and (inputsDF["FN"][1] == 1670)
-            and (inputsDF["FP"][1] == 200)
-            and (inputsDF["TN"][1] == 7350)
+        (inputsDF["TP"][1] == 780)
+        and (inputsDF["FN"][1] == 1670)
+        and (inputsDF["FP"][1] == 200)
+        and (inputsDF["TN"][1] == 7350)
     )
 
 
@@ -233,7 +237,7 @@ def test_makeDomainTransfo(tmp_path):
         sourceData = IOf.readRaster(rasterSource)
         rasterdata = sourceData["rasterData"]
         error = (resAnalysisDF["TP"][i] + resAnalysisDF["FP"][i] - np.nansum(rasterdata)) / (
-                np.nansum(rasterdata) * 100
+            np.nansum(rasterdata) * 100
         )
         assert error < 0.4
         assert np.abs(resAnalysisDF["sRunout"][i] - (240 + 10 * (i + 1))) < 5
@@ -552,3 +556,117 @@ def test_postProcessReference(tmp_path):
     maxIndex = np.amax(refDataTransformed["refLine"]["index"])
 
     assert np.isclose(rasterTransfo["s"][int(maxIndex)], 3198.7449)
+
+
+# From here it is AI created
+
+
+@pytest.fixture
+def mockConfig(mocker):
+    """Mock configparser object with AIMECSETUP section"""
+    cfg = mocker.MagicMock()
+    aimecSetup = mocker.MagicMock()
+
+    # Configure AIMECSETUP section
+    aimecSetup.getfloat.return_value = 2.0
+    aimecSetup.__getitem__.side_effect = lambda key: {"interpMethod": "bilinear"}[key]
+
+    cfg.__getitem__.side_effect = lambda section: {"AIMECSETUP": aimecSetup}[section]
+
+    return cfg
+
+
+@pytest.fixture
+def mockRasterTransfo():
+    """Mock raster transformation dictionary"""
+    return {
+        "dem": {
+            "header": {"cellsize": 1.0, "xllcenter": 0.0, "yllcenter": 0.0},
+            "rasterData": np.array([[1, 2], [3, 4]]),
+            "originalHeader": {},
+        }
+    }
+
+
+@pytest.fixture
+def mockPathDict(tmp_path):
+    """Mock path dictionary with temporary files"""
+    return {
+        "referenceLine": [tmp_path / "line1.shp"],
+        "referencePoint": [tmp_path / "point1.shp"],
+        "referencePolygon": [tmp_path / "poly1.shp"],
+    }
+
+
+@pytest.fixture
+def mock_path_dict_line_only(tmp_path):
+    """Mock path dictionary with ONLY line reference"""
+    return {
+        "referenceLine": [tmp_path / "line1.shp"],
+        "referencePoint": [],  # Empty list for other types
+        "referencePolygon": [],
+    }
+
+
+@pytest.fixture
+def mockReferenceDf(mocker):
+    """Mock DataFrame that supports assignment"""
+    return mocker.MagicMock()
+
+
+@pytest.fixture
+def mockNewRasters():
+    """Real dictionary for raster storage"""
+    return {}
+
+
+def test_postProcessReference_referencePointMultiplePointsError(
+    mocker, mockConfig, mockRasterTransfo, mockPathDict, mockReferenceDf, mockNewRasters
+):
+    """Test error when multiple points are provided in reference file"""
+    # Mock all shapefile reading functions
+    mocker.patch("avaframe.in2Trans.shpConversion.readLine", return_value={"x": [0], "y": [0]})
+    mocker.patch("avaframe.in2Trans.shpConversion.readPoints", return_value={"x": [1, 2], "y": [3, 4]})
+    mocker.patch(
+        "avaframe.in2Trans.shpConversion.readLine", return_value={"x": [0], "y": [0]}
+    )  # For polygon
+    mocker.patch("avaframe.in3Utils.geoTrans.prepareLine", return_value=({"x": [0], "y": [0]}, None))
+    # Mock downstream processing to short-circuit execution
+    mocker.patch("avaframe.in3Utils.geoTrans.projectOnGrid", return_value=({"x": [0], "y": [0]}, None))
+    mocker.patch("avaframe.ana3AIMEC.aimecTools.transform")
+    mocker.patch("avaframe.ana3AIMEC.aimecTools.computeRunoutLine")
+    mocker.patch("avaframe.out3Plot.outAIMEC.referenceLinePlot")
+
+    with pytest.raises(AssertionError) as excInfo:
+        postProcessReference(mockConfig, mockRasterTransfo, mockPathDict, mockReferenceDf, mockNewRasters)
+
+    assert "More than one point in reference data file" in str(excInfo.value)
+
+
+def test_postProcessReference_processReferenceLine(
+    mocker, mockConfig, mockRasterTransfo, mockPathDict, mockReferenceDf, mockNewRasters
+):
+    """Test processing of reference line data"""
+    # Use line-only path dictionary
+    pathDict = {"referenceLine": [Mock()], "referencePoint": [], "referencePolygon": []}  # Mock Path object
+
+    # Setup mocks
+    mocker.patch("avaframe.in2Trans.shpConversion.readLine", return_value={"x": [0], "y": [0]})
+    mocker.patch("avaframe.in3Utils.geoTrans.prepareLine", return_value=({"x": [0], "y": [0]}, None))
+    mocker.patch("avaframe.in3Utils.geoTrans.projectOnGrid", return_value=(None, np.array([[1]])))
+    mocker.patch("avaframe.ana3AIMEC.aimecTools.transform", return_value=np.array([[1]]))
+    mocker.patch(
+        "avaframe.ana3AIMEC.aimecTools.computeRunoutLine", return_value={"sRunout": 10.0, "lRunout": 5.0}
+    )
+    mocker.patch("avaframe.ana3AIMEC.aimecTools.addReferenceAnalysisTODF", return_value=mockReferenceDf)
+    plot_mock = mocker.patch("avaframe.out3Plot.outAIMEC.referenceLinePlot")
+
+    # Execute function
+    ref_data, updated_df = postProcessReference(
+        mockConfig, mockRasterTransfo, pathDict, mockReferenceDf, mockNewRasters
+    )
+
+    # Verify results
+    assert "refLine" in ref_data
+    assert mockNewRasters["refLine"].shape == (1, 1)
+    plot_mock.assert_called_once()

@@ -221,7 +221,7 @@ def getInputDataCom1DFA(avaDir):
 
     # check if relThFile is available
     relThFile, entResInfo["releaseThicknessFile"] = getAndCheckInputFiles(
-        inputDir, "RELTH", "release thickness data", fileExt="asc"
+        inputDir, "RELTH", "release thickness data", fileExt="raster"
     )
 
     # Initialise secondary release areas
@@ -251,11 +251,11 @@ def getInputDataCom1DFA(avaDir):
 
     # check if frictionParameter file  is available
     # TODO: enable this with geotiff
-    muFile, entResInfo["mu"] = getAndCheckInputFiles(inputDir, "RASTERS", "mu parameter data", fileExt="asc",
+    muFile, entResInfo["mu"] = getAndCheckInputFiles(inputDir, "RASTERS", "mu parameter data", fileExt="raster",
                                                      fileSuffix='_mu')
 
     # check if frictionParameter file  is available
-    xiFile, entResInfo["xi"] = getAndCheckInputFiles(inputDir, "RASTERS", "xi parameter data", fileExt="asc",
+    xiFile, entResInfo["xi"] = getAndCheckInputFiles(inputDir, "RASTERS", "xi parameter data", fileExt="raster",
                                                      fileSuffix='_xi')
 
     # return DEM, first item of release, entrainment and resistance areas
@@ -276,9 +276,14 @@ def getInputDataCom1DFA(avaDir):
 
 
 def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix=""):
-    """Fetch fileExt files and check if they exist and if it is not more than one
+    """Fetch fileExt files and check if they exist and if it is not more than one. If fileExt is set to "raster" both
+    .asc and .tif files will be searched.
 
     Raises error if there is more than one fileExt file.
+
+    If fileExt is empty, only suffix will be checked.
+
+    If a file is found, it is checked to be of an allowed extension; currently .shp .asc and .tif are supported.
 
     Parameters
     ----------
@@ -289,7 +294,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     inputType : str
         type of input (used for the logging messages). Secondary release or Entrainment or Resistance
     fileExt: str
-        file extension e.g. shp, asc - optional default is shp
+        file extension e.g. shp, asc, tif - optional; default is shp
     fileSuffix: str
         file name part before extension
 
@@ -298,15 +303,28 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     OutputFile: str
         path to file checked
     available: str
-        Yes or No depending of if there is a shape file available (if No, OutputFile is None)
+        Yes or No depending on if there is a  file available (if No, OutputFile is None)
     """
     available = "No"
-    # Initialise secondary release areas
-    inDir = pathlib.Path(inputDir, folder)
-    if fileSuffix == "":
-        OutputFile = list(inDir.glob("*.%s" % fileExt))
+
+    supportedFileFormats = [".shp", ".asc", ".tif"]
+
+    # Define the directory to search and the extensions
+    if fileExt == "":
+        extensions = [""]
+    elif fileExt.lower() == "raster":
+        extensions = ["asc", "tif"]
     else:
-        OutputFile = list(inDir.glob("*%s.%s" % (fileSuffix, fileExt)))
+        extensions = [fileExt]
+
+    inDir = pathlib.Path(inputDir, folder)
+
+    if fileSuffix == "":
+        OutputFile = list([file for ext in extensions for file in inDir.glob(f"*.{ext}")])
+    else:
+        OutputFile = list([file for ext in extensions for file in inDir.glob(f"*{fileSuffix}.{ext}")])
+
+    # check for number of files
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:
@@ -316,6 +334,12 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     else:
         available = "Yes"
         OutputFile = OutputFile[0]
+
+        if OutputFile.suffix not in supportedFileFormats:
+            message = "Unsupported file format found for OutputFile %s; shp, asc, tif are allowed" % OutputFile
+            log.error(message)
+            raise AssertionError(message)
+
 
     return OutputFile, available
 
@@ -338,7 +362,7 @@ def getThicknessInputSimFiles(inputSimFiles):
 
     # fetch thickness attribute of entrainment area and secondary release
     for thType in ["entFile", "secondaryReleaseFile"]:
-        if inputSimFiles[thType] != None:
+        if inputSimFiles[thType] is not None:
             thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
             inputSimFiles[inputSimFiles[thType].stem] = {
                 "thickness": thicknessList,
@@ -406,7 +430,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, "relTh")
         if cfgInitial["GENERAL"].getboolean("relThFromFile"):
-            if inputSimFiles["relThFile"] == None:
+            if inputSimFiles["relThFile"] is None:
                 message = "relThFromFile set to True but no relTh file found"
                 log.error(message)
                 raise FileNotFoundError(message)
@@ -809,7 +833,7 @@ def getInputPaths(avaDir):
 
     # fetch release thickness fields
     releaseFieldDir = inputDir / "RELTH"
-    relFieldFiles = sorted(list(releaseFieldDir.glob("*.asc")))
+    relFieldFiles = sorted(list(releaseFieldDir.glob("*.asc")) + list(releaseFieldDir.glob("*.tif")))
     if len(relFieldFiles) > 0:
         log.info("Release area files are: %s" % [str(relFFilestr) for relFFilestr in relFieldFiles])
     else:

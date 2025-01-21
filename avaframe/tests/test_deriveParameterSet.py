@@ -7,10 +7,15 @@ import pandas as pd
 import pytest
 import pathlib
 
+import rasterio.crs
+
+import avaframe.in2Trans.rasterUtils as IOf
+
 # Local imports
 import avaframe.com1DFA.deriveParameterSet as dP
-import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.com1DFA.deriveParameterSet import setRangeFromCiVariation
+
 
 def test_getVariationDict(caplog):
     """test creating a variation dictionary"""
@@ -52,7 +57,7 @@ def test_getVariationDict(caplog):
     # call function to be tested
     variations = dP.getVariationDict(avaDir, cfg, modDict)
 
-#    print("variations", variations)
+    #    print("variations", variations)
 
     # see if a parameter that was locally added to the GENERAL cfg and has a variation is filtered out:
     assert ("Parameter howMeBlue: has a variation, seems to be added") in caplog.text
@@ -78,7 +83,7 @@ def test_getVariationDict(caplog):
     # call function to be tested
     variations2 = dP.getVariationDict(avaDir, cfg, modDict)
 
-#    print("variations2", variations2)
+    #    print("variations2", variations2)
 
     variationsTest2 = {
         "simTypeList": ["null", "ent"],
@@ -128,7 +133,7 @@ def test_validateVarDict():
     # call function to be tested
     variationDictTest = dP.validateVarDict(variationDict, standardCfg)
 
-#    print("variationDictTest", variationDictTest)
+    #    print("variationDictTest", variationDictTest)
 
     assert len(variationDictTest.keys()) == 3
     assert variationDictTest["simTypeList"][0] == "null"
@@ -147,7 +152,7 @@ def test_validateVarDict():
     # call function to be tested
     variationDictTest = dP.validateVarDict(variationDict, standardCfg)
 
-#    print("variationDictTest", variationDictTest)
+    #    print("variationDictTest", variationDictTest)
 
     assert len(variationDictTest.keys()) == 3
     assert variationDictTest["simTypeList"][0] == "null"
@@ -173,7 +178,7 @@ def test_checkResType():
     # call function to be tested
     fullCfg = dP.checkResType(fullCfg, section, key, value)
 
-#    print("fullCfg", fullCfg)
+    #    print("fullCfg", fullCfg)
 
     assert fullCfg["GENERAL"]["resType"] == "pft|ppr|pfv|particles"
 
@@ -556,8 +561,8 @@ def test_splitVariationToArraySteps():
     value = "40$4"
     itemsTest = np.linspace(0.6, 1.4, 4)
     itemsArray = dP.splitVariationToArraySteps(value, key, fullCfg)
-#    print("itemsTest", itemsTest)
-#    print("itemsArray", itemsArray)
+    #    print("itemsTest", itemsTest)
+    #    print("itemsArray", itemsArray)
 
     assert np.array_equal(itemsArray, itemsTest)
 
@@ -600,66 +605,141 @@ def test_splitVariationToArraySteps():
 
 
 def test_checkExtentAndCellSize(tmp_path):
-    """ test if inputFile has close enough extent to DEM file and if so resize if required """
+    """test if inputFile has close enough extent to DEM file and if so resize if required"""
 
     # setup required inputs
     testDir = pathlib.Path(tmp_path, "test")
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'resizeThreshold': 3., 'meshCellSize': 1., 'meshCellSizeThreshold': 0.0001}
-    cfg['GENERAL']['avalancheDir'] = str(testDir)
-    inDir = testDir / 'Inputs'
-    inDirR = inDir / 'RASTERS'
+    cfg["GENERAL"] = {"resizeThreshold": 3.0, "meshCellSize": 1.0, "meshCellSizeThreshold": 0.0001}
+    cfg["GENERAL"]["avalancheDir"] = str(testDir)
+    inDir = testDir / "Inputs"
+    inDirR = inDir / "RASTERS"
     fU.makeADir(inDirR)
 
     demField = np.ones((4, 5))
-    dem = {'header': {'nrows': 4, 'ncols': 5, 'xllcenter': 1, 'yllcenter': 5, 'cellsize': 1, 'nodata_value': -9999},
-           'rasterData': demField}
+    dem = {
+        "header": {
+            "nrows": 4,
+            "ncols": 5,
+            "xllcenter": 1,
+            "yllcenter": 5,
+            "cellsize": 1,
+            "nodata_value": -9999,
+            "driver": "AAIGrid",
+        },
+        "rasterData": demField,
+    }
 
-    inputFile = inDirR / 'inputFile.asc'
-    headerInput = {'nrows': 4, 'ncols': 5, 'xllcenter': 1.2, 'yllcenter': 4.3,
-                              'cellsize': 1, 'nodata_value': -9999}
+    dem["header"]["transform"] = IOf.transformFromASCHeader(dem["header"])
+    dem["header"]["crs"] = rasterio.crs.CRS()
+
+    inputFile = inDirR / "inputFile.asc"
+    headerInput = {
+        "nrows": 4,
+        "ncols": 5,
+        "xllcenter": 1.2,
+        "yllcenter": 4.3,
+        "cellsize": 1,
+        "nodata_value": -9999,
+        "driver": "AAIGrid",
+    }
+    headerInput["transform"] = IOf.transformFromASCHeader(headerInput)
+    headerInput["crs"] = rasterio.crs.CRS()
+
     inField = np.ones((4, 5))
-    inField[2,2] = 10.
-    IOf.writeResultToAsc(headerInput, inField, inputFile, flip=False)
+    inField[2, 2] = 10.0
+    IOf.writeResultToRaster(headerInput, inField, inputFile.parent / inputFile.stem, flip=False)
 
-    testFile = dP.checkExtentAndCellSize(cfg, inputFile, dem, 'mu')
-    print('testFiel', testFile)
+    testFile = dP.checkExtentAndCellSize(cfg, inputFile, dem, "mu")
 
     newRaster = IOf.readRaster((inDir / testFile))
-    print('newRaster', newRaster['rasterData'])
-    print('inField', inField)
 
-    assert 'remeshedmu1.00' in testFile
-    assert newRaster['header']['nrows'] == 4
-    assert newRaster['rasterData'].shape[1] == 5
-    assert newRaster['header']['xllcenter'] == 1.
-    assert newRaster['header']['yllcenter'] == 5.
+    assert "remeshedmu1.00" in testFile
+    assert newRaster["header"]["nrows"] == 4
+    assert newRaster["rasterData"].shape[1] == 5
+    assert newRaster["header"]["xllcenter"] == 1.0
+    assert newRaster["header"]["yllcenter"] == 5.0
 
-    inputFile2 = inDirR / 'inputFile1.asc'
-    headerInput2 = {'nrows': 4, 'ncols': 5, 'xllcenter': 1., 'yllcenter': 5.,
-                   'cellsize': 1, 'nodata_value': -9999}
+    inputFile2 = inDirR / "inputFile1.asc"
+    headerInput2 = {
+        "nrows": 4,
+        "ncols": 5,
+        "xllcenter": 1.0,
+        "yllcenter": 5.0,
+        "cellsize": 1,
+        "nodata_value": -9999,
+        "driver": "AAIGrid",
+    }
+    headerInput2["transform"] = IOf.transformFromASCHeader(headerInput2)
+    headerInput2["crs"] = rasterio.crs.CRS()
     inField2 = np.ones((4, 5))
-    inField2[2,2] = 10.
-    IOf.writeResultToAsc(headerInput2, inField2, inputFile2, flip=False)
+    inField2[2, 2] = 10.0
+    IOf.writeResultToRaster(headerInput2, inField2, inputFile2.parent / inputFile2.stem, flip=False)
 
-    testFile2 = dP.checkExtentAndCellSize(cfg, inputFile2, dem, 'mu')
-    print('test 2', testFile2)
-    newRaster2 = IOf.readRaster((inDir / testFile))
+    testFile2 = dP.checkExtentAndCellSize(cfg, inputFile2, dem, "mu")
+    print("test 2", testFile2)
+    newRaster2 = IOf.readRaster((inDir / testFile2))
 
-    assert 'remeshedmu1.00' not in testFile2
-    assert 'RASTERS' in testFile2
-    assert newRaster['header']['nrows'] == 4
-    assert newRaster['rasterData'].shape[1] == 5
-    assert newRaster['header']['xllcenter'] == 1.
-    assert newRaster['header']['yllcenter'] == 5.
+    assert "remeshedmu1.00" not in testFile2
+    assert "RASTERS" in testFile2
+    assert newRaster2["header"]["nrows"] == 4
+    assert newRaster2["rasterData"].shape[1] == 5
+    assert newRaster2["header"]["xllcenter"] == 1.0
+    assert newRaster2["header"]["yllcenter"] == 5.0
 
-    inputFile2 = inDirR / 'inputFile1.asc'
-    headerInput2= {'nrows': 5, 'ncols': 5, 'xllcenter': 10., 'yllcenter': 5.,
-                    'cellsize': 1, 'nodata_value': -9999}
+    inputFile2 = inDirR / "inputFile1.asc"
+    headerInput2 = {
+        "nrows": 5,
+        "ncols": 5,
+        "xllcenter": 10.0,
+        "yllcenter": 5.0,
+        "cellsize": 1,
+        "nodata_value": -9999,
+        "driver": "AAIGrid",
+    }
+    headerInput2["transform"] = IOf.transformFromASCHeader(headerInput2)
+    headerInput2["crs"] = rasterio.crs.CRS()
     inField2 = np.ones((5, 5))
-    inField2[2,2] = 10.
-    IOf.writeResultToAsc(headerInput2, inField2, inputFile2, flip=False)
+    inField2[2, 2] = 10.0
+    IOf.writeResultToRaster(headerInput2, inField2, inputFile2.parent / inputFile2.stem, flip=False)
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkExtentAndCellSize(cfg, inputFile2, dem, 'mu')
+        assert dP.checkExtentAndCellSize(cfg, inputFile2, dem, "mu")
     assert "Lower left center coordinates of DEM and " in str(e.value)
+
+
+# Produced by AI (test):
+
+
+def test_setRangeFromCiVariation_ciValue_none_raises_error():
+    with pytest.raises(AssertionError) as exc_info:
+        setRangeFromCiVariation(None, "chi95$0$1", "thValue", "None")
+    assert "ci95 values required" in str(exc_info.value)
+
+
+def test_setRangeFromCiVariation_valid_variation_factor():
+    # Test case 1: varValStep=2, allSteps=5, ciValue=10
+    variationValue = setRangeFromCiVariation(None, "2$middle$5", "ignore", "10")
+    expected_values = np.linspace(-10, 10, 5)
+    assert variationValue == expected_values[2]
+
+    # Test case 2: varValStep=0, allSteps=3, ciValue=3
+    variationValue = setRangeFromCiVariation(None, "0$x$3", "ignore", "3")
+    expected_values = np.linspace(-3, 3, 3)
+    assert variationValue == expected_values[0]
+
+    # Test case 3: varValStep=4, allSteps=5, ciValue=5
+    variationValue = setRangeFromCiVariation(None, "4$y$5", "ignore", "5")
+    expected_values = np.linspace(-5, 5, 5)
+    assert variationValue == expected_values[4]
+
+
+def test_setRangeFromCiVariation_edge_cases():
+    # All steps = 1, varValStep=0
+    variationValue = setRangeFromCiVariation(None, "0$z$1", "ignore", "8")
+    assert variationValue == -8.0
+
+    # varValStep at midpoint
+    variationValue = setRangeFromCiVariation(None, "1$mid$3", "ignore", "6")
+    expected = np.linspace(-6, 6, 3)[1]
+    assert variationValue == expected

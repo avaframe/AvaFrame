@@ -112,7 +112,6 @@ def test_makeSimDF():
     inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
     cfg = {'varPar': 'test'}
-#    print(inputDir)
     dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
 
     assert dataDF['names'][0] == 'releaseTest1_0.888_entres_dfa_ppr'
