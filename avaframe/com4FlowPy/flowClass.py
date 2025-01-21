@@ -207,13 +207,7 @@ class Cell:
         to the current cell. The travel-angle along the shortest flow-path is equivalent to the
         maximum travel angle along all paths from the startcell to this cell.
         """
-        # _ldistMin = []  #
         _dh = self.startcell.altitude - self.altitude  # elevation difference from cell to start-cell
-        # for parent in self.lOfParents:
-        #     _dx = abs(parent.colindex - self.colindex)
-        #    _dy = abs(parent.rowindex - self.rowindex)
-        #    _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) * self.cellsize + parent.min_distance)
-        # self.min_distance = np.amin(_ldistMin)
         self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
