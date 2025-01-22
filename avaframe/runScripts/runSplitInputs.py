@@ -45,7 +45,7 @@ def runSplitInputs(avalancheDir=''):
     cfg = cfgUtils.getModuleConfig(splitInputs)
 
     # Run splitting process
-    splitInputs.splitInputsMain(inputDir, outputDir, cfg)
+    splitInputs.splitInputsMain(inputDir, outputDir, cfg, cfgMain)
 
     # Print time needed
     endTime = time.time()
