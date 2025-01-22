@@ -9,13 +9,14 @@ from matplotlib.patches import Patch, Rectangle
 import matplotlib as mpl
 import time
 
+from avaframe.out3Plot import plotUtils as pU
 from avaframe.in2Trans import ascUtils
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 
 # create local logger
 log = logging.getLogger(__name__)
 
-def splitInputsMain(inputDir, outputDir, cfg):
+def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     """Process and organize avalanche input data into individual avalanche directories based 
     on release area's "group" and "scenario" attributes.
 
@@ -28,6 +29,10 @@ def splitInputsMain(inputDir, outputDir, cfg):
     cfg : dict
         Configuration settings containing:
         - GENERAL.bufferSize : float, buffer size for DEM clipping
+    cfgMain : dict
+        Configuration settings containing:
+        - FLAGS.createReport : bool, whether to write report
+        - FLAGS.savePlot : bool, whether to save plots
 
     Returns
     -------
@@ -65,7 +70,7 @@ def splitInputsMain(inputDir, outputDir, cfg):
     log.info("Finished creating folder list")
 
     # Step 2: Set up avalanche directories
-    log.info("Running folder initialization for each entry...")
+    log.info("Initializing folder structure for each entry...")
     for entry in dirListGrouped:
         dirName = entry['dirName']
         initializeFolderStruct(str(outputDir / dirName), removeExisting=True)
@@ -87,23 +92,26 @@ def splitInputsMain(inputDir, outputDir, cfg):
     groupFeatures = clipAndMoveOptionalInput(inputDir, outputDir, groupExtents)
     log.info("Finished clipping and moving optional input")
 
-    # Step 6: Divide release areas into scenarios based on "scenario" attribute
-    log.info("Separating release area by scenario attribute...")
+    # Step 6: Divide release areas into scenarios
+    log.info("Separating release areas by scenarios...")
     splitByScenarios(dirListGrouped, outputDir)
     log.info("Finished separating by scenarios")
 
-    # Step 7: Write report
-    log.info("Writing reports...")
-    writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures)
-    writeScenarioReport(dirListGrouped, outputDir)
-    log.info("Finished writing reports")
+    # Step 7: Write reports
+    if cfgMain['FLAGS'].getboolean('createReport'):
+        log.info("Writing reports...")
+        writeScenarioReport(dirListGrouped, outputDir)
+        if cfgMain['FLAGS'].getboolean('savePlot'):
+            writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures)
+        log.info("Finished writing reports")
 
 def readShapefile(inputShp):
     """Read the fields, properties, geometries, and spatial reference of an input shapefile.
     To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
     shapeTypes, bounds, numFeatures and metadata if needed
 
-    # ToDo: maybe move to some other module since its generally useful, e.g. in1Data, in2Trans -> shapeUtils.py
+    # ToDo: maybe move to some other module e.g. in1Data, in2Trans -> shapeUtils.py or 
+    # update to use pre-existing function from shpConversion.py
 
     Parameters
     ----------
@@ -395,17 +403,17 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
         clippedHeader['xllcenter'] = xOrigin + colStart * cellSize
         clippedHeader['yllcenter'] = yOrigin + rowStart * cellSize
         
-        # Store DEM extents
-        xMinDEM = clippedHeader['xllcenter']
-        yMinDEM = clippedHeader['yllcenter']
-        xMaxDEM = xMinDEM + clippedHeader['ncols'] * cellSize
-        yMaxDEM = yMinDEM + clippedHeader['nrows'] * cellSize
-        groupExtents[dirName] = (xMinDEM, xMaxDEM, yMinDEM, yMaxDEM)
-        
         # Write clipped DEM
         outputDEM = outputDir / dirName / 'Inputs' / f"{dirName}_DEM.asc"
         ascUtils.writeResultToAsc(clippedHeader, clippedData, outputDEM, flip=True)
         log.debug(f"Clipped DEM saved to: {outputDEM}")
+
+        # Store DEM extents (reduced by one pixel on each side to ensure DEM > clip extents)
+        xMinDEM = clippedHeader['xllcenter'] - (cellSize/2) + cellSize
+        yMinDEM = clippedHeader['yllcenter'] - (cellSize/2) + cellSize
+        xMaxDEM = clippedHeader['xllcenter'] + (clippedHeader['ncols'] * cellSize) - (cellSize/2) - cellSize
+        yMaxDEM = clippedHeader['yllcenter'] + (clippedHeader['nrows'] * cellSize) - (cellSize/2) - cellSize
+        groupExtents[dirName] = (xMinDEM, xMaxDEM, yMinDEM, yMaxDEM)
     
     return groupExtents
 
@@ -482,6 +490,59 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
 
     return groupFeatures
 
+def getScenarioGroups(inputShp, fieldNames):
+    """Group shapefile records by their scenario attribute.
+    
+    Parameters
+    ----------
+    inputShp : pathlib.Path
+        Path to input shapefile
+    fieldNames : list
+        List of field names in the shapefile
+        
+    Returns
+    -------
+    dict
+        Dictionary mapping scenario names to lists of shape records
+    """
+    scenarios = {}
+    for shapeRecord in shapefile.Reader(str(inputShp)).iterShapeRecords():
+        properties = {k.lower(): v for k, v in zip(fieldNames, shapeRecord.record)}
+        scenarioValues = properties.get('scenario', '').split(',')
+        for scenario in scenarioValues:
+            # Check if scenario value is empty and set flag
+            if scenario.strip() == '':
+                scenario = 'NULL'
+            # If scenario is not in scenarios dict, add it
+            if scenario not in scenarios:
+                scenarios[scenario] = []
+            scenarios[scenario].append(shapeRecord)
+    return scenarios
+
+def writeScenarioShapefile(outputShp, records, fields, fieldNames, srs):
+    """Write a shapefile for a specific scenario.
+    
+    Parameters
+    ----------
+    outputShp : pathlib.Path
+        Path where to write the shapefile
+    records : list
+        List of shape records for this scenario
+    fields : list
+        List of field definitions
+    fieldNames : list
+        List of field names
+    srs : str
+        Spatial reference system string
+    """
+    # Filter out the scenario attribute
+    shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
+    filteredFields = [field for field in fields if field[0].lower() != 'scenario']
+    filteredFieldNames = [name for name in fieldNames if name.lower() != 'scenario']
+    
+    # Write the shapefile
+    writeShapefile(outputShp, filteredFields, filteredFieldNames, shapeFeatures, srs)
+
 def splitByScenarios(dirList, outputDir):
     """Split release areas into separate shapefiles based on their scenario attribute.
 
@@ -511,22 +572,11 @@ def splitByScenarios(dirList, outputDir):
         totalInputFiles += 1
         
         # Get the scenario attribute values
-        if 'scenario' in map(str.lower, fieldNames):  # Check if scenario attribute exists
-            # Create scenario dictionary
-            scenarios = {}
-            for shapeRecord in shapefile.Reader(str(inputShp)).iterShapeRecords():
-                properties = {k.lower(): v for k, v in zip(fieldNames, shapeRecord.record)} # Handle case sensitivity
-                scenarioValues = properties.get('scenario', '').split(',')
-                for scenario in scenarioValues:
-                    # Check if scenario value is empty and set flag
-                    if scenario.strip() == '':
-                        scenario = 'NULL'
-                    # If scenario is not in scenarios dict, add it
-                    if scenario not in scenarios:
-                        scenarios[scenario] = []
-                    scenarios[scenario].append(shapeRecord)
+        if 'scenario' in map(str.lower, fieldNames):
+            # Group records by scenario
+            scenarios = getScenarioGroups(inputShp, fieldNames)
             
-            # Write the scenario shapefiles
+            # Write a shapefile for each scenario
             for scenario, records in scenarios.items():
                 if all(scenario == 'NULL' for scenario in scenarios):
                     outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_REL"
@@ -535,13 +585,7 @@ def splitByScenarios(dirList, outputDir):
                 else:
                     outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_{scenario}"
                 
-                # Filter out the scenario attribute and remove it
-                shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) for record in records]
-                filteredFields = [field for field in fields if field[0].lower() != 'scenario']
-                filteredFieldNames = [name for name in fieldNames if name.lower() != 'scenario']
-                
-                # Write the shapefile
-                writeShapefile(outputShp, filteredFields, filteredFieldNames, shapeFeatures, srs)
+                writeScenarioShapefile(outputShp, records, fields, fieldNames, srs)
                 totalScenarioFiles += 1
 
             # Delete the intermediate shapefile
@@ -549,19 +593,93 @@ def splitByScenarios(dirList, outputDir):
                 if (inputShp.with_suffix(ext)).exists():
                     (inputShp.with_suffix(ext)).unlink()
         else:
-            # If no scenario attribute exists, just rename the file
+            # If no scenario attribute exists, rename the file (necessary for further processing)
             outputShp = pathlib.Path(outputDir) / folder['dirName'] / "Inputs" / "REL" / f"{folder['dirName']}_REL"
             shapeFeatures = [(dict(zip(fieldNames, record.record)), record.shape) 
                            for record in shapefile.Reader(str(inputShp)).iterShapeRecords()]
             writeShapefile(outputShp, fields, fieldNames, shapeFeatures, srs)
-            totalScenarioFiles += 1
-            
-            # Delete the intermediate shapefile
             for ext in ['.shp', '.shx', '.dbf', '.prj']:
                 if (inputShp.with_suffix(ext)).exists():
                     (inputShp.with_suffix(ext)).unlink()
+            
+    if totalScenarioFiles == 0:
+        log.info("No 'scenario' attribute or only 'NULL' found in release area shapefiles, continuing")
+    else:
+        log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
 
-    log.info(f"Split '{totalInputFiles}' release area shapefiles into '{totalScenarioFiles}' scenarios")
+def writeScenarioReport(dirListGrouped, outputDir):
+    """Create a report in txt format listing all scenarios and their associated features.
+    
+    Parameters
+    ----------
+    dirListGrouped : list
+        list of dictionaries containing dirName and list of geometries
+    outputDir : pathlib.Path
+        Path to output directory where the report will be saved
+    
+    Returns
+    -------
+    none
+    """
+    reportPath = outputDir / 'splitInputs_scenarioReport.txt'
+    
+    with open(reportPath, 'w') as f:
+        f.write("SCENARIO REPORT\n")
+        f.write("==============\n")
+        f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        
+        # Process each group and their scenarios
+        for group in sorted(dirListGrouped, key=lambda x: x['dirName'].lower()):
+            dirName = group['dirName']
+            f.write(f"Group: {dirName}\n")
+            f.write("-" * (len(dirName) + 7) + "\n\n")
+            
+            relPath = pathlib.Path(outputDir) / dirName / "Inputs" / "REL"
+            scenarioFiles = sorted(relPath.glob(f"{dirName}_*.shp"), 
+                                 key=lambda x: x.stem.split('_')[-1])
+            
+            if not scenarioFiles:
+                f.write("No scenarios found\n\n")
+                continue
+            
+            # Write release areas for each scenario
+            for scenFile in scenarioFiles:
+                fields, fieldNames, properties, geometries, _ = readShapefile(scenFile)
+                scenName = scenFile.stem.split('_')[-1]
+                
+                f.write(f"Scenario: {scenName}\n")
+                f.write(f"No. of release areas: {len(geometries)}\n")
+                
+                if 'name' in map(str.lower, fieldNames): # Handle case sensitivity
+                    nameIdx = [i for i, name in enumerate(fieldNames) if name.lower() == 'name'][0]
+                    with shapefile.Reader(str(scenFile)) as shp:
+                        records = sorted(shp.records(), key=lambda x: x[nameIdx].lower())
+                        for record in records:
+                            f.write(f"- {record[nameIdx]}\n")
+                else:
+                    for i in range(len(geometries)):
+                        f.write(f"- Release Area {i+1}\n")
+                f.write("\n")
+            
+            # Write total entrainment and resistance areas for the group
+            entPath = pathlib.Path(outputDir) / dirName / "Inputs" / "ENT"
+            resPath = pathlib.Path(outputDir) / dirName / "Inputs" / "RES"
+            
+            entFiles = list(entPath.glob(f"{dirName}_*.shp"))
+            if entFiles:
+                totalEnt = sum(len(readShapefile(ef)[3]) for ef in entFiles)
+                if totalEnt > 0:
+                    f.write(f"No. of entrainment areas: {totalEnt}\n")
+            
+            resFiles = list(resPath.glob(f"{dirName}_*.shp"))
+            if resFiles:
+                totalRes = sum(len(readShapefile(rf)[3]) for rf in resFiles)
+                if totalRes > 0:
+                    f.write(f"No. of resistance areas: {totalRes}\n")
+            
+            f.write("\n")
+    
+    log.info(f"Scenario report written to: {reportPath}")
 
 def getExteriorCoords(geom):
     """Get the exterior coordinates of a shapely geometry to handle both single and multi-polygon geometries.
@@ -620,14 +738,13 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
     xMax = xMin + cellSize * header['ncols']
     yMax = yMin + cellSize * header['nrows']
     im = ax.imshow(demData['rasterData'], extent=[xMin, xMax, yMin, yMax],
-              cmap='binary_r', alpha=0.5, origin='lower', zorder=1)
+                  cmap=pU.cmapDEM.reversed(), alpha=1, origin='lower', zorder=1)
     
-    colors = ['#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF',
-              '#FF8000', '#FF0080', '#80FF00', '#00FF80', '#0080FF',
-              '#8000FF', '#FF3333', '#33FF33', '#3333FF', '#FF33FF',
-              '#33FFFF', '#FFE666', '#FF66E6', '#E6FF66', '#33FFB4',
-              '#33B4FF', '#B433FF', '#FF6666', '#66FF66', '#6666FF',
-              '#FF66FF', '#66FFFF', '#FFE666', '#FF66E6', '#E6FF66']
+    # Custom color scheme for groups
+    colors = ['#0EF8EA', '#FFA500', '#C71585', '#00FF00', '#FF4500', '#800080',
+              '#ADFF2F', '#FF6347', '#8A2BE2', '#FFFF00', '#FF0000']
+
+    # Plot groups
     for idx, group in enumerate(dirListGrouped):
         dirName = group['dirName']
         color = colors[idx % len(colors)]
@@ -665,7 +782,7 @@ def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupF
     else:  # optional
         mapElements.extend([
             Patch(facecolor='black', alpha=0.3, label='Entrainment Areas'),
-            Patch(facecolor='none', alpha=0.5, hatch='xxxx', label='Resistance Areas', edgecolor='black', linewidth=0.5)
+            Patch(facecolor='none', alpha=0.3, hatch='xxxx', label='Resistance Areas', edgecolor='black', linewidth=0.5)
         ])
 
     plt.legend(handles=mapElements,
@@ -742,77 +859,3 @@ def writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFe
     optionalPath = createVisualReport(dirListGrouped, inputDEM, outputDir, 
                                     groupExtents, groupFeatures, 'optional')
     log.info(f"Visual report (optional) written to: {optionalPath}")
-
-def writeScenarioReport(dirListGrouped, outputDir):
-    """Create a report in txt format listing all scenarios and their associated features.
-    
-    Parameters
-    ----------
-    dirListGrouped : list
-        list of dictionaries containing dirName and list of geometries
-    outputDir : pathlib.Path
-        Path to output directory where the report will be saved
-    
-    Returns
-    -------
-    none
-    """
-    reportPath = outputDir / 'splitInputs_scenario_report.txt'
-    
-    with open(reportPath, 'w') as f:
-        f.write("SCENARIO REPORT\n")
-        f.write("==============\n")
-        f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        
-        # Process each group and their scenarios
-        for group in sorted(dirListGrouped, key=lambda x: x['dirName'].lower()):
-            dirName = group['dirName']
-            f.write(f"Group: {dirName}\n")
-            f.write("-" * (len(dirName) + 7) + "\n\n")
-            
-            relPath = pathlib.Path(outputDir) / dirName / "Inputs" / "REL"
-            scenarioFiles = sorted(relPath.glob(f"{dirName}_*.shp"), 
-                                 key=lambda x: x.stem.split('_')[-1])
-            
-            if not scenarioFiles:
-                f.write("No scenarios found\n\n")
-                continue
-            
-            # Write release areas for each scenario
-            for scenFile in scenarioFiles:
-                fields, fieldNames, properties, geometries, _ = readShapefile(scenFile)
-                scenName = scenFile.stem.split('_')[-1]
-                
-                f.write(f"Scenario: {scenName}\n")
-                f.write(f"No. of release areas: {len(geometries)}\n")
-                
-                if 'name' in map(str.lower, fieldNames): # Handle case sensitivity
-                    nameIdx = [i for i, name in enumerate(fieldNames) if name.lower() == 'name'][0]
-                    with shapefile.Reader(str(scenFile)) as shp:
-                        records = sorted(shp.records(), key=lambda x: x[nameIdx].lower())
-                        for record in records:
-                            f.write(f"- {record[nameIdx]}\n")
-                else:
-                    for i in range(len(geometries)):
-                        f.write(f"- Release Area {i+1}\n")
-                f.write("\n")
-            
-            # Write total entrainment and resistance areas for the group
-            entPath = pathlib.Path(outputDir) / dirName / "Inputs" / "ENT"
-            resPath = pathlib.Path(outputDir) / dirName / "Inputs" / "RES"
-            
-            entFiles = list(entPath.glob(f"{dirName}_*.shp"))
-            if entFiles:
-                totalEnt = sum(len(readShapefile(ef)[3]) for ef in entFiles)
-                if totalEnt > 0:
-                    f.write(f"No. of entrainment areas: {totalEnt}\n")
-            
-            resFiles = list(resPath.glob(f"{dirName}_*.shp"))
-            if resFiles:
-                totalRes = sum(len(readShapefile(rf)[3]) for rf in resFiles)
-                if totalRes > 0:
-                    f.write(f"No. of resistance areas: {totalRes}\n")
-            
-            f.write("\n")
-    
-    log.info(f"Scenario report written to: {reportPath}")
