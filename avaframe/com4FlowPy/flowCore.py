@@ -274,6 +274,7 @@ def run(optTuple):
 
     computeSaveTileResults(outputFileList, results, dem, tempDir, optTuple[0], optTuple[1])
 
+
 def calculation(args):
     """This is the core function where all the data handling and calculation is
     done.
@@ -531,7 +532,7 @@ def calculation(args):
 
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
-                                                                       infra[cell.rowindex, cell.colindex])                
+                                                                       infra[cell.rowindex, cell.colindex])
 
         if infraBool:
             release[zDeltaArray > 0] = 0
@@ -549,9 +550,10 @@ def calculation(args):
             zDeltaSumArray += zDeltaPathArray
     gc.collect()
     outputArray = {}
-    _arrayNames = ['zDelta', 'flux', 'cellCounts', 'zDeltaSum', 'backcalc', 'fpTravelAngle', 'slTravelAngle', \
+    _arrayNames = ['zDelta', 'flux', 'cellCounts', 'zDeltaSum', 'backcalc', 'fpTravelAngle', 'slTravelAngle',
                   'travelLength', 'routFluxSum', 'depFluxSum', 'forestInteraction']
-    _output = zDeltaArray, fluxArray, cellCountsArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
+    _output = zDeltaArray, fluxArray, cellCountsArray, zDeltaSumArray, backcalc, fpTravelAngleArray, \
+          slTravelAngleArray, travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
     for name, array in zip(_arrayNames, _output):
         outputArray[name] = array
     del _output, _arrayNames
@@ -689,23 +691,23 @@ def computeSaveTileResults(outputFileList, results, dem, tempDir, indI, indJ):
         zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     if 'flux' in outputFileList:
         fluxArray = np.zeros_like(dem, dtype=np.float32)
-    if 'cellCounts'  in outputFileList:
+    if 'cellCounts' in outputFileList:
         cellCountsArray = np.zeros_like(dem, dtype=np.int32)
-    if 'zDeltaSum'  in outputFileList:
+    if 'zDeltaSum' in outputFileList:
         zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
-    if 'routFluxSum'  in outputFileList:
+    if 'routFluxSum' in outputFileList:
         routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    if 'depFluxSum'  in outputFileList:
+    if 'depFluxSum' in outputFileList:
         depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    if 'backcalc'  in outputFileList:
+    if 'backcalc' in outputFileList:
         backcalc = np.zeros_like(dem, dtype=np.int32)
-    if 'fpTravelAngle'  in outputFileList:
+    if 'fpTravelAngle' in outputFileList:
         fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    if 'slTravelAngle'  in outputFileList:
+    if 'slTravelAngle' in outputFileList:
         slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    if 'travelLength'  in outputFileList:
+    if 'travelLength' in outputFileList:
         travelLengthArray = np.zeros_like(dem, dtype=np.float32)
-    if 'forestInteraction'  in outputFileList:
+    if 'forestInteraction' in outputFileList:
         forestIntArray = np.ones_like(dem, dtype=np.int32) * -9999
 
     for i in range(len(results)):
@@ -714,23 +716,23 @@ def computeSaveTileResults(outputFileList, results, dem, tempDir, indI, indJ):
             zDeltaArray = np.maximum(zDeltaArray, res['zDelta'])
         if 'flux' in outputFileList:
             fluxArray = np.maximum(fluxArray, res['flux'])
-        if 'cellCounts'  in outputFileList:
+        if 'cellCounts' in outputFileList:
             cellCountsArray += res['cellCounts']
-        if 'zDeltaSum'  in outputFileList:
+        if 'zDeltaSum' in outputFileList:
             zDeltaSumArray += res['zDeltaSum']
-        if 'backcalc'  in outputFileList:
+        if 'backcalc' in outputFileList:
             backcalc = np.maximum(backcalc, res['backcalc'])
-        if 'fpTravelAngle'  in outputFileList:
+        if 'fpTravelAngle' in outputFileList:
             fpTravelAngleArray = np.maximum(fpTravelAngleArray, res['fpTravelAngle'])
-        if 'slTravelAngle'  in outputFileList:
+        if 'slTravelAngle' in outputFileList:
             slTravelAngleArray = np.maximum(slTravelAngleArray, res['slTravelAngle'])
-        if 'travelLength'  in outputFileList:
+        if 'travelLength' in outputFileList:
             travelLengthArray = np.maximum(travelLengthArray, res['travelLength'])
-        if 'routFluxSum'  in outputFileList:
+        if 'routFluxSum' in outputFileList:
             routFluxSumArray += res['routFluxSum']
-        if 'depFluxSum'  in outputFileList:
+        if 'depFluxSum' in outputFileList:
             depFluxSumArray += res['depFluxSum']
-        if 'forestInteraction'  in outputFileList:
+        if 'forestInteraction' in outputFileList:
             forestIntArray = np.where((forestIntArray >= 0) & (res['forestInteraction'] >= 0),
                                     np.minimum(forestIntArray, res['forestInteraction']),
                                     np.maximum(forestIntArray, res['forestInteraction']))
@@ -740,23 +742,23 @@ def computeSaveTileResults(outputFileList, results, dem, tempDir, indI, indJ):
     # Save Calculated tiles
     if 'zDelta' in outputFileList:
         np.save(tempDir / ("res_z_delta_%s_%s" % (indI, indJ)), zDeltaArray)
-    if 'zDeltaSum'  in outputFileList:
+    if 'zDeltaSum' in outputFileList:
         np.save(tempDir / ("res_z_delta_sum_%s_%s" % (indI, indJ)), zDeltaSumArray)
-    if 'routFluxSum'  in outputFileList:
+    if 'routFluxSum' in outputFileList:
         np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (indI, indJ)), routFluxSumArray)
-    if 'depFluxSum'  in outputFileList:
+    if 'depFluxSum' in outputFileList:
         np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (indI, indJ)), depFluxSumArray)
     if 'flux' in outputFileList:
         np.save(tempDir / ("res_flux_%s_%s" % (indI, indJ)), fluxArray)
-    if 'cellCounts'  in outputFileList:
+    if 'cellCounts' in outputFileList:
         np.save(tempDir / ("res_count_%s_%s" % (indI, indJ)), cellCountsArray)
-    if 'fpTravelAngle'  in outputFileList:
+    if 'fpTravelAngle' in outputFileList:
         np.save(tempDir / ("res_fp_%s_%s" % (indI, indJ)), fpTravelAngleArray)
-    if 'slTravelAngle'  in outputFileList:
+    if 'slTravelAngle' in outputFileList:
         np.save(tempDir / ("res_sl_%s_%s" % (indI, indJ)), slTravelAngleArray)
-    if 'travelLength'  in outputFileList:
+    if 'travelLength' in outputFileList:
         np.save(tempDir / ("res_travel_length_%s_%s" % (indI, indJ)), travelLengthArray)
-    if 'backcalc'  in outputFileList:
+    if 'backcalc' in outputFileList:
         np.save(tempDir / ("res_backcalc_%s_%s" % (indI, indJ)), backcalc)
-    if 'forestInteraction'  in outputFileList:
+    if 'forestInteraction' in outputFileList:
         np.save(tempDir / ("res_forestInt_%s_%s" % (indI, indJ)), forestIntArray)
