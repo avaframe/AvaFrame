@@ -255,10 +255,6 @@ If ``forestInteraction = True`` this layer will be written automatically (no nee
 
 - ``forestInteraction``: minimum number of forested raster cells a path runs through
 
-.. Note::
-  * **please interpret the current** ``zDeltaSum`` **output with caution!**
-  * dividing ``zDeltaSum.tif`` by ``cellCounts`` will currently not yield average values for :math:`z^{\delta}_{max}` !!
-
  .. Model Parameterisation
  .. ------------------------
  ..
