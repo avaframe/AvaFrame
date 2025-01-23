@@ -285,7 +285,7 @@ def calculation(args):
 
         - args[0] (dict) - contains all parameters for the model
         - args[1] (dict) - contains necessary input data
-        - args[2] (rasterAttributes) - contains raster attributes od the input data
+        - args[2] (dict) - contains raster attributes od the input data
         - args[3] (list) - contains the names for the outputs
         - args[4] (np.array) - cells with value 1 are PRAs
 
@@ -328,6 +328,8 @@ def calculation(args):
         forestInteraction = False
         forestArray = None
         forestParams = None
+
+    del modelParameters, modelData, rasterAttributes, release_sub
 
     if 'zDelta' in outputFileList:
         zDeltaArray = np.zeros_like(dem, dtype=np.float32)
@@ -734,23 +736,6 @@ def computeSaveTileResults(outputFileList, results, dem, tempDir, indI, indJ):
                                     np.maximum(forestIntArray, res['forestInteraction']))
 
     logging.info("Calculation finished, getting results.")
-    """
-    for i in range(len(zDeltaList)):
-        zDeltaArray = np.maximum(zDeltaArray, zDeltaList[i])
-        fluxArray = np.maximum(fluxArray, fluxList[i])
-        cellCountsArray += ccList[i]
-        zDeltaSumArray += zDeltaSumList[i]
-        routFluxSumArray += routFluxSumList[i]
-        depFluxSumArray += depFluxSumList[i]
-        backcalc = np.maximum(backcalc, backcalcList[i])
-        fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
-        slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
-        travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
-        if forestInteraction:
-            forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
-                                    np.minimum(forestIntArray, forestIntList[i]),
-                                    np.maximum(forestIntArray, forestIntList[i]))
-    """
 
     # Save Calculated tiles
     if 'zDelta' in outputFileList:
