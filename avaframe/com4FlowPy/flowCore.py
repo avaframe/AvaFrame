@@ -493,12 +493,18 @@ def calculation(args):
             if 'zDeltaSum' in outputFileList:
                 zDeltaPathArray[cell.rowindex, cell.colindex] = max(zDeltaPathArray[cell.rowindex, cell.colindex], cell.z_delta)
             if 'fpTravelAngle' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_fp_travelangle()
                 fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.max_gamma)
             if 'slTravelAngle' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_sl_travelangle()
                 slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.sl_gamma)
             if 'travelLength' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_fp_travelangle()
                 travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
                                                                   cell.min_distance)
             if 'cellCounts' in outputFileList:
@@ -529,13 +535,16 @@ def calculation(args):
             release[zDeltaArray > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
-        zDeltaPathList.append(zDeltaPathArray)
-        del cell_list, processedCells, zDeltaPathArray
+        if 'zDeltaSum' in outputFileList:
+            zDeltaPathList.append(zDeltaPathArray)
+            del zDeltaPathArray
+        del cell_list, processedCells
 
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
-    for zDeltaPathArray in zDeltaPathList:
-        zDeltaSumArray += zDeltaPathArray
+    if 'zDeltaSum' in outputFileList:
+        for zDeltaPathArray in zDeltaPathList:
+            zDeltaSumArray += zDeltaPathArray
     gc.collect()
     outputArray = {}
     _arrayNames = ['zDelta', 'flux', 'cellCounts', 'zDeltaSum', 'backcalc', 'fpTravelAngle', 'slTravelAngle', \
