@@ -58,7 +58,7 @@ def SHP2Array(infile, defname=None):
             number of features per line (parts)
 
     """
-    # Input shapefile
+    #  Input shapefile
     sf = shapefile.Reader(str(infile))
     infile = pathlib.Path(infile)
     # set defaults for variables
@@ -115,9 +115,11 @@ def SHP2Array(infile, defname=None):
 
         # check if records are available and extract
         if records:
+            # loop through fields
             # Extract attributes for the feature
             attr_dict = {}
             for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
+                # get entity name
                 name = name.lower()
                 attr_dict[name] = value  # Store attributes in dictionary
 
@@ -129,6 +131,7 @@ def SHP2Array(infile, defname=None):
                 if name == "ci95":
                     ci95 = value
                 if name == "slope":
+                    # for dams
                     slope = value
                 if name == "rho":
                     rho = value
@@ -137,7 +140,12 @@ def SHP2Array(infile, defname=None):
                 if name == "iso":
                     iso = value
                 if name == "layer":
-                    layerN = value
+                    layerN = value               
+            # if name is still empty go through file again and take Layer instead
+            if (type(layername) is bytes) or (layername is None):
+                for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
+                    if name == "Layer":
+                        layername = value
 
             attributes.append(attr_dict)  # Add the attribute dictionary to the list
 
