@@ -182,6 +182,11 @@ class Cell:
         """
         function calculates the projected horizontal (self.min_distance) and 3D (self.minDistXYZ) length
         of the shortest flow path from the start-cell to the current cell.
+
+        Parameters
+        -----------
+        calc3D: bool
+            if True, the 3D distance is computed additionally (default: False)
         """
         if calc3D:
             _ldistMin = []
