@@ -105,7 +105,6 @@ class Cell:
 
                 self.AlphaFor = max(self.AlphaFor, self.alpha)  # Friction in Forest can't be lower than without forest
                 self.tanAlphaFor = np.tan(np.deg2rad(self.AlphaFor))
-                # self.nSkipForestCells = forestParams["nSkipForest"]
 
             # NOTE: This is a quick hack to check if all values for Detrainment are set to 0 (as provided in the
             #      .ini file)
