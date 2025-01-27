@@ -350,8 +350,6 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
             CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapT.reversed(), linewidths=1, zorder=4)
         else:
             CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1, zorder=4)
-        for i in range(len(labels)):
-            CS.collections[i].set_label(labels[i])
 
         pU.addColorBar(im1, ax1, ticks, unit)
         title = str('%s' % cfg['name'])
