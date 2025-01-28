@@ -188,3 +188,19 @@ def test_appendCgf2DF(tmp_path):
     assert simDF.loc['d10bdc1e81']['mu'] == 0.155
     assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
     assert simDF.loc['e2145362b7']['relTh0'] == 1.0
+
+
+def test_readConfigurationInfoFromDone(tmp_path):
+    """ test checking for config files and which ones were perfromed and read simDF"""
+
+    dirPath = pathlib.Path(__file__).parents[0]
+    configDir = dirPath / 'data' / 'testReadConfig' / 'Outputs'/ 'com1DFA'
+    configDir2 = dirPath / 'data' / 'testReadConfig'
+
+    simDF, simNameExisting = cfgUtils.readConfigurationInfoFromDone(configDir, specDir=configDir, latest=False)
+
+    assert len(simDF) == 11
+
+    simDF, simNameExisting = cfgUtils.readConfigurationInfoFromDone(configDir2, specDir="", latest=True)
+
+    assert len(simDF) == 3
