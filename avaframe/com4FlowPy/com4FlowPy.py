@@ -65,6 +65,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
+    # Flag for preview mode
+    modelParameters["previewMode"] = cfgSetup.getboolean("previewMode")
+
     # Flags for use of dynamic input parameters
     modelParameters["varUmaxBool"] = cfgSetup.getboolean("variableUmaxLim")
     modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
