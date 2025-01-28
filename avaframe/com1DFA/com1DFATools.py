@@ -3,6 +3,7 @@
 """
 
 import configparser
+
 # Load modules
 import logging
 import math
@@ -16,6 +17,7 @@ import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.com1DFA import com1DFA
 from avaframe.in1Data import getInput as gI
 from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -112,7 +114,7 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
 
     """
 
-    log.info('Comparing simCfg to default cfg')
+    log.info("Comparing simCfg to default cfg")
 
     defaultIdentifierString = "D"
 
@@ -134,9 +136,9 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     if simCfg["GENERAL"]["simTypeList"] == "ent" and simCfg["GENERAL"]["entThFromShp"] == "True":
         defaultEntTh = defCfg["GENERAL"]["entThIfMissingInShp"]
 
-        if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split('|')]):
+        if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split("|")]):
             defaultIdentifierString = "C"
-            log.info('Non-default entrainment value(s) used: %s' % simCfg["INPUT"]["entThThickness"])
+            log.info("Non-default entrainment value(s) used: %s" % simCfg["INPUT"]["entThThickness"])
 
     # Entrainment might not be set in shpfile, but still the default from
     # ini file is used. This is still default D and not changed C
@@ -169,11 +171,11 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     valuesChanged = dict()
     # This needs to be checked AFTER check for type_changes
     if "values_changed" in diff:
-        defaultIdentifierString = 'C'
+        defaultIdentifierString = "C"
         for key, val in diff["values_changed"].items():
             valuesChanged[_cleanDiffKey(key)] = val
 
-        log.info('Comparing to default cfg, values changed:')
+        log.info("Comparing to default cfg, values changed:")
         log.info(valuesChanged)
 
     else:
@@ -323,8 +325,11 @@ def initializeInputs(avalancheDir, cleanRemeshedRasters):
     _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanRemeshedRasters)
 
     # first fetch info on already existing simulations in Outputs
-    # if it is needed to reproduce exactly the hash - need to be strings with exactly the same number of digits!!
-    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir="")
+    # if need to reproduce exactly the hash - need to be strings with exactly the same number of digits!!
+    # searchCfgFiles=True enables to search for preformed sims if run has been interrupted
+    simDFExisting, simNameExisting = cfgUtils.readConfigurationInfoFromDone(
+        avalancheDir, specDir='',
+    )
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
     inputSimFilesAll = gI.getInputDataCom1DFA(avalancheDir)

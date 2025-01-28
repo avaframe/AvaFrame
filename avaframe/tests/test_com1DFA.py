@@ -1531,7 +1531,9 @@ def test_exportFields(tmp_path):
     fieldsList = [fields1, fields2, fields3, fields4, fields5]
 
     # call function to be tested
-    com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir, logName)
+    com1DFA.exportFields(cfg, 10.00, fields2, dem, outDir, logName, TSave='intermediate')
+    com1DFA.exportFields(cfg, 40.00, fields5, dem, outDir, logName, TSave='final')
+
 
     # read fields
     fieldDir = outDir / "peakFiles"
@@ -1555,26 +1557,36 @@ def test_exportFields(tmp_path):
 
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pftt10)
-    assert len(fieldsListTest) == 19
+    assert len(fieldsListTest) == 8
 
     # call function to be tested
     outDir2 = pathlib.Path(tmp_path, "testDir2")
     outDir2.mkdir()
     cfg["GENERAL"]["resType"] = ""
     cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
-    com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir2, logName)
+
+    com1DFA.exportFields(cfg, 0.00, fields1, dem, outDir2, logName, TSave='initial')
+    com1DFA.exportFields(cfg, 10.00, fields2, dem, outDir2, logName, TSave='intermediate')
+    com1DFA.exportFields(cfg, 15.00, fields3, dem, outDir2, logName, TSave='intermediate')
+    com1DFA.exportFields(cfg, 25.00, fields4, dem, outDir2, logName, TSave='intermediate')
+    com1DFA.exportFields(cfg, 40.00, fields5, dem, outDir2, logName, TSave='final')
 
     # read fields
     fieldDir = outDir2 / "peakFiles"
     fieldDirTSteps = outDir2 / "peakFiles" / "timeSteps"
     fieldFiles = list(fieldDirTSteps.glob("*.asc"))
+    fieldFiles3 = list(fieldDir.glob("*.asc"))
     fieldsListTest2 = []
-    #    print("fields file", fieldFiles)
-
+    fieldsListTest3 = []
     for f in fieldFiles:
         fieldsListTest2.append(f.name)
+    #    print("fields file", fieldFiles)
+
+    for f in fieldFiles3:
+        fieldsListTest3.append(f.name)
 
     assert len(fieldsListTest2) == 6
+    assert len(fieldsListTest3) == 3
 
 
 def test_initializeFields():

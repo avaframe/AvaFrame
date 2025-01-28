@@ -39,6 +39,8 @@ def initialiseRunDirs(avaDir, modName, cleanRemeshedRasters):
     outputDir = pathlib.Path(avaDir, 'Outputs', modName)
     fU.makeADir(outputDir)
     workDir = pathlib.Path(avaDir, 'Work', modName)
+    configDoneDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFilesDone')
+    fU.makeADir(configDoneDir)
     # If Work directory already exists - error
     if workDir.is_dir():
         message = 'Work directory %s already exists - delete first!' % (workDir)
@@ -50,5 +52,8 @@ def initialiseRunDirs(avaDir, modName, cleanRemeshedRasters):
 
     if cleanRemeshedRasters is True:
         initProj.cleanRemeshedDir(avaDir)
+
+    # first clean latestConfigurationFiles dir and create new one
+    initProj.cleanLatestConfigurationsDirAndCreate(avaDir, modName)
 
     return workDir, outputDir
