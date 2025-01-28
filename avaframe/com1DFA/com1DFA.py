@@ -1777,6 +1777,12 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     if cfg["EXPORTS"].getboolean("exportData"):
         exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
 
+    # export particles dictionaries of saving time steps
+    # (if particles is not in resType, only first and last time step are saved)
+    outDirData = outDir / "particles"
+    fU.makeADir(outDirData)
+    savePartToPickle(particles, outDirData, cuSimName)
+
     zPartArray0 = copy.deepcopy(particles["z"])
 
     # create range time diagram
@@ -1864,11 +1870,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
                 # exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
                 exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
 
-            # export particles dictionaries of saving time steps
-            # (if particles is not in resType, only first and last time step are saved)
-            outDirData = outDir / "particles"
-            fU.makeADir(outDirData)
-            savePartToPickle(particles, outDirData, cuSimName)
+                # export particles dictionaries of saving time steps
+                savePartToPickle(particles, outDirData, cuSimName)
 
             # export particles properties for visulation
             if cfg["VISUALISATION"].getboolean("writePartToCSV"):
@@ -1985,6 +1988,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     if cfg["EXPORTS"].getboolean("exportData"):
         # exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
         exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="final")
+        
+        # export particles dictionaries of saving time steps
+        savePartToPickle(particles, outDirData, cuSimName)
     else:
         # fetch contourline info
         contDictXY = outCom1DFA.fetchContCoors(
