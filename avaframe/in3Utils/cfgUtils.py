@@ -670,8 +670,14 @@ def setStrnanToNan(simDF, simDFTest, name):
     return simDF
 
 
-def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations'):
+def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations', searchCfgFiles=False):
     """ Read allConfigurations.csv file as dataFrame from directory
+        if serachCfgFiles is True, check avaName/Outputs/com1DFA/configurationFilesDone and pass
+        names of all files found in this directory, this is useful if e.g. no allConfigurations.csv has
+        been written but already some simulations have been performed as a txt file is saved in
+        avaName/Outputs/com1DFA/configurationFiles after the respecitve simulation has been run
+        whereas the allConfigurations file is written at the end of a call to com1DFAMain that can
+        include several individual sims
 
         Parameters
         -----------
@@ -681,6 +687,8 @@ def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfiguration
             path to a directory where simulation configuration files can be found - optional
         configCsvName: str
             name of configuration csv file
+        searchCfgFiles: bool
+            if True search for available cfg files to check if sims already done: avaName/Outputs/com1DFA/configurationFiles
 
         Returns
         --------
@@ -695,17 +703,33 @@ def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfiguration
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
-    configFiles = inDir / ('%s.csv' % configCsvName)
 
-    if configFiles.is_file():
-        with open(configFiles, 'rb') as file:
-            simDF = pd.read_csv(file, index_col=0, keep_default_na=False)
-        simDFName = simDF['simName'].to_numpy()
+    # search avaName/Outputs/com1DFA/configurationFilesDone for already existing sims
+    if searchCfgFiles:
+        configDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFilesDone')
+        existingSims = list(configDir.glob('*.txt'))
+        simNameExisting = []
+        for fName in existingSims:
+            simNameExisting.append(fName.stem)
+
+        # TODO: if returned simDF after run should contain also one line per sim from the previously existing sims
+        # TODO: include here reading those and creating a simDF first and return here as first parameter
+        # TODO: this is the case if already existing sims are found and an allConfigurations.csv file exists (oldVersion)
+
+        return None, simNameExisting
+
     else:
-        simDF = None
-        simDFName = []
+        configFiles = inDir / ('%s.csv' % configCsvName)
 
-    return simDF, simDFName
+        if configFiles.is_file():
+            with open(configFiles, 'rb') as file:
+                simDF = pd.read_csv(file, index_col=0, keep_default_na=False)
+            simDFName = simDF['simName'].to_numpy()
+        else:
+            simDF = None
+            simDFName = []
+
+        return simDF, simDFName
 
 
 def writeAllConfigurationInfo(avaDir, simDF, specDir='', csvName='allConfigurations.csv'):
