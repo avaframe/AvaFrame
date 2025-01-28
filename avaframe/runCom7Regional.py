@@ -98,6 +98,11 @@ def runCom7Regional(avalancheDir=''):
         log.info(f"{'Moved' if moved else 'Copied'} timeSteps to "
                   f"{allTimeStepsDir}")
 
+    # Merge output rasters from all avalanche directories
+    mergedRastersDir = com7.mergeOutputRasters(cfg, regionalDir)
+    if mergedRastersDir:
+        log.info(f"Merged output rasters saved to {mergedRastersDir}")
+
     # Print time needed
     endTime = time.time()
     log.info('Regional process finished after %.1f seconds.' % (endTime - startTime))
