@@ -110,8 +110,7 @@ def readShapefile(inputShp):
     To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
     shapeTypes, bounds, numFeatures and metadata if needed
 
-    # ToDo: maybe move to some other module e.g. in1Data, in2Trans -> shapeUtils.py or 
-    # update to use pre-existing function from shpConversion.py
+    # ToDo: maybe move to some other module e.g. in1Data, in2Trans -> shapeUtils.py or update to use pre-existing function from shpConversion.py
 
     Parameters
     ----------
@@ -699,7 +698,7 @@ def getExteriorCoords(geom):
     else:
         return [geom.exterior.xy]
 
-def createVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures, reportType):
+def makeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures, reportType):
     """Create a visual report showing the DEM extent with either basic or optional inputs.
     
     Parameters
@@ -851,11 +850,11 @@ def writeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFe
     none
     """
     # Create basic features report
-    basicPath = createVisualReport(dirListGrouped, inputDEM, outputDir, 
+    basicPath = makeVisualReport(dirListGrouped, inputDEM, outputDir, 
                                  groupExtents, groupFeatures, 'basic')
     log.info(f"Visual report (basic) written to: {basicPath}")
     
     # Create optional features report
-    optionalPath = createVisualReport(dirListGrouped, inputDEM, outputDir, 
+    optionalPath = makeVisualReport(dirListGrouped, inputDEM, outputDir, 
                                     groupExtents, groupFeatures, 'optional')
     log.info(f"Visual report (optional) written to: {optionalPath}")
