@@ -476,7 +476,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir=''):
+def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir='', simNameList=[]):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -489,6 +489,8 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
             True if configuration dataFrame shall be written to csv file
         specDir: str
             path to a directory where simulation configuration files can be found - optional
+        simNameList: list
+            if non-empty list only use cfgFiles that are included within simNameList
 
         Returns
         --------
@@ -511,6 +513,10 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
         message = 'No configuration file found in: %s' % (inDir)
         log.error(message)
         raise FileNotFoundError(message)
+
+    # if a simNameList is provided only look for the files with matching simName
+    if simNameList != []:
+        configFiles = [cfgF for cfgF in configFiles if cfgF.stem in simNameList]
 
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
@@ -711,10 +717,6 @@ def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfiguration
         simNameExisting = []
         for fName in existingSims:
             simNameExisting.append(fName.stem)
-
-        # TODO: if returned simDF after run should contain also one line per sim from the previously existing sims
-        # TODO: include here reading those and creating a simDF first and return here as first parameter
-        # TODO: this is the case if already existing sims are found and an allConfigurations.csv file exists (oldVersion)
 
         return None, simNameExisting
 

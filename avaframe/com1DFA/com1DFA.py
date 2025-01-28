@@ -298,9 +298,16 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # this is used for the qgis connector
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDF, specDir="", csvName="latestSims.csv")
 
-    # append new simulations configuration to old ones (if they exist),
-    # return total dataFrame and write it to csv
-    simDFNew = pd.concat([simDF, simDFExisting], axis=0)
+    # first read all sims that are actually located in Outputs folder by checking configurationFilesDone directory
+    # this comprises all sims previously computed and still saved as well as the ones from this run
+    configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFilesDone')
+    existingSims = list(configDir.glob('*.txt'))
+    # create a list of file names
+    existingSims = [fName.stem for fName in existingSims]
+    # create a dataframe with all simulation configurations of the ones that were actually performed
+    simDFNew = cfgUtils.createConfigurationInfo(avalancheDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir='', simNameList=existingSims)
+
+    # write the actually simulated sims to a separate csv file
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir="")
 
     # create plots and report
