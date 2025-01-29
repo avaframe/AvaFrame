@@ -283,7 +283,8 @@ def run(optTuple):
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    backcalc = np.zeros_like(dem, dtype=np.int32)
+    if infraBool:
+        backcalc = np.zeros_like(dem, dtype=np.int32)
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     travelLengthArray = np.zeros_like(dem, dtype=np.float32)
@@ -296,7 +297,8 @@ def run(optTuple):
     zDeltaSumList = []
     routFluxSumList = []
     depFluxSumList = []
-    backcalcList = []
+    if infraBool:
+        backcalcList = []
     fpTravelAngleList = []
     slTravelAngleList = []
     travelLengthList = []
@@ -310,7 +312,8 @@ def run(optTuple):
         fluxList.append(res[1])
         ccList.append(res[2])
         zDeltaSumList.append(res[3])
-        backcalcList.append(res[4])
+        if infraBool:
+            backcalcList.append(res[4])
         fpTravelAngleList.append(res[5])
         slTravelAngleList.append(res[6])
         travelLengthList.append(res[7])
@@ -327,7 +330,8 @@ def run(optTuple):
         zDeltaSumArray += zDeltaSumList[i]
         routFluxSumArray += routFluxSumList[i]
         depFluxSumArray += depFluxSumList[i]
-        backcalc = np.maximum(backcalc, backcalcList[i])
+        if infraBool:
+            backcalc = np.maximum(backcalc, backcalcList[i])
         fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
         slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
         travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
