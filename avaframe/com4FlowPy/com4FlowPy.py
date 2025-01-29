@@ -263,6 +263,9 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
         log.info("------------------------")
+    if modelParameters["previewMode"]:
+        log.info("!!! previewMode is ON !!!! - mind when interpreting results!!!")
+        log.info("------------------------")
     if modelParameters["fluxDistOldVersionBool"]:
         log.info("Calculation using old (BUGGY!!) version of flux distribution!")
         log.info("------------------------")
