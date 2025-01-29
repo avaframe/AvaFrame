@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 
 def readDEM(avaDir):
-    """read the ascii DEM file from a provided avalanche directory
+    """read the DEM (ascii or tif) file from a provided avalanche directory
 
     Parameters
     ----------
@@ -292,7 +292,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     folder : str
         subfolder name where the shape file should be located (SECREL, ENT or RES)
     inputType : str
-        type of input (used for the logging messages). Secondary release or Entrainment or Resistance
+        type of input (used for the logging messages).
     fileExt: str
         file extension e.g. shp, asc, tif - optional; default is shp
     fileSuffix: str
@@ -339,7 +339,6 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
             message = "Unsupported file format found for OutputFile %s; shp, asc, tif are allowed" % OutputFile
             log.error(message)
             raise AssertionError(message)
-
 
     return OutputFile, available
 
