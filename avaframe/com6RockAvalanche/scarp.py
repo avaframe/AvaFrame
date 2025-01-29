@@ -2,11 +2,8 @@ import rasterio
 import numpy as np
 import math
 import configparser
-import shapefile
-import pathlib
 import logging
-from in2Trans.shpConversion import SHP2Array
-from in2Trans.shpConversion import getSHPProjection
+from avaframe.in2Trans.shpConversion import SHP2Array
 from rasterio.features import rasterize
 from shapely.geometry import shape, mapping
 
@@ -19,7 +16,7 @@ def runScarpAnalysis(configFile):
 
     Parameters
     ----------
-    config_file : str
+    configFile : str
         Path to the configuration file in .ini format.
 
     Returns
@@ -50,7 +47,6 @@ def runScarpAnalysis(configFile):
         elevTransform = elevSrc.transform
         elevCRS = elevSrc.crs
         n, m = elevData.shape
-        res = elevTransform[0]
 
     periData = readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, (n, m), elevCRS)
 
@@ -119,15 +115,15 @@ def readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, elevSha
 
     Parameters
     ----------
-    perimeter_input : str
+    perimeterInput : str
         Path to the perimeter raster file.
-    perimeter_shapefile_path : str
+    perimeterShapefilePath : str
         Path to the perimeter shapefile.
-    elev_transform : Affine
-        Affine transformation of the elevation raster.
-    elev_shape : tuple
+    elevTransform : Affine
+        transformation of the elevation raster.
+    elevShape : tuple
         Shape (height, width) of the elevation raster.
-    elev_crs : rasterio.crs.CRS
+    elevCrs : rasterio.crs.CRS
         Coordinate Reference System of the elevation raster.
 
     Returns
