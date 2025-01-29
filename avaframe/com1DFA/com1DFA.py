@@ -305,7 +305,13 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # create a list of file names
     existingSims = [fName.stem for fName in existingSims]
     # create a dataframe with all simulation configurations of the ones that were actually performed
-    simDFNew = cfgUtils.createConfigurationInfo(avalancheDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir='', simNameList=existingSims)
+    simDFExisting = cfgUtils.createConfigurationInfo(avalancheDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir='', simNameList=existingSims)
+
+    # append new simulations configuration to old ones (if they exist),
+    # remove duplicates - sims from this run from existing
+    # return total dataFrame and write it to csv
+    simDFNew = pd.concat([simDF, simDFExisting], axis=0)
+    simDFNew = simDFNew.drop_duplicates(subset=['simName'])
 
     # write the actually simulated sims to a separate csv file
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir="")
@@ -1776,6 +1782,12 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # export initial time step
     if cfg["EXPORTS"].getboolean("exportData"):
         exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
+    # export particles properties for visulation
+    if cfg["VISUALISATION"].getboolean("writePartToCSV"):
+        particleTools.savePartToCsv(
+            cfg["VISUALISATION"]["visuParticleProperties"], [particles], outDir, countParticleCsv=countParticleCsv
+        )
+        countParticleCsv = countParticleCsv + 1
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
@@ -1876,7 +1888,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
             # export particles properties for visulation
             if cfg["VISUALISATION"].getboolean("writePartToCSV"):
                 particleTools.savePartToCsv(
-                    cfg["VISUALISATION"]["visuParticleProperties"], [particles], outDir, countParticleCsv
+                    cfg["VISUALISATION"]["visuParticleProperties"], [particles], outDir, countParticleCsv=countParticleCsv
                 )
                 countParticleCsv = countParticleCsv + 1
 
@@ -2008,7 +2020,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # export particles properties for visulation
     if cfg["VISUALISATION"].getboolean("writePartToCSV"):
         particleTools.savePartToCsv(
-            cfg["VISUALISATION"]["visuParticleProperties"], [particles], outDir, countParticleCsv
+            cfg["VISUALISATION"]["visuParticleProperties"], [particles], outDir, countParticleCsv=countParticleCsv
         )
         countParticleCsv = countParticleCsv + 1
 

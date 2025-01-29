@@ -867,7 +867,7 @@ def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA')
     return Particles, timeStepInfo
 
 
-def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv):
+def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv=None):
     """ Save each particle dictionary from a list to a csv file;
         works also for one dictionary instead of list
 
@@ -881,6 +881,9 @@ def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv):
         outDir: str
             path to output directory; particlesCSV will be created in this
             outDir
+        countParticleCsv: int
+            number of particlesDict to be saved according to time step - ranging from 0...n where n is the total number
+            of saved particleDicts - if list of dicts is saved this parameter is ignored
     """
 
     # set output directory
@@ -893,7 +896,12 @@ def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv):
     # write particles locations and properties to csv file
     nParticles = len(dictList)
     if nParticles == 1:
-        count = countParticleCsv
+        if countParticleCsv is None:
+            message = 'Indicator for step in timeseries for particlesDict to be saved is required, set countPartCsv'
+            log.error(message)
+            raise AssertionError(message)
+        else:
+            count = countParticleCsv
     else:
         count = 0
     for m in range(nParticles):
