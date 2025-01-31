@@ -246,7 +246,7 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
         return None, None
 
     # Set up outdirs
-    allPeakFilesDir = pathlib.Path(avalancheDir, 'allPeakFiles')
+    allPeakFilesDir = pathlib.Path(avalancheDir, 'Outputs', 'com7Regional', 'allPeakFiles')
     allTimeStepsDir = allPeakFilesDir / 'allTimeSteps'
     for dirPath in [allPeakFilesDir, allTimeStepsDir]:
         if dirPath.exists():
@@ -459,7 +459,7 @@ def mergeOutputRasters(cfg, avalancheDir):
         return None
 
     # Set up merged rasters directory
-    mergedRastersDir = pathlib.Path(avalancheDir, 'mergedRasters')
+    mergedRastersDir = pathlib.Path(avalancheDir, 'Outputs', 'com7Regional', 'mergedRasters')
     if mergedRastersDir.exists():
         shutil.rmtree(str(mergedRastersDir))
     mergedRastersDir.mkdir(parents=True, exist_ok=True)
