@@ -503,7 +503,7 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', comModule, 'configurationFiles')
-    configFiles = inDir.glob('*.ini')
+    configFiles = list(inDir.glob('*.ini'))
 
     if not inDir.is_dir():
         message = 'configuration file directory not found: %s' % (inDir)
@@ -518,34 +518,37 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
     if simNameList != []:
         configFiles = [cfgF for cfgF in configFiles if cfgF.stem in simNameList]
 
-    # create confiparser object, convert to json object, write to dataFrame
-    # append all dataFrames
-    simDF = ''
-    for cFile in configFiles:
-        if 'sourceConfiguration' not in str(cFile):
-            simName = pathlib.Path(cFile).stem
-            if '_AF_' in simName:
-                nameParts = simName.split('_AF_')
-                infoParts = nameParts[1].split('_')
+    if len(configFiles) == 0:
+        simDF = None
+    else:
+        # create configparser object, convert to json object, write to dataFrame
+        # append all dataFrames
+        simDF = ''
+        for cFile in configFiles:
+            if 'sourceConfiguration' not in str(cFile):
+                simName = pathlib.Path(cFile).stem
+                if '_AF_' in simName:
+                    nameParts = simName.split('_AF_')
+                    infoParts = nameParts[1].split('_')
 
-            else:
-                nameParts = simName.split('_')
-                infoParts = nameParts[1:]
-            simHash = infoParts[0]
-            cfgObject = readCfgFile(avaDir, fileName=cFile)
-            simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
+                else:
+                    nameParts = simName.split('_')
+                    infoParts = nameParts[1:]
+                simHash = infoParts[0]
+                cfgObject = readCfgFile(avaDir, fileName=cFile)
+                simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 
-    # convert numeric parameters to numerics
-    simDF = convertDF2numerics(simDF)
+        # convert numeric parameters to numerics
+        simDF = convertDF2numerics(simDF)
 
-    # add default configuration
-    if standardCfg != '':
-        # read default configuration of this module
-        simDF = appendCgf2DF('current standard', 'current standard', standardCfg, simDF)
+        # add default configuration
+        if standardCfg != '':
+            # read default configuration of this module
+            simDF = appendCgf2DF('current standard', 'current standard', standardCfg, simDF)
 
-    # if writeCSV, write dataFrame to csv file
-    if writeCSV:
-        writeAllConfigurationInfo(avaDir, simDF, specDir=specDir)
+        # if writeCSV, write dataFrame to csv file
+        if writeCSV:
+            writeAllConfigurationInfo(avaDir, simDF, specDir=specDir)
 
     return simDF
 
@@ -675,15 +678,64 @@ def setStrnanToNan(simDF, simDFTest, name):
             log.info('%s for index: %s set to numpy nan' % (name, index))
     return simDF
 
-
-def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations', searchCfgFiles=False):
-    """ Read allConfigurations.csv file as dataFrame from directory
-        if serachCfgFiles is True, check avaName/Outputs/com1DFA/configurationFilesDone and pass
-        names of all files found in this directory, this is useful if e.g. no allConfigurations.csv has
+def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
+    """ Check avaName/Outputs/com1DFA/configurationFilesDone and pass
+        names of all files found in this directory and create corresponding simDF
+        this is useful if e.g. no allConfigurations.csv has
         been written but already some simulations have been performed as a txt file is saved in
-        avaName/Outputs/com1DFA/configurationFiles after the respecitve simulation has been run
+        avaName/Outputs/com1DFA/configurationFiles after the respective simulation has been run
         whereas the allConfigurations file is written at the end of a call to com1DFAMain that can
         include several individual sims
+        if latest=True only look for latest simulations in avaName/Outputs/com1DFA/latestConfigurationFiles
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
+       latest: bool
+            if True check for files found in avaName/Outputs/com1DFA/latestConfigurationFiles
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+            DF with all the simulation configurations
+        simDFName: array
+            simName column of the dataframe
+    """
+
+    # collect all configuration files for this module from directory
+    if specDir != '':
+        inDir = pathlib.Path(specDir)
+    else:
+        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
+
+    # search avaName/Outputs/com1DFA/configurationFilesDone for already existing sims
+    if latest:
+        configDir = inDir / 'latestConfigurationFiles'
+    else:
+        configDir = inDir / 'configurationFilesDone'
+
+    existingSims = list(configDir.glob('*.ini'))
+
+    simNameExisting = []
+    for fName in existingSims:
+        simNameExisting.append(fName.stem)
+
+    if not (inDir / 'configurationFiles').is_dir():
+        log.info('No existing simulations in Outputs found')
+        simDF = None
+    else:
+        # create simDF (dataFrame with one row per simulation of configuration files found in configDir)
+        simDF = createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir="",
+                                        simNameList=simNameExisting)
+
+    return simDF, simNameExisting
+
+
+def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations'):
+    """ Read allConfigurations.csv file as dataFrame from directory
 
         Parameters
         -----------
@@ -693,8 +745,6 @@ def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfiguration
             path to a directory where simulation configuration files can be found - optional
         configCsvName: str
             name of configuration csv file
-        searchCfgFiles: bool
-            if True search for available cfg files to check if sims already done: avaName/Outputs/com1DFA/configurationFiles
 
         Returns
         --------
@@ -709,29 +759,17 @@ def readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfiguration
         inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    configFiles = inDir / ('%s.csv' % configCsvName)
 
-    # search avaName/Outputs/com1DFA/configurationFilesDone for already existing sims
-    if searchCfgFiles:
-        configDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFilesDone')
-        existingSims = list(configDir.glob('*.txt'))
-        simNameExisting = []
-        for fName in existingSims:
-            simNameExisting.append(fName.stem)
-
-        return None, simNameExisting
-
+    if configFiles.is_file():
+        with open(configFiles, 'rb') as file:
+            simDF = pd.read_csv(file, index_col=0, keep_default_na=False)
+        simDFName = simDF['simName'].to_numpy()
     else:
-        configFiles = inDir / ('%s.csv' % configCsvName)
+        simDF = None
+        simDFName = []
 
-        if configFiles.is_file():
-            with open(configFiles, 'rb') as file:
-                simDF = pd.read_csv(file, index_col=0, keep_default_na=False)
-            simDFName = simDF['simName'].to_numpy()
-        else:
-            simDF = None
-            simDFName = []
-
-        return simDF, simDFName
+    return simDF, simDFName
 
 
 def writeAllConfigurationInfo(avaDir, simDF, specDir='', csvName='allConfigurations.csv'):

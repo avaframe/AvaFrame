@@ -322,17 +322,13 @@ def initializeInputs(avalancheDir, cleanRemeshedRasters):
     modName = str(pathlib.Path(com1DFA.__file__).stem)
 
     # Create output and work directories
-    configDir = pathlib.Path(avalancheDir, "Outputs", "com1DFA", "configurationFilesDone")
-    fU.makeADir(configDir)
-
-    # Create output and work directories
     _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanRemeshedRasters)
 
     # first fetch info on already existing simulations in Outputs
     # if need to reproduce exactly the hash - need to be strings with exactly the same number of digits!!
     # searchCfgFiles=True enables to search for preformed sims if run has been interrupted
-    simDFExisting, simNameExisting = cfgUtils.readAllConfigurationInfo(
-        avalancheDir, specDir="", searchCfgFiles=True
+    simDFExisting, simNameExisting = cfgUtils.readConfigurationInfoFromDone(
+        avalancheDir, specDir='',
     )
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)

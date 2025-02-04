@@ -298,20 +298,10 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
     # this is used for the qgis connector
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDF, specDir="", csvName="latestSims.csv")
 
-    # first read all sims that are actually located in Outputs folder by checking configurationFilesDone directory
-    # this comprises all sims previously computed and still saved as well as the ones from this run
-    configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFilesDone')
-    existingSims = list(configDir.glob('*.txt'))
-    # create a list of file names
-    existingSims = [fName.stem for fName in existingSims]
-    # create a dataframe with all simulation configurations of the ones that were actually performed
-    simDFExisting = cfgUtils.createConfigurationInfo(avalancheDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir='', simNameList=existingSims)
-
     # append new simulations configuration to old ones (if they exist),
-    # remove duplicates - sims from this run from existing
     # return total dataFrame and write it to csv
     simDFNew = pd.concat([simDF, simDFExisting], axis=0)
-    simDFNew = simDFNew.drop_duplicates(subset=['simName'])
+    cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir="")
 
     # write the actually simulated sims to a separate csv file
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir="")
@@ -419,12 +409,13 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     if cfg["EXPORTS"].getboolean("exportData") == False:
         reportDict["contours"] = contDictXY
 
-        # write text file to Outputs/com1DFA/configurationFilesDone to indicate that this simulation has been performed
-    configDir = pathlib.Path(avaDir, "Outputs", "com1DFA", "configurationFilesDone")
-    configFileName = configDir / ("%s.txt" % cuSimName)
-    with open(configFileName, "w") as fi:
-        fi.write("see directory configurationFiles for info on config")
-    fi.close()
+    # write text file to Outputs/com1DFA/configurationFilesDone to indicate that this simulation has been performed
+    configFileName = ("%s.ini" % cuSimName)
+    for saveDir in ['configurationFilesDone', 'latestConfigurationFiles']:
+        configDir = pathlib.Path(avaDir, "Outputs", "com1DFA", saveDir)
+        with open((configDir / configFileName), "w") as fi:
+            fi.write("see directory configurationFiles for info on config")
+        fi.close()
 
     return dem, reportDict, cfg, infoDict["tCPU"], nPartInitial
 
@@ -3073,6 +3064,18 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
 
 
 def saveContToPickle(contDictXY, outDir, cuSimName):
+    """ save contourline x, y coordinates dictionary to a pickle
+
+        Parameters
+        ------------
+        contDictXY: dict
+            dictionary with key simName and dict with x, y coordinates of contour line of specified level
+        outDir: pathlib path
+            path to dir where pickle shall be saved
+        cuSimName: str
+            name of current simulation where this contourline is derived from
+    """
+
     fi = open(outDir / ("contDictXY_%s.pickle" % (cuSimName)), "wb")
     pickle.dump(contDictXY, fi)
     fi.close()
