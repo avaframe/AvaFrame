@@ -2272,7 +2272,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     
     # adapt DEM considering erosion and deposition
-    dem, fields = DFAfunC.adaptDEM(dem, fields)
+    if particles["t"] > 0:
+        if np.any(fields['hEro'] != 0) or np.any(fields['hDep'] != 0):
+            dem, fields = adaptDEM(dem, fields, cfg)
     
     tCPUField = time.time() - startTime
     tCPU["timeField"] = tCPU["timeField"] + tCPUField
@@ -2993,3 +2995,44 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
         relVolume = np.nansum(releaseLine["rasterData"] * demVol["areaRaster"])
 
     return relVolume
+
+
+def adaptDEM(dem, fields, cfg):
+  """ adapt topography in respect to erosion and deposition
+
+    Parameters
+    dem: dict
+        dictionary with info on DEM data
+    fields : dict
+        fields dictionary
+    cfg: dict
+        configuration settings
+
+    Returns
+    ---------
+    dem: dict
+        dictionary with info on DEM data containing adapted topography
+    fields : dict
+        fields dictionary containg adapted DEM
+  """
+
+  header = dem['header']
+  nrows = header['nrows']
+  ncols = header['ncols']
+  ZDEM = dem['rasterData']
+  hDep = fields['hDep']
+  hEro = fields['hEro']
+  ZDEMadapt = np.zeros_like(ZDEM)
+
+  for i in range(ncols):
+    for j in range(nrows):
+      ZDEMadapt[j, i] = ZDEM[j, i] + hDep[j, i] + hEro[j, i]
+  
+  dem['rasterData'] = np.asarray(ZDEMadapt)
+  fields['demAdapted'] = np.asarray(ZDEMadapt)
+
+  num = cfg.getfloat("GENERAL", "methodMeshNormal")
+  dem = geoTrans.getNormalMesh(dem, num=num) #direction of flow???
+  dem = DFAtls.getAreaMesh(dem, num)
+
+  return dem, fields

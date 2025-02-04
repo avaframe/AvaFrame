@@ -733,6 +733,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] dmDepositedArray = np.empty(0)
   cdef double[:] idDepositedArray = np.empty(0)
   cdef double[:] uMagDepositedArray = np.empty(0)
+  cdef long[:] indRemoveParticle
   # read fields
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
@@ -1085,15 +1086,15 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
   # remove particles that have mass = 0 or velocity = 0
   if nDeposit > 0:
-    k = 0
-    while k < len(notDepositParticle):
+    indRemoveParticle = np.array([], dtype=np.int64)
+    for k in range(len(keepParticle)):
       if keepParticle[k] == 0:
-        notDepositParticle = np.delete(notDepositParticle, k)
-      else:
-        k = k + 1
+          indRemoveParticle = np.append(indRemoveParticle, int(k))
+          if notDepositParticle[k] == 0:
+            nDeposit = nDeposit - 1
+    notDepositParticle = np.delete(notDepositParticle,indRemoveParticle)
     mask = np.array(np.asarray(notDepositParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nDeposit, 'because their mass or velocity is zero', snowSlide=snowSlide)
-
   return particles
 
 
@@ -2259,23 +2260,3 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   particles['m'] = np.asarray(mass)
 
   return particles, force
-
-
-def adaptDEM(dem, fields):
-
-  header = dem['header']
-  cdef int nrows = header['nrows']
-  cdef int ncols = header['ncols']
-  cdef double[:, :] ZDEM = dem['rasterData']
-  cdef double[:, :] hDep = fields['hDep']
-  cdef double[:, :] hEro = fields['hEro']
-  cdef double[:, :] ZDEMadapt = np.zeros_like(ZDEM)
-
-  for i in range(ncols):
-    for j in range(nrows):
-      ZDEMadapt[j, i] = ZDEM[j, i] + hDep[j, i] + hEro[j, i]
-  
-  dem['rasterData'] = np.asarray(ZDEMadapt)
-  fields['demAdapted'] = np.asarray(ZDEMadapt)
-
-  return dem, fields
