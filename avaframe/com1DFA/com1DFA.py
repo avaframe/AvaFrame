@@ -391,7 +391,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
 
     # ------------------------
     #  Start time step computation
-    Tsave, infoDict, contDictXY = DFAIterate(
+    Tsave, infoDict, contourDictXY = DFAIterate(
         cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, simHash=simHash
     )
 
@@ -407,7 +407,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
 
     if cfg["EXPORTS"].getboolean("exportData") == False:
-        reportDict["contours"] = contDictXY
+        reportDict["contours"] = contourDictXY
 
     # write text file to Outputs/com1DFA/configurationFilesDone to indicate that this simulation has been performed
     configFileName = ("%s.ini" % cuSimName)
@@ -1749,7 +1749,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     log.debug("Resistance Model used: %s, %s" % (ResModelsList[resistanceType - 1], resistanceType))
 
     # Initialise Lists to save fields and add initial time step
-    contDictXY = None
+    contourDictXY = None
     timeM = []
     massEntrained = []
     massDetrained = []
@@ -1772,7 +1772,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
 
     # export initial time step
     if cfg["EXPORTS"].getboolean("exportData"):
-        exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
+        exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
     # export particles properties for visulation
     if cfg["VISUALISATION"].getboolean("writePartToCSV"):
         particleTools.savePartToCsv(
@@ -1870,8 +1870,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
 
             # Result parameters to be exported
             if cfg["EXPORTS"].getboolean("exportData"):
-                # exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
-                exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
+                exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
 
                 # export particles dictionaries of saving time steps
                 savePartToPickle(particles, outDirData, cuSimName)
@@ -1989,24 +1988,23 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     resultsDF.to_csv(resultsDFPath)
 
     if cfg["EXPORTS"].getboolean("exportData"):
-        # exportFields(cfg, Tsave, fieldsList, dem, outDir, cuSimName)
-        exportFields1(cfg, t, fields, dem, outDir, cuSimName, TSave="final")
+        exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="final")
         
         # export particles dictionaries of saving time steps
         savePartToPickle(particles, outDirData, cuSimName)
     else:
         # fetch contourline info
-        contDictXY = outCom1DFA.fetchContCoors(
+        contourDictXY = outCom1DFA.fetchContCoors(
             dem["header"], fields[cfg["VISUALISATION"]["contourResType"]], cfg["VISUALISATION"], cuSimName
         )
 
     # save contour line for each sim
-    contDictXY = outCom1DFA.fetchContCoors(
+    contourDictXY = outCom1DFA.fetchContCoors(
         dem["header"], fields[cfg["VISUALISATION"]["contourResType"]], cfg["VISUALISATION"], cuSimName
     )
     outDirDataCont = outDir / "contours"
     fU.makeADir(outDirDataCont)
-    saveContToPickle(contDictXY, outDirDataCont, cuSimName)
+    saveContToPickle(contourDictXY, outDirDataCont, cuSimName)
 
     # export particles properties for visulation
     if cfg["VISUALISATION"].getboolean("writePartToCSV"):
@@ -2021,7 +2019,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
             % particles["nExitedParticles"]
         )
 
-    return Tsave, infoDict, contDictXY
+    return Tsave, infoDict, contourDictXY
 
 
 def setupresultsDF(resTypes, cfgRangeTime):
@@ -2499,88 +2497,29 @@ def readFields(inDir, resType, simName="", flagAvaDir=True, comModule="com1DFA",
     return fieldsList, fieldHeader, timeList
 
 
-def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
+def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermediate", resTypesForced=[]):
     """export result fields to Outputs directory according to result parameters and time step
     that can be specified in the configuration file
+    option intermediate or final, if final also plotFields for report are exported if intermediate only resTypes are exported
 
     Parameters
     -----------
     cfg: dict
         configurations
-    Tsave: list
-        list of time step that corresponds to each dict in Fields
-    Fields: list
-        list of Fields for each dtSave
+    timeStep: float
+        acutal time step
+    fields: dict
+        dictionary with resTypes fields
+    dem: dict
+        dictionary with dem info
     outDir: str
         outputs Directory
-
-    Returns
-    --------
-    exported peak fields are saved in Outputs/com1DFA/peakFiles
-    """
-
-    resTypesGen = fU.splitIniValueToArraySteps(cfg["GENERAL"]["resType"])
-    resTypesReport = fU.splitIniValueToArraySteps(cfg["REPORT"]["plotFields"])
-    if "particles" in resTypesGen:
-        resTypesGen.remove("particles")
-    if "particles" in resTypesReport:
-        resTypesReport.remove("particles")
-    numberTimes = len(Tsave) - 1
-    countTime = 0
-    for timeStep in Tsave:
-        if (countTime == numberTimes) or (countTime == 0):
-            # for last time step we need to add the report fields
-            resTypes = list(set(resTypesGen + resTypesReport))
-        else:
-            resTypes = resTypesGen
-        for resType in resTypes:
-            resField = fieldsList[countTime][resType]
-            if resType == "ppr":
-                # convert from Pa to kPa
-                resField = resField * 0.001
-            if resType == "pke":
-                # convert from J/cell to kJ/m²
-                # (by dividing the peak kinetic energy per cell by the real area of the cell)
-                resField = resField * 0.001 / dem["areaRaster"]
-            dataName = logName + "_" + resType + "_" + "t%.2f" % (Tsave[countTime]) + ".asc"
-            # create directory
-            outDirPeak = outDir / "peakFiles" / "timeSteps"
-            fU.makeADir(outDirPeak)
-            outFile = outDirPeak / dataName
-            IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
-            if countTime == numberTimes:
-                log.debug(
-                    "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
-                    % (resType, Tsave[countTime])
-                )
-                dataName = logName + "_" + resType + ".asc"
-                # create directory
-                outDirPeakAll = outDir / "peakFiles"
-                fU.makeADir(outDirPeakAll)
-                outFile = outDirPeakAll / dataName
-                IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
-            else:
-                log.debug(
-                    "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
-                    % (resType, Tsave[countTime])
-                )
-        countTime = countTime + 1
-
-
-def exportFields1(cfg, timeStep, fields, dem, outDir, logName, TSave="intermediate", resTypesForced=[]):
-    """export result fields to Outputs directory according to result parameters and time step
-    that can be specified in the configuration file
-
-    Parameters
-    -----------
-    cfg: dict
-        configurations
-    Tsave: list
-        list of time step that corresponds to each dict in Fields
-    Fields: list
-        list of Fields for each dtSave
-    outDir: str
-        outputs Directory
+    cuSimName: str
+        name of current simulation
+    Tsave: str
+        indicator if time step is intermediate or final - to decide which resTypes shall be exported
+    resTypesForced: list
+        list of resTypes that overwrite info from configuration regarding resTypes to be exported
 
     Returns
     --------
@@ -2611,7 +2550,7 @@ def exportFields1(cfg, timeStep, fields, dem, outDir, logName, TSave="intermedia
             # convert from J/cell to kJ/m²
             # (by dividing the peak kinetic energy per cell by the real area of the cell)
             resField = resField * 0.001 / dem["areaRaster"]
-        dataName = logName + "_" + resType + "_" + "t%.2f" % (timeStep) + ".asc"
+        dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep) + ".asc"
         # create directory
         outDirPeak = outDir / "peakFiles" / "timeSteps"
         fU.makeADir(outDirPeak)
@@ -2622,7 +2561,7 @@ def exportFields1(cfg, timeStep, fields, dem, outDir, logName, TSave="intermedia
                 "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
                 % (resType, timeStep)
             )
-            dataName = logName + "_" + resType + ".asc"
+            dataName = cuSimName + "_" + resType + ".asc"
             # create directory
             outDirPeakAll = outDir / "peakFiles"
             fU.makeADir(outDirPeakAll)
@@ -3063,12 +3002,12 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
     return relVolume
 
 
-def saveContToPickle(contDictXY, outDir, cuSimName):
+def saveContToPickle(contourDictXY, outDir, cuSimName):
     """ save contourline x, y coordinates dictionary to a pickle
 
         Parameters
         ------------
-        contDictXY: dict
+        contourDictXY: dict
             dictionary with key simName and dict with x, y coordinates of contour line of specified level
         outDir: pathlib path
             path to dir where pickle shall be saved
@@ -3076,6 +3015,6 @@ def saveContToPickle(contDictXY, outDir, cuSimName):
             name of current simulation where this contourline is derived from
     """
 
-    fi = open(outDir / ("contDictXY_%s.pickle" % (cuSimName)), "wb")
-    pickle.dump(contDictXY, fi)
+    fi = open(outDir / ("contourDictXY_%s.pickle" % (cuSimName)), "wb")
+    pickle.dump(contourDictXY, fi)
     fi.close()

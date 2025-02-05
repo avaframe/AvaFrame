@@ -694,7 +694,7 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
             path to avalanche directory
         specDir: str
             path to a directory where simulation configuration files can be found - optional
-       latest: bool
+        latest: bool
             if True check for files found in avaName/Outputs/com1DFA/latestConfigurationFiles
 
         Returns
@@ -711,7 +711,7 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
     else:
         inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
 
-    # search avaName/Outputs/com1DFA/configurationFilesDone for already existing sims
+    # search inDir/configurationFilesDone or inDir/latestConfigurationFiles (depending on latest flag) for already existing sims
     if latest:
         configDir = inDir / 'latestConfigurationFiles'
     else:
