@@ -728,7 +728,7 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
         simDF = None
     else:
         # create simDF (dataFrame with one row per simulation of configuration files found in configDir)
-        simDF = createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir="",
+        simDF = createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir=specDir,
                                         simNameList=simNameExisting)
 
     return simDF, simNameExisting
