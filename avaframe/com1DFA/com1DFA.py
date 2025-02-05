@@ -1772,7 +1772,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
 
     # export initial time step
     if cfg["EXPORTS"].getboolean("exportData"):
-        exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
+        exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="initial")
     # export particles properties for visulation
     if cfg["VISUALISATION"].getboolean("writePartToCSV"):
         particleTools.savePartToCsv(
@@ -2517,7 +2517,7 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
     cuSimName: str
         name of current simulation
     Tsave: str
-        indicator if time step is intermediate or final - to decide which resTypes shall be exported
+        indicator if time step is initial, intermediate or final - to decide which resTypes shall be exported
     resTypesForced: list
         list of resTypes that overwrite info from configuration regarding resTypes to be exported
 
@@ -2533,7 +2533,7 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
     if "particles" in resTypesReport:
         resTypesReport.remove("particles")
 
-    if TSave == "final":
+    if TSave == "final" or TSave == 'initial':
         # for last time step we need to add the report fields
         resTypes = list(set(resTypesGen + resTypesReport))
     else:
