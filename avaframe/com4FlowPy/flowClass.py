@@ -389,16 +389,19 @@ class Cell:
 
         if mass_to_distribute > 0 and count > 0:
             # local flux redistribution to eligible child cells
-            self.dist[self.dist > threshold] += mass_to_distribute / count
+            self.dist[self.dist >= threshold] += mass_to_distribute / count
             self.dist[self.dist < threshold] = 0
         if np.sum(self.dist) < self.flux and count > 0:
             # correction/flux conservation for potential rounding losses
-            self.dist[self.dist > threshold] += (self.flux - np.sum(self.dist)) / count
+            self.dist[self.dist >= threshold] += (self.flux - np.sum(self.dist)) / count
+        if np.sum(self.dist) > self.flux and count > 0:
+            # correction/flux conservation for potential rounding gains
+            self.dist[self.dist >= threshold] += (self.flux - np.sum(self.dist)) / count
         if count == 0:
             # if all child cells are below flux_threshold, the flux is deposited
             # TODO: check alternatives (e.g. 'global' redistribution or within generations)
             self.fluxDep = self.flux
-        row_local, col_local = np.where(self.dist > threshold)
+        row_local, col_local = np.where(self.dist >= threshold)
 
         return (
             self.rowindex - 1 + row_local,
