@@ -109,6 +109,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     version=getVersion(),
+
     # The project's main homepage.
     url=URL,
     # Author details
