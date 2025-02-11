@@ -129,7 +129,6 @@ def main():
             os.makedirs(workDir / "res_{}".format(uid))  # (time_string))
             res_dir = workDir / "res_{}".format(uid)   # (time_string)
         except FileExistsError:
-            log.info("folder with same name already exists - aborting")
             log.info("simulation results folder with same .ini parameters already exists: simulation {}".format(uid))
             sys.exit(1)
         try:
