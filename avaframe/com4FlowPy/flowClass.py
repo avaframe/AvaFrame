@@ -391,11 +391,10 @@ class Cell:
             # local flux redistribution to eligible child cells
             self.dist[self.dist >= threshold] += mass_to_distribute / count
             self.dist[self.dist < threshold] = 0
-        if np.sum(self.dist) < self.flux and count > 0:
-            # correction/flux conservation for potential rounding losses
-            self.dist[self.dist >= threshold] += (self.flux - np.sum(self.dist)) / count
-        if np.sum(self.dist) > self.flux and count > 0:
-            # correction/flux conservation for potential rounding gains
+        if np.sum(self.dist) != self.flux and count > 0:
+            # correction/flux conservation for potential rounding losses or gains
+            # (self.flux - np.sum(self.dist)) will either be negative or positive 
+            # depending on the direction of the rounding error
             self.dist[self.dist >= threshold] += (self.flux - np.sum(self.dist)) / count
         if count == 0:
             # if all child cells are below flux_threshold, the flux is deposited
