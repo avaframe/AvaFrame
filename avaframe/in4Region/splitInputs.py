@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
 import matplotlib as mpl
 import time
+import rasterio.transform
 
 from avaframe.out3Plot import plotUtils as pU
-from avaframe.in2Trans import ascUtils
+from avaframe.in2Trans import rasterUtils
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 
 # create local logger
@@ -48,7 +49,7 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     │   └── entrainment.shp (with optional .prj)
     ├── RES/ (optional)
     │   └── resistance.shp (with optional .prj)
-    └── dem_file.asc
+    └── dem_file.asc or .tif
     """
     # Fetch the necessary input
     inputRELDir = inputDir / 'REL'
@@ -56,10 +57,13 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     if not inputShp:
         log.error(f"No shapefile found in {inputRELDir}.")
         return
-    inputDEM = next(inputDir.glob("*.asc"), None) #ToDo: needs adjustment once we include tif files as well
-    if not inputDEM:
-        log.error(f"No DEM file found in {inputDir}.")
-        return
+    inputDEM = next(inputDir.glob("*.asc"), None)
+    if inputDEM is None:
+        inputDEM = next(inputDir.glob("*.tif"), None)
+    if inputDEM is None:
+        message = f"No DEM file (*.asc or *.tif) found in {inputDir}"
+        log.error(message)
+        raise FileNotFoundError(message)
 
     # Create the output directory
     outputDir.mkdir(parents=True, exist_ok=True)
@@ -338,18 +342,21 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     inputDEM : pathlib.Path
         Path to input DEM file
     outputDir : pathlib.Path
-        Path to output directory where DEM will be saved
+        Path to output directory where clipped DEMs will be saved
     cfg : configparser object
-        Configuration settings
+        Configuration settings containing:
+        - GENERAL.bufferSize : float
+            Size of buffer to add around release areas
 
     Returns
     -------
-    dict
-        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value,
-        containing the DEM extents for each group
+    groupExtents : dict
+        Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value.
+        The extents are reduced by one pixel on each side to ensure DEM extents
+        are larger than clip extents.
     """    
     # Read input DEM
-    demData = ascUtils.readRaster(inputDEM)
+    demData = rasterUtils.readRaster(inputDEM)
     header = demData['header']
     raster = demData['rasterData']
     cellSize = header['cellsize']
@@ -381,17 +388,17 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
         yMax = max(yMaxs) + bufferSize
         groupExtents[dirName] = (xMin, xMax, yMin, yMax) # Store extent for this group
         
-        # Convert extent to grid indices
+        # Convert extent to grid indices (using top-left origin)
         colStart = max(0, int((xMin - xOrigin) / cellSize))
         colEnd = min(nCols, int((xMax - xOrigin) / cellSize) + 1)
+        rowStart = max(0, int((yMin - (yOrigin + nRows * cellSize)) / cellSize) + nRows)
+        rowEnd = min(nRows, int((yMax - (yOrigin + nRows * cellSize)) / cellSize) + nRows)
         
-        # Convert y-coordinates to row indices (flipped for bottom-left origin)
-        rowStart = max(0, int((yOrigin + nRows * cellSize - yMax) / cellSize))
-        rowEnd = min(nRows, int((yOrigin + nRows * cellSize - yMin) / cellSize) + 1)
-        
-        # Flip row indices for bottom-left origin
-        rowStart, rowEnd = nRows - rowEnd, nRows - rowStart
-        
+        # Ensure valid row indices
+        if rowEnd <= rowStart:
+            log.warning(f"Invalid row indices calculated for {dirName}: start={rowStart}, end={rowEnd}")
+            continue
+            
         # Clip the DEM data
         clippedData = raster[rowStart:rowEnd, colStart:colEnd]
         
@@ -402,9 +409,18 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
         clippedHeader['xllcenter'] = xOrigin + colStart * cellSize
         clippedHeader['yllcenter'] = yOrigin + rowStart * cellSize
         
+        # Update transformation matrix for clipped DEM
+        newTransform = rasterio.transform.from_origin(
+            clippedHeader['xllcenter'] - (cellSize/2),  # Convert center to corner
+            clippedHeader['yllcenter'] + (clippedHeader['nrows'] * cellSize) - (cellSize/2),  # Convert to top-left y
+            cellSize,
+            cellSize
+        )
+        clippedHeader['transform'] = newTransform
+        
         # Write clipped DEM
-        outputDEM = outputDir / dirName / 'Inputs' / f"{dirName}_DEM.asc"
-        ascUtils.writeResultToAsc(clippedHeader, clippedData, outputDEM, flip=True)
+        outputDEM = outputDir / dirName / 'Inputs' / f"{dirName}_DEM"
+        rasterUtils.writeResultToRaster(clippedHeader, clippedData, outputDEM, flip=True)
         log.debug(f"Clipped DEM saved to: {outputDEM}")
 
         # Store DEM extents (reduced by one pixel on each side to ensure DEM > clip extents)
@@ -418,7 +434,7 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
 
 def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
     """Clip and move ENT and RES files based on group DEM extent.
-
+    
     #ToDo: extend to include other input types
     
     Parameters
@@ -433,7 +449,7 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
 
     Returns
     -------
-    dict
+    groupFeatures : dict
         Dictionary containing clipped features for each group and type
         {dirName: {'ENT': [...], 'RES': [...]}}
     """
@@ -501,7 +517,7 @@ def getScenarioGroups(inputShp, fieldNames):
         
     Returns
     -------
-    dict
+    scenarios : dict
         Dictionary mapping scenario names to lists of shape records
     """
     scenarios = {}
@@ -721,7 +737,7 @@ def makeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
     
     Returns
     -------
-    pathlib.Path
+    reportPath : pathlib.Path
         Path to the generated report image
     """
     # Set up figure
@@ -729,7 +745,7 @@ def makeVisualReport(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
     ax = plt.subplot(1, 1, 1)
     
     # Read and plot DEM
-    demData = ascUtils.readRaster(inputDEM)
+    demData = rasterUtils.readRaster(inputDEM)
     header = demData['header']
     cellSize = header['cellsize']
     xMin = header['xllcenter']

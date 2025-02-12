@@ -21,11 +21,11 @@ Example of a valid directory structure::
     ├── avalanche1/
     │   └── Inputs/
     │       ├── REL/*.shp
-    │       └── dem.asc
+    │       └── dem.asc or dem.tif
     ├── avalanche2/
     │   └── Inputs/
     │       ├── REL/*.shp
-    │       └── dem.asc
+    │       └── dem.asc or dem.tif
     └── ...
 
 .. note::

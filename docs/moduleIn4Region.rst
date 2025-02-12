@@ -16,7 +16,7 @@ Input
 The module is currently compatible with the following input file types:
 
 **Required:**
-    * Digital elevation model (.asc file)
+    * Digital elevation model (as .asc or .tif file)
     * Release areas (shapefile in REL directory, with optional attributes ``group`` and ``scenario``)
 
 **Optional:**
@@ -33,7 +33,7 @@ Where the expected input directory structure is::
       │   └── entrainment.shp
       ├── RES/ (optional)
       │   └── resistance.shp
-      └── dem_file.asc
+      └── dem_file.asc or dem_file.tif
 
 Group and scenario creation
 ---------------------------
