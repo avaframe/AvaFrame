@@ -383,8 +383,8 @@ def calculation(args):
         the maximum of flux in every cell
     countArray: numpy array
         the number of hits (GMF paths) in every cell
-    zDeltaPathList: list
-        containing the max zDelta Arrays of all paths
+    zDeltaSumArray: numpy array
+        the maximum of zDelta in every cell per path and the sum over the paths
     backcalc: numpy array
           Array with back calculation, still TODO!!!
     fpTravelAngleArray: numpy array
