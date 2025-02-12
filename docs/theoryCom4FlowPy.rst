@@ -12,6 +12,7 @@ com4FlowPy theory
   
   Initial information pertaining to the application of :py:mod:`com4FlowPy` with consideration of forest-effects can be found in:
      - D'Amboise, C.J.L; Teich, M.; Hormes, A.; Steger, S. and Berger, F. (2021). Modeling Protective Forests for Gravitational Natural Hazards and How It Relates to Risk-Based Decision Support Tools. in: *Protective forests as Ecosystem-based solution for Disaster Risk Reduction (ECO-DRR), Teich et al., 2021*. (https://www.intechopen.com/chapters/78979)
+     - Huber, A.; Saxer, L.; Hesselbach, C.; Neuhauser, M.; D'Amboise, C.J.L. and Teich, M. (2024): Regional-scale avalanche modeling with com4FlowPy - potential and limitations for considering avalanche-forest interaction along the avalanche track. *Proceedings, International Snow Science Workshop, Tromso, Norway* (https://arc.lib.montana.edu/snow-science/item.php?id=3194)
 
 
 Background and motivation
@@ -288,7 +289,9 @@ autoATES
 ~~~~~~~~~~~~~~~~~~~
 - Toft, H.B.; Sykes, J.; Schauer, A.; Hendrikx, J. and Hetland, A. (2024). AutoATES v2.0: Automated Avalanche Terrain Exposure Scale mapping. *Nat. Hazards Earth Syst. Sci., 24*, 1779–1793 (https://doi.org/10.5194/nhess-24-1779-2024)
 - Sykes, J.; Toft, H.B.; Haegeli, P. and Statham, G. (2024). Automated Avalanche Terrain Exposure Scale (ATES) mapping – local validation and optimization in western Canada. *Nat. Hazards Earth Syst. Sci., 24*, 947–971 (https://doi.org/10.5194/nhess-24-947-2024)
+- Panayotov, M.; Markov, K.; Tsvetanov, N.; Huber, A.; Hesselbach, C. and Teich, M. (2024). Avalanche Hazard Mapping using the Avalanche Terrain Exposure Scale (ATES) in the high mountain ranges of Bulgaria. *Proceedings, International Snow Science Workshop, Tromso, Norway* (https://arc.lib.montana.edu/snow-science/item.php?id=3366)
 - Spannring, P.; Hesselbach, C.; Mitterer, C. and Fischer, J.-T. (2024). Classification of avalanche terrain: a open-source model chain for the Avalanche Terrain Exposure Scale. *Proceedings Interpraevent 2024, Vienna, Austria* (https://www.interpraevent.at/en/proceeding/proceedings-ip-2024)
+- Spannring, P. (2024). Comparison of two avalanche terrain classification approaches : Avalanche Terrain Exposure scale - Classified Avalanche Terrain. *Masters' Thesis*. University of Innsbruck. (https://ulb-dok.uibk.ac.at/urn/urn:nbn:at:at-ubi:1-155858)
 - von Avis, C.D.; Sykes, J. and Tutt, B. (2023). Development of large scale automated Avalanche Terrain Exposure Scale (ATES) ratings in collaboration with local avalanche experts. *Proceedings, International Snow Science Workshop, Bend, OR, USA* (http://arc.lib.montana.edu/snow-science/item/2998)
 - Huber, A.; Hesselbach, C.; Oesterle, F.; Neuhauser, M.; Adams, M.; Plörer, M.; Stephan, L.; Toft, H.B.; Sykes, J.; Mitterer, C. and Fischer, J.-T. (2023). AutoATES Austria - Testing and application of an automated model-chain for avalanche terrain classification in the Austrian Alps. *Proceedings, International Snow Science Workshop, Bend, OR, USA* (http://arc.lib.montana.edu/snow-science/item/2989)
 - Hesselbach, C. (2023). Adaptaion and application of an automated Avalanche Terrain Classification in Austria. *Masters' Thesis*. University of Life Sciences (BOKU), Vienna (https://forschung.boku.ac.at/de/publications/175549)
@@ -296,5 +299,6 @@ autoATES
 
 other
 ~~~~~~~~~~~~~~~~~~~
+- Huber, A.; Saxer, L.; Hesselbach, C.; Neuhauser, M.; D'Amboise, C.J.L. and Teich, M. (2024): Regional-scale avalanche modeling with com4FlowPy - potential and limitations for considering avalanche-forest interaction along the avalanche track. *Proceedings, International Snow Science Workshop, Tromso, Norway* (https://arc.lib.montana.edu/snow-science/item.php?id=3194)
 - Perzl, F.; Huber, A.; Fromm, R. and Teich, M. (2024). Estimation of potential snow avalanche hazard probability in areas below protective forests in Austria. *Proceedings Interpraevent 2024, Vienna, Austria* (https://www.interpraevent.at/en/proceeding/proceedings-ip-2024)
 - D'Amboise, C.J.L; Teich, M.; Hormes, A.; Steger, S. and Berger, F. (2021). Modeling Protective Forests for Gravitational Natural Hazards and How It Relates to Risk-Based Decision Support Tools. in: *Protective forests as Ecosystem-based solution for Disaster Risk Reduction (ECO-DRR), Teich et al., 2021*. (https://www.intechopen.com/chapters/78979)
