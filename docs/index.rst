@@ -47,7 +47,6 @@ Computational modules
 .. only:: html
 
     * :doc:`moduleCom1DFA`
-    * :doc:`moduleCom1DFAOrig`
     * :doc:`moduleCom2AB`
     * :doc:`moduleCom3Hybrid`
     * :doc:`moduleCom4FlowPy`
@@ -60,7 +59,6 @@ Computational modules
    :caption: Computational modules
 
    moduleCom1DFA.rst
-   moduleCom1DFAOrig.rst
    moduleCom2AB.rst
    moduleCom3Hybrid.rst
    moduleCom4FlowPy.rst

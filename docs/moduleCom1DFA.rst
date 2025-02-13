@@ -4,7 +4,7 @@ com1DFA: DFA-Kernel
 :py:mod:`com1DFA` is a module for dense flow (snow) avalanche computations (DFA) .
 It is a python and cython implementation of the DFA C++ implementation samosAT
 (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
-in cooperation with the company AVL List GmbH in Graz (see :ref:`moduleCom1DFAOrig:com1DFAOrig: Original DFA-Kernel`).
+in cooperation with the company AVL List GmbH in Graz.
 Calculations are based on the thickness integrated governing equations and
 solved numerically using the smoothed particle hydrodynamics (sph) method. Please note
 the use of *thickness averaged/integrated* instead of *depth averaged/integrated* for clarity and consistency.

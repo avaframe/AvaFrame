@@ -141,7 +141,7 @@ def test_makeSimFromResDF():
 #    print(resTypeList)
 #    print(dataDF.columns)
 #    print(dataDF.index)
-    assert dataDF['simName'].iloc[0] == 'release1HX_f087345c17_C_ent_dfa'
+    assert dataDF['simName'].iloc[0] == 'release1HX_f6942a9a69_C_L_ent_dfa'
     assert dataDF['releaseArea'].iloc[0] == 'release1HX'
     assert dataDF['simType'].iloc[0] == 'ent'
     assert dataDF['cellSize'].iloc[0] == 5.0

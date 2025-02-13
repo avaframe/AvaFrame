@@ -120,6 +120,6 @@ def test_fetchBenchmarkResults():
     refDir = dirName / '..' / '..' / 'benchmarks' / testName
     refFiles = tU.fetchBenchmarkResults(testName, resTypes=[], refDir=refDir)
 
-    assert 'relAlr_1d389a011c_C_M_null_dfa' in str(refFiles[0])
+    assert 'relAlr_c544043f9e_C_M_null_dfa' in str(refFiles[0])
 #    print(refFiles)
     assert len(refFiles) == 3
