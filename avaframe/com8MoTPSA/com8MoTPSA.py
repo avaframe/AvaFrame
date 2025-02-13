@@ -38,10 +38,15 @@ def _runAndCheck(command):
 def cfgToRcf(cfg, fileName):
     with open(fileName, 'w') as f:
         for section in cfg.sections():
-            f.write(f"# {section.replace('_', ' ')}\n")
-            f.write("#\n")
+            if section in ("FOREST_EFFECTS", "ENTRAINMENT"):
+                pass
+            elif section in ("GENERAL"):
+                continue
+            else:
+                f.write(f"# {section.replace('_', ' ')}\n")
+                f.write("#\n")
             for key, value in cfg.items(section):
-                key = key.replace('_', ' ')
+                # key = key.replace('_', ' ')
                 key = key.strip()
                 f.write(f"{key:<40}{value}\n")
             f.write("#\n")
