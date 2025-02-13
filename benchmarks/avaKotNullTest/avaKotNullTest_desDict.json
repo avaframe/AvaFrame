@@ -1,1 +1,49 @@
-{"TAGS": ["null", "standardTest", "real"], "DESCRIPTION": " this is Kot test", "TYPE": ["2DPeak"], "FILES": ["relKot_352a2dc54d_C_S_null_dfa_ppr", "relKot_352a2dc54d_C_S_null_dfa_pft", "relKot_352a2dc54d_C_S_null_dfa_pfv", "mass_relKot_352a2dc54d_C_S_null_dfa"], "TOPOTYPE": "real", "AVANAME": "avaKot", "AVADIR": "data/avaKot", "simNameRef": "relKot_352a2dc54d_C_S_null_dfa", "NAME": "avaKotNullTest", "Test Info": {"type": "text", "Test Info": "This test runs the Kot test."}, "simType": "null", "simName": {"type": "simName", "name": "relKot_352a2dc54d_C_S_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "relKot", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.22", "Density [kgm-3]": "200", "Friction model": "samosATSmall", "Initial mass [kg]": "4318320.31", "Final mass [kg]": "4318320.31", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "120.20", "Computation time [s]": "9.46"}}
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "real"
+  ],
+  "DESCRIPTION": " this is Kot test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "relKot_989874a9be_C_S_null_dfa_ppr",
+    "relKot_989874a9be_C_S_null_dfa_pft",
+    "relKot_989874a9be_C_S_null_dfa_pfv",
+    "mass_relKot_989874a9be_C_S_null_dfa"
+  ],
+  "TOPOTYPE": "real",
+  "AVANAME": "avaKot",
+  "AVADIR": "data/avaKot",
+  "simNameRef": "relKot_989874a9be_C_S_null_dfa",
+  "NAME": "avaKotNullTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs the Kot test."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "relKot_989874a9be_C_S_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "relKot",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosATSmall",
+    "Initial mass [kg]": "4328073.73",
+    "Final mass [kg]": "4328073.73",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "117.60",
+    "Computation time [s]": "12.50"
+  }
+}

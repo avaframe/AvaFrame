@@ -45,11 +45,14 @@ def writeDesDicttoJson(desDict, testName, outDir):
         path to json file
     """
 
-    jsonDict = json.dumps(desDict)
+    # jsonDict = json.dumps(desDict, indent=2)
     fileName = pathlib.Path(outDir, "%s_desDict.json" % testName)
-    f = open(fileName, "w")
-    f.write(jsonDict)
-    f.close()
+    with open(fileName, 'w') as outfile:
+        json.dump(desDict, outfile, indent=2)
+
+    # f = open(fileName, "w")
+    # f.write(jsonDict)
+    # f.close()
 
     return fileName
 

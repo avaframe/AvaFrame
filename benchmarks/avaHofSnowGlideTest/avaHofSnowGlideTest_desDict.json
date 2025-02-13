@@ -9,15 +9,15 @@
     "2DPeak"
   ],
   "FILES": [
-    "relfHof_bf75d6aef8_C_res_ssl_ppr",
-    "relfHof_bf75d6aef8_C_res_ssl_pft",
-    "relfHof_bf75d6aef8_C_res_ssl_pfv",
-    "mass_relfHof_bf75d6aef8_C_res_ssl"
+    "relfHof_079d8abe39_C_L_res_ssl_ppr",
+    "relfHof_079d8abe39_C_L_res_ssl_pft",
+    "relfHof_079d8abe39_C_L_res_ssl_pfv",
+    "mass_relfHof_079d8abe39_C_L_res_ssl"
   ],
   "TOPOTYPE": "real",
   "AVANAME": "avaHof",
   "AVADIR": "data/avaHof",
-  "simNameRef": "relfHof_bf75d6aef8_C_res_ssl",
+  "simNameRef": "relfHof_079d8abe39_C_L_res_ssl",
   "NAME": "avaHofSnowGlideTest",
   "Test Info": {
     "type": "text",
@@ -26,26 +26,24 @@
   "simType": "res",
   "simName": {
     "type": "simName",
-    "name": "relfHof_bf75d6aef8_C_res_ssl"
+    "name": "relfHof_079d8abe39_C_L_res_ssl"
   },
   "Simulation Parameters": {
     "type": "list",
-    "Program version": "1.7.1",
-    "Parameter set": "",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
     "Release Area Scenario": "relfHof",
     "Entrainment": "No",
     "Resistance": "Yes",
-    "Parameter variation on": "",
-    "Parameter value": "",
-    "muvoellmy": "0.325",
+    "Secondary release area": "No",
     "Density [kgm-3]": "300",
     "Friction model": "Voellmy",
-    "Initial mass [kg]": "3855840.99",
-    "Final mass [kg]": "3855840.99",
+    "Initial mass [kg]": "3855823.75",
+    "Final mass [kg]": "3855823.75",
     "Entrained mass [kg]": "0.00",
     "Entrained volume [m3]": "0.00",
     "Stop criterion": "< 1.00 percent of PKE",
-    "Avalanche run time [s]": "40.42",
-    "Computation time [s]": "100.67"
+    "Avalanche run time [s]": "40.34",
+    "Computation time [s]": "115.23"
   }
 }

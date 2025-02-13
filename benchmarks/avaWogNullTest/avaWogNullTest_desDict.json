@@ -1,1 +1,49 @@
-{"TAGS": ["null", "standardTest", "real"], "DESCRIPTION": " this is Wog test", "TYPE": ["2DPeak"], "FILES": ["relWog_8990d96ccf_C_null_dfa_ppr", "relWog_8990d96ccf_C_null_dfa_pft", "relWog_8990d96ccf_C_null_dfa_pfv", "mass_relWog_8990d96ccf_C_null_dfa"], "TOPOTYPE": "real", "AVANAME": "avaWog", "AVADIR": "data/avaWog", "simNameRef": "relWog_8990d96ccf_C_null_dfa", "NAME": "avaWogNullTest", "Test Info": {"type": "text", "Test Info": "This test runs the Wog test."}, "simType": "null", "simName": {"type": "simName", "name": "relWog_8990d96ccf_C_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "relWog", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.155", "Density [kgm-3]": "200", "Friction model": "samosAT", "Initial mass [kg]": "33016598.47", "Final mass [kg]": "33016598.47", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "164.30", "Computation time [s]": "107.70"}}
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "real"
+  ],
+  "DESCRIPTION": " this is Wog test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "relWog_005698a9de_C_L_null_dfa_ppr",
+    "relWog_005698a9de_C_L_null_dfa_pft",
+    "relWog_005698a9de_C_L_null_dfa_pfv",
+    "mass_relWog_005698a9de_C_L_null_dfa"
+  ],
+  "TOPOTYPE": "real",
+  "AVANAME": "avaWog",
+  "AVADIR": "data/avaWog",
+  "simNameRef": "relWog_005698a9de_C_L_null_dfa",
+  "NAME": "avaWogNullTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs the Wog test."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "relWog_005698a9de_C_L_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "relWog",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosAT",
+    "Initial mass [kg]": "33020609.50",
+    "Final mass [kg]": "33020609.50",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "163.20",
+    "Computation time [s]": "111.54"
+  }
+}

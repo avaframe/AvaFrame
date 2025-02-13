@@ -1,1 +1,49 @@
-{"TAGS": ["null", "standardTest", "idealized"], "DESCRIPTION": " this is avaHockeySmall test", "TYPE": ["2DPeak"], "FILES": ["release1HS_8bfc07aae5_C_M_null_dfa_ppr", "rrelease1HS_8bfc07aae5_C_M_null_dfa_pft", "release1HS_8bfc07aae5_C_M_null_dfa_pfv", "mass_release1HS_8bfc07aae5_C_M_null_dfa"], "TOPOTYPE": "idealised", "AVANAME": "avaHockeySmall", "AVADIR": "data/avaHockeySmall", "simNameRef": "release1HS_8bfc07aae5_C_M_null_dfa", "NAME": "avaHockeySmallNullTest", "Test Info": {"type": "text", "Test Info": "This test uses a hockey stick-shaped geometry,                         where a linearly sloping surface transitions smoothly into a flat foreland.                         This geometry also includes a channel."}, "simType": "null", "simName": {"type": "simName", "name": "release1HS_8bfc07aae5_C_M_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "release1HS", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.17", "Density [kgm-3]": "200", "Friction model": "samosATMedium", "Initial mass [kg]": "9970597.56", "Final mass [kg]": "9970597.56", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "end Time reached: 400.00", "Avalanche run time [s]": "400.00", "Computation time [s]": "62.06"}}
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is avaHockeySmall test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1HS_ea20151544_C_M_null_dfa_ppr",
+    "release1HS_ea20151544_C_M_null_dfa_pft",
+    "release1HS_ea20151544_C_M_null_dfa_pfv",
+    "mass_release1HS_ea20151544_C_M_null_dfa"
+  ],
+  "TOPOTYPE": "idealised",
+  "AVANAME": "avaHockeySmall",
+  "AVADIR": "data/avaHockeySmall",
+  "simNameRef": "release1HS_ea20151544_C_M_null_dfa",
+  "NAME": "avaHockeySmallNullTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test uses a hockey stick-shaped geometry,                         where a linearly sloping surface transitions smoothly into a flat foreland.                         This geometry also includes a channel."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "release1HS_ea20151544_C_M_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "release1HS",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosATMedium",
+    "Initial mass [kg]": "9970597.11",
+    "Final mass [kg]": "9970597.11",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "end Time reached: 400.00",
+    "Avalanche run time [s]": "400.00",
+    "Computation time [s]": "73.02"
+  }
+}
