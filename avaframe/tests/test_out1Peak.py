@@ -21,13 +21,13 @@ def test_plotAllPeakFields(tmp_path):
     avaTestDir2 = 'avaAlrNullTest2'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir1
-    peakFile1 = list(avaDir.glob(('*pft.asc')))[0]
-    peakFile2 = list(avaDir.glob(('*pfv.asc')))[0]
+    peakFile1 = list(avaDir.glob(('*pft.tif')))[0]
+    peakFile2 = list(avaDir.glob(('*pfv.tif')))[0]
     demFile = dirPath / '..' / 'data' / 'avaAlr' / 'Inputs' / 'avaAlr.tif'
     avaDirTmp1 = pathlib.Path(tmp_path, avaTestDir1)
     resultDir1 = avaDirTmp1 / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFileResult1 = resultDir1 / 'relAlr_125e697996_null_dfa_pft.asc'
-    peakFileResult2 = resultDir1 / 'relAlr_125e697996_null_dfa_pfv.asc'
+    peakFileResult1 = resultDir1 / 'relAlr_125e697996_null_dfa_pft.tif'
+    peakFileResult2 = resultDir1 / 'relAlr_125e697996_null_dfa_pfv.tif'
     inputDir1 = avaDirTmp1 / 'Inputs'
     resultDir1.mkdir(parents=True)
     inputDir1.mkdir()
@@ -38,8 +38,8 @@ def test_plotAllPeakFields(tmp_path):
 
     avaDirTmp2 = pathlib.Path(tmp_path, avaTestDir2)
     resultDir2 = avaDirTmp2 / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFileResult1 = resultDir2 / 'relAlr_125e697996_null_dfa_pft.asc'
-    peakFileResult2 = resultDir2 / 'relAlr_125e697996_null_dfa_pfv.asc'
+    peakFileResult1 = resultDir2 / 'relAlr_125e697996_null_dfa_pft.tif'
+    peakFileResult2 = resultDir2 / 'relAlr_125e697996_null_dfa_pfv.tif'
     inputDir2 = avaDirTmp2 / 'Inputs'
     resultDir2.mkdir(parents=True)
     inputDir2.mkdir()
@@ -84,7 +84,7 @@ def test_plotAllFields(tmp_path):
 
     # call function to be tested
     oP.plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True)
-    peakFile = list(avaDir.glob(('*ppr.asc')))[0]
+    peakFile = list(avaDir.glob(('*ppr.tif')))[0]
     plotPath = outDir / (str(peakFile.stem) + '.png')
 
     assert plotPath.is_file()
@@ -93,7 +93,7 @@ def test_plotAllFields(tmp_path):
     outDir2 = pathlib.Path(tmp_path, 'avaTest2')
     outDir2.mkdir()
     oP.plotAllFields(avaDir, inputDir, outDir2, unit='', constrainData=False)
-    peakFile = list(avaDir.glob(('*ppr.asc')))[0]
+    peakFile = list(avaDir.glob(('*ppr.tif')))[0]
     plotPath2 = outDir2 / (str(peakFile.stem) + '.png')
 
     assert plotPath2.is_file()
