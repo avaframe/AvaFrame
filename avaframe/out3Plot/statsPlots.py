@@ -414,7 +414,7 @@ def plotProbMap(avaDir, inDir, cfgFull, demPlot=False):
         pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def resultHistPlot(cfg, dataDF, xName='', scenario='', stat='count', parametersDict=''):
+def resultHistPlot(cfg, dataDF, xName='', scenario=None, stat='count', parametersDict=''):
     """ create a histogram of values and optional colorcode using scenario name
         and option to filter simulations using parametersDict
 
@@ -451,11 +451,11 @@ def resultHistPlot(cfg, dataDF, xName='', scenario='', stat='count', parametersD
     fig, ax = plt.subplots()
 
     # create histogram
-    bars = sns.histplot(data=dataDF, x=xName, hue="scenario", stat=stat, ax=ax)
+    bars = sns.histplot(data=dataDF, x=xName, hue=scenario, stat=stat, ax=ax)
 
     # create second y axis for ecdf
     ax2 = ax.twinx()
-    cdf = sns.ecdfplot(data=dataDF, x=xName, hue='scenario', stat='count', ax=ax2)
+    cdf = sns.ecdfplot(data=dataDF, x=xName, hue=scenario, stat='count', ax=ax2)
 
     ax.set_ylabel('histogram ' + stat)
     ax2.set_ylabel('ecdf count')
@@ -466,7 +466,7 @@ def resultHistPlot(cfg, dataDF, xName='', scenario='', stat='count', parametersD
     return plotPath
 
 
-def plotDistFromDF(cfg, dataDF, name1, name2, scenario='', parametersDict='', type=''):
+def plotDistFromDF(cfg, dataDF, name1, name2, scenario=None, parametersDict='', type=''):
     """ create a dist plot from dataframe for name1 on x axis and name2 on y axis, optionally
         colorcoded with scenario name and filtered with parametersDict
 

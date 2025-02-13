@@ -71,7 +71,7 @@ for avaDir in avalancheDirectories:
         # perform probability analysis
         anaPerformed, contourDict = probAna.probAnalysis(avaDir,
                                                          cfgProb,
-                                                         com1DFA,
+                                                         'com1DFA',
                                                          parametersDict=parametersDict,
                                                          probConf=probConf
                                                          )

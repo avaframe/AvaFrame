@@ -173,7 +173,7 @@ for i, simIndex in enumerate(SimDF.index):
 
     # create mtiInfo dicts for tt-diagram
     cfgRangeTime = cfgUtils.getModuleConfig(dtAna, fileOverride='', modInfo=False, toPrint=False,
-            onlyDefault=cfgPartAna['ana1Tests_distanceTimeAnalysis_override'].getboolean('defaultConfig'))
+            onlyDefault=cfgPartAna['ana5Utils_distanceTimeAnalysis_override'].getboolean('defaultConfig'))
     cfgRangeTime, cfgPartAna = cfgHandling.applyCfgOverride(cfgRangeTime, cfgPartAna, dtAna, addModValues=False)
     cfgRangeTime['GENERAL']['avalancheDir'] = avalancheDir
     cfgRangeTime, mtiInfo = dtAna.createThalwegTimeInfoFromSimResults(avalancheDir,

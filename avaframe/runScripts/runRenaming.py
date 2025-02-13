@@ -13,7 +13,7 @@ from avaframe.in3Utils import logUtils
 
 # -------------Required settings ------
 # which parameters to add to simulation name
-csvString = 'mu,tau0'
+csvString = 'relTh0,frictModel'
 # -------------Required settings ------
 
 # log file name; leave empty to use default runLog.log
@@ -33,3 +33,4 @@ avaDir = pathlib.Path(avaDir)
 renameDF = cfgHandling.addInfoToSimName(avaDir, csvString)
 
 print(renameDF)
+

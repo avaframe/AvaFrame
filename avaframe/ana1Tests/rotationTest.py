@@ -130,7 +130,7 @@ def rotateDFAResults(avalancheDir, simDF, rowSimHash, resTypeList, thetaRef, com
         comRotated = comModule + 'Rotated'
         outDir = avalancheDir / 'Outputs' / comRotated / 'peakFiles'
         fU.makeADir(outDir)
-        outFileName = outDir / fName.name
+        outFileName = outDir / fName.stem
         IOf.writeResultToRaster(rotatedRaster['header'], rotatedRaster['rasterData'], outFileName, flip=False)
 
 

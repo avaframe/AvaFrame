@@ -12,6 +12,7 @@ import pathlib
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAToolsCython as DFAtlsC
 import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -84,8 +85,8 @@ def postProcessFPcom1DFA(cfgGen, particles, fields, ind_t, relDict):
     grad = DFAtls.scalProd(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'], x1, y1, z1)
     Grad = np.zeros((nrows, ncols))
     MassBilinear = np.zeros((nrows, ncols))
-    MassBilinear = DFAfunC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
-    Grad = DFAfunC.pointsToRasterC(x, y, m*gradNorm, Grad, csz=5)
+    MassBilinear = DFAtlsC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
+    Grad = DFAtlsC.pointsToRasterC(x, y, m*gradNorm, Grad, csz=5)
     indMass = np.where(MassBilinear > 0)
     Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
     x = particles['x']+xllc

@@ -38,5 +38,5 @@ log.info('MAIN SCRIPT')
 
 for topo in plotList:
     cfgMain['MAIN']['avalancheDir'] = topo
-    # Plot topogrpahy
+    # Plot topography
     oT.plotDEM3D(cfgMain)

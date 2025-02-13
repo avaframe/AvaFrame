@@ -77,9 +77,9 @@ resAnalysisDF = pd.read_csv(resAnalysisDFFiles[0])
 parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
 # ------- runout histogram plot
-sPlot.resultHistPlot(cfgStats['GENERAL'], resAnalysisDF, xName='sRunout', scenario='scenario',
+sPlot.resultHistPlot(cfgStats['GENERAL'], resAnalysisDF, xName='sRunout', scenario=None,
     stat='probability', parametersDict=parametersDict)
 
 # -------- max result values scatter plot
 sPlot.plotDistFromDF(cfgStats['GENERAL'], resAnalysisDF, name1='pftFieldMax',
-    name2='pfvFieldMax', scenario='scenario', parametersDict=parametersDict, type='')
+    name2='pfvFieldMax', scenario=None, parametersDict=parametersDict, type='')
