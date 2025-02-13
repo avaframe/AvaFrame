@@ -31,7 +31,8 @@ shpData = shpConv.SHP2Array(inFileRef, defname=None)
 contourDictRef = oC.readShpLines(shpData, layerName='layerName')
 
 # read simulation result field and extract contour lines)
-inFileSim = list(inDirRef.glob('*%s.asc' % resType))[0]
+inFileSimList = list(inDirRef.glob('*%s.asc' % resType)) + list(inDirRef.glob('*%s.tif' % resType))
+inFileSim = inFileSimList[0]
 contourDictSim = oC.createRasterContourDict(inFileSim, levels)
 
 # setup pathDict where to save plots

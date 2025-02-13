@@ -1,6 +1,7 @@
 """
 Run the rotation test
 Analyze the effect of the grid orientation/alignment on DFA simulation results
+settings in ana1Tests/rotationTestCfg.ini in aimec to search for reference sim, rel0 is set (data/avaTripleBowl release area)
 """
 import pathlib
 

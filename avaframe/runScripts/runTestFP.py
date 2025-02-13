@@ -1,7 +1,7 @@
 """
     Run script for running python DFA kernel
 """
-import os
+import pathlib
 import time
 import numpy as np
 
@@ -23,6 +23,7 @@ logName = 'runFlatPlaneTest'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaFPtest'
+cfgMain['MAIN']['avalancheDir'] = avalancheDir
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanModuleFiles(avalancheDir, com1DFA)
@@ -33,7 +34,7 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration
-FPCfg = os.path.join(avalancheDir, 'Inputs', 'FlatPlane_com1DFACfg.ini')
+FPCfg = pathlib.Path(avalancheDir, 'Inputs', 'FlatPlane_com1DFACfg.ini')
 cfg = cfgUtils.getModuleConfig(com1DFA, FPCfg)
 cfgGen = cfg['GENERAL']
 cfgFP = cfg['FPSOL']
@@ -41,12 +42,11 @@ cfgFP = cfg['FPSOL']
 # for timing the sims
 startTime = time.time()
 # create output directory for test result plots
-outDirTest = os.path.join(avalancheDir, 'Outputs', 'ana1Tests')
+outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
 # Define release thickness distribution
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
-    avalancheDir, cfg['INPUT'])
+demFile = gI.getDEMPath(avalancheDir)
 relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
@@ -54,6 +54,7 @@ relTh = relDict['relTh']
 dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=FPCfg)
 Particles, Tsave = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True, comModule='com1DFA')
 relDict['dem'] = dem
+
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # option for user interaction
 if cfgFP.getboolean('flagInteraction'):

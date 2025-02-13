@@ -378,6 +378,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     inputDir = fU.checkPathlib(inputDir)
     datafiles = sorted(list(inputDir.glob('*.asc')))
     datafiles.extend(list(inputDir.glob('*.txt')))
+    datafiles.extend(list(inputDir.glob('*.tif')))
 
     name1 = datafiles[0].name
     name2 = datafiles[1].name

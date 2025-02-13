@@ -87,7 +87,7 @@ def plotDEM3D(cfg, showPlot = False):
     ax, fig = _generateDEMPlot(X, Y, z, avaName)
 
     # Save figure to file
-    outName = os.path.splitext(demPath)[0] + '_plot'
+    outName = demPath.stem + '_plot'
 
     # save and or show figure
     plotPath = pU.saveAndOrPlot({'pathResult': avalancheDir}, outName, fig)

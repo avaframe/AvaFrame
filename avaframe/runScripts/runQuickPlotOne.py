@@ -41,6 +41,7 @@ axis = cfgPlot['axis']
 # Load input datasets from input directory
 dataFiles = glob.glob(inputDir+os.sep + '*.asc')
 dataFiles.extend(glob.glob(inputDir+os.sep + '*.txt'))
+dataFiles.extend(glob.glob(inputDir+os.sep + '*.tif'))
 
 for file in dataFiles:
     outQuickPlot.quickPlotOne(inputDir, file, cfgMain, location, axis, resType=resType)

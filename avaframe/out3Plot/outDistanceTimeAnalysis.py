@@ -80,7 +80,7 @@ def addRangeTimePlotToAxes(mtiInfo, cfgRangeTime, ax):
     textsize = cfgRangeTime["PLOTS"].getfloat("textsize")
 
 
-    pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
+    pc = ax.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
     ax.plot(timeList, rangeList, ".", color="black", markersize=4, label="avalanche front")
     ax.set_xlabel("Time [s]")
     # add y label axis

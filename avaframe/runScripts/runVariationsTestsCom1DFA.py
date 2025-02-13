@@ -33,6 +33,10 @@ aimecFlagMass = 'False'
 aimecComModules = 'benchmarkReference|com1DFA'
 # ++++++++++++++++++++++++++++++
 
+
+# TODO: needs to be updated and benchmarks too
+
+
 # log file name; leave empty to use default runLog.log
 logName = 'runVariationsTestsCom1DFA'
 
