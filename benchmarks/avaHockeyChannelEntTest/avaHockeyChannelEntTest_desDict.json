@@ -9,15 +9,15 @@
     "2DPeak"
   ],
   "FILES": [
-    "release1HS_e8ff174c9d_C_ent_dfa_ppr",
-    "release1HS_e8ff174c9d_C_ent_dfa_pft",
-    "release1HS_e8ff174c9d_C_ent_dfa_pfv",
-    "mass_release1HS_e8ff174c9d_C_ent_dfa"
+    "release1HS_38020c7f23_C_L_ent_dfa_ppr",
+    "release1HS_38020c7f23_C_L_ent_dfa_pft",
+    "release1HS_38020c7f23_C_L_ent_dfa_pfv",
+    "mass_release1HS_38020c7f23_C_L_ent_dfa"
   ],
   "TOPOTYPE": "idealised",
   "AVANAME": "avaHockeyChannel",
   "AVADIR": "data/avaHockeyChannel",
-  "simNameRef": "release1HS_e8ff174c9d_C_ent_dfa",
+  "simNameRef": "release1HS_38020c7f23_C_L_ent_dfa",
   "NAME": "avaHockeyChannelEntTest",
   "Test Info": {
     "type": "text",
@@ -26,26 +26,24 @@
   "simType": "ent",
   "simName": {
     "type": "simName",
-    "name": "release1HS_e8ff174c9d_C_ent_dfa"
+    "name": "release1HS_38020c7f23_C_L_ent_dfa"
   },
   "Simulation Parameters": {
     "type": "list",
-    "Program version": "1.7.1",
-    "Parameter set": "",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
     "Release Area Scenario": "release1HS",
     "Entrainment": "Yes",
     "Resistance": "No",
-    "Parameter variation on": "",
-    "Parameter value": "",
-    "Mu": "0.155",
+    "Secondary release area": "No",
     "Density [kgm-3]": "200",
     "Friction model": "samosAT",
-    "Initial mass [kg]": "19924077.62",
-    "Final mass [kg]": "20257740.73",
-    "Entrained mass [kg]": "333663.12",
-    "Entrained volume [m3]": "3336.63",
+    "Initial mass [kg]": "19924078.16",
+    "Final mass [kg]": "20257638.39",
+    "Entrained mass [kg]": "333560.24",
+    "Entrained volume [m3]": "3335.60",
     "Stop criterion": "< 1.00 percent of PKE",
-    "Avalanche run time [s]": "302.60",
-    "Computation time [s]": "110.61"
+    "Avalanche run time [s]": "300.70",
+    "Computation time [s]": "120.17"
   }
 }

@@ -1,1 +1,49 @@
-{"TAGS": ["resistance", "standardTest", "idealized"], "DESCRIPTION": " this is Parabola test", "TYPE": ["2DPeak"], "FILES": ["release1PF_995c83f5ed_C_res_dfa_ppr", "release1PF_995c83f5ed_C_res_dfa_pft", "release1PF_995c83f5ed_C_res_dfa_pfv", "mass_release1PF_995c83f5ed_C_res_dfa_dfa"], "TOPOTYPE": "idealised", "AVANAME": "avaParabola", "AVADIR": "data/avaParabola", "simNameRef": "release1PF_995c83f5ed_C_res_dfa", "NAME": "avaParabolaResTest", "Test Info": {"type": "text", "Test Info": "This test runs on a parabolically sloping surface with a flat foreland."}, "simType": "res", "simName": {"type": "simName", "name": "release1PF_995c83f5ed_C_res_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "release1PF", "Entrainment": "No", "Resistance": "Yes", "Parameter variation on": "", "Parameter value": "", "Mu": "0.155", "Density [kgm-3]": "200", "Friction model": "samosAT", "Initial mass [kg]": "20672345.03", "Final mass [kg]": "20672345.03", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "158.50", "Computation time [s]": "45.35"}}
+{
+  "TAGS": [
+    "resistance",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is Parabola test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1PF_39f1d08fa9_C_L_res_dfa_ppr",
+    "release1PF_39f1d08fa9_C_L_res_dfa_pft",
+    "release1PF_39f1d08fa9_C_L_res_dfa_pfv",
+    "mass_release1PF_39f1d08fa9_C_L_res_dfa"
+  ],
+  "TOPOTYPE": "idealised",
+  "AVANAME": "avaParabola",
+  "AVADIR": "data/avaParabola",
+  "simNameRef": "release1PF_39f1d08fa9_C_L_res_dfa",
+  "NAME": "avaParabolaResTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs on a parabolically sloping surface with a flat foreland."
+  },
+  "simType": "res",
+  "simName": {
+    "type": "simName",
+    "name": "release1PF_39f1d08fa9_C_L_res_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "release1PF",
+    "Entrainment": "No",
+    "Resistance": "Yes",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosAT",
+    "Initial mass [kg]": "20672345.82",
+    "Final mass [kg]": "20672345.82",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "158.50",
+    "Computation time [s]": "45.59"
+  }
+}

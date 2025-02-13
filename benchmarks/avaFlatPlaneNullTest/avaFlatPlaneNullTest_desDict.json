@@ -1,1 +1,49 @@
-{"TAGS": ["null", "standardTest", "idealized"], "DESCRIPTION": " this is FlatPlane test", "TYPE": ["2DPeak"], "FILES": ["release1FP_49cf779ec3_C_null_dfa_ppr", "release1FP_49cf779ec3_C_null_dfa_pft", "release1FP_49cf779ec3_C_null_dfa_pfv", "mass_release1FP_49cf779ec3_C_null_dfa"], "TOPOTYPE": "idealised", "AVANAME": "avaFlatPlane", "AVADIR": "data/avaFlatPlane", "simNameRef": "release1FP_49cf779ec3_C_null_dfa", "NAME": "avaFlatPlaneNullTest", "Test Info": {"type": "text", "Test Info": "This test runs on a flat plane geometry."}, "simType": "null", "simName": {"type": "simName", "name": "release1FP_49cf779ec3_C_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "release1FP", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.155", "Density [kgm-3]": "200", "Friction model": "samosAT", "Initial mass [kg]": "19991250.00", "Final mass [kg]": "19991250.00", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "17.60", "Computation time [s]": "5.17"}}
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is FlatPlane test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1FP_a644215eee_C_L_null_dfa_ppr",
+    "release1FP_a644215eee_C_L_null_dfa_pft",
+    "release1FP_a644215eee_C_L_null_dfa_pfv",
+    "mass_release1FP_a644215eee_C_L_null_dfa"
+  ],
+  "TOPOTYPE": "idealised",
+  "AVANAME": "avaFlatPlane",
+  "AVADIR": "data/avaFlatPlane",
+  "simNameRef": "release1FP_a644215eee_C_L_null_dfa",
+  "NAME": "avaFlatPlaneNullTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs on a flat plane geometry."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "release1FP_a644215eee_C_L_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "release1FP",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosAT",
+    "Initial mass [kg]": "19991250.00",
+    "Final mass [kg]": "19991250.00",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "17.60",
+    "Computation time [s]": "5.42"
+  }
+}

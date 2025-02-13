@@ -1,1 +1,50 @@
-{"TAGS": ["null", "standardTest", "real", "wetSnow"], "DESCRIPTION": " this is wetSnow Alr test", "TYPE": ["2DPeak"], "FILES": ["relAlr_fd7f222361_C_null_dfa_ppr", "relAlr_fd7f222361_C_null_dfa_pft", "relAlr_fd7f222361_C_null_dfa_pfv", "mass_relAlr_fd7f222361_C_null_dfa"], "TOPOTYPE": "real", "AVANAME": "avaAlr", "AVADIR": "data/avaAlr", "simNameRef": "relAlr_fd7f222361_C_null_dfa", "NAME": "avaAlrWetSnowTest", "Test Info": {"type": "text", "Test Info": "This test runs on a Alr DEM for wetSnow test."}, "simType": "null", "simName": {"type": "simName", "name": "relAlr_fd7f222361_C_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "relAlr", "Entrainment": "No", "Resistance": "No", "Density [kgm-3]": "200", "Friction model": "wetSnow", "Initial mass [kg]": "10559156.54", "Final mass [kg]": "10559156.54", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "360.00", "Computation time [s]": "81.12"}}
+{
+  "TAGS": [
+    "null",
+    "standardTest",
+    "real",
+    "wetSnow"
+  ],
+  "DESCRIPTION": " this is wetSnow Alr test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "relAlr_ff5f9b78c6_C_L_null_dfa_ppr",
+    "relAlr_ff5f9b78c6_C_L_null_dfa_pft",
+    "relAlr_ff5f9b78c6_C_L_null_dfa_pfv",
+    "mass_relAlr_ff5f9b78c6_C_L_null_dfa"
+  ],
+  "TOPOTYPE": "real",
+  "AVANAME": "avaAlr",
+  "AVADIR": "data/avaAlr",
+  "simNameRef": "relAlr_ff5f9b78c6_C_L_null_dfa",
+  "NAME": "avaAlrWetSnowTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs on a Alr DEM for wetSnow test."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "relAlr_ff5f9b78c6_C_L_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "relAlr",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "wetSnow",
+    "Initial mass [kg]": "10559156.54",
+    "Final mass [kg]": "10559156.54",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "360.00",
+    "Computation time [s]": "100.14"
+  }
+}

@@ -1,1 +1,49 @@
-{"TAGS": ["null", "rotational", "standardTest", "idealized"], "DESCRIPTION": " this is my null test", "TYPE": ["2DPeak"], "FILES": ["release1PY_1954323dbf_C_null_dfa_ppr", "release1PY_1954323dbf_C_null_dfa_pft", "release1PY_1954323dbf_C_null_dfa_pfv", "mass_release1PY_1954323dbf_C_null_dfa"], "AVANAME": "avaPyramid", "AVADIR": "data/avaPyramid", "simNameRef": "release1PY_1954323dbf_C_null_dfa", "NAME": "avaPyramidNullTest", "Test Info": {"type": "text", "Test Info": "This test runs the Pyramid test."}, "simType": "null", "simName": {"type": "simName", "name": "release1PY_1954323dbf_C_null_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "release1PY", "Entrainment": "No", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.155", "Density [kgm-3]": "200", "Friction model": "samosAT", "Initial mass [kg]": "38452792.73", "Final mass [kg]": "38452792.73", "Entrained mass [kg]": "0.00", "Entrained volume [m3]": "0.00", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "270.30", "Computation time [s]": "165.54"}}
+{
+  "TAGS": [
+    "null",
+    "rotational",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is my null test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1PY_d296a00ba6_C_L_null_dfa_ppr",
+    "release1PY_d296a00ba6_C_L_null_dfa_pft",
+    "release1PY_d296a00ba6_C_L_null_dfa_pfv",
+    "mass_release1PY_d296a00ba6_C_L_null_dfa"
+  ],
+  "AVANAME": "avaPyramid",
+  "AVADIR": "data/avaPyramid",
+  "simNameRef": "release1PY_d296a00ba6_C_L_null_dfa",
+  "NAME": "avaPyramidNullTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs the Pyramid test."
+  },
+  "simType": "null",
+  "simName": {
+    "type": "simName",
+    "name": "release1PY_d296a00ba6_C_L_null_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "release1PY",
+    "Entrainment": "No",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosAT",
+    "Initial mass [kg]": "38452792.67",
+    "Final mass [kg]": "38452792.67",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "272.10",
+    "Computation time [s]": "161.73"
+  }
+}

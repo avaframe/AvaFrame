@@ -1,1 +1,49 @@
-{"TAGS": ["entrainment1m", "standardTest", "idealized"], "DESCRIPTION": " this is HelixChannel test", "TYPE": ["2DPeak"], "FILES": ["release1HX_663e061321_C_ent_dfa_ppr", "release1HX_663e061321_C_ent_dfa_pft", "release1HX_663e061321_C_ent_dfa_pfv", "mass_release1HX_663e061321_C_ent_dfa"], "TOPOTYPE": "idealised", "AVANAME": "avaHelixChannel", "AVADIR": "data/avaHelixChannel", "simNameRef": "release1HX_663e061321_C_ent_dfa", "NAME": "avaHelixChannelEnt1mTest", "Test Info": {"type": "text", "Test Info": "This test uses a helix-shaped geometry with a channel with a channel."}, "simType": "ent", "simName": {"type": "simName", "name": "release1HX_663e061321_C_ent_dfa"}, "Simulation Parameters": {"type": "list", "Program version": "1.7.1", "Parameter set": "", "Release Area Scenario": "release1HX", "Entrainment": "Yes", "Resistance": "No", "Parameter variation on": "", "Parameter value": "", "Mu": "0.155", "Density [kgm-3]": "200", "Friction model": "samosAT", "Initial mass [kg]": "34384539.96", "Final mass [kg]": "36377398.67", "Entrained mass [kg]": "1992858.71", "Entrained volume [m3]": "19928.59", "Stop criterion": "< 1.00 percent of PKE", "Avalanche run time [s]": "137.10", "Computation time [s]": "65.15"}}
+{
+  "TAGS": [
+    "entrainment1m",
+    "standardTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is HelixChannel test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1HX_63b8c5ce1d_C_L_ent_dfa_ppr",
+    "release1HX_63b8c5ce1d_C_L_ent_dfa_pft",
+    "release1HX_63b8c5ce1d_C_L_ent_dfa_pfv",
+    "mass_release1HX_63b8c5ce1d_C_L_ent_dfa"
+  ],
+  "TOPOTYPE": "idealised",
+  "AVANAME": "avaHelixChannel",
+  "AVADIR": "data/avaHelixChannel",
+  "simNameRef": "release1HX_63b8c5ce1d_C_L_ent_dfa",
+  "NAME": "avaHelixChannelEnt1mTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test uses a helix-shaped geometry with a channel with a channel."
+  },
+  "simType": "ent",
+  "simName": {
+    "type": "simName",
+    "name": "release1HX_63b8c5ce1d_C_L_ent_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.11",
+    "Parameter set": "Changed",
+    "Release Area Scenario": "release1HX",
+    "Entrainment": "Yes",
+    "Resistance": "No",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosAT",
+    "Initial mass [kg]": "34384539.92",
+    "Final mass [kg]": "36377433.54",
+    "Entrained mass [kg]": "1992893.62",
+    "Entrained volume [m3]": "19928.94",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "136.90",
+    "Computation time [s]": "69.83"
+  }
+}
