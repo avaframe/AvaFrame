@@ -57,11 +57,11 @@ def runCom8MoTPSA(avalancheDir=''):
     # already did some calculations you might want to clean it::
     initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
 
-    # Set friction model according to cmd argument
+    # Get module config
     cfgCom8MoTPSA = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
 
     # ----------------
-    # Run dense flow
+    # Run psa
     com8MoTPSA.com8MoTPSAMain(cfgMain, cfgInfo=cfgCom8MoTPSA)
 
     # # Get peakfiles to return to QGIS
@@ -73,7 +73,8 @@ def runCom8MoTPSA(avalancheDir=''):
     endTime = time.time()
     log.info('Took %6.1f seconds to calculate.' % (endTime - startTime))
 
-    return peakFilesDF
+    # return peakFilesDF
+    return
 
 
 if __name__ == '__main__':
