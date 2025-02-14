@@ -1,8 +1,17 @@
 import os
 import subprocess
 import platform
+import logging
+
+import avaframe.com1DFA.com1DFATools as com1DFATools
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.in3Utils import cfgUtils
+
+# create local logger
+log = logging.getLogger(__name__)
 
 
+# TODO move to whereever?
 def _runAndCheck(command):
     if os.name == "nt":
         useShell = True
@@ -33,8 +42,7 @@ def _runAndCheck(command):
             print(line)
 
 
-# Example usage
-
+# TODO move to utils
 def cfgToRcf(cfg, fileName):
     with open(fileName, 'w') as f:
         for section in cfg.sections():
@@ -53,11 +61,34 @@ def cfgToRcf(cfg, fileName):
 
 
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
-    # Generate command and run via subprocess.run
+    # Get all necessary information from the configuration files
 
-    rcfFile = 'outputTemplate.rcf'
+    # Load avalanche directory from general configuration file
+    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
-    cfgToRcf(cfgInfo, rcfFile)
+    # fetch type of cfgInfo
+    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
 
-    command = ['./MoT-PSA', rcfFile]
-    _runAndCheck(command)
+    # preprocessing to create configuration objects for all simulations to run
+    simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
+
+    log.info("The following simulations will be performed")
+    for key in simDict:
+        log.info("Simulation: %s" % key)
+        exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
+
+    # # Generate command and run via subprocess.run
+    #
+    # # Configuration that needs adjustment
+    # cfgInfo['Run information']['Area of Interest'] = cfgMain['MAIN']['avalancheDir'].replace("/", "")
+    # # cfgInfo['Run information']['UTM Zone']
+    # # cfgInfo['Run information']['EPGS geodetic datum code']
+    # cfgInfo['Run information']['Run name'] = cfgMain['MAIN']['avalancheDir'].replace("/", "")
+    #
+    #
+    # rcfFile = 'outputTemplate.rcf'
+    #
+    # cfgToRcf(cfgInfo, rcfFile)
+    #
+    # command = ['./MoT-PSA', rcfFile]
+    # _runAndCheck(command)
