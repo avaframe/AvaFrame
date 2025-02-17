@@ -1674,6 +1674,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "Bsamosat": "4.13",
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
+        "dam": "True",
     }
     standardCfg["INPUT"] = {
         "entThThickness": "1.",
@@ -1693,6 +1694,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "relFiles": [relPath],
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
+        "damFile": None,
     }
     variationDict = {"rho": np.asarray([200.0, 150.0]), "releaseScenario": ["relAlr"]}
 
@@ -1730,6 +1732,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "Bsamosat": "4.13",
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
+        "dam": "True",
     }
 
     testCfg["INPUT"] = {
@@ -1769,18 +1772,21 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "relFiles": [relPath],
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
+        "damFile": relPath,
     }
     variationDict = {
         "rho": np.asarray([200.0, 150.0]),
         "simTypeList": ["entres", "ent"],
         "releaseScenario": ["relAlr"],
     }
+
     simDict2 = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
 
     inputSimFiles = {
         "relFiles": [relPath],
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
+        "damFile": relPath,
     }
     testCfg2 = configparser.ConfigParser()
     testCfg2.optionxform = str
@@ -1814,12 +1820,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "Bsamosat": "4.13",
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
+        "dam": "True",
     }
     testCfg2["INPUT"] = {
         "entThThickness": "1.",
         "entThId": "0",
         "entThCi95": "None",
         "releaseScenario": "relAlr",
+        "DAM": str(pathlib.Path('DAM', relPath.name)),
     }
     testCfg2["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg2["INPUT"]["relThFile"] = ""
