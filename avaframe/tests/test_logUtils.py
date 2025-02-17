@@ -4,6 +4,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 import os
 import pathlib
+import logging
 
 
 def test_initiateLogger(tmp_path):
@@ -38,3 +39,22 @@ def test_writeCfg2Log(tmp_path):
     for line,refLine in zip(f, fref):
         line = line[line.find('cfgUtils'):]
         assert(line == refLine)
+
+def test_silentLogger(tmp_path):
+    '''Simple test for silentLogger context manager functionality'''
+    logName = 'testSilent'
+    log = logUtils.initiateLogger(tmp_path, logName)
+    originalLevel = logging.INFO
+    log.setLevel(originalLevel)
+    
+    with logUtils.silentLogger():
+        assert log.level == logging.ERROR
+        log.info("This should not appear in log")
+        
+    assert log.level == originalLevel
+    
+    logFile = log.handlers[-1].baseFilename
+    with open(logFile, 'r') as f:
+        logContent = f.read()
+    
+    assert "This should not appear in log" not in logContent
