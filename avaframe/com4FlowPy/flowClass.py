@@ -351,9 +351,6 @@ class Cell:
             if self.forestBool and self.forestDetrainmentBool:
                 self.forest_detrainment()
 
-            self.calc_fp_travelangle()
-            self.calc_sl_travelangle()
-
             # FOREST-Detrainment
             # here we subtract the detrainment from the flux before moving flux to new cells.
             if self.forestBool and self.forestDetrainmentBool:

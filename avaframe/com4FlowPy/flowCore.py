@@ -163,24 +163,19 @@ def run(optTuple):
     log = logging.getLogger(__name__)
 
     # Flow-Py parameters
-    alpha = float(optTuple[2]["alpha"])
-    exp = float(optTuple[2]["exp"])
-    flux_threshold = float(optTuple[2]["flux_threshold"])
-    max_z_delta = float(optTuple[2]["max_z"])
+    modelParameters = optTuple[2]
     infraBool = optTuple[2]["infraBool"]
     forestBool = optTuple[2]["forestBool"]
     forestInteraction = optTuple[2]["forestInteraction"]
     varUmaxBool = optTuple[2]["varUmaxBool"]
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
-    fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
     # raster-layer Attributes
-    cellsize = float(optTuple[4]["cellsize"])
-    nodata = float(optTuple[4]["nodata"])
+    rasterAttributes = optTuple[4]
 
     MPOptions = optTuple[6]  # CPU, Multiprocessing options ...
 
@@ -203,6 +198,7 @@ def run(optTuple):
     else:
         forestParams = None
         forestArray = None
+    modelParameters["forestParams"] = forestParams
 
     if varUmaxBool:
         varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
@@ -223,15 +219,16 @@ def run(optTuple):
     else:
         varExponentArray = None
 
-    varParams = {
-        'varUmaxBool': varUmaxBool,
+    modelData = {
+        "dem": dem,
+        "infra": infra,
+        "forestArray": forestArray,
         'varUmaxArray': varUmaxArray,
-        'varAlphaBool': varAlphaBool,
         'varAlphaArray': varAlphaArray,
-        'varExponentBool': varExponentBool,
         'varExponentArray': varExponentArray,
     }
-
+    del infra, forestArray, varUmaxArray, varAlphaArray, varExponentArray
+    outputFileList = set(optTuple[3]['outputFileList'])
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
     release[release < 0] = 0
@@ -256,12 +253,11 @@ def run(optTuple):
             calculation,
             [
                 [   # TODO: write in dicts:
-                    dem, infra, release_sub,
-                    alpha, exp, flux_threshold, max_z_delta,
-                    nodata, cellsize,
-                    infraBool, forestBool,
-                    varParams, fluxDistOldVersionBool,
-                    forestArray, forestParams,
+                    modelParameters,
+                    modelData,
+                    rasterAttributes,
+                    outputFileList,
+                    release_sub,
                 ]
                 for release_sub in release_list
             ],
@@ -275,79 +271,8 @@ def run(optTuple):
     # TODO - NOTE:
     # also move this part into a separate function
     # initializing arrays for storing the results from the multiprocessing step
-    zDeltaArray = np.zeros_like(dem, dtype=np.float32)
-    fluxArray = np.zeros_like(dem, dtype=np.float32)
-    countArray = np.zeros_like(dem, dtype=np.int32)
-    zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
-    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    backcalc = np.zeros_like(dem, dtype=np.int32)
-    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
-    if forestInteraction:
-        forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
-    zDeltaList = []
-    fluxList = []
-    ccList = []
-    zDeltaSumList = []
-    routFluxSumList = []
-    depFluxSumList = []
-    backcalcList = []
-    fpTravelAngleList = []
-    slTravelAngleList = []
-    travelLengthList = []
-    if forestInteraction:
-        forestIntList = []
-
-    for i in range(len(results)):
-        res = results[i]
-        res = list(res)
-        zDeltaList.append(res[0])
-        fluxList.append(res[1])
-        ccList.append(res[2])
-        zDeltaSumList.append(res[3])
-        backcalcList.append(res[4])
-        fpTravelAngleList.append(res[5])
-        slTravelAngleList.append(res[6])
-        travelLengthList.append(res[7])
-        routFluxSumList.append(res[8])
-        depFluxSumList.append(res[9])
-        if forestInteraction:
-            forestIntList.append(res[10])
-
-    logging.info("Calculation finished, getting results.")
-    for i in range(len(zDeltaList)):
-        zDeltaArray = np.maximum(zDeltaArray, zDeltaList[i])
-        fluxArray = np.maximum(fluxArray, fluxList[i])
-        countArray += ccList[i]
-        zDeltaSumArray += zDeltaSumList[i]
-        routFluxSumArray += routFluxSumList[i]
-        depFluxSumArray += depFluxSumList[i]
-        backcalc = np.maximum(backcalc, backcalcList[i])
-        fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
-        slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
-        travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
-        if forestInteraction:
-            forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
-                                    np.minimum(forestIntArray, forestIntList[i]),
-                                    np.maximum(forestIntArray, forestIntList[i]))
-
-    # Save Calculated tiles
-    np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
-    np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
-    np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), routFluxSumArray)
-    np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
-    np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
-    np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
-    np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
-    np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), slTravelAngleArray)
-    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
-    if infraBool:
-        np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
-    if forestInteraction:
-        np.save(tempDir / ("res_forestInt_%s_%s" % (optTuple[0], optTuple[1])), forestIntArray)
+    computeSaveTileResults(outputFileList, results, dem, tempDir, optTuple[0], optTuple[1])
 
 
 def calculation(args):
@@ -359,104 +284,111 @@ def calculation(args):
     args: list
         contains the following model input data:
 
-        - args[0] (np.array) - The digital elevation model
-        - args[1] (np.array) - The infrastructure layer
-        - args[2] (np.array) - cells with value 1 are PRAs
-        - args[3] (float) - alpha angle
-        - args[4] (float) - exponent
-        - args[5] (float) - threshold of minimum flux
-        - args[6] (float) - maximum of zDelta
-        - args[7] (float) - nodata values of rasters
-        - args[8] (float) - cellsize of rasters
-        - args[9] (bool) -  flag for calculation with/without infrastructure
-        - args[10] (bool) - flag for calculation with/without forest
-        - args[11] (dict) - contains flags and numpy arrays for variable input parameters (Alpha, exp, uMax)
-        - args[12] (bool) - flag for computing flux distribution with old version
-        - args[13] (numpy array) - contains forest information (None if forestBool=False)
-        - args[14] (dict) - contains parameters for forest interaction models (None if forestBool=False)
+        - args[0] (dict) - contains all parameters for the model
+        - args[1] (dict) - contains necessary input data
+        - args[2] (dict) - contains raster attributes od the input data
+        - args[3] (list) - contains the names for the outputs
+        - args[4] (np.array) - cells with value 1 are PRAs
 
     Returns
     -----------
-    zDeltaArray: numpy array
-        the maximum of kinetic velocity height (zDelta) in every raster cell
-    fluxArray: numpy array
-        the maximum of flux in every cell
-    countArray: numpy array
-        the number of hits (GMF paths) in every cell
-    zDeltaPathList: list
-        containing the max zDelta Arrays of all paths
-    backcalc: numpy array
-          Array with back calculation, still TODO!!!
-    fpTravelAngleArray: numpy array
-        maximum of flow-path travel-angle in every cell
-    slTravelAngleArray: numpy array
-        maximum of sl travel-angle in every cell
-    travelLengthArray: numpy array
-        maximum of travel length in every cell
-    routFluxSumArray:numpy array
-        sum of routing flux in every cell
-    depFluxSumArray:numpy array
-        sum of deposition flux in every cell
-    forestIntArray: numpy array
-        minimum of the count a forested cell is hit (only returned if args[18]["forestInteraction"]==True)
-
+    outputArray: dict
+        contains the numpy arrays for the output
     """
-
+    log = logging.getLogger(__name__)
     # check if there's enough RAM available (default value set to 5%)
     # if not, wait for 30 secs and check again
     # should prevent the occurence of broken pipe errors or similar issues related
     # to RAM overflow
     handleMemoryAvailability()
-
-    dem = args[0]
-    infra = args[1]
-    release = args[2]
-    alpha = args[3]
-    exp = args[4]
-    flux_threshold = args[5]
-    max_z_delta = args[6]
-    nodata = args[7]
-    cellsize = args[8]
-    infraBool = args[9]
-    forestBool = args[10]
-    varUmaxBool = args[11]['varUmaxBool']
-    varUmaxArray = args[11]['varUmaxArray']
-    varAlphaBool = args[11]['varAlphaBool']
-    varAlphaArray = args[11]['varAlphaArray']
-    varExponentBool = args[11]['varExponentBool']
-    varExponentArray = args[11]['varExponentArray']
-    fluxDistOldVersionBool = args[12]
+    modelParameters, modelData, rasterAttributes, outputFileList, release_sub = args
+    dem = modelData["dem"]
+    infra = modelData["infra"]
+    release = release_sub
+    alpha = float(modelParameters["alpha"])
+    exp = float(modelParameters["exp"])
+    flux_threshold = float(modelParameters["flux_threshold"])
+    max_z_delta = float(modelParameters["max_z"])
+    nodata = rasterAttributes["nodata"]
+    cellsize = rasterAttributes["cellsize"]
+    infraBool = modelParameters["infraBool"]
+    forestBool = modelParameters["forestBool"]
+    varUmaxBool = modelParameters["varUmaxBool"]
+    varUmaxArray = modelData["varUmaxArray"]
+    varAlphaBool = modelParameters["varAlphaBool"]
+    varAlphaArray = modelData["varAlphaArray"]
+    varExponentBool = modelParameters["varExponentBool"]
+    varExponentArray = modelData["varExponentArray"]
+    fluxDistOldVersionBool = modelParameters["fluxDistOldVersionBool"]
 
     if forestBool:
-        forestArray = args[13]
-        forestParams = args[14]
+        forestArray = modelData["forestArray"]
+        forestParams = modelParameters["forestParams"]
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
         forestArray = None
         forestParams = None
 
-    zDeltaArray = np.zeros_like(dem, dtype=np.float32)
-    zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
-    zDeltaPathList = []
-    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    fluxArray = np.zeros_like(dem, dtype=np.float32)
-    countArray = np.zeros_like(dem, dtype=np.int32)
+    del modelParameters, modelData, rasterAttributes, release_sub
 
-    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
-    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # sl = Straight Line
-
-    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    if 'zDelta' in outputFileList:
+        zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+    else:
+        zDeltaArray = None
+    if 'zDeltaSum' in outputFileList:
+        zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+        zDeltaPathList = []
+    else:
+        zDeltaSumArray = None
+    if 'routFluxSum' in outputFileList:
+        routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    else:
+        routFluxSumArray = None
+    if 'depFluxSum' in outputFileList:
+        depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    else:
+        depFluxSumArray = None
+    if 'flux' in outputFileList:
+        fluxArray = np.zeros_like(dem, dtype=np.float32)
+    else:
+        fluxArray = None
+    if 'cellCounts' in outputFileList:
+        cellCountsArray = np.zeros_like(dem, dtype=np.int32)
+    else:
+        cellCountsArray = None
+    if 'fpTravelAngle' in outputFileList:
+        fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
+    else:
+        fpTravelAngleArray = None
+    if 'slTravelAngle' in outputFileList:
+        slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # sl = Straight Line
+    else:
+        slTravelAngleArray = None
+    if 'travelLength' in outputFileList:
+        travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    else:
+        travelLengthArray = None
+    if 'forestInteraction' in outputFileList:
+        if forestInteraction:
+            forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
+        else:
+            log.error("forestInteraction must set to True, when 'forestInteraction' is in outputs (.ini - File)")
+            raise ValueError("forestInteraction must set to True, when 'forestInteraction' is in outputs (.ini - File)")
+    else:
+        forestIntArray = None
 
     # NOTE-TODO maybe also include a switch for INFRA (like Forest) and not implicitly always use an empty infra array ?
-    backcalc = np.zeros_like(dem, dtype=np.int32)
-
+    if 'backcalc' in outputFileList:
+        if infraBool:
+            backcalc = np.zeros_like(dem, dtype=np.int32)
+        else:
+            log.error("infra must set to True, when 'backcalc' is in outputs (.ini - File)")
+            raise ValueError("infra must set to True, when 'backcalc' is in outputs (.ini - File)")
+    else:
+        backcalc = None
     if infraBool:
         back_list = []
-
-    if forestInteraction:
-        forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     # Core
     # start = datetime.now().replace(microsecond=0)
@@ -553,20 +485,41 @@ def calculation(args):
                             FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
                             forestParams=forestParams,
                                      ))
-
-            zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
-            fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
-            routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
-            depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
-            zDeltaPathArray[cell.rowindex, cell.colindex] = max(zDeltaPathArray[cell.rowindex, cell.colindex], cell.z_delta)
-            fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
+            if 'zDelta' in outputFileList:
+                zDeltaArray[cell.rowindex, cell.colindex] = max(zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta)
+            if 'flux' in outputFileList:
+                fluxArray[cell.rowindex, cell.colindex] = max(fluxArray[cell.rowindex, cell.colindex], cell.flux)
+            if 'routFluxSum' in outputFileList:
+                routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
+            if 'depFluxSum' in outputFileList:
+                depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
+            if 'zDeltaSum' in outputFileList:
+                zDeltaPathArray[cell.rowindex, cell.colindex] = max(zDeltaPathArray[cell.rowindex, cell.colindex], cell.z_delta)
+            if 'fpTravelAngle' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_fp_travelangle()
+                fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.max_gamma)
-            slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
+            if 'slTravelAngle' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_sl_travelangle()
+                slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.sl_gamma)
-            travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
+            if 'travelLength' in outputFileList:
+                if (not cell.is_start):
+                    cell.calc_fp_travelangle()
+                travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
                                                                   cell.min_distance)
-            if processedCells[(cell.rowindex, cell.colindex)] == 1:
-                countArray[cell.rowindex, cell.colindex] += int(1)
+            if 'cellCounts' in outputFileList:
+                if processedCells[(cell.rowindex, cell.colindex)] == 1:
+                    cellCountsArray[cell.rowindex, cell.colindex] += int(1)
+            if 'forestInteraction' in outputFileList:
+                if forestIntArray[cell.rowindex, cell.colindex] >= 0 and cell.forestIntCount >= 0:
+                    forestIntArray[cell.rowindex, cell.colindex] = min(forestIntArray[cell.rowindex, cell.colindex],
+                                                                       cell.forestIntCount)
+                else:
+                    forestIntArray[cell.rowindex, cell.colindex] = max(forestIntArray[cell.rowindex, cell.colindex],
+                                                                       cell.forestIntCount)
 
             # Backcalculation
             if infraBool:
@@ -580,32 +533,31 @@ def calculation(args):
                     for bCell in backList:
                         backcalc[bCell.rowindex, bCell.colindex] = max(backcalc[bCell.rowindex, bCell.colindex],
                                                                        infra[cell.rowindex, cell.colindex])
-            if forestInteraction:
-                if forestIntArray[cell.rowindex, cell.colindex] >= 0 and cell.forestIntCount >= 0:
-                    forestIntArray[cell.rowindex, cell.colindex] = min(forestIntArray[cell.rowindex, cell.colindex],
-                                                                       cell.forestIntCount)
-                else:
-                    forestIntArray[cell.rowindex, cell.colindex] = max(forestIntArray[cell.rowindex, cell.colindex],
-                                                                       cell.forestIntCount)
 
         if infraBool:
             release[zDeltaArray > 0] = 0
             # Check if i hit a release Cell, if so set it to zero and get again the indexes of release cells
             row_list, col_list = get_start_idx(dem, release)
-        zDeltaPathList.append(zDeltaPathArray)
-        del cell_list, processedCells, zDeltaPathArray
+        if 'zDeltaSum' in outputFileList:
+            zDeltaPathList.append(zDeltaPathArray)
+            del zDeltaPathArray
+        del cell_list, processedCells
 
         startcell_idx += 1
     # end = datetime.now().replace(microsecond=0)
-    for zDeltaPathArray in zDeltaPathList:
-        zDeltaSumArray += zDeltaPathArray
+    if 'zDeltaSum' in outputFileList:
+        for zDeltaPathArray in zDeltaPathList:
+            zDeltaSumArray += zDeltaPathArray
     gc.collect()
-    if forestInteraction:
-        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
-    else:
-        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, routFluxSumArray, depFluxSumArray
+    outputArray = {}
+    _arrayNames = ['zDelta', 'flux', 'cellCounts', 'zDeltaSum', 'backcalc', 'fpTravelAngle', 'slTravelAngle',
+                  'travelLength', 'routFluxSum', 'depFluxSum', 'forestInteraction']
+    _output = zDeltaArray, fluxArray, cellCountsArray, zDeltaSumArray, backcalc, fpTravelAngleArray, \
+          slTravelAngleArray, travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
+    for name, array in zip(_arrayNames, _output):
+        outputArray[name] = array
+    del _output, _arrayNames
+    return outputArray
 
 
 def enoughMemoryAvailable(limit=0.05):
@@ -712,3 +664,101 @@ def handleMemoryAvailability(recheckInterval=30):
     """
     while not enoughMemoryAvailable():
         time.sleep(recheckInterval)
+
+
+def computeSaveTileResults(outputFileList, results, dem, tempDir, indI, indJ):
+    """function computes the output rasters for the processed tile and saves the rasters
+    in the temporary fodler
+
+    Parameters
+    -----------
+    outputFileList: list
+        contains the names of the outputs
+    results: dict
+        contains output rasters computed by every CPU core
+    dem: numpy array
+        digital elevation model of the processed tile
+    tempDir: str
+        path to temporary directory
+    indI: int
+        i index of the processed tile (for loading correct data for tiles)
+    indJ: int
+        j index of the processed tile (for loading correct data for tiles)
+
+    """
+
+    if 'zDelta' in outputFileList:
+        zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+    if 'flux' in outputFileList:
+        fluxArray = np.zeros_like(dem, dtype=np.float32)
+    if 'cellCounts' in outputFileList:
+        cellCountsArray = np.zeros_like(dem, dtype=np.int32)
+    if 'zDeltaSum' in outputFileList:
+        zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    if 'routFluxSum' in outputFileList:
+        routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    if 'depFluxSum' in outputFileList:
+        depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+    if 'backcalc' in outputFileList:
+        backcalc = np.zeros_like(dem, dtype=np.int32)
+    if 'fpTravelAngle' in outputFileList:
+        fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
+    if 'slTravelAngle' in outputFileList:
+        slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
+    if 'travelLength' in outputFileList:
+        travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    if 'forestInteraction' in outputFileList:
+        forestIntArray = np.ones_like(dem, dtype=np.int32) * -9999
+
+    for i in range(len(results)):
+        res = results[i]
+        if 'zDelta' in outputFileList:
+            zDeltaArray = np.maximum(zDeltaArray, res['zDelta'])
+        if 'flux' in outputFileList:
+            fluxArray = np.maximum(fluxArray, res['flux'])
+        if 'cellCounts' in outputFileList:
+            cellCountsArray += res['cellCounts']
+        if 'zDeltaSum' in outputFileList:
+            zDeltaSumArray += res['zDeltaSum']
+        if 'backcalc' in outputFileList:
+            backcalc = np.maximum(backcalc, res['backcalc'])
+        if 'fpTravelAngle' in outputFileList:
+            fpTravelAngleArray = np.maximum(fpTravelAngleArray, res['fpTravelAngle'])
+        if 'slTravelAngle' in outputFileList:
+            slTravelAngleArray = np.maximum(slTravelAngleArray, res['slTravelAngle'])
+        if 'travelLength' in outputFileList:
+            travelLengthArray = np.maximum(travelLengthArray, res['travelLength'])
+        if 'routFluxSum' in outputFileList:
+            routFluxSumArray += res['routFluxSum']
+        if 'depFluxSum' in outputFileList:
+            depFluxSumArray += res['depFluxSum']
+        if 'forestInteraction' in outputFileList:
+            forestIntArray = np.where((forestIntArray >= 0) & (res['forestInteraction'] >= 0),
+                                    np.minimum(forestIntArray, res['forestInteraction']),
+                                    np.maximum(forestIntArray, res['forestInteraction']))
+
+    logging.info("Calculation finished, getting results.")
+
+    # Save Calculated tiles
+    if 'zDelta' in outputFileList:
+        np.save(tempDir / ("res_z_delta_%s_%s" % (indI, indJ)), zDeltaArray)
+    if 'zDeltaSum' in outputFileList:
+        np.save(tempDir / ("res_z_delta_sum_%s_%s" % (indI, indJ)), zDeltaSumArray)
+    if 'routFluxSum' in outputFileList:
+        np.save(tempDir / ("res_rout_flux_sum_%s_%s" % (indI, indJ)), routFluxSumArray)
+    if 'depFluxSum' in outputFileList:
+        np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (indI, indJ)), depFluxSumArray)
+    if 'flux' in outputFileList:
+        np.save(tempDir / ("res_flux_%s_%s" % (indI, indJ)), fluxArray)
+    if 'cellCounts' in outputFileList:
+        np.save(tempDir / ("res_count_%s_%s" % (indI, indJ)), cellCountsArray)
+    if 'fpTravelAngle' in outputFileList:
+        np.save(tempDir / ("res_fp_%s_%s" % (indI, indJ)), fpTravelAngleArray)
+    if 'slTravelAngle' in outputFileList:
+        np.save(tempDir / ("res_sl_%s_%s" % (indI, indJ)), slTravelAngleArray)
+    if 'travelLength' in outputFileList:
+        np.save(tempDir / ("res_travel_length_%s_%s" % (indI, indJ)), travelLengthArray)
+    if 'backcalc' in outputFileList:
+        np.save(tempDir / ("res_backcalc_%s_%s" % (indI, indJ)), backcalc)
+    if 'forestInteraction' in outputFileList:
+        np.save(tempDir / ("res_forestInt_%s_%s" % (indI, indJ)), forestIntArray)
