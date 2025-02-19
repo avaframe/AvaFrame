@@ -17,7 +17,8 @@ using a parameter variation, different release-, entrainment- or resistance scen
 An example run script is given by :py:mod:`runAna4ProbAna.py`: where firstly, :py:mod:`com1DFA` is used to
 perform avalanche simulations varying parameters set in the ``ana4Stats/probAnaCfg.ini`` file.
 Using these simulations, a probability map is generated.
-The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
+The output is a raster file (.asc or .tif) with values ranging from 0-1. 0 meaning that no simulation exceeded the
+threshold
 in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
 Details on this function, as for example required inputs can be found in: :py:mod:`ana4Stats.probAna`.
 In addition, there is the option to use the run script :py:mod:`runProbAnalysisOnly.py`: to create probability maps
@@ -68,7 +69,7 @@ can be set in ``ana4Stats/probAnaCfg.ini`` in the sections GENERAL and PLOT. The
 ``avaName/Outputs/comMod/peakfiles`` directory, where ``comMod`` refers to the name of the computational module that has been
 used to create the simulation results. If com1DFA has been used, the full configuration information is accessible and hence
 also filtering is implemented. For other modules the only requirement is that simulation results have to be named in the following format:
-``nameOfReleaseArea_uniqueSimulationIndicator_ModificationIndicator_simType_modelType_resultType.asc``
+``nameOfReleaseArea_uniqueSimulationIndicator_ModificationIndicator_simType_modelType_resultType.*``
 
 * *uniqueSimulationIndicator*: a string that is unique for each simulation (can also be a combination of parameter names and values in case of com1DFA this is the simHash)
 * *ModificationIndicator*: **C** for changed or **D** for default model configuration

@@ -11,7 +11,8 @@ Input
 
 Please be aware that all input data have to be provided in the same projection.
 
-* digital elevation model as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+* digital elevation model as raster file with either `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+  or GeoTIFF format. The format of the DEM determines the format of the output files.
 * set of avalanche paths as (multi-) line shapefile. I.e there can be multiple paths in the shapefile
 
   - recommended attribute *name*

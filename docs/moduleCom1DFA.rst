@@ -50,7 +50,8 @@ folder structure described below.
 In the directory ``Inputs``, the following files are required. Be aware that ALL inputs have to be provided in the same
 projection:
 
-* digital elevation model as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+* digital elevation model as raster file with either `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+  or GeoTIFF format. The format of the DEM determines the format of the output files.
 
 * release area scenario as (multi-) polygon shapefile (in Inputs/REL; multiple features are possible)
 
@@ -87,7 +88,7 @@ and the following files are optional:
 * raster files for the Voellmy friction parameters :math:`\mu` and :math:`\xi` (in Inputs/RASTERS)
 
   - spatial field of :math:`\mu` and :math:`\xi` values with same extent as DEM
-  - file names need to end with ``_mu.asc`` and ``_xi.asc``
+  - file names need to end with ``_mu.*`` and ``_xi.*``
   - only one file per parameter allowed
   - if ``meshCellSize`` is different from simulation ``meshCellSize`` fields will be remeshed
   - only used if ``frictionModel`` is set to ``spatialVoellmy``
@@ -145,7 +146,7 @@ Only available for release thickness:
 
   - set the flag 'relThFromShp' to False
   - set the flag 'relThFromFile' to True
-  - save a raster file with info on release thickness as .asc file in
+  - save a raster file with info on release thickness as raster file in
     ``Inputs/RELTH`` the number of rows and columns must match the DEM raster
     with desired meshCellSize
 

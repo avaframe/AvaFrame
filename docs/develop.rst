@@ -230,7 +230,7 @@ generated. If you plan to add a new benchmark test case, follow these steps
 as a next step, you need to add the benchmark results:
 
   * go to ``AvaFrame/benchmarks`` and add the subdirectory named after your test name
-  * add benchmark data i.e. peak values of result parameters as ascii files. This
+  * add benchmark data i.e. peak values of result parameters as raster files (ascii or geotiff). This
     data will be used as reference for the new test!
   * add the configuration file as ``NameOfAvalanche_com1DFACfg.ini``
   * add a json file with required info on benchmark test - you can use the

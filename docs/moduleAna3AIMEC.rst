@@ -27,7 +27,9 @@ for the full Aimec analysis, as provided in :py:mod:`runScripts/runAna3AIMEC.py`
 Inputs
 -------
 
-*  DEM  (digital elevation model) as .asc file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+*  DEM  (digital elevation model) as raster file with either `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
+   or GeoTIFF format. The format of the DEM determines
+which format is used for the output.
 .. Note:: The spatial resolution of the DEM and its extent can differ from the result raster data.
           Spatial resolution can also differ between simulations. If this is the case, the spatial
           resolution of the reference simulation results raster is used (default) or, if provided,
@@ -88,7 +90,7 @@ To run
       python3 runScripts/runAna3AIMEC.py
 
 .. Note:: 
-   In the default configuration, the analysis is performed on the simulation result files located in ``NameOfAvalanche/Outputs/anaMod/peakFiles``, where anaMod is specified in the aimecCfg.ini. There is also the option to directly provide a path to an input directory to the :py:func:`ana3AIMEC.ana3AIMEC.fullAimecAnalysis`. However, the peak field file names need to have a specific format: *A_B_C_D_E.asc*, where:
+   In the default configuration, the analysis is performed on the simulation result files located in ``NameOfAvalanche/Outputs/anaMod/peakFiles``, where anaMod is specified in the aimecCfg.ini. There is also the option to directly provide a path to an input directory to the :py:func:`ana3AIMEC.ana3AIMEC.fullAimecAnalysis`. However, the peak field file names need to have a specific format: *A_B_C_D_E.*, where:
    
    - A - *releaseAreaScenario*: refers to the name of the release shape file 
    - B - *simulationID*: needs to be unique for the respective simulation

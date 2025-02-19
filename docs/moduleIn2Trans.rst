@@ -2,12 +2,12 @@
 in2Trans: Transformation Utilities
 ##################################
 
-Working with ASCII files
+Working with RASTER files
 ==========================
 
-:py:mod:`in2Trans.ascUtils` is a module created to handle raster ASCII files. It
-contains different functions to read ASCII files and write the data to a numpy
-array, to compare raster file headers or to write a raster to an ASCII file.
+:py:mod:`in2Trans.rasterUtils` is a module created to handle raster  files. It
+contains different functions to read ASCII or GeoTIFF files and write the data to a numpy
+array, to compare raster file headers or to write a raster to file.
 A description of the functions is available in
 :py:mod:`in2Trans.ascUtils`.
 
