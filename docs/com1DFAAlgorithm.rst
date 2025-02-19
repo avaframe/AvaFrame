@@ -20,7 +20,7 @@ Mesh, particles and fields are subsequently initialized.
 Initialize Mesh
 ~~~~~~~~~~~~~~~~~
 
-Read DEM ascii file provided in the Input folder (only one DEM ascii file allowed).
+Read DEM raster file provided in the Input folder (only one DEM raster file allowed; .asc or .tif).
 If the DEM cell size is different from the :``meshCellSize`` specified in the configuration
 from more than ``meshCellSizeThreshold`` [m] the DEM is remeshed (:py:func:`in3Trans.geoTrans.remesh`).
 
@@ -460,7 +460,8 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Simulation outputs
 -------------------
 
-At the end of the simulation, the result fields are exported to .asc files in
+At the end of the simulation, the result fields are exported to raster files (.asc or .tif; depending on file format
+of the input DEM) in
 :py:func:`com1DFA.com1DFA.exportFields` and the information gathered in an info dictionary is used to
 create a markdown report (:py:func:`log2Report.generateReport.writeReport`).
 Further details on the available outputs can be found in :ref:`moduleCom1DFA:Output`.

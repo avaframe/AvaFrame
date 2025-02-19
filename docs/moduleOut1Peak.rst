@@ -24,7 +24,7 @@ Plot all fields
 simulation result field provided in the specified input directory. This function
 is designed to work for result fields that follow a certain naming convention in
 order to provide full functionality:
-*releaseAreaName_simulationType_modelType_simulationIdentifier_resultType.asc*
+*releaseAreaName_simulationType_modelType_simulationIdentifier_resultType.{asc/tif}*
 
 One plot for each field is saved using the name of the input field. By default,
 the plot is constrained to where there is data, however this can be turned off

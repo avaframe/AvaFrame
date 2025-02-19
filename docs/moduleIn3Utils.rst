@@ -36,7 +36,7 @@ Extra features can be added to the above topographies:
 		or by cutting them into the original topography (``topoAdd=False``).
 	* **in case of the parabola topography, a dam can be added by setting ``dam=True``.**
 
-This modules returns a 3D plot of the generated topography as well as an .asc
+This modules returns a 3D plot of the generated topography as well as an raster
 file of the DEM data. The input parameters are defined in the respective
 configuration file ``in3Utils.generateTopoCfg.ini``. Detailed information on the
 individual functions used to create the topographies can be found in
@@ -180,7 +180,7 @@ creates the folder structure required to perform avalanche simulations: ::
 				REL/		- release area scenario
 				RES/		- resistance areas
 				SECREL/ - secondary release areas
-				.asc		- DEM
+				.asc or .tif		- DEM
 			Outputs/
 			Work/
 

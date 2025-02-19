@@ -21,7 +21,7 @@ the :math:`\mu` or :math:`\alpha` value stops varying.
 Input
 -----
 
-* raster of the DEM (.asc file)
+* raster of the DEM (raster file; .asc or .tif)
 * a release feature (shapefile) in ``Inputs/REL``
 * Split point (shapefile). This requirement is planned to be automated as well.
 
