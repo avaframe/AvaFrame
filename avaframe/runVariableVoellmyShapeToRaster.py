@@ -1,60 +1,60 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 21 11:49:44 2025
-
-@author: Domi
-"""
 
 import argparse
 import pathlib
-from com6RockAvalanche.variableVoellmyShapeToRaster import generateMuXsiRasters
+import time
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from avaframe.in3Utils import initializeProject as initProj
+import avaframe.in3Utils.initializeProject as initProj
+from com6RockAvalanche import variableVoellmyShapeToRaster
+from com6RockAvalanche.variableVoellmyShapeToRaster import generateMuXsiRasters
 
-def runMuXsiWorkflow(configPath=''):
+def runMuXsiWorkflow(avadir=''):
     """
     Run the workflow to generate \u03bc and \u03be rasters.
 
     Parameters
     ----------
-    configPath : str
-        Path to the configuration file.
+    avadir : str
+        Path to the avalanche directory containing input and output folders.
 
     Returns
     -------
     None
     """
+    startTime = time.time()
     logName = 'runMuXsi'
 
     # Load general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
-
-    # Load configuration file path from general config if not provided
-    if configPath:
-        cfgMain['MAIN']['configFile'] = configPath
+    if avadir:
+        cfgMain['MAIN']['avalancheDir'] = avadir
     else:
-        configPath = cfgMain['MAIN']['configFile']
+        avadir = cfgMain['MAIN']['avalancheDir']
 
-    configPath = pathlib.Path(configPath)
+    avadir = pathlib.Path(avadir)
 
     # Start logging
-    log = logUtils.initiateLogger(configPath.parent, logName)
+    log = logUtils.initiateLogger(avadir, logName)
     log.info('MAIN SCRIPT')
-    log.info('Using configuration file: %s', configPath)
+    log.info('Using avalanche directory: %s', avadir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(configPath.parent, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avadir, deleteOutput=False)
+
+    # Load module-specific configuration for Variable Voellmy
+    variableVoellmyCfg = cfgUtils.getModuleConfig(variableVoellmyShapeToRaster)
 
     # Run the raster generation process
-    generateMuXsiRasters(str(configPath))
+    generateMuXsiRasters(avadir, variableVoellmyCfg)
 
+    endTime = time.time()
+    log.info("Took %6.1f seconds to calculate.", (endTime - startTime))
     log.info('Workflow completed successfully.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run \u03bc and \u03be raster generation workflow')
-    parser.add_argument('configPath', metavar='c', type=str, nargs='?', default='',
-                        help='Path to the configuration file')
+    parser.add_argument('avadir', metavar='a', type=str, nargs='?', default='',
+                        help='Path to the avalanche directory')
 
     args = parser.parse_args()
-    runMuXsiWorkflow(str(args.configPath))
+    runMuXsiWorkflow(str(args.avadir))
