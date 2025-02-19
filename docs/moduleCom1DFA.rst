@@ -1,3 +1,5 @@
+.. _com1DFA:
+
 com1DFA: DFA-Kernel
 ===========================
 
@@ -292,7 +294,6 @@ To run
 
 Theory
 --------
-
 
 The governing equations of the dense flow avalanche are derived from the
 incompressible mass and momentum balance on a Lagrange control volume
