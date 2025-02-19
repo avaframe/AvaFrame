@@ -53,6 +53,7 @@ class Cell:
         # every iteration of calc_z_delta(self)
 
         self.min_distance = 0  # minimal distance to start-cell (i.e. along shortest path) min_distance >=
+        self.minDistXYZ = 0  # minimal distance to start-cell (Actual 3D lenght, not projected!!)
         self.max_distance = 0  # NOTE: self.max_distance is never used - maybe remove!?
         self.min_gamma = 0  # NOTE: self.min_gamma (assumingly minimal travel angle to cell) never used - maybe remove!?
         self.max_gamma = 0
@@ -68,6 +69,7 @@ class Cell:
 
             self.forestBool = True
             self.forestModule = forestParams["forestModule"]
+            self.skipForestDist = forestParams["skipForestDist"]
 
             # forestInteraction:
             self.forestInteraction = forestParams["forestInteraction"]
@@ -91,7 +93,7 @@ class Cell:
                 _vThFr = self.noFrictionEffectV
                 _vThDe = self.noDetrainmentEffectV
                 _sqrt2xG = self._SQRT2 * 9.81
-                self.noFricitonEffectZdelta = (_vThFr * _vThFr) / _sqrt2xG
+                self.noFrictionEffectZDelta = (_vThFr * _vThFr) / _sqrt2xG
                 self.noDetrainmentEffectZdelta = (_vThDe * _vThDe) / _sqrt2xG
 
             elif self.forestModule == "forestFrictionLayer":
@@ -103,7 +105,6 @@ class Cell:
 
                 self.AlphaFor = max(self.AlphaFor, self.alpha)  # Friction in Forest can't be lower than without forest
                 self.tanAlphaFor = np.tan(np.deg2rad(self.AlphaFor))
-                self.nSkipForestCells = forestParams["nSkipForest"]
 
             # NOTE: This is a quick hack to check if all values for Detrainment are set to 0 (as provided in the
             #      .ini file)
@@ -132,7 +133,7 @@ class Cell:
             self.maxAddedDetrainmentForest = 0
             self.minAddedDetrainmentForest = 0
             self.noDetrainmentEffectV = 0
-            self.noFricitonEffectZdelta = 0
+            self.noFrictionEffectZDelta = 0
             self.noDetrainmentEffectZdelta = 0
 
         if type(startcell) == bool:  # if a boolean variable (i.e.'True') is passed to the constructor
@@ -176,18 +177,41 @@ class Cell:
             if parent.forestIntCount < (self.forestIntCount - self.isForest):
                 self.forestIntCount = parent.forestIntCount + self.isForest
 
+    def calcDistMin(self, calc3D=False):
+        """
+        function calculates the projected horizontal (self.min_distance) and 3D (self.minDistXYZ) length
+        of the shortest flow path from the start-cell to the current cell.
+
+        Parameters
+        -----------
+        calc3D: bool
+            if True, the 3D distance is computed additionally (default: False)
+        """
+        if calc3D:
+            _ldistMin = []
+            _lDistMinXYZ = []
+            for parent in self.lOfParents:
+                _dx = abs(parent.colindex - self.colindex) * self.cellsize
+                _dy = abs(parent.rowindex - self.rowindex) * self.cellsize
+                _dz = abs(parent.altitude - self.altitude)
+                _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) + parent.min_distance)
+                _lDistMinXYZ.append(math.sqrt(_dy*_dy + _dy*_dy + _dz*_dz) + parent.minDistXYZ)
+            self.min_distance = np.amin(_ldistMin)
+            self.minDistXYZ = np.amin(_lDistMinXYZ)
+        else:
+            _ldistMin = []
+            for parent in self.lOfParents:
+                _dx = abs(parent.colindex - self.colindex) * self.cellsize
+                _dy = abs(parent.rowindex - self.rowindex) * self.cellsize
+                _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) + parent.min_distance)
+            self.min_distance = np.amin(_ldistMin)
+
     def calc_fp_travelangle(self):
         """function calculates the travel-angle along the shortest flow-path from the start-cell
         to the current cell. The travel-angle along the shortest flow-path is equivalent to the
         maximum travel angle along all paths from the startcell to this cell.
         """
-        _ldistMin = []  #
         _dh = self.startcell.altitude - self.altitude  # elevation difference from cell to start-cell
-        for parent in self.lOfParents:
-            _dx = abs(parent.colindex - self.colindex)
-            _dy = abs(parent.rowindex - self.rowindex)
-            _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) * self.cellsize + parent.min_distance)
-        self.min_distance = np.amin(_ldistMin)
         self.max_gamma = np.rad2deg(np.arctan(_dh / self.min_distance))
 
     def calc_sl_travelangle(self):
@@ -213,41 +237,40 @@ class Cell:
         self.z_gamma = self.altitude - self.dem_ng
         ds = np.array([[self._SQRT2, 1, self._SQRT2], [1, 0, 1], [self._SQRT2, 1, self._SQRT2]])
 
+        if (not self.is_start):
+            if (not self.forestBool):
+                self.calcDistMin()
+            else:
+                self.calcDistMin(calc3D=True)
+
         if self.forestBool:
+
             if self.forestModule == "forestFrictionLayer":
-                # default behavior - forest effect only neglected for start-cells
-                if (self.nSkipForestCells == 1) and (not self.is_start):
-                    _tanAlpha = self.tanAlphaFor
-                # forest effect also neglected for direct successors to the start-cell if nSkipForestCells==2
-                elif ((self.nSkipForestCells == 2) and (not self.is_start) and
-                      (True not in [x.is_start for x in self.lOfParents])):
+                if (not self.is_start) and (self.skipForestDist < self.minDistXYZ):
                     _tanAlpha = self.tanAlphaFor
                 else:
                     _tanAlpha = self.tanAlpha
 
-            elif (self.forestModule == "forestFriction") or (self.forestModule == "forestDetrainment"):
-
-                if (self.forestBool) and (self.FSI > 0.0) and (not self.is_start):
+            if self.forestModule in ["forestFriction", "forestDetrainment"]:
+                if (not self.is_start) and (self.FSI > 0.) and (self.skipForestDist < self.minDistXYZ):
                     # if forestBool, we assume that forestFriciton is activated
                     # and if FSI > 0 then we also calculate _tanAlpha with forestEffect
                     # NOTE: We also don't assume a forest Effect on potential Start Zells, since this should
                     #      ideally be handled by a separate release-area algorithm in the pre-processing
                     # NOTE-TODO: The rest of this implementation is also just copy+pasted from 'foreste_detraiment'
                     #      branch and not yet fully tested!!
-                    if self.z_delta < self.noFricitonEffectZdelta:
+                    if self.z_delta < self.noFrictionEffectZDelta:
                         # friction at rest v=0 would be applied to start cells
                         _rest = self.maxAddedFrictionForest * self.FSI
                         # rise over run
-                        _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFricitonEffectZdelta)
+                        _slope = (_rest - self.minAddedFrictionForest) / (0 - self.noFrictionEffectZDelta)
                         # y = mx + b, shere z_delta is the x
                         friction = max(self.minAddedFrictionForest, _slope * self.z_delta + _rest)
-
                         _alpha_calc = self.alpha + max(0, friction)  # NOTE: not sure what this does, seems redundant!
                     else:
                         _alpha_calc = self.alpha + self.minAddedFrictionForest
 
                     _tanAlpha = np.tan(np.deg2rad(_alpha_calc))
-
                 else:
                     _tanAlpha = self.tanAlpha
 

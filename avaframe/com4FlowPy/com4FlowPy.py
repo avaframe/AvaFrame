@@ -130,7 +130,8 @@ def com4FlowPyMain(cfgPath, cfgSetup):
         forestParams["velThForDetrain"] = cfgSetup.getfloat("velThForDetrain")  # float(cfgSetup["velThForDetrain"])
         # 'forestFrictionLayer' parameter
         forestParams["fFrLayerType"] = cfgSetup.get("forestFrictionLayerType")
-        forestParams["nSkipForest"] = cfgSetup.getint("skipForestCells")
+        # skipForestDist - no forest friciton effect assumed while distance along path <= skipForestDist
+        forestParams["skipForestDist"] = cfgSetup.getfloat("skipForestDist")
 
     else:
         modelPaths["forestPath"] = ""
@@ -612,8 +613,6 @@ def checkConvertReleaseShp2Tif(modelPaths):
             dem = IOf.readRaster(modelPaths["demPath"])
             demHeader = IOf.readRasterHeader(modelPaths["demPath"])
         elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            #dem = io.read_raster(modelPaths["demPath"])
-            #demHeader = io.read_header(modelPaths["demPath"])
             _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
             log.error(_errMsg)
             raise ValueError(_errMsg)
