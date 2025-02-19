@@ -12,15 +12,16 @@ from com6RockAvalanche.scarp import runScarpAnalysis
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
+from com6RockAvalanche import scarp
 
 
-def runScarpAnalysisWorkflow(configFile=''):
+def runScarpAnalysisWorkflow(avadir=''):
     """Run the scarp analysis workflow.
 
     Parameters
     ----------
-    configFile : str
-        Path to the configuration file in .ini format.
+    avadir : str
+        Path to the avalanche directory containing input and output folders.
 
     Returns
     -------
@@ -31,25 +32,26 @@ def runScarpAnalysisWorkflow(configFile=''):
 
     # Load general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
-
-    # Load configuration file path from general config if not provided
-    if configFile != '':
-        cfgMain['MAIN']['configFile'] = configFile
+    if avadir:
+        cfgMain['MAIN']['avalancheDir'] = avadir
     else:
-        configFile = cfgMain['MAIN']['configFile']
+        avadir = cfgMain['MAIN']['avalancheDir']
 
-    configFile = pathlib.Path(configFile)
+    avadir = pathlib.Path(avadir)
 
     # Start logging
-    log = logUtils.initiateLogger(configFile.parent, logName)
+    log = logUtils.initiateLogger(avadir.parent, logName)
     log.info('MAIN SCRIPT')
-    log.info('Using configuration file: %s', configFile)
+    log.info('Using configuration file: %s', avadir)
 
     # Clean input directory(ies) of old work files
-    initProj.cleanSingleAvaDir(configFile.parent, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avadir.parent, deleteOutput=False)
+
+    # Load module-specific configuration for Variable Voellmy
+    scarpCfg = cfgUtils.getModuleConfig(scarp)
 
     # Run the scarp analysis
-    runScarpAnalysis(str(configFile))
+    runScarpAnalysis(avadir, scarpCfg)
 
     log.info('Scarp analysis completed successfully.')
 
@@ -58,9 +60,10 @@ def runScarpAnalysisWorkflow(configFile=''):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run scarp analysis workflow')
-    parser.add_argument('configFile', metavar='c', type=str, nargs='?', default='',
-                        help='Path to the scarp configuration file')
+    parser.add_argument('avadir', metavar='c', type=str, nargs='?', default='',
+                        help='Path to the avalanche directory')
 
     args = parser.parse_args()
-    runScarpAnalysisWorkflow(str(args.configFile))
+    runScarpAnalysisWorkflow(str(args.avadir))
+
 

@@ -2,43 +2,57 @@ import rasterio
 import numpy as np
 import math
 import configparser
-import shapefile
-import pathlib
 import logging
-from in2Trans.shpConversion import SHP2Array
-from in2Trans.shpConversion import getSHPProjection
+<<<<<<< HEAD
+import pathlib
+=======
+>>>>>>> 02ccac48226b0dd1afd5fc57d0210530b75b2b5d
+from avaframe.in2Trans.shpConversion import SHP2Array
 from rasterio.features import rasterize
 from shapely.geometry import shape, mapping
+from in1Data.getInput import getAndCheckInputFiles
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-def runScarpAnalysis(configFile):
+def runScarpAnalysis(avadir, scarpCfg):
     """Run the scarp analysis using parameters from an .ini configuration file.
 
     Parameters
     ----------
-    config_file : str
+<<<<<<< HEAD
+    avadir : str
+        Path to the avalanche directory.
+    scarpCfg : Config Parser Object
+        scarpCfg Configuration File
+=======
+    configFile : str
         Path to the configuration file in .ini format.
 
+>>>>>>> 02ccac48226b0dd1afd5fc57d0210530b75b2b5d
     Returns
     -------
     None
     """
-    config = configparser.ConfigParser()
-    config.read(configFile)
-   
+    avadir = pathlib.Path(avadir)
+    
+    config = scarpCfg  # Directly use the ConfigParser object
+    
+    inputDir = avadir / "Inputs"
+    outputDir = avadir / "Inputs" # Output directory is Inputs, because Outputs of this Script will be used as Inputs for AvaFrame
+    elevation, _ = getAndCheckInputFiles(inputDir, '', 'DEM', fileExt='asc')
+    perimeterInput, _ = getAndCheckInputFiles(inputDir, 'RASTERS', 'Perimeter Input Raster File', fileExt='asc', fileSuffix='_per')
+    perimeterShapefilePath, _ = getAndCheckInputFiles(inputDir, 'POLYGONS', 'Perimeter Input Shape File', fileExt='shp', fileSuffix='_per')
+    shapefilePath, _ = getAndCheckInputFiles(inputDir, 'POINTS', 'Features Shape File', fileExt='shp', fileSuffix='_feat')
+       
+    elevScarp = outputDir / "RASTERS" / "raster_scarp.asc"
+    hRelease = outputDir / "REL" / "raster_rel.asc"
+    
     # Read input parameters from the configuration file
-    elevation = config['INPUT']['elevation']
-    perimeterInput = config['INPUT']['perimeter']
-    shapefilePath = config['INPUT'].get('shapefile', '').strip()
-    perimeterShapefilePath = config['INPUT'].get('perimeter_shapefile', '').strip()
+
     features = config['INPUT'].get('features', '')
-    
-    elevScarp = config['OUTPUT']['elevscarp']
-    hRelease = config['OUTPUT']['hrelease']
-    
+       
     method = config['SETTINGS']['method'].lower()
 
     # Initialize feature parameters
@@ -50,7 +64,6 @@ def runScarpAnalysis(configFile):
         elevTransform = elevSrc.transform
         elevCRS = elevSrc.crs
         n, m = elevData.shape
-        res = elevTransform[0]
 
     periData = readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, (n, m), elevCRS)
 
@@ -119,15 +132,15 @@ def readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, elevSha
 
     Parameters
     ----------
-    perimeter_input : str
+    perimeterInput : str
         Path to the perimeter raster file.
-    perimeter_shapefile_path : str
+    perimeterShapefilePath : str
         Path to the perimeter shapefile.
-    elev_transform : Affine
-        Affine transformation of the elevation raster.
-    elev_shape : tuple
+    elevTransform : Affine
+        transformation of the elevation raster.
+    elevShape : tuple
         Shape (height, width) of the elevation raster.
-    elev_crs : rasterio.crs.CRS
+    elevCrs : rasterio.crs.CRS
         Coordinate Reference System of the elevation raster.
 
     Returns
@@ -310,3 +323,4 @@ def saveRaster(filename, data, transform, crs):
     ) as dst:
         dst.write(data, 1)
     log.debug("Raster saved: %s", filename)
+
