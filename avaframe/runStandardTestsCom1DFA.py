@@ -47,8 +47,8 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 #  valuesList = ['resistance']
 filterType = 'TAGS'
 valuesList = ['standardTest', 'standardTestSnowGlide']
-# filterType = 'AVANAME'
-# valuesList = ['avaAlr']
+# filterType = 'NAME'
+# valuesList = ['avaPyramidNullTest']
 
 testList = tU.filterBenchmarks(testDictList, filterType, valuesList, condition='or')
 
@@ -80,6 +80,7 @@ for test in testList:
     avaDir = test['AVADIR']
     cfgMain['MAIN']['avalancheDir'] = avaDir
 
+    print("\n", 40 * "*", "\n", test["NAME"], 40 * "*")
     # Fetch benchmark test info
     benchDict = test
     simNameRef = test['simNameRef']
