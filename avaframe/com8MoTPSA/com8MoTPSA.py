@@ -2,6 +2,7 @@ import os
 import subprocess
 import platform
 import logging
+import pandas as pd
 
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -44,11 +45,11 @@ def _runAndCheck(command):
 
 # TODO move to utils
 def cfgToRcf(cfg, fileName):
-    with open(fileName, 'w') as f:
+    with open(fileName, "w") as f:
         for section in cfg.sections():
             if section in ("FOREST_EFFECTS", "ENTRAINMENT"):
                 pass
-            elif section in ("GENERAL"):
+            elif section in ("GENERAL", "INPUT"):
                 continue
             else:
                 f.write(f"# {section.replace('_', ' ')}\n")
@@ -77,18 +78,37 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         log.info("Simulation: %s" % key)
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
-    # # Generate command and run via subprocess.run
-    #
-    # # Configuration that needs adjustment
-    # cfgInfo['Run information']['Area of Interest'] = cfgMain['MAIN']['avalancheDir'].replace("/", "")
-    # # cfgInfo['Run information']['UTM Zone']
-    # # cfgInfo['Run information']['EPGS geodetic datum code']
-    # cfgInfo['Run information']['Run name'] = cfgMain['MAIN']['avalancheDir'].replace("/", "")
-    #
-    #
-    # rcfFile = 'outputTemplate.rcf'
-    #
-    # cfgToRcf(cfgInfo, rcfFile)
-    #
+    for key in simDict:
+        # Generate command and run via subprocess.run
+        # Configuration that needs adjustment
+
+        simDF = pd.DataFrame()
+
+        # load configuration object for current sim
+        cfg = simDict[key]["cfgSim"]
+
+        # fetch simHash for current sim
+        simHash = simDict[key]["simHash"]
+
+        # append configuration to dataframe
+        simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
+        print(simDF["DEM"])
+
+        cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
+        cfgInfo["Run information"]["UTM zone"] = "HAUMIBLAU"
+        cfgInfo["Run information"]["EPSG geodetic datum code"] = "37888"
+        cfgInfo["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
+        cfgInfo["File names"]["Grid filename"] = "./" + str(inputSimFiles["demFile"])
+
+        # select release area input data according to chosen release scenario
+        # inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
+
+        # create required input from input files
+        # demOri, inputSimLines = prepareInputData(inputSimFiles, cfg)
+
+        rcfFile = key + ".rcf"
+
+        cfgToRcf(cfgInfo, rcfFile)
+
     # command = ['./MoT-PSA', rcfFile]
     # _runAndCheck(command)

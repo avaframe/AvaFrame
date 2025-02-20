@@ -2761,7 +2761,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             log.warning("Simulation %s already exists, not repeating it" % simName)
 
     log.info("Done preparing variations -----")
-    inputSimFiles.pop("demFile")
+    # TODO: maybe treat this in some other way, i.e. adding an "finalDEM" or similar
+    # inputSimFiles.pop("demFile")
+    inputSimFiles["demFile"] = pathToDemFull
 
     return simDict
 
