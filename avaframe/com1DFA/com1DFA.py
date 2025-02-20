@@ -1840,7 +1840,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         startTime = time.time()
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
         # Perform computations
-        particles, fields, zPartArray0, tCPU = computeEulerTimeStep(
+        particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
             cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
         )
         # set max values of fields to dataframe
@@ -2191,6 +2191,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         fields dictionary at t + dt
     tCPU : dict
         computation time dictionary
+    dem: dict
+        dictionary with dem information including the adapted DEM
     """
     # get forces
     startTime = time.time()
@@ -2272,7 +2274,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPUField = time.time() - startTime
     tCPU["timeField"] = tCPU["timeField"] + tCPUField
 
-    return particles, fields, zPartArray0, tCPU
+    return particles, fields, zPartArray0, tCPU, dem
 
 
 def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
