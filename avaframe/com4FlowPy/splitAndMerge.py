@@ -10,7 +10,7 @@ import logging
 import pickle
 import gc
 import numpy as np
-import avaframe.com4FlowPy.rasterIo as io
+import avaframe.in2Trans.rasterUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -42,7 +42,8 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     #    os.makedirs(dirName)
 
     # largeRaster, largeHeader = iof.f_readASC(fNameIn, dType='float')
-    largeRaster, largeHeader = io.read_raster(fNameIn)
+    largeData = IOf.readRaster(fNameIn, noDataToNan=False)
+    largeRaster = largeData["rasterData"]
     # einlesen des Rasters und der Header
 
     i, j, imax, jmax = 0, 0, 0, 0
