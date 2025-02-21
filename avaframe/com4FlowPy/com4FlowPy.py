@@ -24,7 +24,6 @@ import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
 # com4FlowPy Libraries
-import avaframe.com4FlowPy.rasterIo as io
 import avaframe.com4FlowPy.flowCore as fc
 import avaframe.com4FlowPy.splitAndMerge as SPAM
 
@@ -173,19 +172,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # get information on cellsize and nodata value from demHeader
     rasterAttributes = {}
-
-    demExt = os.path.splitext(modelPaths["demPath"])[1]
-    if demExt in ['.asc', '.ASC']:
-        demHeader = IOf.readRasterHeader(modelPaths["demPath"])
-        rasterAttributes["nodata"] = demHeader["nodata_value"]
-    elif demExt in ['.tif', '.tiff', '.TIF', '.TIFF']:
-        demHeader = io.read_header(modelPaths["demPath"])
-        rasterAttributes["nodata"] = demHeader["noDataValue"]
-    else:
-        _errMsg = f"file format '{demExt}' for DEM is not supported, please provide '.tif' or '.asc'"
-        log.error(_errMsg)
-        raise ValueError(_errMsg)
-
+    
+    demHeader = IOf.readRasterHeader(modelPaths["demPath"])
+    rasterAttributes["nodata"] = demHeader["nodata_value"]
     rasterAttributes["cellsize"] = demHeader["cellsize"]
 
     # tile input layers and write tiles (pickled np.arrays) to temp Folder
@@ -291,15 +280,8 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
 
         ext = os.path.splitext(modelPaths["demPath"])[1]
 
-        if ext in ['.asc', '.ASC']:
-            _demHeader = IOf.readRasterHeader(modelPaths["demPath"])
-            _relHeader = io.read_header(modelPaths["releasePathWork"])
-        elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            _demHeader = io.read_header(modelPaths["demPath"])
-            _relHeader = io.read_header(modelPaths["releasePathWork"])
-        else:
-            _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
-            raise ValueError(_errMsg)
+        _demHeader = IOf.readRasterHeader(modelPaths["demPath"])
+        _relHeader = IOf.readRasterHeader(modelPaths["releasePathWork"])
 
         if _demHeader["ncols"] == _relHeader["ncols"] and _demHeader["nrows"] == _relHeader["nrows"]:
             log.info("DEM and Release Layer ok!")
@@ -308,7 +290,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
             sys.exit(1)
 
         if modelParameters["infraBool"]:
-            _infraHeader = io.read_header(modelPaths["infraPath"])
+            _infraHeader = IOf.readRasterHeader(modelPaths["infraPath"])
             if _demHeader["ncols"] == _infraHeader["ncols"] and _demHeader["nrows"] == _infraHeader["nrows"]:
                 log.info("Infra Layer ok!")
             else:
@@ -316,7 +298,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["forestBool"]:
-            _forestHeader = io.read_header(modelPaths["forestPath"])
+            _forestHeader = IOf.readRasterHeader(modelPaths["forestPath"])
             if _demHeader["ncols"] == _forestHeader["ncols"] and _demHeader["nrows"] == _forestHeader["nrows"]:
                 log.info("Forest Layer ok!")
             else:
@@ -324,7 +306,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varUmaxBool"]:
-            _varUmaxHeader = io.read_header(modelPaths["varUmaxPath"])
+            _varUmaxHeader = IOf.readRasterHeader(modelPaths["varUmaxPath"])
             if _demHeader["ncols"] == _varUmaxHeader["ncols"] and _demHeader["nrows"] == _varUmaxHeader["nrows"]:
                 log.info("uMax Limit Layer ok!")
             else:
@@ -332,7 +314,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varAlphaBool"]:
-            _varAlphaHeader = io.read_header(modelPaths["varAlphaPath"])
+            _varAlphaHeader = IOf.readRasterHeader(modelPaths["varAlphaPath"])
             if _demHeader["ncols"] == _varAlphaHeader["ncols"] and _demHeader["nrows"] == _varAlphaHeader["nrows"]:
                 log.info("variable Alpha Layer ok!")
             else:
@@ -340,7 +322,7 @@ def checkInputLayerDimensions(modelParameters, modelPaths):
                 sys.exit(1)
 
         if modelParameters["varExponentBool"]:
-            _varExponentHeader = io.read_header(modelPaths["varExponentPath"])
+            _varExponentHeader = IOf.readRasterHeader(modelPaths["varExponentPath"])
             if _demHeader["ncols"] == _varExponentHeader["ncols"] and _demHeader["nrows"] == _varExponentHeader["nrows"]:
                 log.info("variable exponent Layer ok!")
             else:
@@ -385,7 +367,8 @@ def checkInputParameterValues(modelParameters, modelPaths):
     _checkVarParams = True
 
     if modelParameters["varAlphaBool"]:
-        rasterValues, header = io.read_raster(modelPaths["varAlphaPath"])
+        data = IOf.readRaster(modelPaths["varAlphaPath"])
+        rasterValues = data["rasterData"] 
         rasterValues[rasterValues < 0] = np.nan  # handle different noData values
         if np.any(rasterValues > 90, where=~np.isnan(rasterValues)):
             log.error("Error: Not all Alpha-raster values are within a physically sensible range ([0,90]),\
@@ -393,7 +376,8 @@ def checkInputParameterValues(modelParameters, modelPaths):
             _checkVarParams = False
 
     if modelParameters["varUmaxBool"]:
-        rasterValues, header = io.read_raster(modelPaths["varUmaxPath"])
+        data = IOf.readRaster(modelPaths["varUmaxPath"])
+        rasterValues = data["rasterData"] 
         rasterValues[rasterValues < 0] = np.nan
         if modelParameters["varUmaxType"].lower() == 'umax':
             _maxVal = 1500  # ~sqrt(8848*2*9.81)
@@ -549,44 +533,54 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     _oF = modelPaths["outputFileFormat"]
     _ts = modelPaths["timeString"]
 
+    demHeader = IOf.readRasterHeader(modelPaths["demPath"])
+    outputHeader = demHeader.copy()
+    outputHeader["nodata_value"]=-9999
+    
+    if _oF == ".asc":
+        outputHeader["driver"] = "AAIGrid"
+    elif _oF == ".tif":
+        outputHeader["driver"] = "GTiff"
+
     if 'flux' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_flux{}".format(_uid, _ts, _oF),
-        flux)
+        output = IOf.writeResultToRaster(outputHeader, flux,
+                                         modelPaths["resDir"] / "com4_{}_{}_flux".format(_uid, _ts), flip=True)
     if 'zDelta' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zdelta{}".format(_uid, _ts, _oF),
-        zDelta)
+        output = IOf.writeResultToRaster(outputHeader, zDelta,
+                                         modelPaths["resDir"] / "com4_{}_{}_zdelta".format(_uid, _ts), flip=True)
     if 'cellCounts' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_cellCounts{}".format(_uid, _ts, _oF),
-        cellCounts)
+        output = IOf.writeResultToRaster(outputHeader, cellCounts,
+                                         modelPaths["resDir"] / "com4_{}_{}_cellCounts".format(_uid, _ts), flip=True)
     if 'zDeltaSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_zDeltaSum{}".format(_uid, _ts, _oF),
-        zDeltaSum)
+        output = IOf.writeResultToRaster(outputHeader, zDeltaSum,
+                                         modelPaths["resDir"] / "com4_{}_{}_zDeltaSum".format(_uid, _ts), flip=True)
     if 'routFluxSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_routFluxSum{}".format(_uid, _ts, _oF),
-        routFluxSum)
+        output = IOf.writeResultToRaster(outputHeader, routFluxSum,
+                                         modelPaths["resDir"] / "com4_{}_{}_routFluxSum".format(_uid, _ts), flip=True)
     if 'depFluxSum' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_depFluxSum{}".format(_uid, _ts, _oF),
-        depFluxSum)
+        output = IOf.writeResultToRaster(outputHeader, depFluxSum,
+                                         modelPaths["resDir"] / "com4_{}_{}_depFluxSum".format(_uid, _ts), flip=True)
     if 'fpTravelAngle' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle{}".format(_uid,
-        _ts, _oF), fpTa)
+        output = IOf.writeResultToRaster(outputHeader, fpTa,
+                                         modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle".format(_uid, _ts), flip=True)
     if 'slTravelAngle' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_slTravelAngle{}".format(_uid,
-        _ts, _oF), slTa)
+        output = IOf.writeResultToRaster(outputHeader, slTa,
+                                         modelPaths["resDir"] / "com4_{}_{}_slTravelAngle".format(_uid, _ts), flip=True)
     if 'travelLength' in _outputs:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_travelLength{}".format(_uid,
-        _ts, _oF), travelLength)
+        output = IOf.writeResultToRaster(outputHeader, travelLength,
+                                         modelPaths["resDir"] / "com4_{}_{}_travelLength".format(_uid, _ts), flip=True)
 
     # NOTE:
     # if not modelOptions["infraBool"]:  # if no infra
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
     if modelOptions["infraBool"]:  # if infra
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_backcalculation{}".format(_uid,
-                         _ts, _oF), backcalc)
+        output = IOf.writeResultToRaster(outputHeader, backcalc,
+                                         modelPaths["resDir"] / "com4_{}_{}_backcalculation".format(_uid, _ts), flip=True)
     if modelOptions["forestInteraction"]:
-        io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / "com4_{}_{}_forestInteraction{}".format(_uid,
-                         _ts, _oF), forestInteraction)
+        output = IOf.writeResultToRaster(outputHeader, forestInteraction,
+                                         modelPaths["resDir"] / "com4_{}_{}_forestInteraction".format(_uid, _ts), flip=True)
+    del output
 
 
 def checkConvertReleaseShp2Tif(modelPaths):
@@ -604,34 +598,26 @@ def checkConvertReleaseShp2Tif(modelPaths):
     """
     # the release is a shp polygon, we need to convert it to a raster
     # releaseLine = shpConv.readLine(releasePath, 'releasePolygon', demDict)
-
     if modelPaths["releasePath"].suffix == ".shp":
 
-        ext = os.path.splitext(modelPaths["demPath"])[1]
-
-        if ext in ['.asc', '.ASC']:
-            dem = IOf.readRaster(modelPaths["demPath"])
-            demHeader = IOf.readRasterHeader(modelPaths["demPath"])
-        elif ext in ['.tif', '.tiff', '.TIF', '.TIFF']:
-            _errMsg = "using release area in '.shp' format currently only supported in combination with '.asc' DEMs"
-            log.error(_errMsg)
-            raise ValueError(_errMsg)
-        else:
-            _errMsg = f"file format '{ext}' for DEM is not supported, please provide '.tif' or '.asc'"
-            log.error(_errMsg)
-            raise ValueError(_errMsg)
-
+        dem = IOf.readRaster(modelPaths["demPath"])
+        demHeader = dem["header"]
         dem['originalHeader'] = demHeader
 
         releaseLine = shpConv.SHP2Array(modelPaths["releasePath"], "releasePolygon")
         thresholdPointInPoly = 0.01
         releaseLine = gT.prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=False)
         # give the same header as the dem
-        releaseAreaHeader = demHeader
         releaseArea = np.flipud(releaseLine["rasterData"])
-        modelPaths["releasePathWork"] = modelPaths["workDir"] / "release.tif"
-        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.asc", releaseArea)
-        io.output_raster(modelPaths["demPath"], modelPaths["workDir"] / "release.tif", releaseArea)
+        if demHeader["driver"] == "AAIGrid":
+            modelPaths["releasePathWork"] = modelPaths["workDir"] / "release.asc"
+        if demHeader["driver"] == "GTiff":
+            modelPaths["releasePathWork"] = modelPaths["workDir"] / "release.tif"
+        # we use the nodata_value of the DEM for the output release raster
+        # NOTE: nodata_value does not matter anyways - since gT.prepareArea() returns a
+        # raster with values of '0' indicating 'no release area' - so there actually should
+        # not be any 'no_data' values in the created release raster file
+        IOf.writeResultToRaster(demHeader, releaseArea, modelPaths["workDir"] / "release")
         del releaseLine
     else:
         modelPaths["releasePathWork"] = modelPaths["releasePath"]

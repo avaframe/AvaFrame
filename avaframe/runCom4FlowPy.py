@@ -209,124 +209,82 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
 
     cfgPath = {}
     avalancheDir = pathlib.Path(avalancheDir)
-    # read release area
-    releaseDir = avalancheDir / "Inputs" / "REL"
 
-    # from shapefile
-    relFiles = sorted(list(releaseDir.glob("*.shp")))
-    tryTif = False
-    if len(relFiles) == 0:
-        log.info("Found no *.shp file containing the release area in %s, trying with *.tif" % releaseDir)
-        tryTif = True
-    elif len(relFiles) > 1:
-        message = "There should be exactly one *.shp file containing the release area in %s" % releaseDir
+    inputDir = avalancheDir / "Inputs"
+    relFile, available = gI.getAndCheckInputFiles(inputDir, "REL", "Release Area", fileExt="shp")
+    
+    if available == "No":
+        relFile, available = gI.getAndCheckInputFiles(inputDir, "REL", "Release Area", fileExt="raster")
+    if available == "No":
+        message = f"There is no release area file in supported format provided in {avalancheDir}/REL"
         log.error(message)
         raise AssertionError(message)
-    else:
-        log.info("Release area file is: %s" % relFiles[0])
-        cfgPath["releasePath"] = relFiles[0]
-
-    # from tif
-    if tryTif:
-        relFiles = sorted(list(releaseDir.glob("*.tif")))
-        if len(relFiles) == 0:
-            message = (
-                "You need to provide one *.shp file or one *.tif file containing the release area in %s"
-                % releaseDir
-            )
-            log.error(message)
-            raise FileNotFoundError(message)
-        elif len(relFiles) > 1:
-            message = "There should be exactly one *.tif file containing the release area in %s" % releaseDir
+    log.info("Release area file is: %s" % relFile)
+    cfgPath["releasePath"] = relFile
+    
+    # TODO: also use the getAndCheckInputFiles to get the paths for the following files?
+    # read infra area
+    if cfgFlowPy.getboolean("GENERAL", "infra") is True:
+        infraPath, available = gI.getAndCheckInputFiles(inputDir, "INFRA", "Infra", fileExt="raster")
+        if available == "No":
+            message = f"There is no infra file in supported format provided in {avalancheDir}/INFRA"
             log.error(message)
             raise AssertionError(message)
-        else:
-            log.info("Release area file is: %s" % relFiles[0])
-            cfgPath["releasePath"] = relFiles[0]
-
-    # read infra area
-    infraDir = avalancheDir / "Inputs" / "INFRA"
-    infraPath = sorted(list(infraDir.glob("*.tif")))
-    if len(infraPath) == 0 or cfgFlowPy.getboolean("GENERAL", "infra") is False:
-        infraPath = ""
-    elif len(infraPath) > 1:
-        message = "More than one Infrastructure file .%s file in %s not allowed" % (infraDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        infraPath = infraPath[0]
         log.info("Infrastructure area file is: %s" % infraPath)
+    else:
+        infraPath = ""
     cfgPath["infraPath"] = infraPath
 
     # read uMax Limit Raster
-    varUmaxDir = avalancheDir / "Inputs" / "UMAX"
-    varUmaxPath = sorted(list(varUmaxDir.glob("*.tif")))
-    if len(varUmaxPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableUmaxLim") is False:
-        varUmaxPath = ""
-    elif len(varUmaxPath) > 1:
-        message = "More than one uMax Limit file .%s file in %s not allowed" % (varUmaxDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        varUmaxPath = varUmaxPath[0]
+    if cfgFlowPy.getboolean("GENERAL", "variableUmaxLim") is True:
+        varUmaxPath, available = gI.getAndCheckInputFiles(inputDir, "UMAX", "Umax", fileExt="raster")
+        if available == "No":
+            message = f"There is no variable UMAX file in supported format provided in {avalancheDir}/UMAX"
+            log.error(message)
+            raise AssertionError(message)
         log.info("uMax Limit file is: %s" % varUmaxPath)
+    else:
+        varUmaxPath = ""
     cfgPath["varUmaxPath"] = varUmaxPath
 
     # read variable Alpha Angle Raster
-    varAlphaDir = avalancheDir / "Inputs" / "ALPHA"
-    varAlphaPath = sorted(list(varAlphaDir.glob("*.tif")))
-    if len(varAlphaPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableAlpha") is False:
-        varAlphaPath = ""
-    elif len(varAlphaPath) > 1:
-        message = "More than one variable alpha file .%s file in %s not allowed" % (varAlphaDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        varAlphaPath = varAlphaPath[0]
+
+    if cfgFlowPy.getboolean("GENERAL", "variableAlpha") is True:
+        varAlphaPath, available = gI.getAndCheckInputFiles(inputDir, "ALPHA", "alpha", fileExt="raster")
+        if available == "No":
+            message = f"There is no variable ALPHA file in supported format provided in {avalancheDir}/ALPHA"
+            log.error(message)
+            raise AssertionError(message)
         log.info("variable Alpha file is: %s" % varAlphaPath)
+    else:
+        varAlphaPath = ""
     cfgPath["varAlphaPath"] = varAlphaPath
 
     # read variable Exponent Raster
-    varExponentDir = avalancheDir / "Inputs" / "EXP"
-    varExponentPath = sorted(list(varExponentDir.glob("*.tif")))
-    if len(varExponentPath) == 0 or cfgFlowPy.getboolean("GENERAL", "variableExponent") is False:
-        varExponentPath = ""
-    elif len(varExponentPath) > 1:
-        message = "More than one variable exponent file .%s file in %s not allowed" % (varExponentDir)
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        varExponentPath = varExponentPath[0]
+
+    if cfgFlowPy.getboolean("GENERAL", "variableExponent") is True:
+        varExponentPath, available = gI.getAndCheckInputFiles(inputDir, "EXP", "exp", fileExt="raster")
+        if available == "No":
+            message = f"There is no variable EXPONENT file in supported format provided in {avalancheDir}/EXP"
+            log.error(message)
+            raise AssertionError(message)
         log.info("variable Exponent file is: %s" % varExponentPath)
+    else:
+        varExponentPath = ""
     cfgPath["varExponentPath"] = varExponentPath
 
     # check if forest should be used (assumed to be in the RES - 'RESISTANCE' directory)
+    # TODO: should we also allow forest as shp - file?
 
-    forestDir = avalancheDir / "Inputs" / "RES"  # use directory for Resistance Layer for the forest layer
-
-    if cfgFlowPy.getboolean("GENERAL", "forest") is False:
-        forestPath = ""
+    if cfgFlowPy.getboolean("GENERAL", "forest") is True:
+        forestPath, available = gI.getAndCheckInputFiles(inputDir, "RES", "forest", fileExt="raster")
+        if available == "No":
+            message = f"There is no forest file in supported format provided in {avalancheDir}/RES"
+            log.error(message)
+            raise AssertionError(message)
+        log.info("Forest file is: %s" % forestPath)
     else:
-        patterns = ("*.tif", "*.asc", "*.TIF", "*.tiff", "*.TIFF", "*.ASC")
-        forestPath = [f for f in forestDir.iterdir() if any(f.match(p) for p in patterns)]
-
-        if len(forestPath) == 0:
-            message = (
-                "Please provide a Forest file in %s or set 'forest = False' in the .ini file" % forestDir
-            )
-            log.error(message)
-            raise AssertionError(message)
-        elif len(forestPath) > 1:
-            message = (
-                "Please provide exactly one Forest file in %s or set 'forest = False' in the .ini file"
-                % forestDir
-            )
-            log.error(message)
-            raise AssertionError(message)
-        else:
-            forestPath = forestPath[0]
-            log.info("Forest File file is: %s" % forestPath)
-
+        forestPath = ""
     cfgPath["forestPath"] = forestPath
 
     # read DEM
