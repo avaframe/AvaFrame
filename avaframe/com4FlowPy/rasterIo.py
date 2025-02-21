@@ -28,6 +28,7 @@ def read_header(input_file):
         header of raster file in style of ASCII-Rasters
     """
 
+    log.warning("This function is deprecated. Look at avaframe.in2Trans.rasterUtils for replacements.")
     raster = rasterio.open(input_file)
     if raster is None:
         print("Unable to open {}".format(input_file))
@@ -60,6 +61,7 @@ def read_raster(input_file):
         header of raster file in style of ASCII-Rasters
     """
 
+    log.warning("This function is deprecated. Look at avaframe.in2Trans.rasterUtils for replacements.")
     header = read_header(input_file)
     raster = rasterio.open(input_file)
     my_array = raster.read(1)
@@ -81,6 +83,7 @@ def output_raster(referenceFile, file_out, raster):
         raster (array) that is saved
     """
 
+    log.warning("This function is deprecated. Look at avaframe.in2Trans.rasterUtils for replacements.")
     raster_trans = rasterio.open(referenceFile)
     try:
         crs = rasterio.crs.CRS.from_dict(raster_trans.crs.data)
