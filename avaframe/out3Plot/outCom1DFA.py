@@ -503,7 +503,7 @@ def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, seco
     im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
     handles = []
     relArea = gpd.read_file(inputSimLines['releaseLine']['file'])
-    relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none", label='release')
+    relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none")
     relPatch = Patch(color='darkblue', label='release')
     handles.append(relPatch)
 
@@ -522,7 +522,7 @@ def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, seco
         count = count + 1
     if reportAreaInfo['secRelArea'] != 'No':
         secRelArea = gpd.read_file(inputSimLines['secondaryReleaseLine']['fileName'])
-        secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none", label='secondary release')
+        secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none")
         secRelPatch = Patch(color='blue', label='secondary release')
         handles.append(secRelPatch)
         count = count + 1
