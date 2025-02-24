@@ -1136,6 +1136,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         dem,
         ("Release Scenario %s" % inputSimLines["releaseLine"]["file"].stem),
         logName,
+        inputSimLines,
     )
 
     return particles, fields, dem, reportAreaInfo

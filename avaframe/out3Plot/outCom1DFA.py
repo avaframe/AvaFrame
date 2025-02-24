@@ -3,6 +3,8 @@ import pathlib
 import matplotlib.pyplot as plt
 import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
+import geopandas as gpd
+from matplotlib.patches import Patch
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -455,7 +457,7 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     return contDictXY
 
 
-def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, secondaryReleaseLine, reportAreaInfo, dem, titleFig, cuSimName):
+def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, secondaryReleaseLine, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
     """ plot release polygon, area with thickness on dem hillshade
         saved to avaDir/Outputs/com1DFA/reports
 
@@ -499,26 +501,38 @@ def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, seco
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(pU.figW, pU.figH))
     addDem2Plot(ax, dem, what='hillshade', extent=extentDem, origHeader=True)
     im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
-    ax.plot(releaseLine['x'], releaseLine['y'], linestyle='-', color='darkblue', label='release polygon')
+    legendLabels = []
+    relArea = gpd.read_file(inputSimLines['releaseLine']['file'])
+    relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none", label='release')
+    legendLabels.append(Patch(facecolor='darkblue', label='release'))
 
     count = 1
     if reportAreaInfo['resistance'] == 'Yes':
-        ax.plot(resLine['x'], resLine['y'], 'g-', label='resistance')
+        resArea = gpd.read_file(inputSimLines['resLine']['fileName'])
+        resArea.plot(ax=ax, edgecolor="green", linewidth=2, facecolor="none")
+        legendLabels.append(Patch(facecolor='green', label='resistance'))
         count = count + 1
     if reportAreaInfo['entrainment'] == 'Yes':
-        ax.plot(entLine['x'], entLine['y'], color='lightblue', linestyle='-', label='entrainment')
+        entArea = gpd.read_file(inputSimLines['entLine']['fileName'])
+        entArea.plot(ax=ax, edgecolor="lightblue", linewidth=2, facecolor="none")
+        legendLabels.append(Patch(facecolor='lightblue', label='entrainment'))
         count = count + 1
     if reportAreaInfo['secRelArea'] != 'No':
-        ax.plot(secondaryReleaseLine['x'], secondaryReleaseLine['y'], color='b', linestyle='-', label='secondary release')
+        secRelArea = gpd.read_file(inputSimLines['secondaryReleaseLine']['fileName'])
+        secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none", label='secondary release')
+        legendLabels.append(Patch(facecolor='blue', label='secondary release'))
         count = count + 1
     if reportAreaInfo['dam'] == 'Yes':
-        ax.plot(damLine['x']+xL, damLine['y']+yL, color='orange', linestyle='-', label='dam')
+        damArea = gpd.read_file(inputSimLines['damLine']['fileName'][0])
+        damArea.plot(ax=ax, edgecolor="orange", linewidth=2, facecolor="none")
+        legendLabels.append(Patch(facecolor='orange', label='dam'))
         count = count + 1
 
+    handles, _ = ax.get_legend_handles_labels()
     ax.set_aspect('equal')
     cax = ax.inset_axes([1.04, 0.0, 0.05, 1.])
     pU.addColorBar(im1, ax, ticks, 'm', cax=cax)
-    plt.legend(fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+    plt.legend(handles=[*handles,*legendLabels], fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
                  ncol=int(np.ceil(count/2)))
     #plt.title(titleFig)
     pU.putAvaNameOnPlot(ax, avaDir)
