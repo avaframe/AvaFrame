@@ -534,35 +534,40 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     _ts = modelPaths["timeString"]
 
     demHeader = IOf.readRasterHeader(modelPaths["demPath"])
-    # TODO: should we keep the modelPaths["outputFileFormat"] or can we use the DEM - format for the outputs
+    outputHeader = demHeader.copy()
+    if _oF == ".asc":
+        outputHeader["driver"] = "AAIGrid"
+    elif _oF == ".tif":
+        outputHeader["driver"] = "GTiff"
+
     # TODO: do we want -99909 as nodata values or the DEM - nodata
 
     if 'flux' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, flux,
+        output = IOf.writeResultToRaster(outputHeader, flux,
                                          modelPaths["resDir"] / "com4_{}_{}_flux".format(_uid, _ts), flip=True)
     if 'zDelta' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, zDelta,
+        output = IOf.writeResultToRaster(outputHeader, zDelta,
                                          modelPaths["resDir"] / "com4_{}_{}_zdelta".format(_uid, _ts), flip=True)
     if 'cellCounts' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, cellCounts,
+        output = IOf.writeResultToRaster(outputHeader, cellCounts,
                                          modelPaths["resDir"] / "com4_{}_{}_cellCounts".format(_uid, _ts), flip=True)
     if 'zDeltaSum' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, zDeltaSum,
+        output = IOf.writeResultToRaster(outputHeader, zDeltaSum,
                                          modelPaths["resDir"] / "com4_{}_{}_zDeltaSum".format(_uid, _ts), flip=True)
     if 'routFluxSum' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, routFluxSum,
+        output = IOf.writeResultToRaster(outputHeader, routFluxSum,
                                          modelPaths["resDir"] / "com4_{}_{}_routFluxSum".format(_uid, _ts), flip=True)
     if 'depFluxSum' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, depFluxSum,
+        output = IOf.writeResultToRaster(outputHeader, depFluxSum,
                                          modelPaths["resDir"] / "com4_{}_{}_depFluxSum".format(_uid, _ts), flip=True)
     if 'fpTravelAngle' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, fpTa,
+        output = IOf.writeResultToRaster(outputHeader, fpTa,
                                          modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle".format(_uid, _ts), flip=True)
     if 'slTravelAngle' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, slTa,
+        output = IOf.writeResultToRaster(outputHeader, slTa,
                                          modelPaths["resDir"] / "com4_{}_{}_slTravelAngle".format(_uid, _ts), flip=True)
     if 'travelLength' in _outputs:
-        output = IOf.writeResultToRaster(demHeader, travelLength,
+        output = IOf.writeResultToRaster(outputHeader, travelLength,
                                          modelPaths["resDir"] / "com4_{}_{}_travelLength".format(_uid, _ts), flip=True)
 
     # NOTE:
@@ -570,10 +575,10 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
         # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
     if modelOptions["infraBool"]:  # if infra
-        output = IOf.writeResultToRaster(demHeader, backcalc,
+        output = IOf.writeResultToRaster(outputHeader, backcalc,
                                          modelPaths["resDir"] / "com4_{}_{}_backcalculation".format(_uid, _ts), flip=True)
     if modelOptions["forestInteraction"]:
-        output = IOf.writeResultToRaster(demHeader, forestInteraction,
+        output = IOf.writeResultToRaster(outputHeader, forestInteraction,
                                          modelPaths["resDir"] / "com4_{}_{}_forestInteraction".format(_uid, _ts), flip=True)
     del output
 
