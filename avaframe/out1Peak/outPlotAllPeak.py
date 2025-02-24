@@ -133,7 +133,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                         sarea = gpd.read_file(sFile)
                         sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
                                    label=('%s area' % sType), alpha=0.8)
-                        extent = focus.total_bounds
+                        extent = sarea.total_bounds
                         ax.set_xlim(extent[0], extent[2])
                         ax.set_ylim(extent[1], extent[3])
 
