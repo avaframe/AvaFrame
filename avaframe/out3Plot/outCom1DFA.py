@@ -501,38 +501,42 @@ def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, seco
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(pU.figW, pU.figH))
     addDem2Plot(ax, dem, what='hillshade', extent=extentDem, origHeader=True)
     im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
-    legendLabels = []
+    handles = []
     relArea = gpd.read_file(inputSimLines['releaseLine']['file'])
     relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none", label='release')
-    legendLabels.append(Patch(facecolor='darkblue', label='release'))
+    relPatch = Patch(color='darkblue', label='release')
+    handles.append(relPatch)
 
     count = 1
     if reportAreaInfo['resistance'] == 'Yes':
         resArea = gpd.read_file(inputSimLines['resLine']['fileName'])
         resArea.plot(ax=ax, edgecolor="green", linewidth=2, facecolor="none")
-        legendLabels.append(Patch(facecolor='green', label='resistance'))
+        resPatch = Patch(color='green', label='resistance')
+        handles.append(resPatch)
         count = count + 1
     if reportAreaInfo['entrainment'] == 'Yes':
         entArea = gpd.read_file(inputSimLines['entLine']['fileName'])
         entArea.plot(ax=ax, edgecolor="lightblue", linewidth=2, facecolor="none")
-        legendLabels.append(Patch(facecolor='lightblue', label='entrainment'))
+        entPatch = Patch(color='lightblue', label='entrainment')
+        handles.append(entPatch)
         count = count + 1
     if reportAreaInfo['secRelArea'] != 'No':
         secRelArea = gpd.read_file(inputSimLines['secondaryReleaseLine']['fileName'])
         secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none", label='secondary release')
-        legendLabels.append(Patch(facecolor='blue', label='secondary release'))
+        secRelPatch = Patch(color='blue', label='secondary release')
+        handles.append(secRelPatch)
         count = count + 1
     if reportAreaInfo['dam'] == 'Yes':
         damArea = gpd.read_file(inputSimLines['damLine']['fileName'][0])
         damArea.plot(ax=ax, edgecolor="orange", linewidth=2, facecolor="none")
-        legendLabels.append(Patch(facecolor='orange', label='dam'))
+        damPatch = Patch(color='orange', label='dam')
+        handles.append(damPatch)
         count = count + 1
 
-    handles, _ = ax.get_legend_handles_labels()
     ax.set_aspect('equal')
     cax = ax.inset_axes([1.04, 0.0, 0.05, 1.])
     pU.addColorBar(im1, ax, ticks, 'm', cax=cax)
-    plt.legend(handles=[*handles,*legendLabels], fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+    plt.legend(handles=handles, fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
                  ncol=int(np.ceil(count/2)))
     #plt.title(titleFig)
     pU.putAvaNameOnPlot(ax, avaDir)
