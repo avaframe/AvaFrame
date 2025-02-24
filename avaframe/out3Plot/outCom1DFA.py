@@ -3,6 +3,8 @@ import pathlib
 import matplotlib.pyplot as plt
 import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
+import geopandas as gpd
+from matplotlib.patches import Patch
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -455,7 +457,7 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     return contDictXY
 
 
-def plotReleaseScenarioView(avaDir, releaseLine, dem, titleFig, cuSimName):
+def plotReleaseScenarioView(avaDir, releaseLine, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
     """ plot release polygon, area with thickness on dem hillshade
         saved to avaDir/Outputs/com1DFA/reports
 
@@ -465,8 +467,10 @@ def plotReleaseScenarioView(avaDir, releaseLine, dem, titleFig, cuSimName):
             path to ava directory
         dem: dict
             dict with dem header and data
-        releaseLine: dict
-            dict with raster of release line and x,y coors
+        releaseLine, damLine, entLine, resLine, secondaryReleaseLine: dict
+            dict with raster of release, dam, entrainment, resistance, secondary release line and x,y coors
+        reportAreaInfo: dict
+            info with Yes or No for entrainment, resistance, secRelArea, dam
         titleFig: str
             title of figure
         cuSimName: str
@@ -494,15 +498,47 @@ def plotReleaseScenarioView(avaDir, releaseLine, dem, titleFig, cuSimName):
     extentDem = [xL, xL + Lx, yL + Ly, yL]
 
     # create figure
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(pU.figW, pU.figH))
     addDem2Plot(ax, dem, what='hillshade', extent=extentDem, origHeader=True)
     im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
-    ax.plot(releaseLine['x'], releaseLine['y'], 'b-', label='release polygon')
+    handles = []
+    relArea = gpd.read_file(inputSimLines['releaseLine']['file'])
+    relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none")
+    relPatch = Patch(color='darkblue', label='release')
+    handles.append(relPatch)
+
+    count = 1
+    if reportAreaInfo['resistance'] == 'Yes':
+        resArea = gpd.read_file(inputSimLines['resLine']['fileName'])
+        resArea.plot(ax=ax, edgecolor="green", linewidth=2, facecolor="none")
+        resPatch = Patch(color='green', label='resistance')
+        handles.append(resPatch)
+        count = count + 1
+    if reportAreaInfo['entrainment'] == 'Yes':
+        entArea = gpd.read_file(inputSimLines['entLine']['fileName'])
+        entArea.plot(ax=ax, edgecolor="lightblue", linewidth=2, facecolor="none")
+        entPatch = Patch(color='lightblue', label='entrainment')
+        handles.append(entPatch)
+        count = count + 1
+    if reportAreaInfo['secRelArea'] != 'No':
+        secRelArea = gpd.read_file(inputSimLines['secondaryReleaseLine']['fileName'])
+        secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none")
+        secRelPatch = Patch(color='blue', label='secondary release')
+        handles.append(secRelPatch)
+        count = count + 1
+    if reportAreaInfo['dam'] == 'Yes':
+        damArea = gpd.read_file(inputSimLines['damLine']['fileName'][0])
+        damArea.plot(ax=ax, edgecolor="orange", linewidth=2, facecolor="none")
+        damPatch = Patch(color='orange', label='dam')
+        handles.append(damPatch)
+        count = count + 1
+
     ax.set_aspect('equal')
     cax = ax.inset_axes([1.04, 0.0, 0.05, 1.])
     pU.addColorBar(im1, ax, ticks, 'm', cax=cax)
-    plt.legend(fontsize=8)
-    plt.title(titleFig)
+    plt.legend(handles=handles, fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                 ncol=int(np.ceil(count/2)))
+    plt.title(titleFig, fontsize=8)
     pU.putAvaNameOnPlot(ax, avaDir)
 
     # save and or plot

@@ -1867,6 +1867,11 @@ def test_initializeSimulation(tmp_path):
     """test initializing a simulation"""
 
     outDir = pathlib.Path(tmp_path, "Outputs")
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / "data" / "avaTestInputs"
+    avaDir = pathlib.Path(tmp_path, "avaTest1")
+    shutil.copytree(inputDir, avaDir)
+
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
@@ -1911,7 +1916,7 @@ def test_initializeSimulation(tmp_path):
     demOri = {"header": demHeader, "rasterData": demData}
 
     # setup release line, entrainment line
-    relFileTest = pathlib.Path(tmp_path, "testRel.shp")
+    relFileTest = avaDir / 'REL' / "relAlr.shp"
     releaseLine = {
         "x": np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]),
         "y": np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
@@ -1924,7 +1929,7 @@ def test_initializeSimulation(tmp_path):
         "file": relFileTest,
     }
     entLine = {
-        "fileName": "test/entTest.shp",
+        "fileName": (avaDir / 'ENT' / "entAlr.shp"),
         "Name": ["testEnt"],
         "Start": np.asarray([0.0]),
         "thickness": [0.3, 0.3],
@@ -1939,6 +1944,7 @@ def test_initializeSimulation(tmp_path):
         "releaseLine": releaseLine,
         "entResInfo": {"flagSecondaryRelease": "No"},
         "entLine": entLine,
+        "secondaryReleaseLine": None,
         "resLine": "",
         "relThField": "",
         "damLine": None,
@@ -1986,7 +1992,7 @@ def test_initializeSimulation(tmp_path):
         "Start": np.asarray([0]),
         "Length": np.asarray([5]),
         "type": "Secondary release",
-        "fileName": pathlib.Path(tmp_path, "path2File.shp"),
+        "fileName": (avaDir / 'SECREL' / "ec1.shp"),
         "Name": ["secRel1"],
         "thickness": [0.5],
         "thicknessSource": ["ini File"],
@@ -2022,6 +2028,91 @@ def test_initializeSimulation(tmp_path):
     assert reportAreaInfo["resistance"] == "No"
     assert np.sum(particles2["secondaryReleaseInfo"]["rasterData"]) == 4.5
 
+
+    # test if dam is found
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
+    cfg["GENERAL"] = {
+        "methodMeshNormal": "1",
+        "thresholdPointInPoly": "0.001",
+        "useRelThFromIni": "False",
+        "resType": "ppr|pft|pfv",
+        "relTh": "1.0",
+        "useEntThFromIni": "False",
+        "meshCellSizeThreshold": "0.0001",
+        "meshCellSize": "1.",
+        "simTypeActual": "null",
+        "rhoEnt": "100.",
+        "entTh": "0.3",
+        "rho": "200.",
+        "gravAcc": "9.81",
+        "massPerParticleDeterminationMethod": "MPPDH",
+        "interpOption": "2",
+        "sphKernelRadius": "1",
+        "deltaTh": "0.25",
+        "seed": "12345",
+        "initPartDistType": "uniform",
+        "thresholdPointInPoly": "0.001",
+        "avalancheDir": "data/avaTest",
+        "cRes": "0.003",
+        "initialiseParticlesFromFile": "False",
+        "entTempRef": "-10.",
+        "cpIce": "2050.",
+        "TIni": "-10.",
+        "ResistanceModel": "cRes",
+        "restitutionCoefficient": 1,
+        "nIterDam": 1
+    }
+    releaseLine = {
+        "x": np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]),
+        "y": np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
+        "Start": np.asarray([0]),
+        "Length": np.asarray([5]),
+        "Name": [""],
+        "thickness": [1.0],
+        "thicknessSource": ["ini File"],
+        "type": "release",
+        "file": relFileTest,
+    }
+    inputSimLines = {
+        "releaseLine": releaseLine,
+        "entResInfo": {"flagSecondaryRelease": "No"},
+        "entLine": None,
+        "secondaryReleaseLine": None,
+        "resLine": "",
+        "relThField": "",
+        "damLine": None,
+        "muFile": None,
+        "xiFile": None,
+    }
+    inputSimLines['damLine'] = {
+        "fileName": [(avaDir / 'DAM' / "damLine.shp")],
+        'Name': [''],
+        'thickness': ['None'],
+        'slope': 60.0,
+        'Start': np.asarray([0.]),
+        'Length': np.asarray([2.]),
+        'x': np.asarray([5., 7.]),
+        'y': np.asarray([4., 6.]),
+        'z': np.asarray([0., 0.]),
+        'id': ['0'],
+        'ci95': ['None'],
+        'layerName': [None],
+        'nParts': [[0, 2]],
+        'nFeatures': 1,
+        'type': 'Dam'
+    }
+
+    particles3, fields3, dem3, reportAreaInfo3 = com1DFA.initializeSimulation(
+        cfg, outDir, demOri, inputSimLines, logName
+    )
+
+    print('dam', inputSimLines['damLine'])
+
+    assert reportAreaInfo3['dam'] == 'Yes'
+    assert 'xCrown' in inputSimLines['damLine']
+    assert 'height' in inputSimLines['damLine']
 
 def test_runCom1DFA(tmp_path, caplog):
     """Check that runCom1DFA produces the good outputs"""
