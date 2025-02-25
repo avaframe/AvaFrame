@@ -125,8 +125,9 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                         sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
                                        label=('%s area' % sType), alpha=0.8)
 
-            ax.set_xlim(extentCellCorners[0], extentCellCorners[2])
-            ax.set_ylim(extentCellCorners[1], extentCellCorners[3])
+            # set limit to axis from constrainedData
+            ax.set_xlim(extentCellCorners[0], extentCellCorners[1])
+            ax.set_ylim(extentCellCorners[2], extentCellCorners[3])
 
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
             cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="cropshape.shp")
