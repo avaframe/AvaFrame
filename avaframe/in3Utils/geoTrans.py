@@ -347,6 +347,7 @@ def remeshDataRio(rasterFile, cellSizeNew, larger=True):
         dst_transform=targetTransform,
         src_crs=srcCrs,
         dst_crs=srcCrs,
+        src_nodata=src.nodata,
         dst_nodata=src.nodata,
         resampling=Resampling.cubic,
     )
