@@ -103,6 +103,8 @@ and the following files are optional:
 
 Release-, entrainment thickness settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. Note::
+    Thickness is unambiguous: it is measured normal to the slope.
 
 Release, entrainment and secondary release thickness can be specified in two different ways:
 
