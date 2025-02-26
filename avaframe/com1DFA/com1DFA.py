@@ -2557,23 +2557,23 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
             # convert from J/cell to kJ/m²
             # (by dividing the peak kinetic energy per cell by the real area of the cell)
             resField = resField * 0.001 / dem["areaRaster"]
-        dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep) + ".asc"
+        dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
         # create directory
         outDirPeak = outDir / "peakFiles" / "timeSteps"
         fU.makeADir(outDirPeak)
         outFile = outDirPeak / dataName
-        IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
+        IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
         if TSave == "final":
             log.debug(
                 "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
                 % (resType, timeStep)
             )
-            dataName = cuSimName + "_" + resType + ".asc"
+            dataName = cuSimName + "_" + resType
             # create directory
             outDirPeakAll = outDir / "peakFiles"
             fU.makeADir(outDirPeakAll)
             outFile = outDirPeakAll / dataName
-            IOf.writeResultToAsc(dem["originalHeader"], resField, outFile, flip=True)
+            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
         else:
             log.debug(
                 "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
