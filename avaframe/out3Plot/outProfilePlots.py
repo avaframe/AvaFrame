@@ -76,7 +76,7 @@ def plotAlongProfile(avaDir, peakFilesDF, resType='pft', cInd='names'):
     _, _ = pU.addHillShadeContours(ax1, demDict['rasterData'], demDict['header']['cellsize'], extentCellCenters)
 
     # add profile line
-    ax1.plot(profileLine['x'], profileLine['y'], color='orange', linestyle='-', zorder=10, label='transect line')
+    ax1.plot(profileLine['x'], profileLine['y'], color='orange', linestyle='-', zorder=10, label='profile line')
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
     ax1.legend()
