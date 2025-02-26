@@ -1128,10 +1128,6 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     outCom1DFA.plotReleaseScenarioView(
         cfgGen["avalancheDir"],
         releaseLine,
-        damLine,
-        inputSimLines['entLine'],
-        inputSimLines['resLine'],
-        inputSimLines['secondaryReleaseLine'],
         reportAreaInfo,
         dem,
         ("Release Scenario %s" % inputSimLines["releaseLine"]["file"].stem),

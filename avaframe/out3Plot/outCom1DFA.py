@@ -457,7 +457,7 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     return contDictXY
 
 
-def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, secondaryReleaseLine, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
+def plotReleaseScenarioView(avaDir, releaseLine, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
     """ plot release polygon, area with thickness on dem hillshade
         saved to avaDir/Outputs/com1DFA/reports
 
@@ -538,7 +538,7 @@ def plotReleaseScenarioView(avaDir, releaseLine, damLine, entLine, resLine, seco
     pU.addColorBar(im1, ax, ticks, 'm', cax=cax)
     plt.legend(handles=handles, fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.15),
                  ncol=int(np.ceil(count/2)))
-    #plt.title(titleFig)
+    plt.title(titleFig, fontsize=8)
     pU.putAvaNameOnPlot(ax, avaDir)
 
     # save and or plot
