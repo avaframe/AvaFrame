@@ -102,7 +102,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             cellSize = peakFilesDF["cellSize"][m]
 
             # add peak field data now
-            ax, rowsMinPlot, colsMinPlot = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
+            ax, rowsMinPlot, colsMinPlot, extentCellCorners = addConstrainedDataField(fileName, resType, demField, ax, cellSize)
 
             # Add background map
             if cfgFLAGS.getboolean("showOnlineBackground"):
@@ -115,6 +115,20 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                     raise AssertionError(message)
                 ctx.add_basemap(ax, crs=srcCrs, source=providers[str(cfgFLAGS["mapProvider"])], zorder=2)
 
+            # if entrainment or resistance area is considered in simulation, show extent of entrainment or resistance area
+            colorOutline = {'ent': 'white', 'res': 'green'}
+            for sType in ['ent', 'res']:
+                if sType in simType:
+                    sFile, sInfo = gI.getAndCheckInputFiles(inDir, sType.upper(), sType, fileExt="shp")
+                    if sInfo != 'No':
+                        sarea = gpd.read_file(sFile)
+                        sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
+                                       label=('%s area' % sType), alpha=0.8)
+
+            # set limit to axis from constrainedData
+            ax.set_xlim(extentCellCorners[0], extentCellCorners[1])
+            ax.set_ylim(extentCellCorners[2], extentCellCorners[3])
+
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
             cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="cropshape.shp")
             if cropInfo != 'No':
@@ -124,15 +138,6 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                 ax.set_xlim(extent[0], extent[2])
                 ax.set_ylim(extent[1], extent[3])
 
-            # if entrainment or resistance area is considered in simulation, show extent of entrainment or resistance area
-            colorOutline = {'ent': 'white', 'res': 'green'}
-            for sType in ['ent', 'res']:
-                if sType in simType:
-                    sFile, sInfo = gI.getAndCheckInputFiles(inDir, sType.upper(), sType, fileExt="shp")
-                    if sInfo != 'No':
-                        sarea = gpd.read_file(sFile)
-                        sarea.plot(ax=ax, zorder=12, edgecolor=colorOutline[sType], linewidth=2, facecolor="none",
-                                   label=('%s area' % sType), alpha=0.8)
 
             # add title, labels and ava Info
             title = str("%s" % name)
@@ -227,7 +232,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.,
             cax = divider.append_axes("right", size="5%", pad=0.05)
             fig.colorbar(im1, cax=cax)
 
-    return ax, rowsMinPlot, colsMinPlot
+    return ax, rowsMinPlot, colsMinPlot, extentCellCorners
 
 
 def plotAllFields(avaDir, inputDir, outDir, unit="", constrainData=True):

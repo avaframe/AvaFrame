@@ -1867,6 +1867,11 @@ def test_initializeSimulation(tmp_path):
     """test initializing a simulation"""
 
     outDir = pathlib.Path(tmp_path, "Outputs")
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / "data" / "avaTestInputs"
+    avaDir = pathlib.Path(tmp_path, "avaTest1")
+    shutil.copytree(inputDir, avaDir)
+
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
@@ -1911,7 +1916,7 @@ def test_initializeSimulation(tmp_path):
     demOri = {"header": demHeader, "rasterData": demData}
 
     # setup release line, entrainment line
-    relFileTest = pathlib.Path(tmp_path, "testRel.shp")
+    relFileTest = avaDir / 'REL' / "relAlr.shp"
     releaseLine = {
         "x": np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]),
         "y": np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
@@ -1924,7 +1929,7 @@ def test_initializeSimulation(tmp_path):
         "file": relFileTest,
     }
     entLine = {
-        "fileName": "test/entTest.shp",
+        "fileName": (avaDir / 'ENT' / "entAlr.shp"),
         "Name": ["testEnt"],
         "Start": np.asarray([0.0]),
         "thickness": [0.3, 0.3],
@@ -1939,6 +1944,7 @@ def test_initializeSimulation(tmp_path):
         "releaseLine": releaseLine,
         "entResInfo": {"flagSecondaryRelease": "No"},
         "entLine": entLine,
+        "secondaryReleaseLine": None,
         "resLine": "",
         "relThField": "",
         "damLine": None,
@@ -1986,7 +1992,7 @@ def test_initializeSimulation(tmp_path):
         "Start": np.asarray([0]),
         "Length": np.asarray([5]),
         "type": "Secondary release",
-        "fileName": pathlib.Path(tmp_path, "path2File.shp"),
+        "fileName": (avaDir / 'SECREL' / "ec1.shp"),
         "Name": ["secRel1"],
         "thickness": [0.5],
         "thicknessSource": ["ini File"],
