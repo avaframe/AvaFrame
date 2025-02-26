@@ -7,7 +7,7 @@ import pathlib
 # Local imports
 import avaframe.in2Trans.rasterUtils as IOf
 from avaframe.in1Data import getInput as gI
-import avaframe.in2Trans.transfromFields as tF
+import avaframe.in2Trans.transformFields as tF
 import avaframe.out3Plot.outTransformPlots as oT
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
@@ -31,7 +31,7 @@ def runD2Th(avaDir, comMod, resType, profileAxis, profileIndex):
         depthField = IOf.readRaster(rF)
 
         # convert depth to thickness using dem
-        thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthToThickness(depthField, dem)
+        thicknessDict, depthRasterResized, slopeAngleField = tF.convertDepthThickness(depthField, dem, typeOfInput='depth')
 
         pName = rF.stem.split("_%s" % resType)[0] + "transformed" + "_%s" % resType
 

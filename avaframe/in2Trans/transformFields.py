@@ -16,20 +16,24 @@ import avaframe.in2Trans.rasterUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def convertDepthToThickness(depthDict, demDict):
-    """convert depthField to thicknessField, using a DEM to compute the slope angle required for transformation
-    also writes field to a new directory called transformed where depthFile is located
+def convertDepthThickness(inputDict, demDict, typeOfInput='depth'):
+    """convert depthField to thicknessField or the other way around depending on type, using a DEM to compute the slope
+    angle required for transformation
+    also writes field to a new directory called transformed where depthFile/thicknessFile is located
+
     Parameters
     -----------
     demDict: dict
         dictionary with dem header and rasterData (numpy nd array of z values)
-    depthDict: dict
-        dictionary with depthField header and rasterData (numpy nd array of depth values)
+    inputDict: dict
+        dictionary with depthField/thicknessField header and rasterData (numpy nd array of depth values)
+    typeOfInput: str
+        provided inputDict type: thickness or depth
 
     Returns
     --------
-    thicknessField: dict
-        dictionary with header and thickness field numpy array as rasterData key
+    outputDict: dict
+        dictionary with header and thickness/depth field numpy array as rasterData key
 
     """
     # get normal vector of the grid mesh
@@ -37,17 +41,25 @@ def convertDepthToThickness(depthDict, demDict):
     _, _, NzNormed = DFAtls.normalize(demDict["Nx"], demDict["Ny"], demDict["Nz"])
 
     # if resType field cellSize/extent is different to DEM reproject raster on a grid of shape DEM
-    depthRasterNew, demData = gT.resizeData(depthDict, demDict)
-    demDict["header"]["nodata_value"] = depthDict["header"]["nodata_value"]
+    inputRasterNew, demData = gT.resizeData(inputDict, demDict)
+    demDict["header"]["nodata_value"] = inputDict["header"]["nodata_value"]
 
     # multiply depth with cos(slopeAngle)
-    thickness = depthRasterNew * NzNormed
+    if typeOfInput == 'depth':
+        outField = inputRasterNew * NzNormed
+    elif typeOfInput == 'thickness':
+        outField = inputRasterNew / NzNormed
+    else:
+        message = 'Type for thickness/depth conversion is: %s - not valid' % typeOfInput
+        log.error(message)
+        raise AssertionError(message)
+
     slopeAngleField = np.rad2deg(np.arccos(NzNormed))
 
     # create thickness dict
-    thicknessDict = {'header': demDict['header'], 'rasterData': thickness}
+    outputDict = {'header': demDict['header'], 'rasterData': outField}
 
-    return thicknessDict, depthRasterNew, slopeAngleField
+    return outputDict, inputRasterNew, slopeAngleField
 
 
 def fetchPointValuesFromField(dataDF, xyPoints, resType, interpMethod='bilinear'):
