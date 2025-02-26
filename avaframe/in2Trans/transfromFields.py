@@ -50,6 +50,40 @@ def convertDepthToThickness(depthDict, demDict):
     return thicknessDict, depthRasterNew, slopeAngleField
 
 
+def convertThicknessToDepth(thicknessDict, demDict):
+    """convert thicknessField to depthField, using a DEM to compute the slope angle required for transformation
+    also writes field to a new directory called transformed where thicknessField is located
+    Parameters
+    -----------
+    demDict: dict
+        dictionary with dem header and rasterData (numpy nd array of z values)
+    thicknessDict: dict
+        dictionary with thicknessField header and rasterData (numpy nd array of thickness values)
+
+    Returns
+    --------
+    thicknessField: dict
+        dictionary with header and thickness field numpy array as rasterData key
+
+    """
+    # get normal vector of the grid mesh
+    demDict = gT.getNormalMesh(demDict)
+    _, _, NzNormed = DFAtls.normalize(demDict["Nx"], demDict["Ny"], demDict["Nz"])
+
+    # if resType field cellSize/extent is different to DEM reproject raster on a grid of shape DEM
+    thicknessRasterNew, demData = gT.resizeData(thicknessDict, demDict)
+    demDict["header"]["nodata_value"] = thicknessDict["header"]["nodata_value"]
+
+    # multiply depth with cos(slopeAngle)
+    depth = thicknessRasterNew / NzNormed
+    slopeAngleField = np.rad2deg(np.arccos(NzNormed))
+
+    # create thickness dict
+    depthDict = {'header': demDict['header'], 'rasterData': depth}
+
+    return depthDict, thicknessRasterNew, slopeAngleField
+
+
 def fetchPointValuesFromField(dataDF, xyPoints, resType, interpMethod='bilinear'):
     """ derive field values at xyPoints using a interpMethod (options: nearest and bilinear)
 
