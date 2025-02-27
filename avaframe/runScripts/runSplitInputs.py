@@ -1,4 +1,5 @@
-"""runScript for splitting avalanche input data into multiple folders based on individual release areas"""
+"""runScript for splitting avalanche input data into multiple avalanche directories based on "groups" 
+and "scenarios" defined in the release area file"""
 
 import time
 import pathlib
@@ -9,7 +10,9 @@ from avaframe.in4Region import splitInputs
 
 
 def runSplitInputs(avalancheDir=''):
-    """Main function to split input data for avalanche scenarios.
+    """Main function to split input data for creating avalanche scenarios. Split avalanche input data in the form of multiple 
+    avalanche directories, in addition to logs and reports of the procedure are created in '<avalancheDir>/Outputs/in4Region/splitInputs'.
+    Runlog is written directly to <avalancheDir>. 
 
     Parameters
     ----------

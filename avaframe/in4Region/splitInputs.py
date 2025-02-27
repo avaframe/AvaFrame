@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle
 import matplotlib as mpl
 import time
-import rasterio.transform
 
 from avaframe.out3Plot import plotUtils as pU
 from avaframe.in2Trans import rasterUtils
@@ -19,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     """Process and organize avalanche input data into individual avalanche directories based 
-    on release area's "group" and "scenario" attributes.
+    on release area's "group" and "scenario" attributes provided in the release area file.
 
     Parameters
     ----------
@@ -42,14 +41,16 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     Notes
     -----
     Expected input directory structure:
-    inputDir/
-    ├── REL/
-    │   └── release_areas.shp (with optional .prj)
-    ├── ENT/ (optional)
-    │   └── entrainment.shp (with optional .prj)
-    ├── RES/ (optional)
-    │   └── resistance.shp (with optional .prj)
-    └── dem_file.asc or .tif
+
+    avalancheDir/
+    └── Inputs/
+        ├── REL/
+        │   └── *.shp         # all release areas
+        ├── ENT/              # all entrainment areas (optional)
+        │   └── *.shp
+        ├── RES/              # all resistance areas (optional)
+        │   └── *.shp
+        └── *.asc or *.tif    # digital elevation model (DEM)
     """
     # Fetch the necessary input
     inputRELDir = inputDir / 'REL'
@@ -74,7 +75,7 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
     log.info("Finished creating folder list")
 
     # Step 2: Set up avalanche directories
-    log.info("Initializing folder structure for each entry...")
+    log.info("Initializing folder structure for each group...")
     for entry in dirListGrouped:
         dirName = entry['dirName']
         initializeFolderStruct(str(outputDir / dirName), removeExisting=True)
@@ -113,8 +114,6 @@ def readShapefile(inputShp):
     """Read the fields, properties, geometries, and spatial reference of an input shapefile.
     To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
     shapeTypes, bounds, numFeatures and metadata if needed
-
-    # ToDo: maybe move to some other module e.g. in1Data, in2Trans -> shapeUtils.py or update to use pre-existing function from shpConversion.py
 
     Parameters
     ----------
@@ -328,12 +327,12 @@ def checkFeatureIsolation(geometries, properties, bufferSize, groupName):
             featureProps = {key.lower(): value for key, value in properties[i].items()}
             featureName = featureProps.get('name', f'unnamed feature {i+1}').strip()
             
-            message = f"Feature '{featureName}' in group '{groupName}' is isolated from all other features - consider splitting into a separate group"
+            message = f"Feature '{featureName}' in group '{groupName}' is isolated from all other features - consider assigning it to a different group"
             log.error(message)
             raise ValueError(message)
 
 def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
-    """Clip the DEM to include all features in each release group.
+    """Clip the DEM to include all features in each release group. Returns an error if any feature in a group is isolated.
 
     Parameters
     ----------
@@ -353,7 +352,7 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     groupExtents : dict
         Dictionary with dirName as key and (xMin, xMax, yMin, yMax) as value.
         The extents are reduced by one pixel on each side to ensure DEM extents
-        are larger than clip extents.
+        are larger than clip extents of other input.
     """    
     # Read input DEM
     demData = rasterUtils.readRaster(inputDEM)
@@ -370,23 +369,26 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     for entry in dirList:
         dirName = entry['dirName']
         geometries = entry['geometries']
+        properties = entry['properties']
         
         if not geometries:
             message = f"No geometries found for {dirName}"
             log.error(message)
             raise ValueError(message)
             
+        # Check if any features in the group are isolated
+        bufferSize = cfg['GENERAL'].getfloat('bufferSize')
+        checkFeatureIsolation(geometries, properties, bufferSize, dirName)
+            
         # Get extent of all geometries in group
         bounds = [geom.bounds for geom in geometries]
         xMins, yMins, xMaxs, yMaxs = zip(*bounds)
         
-        # Calculate extent with buffer
-        bufferSize = cfg['GENERAL'].getfloat('bufferSize')
+        # Calculate extent with buffer for DEM clipping
         xMin = min(xMins) - bufferSize
         xMax = max(xMaxs) + bufferSize
         yMin = min(yMins) - bufferSize
         yMax = max(yMaxs) + bufferSize
-        groupExtents[dirName] = (xMin, xMax, yMin, yMax) # Store extent for this group
         
         # Convert extent to grid indices (using top-left origin)
         colStart = max(0, int((xMin - xOrigin) / cellSize))
@@ -410,24 +412,18 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
         clippedHeader['yllcenter'] = yOrigin + rowStart * cellSize
         
         # Update transformation matrix for clipped DEM
-        newTransform = rasterio.transform.from_origin(
-            clippedHeader['xllcenter'] - (cellSize/2),  # Convert center to corner
-            clippedHeader['yllcenter'] + (clippedHeader['nrows'] * cellSize) - (cellSize/2),  # Convert to top-left y
-            cellSize,
-            cellSize
-        )
-        clippedHeader['transform'] = newTransform
+        clippedHeader['transform'] = rasterUtils.transformFromASCHeader(clippedHeader)
         
         # Write clipped DEM
         outputDEM = outputDir / dirName / 'Inputs' / f"{dirName}_DEM"
         rasterUtils.writeResultToRaster(clippedHeader, clippedData, outputDEM, flip=True)
         log.debug(f"Clipped DEM saved to: {outputDEM}")
 
-        # Store DEM extents (reduced by one pixel on each side to ensure DEM > clip extents)
-        xMinDEM = clippedHeader['xllcenter'] - (cellSize/2) + cellSize
-        yMinDEM = clippedHeader['yllcenter'] - (cellSize/2) + cellSize
-        xMaxDEM = clippedHeader['xllcenter'] + (clippedHeader['ncols'] * cellSize) - (cellSize/2) - cellSize
-        yMaxDEM = clippedHeader['yllcenter'] + (clippedHeader['nrows'] * cellSize) - (cellSize/2) - cellSize
+        # Store final DEM extents (reduced by one pixel on each side to ensure DEM > clip extents of other input)
+        xMinDEM = clippedHeader['xllcenter'] + (cellSize*0.5)
+        yMinDEM = clippedHeader['yllcenter'] + (cellSize*0.5)
+        xMaxDEM = clippedHeader['xllcenter'] + (clippedHeader['ncols'] * cellSize) - (cellSize*0.5)
+        yMaxDEM = clippedHeader['yllcenter'] + (clippedHeader['nrows'] * cellSize) - (cellSize*0.5)
         groupExtents[dirName] = (xMinDEM, xMaxDEM, yMinDEM, yMaxDEM)
     
     return groupExtents

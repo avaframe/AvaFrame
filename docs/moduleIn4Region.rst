@@ -23,23 +23,26 @@ The module is currently compatible with the following input file types:
     * Entrainment areas (shapefile in ENT directory)
     * Resistance areas (shapefile in RES directory)
 
+The module is intended to work with only one of each of these files. The first file that is found is the one that is used.
+
 Where the expected input directory structure is::
 
   avalancheDir/
   └── Inputs/
       ├── REL/
-      │   └── release_areas.shp
-      ├── ENT/ (optional)
-      │   └── entrainment.shp
-      ├── RES/ (optional)
-      │   └── resistance.shp
-      └── dem_file.asc or dem_file.tif
+      │   └── *.shp         # release areas    
+      ├── ENT/              # entrainment areas
+      │   └── *.shp
+      ├── RES/              # resistance areas
+      │   └── *.shp
+      └── *.asc or *.tif    # digital elevation model (DEM)
 
 Group and scenario creation
 ---------------------------
 Input data organization is based on two key concepts:
 
-1. **Groups**: Collections of avalanche release areas that are located in the same spatial domain and may be wanted to be simulated together (e.g. divided into avalanche paths)
+1. **Groups**: Collections of avalanche release areas (single polygon features) that are located in the same spatial domain and may be 
+wanted to be simulated together (e.g. divided into avalanche paths)
 2. **Scenarios**: Collections of release area features within each group, that would be simulated together in :ref:`com1DFA <com1DFA>`.
 
 These may be defined through two new attributes in the input release area shapefile attribute table:
@@ -138,6 +141,13 @@ Example Scenario Report:
     ------------
     ...
 
+Configuration
+-------------
+Settings are controlled through ``splitInputsCfg.ini``, in which the ``bufferSize`` for the group extent is defined (which is used for DEM, RES, and ENT clipping into 
+smaller chunks). By default, this value is set to 2500 m. For each group, a bounding box is created from the maximum x-y extent of all release features in the group. 
+The value for ``bufferSize`` is then added to each direction (+x, -x, +y, -y). This buffer may be adjusted according to the expected maximum runout length of your avalanches - 
+a larger value will ensure that no simulation will exit its domain, while a larger value will result in smaller output file sizes.
+
 Procedure
 ---------
 The ``splitInputsMain`` function, which is called in ``runScripts/runSplitInputs.py``, performs the following steps:
@@ -150,16 +160,13 @@ The ``splitInputsMain`` function, which is called in ``runScripts/runSplitInputs
 6. Divide release areas into scenarios
 7. Write reports
 
-Configuration
--------------
-Settings are controlled through ``splitInputsCfg.ini``, in which the ``bufferSize`` for the group bounding box is defined (which is used for DEM, RES, and ENT splitting). 
-By default, this value is set to 2500 m. Value may be adjusted according to the expected maximum runout length of your avalanches.
-
 To Run
 ------
 1. Prepare inputs in your ``<avalancheDir>/Inputs``
-2. Configure settings in ``in4RegionCfg.ini`` (or local version ``local_in4RegionCfg.ini``)
+2. Configure settings in ``splitInputsCfg.ini`` (or local version ``local_splitInputsCfg.ini``)
 3. Set path to avalanche directory in ``avaframeCfg.ini`` (or local version ``local_avaframeCfg.ini``)
-4. Execute from AvaFrame/avaframe directory::
+4. Execute from AvaFrame/avaframe directory:
+
+.. code-block:: bash
 
     python3 runScripts/runSplitInputs.py
