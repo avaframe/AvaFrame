@@ -16,6 +16,7 @@ Computational Modules
    com4FlowPy
    com5SnowSlide
    com6RockAvalanche
+   com7Regional
 
 Input/Transformation Modules
 ============================
@@ -28,6 +29,7 @@ Input/Transformation Modules
    in1Data
    in2Trans
    in3Utils
+   in4Region
 
 Analysis/Output/Helper Modules
 ===============================
