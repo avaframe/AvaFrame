@@ -3,10 +3,15 @@ import subprocess
 import platform
 import logging
 import pandas as pd
+import numpy as np
 
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import cfgUtils
+from avaframe.in2Trans import rasterUtils as rU
+from avaframe.com1DFA import particleInitialisation as pI
+from avaframe.in1Data import getInput as gI
+import avaframe.in3Utils.geoTrans as geoTrans
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -61,6 +66,16 @@ def cfgToRcf(cfg, fileName):
             f.write("#\n")
 
 
+def rewriteDEMtoZeroValues(demFile):
+    demData = rU.readRaster(demFile)
+    demData["rasterData"][np.isnan(demData["rasterData"])] = 0.0
+    demData["header"]["nodata_value"] = 0.0
+    newFileName = demFile.parent / demFile.stem
+    rU.writeResultToRaster(demData["header"], demData["rasterData"], newFileName)
+
+
+
+
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get all necessary information from the configuration files
 
@@ -72,6 +87,11 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
     # preprocessing to create configuration objects for all simulations to run
     simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
+
+    # convert DEM from nan to 0 values
+    # TODO: suggest MoT-PSA to handle nan values
+    rewriteDEMtoZeroValues(inputSimFiles["demFile"])
+
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -94,11 +114,42 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
         print(simDF["DEM"])
 
+        # convert release shape to raster with values for current sim
+        relFile = simDict[key]["relFile"]
+
+        # select release area input data according to chosen release scenario
+        inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
+        # create required input from input files
+        demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+
+        if cfg["GENERAL"].getboolean("iniStep"):
+            # append buffered release Area
+            inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
+
+        # set thickness values for the release area, entrainment and secondary release areas
+        relName, inputSimLines, badName = com1DFA.prepareReleaseEntrainment(
+            cfg, inputSimFiles["releaseScenario"], inputSimLines
+        )
+
+        releaseLine = inputSimLines["releaseLine"]
+        # check if release features overlap between features
+        # TODO: split releaseheight -> question NGI
+        dem = rU.readRaster(inputSimFiles["demFile"])
+        dem["originalHeader"] = dem["header"].copy()
+        releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
+        releaseL1 = inputSimFiles["demFile"].parent / "releaseLine1"
+        releaseL2 = inputSimFiles["demFile"].parent / "releaseLine2"
+        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1)
+        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL2)
+
+        # set configuration for MoT-PSA
         cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["Run information"]["UTM zone"] = "HAUMIBLAU"
-        cfgInfo["Run information"]["EPSG geodetic datum code"] = "37888"
+        cfgInfo["Run information"]["UTM zone"] = "32N"
+        cfgInfo["Run information"]["EPSG geodetic datum code"] = "31287"
         cfgInfo["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
         cfgInfo["File names"]["Grid filename"] = "./" + str(inputSimFiles["demFile"])
+        cfgInfo["File names"]["Release depth 1 filename"] = "./" + str(releaseL1) + ".asc"
+        cfgInfo["File names"]["Release depth 2 filename"] = "./" + str(releaseL2) + ".asc"
 
         # select release area input data according to chosen release scenario
         # inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
