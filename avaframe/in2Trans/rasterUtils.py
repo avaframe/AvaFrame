@@ -189,7 +189,7 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
         width=resultArray.shape[1],
         count=1,
         dtype=resultArray.dtype,
-        # decimal_precision=3,
+        decimal_precision=3,
     )
     if flip:
         rasterOut.write(np.flipud(resultArray), 1)
