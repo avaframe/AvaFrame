@@ -9,6 +9,8 @@ import logging
 import shutil
 import pathlib
 
+import avaframe.in3Utils.fileHandlerUtils as fU
+
 log = logging.getLogger(__name__)
 
 
@@ -144,6 +146,36 @@ def cleanRemeshedDir(avaDir):
 
     return 'SUCCESS'
 
+
+def cleanLatestConfigurationsDirAndCreate(avaDir, modName):
+    """ clean latestConfigurationFiles folder in avaDir/modName/Outputs
+
+        Parameters
+        ------------
+        avaDir: str or pathlib patch
+            path to avalanche directory
+        modName: str
+            name of module
+    """
+
+    avaDirOutputs = pathlib.Path(avaDir, 'Outputs', modName)
+    avaDirOutputsString = str(avaDirOutputs)
+
+    # check for empty or non string variable
+    result = _checkAvaDirVariable(avaDirOutputsString)
+    if 'SUCCESS' not in result:
+        return result
+
+    # clean directory
+    folderName = 'latestConfigurationFiles'
+    _checkForFolderAndDelete(avaDirOutputsString, folderName)
+    log.info('Cleaned %s/%s directory' % (avaDirOutputsString,folderName))
+
+    # create new latestConfigurationFiles dir
+    latestConfigDir = avaDirOutputs / folderName
+    fU.makeADir(latestConfigDir)
+
+    return 'SUCCESS'
 
 def initializeFolderStruct(pathAvaName, removeExisting=False):
     ''' Initialize the standard folder structure. If removeExisting is true,
