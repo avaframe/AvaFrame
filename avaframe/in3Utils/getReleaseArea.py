@@ -166,10 +166,10 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     for m in range(len(xyPoints)):
         xy.append([xyPoints[m, 0], xyPoints[m, 1]])
 
-    # Wr
+    # Write shp file - include endpoint =startpoint for polygon!
     releaseFileName = outDir / ('release%d%s' % (relNo, demType))
     w = shapefile.Writer(str(releaseFileName))
-    w.poly([[xy[3], xy[2], xy[1], xy[0]]])
+    w.poly([[xy[3], xy[2], xy[1], xy[0], xy[3]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
     w.field('thickness', 'N', decimal=4)
