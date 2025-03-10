@@ -37,6 +37,9 @@ def _runAndCheck(command):
         universal_newlines=True,
     )
 
+    printCounter = 0
+    counter = 1
+
     while True:
         realtimeOutput = process.stdout.readline()
 
@@ -45,7 +48,29 @@ def _runAndCheck(command):
 
         if realtimeOutput:
             line = realtimeOutput.strip()
-            print(line)
+
+            # do not pollute output window with time step prints
+            # TODO: hacky for now
+            if "Step" in line:
+                counter = counter + 1
+                printCounter = printCounter + 1
+                if printCounter > 100:
+                    # print('\r' + line, flush=True, end='')
+                    msg = (
+                            "Process is running. Reported time steps (all sims): "
+                            + str(counter)
+                    )
+                    print(msg)
+                    printCounter = 0
+
+            elif "find_dt" in line:
+                continue
+            elif "h1" in line:
+                continue
+            elif "h2" in line:
+                continue
+            else:
+                print(line)
 
 
 # TODO move to utils
@@ -112,7 +137,6 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
         # append configuration to dataframe
         simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
-        print(simDF["DEM"])
 
         # convert release shape to raster with values for current sim
         relFile = simDict[key]["relFile"]
@@ -139,8 +163,15 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
         releaseL1 = inputSimFiles["demFile"].parent / "releaseLine1"
         releaseL2 = inputSimFiles["demFile"].parent / "releaseLine2"
+        bedDepth = inputSimFiles["demFile"].parent / "dummyBedDepth"
+        bedDepo = inputSimFiles["demFile"].parent / "dummyBedDepo"
+        bedShear = inputSimFiles["demFile"].parent / "dummyBedShear"
         rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1)
         rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL2)
+        emptyRaster = np.full_like(releaseLine["rasterData"], 0)
+        rU.writeResultToRaster(dem["header"], emptyRaster, bedDepth)
+        rU.writeResultToRaster(dem["header"], emptyRaster, bedDepo)
+        rU.writeResultToRaster(dem["header"], emptyRaster, bedShear)
 
         # set configuration for MoT-PSA
         cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
@@ -150,6 +181,9 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         cfgInfo["File names"]["Grid filename"] = "./" + str(inputSimFiles["demFile"])
         cfgInfo["File names"]["Release depth 1 filename"] = "./" + str(releaseL1) + ".asc"
         cfgInfo["File names"]["Release depth 2 filename"] = "./" + str(releaseL2) + ".asc"
+        cfgInfo["File names"]["Bed depth filename"] = "./" + str(bedDepth) + ".asc"
+        cfgInfo["File names"]["Bed deposition filename"] = "./" + str(bedDepo) + ".asc"
+        cfgInfo["File names"]["Bed shear strength filename"] = "./" + str(bedShear) + ".asc"
 
         # select release area input data according to chosen release scenario
         # inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
@@ -161,5 +195,7 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
         cfgToRcf(cfgInfo, rcfFile)
 
-    # command = ['./MoT-PSA', rcfFile]
-    # _runAndCheck(command)
+        command = ['./MoT-PSA', rcfFile]
+        _runAndCheck(command)
+
+        sys.exit()
