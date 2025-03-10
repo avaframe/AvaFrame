@@ -8,12 +8,15 @@
 #  Load modules
 from avaframe.in3Utils import getReleaseArea as gR
 from avaframe.in3Utils.getReleaseArea import getReleaseArea, writeReleaseArea
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 import pytest
 import configparser
 import numpy as np
 import pytest
 from pathlib import Path
+import pathlib
+import geopandas as gpd
 
 
 def test_makexyPoints():
@@ -172,13 +175,14 @@ def test_writeReleaseArea_createsNxyzFile(tmp_path, cfgR, mocker):
         assert lines[0] == "name=TestRelease\n"
         assert lines[1] == "d0=5.00\n"
         assert lines[2] == "rho=None\n"
-        assert lines[3] == "4\n"
+        assert lines[3] == "5\n"
         dataLines = [line.strip() for line in lines[4:]]
         assert dataLines == [
             "0.000000 1.000000 0.000000",
             "2.000000 3.000000 0.000000",
             "4.000000 5.000000 0.000000",
             "6.000000 7.000000 0.000000",
+            "0.000000 1.000000 0.000000",
         ]
 
 
@@ -193,35 +197,30 @@ def test_writeReleaseArea_copiesTxtFile(tmp_path, cfgR, mocker):
     dst = tmp_path / "release1FP.txt"
     mockCopy.assert_called_once_with(src, dst)
 
+def test_writeReleaseArea(tmp_path):
+    """ test writing a shp file for the created polygon """
 
-def test_writeReleaseArea_createsShapefile(tmp_path, cfgR, mocker):
-    mockWriter = mocker.MagicMock()
-    mocker.patch("shapefile.Writer", return_value=mockWriter)
-    mocker.patch("avaframe.in3Utils.getReleaseArea.log.info")
+    # setup required inputs
+    cfgR = configparser.ConfigParser()
+    cfgR['FILE'] = {'relNo': 1, 'relName': 'releaseTest'}
+    cfgR['GENERAL'] = {'dh': 1.5, 'outputtxt': True}
+    outDir  = pathlib.Path(tmp_path, 'testDir')
+    fU.makeADir(outDir)
+    demType = 'HS'
+    xyPoints = np.array([[2.0, 1.0], [5.0, 2.0], [4.0, 7.0], [1.0, 5.0]])
 
-    # Create numpy array with float values
-    xyPoints = np.array([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [6.0, 7.0]])
+    gR.writeReleaseArea(xyPoints, demType, cfgR, outDir)
 
-    writeReleaseArea(xyPoints, "FP", cfgR, tmp_path)
+    # read file
+    gs = gpd.read_file((outDir / 'release1HS.shp'))
 
-    # Convert expected coordinates to native Python floats and wrap in array structure
-    expectedPoly = [[[6.0, 7.0], [4.0, 5.0], [2.0, 3.0], [0.0, 1.0]]]
+    print('gs', gs)
+    gsCoors = gs.get_coordinates().to_numpy()
+    xyPointsWithEnd = np.array([[2.0, 1.0], [5.0, 2.0], [4.0, 7.0], [1.0, 5.0], [2.0, 1.0]])
 
-    # Get the actual arguments passed to poly()
-    actualArgs, _ = mockWriter.poly.call_args
 
-    # Compare using numpy array comparison
-    assert np.array_equal(actualArgs[0], expectedPoly)
-
-    mockWriter.field.assert_has_calls(
-        [
-            mocker.call("ID", "C", "40"),
-            mocker.call("Name", "C", "40"),
-            mocker.call("thickness", "N", decimal=4),
-        ]
-    )
-    mockWriter.record.assert_called_once_with("1", "Rel_Example", 5.0)
-    mockWriter.close.assert_called_once()
+    print('gsCoors', type(gsCoors), gsCoors.shape, 'type', xyPoints.shape, type(xyPoints))
+    assert np.array_equal(xyPointsWithEnd, np.asarray(gs.get_coordinates().to_numpy()))
 
 
 def test_getReleaseArea_logsMissingDirectory(tmp_path, cfgT, cfgR, mocker):

@@ -136,6 +136,9 @@ def correctOrigin(xyPoints, cfgT):
 def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     """ Write topography information to file """
 
+    # add enpoint=startpoint to close polygon
+    xyPoints = np.append(xyPoints, [xyPoints[0,:]], axis=0)
+
     lenp = len(xyPoints)
     relNo = int(cfgR['FILE']['relNo'])
     relH = cfgR['GENERAL'].getfloat('dh')
@@ -169,7 +172,7 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     # Write shp file - include endpoint =startpoint for polygon!
     releaseFileName = outDir / ('release%d%s' % (relNo, demType))
     w = shapefile.Writer(str(releaseFileName))
-    w.poly([[xy[3], xy[2], xy[1], xy[0], xy[3]]])
+    w.poly([[xy[0], xy[1], xy[2], xy[3], xy[4]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
     w.field('thickness', 'N', decimal=4)
