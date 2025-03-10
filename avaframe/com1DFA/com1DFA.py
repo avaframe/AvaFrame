@@ -1130,7 +1130,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         releaseLine,
         reportAreaInfo,
         dem,
-        ("Release Scenario %s" % inputSimLines["releaseLine"]["file"].stem),
+        ("Release Scenario %s" % logName),
         logName,
         inputSimLines,
     )
