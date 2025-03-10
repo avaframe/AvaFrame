@@ -184,6 +184,8 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         cfgInfo["File names"]["Bed depth filename"] = "./" + str(bedDepth) + ".asc"
         cfgInfo["File names"]["Bed deposition filename"] = "./" + str(bedDepo) + ".asc"
         cfgInfo["File names"]["Bed shear strength filename"] = "./" + str(bedShear) + ".asc"
+        cfgInfo["File names"]["Output filename root"] = "./avaTest/Work/" + str(simHash) + "/" + str(
+            simHash)
 
         # select release area input data according to chosen release scenario
         # inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
@@ -198,4 +200,3 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         command = ['./MoT-PSA', rcfFile]
         _runAndCheck(command)
 
-        sys.exit()
