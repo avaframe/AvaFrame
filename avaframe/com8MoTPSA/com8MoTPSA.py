@@ -4,6 +4,16 @@ import platform
 import logging
 import pandas as pd
 import numpy as np
+import pathlib
+import time
+import shutil
+
+if os.name == "nt":
+    from multiprocessing.pool import ThreadPool as Pool
+elif platform.system() == "Darwin":
+    from multiprocessing.pool import ThreadPool as Pool
+else:
+    from multiprocessing import Pool
 
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -12,6 +22,9 @@ from avaframe.in2Trans import rasterUtils as rU
 from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.in3Utils.fileHandlerUtils as fU
+
+import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -57,10 +70,10 @@ def _runAndCheck(command):
                 if printCounter > 100:
                     # print('\r' + line, flush=True, end='')
                     msg = (
-                            "Process is running. Reported time steps (all sims): "
+                            "Process is running. Reported time steps: "
                             + str(counter)
                     )
-                    print(msg)
+                    log.info(msg)
                     printCounter = 0
 
             elif "find_dt" in line:
@@ -69,8 +82,10 @@ def _runAndCheck(command):
                 continue
             elif "h2" in line:
                 continue
+            elif "write_data" in line:
+                continue
             else:
-                print(line)
+                log.info(line)
 
 
 # TODO move to utils
@@ -104,8 +119,6 @@ def rewriteDEMtoZeroValues(demFile):
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get all necessary information from the configuration files
 
-    # Load avalanche directory from general configuration file
-    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
     # fetch type of cfgInfo
     typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
@@ -123,6 +136,89 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         log.info("Simulation: %s" % key)
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
+    # Preprocess the simulations, mainly creating the rcf files
+    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo)
+
+    # And now we run the simulations
+    startTime = time.time()
+
+    log.info("--- STARTING (potential) PARALLEL PART ----")
+
+    # Get number of CPU Cores wanted
+    nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(rcfFiles))
+
+    # Create parallel pool and run
+    # with multiprocessing.Pool(processes=nCPU) as pool:
+    with Pool(processes=nCPU) as pool:
+        results = pool.map(com8MoTPSATask, rcfFiles)
+        pool.close()
+        pool.join()
+
+    timeNeeded = "%.2f" % (time.time() - startTime)
+    log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
+    log.info("--- ENDING (potential) PARALLEL PART ----")
+
+    # Postprocess the simulations
+    com8MoTPSAPostprocess(simDict, cfgMain)
+
+
+def com8MoTPSAPostprocess(simDict, cfgMain):
+    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+    # Copy max files to output directory
+
+    outputDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA"
+    outputDirPeakFile = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "peakFiles"
+    fU.makeADir(outputDirPeakFile)
+
+    for key in simDict:
+        workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA" / str(key)
+
+        # Copy DataTime.txt
+        dataTimeFile = workDir / "DataTime.txt"
+        shutil.copy2(dataTimeFile, outputDir / (str(key) + "_DataTime.txt"))
+
+        # TODO: functionize it
+        # Copy ppr files
+        pfdFiles = list(workDir.glob("*p?_max*"))
+        targetFiles = [pathlib.Path(str(f.name).replace('p1_max', 'lay1_ppr')) for f in pfdFiles]
+        targetFiles = [pathlib.Path(str(f).replace('p2_max', 'lay2_ppr')) for f in targetFiles]
+        targetFiles = [outputDirPeakFile / f for f in targetFiles]
+        for source, target in zip(pfdFiles, targetFiles):
+            shutil.copy2(source, target)
+
+        # Copy pfd files
+        pfdFiles = list(workDir.glob("*h?_max*"))
+        targetFiles = [pathlib.Path(str(f.name).replace('h1_max', 'lay1_pfd')) for f in pfdFiles]
+        targetFiles = [pathlib.Path(str(f).replace('h2_max', 'lay2_pfd')) for f in targetFiles]
+        targetFiles = [outputDirPeakFile / f for f in targetFiles]
+        for source, target in zip(pfdFiles, targetFiles):
+            shutil.copy2(source, target)
+
+        # Copy pfv files
+        pfdFiles = list(workDir.glob("*s?_max*"))
+        targetFiles = [pathlib.Path(str(f.name).replace('s1_max', 'lay1_pfv')) for f in pfdFiles]
+        targetFiles = [pathlib.Path(str(f).replace('s2_max', 'lay2_pfv')) for f in targetFiles]
+        targetFiles = [outputDirPeakFile / f for f in targetFiles]
+        for source, target in zip(pfdFiles, targetFiles):
+            shutil.copy2(source, target)
+
+
+def com8MoTPSATask(rcfFile):
+    command = ['./MoT-PSA', rcfFile]
+    log.info("Run simulation: %s" % rcfFile)
+    _runAndCheck(command)
+    return command
+
+
+def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
+    # Load avalanche directory from general configuration file
+    avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+
+    workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA"
+    cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "configurationFiles"
+    fU.makeADir(cfgFileDir)
+    rcfFiles = list()
+
     for key in simDict:
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
@@ -135,12 +231,10 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         # fetch simHash for current sim
         simHash = simDict[key]["simHash"]
 
-        # append configuration to dataframe
-        simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
+        # # append configuration to dataframe
+        # simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
 
         # convert release shape to raster with values for current sim
-        relFile = simDict[key]["relFile"]
-
         # select release area input data according to chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
         # create required input from input files
@@ -161,17 +255,28 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         dem = rU.readRaster(inputSimFiles["demFile"])
         dem["originalHeader"] = dem["header"].copy()
         releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
-        releaseL1 = inputSimFiles["demFile"].parent / "releaseLine1"
-        releaseL2 = inputSimFiles["demFile"].parent / "releaseLine2"
-        bedDepth = inputSimFiles["demFile"].parent / "dummyBedDepth"
-        bedDepo = inputSimFiles["demFile"].parent / "dummyBedDepo"
-        bedShear = inputSimFiles["demFile"].parent / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1)
-        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL2)
-        emptyRaster = np.full_like(releaseLine["rasterData"], 0)
-        rU.writeResultToRaster(dem["header"], emptyRaster, bedDepth)
-        rU.writeResultToRaster(dem["header"], emptyRaster, bedDepo)
-        rU.writeResultToRaster(dem["header"], emptyRaster, bedShear)
+
+        # Generate the work and data dirs for the current simHash
+
+        cuWorkDir = workDir / key
+        workInputDir = cuWorkDir / "Input"
+        workOutputDir = cuWorkDir / key
+
+        fU.makeADir(cuWorkDir)
+        fU.makeADir(workInputDir)
+
+        zeroRaster = np.full_like(releaseLine["rasterData"], 0)
+
+        releaseL1 = workInputDir / "releaseLayer1"
+        releaseL2 = workInputDir / "releaseLayer2"
+        bedDepth = workInputDir / "dummyBedDepth"
+        bedDepo = workInputDir / "dummyBedDepo"
+        bedShear = workInputDir / "dummyBedShear"
+        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1, flip=True)
+        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL2, flip=True)
+        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
+        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepo)
+        rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
 
         # set configuration for MoT-PSA
         cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
@@ -184,19 +289,13 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         cfgInfo["File names"]["Bed depth filename"] = "./" + str(bedDepth) + ".asc"
         cfgInfo["File names"]["Bed deposition filename"] = "./" + str(bedDepo) + ".asc"
         cfgInfo["File names"]["Bed shear strength filename"] = "./" + str(bedShear) + ".asc"
-        cfgInfo["File names"]["Output filename root"] = "./avaTest/Work/" + str(simHash) + "/" + str(
-            simHash)
+        cfgInfo["File names"]["Output filename root"] = "./" + str(workOutputDir)
 
-        # select release area input data according to chosen release scenario
-        # inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
+        rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
-        # create required input from input files
-        # demOri, inputSimLines = prepareInputData(inputSimFiles, cfg)
+        cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfgInfo, str(key))
 
-        rcfFile = key + ".rcf"
+        cfgToRcf(cfgInfo, rcfFileName)
+        rcfFiles.append(rcfFileName)
 
-        cfgToRcf(cfgInfo, rcfFile)
-
-        command = ['./MoT-PSA', rcfFile]
-        _runAndCheck(command)
-
+    return rcfFiles
