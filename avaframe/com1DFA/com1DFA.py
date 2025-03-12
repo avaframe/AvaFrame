@@ -1093,6 +1093,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     fields["cResRaster"] = cResRaster
     fields["detRaster"] = detRaster
+    fields["cResRasterOrig"] = cResRaster
+    fields["detRasterOrig"] = detRaster
 
     for fric in ['mu', 'xi']:
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
@@ -1255,6 +1257,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
 
     particles["massPerPart"] = massPerPart
     particles["mTot"] = np.sum(particles["m"])
+    particles['tPlot'] = 0
     particles["h"] = hPartArray
     particles["ux"] = np.zeros(np.shape(hPartArray))
     particles["uy"] = np.zeros(np.shape(hPartArray))
@@ -1628,19 +1631,21 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     """
     K = cfg.getfloat("detK")
     detrainment = cfg.getboolean("detrainment")
-    detWithoutRes = cfg.getboolean("detWithoutRes")
 
-    ResModel = cfg["ResistanceModel"].lower()
-    if ResModel == "cres":
-        cRes = cfg.getfloat("cRes")
-    if ResModel == "cresh":
-        cRes = cfg.getfloat("cResH")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
 
     if simTypeActual in ["entres", "res"]:
+        ResModel = cfg["ResistanceModel"].lower()
+        if ResModel == "default":
+            cRes = cfg.getfloat("cResH")
+        else:
+            message = 'Resistance model %s not a valid option' % ResModel
+            log.error(message)
+            raise AssertionError(message)
+
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
@@ -1655,10 +1660,6 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
             log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
             detRaster = K * mask
             reportAreaInfo["detrainment"] = "Yes"
-
-            if detWithoutRes:
-                cResRaster = np.zeros((nrows, ncols))
-                reportAreaInfo["resistance"] = "No"
         else:
             detRaster = np.zeros((nrows, ncols))
             reportAreaInfo["detrainment"] = "No"
@@ -1750,8 +1751,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # turn resistance model into integer
     ResModel = cfgGen["ResistanceModel"].lower()
     ResModelsList = [
-        "cres",
-        "cresh",
+        "default",
     ]
     resistanceType = ResModelsList.index(ResModel) + 1
     log.debug("Resistance Model used: %s, %s" % (ResModelsList[resistanceType - 1], resistanceType))
@@ -1762,6 +1762,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     massEntrained = []
     massDetrained = []
     massTotal = []
+    pfvTimeMax = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
     resultsDF = setupresultsDF(resTypesLast, cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"))
@@ -1842,6 +1843,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         massDetrained.append(particles["massDetrained"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
+        pfvTimeMax.append(np.nanmax(fields['FV']))
         # print progress to terminal
         print("time step t = %f s\r" % t, end="")
 
@@ -1955,6 +1957,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "entrained mass": np.sum(massEntrained),
         "detrained mass": np.sum(massDetrained),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
+        "pfvTimeMax": pfvTimeMax,
     }
 
     # determine if stop criterion is reached or end time
@@ -2049,7 +2052,7 @@ def setupresultsDF(resTypes, cfgRangeTime):
 
     resDict = {"timeStep": [0.0]}
     for resT in resTypes:
-        if resT != "particles":
+        if (resT != "particles" and resT != 'FTDet'):
             resDict["max" + resT] = [0.0]
     if cfgRangeTime:
         resDict["rangeList"] = [0.0]
@@ -2083,7 +2086,7 @@ def addMaxValuesToDF(resultsDF, fields, timeStep, resTypes, rangeValue=""):
 
     newLine = []
     for resT in resTypes:
-        if resT != "particles":
+        if (resT != "particles" and resT != 'FTDet'):
             newLine.append(np.nanmax(fields[resT]))
 
     if rangeValue != "":
@@ -2169,6 +2172,12 @@ def writeMBFile(infoDict, avaDir, logName):
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
     massTotal = infoDict["massTotal"]
+    massDetrainedTotal = np.zeros(len(massDetrained))
+    for m in range(1, len(massDetrained)):
+        massDetrainedTotal[m] = massDetrainedTotal[m-1] + massDetrained[m]
+
+    # create mass plot
+    outCom1DFA.massPlot(infoDict, massDetrainedTotal, t, avaDir, logName)
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
@@ -2177,8 +2186,8 @@ def writeMBFile(infoDict, avaDir, logName):
         mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,    %.06f\n"
-                % (t[m], massTotal[m], massEntrained[m], massDetrained[m])
+                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f\n"
+                % (t[m], massTotal[m], massEntrained[m], massDetrained[m], massDetrainedTotal[m])
             )
 
 
@@ -2213,6 +2222,17 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPU : dict
         computation time dictionary
     """
+
+    # update cRes and detK rasters according to thresholds of FV and FT
+    particles['tPlot'] = particles['tPlot'] + 1
+    # only if entres or res sim and detrainment is used
+    if cfg['simTypeActual'] in ['entres', 'res'] and (cfg['ResistanceModel'].lower() == 'default' and cfg.getboolean('detrainment')):
+        # update resistance area fields using thresholds
+        fields = com1DFATools.updateResCoeffFields(fields, cfg, float(particles['t']), dem)
+        if debugPlot:
+            outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem, particles['mTot'])
+
+
     # get forces
     startTime = time.time()
     # loop version of the compute force
@@ -2547,10 +2567,15 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
     else:
         resTypes = resTypesGen
 
+
     if resTypesForced != []:
         resTypes = resTypesForced
     for resType in resTypes:
-        resField = fields[resType]
+        if resType == 'FTDet':
+            dmDet = fields['dmDet']
+            resField = dmDet / (cfg['GENERAL'].getfloat('rho') * dem['areaRaster'])
+        else:
+            resField = fields[resType]
         if resType == "ppr":
             # convert from Pa to kPa
             resField = resField * 0.001
@@ -2700,8 +2725,16 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
         # add info about dam file path to the cfg
-        if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
+        if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] is not None:
             cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'ent' in row._asdict()["simTypeList"] and inputSimFiles['entFile'] is not None:
+            cfgSim['INPUT']['entrainment'] = str(pathlib.Path('ENT', inputSimFiles['entFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'res' in row._asdict()["simTypeList"] and inputSimFiles['resFile'] is not None:
+            cfgSim['INPUT']['resistance'] = str(pathlib.Path('RES', inputSimFiles['resFile'].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)

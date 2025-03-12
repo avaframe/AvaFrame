@@ -126,8 +126,7 @@ def test_computeDetMass(capfd):
 
 def test_computeResForce(capfd):
     """ Test the computeResForce function"""
-    hRes = 2
-    h = 1
+
     areaPart = 1
     rho = 200
     cResCell = 1
@@ -136,35 +135,15 @@ def test_computeResForce(capfd):
     #cRes
     resistanceType = 1
     cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
+        areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
     print(cResPart)
     assert cResPart == -2000
-
-    h = 3
-    cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
-    print(cResPart)
-    assert cResPart == -4000
 
     explicitFriction = 1
     cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
+        areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
     print(cResPart)
-    assert cResPart == -40000
-
-    #cResH
-    explicitFriction = 0
-    resistanceType = 2
-    cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
-    print(cResPart)
-    assert cResPart == -2000
-
-    h = 1
-    cResPart = DFAfunC.computeResForce(
-        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
-    print(cResPart)
-    assert cResPart == -2000
+    assert cResPart == -20000
 
 
 def test_account4FrictionForce(capfd):
