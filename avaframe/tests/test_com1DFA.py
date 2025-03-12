@@ -700,11 +700,14 @@ def test_initializeResistance():
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "cRes": 0.003,
-        "ResistanceModel": "cRes",
+        "cResH": 0.003,
+        "ResistanceModel": "default",
         "detK": 10,
         "detrainment": False,
-        "detWithoutRes": False,
+        "forestVMin": 6.,
+        "forestThMin": 0.6,
+        "forestVMax": 40.,
+        "forestThMax": 10.,
     }
 
     nrows = 11
@@ -753,11 +756,14 @@ def test_initializeResistance():
     assert reportAreaInfo["detrainment"] == "No"
 
     cfg["GENERAL"] = {
-        "cRes": 0.003,
-        "ResistanceModel": "cRes",
+        "cResH": 0.003,
+        "ResistanceModel": "default",
         "detK": 10.0,
         "detrainment": True,
-        "detWithoutRes": False,
+        "forestVMin": 6.,
+        "forestThMin": 0.6,
+        "forestVMax": 40.,
+        "forestThMax": 10.,
     }
     cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
@@ -770,41 +776,23 @@ def test_initializeResistance():
     assert np.sum(detRaster) == 1210.0
     assert np.sum(cResRaster) == 0.363
     assert reportAreaInfo["resistance"] == "Yes"
-    assert reportAreaInfo["detrainment"] == "Yes"
-
-    cfg["GENERAL"] = {
-        "cRes": 0.003,
-        "ResistanceModel": "cRes",
-        "detK": 10.0,
-        "detrainment": True,
-        "detWithoutRes": True,
-    }
-    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
-        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
-    )
-    detTestArray = np.zeros((nrows, ncols))
-    detTestArray[0:11, 0:11] = 10.0
-
-    assert np.array_equal(cResRaster, np.zeros((nrows, ncols)))
-    assert np.array_equal(detRaster, detTestArray)
-    assert np.sum(detRaster) == 1210.0
-    assert np.sum(cResRaster) == 0.0
-    assert reportAreaInfo["resistance"] == "No"
     assert reportAreaInfo["detrainment"] == "Yes"
 
     cfg["GENERAL"] = {
         "cResH": 0.003,
-        "ResistanceModel": "cResH",
+        "ResistanceModel": "cRes",
         "detK": 10.0,
-        "detrainment": False,
-        "detWithoutRes": False,
+        "detrainment": True,
+        "forestVMin": 6.,
+        "forestThMin": 0.6,
+        "forestVMax": 40.,
+        "forestThMax": 10.,
     }
-    cResRaster, detRaster, reportAreaInfo = com1DFA.initializeResistance(
-        cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly
-    )
-    assert np.array_equal(cResRaster, testArray)
-    assert np.sum(cResRaster) == 0.363
-    assert reportAreaInfo["resistance"] == "Yes"
+
+    with pytest.raises(AssertionError) as e:
+        assert com1DFA.initializeResistance(cfg["GENERAL"], dem, simTypeActual, resLine, reportAreaInfo,
+                                            thresholdPointInPoly)
+    assert "Resistance model cres not a valid option" in str(e.value)
 
 
 def test_setDEMOriginToZero():
@@ -1286,6 +1274,7 @@ def test_initializeParticles():
         "totalEnthalpy",
         "velocityMag",
         "nExitedParticles",
+        "tPlot",
     ]
 
     # call function to be tested
@@ -1382,6 +1371,7 @@ def test_writeMBFile(tmp_path):
     infoDict["massEntrained"] = np.asarray([0, 0, 10, 20, 30])
     infoDict["massDetrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massTotal"] = np.asarray([60.0, 60.0, 70.0, 90.0, 120.0])
+    infoDict["pfvTimeMax"] = np.asarray([0, 0, 0, 0, 0])
     avaName = "data/avaTest"
     avaDir = pathlib.Path(tmp_path, avaName)
     logName = "simTestName"
@@ -1399,7 +1389,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1414,7 +1404,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 20, 0, 0, 10])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1429,7 +1419,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
 
 def test_savePartToPickle(tmp_path):
@@ -1707,11 +1697,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": None,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
     }
     variationDict = {"rho": np.asarray([200.0, 150.0]), "releaseScenario": ["relAlr"]}
 
     # call function to be tested
     simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+
     testCfg = configparser.ConfigParser()
     testCfg.optionxform = str
     testCfg["GENERAL"] = {
@@ -1755,6 +1748,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg["INPUT"]["relThFile"] = ""
+    testCfg["INPUT"]["entrainment"] = str(pathlib.Path('ENT', "entAlr.shp"))
+    testCfg["INPUT"]["resistance"] = str(pathlib.Path('RES', "entAlr.shp"))
     testCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
@@ -1785,6 +1780,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": relPath,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "RES", "entAlr.shp"),
     }
     variationDict = {
         "rho": np.asarray([200.0, 150.0]),
@@ -1799,6 +1796,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": relPath,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
     }
     testCfg2 = configparser.ConfigParser()
     testCfg2.optionxform = str
@@ -1843,6 +1842,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg2["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg2["INPUT"]["relThFile"] = ""
+    testCfg2["INPUT"]["entrainment"] = str(pathlib.Path('ENT', "entAlr.shp"))
+    testCfg2["INPUT"]["resistance"] = str(pathlib.Path('RES', "entAlr.shp"))
     testCfg2["GENERAL"]["avalancheDir"] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = "relAlr_" + simHash2 + "_C_L_entres_dfa"
@@ -2195,6 +2196,7 @@ def test_runCom1DFA(tmp_path, caplog):
         "nExitedParticles",
         "dmDet",
         "massDetrained",
+        "tPlot",
     ]
 
     # read one particles dictionary

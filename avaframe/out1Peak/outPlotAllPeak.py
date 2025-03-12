@@ -130,7 +130,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             ax.set_ylim(extentCellCorners[2], extentCellCorners[3])
 
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
-            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="cropshape.shp")
+            cropFile, cropInfo = gI.getAndCheckInputFiles(inDir, "POLYGONS", "cropFile", fileExt="shp", fileSuffix='_cropshape')
             if cropInfo != 'No':
                 focus = gpd.read_file(cropFile)
                 focus.plot(ax=ax, zorder=12, edgecolor="red", linewidth=2, facecolor="none", alpha=0)

@@ -77,7 +77,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double entDefResistance = cfg.getfloat('entDefResistance')
   cdef double rho = cfg.getfloat('rho')
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
-  cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
   cdef double muVoellmy = cfg.getfloat('muvoellmy')
@@ -371,7 +370,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
-      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
+      cResPart = computeResForce(areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
       forceFrict[k] = forceFrict[k] - cResPart
 
       uxArray[k] = ux
@@ -502,16 +501,12 @@ cpdef double computeDetMass(double dt, double detCell,
   return dmDet
 
 
-cpdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell,
+cpdef double computeResForce(double areaPart, double rho, double cResCell,
                              double uMag, int explicitFriction, int resistanceType):
   """ compute force component due to resistance
 
   Parameters
   ----------
-  hRes: float
-      resistance height
-  h : float
-      particle flow thickness
   areaPart : float
       particle area
   rho : float
@@ -530,23 +525,15 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
   cResPart : float
       resistance component for particle
   """
-  cdef double hResEff = hRes
+
   cdef double cRecResPart
-  if(h < hRes):
-      hResEff = h
   # explicit formulation (explicitFriction == 1)
   if explicitFriction == 1:
     if resistanceType == 1:
-      # cRes
-      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
-    elif resistanceType == 2:
       # cResH
       cRecResPart = - rho * areaPart * cResCell * uMag * uMag
   elif explicitFriction == 0:
     if resistanceType == 1:
-      # cRes
-      cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
-    elif resistanceType == 2:
       # cResH
       cRecResPart = - rho * areaPart * cResCell * uMag
   return cRecResPart
