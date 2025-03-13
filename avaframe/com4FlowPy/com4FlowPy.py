@@ -64,6 +64,9 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     # modelParameters["infra"]  = cfgSetup["infra"]
     # modelParameters["forest"] = cfgSetup["forest"]
 
+    # Flag for preview mode
+    modelParameters["previewMode"] = cfgSetup.getboolean("previewMode")
+
     # Flags for use of dynamic input parameters
     modelParameters["varUmaxBool"] = cfgSetup.getboolean("variableUmaxLim")
     modelParameters["varAlphaBool"] = cfgSetup.getboolean("variableAlpha")
@@ -248,6 +251,9 @@ def startLogging(modelParameters, forestParams, modelPaths, MPOptions):
     if modelParameters["infraBool"]:
         log.info("calculation with Infrastructure")
         log.info(f"{'INFRA LAYER:' : <14}{'%s'%modelPaths['infraPath'] : <5}")
+        log.info("------------------------")
+    if modelParameters["previewMode"]:
+        log.info("!!! previewMode is ON !!!! - mind when interpreting results!!!")
         log.info("------------------------")
     if modelParameters["fluxDistOldVersionBool"]:
         log.info("Calculation using old (BUGGY!!) version of flux distribution!")
