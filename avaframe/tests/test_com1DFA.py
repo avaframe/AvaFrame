@@ -1286,6 +1286,7 @@ def test_initializeParticles():
         "totalEnthalpy",
         "velocityMag",
         "nExitedParticles",
+        "tPlot",
     ]
 
     # call function to be tested
@@ -1695,11 +1696,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": None,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
     }
     variationDict = {"rho": np.asarray([200.0, 150.0]), "releaseScenario": ["relAlr"]}
 
     # call function to be tested
     simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+
     testCfg = configparser.ConfigParser()
     testCfg.optionxform = str
     testCfg["GENERAL"] = {
@@ -1743,6 +1747,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg["INPUT"]["relThFile"] = ""
+    testCfg["INPUT"]["entrainment"] = str(pathlib.Path('ENT', "entAlr.shp"))
+    testCfg["INPUT"]["resistance"] = str(pathlib.Path('RES', "entAlr.shp"))
     testCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
 
     simHash = cfgUtils.cfgHash(testCfg)
@@ -1773,6 +1779,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": relPath,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "RES", "entAlr.shp"),
     }
     variationDict = {
         "rho": np.asarray([200.0, 150.0]),
@@ -1787,6 +1795,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
         "demFile": avaDEM,
         "damFile": relPath,
+        "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
+        "resFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
     }
     testCfg2 = configparser.ConfigParser()
     testCfg2.optionxform = str
@@ -1831,6 +1841,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg2["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg2["INPUT"]["relThFile"] = ""
+    testCfg2["INPUT"]["entrainment"] = str(pathlib.Path('ENT', "entAlr.shp"))
+    testCfg2["INPUT"]["resistance"] = str(pathlib.Path('RES', "entAlr.shp"))
     testCfg2["GENERAL"]["avalancheDir"] = str(avaDirTest)
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = "relAlr_" + simHash2 + "_C_L_entres_dfa"
@@ -2183,6 +2195,7 @@ def test_runCom1DFA(tmp_path, caplog):
         "nExitedParticles",
         "dmDet",
         "massDetrained",
+        "tPlot",
     ]
 
     # read one particles dictionary
