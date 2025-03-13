@@ -23,6 +23,7 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.out1Peak import outPlotAllPeak as oP
 
 import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 
@@ -111,7 +112,7 @@ def rewriteDEMtoZeroValues(demFile):
     demData["rasterData"][np.isnan(demData["rasterData"])] = 0.0
     demData["header"]["nodata_value"] = 0.0
     newFileName = demFile.parent / demFile.stem
-    rU.writeResultToRaster(demData["header"], demData["rasterData"], newFileName)
+    rU.writeResultToRaster(demData["header"], demData["rasterData"], newFileName, flip=True)
 
 
 
@@ -159,10 +160,10 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
     log.info("--- ENDING (potential) PARALLEL PART ----")
 
     # Postprocess the simulations
-    com8MoTPSAPostprocess(simDict, cfgMain)
+    com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles)
 
 
-def com8MoTPSAPostprocess(simDict, cfgMain):
+def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
     # Copy max files to output directory
 
@@ -179,28 +180,38 @@ def com8MoTPSAPostprocess(simDict, cfgMain):
 
         # TODO: functionize it
         # Copy ppr files
-        pfdFiles = list(workDir.glob("*p?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('p1_max', 'lay1_ppr')) for f in pfdFiles]
-        targetFiles = [pathlib.Path(str(f).replace('p2_max', 'lay2_ppr')) for f in targetFiles]
+        pprFiles = list(workDir.glob("*p?_max*"))
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_p1_max', 'lay1_psa_ppr')) for f in pprFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_p2_max', 'lay2_psa_ppr')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
-        for source, target in zip(pfdFiles, targetFiles):
+        for source, target in zip(pprFiles, targetFiles):
             shutil.copy2(source, target)
 
         # Copy pfd files
         pfdFiles = list(workDir.glob("*h?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('h1_max', 'lay1_pfd')) for f in pfdFiles]
-        targetFiles = [pathlib.Path(str(f).replace('h2_max', 'lay2_pfd')) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_h1_max', 'lay1_psa_pfd')) for f in pfdFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_h2_max', 'lay2_psa_pfd')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfdFiles, targetFiles):
             shutil.copy2(source, target)
 
         # Copy pfv files
-        pfdFiles = list(workDir.glob("*s?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('s1_max', 'lay1_pfv')) for f in pfdFiles]
-        targetFiles = [pathlib.Path(str(f).replace('s2_max', 'lay2_pfv')) for f in targetFiles]
+        pfvFiles = list(workDir.glob("*s?_max*"))
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_s1_max', 'lay1_psa_pfv')) for f in pfvFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_s2_max', 'lay2_psa_pfv')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
-        for source, target in zip(pfdFiles, targetFiles):
+        for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
+
+    # create plots and report
+    modName = __name__.split('.')[-1]
+    reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
+    fU.makeADir(reportDir)
+    print(inputSimFiles["demFile"])
+
+    dem = rU.readRaster(inputSimFiles["demFile"])
+    # Generate plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
 
 
 def com8MoTPSATask(rcfFile):
