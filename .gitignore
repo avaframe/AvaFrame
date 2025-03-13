@@ -41,3 +41,10 @@ avaframe/com1DFA/*.so
 /pixi.lock
 
 /.pixi/
+
+# auxilliary geodata .xml files (created by GIS software packages)
+*.aux.xml
+
+# Byte-compiled / optimized / DLL files
+# see https://github.com/github/gitignore/blob/main/Python.gitignore
+*.py[cod]
