@@ -14,6 +14,7 @@ import pickle
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 
 
@@ -601,7 +602,7 @@ def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
     alpha = 2*math.pi*(np.arange(nSplit)/nSplit + rng.random(1))
     cos = rNew*np.cos(alpha)
     sin = rNew*np.sin(alpha)
-    nx, ny, nz = DFAtls.getNormalArray(np.array([x[ind]]), np.array([y[ind]]), Nx, Ny, Nz, csz)
+    nx, ny, nz = geoTrans.getNormalArray(np.array([x[ind]]), np.array([y[ind]]), Nx, Ny, Nz, csz)
     e1x, e1y, e1z, e2x, e2y, e2z = getTangenVectors(nx, ny, nz, np.array([ux[ind]]), np.array([uy[ind]]), np.array([uz[ind]]))
     xNew = x[ind] + cos * e1x + sin * e2x
     yNew = y[ind] + cos * e1y + sin * e2y

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 # import avaframe.com1DFA.SPHfunctions as SPH
 from avaframe.in3Utils import cfgUtils
@@ -246,7 +246,7 @@ for nPartPerD in nPartPerDList:
     ux = particles['x']
     uy = particles['y']
     uz = particles['z']
-    nx, ny, nz = DFAtls.getNormalArray(x, y, Nx, Ny, Nz, csz)
+    nx, ny, nz = geoTrans.getNormalArray(x, y, Nx, Ny, Nz, csz)
     # normal component of the velocity
     uN = ux*nx + uy*ny + uz*nz
     # print(nx, ny, nz)
