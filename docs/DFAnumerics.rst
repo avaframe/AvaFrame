@@ -489,7 +489,7 @@ falls below a given value of :math:`n_{PPK}^{min} = C_{n_{PPK}}^{min}n_{PPK}`. P
 method as in :ref:`DFAnumerics:Split (**default**)`. Similarly, particles are merged if the estimated
 number of particles per kernel radius exceeds a given value :math:`n_{PPK}^{max} = C_{n_{PPK}}^{max}n_{PPK}`.
 In this case particles are merged with their closest neighbor. The new position and velocity is the mass
-averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
+averaged one. The new mass is the sum. Here, two coefficients :math:`C_{n_{PPK}}^{min}` (``cMinNPPK``) and :math:`C_{n_{PPK}}^{max}` (``cMaxNPPK``) were
 introduced. A good balance needs to be found for the coefficients so that the particles are not constantly split or
 merged but also not too seldom. The split and merge steps happen only once per time step and per particle.
 
@@ -560,10 +560,10 @@ numerical instabilities.
 A decentering in time allows to better capture the discontinuities.
 This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
 which is formally the same as adding a viscous force. Implementing it for the SPH method,
-this viscous force applied on a given particle :math:`k` can be expressed as follows:
+this viscous force applied on a given particle :math:`k` can be expressed as follows:    
 
 .. math::
-  \mathbf{F_k^{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
+    \mathbf{F_k^{viscosity}} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
 
 with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
 \frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
