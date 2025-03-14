@@ -57,7 +57,7 @@ def test_initialiseRunDirs(tmp_path):
     assert workDir.is_dir()
     assert outputDir.is_dir()
     assert remeshedRastersTest.is_dir() is True
-    assert (avaDirtmp / 'Outputs' / modName / 'configurationFilesDone').is_dir()
-    assert (avaDirtmp / 'Outputs' / modName / 'latestConfigurationFiles').is_dir()
+    assert (avaDirtmp / 'Outputs' / modName / 'configurationFiles' / 'configurationFilesDone').is_dir()
+    assert (avaDirtmp / 'Outputs' / modName / 'configurationFiles' / 'configurationFilesLatest').is_dir()
 
 
