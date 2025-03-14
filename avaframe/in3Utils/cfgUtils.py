@@ -693,7 +693,7 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
         avaDir: str
             path to avalanche directory
         specDir: str
-            path to a directory where simulation configuration files can be found - optional
+            path to a directory where simulation configuration files directory called configurationFiles can be found - optional
         latest: bool
             if True check for files found in avaName/Outputs/com1DFA/latestConfigurationFiles
 
@@ -707,9 +707,9 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
 
     # collect all configuration files for this module from directory
     if specDir != '':
-        inDir = pathlib.Path(specDir)
+        inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
-        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
+        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
 
     # search inDir/configurationFilesDone or inDir/latestConfigurationFiles (depending on latest flag) for already existing sims
     if latest:
@@ -722,14 +722,14 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
     simNameExisting = []
     for fName in existingSims:
         simNameExisting.append(fName.stem)
-
-    if not (inDir / 'configurationFiles').is_dir():
+    if list((inDir / 'configurationFilesDone').glob('*.ini')) == []:
         log.info('No existing simulations in Outputs found')
         simDF = None
     else:
         # create simDF (dataFrame with one row per simulation of configuration files found in configDir)
         simDF = createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir=specDir,
                                         simNameList=simNameExisting)
+
 
     return simDF, simNameExisting
 

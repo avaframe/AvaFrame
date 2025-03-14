@@ -158,7 +158,7 @@ def cleanLatestConfigurationsDirAndCreate(avaDir, modName):
             name of module
     """
 
-    avaDirOutputs = pathlib.Path(avaDir, 'Outputs', modName)
+    avaDirOutputs = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
     avaDirOutputsString = str(avaDirOutputs)
 
     # check for empty or non string variable

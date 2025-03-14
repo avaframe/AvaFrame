@@ -199,7 +199,7 @@ def test_readConfigurationInfoFromDone(tmp_path):
 
     simDF, simNameExisting = cfgUtils.readConfigurationInfoFromDone(configDir, specDir=configDir, latest=False)
 
-    assert len(simDF) == 11
+    assert len(simDF) == 9
 
     simDF, simNameExisting = cfgUtils.readConfigurationInfoFromDone(configDir2, specDir="", latest=True)
 

@@ -39,7 +39,7 @@ def initialiseRunDirs(avaDir, modName, cleanRemeshedRasters):
     outputDir = pathlib.Path(avaDir, 'Outputs', modName)
     fU.makeADir(outputDir)
     workDir = pathlib.Path(avaDir, 'Work', modName)
-    configDoneDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFilesDone')
+    configDoneDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles', 'configurationFilesDone')
     fU.makeADir(configDoneDir)
     # If Work directory already exists - error
     if workDir.is_dir():
