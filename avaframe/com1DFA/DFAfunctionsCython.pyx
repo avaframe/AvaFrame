@@ -124,13 +124,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:] uzArray = particles['uz']
   cdef long long[:] ID = particles['ID']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
-  cdef double[:] xDepositedArray = particles['depositedParticles']['x']
-  cdef double[:] yDepositedArray = particles['depositedParticles']['y']
-  cdef double[:] hDepositedArray = particles['depositedParticles']['h']
-  cdef double[:] mDepositedArray = particles['depositedParticles']['m']
-  cdef double[:] dmDepositedArray = particles['depositedParticles']['dm']
-  cdef double[:] idDepositedArray = particles['depositedParticles']['ID']
-  cdef double[:] uMagDepositedArray = particles['depositedParticles']['velocityMag']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
@@ -375,13 +368,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         m = m + dmDet
         mass[k] = m
         dMDet[k] = dmDet
-        '''
-        xDepositedArray = np.append(xDepositedArray, xArray[k])
-        yDepositedArray = np.append(yDepositedArray, yArray[k])
-        hDepositedArray = np.append(hDepositedArray, hArray[k])
-        mDepositedArray = np.append(mDepositedArray, mass[k])
-        idDepositedArray = np.append(idDepositedArray, ID[k])
-        '''
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
@@ -408,14 +394,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   particles['dmDet'] = np.asarray(dMDet)
   particles['dmEnt'] = np.asarray(dM)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
-  '''
-  particles['depositedParticles']['x'] = np.asarray(xDepositedArray)
-  particles['depositedParticles']['y'] = np.asarray(yDepositedArray)
-  particles['depositedParticles']['h'] = np.asarray(hDepositedArray)
-  particles['depositedParticles']['m'] = np.asarray(mDepositedArray)
-  particles['depositedParticles']['dm'] = np.asarray(dmDepositedArray)
-  particles['depositedParticles']['ID'] = np.asarray(idDepositedArray)
-  '''
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -430,6 +408,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
     if entrMassCell < 0:
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
+    fields['entrMassRaster'] = np.asarray(entrMassRaster)
 
   return particles, force, fields
 
