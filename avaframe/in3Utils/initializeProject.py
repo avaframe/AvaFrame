@@ -148,7 +148,7 @@ def cleanRemeshedDir(avaDir):
 
 
 def cleanLatestConfigurationsDirAndCreate(avaDir, modName):
-    """ clean latestConfigurationFiles folder in avaDir/modName/Outputs
+    """ clean configurationFilesLatest folder in avaDir/modName/Outputs/
 
         Parameters
         ------------
@@ -158,7 +158,7 @@ def cleanLatestConfigurationsDirAndCreate(avaDir, modName):
             name of module
     """
 
-    avaDirOutputs = pathlib.Path(avaDir, 'Outputs', modName)
+    avaDirOutputs = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
     avaDirOutputsString = str(avaDirOutputs)
 
     # check for empty or non string variable
@@ -167,11 +167,11 @@ def cleanLatestConfigurationsDirAndCreate(avaDir, modName):
         return result
 
     # clean directory
-    folderName = 'latestConfigurationFiles'
+    folderName = 'configurationFilesLatest'
     _checkForFolderAndDelete(avaDirOutputsString, folderName)
     log.info('Cleaned %s/%s directory' % (avaDirOutputsString,folderName))
 
-    # create new latestConfigurationFiles dir
+    # create new dir configurationFilesLatest
     latestConfigDir = avaDirOutputs / folderName
     fU.makeADir(latestConfigDir)
 

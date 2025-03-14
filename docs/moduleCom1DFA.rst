@@ -233,6 +233,13 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
     - if ``showOnlineBackground = True`` in avaFrameCfg.ini and a suitable ``mapProvider`` is set, peak fields are plotted onto the corresponding map
 * mass log files of all simulations (*Outputs/com1DFA*)
 * configuration files for all simulations (*Outputs/com1DFA/configurationFiles*)
+    - all configuration files that were created for a simulation to be run are stored in (*Outputs/com1DFA/configurationFiles*)
+    - one file for each simulation that has actually been performed is saved in (*Outputs/com1DFA/configurationFiles/configurationFilesDone*)
+    - one file for each simulation that has actually been performed by the latest call of ``runCom1DFA.py`` is saved in (*Outputs/com1DFA/configurationFiles/configurationFilesLatest*)
+
+    .. Note::
+        This kind of storage of configurations from actually performed simulations allows a run that has been terminated
+        to be resumed without re-running simulations that have already been performed. For this, just restart the run.
 
 optional outputs
 

@@ -411,8 +411,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
 
     # write text file to Outputs/com1DFA/configurationFilesDone to indicate that this simulation has been performed
     configFileName = ("%s.ini" % cuSimName)
-    for saveDir in ['configurationFilesDone', 'latestConfigurationFiles']:
-        configDir = pathlib.Path(avaDir, "Outputs", "com1DFA", saveDir)
+    for saveDir in ['configurationFilesDone', 'configurationFilesLatest']:
+        configDir = pathlib.Path(avaDir, "Outputs", "com1DFA", 'configurationFiles', saveDir)
         with open((configDir / configFileName), "w") as fi:
             fi.write("see directory configurationFiles for info on config")
         fi.close()
