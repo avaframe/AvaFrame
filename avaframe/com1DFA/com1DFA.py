@@ -1116,6 +1116,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     fields["cResRaster"] = cResRaster
     fields["detRaster"] = detRaster
+    fields["cResRasterOrig"] = cResRaster
+    fields["detRasterOrig"] = detRaster
 
     for fric in ['mu', 'xi']:
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
@@ -1277,6 +1279,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
 
     particles["massPerPart"] = massPerPart
     particles["mTot"] = np.sum(particles["m"])
+    particles['tPlot'] = 0
     particles["h"] = hPartArray
     particles["ux"] = np.zeros(np.shape(hPartArray))
     particles["uy"] = np.zeros(np.shape(hPartArray))
@@ -2181,6 +2184,16 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPU : dict
         computation time dictionary
     """
+
+    # update cRes and detK rasters according to thresholds of FV and FT
+    particles['tPlot'] = particles['tPlot'] + 1
+    # only if entres or res sim and detrainment is used
+    if cfg['simTypeActual'] in ['entres', 'res'] and cfg.getboolean('detrainment'):
+        # update resistance area fields using threshold
+        fields = com1DFATools.updateResCoeffFields(fields, cfg)
+        #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem)
+
+
     # get forces
     startTime = time.time()
     # loop version of the compute force
@@ -2662,6 +2675,14 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # add info about dam file path to the cfg
         if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
             cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'ent' in row._asdict()["simTypeList"] and inputSimFiles['entFile'] != None:
+            cfgSim['INPUT']['entrainment'] = str(pathlib.Path('ENT', inputSimFiles['entFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'res' in row._asdict()["simTypeList"] and inputSimFiles['resFile'] != None:
+            cfgSim['INPUT']['resistance'] = str(pathlib.Path('RES', inputSimFiles['resFile'].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)

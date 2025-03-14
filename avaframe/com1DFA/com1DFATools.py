@@ -7,6 +7,7 @@ import configparser
 import logging
 import math
 import pathlib
+import numpy as np
 
 from deepdiff import DeepDiff
 
@@ -375,3 +376,53 @@ def checkCfgInfoType(cfgInfo):
         raise AssertionError(message)
 
     return typeCfgInfo
+
+
+def updateResCoeffFields(fields, cfg):
+    """ update fields of cRes and detK, coefficients of resistance parameter and detrainment parameter
+        according to the thresholds of FV and FT
+        if FV OR FT below min thresholds -> apply detrainment in that area
+        if FV AND FT above min thresholds AND below max thresholds -> apply cResH (additional friction) in that area
+        if FV and FT above max thresholds -> no impact of resistance area
+
+        Parameters
+        ------------
+        fields: dict
+            dictionary with cResRasterOrig, cResRaster and detRasterOrig, detRaster fields
+        cfg: configparser object
+            configuration of com1DFA, thresholds
+
+        Returns
+        ------------
+        fields: dict
+            updated cRes and detK fields
+    """
+
+    # fetch cRes and detK raster and thresholds for FV and FT
+    cResOrig = fields['cResRasterOrig'].copy()
+    detOrig = fields['detRasterOrig'].copy()
+    vMin = cfg.getfloat('forestVMin')
+    thMin = cfg.getfloat('forestThMin')
+    vMax = cfg.getfloat('forestVMax')
+    thMax = cfg.getfloat('forestThMax')
+
+    # create new rasters using FV, FT and thresholds to mask
+    cResRaster = np.where((((fields['FV'] > vMin) & (fields['FV'] < vMax)) & ((fields['FT'] > thMin) & (fields['FT'] < thMax))), cResOrig, 0.)
+    detRaster = np.where(((fields['FV'] <= vMin) | (fields['FT'] <= thMin)), detOrig, 0.)
+
+    # if max thresholds are exceeded: forest destroyed remove forest
+    lTh = len(np.where((fields['FV'] > vMax) & (fields['FT'] > thMax))[0])
+    if lTh > 0:
+        cResOrig = np.where(((fields['FV'] > vMax) & (fields['FT'] > thMax)), 0, cResOrig)
+        detOrig = np.where(((fields['FV'] > vMax) & (fields['FT'] > thMax)), 0, detOrig)
+        fields['cResRasterOrig'] = cResOrig
+        fields['detRasterOrig'] = detOrig
+        log.info('Resistance area removed %d cells because FV, FT exceeded %.2f ms-1, %.2f m' % (lTh, vMax, thMax))
+
+    # update fields dictionary
+    fields['cResRaster'] = cResRaster
+    fields['detRaster'] = detRaster
+
+
+    return fields
+

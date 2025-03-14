@@ -5,6 +5,7 @@ import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
 import geopandas as gpd
 from matplotlib.patches import Patch
+import contextily as ctx
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -544,5 +545,85 @@ def plotReleaseScenarioView(avaDir, releaseLine, reportAreaInfo, dem, titleFig, 
     # save and or plot
     plotName = 'releaseScenario_%s' % cuSimName
     outDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'reports')
+    fU.makeADir(outDir)
+    pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
+
+
+def plotResFields(fields, cfg, tPlot, dem):
+    """ Plot active resistance area fields for com1DFArun
+
+        Parameters
+        -----------
+        fields: dict
+            dictionary with fields of FV, FT, cResRaster, detKRaster of current time step
+        cfg: configparser object
+            configuration settings of com1DFA - FV, FT thresholds for resistance processes
+        tPlot: int
+            integer counting for plot naming, ascending order with time
+        dem: dict
+            dictionary with info on DEM
+            """
+
+    # load thresholds
+    vMin = cfg.getfloat('forestVMin')
+    thMin = cfg.getfloat('forestThMin')
+    vMax = cfg.getfloat('forestVMax')
+    thMax = cfg.getfloat('forestThMax')
+
+    # fetch DEM info
+    header = dem['originalHeader']
+    # create extent for cell centers lower left to upper right in meters
+    extentCellCenters, extentCellCorners = pU.createExtentMinMax(dem['rasterData'], header, originLLCenter=True)
+
+    # create figure
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(pU.figW*2, pU.figH))
+
+    # mask 0 values in arrays for plots
+    cRes = np.flipud(np.where(fields['cResRaster']==0, np.nan, fields['cResRaster']))
+    det = np.flipud(np.where(fields['detRaster']==0, np.nan, fields['detRaster']))
+    fv = np.flipud(np.where(fields['FV']==0, np.nan, fields['FV']))
+    ft = np.flipud(np.where(fields['FT'] == 0, np.nan, fields['FT']))
+
+    # plot resistance model parameter and detrainment parameter
+    im1 = ax[0,0].imshow(cRes, vmin=0, vmax=cfg.getfloat('cRes'), extent=extentCellCenters, zorder=4)
+    im2 = ax[0, 1].imshow(np.where(fields['FV']==0, np.nan,det), vmin=0, vmax=cfg.getfloat('detK'), extent=extentCellCenters, zorder=4)
+    # set title
+    ax[0,0].set_title('cResRaster')
+    ax[0,1].set_title('detRaster')
+    # add colorbar
+    fig.colorbar(im1, ax=ax[0,0])
+    fig.colorbar(im2, ax=ax[0,1])
+
+    # fetch colormaps for FV and FT colorcode values below and above thresholds, mask 0 values
+    cmap1, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps['FV'], vMin, vMax, continuous=pU.contCmap)
+    cmap2, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps['FT'], thMin, thMax, continuous=pU.contCmap)
+    cmap1.set_under(color='white')
+    cmap1.set_over(color='lightblue')
+    cmap2.set_under(color='white')
+    cmap2.set_over(color='lightblue')
+    cmap1.set_bad(color='k', alpha=0.)
+    cmap2.set_bad(color='k', alpha=0.)
+
+    # add FV and FT fields
+    im3 = ax[1,0].imshow(fv, cmap=cmap1, vmin=vMin, vmax=vMax, extent=extentCellCenters, zorder=4)
+    im4 = ax[1,1].imshow(ft, cmap=cmap2, vmin=thMin, vmax=thMax
+                         , extent=extentCellCenters, zorder=4)
+    # set title
+    ax[1,0].set_title('FV')
+    ax[1,1].set_title('FT')
+    # add colorbar
+    fig.colorbar(im3, ax=ax[1,0])
+    fig.colorbar(im4, ax=ax[1,1])
+
+    # add resistance area as transparent field
+    ax[0, 1].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=3)
+    ax[1, 0].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
+    ax[1, 1].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
+
+    # save and or plot
+    plotName = 'resistance_t%04d' % (tPlot)
+    outDir = pathlib.Path(cfg['avalancheDir'], 'Outputs', 'com1DFA', 'cResPlots')
     fU.makeADir(outDir)
     pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
