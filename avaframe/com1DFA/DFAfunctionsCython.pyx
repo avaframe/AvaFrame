@@ -408,7 +408,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
     if entrMassCell < 0:
       entrMassCell = 0
     entrMassRaster[indCellY, indCellX] = entrMassCell
-    fields['entrMassRaster'] = np.asarray(entrMassRaster)
+  fields['entrMassRaster'] = np.asarray(entrMassRaster)
 
   return particles, force, fields
 
@@ -671,6 +671,10 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double centeredPosition = cfg.getfloat('centeredPosition')
   cdef int snowSlide = cfg.getint('snowSlide')
+  cdef int delStoppedParticles = cfg.getint('delStoppedParticles')
+  cdef int adaptSfcStopped = cfg.getint('adaptSfcStopped')
+  cdef int adaptSfcDetrainment = cfg.getint('adaptSfcDetrainment')
+  cdef int adaptSfcEntrainment = cfg.getint('adaptSfcEntrainment')
   cdef int dissDam = cfg.getint('dissDam')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -815,17 +819,18 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     massDetrained = massDetrained + dMDet[k]
 
     # deposit particles with velocity = 0 or mass = 0
-    if uMagNew == 0 or mNew == 0:
-      xDepositedArray = np.append(xDepositedArray, xArray[k])
-      yDepositedArray = np.append(yDepositedArray, yArray[k])
-      hDepositedArray = np.append(hDepositedArray, hArray[k])
-      mDepositedArray = np.append(mDepositedArray, mass[k])
-      idDepositedArray = np.append(idDepositedArray, ID[k])
-      uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
-      massStopped = massStopped + m
-      notDepositParticle[k] = 0  # particle is deleted
-      nDeposit = nDeposit + 1
-      continue
+    if delStoppedParticles == 1:
+      if uMagNew == 0 or mNew == 0:
+        xDepositedArray = np.append(xDepositedArray, xArray[k])
+        yDepositedArray = np.append(yDepositedArray, yArray[k])
+        hDepositedArray = np.append(hDepositedArray, hArray[k])
+        mDepositedArray = np.append(mDepositedArray, mass[k])
+        idDepositedArray = np.append(idDepositedArray, ID[k])
+        uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
+        massStopped = massStopped + m
+        notDepositParticle[k] = 0  # particle is deleted
+        nDeposit = nDeposit + 1
+        continue
 
     # update position
     if centeredPosition:
@@ -1064,9 +1069,10 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', snowSlide=snowSlide)
 
   # remove particles that have mass = 0 or velocity = 0
-  if nDeposit > 0:
+  if nDeposit > 0 and delStoppedParticles == 1:
     indRemoveParticle = np.array([], dtype=np.int64)
     for k in range(len(keepParticle)):
+      # consider particles that are removed because they exit the domain
       if keepParticle[k] == 0:
           indRemoveParticle = np.append(indRemoveParticle, int(k))
           if notDepositParticle[k] == 0:
@@ -1204,8 +1210,9 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
-  cdef double[:, :] hDeposited = fields['hDeposited']
+  cdef double[:, :] hDetrained = fields['hDetrained']
   cdef double[:, :] hEroded = fields['hEroded']
+  cdef double[:, :] hStopped = fields['hStopped']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
@@ -1222,7 +1229,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] kineticEnergy = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
-  cdef double[:, :] hDepBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] hDetBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] hStopBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] hEroBilinear = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
@@ -1322,8 +1330,11 @@ def updateFieldsC(cfg, particles, dem, fields):
             PKE[j, i] = kineticEnergy[j, i]
 
       # topography height change due to detrainment and deposition
-      hDepBilinear[j, i] = - (MassDetBilinear[j, i] + MassDepBilinear[j, i]) / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
-      hDeposited[j, i] = hDeposited[j, i] + hDepBilinear[j, i]
+
+      hDetBilinear[j, i] = - MassDetBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
+      hDetrained[j, i] = hDetrained[j, i] + hDetBilinear[j, i]
+      hStopBilinear[j, i] = - MassDepBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
+      hStopped[j, i] = hStopped[j, i] + hStopBilinear[j, i]
       hEroBilinear[j, i] = - MassEntBilinear[j, i] / (areaRaster[j, i] * rhoEnt)
       hEroded[j, i] = hEroded[j, i] + hEroBilinear[j, i]
 
@@ -1336,9 +1347,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfv'] = np.asarray(PFV)
   fields['pft'] = np.asarray(PFT)
   fields['dmDet'] = np.asarray(DMDet)
-  fields['hDep'] = np.asarray(hDepBilinear)
+  fields['hStop'] = np.asarray(hStopBilinear)
+  fields['hDet'] = np.asarray(hDetBilinear)
   fields['hEro'] = np.asarray(hEroBilinear)
-  fields['hDeposited'] = np.asarray(hDeposited)
+  fields['hDetrained'] = np.asarray(hDetrained)
+  fields['hStopped'] = np.asarray(hStopped)
   fields['hEroded'] = np.asarray(hEroded)
   if computeP:
     fields['ppr'] = np.asarray(PP)

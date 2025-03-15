@@ -150,7 +150,8 @@ def checkResType(fullCfg, section, key, value):
             "TA",
             "particles",
             "dmDet",
-            "hDeposited",
+            "hDetrained",
+            "hStopped",
             "hEroded",
             "demAdapted"
         ]

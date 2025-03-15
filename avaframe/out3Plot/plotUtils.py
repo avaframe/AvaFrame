@@ -231,7 +231,8 @@ except AttributeError:
     cmapZdelta = {"cmap": copy.copy(cmapCrameri.lapaz), "colors": [], "levels": []}
 
 cmapDmDet = copy.copy(cmapCrameri.lapaz.reversed())
-cmapHDeposited = copy.copy(cmapCrameri.davos.reversed())
+cmapHStopped = copy.copy(cmapCrameri.davos.reversed())
+cmapHDetrained = copy.copy(cmapCrameri.davos.reversed())
 cmapHEroded = copy.copy(cmapCrameri.davos)
 
 colorMaps = {
@@ -253,7 +254,8 @@ colorMaps = {
     "zdelta": cmapZdelta,
     "dmDet": cmapDmDet,
     "demAdapted": cmapGreys,
-    "hDeposited": cmapHDeposited,
+    "hDetrained": cmapHDetrained,
+    "hStopped": cmapHStopped,
     "hEroded": cmapHEroded
 }
 

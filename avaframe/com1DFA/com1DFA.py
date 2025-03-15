@@ -1430,7 +1430,8 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
-    fields["hDeposited"] = np.zeros((nrows, ncols))
+    fields["hDetrained"] = np.zeros((nrows, ncols))
+    fields["hStopped"] = np.zeros((nrows, ncols))
     fields["hEroded"] = np.zeros((nrows, ncols))
     fields["demAdapted"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
@@ -2274,8 +2275,11 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     
     # adapt DEM considering erosion and deposition
+    adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(fields['hStop'] != 0)
+    adaptDet = cfg.getboolean("adaptSfcDetrainment") and  np.any(fields['hDet'] != 0)
+    adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(fields['hEro'] != 0)
     if particles["t"] > 0:
-        if np.any(fields['hEro'] != 0) or np.any(fields['hDep'] != 0):
+        if adaptStop or adaptDet or adaptEnt:
             demAdapt, fields = adaptDEM(dem, fields, cfg)
             del dem
             dem = demAdapt
@@ -3022,7 +3026,8 @@ def adaptDEM(dem, fields, cfg):
     nrows = header['nrows']
     ncols = header['ncols']
     ZDEM = dem['rasterData']
-    hDep = fields['hDep']
+    hDet = fields['hDet']
+    hStop = fields['hStop']
     hEro = fields['hEro']
     ZDEMadapt = np.zeros_like(ZDEM)
     demAdapted = {}
@@ -3034,17 +3039,18 @@ def adaptDEM(dem, fields, cfg):
 
     for i in range(ncols):
         for j in range(nrows):
-            ZDEMadapt[j, i] = ZDEM[j, i] + hDep[j, i] + hEro[j, i]
+            if cfg.getboolean("adaptSfcStopped"):
+                ZDEMadapt[j, i] = ZDEM[j, i] + hStop[j, i]
+            if cfg.getboolean("adaptSfcDetrainment"):
+                ZDEMadapt[j, i] = ZDEM[j, i] + hDet[j, i]
+            if cfg.getboolean("adaptSfcEntrainment"):
+                ZDEMadapt[j, i] = ZDEM[j, i] + hEro[j, i]
 
     demAdapted['rasterData'] = np.asarray(ZDEMadapt)
     fields['demAdapted'] = np.asarray(ZDEMadapt)
 
     num = cfg.getfloat("methodMeshNormal")
-
-    #demAdaptedNew = initializeMesh(cfg, demAdapted, num)
-
     demAdapted = geoTrans.getNormalMesh(demAdapted, num=num)
-
     demAdapted = DFAtls.getAreaMesh(demAdapted, num)
 
     return demAdapted, fields
