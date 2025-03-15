@@ -1351,9 +1351,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["depositedParticles"] = {
         "x": np.empty(0),
         "y": np.empty(0),
-        "h": np.empty(0),
         "m": np.empty(0),
-        "dm": np.empty(0),
         "ID": np.empty(0),
         "velocityMag": np.empty(0),
     }
@@ -3029,7 +3027,7 @@ def adaptDEM(dem, fields, cfg):
     hDet = fields['hDet']
     hStop = fields['hStop']
     hEro = fields['hEro']
-    ZDEMadapt = np.zeros_like(ZDEM)
+    ZDEMadapt = ZDEM
     demAdapted = {}
     demAdapted["originalHeader"] = dem["originalHeader"].copy()
     demAdapted["header"] = dem["header"].copy()
@@ -3040,11 +3038,11 @@ def adaptDEM(dem, fields, cfg):
     for i in range(ncols):
         for j in range(nrows):
             if cfg.getboolean("adaptSfcStopped"):
-                ZDEMadapt[j, i] = ZDEM[j, i] + hStop[j, i]
+                ZDEMadapt[j, i] = ZDEMadapt[j, i] + hStop[j, i]
             if cfg.getboolean("adaptSfcDetrainment"):
-                ZDEMadapt[j, i] = ZDEM[j, i] + hDet[j, i]
+                ZDEMadapt[j, i] = ZDEMadapt[j, i] + hDet[j, i]
             if cfg.getboolean("adaptSfcEntrainment"):
-                ZDEMadapt[j, i] = ZDEM[j, i] + hEro[j, i]
+                ZDEMadapt[j, i] = ZDEMadapt[j, i] + hEro[j, i]
 
     demAdapted['rasterData'] = np.asarray(ZDEMadapt)
     fields['demAdapted'] = np.asarray(ZDEMadapt)

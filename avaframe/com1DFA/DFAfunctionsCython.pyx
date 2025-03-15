@@ -711,9 +711,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   # deposited particles
   cdef double[:] xDepositedArray = np.empty(0)
   cdef double[:] yDepositedArray = np.empty(0)
-  cdef double[:] hDepositedArray = np.empty(0)
   cdef double[:] mDepositedArray = np.empty(0)
-  cdef double[:] dmDepositedArray = np.empty(0)
   cdef double[:] idDepositedArray = np.empty(0)
   cdef double[:] uMagDepositedArray = np.empty(0)
   cdef long[:] indRemoveParticle
@@ -823,7 +821,6 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       if uMagNew == 0 or mNew == 0:
         xDepositedArray = np.append(xDepositedArray, xArray[k])
         yDepositedArray = np.append(yDepositedArray, yArray[k])
-        hDepositedArray = np.append(hDepositedArray, hArray[k])
         mDepositedArray = np.append(mDepositedArray, mass[k])
         idDepositedArray = np.append(idDepositedArray, ID[k])
         uMagDepositedArray = np.append(uMagDepositedArray, uMagNew)
@@ -1010,9 +1007,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
   particles['depositedParticles']['x'] = np.asarray(xDepositedArray)
   particles['depositedParticles']['y'] = np.asarray(yDepositedArray)
-  particles['depositedParticles']['h'] = np.asarray(hDepositedArray)
   particles['depositedParticles']['m'] = np.asarray(mDepositedArray)
-  particles['depositedParticles']['dm'] = np.asarray(dmDepositedArray)
   particles['depositedParticles']['ID'] = np.asarray(idDepositedArray)
 
   if typeStop == 1:
