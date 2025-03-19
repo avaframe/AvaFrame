@@ -1151,7 +1151,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTBilinear = np.zeros((nrows, ncols))
-  cdef double[:, :] FTDETBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearX = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearY = np.zeros((nrows, ncols))
   cdef double[:, :] MomBilinearZ = np.zeros((nrows, ncols))
@@ -1236,8 +1235,6 @@ def updateFieldsC(cfg, particles, dem, fields):
           kineticEnergy[j, i] = 0.5*m*VBilinear[j, i]*VBilinear[j, i]
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
-      if DMDet[j, i] < 0:
-          FTDETBilinear[j, i] = DMDet[j, i] / (areaRaster[j, i] * rho)
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
@@ -1248,7 +1245,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfv'] = np.asarray(PFV)
   fields['pft'] = np.asarray(PFT)
   fields['dmDet'] = np.asarray(DMDet)
-  fields['FTDet'] = np.asarray(FTDETBilinear)
   if computeP:
     fields['ppr'] = np.asarray(PP)
     fields['P'] = np.asarray(PBilinear)

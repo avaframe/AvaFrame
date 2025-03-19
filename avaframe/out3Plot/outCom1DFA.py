@@ -627,3 +627,40 @@ def plotResFields(fields, cfg, tPlot, dem):
     outDir = pathlib.Path(cfg['avalancheDir'], 'Outputs', 'com1DFA', 'cResPlots')
     fU.makeADir(outDir)
     pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
+
+
+def massPlot(infoDict, massDetrainedTotal, t, avaDir, logName):
+    massDetrained = infoDict["massDetrained"]
+    massTotal = infoDict["massTotal"]
+    pfvTimeMax = infoDict['pfvTimeMax']
+
+    # create figure
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(pU.figW, pU.figH))
+
+    l1 = ax.plot(t, (100./ massTotal[0]) * np.asarray(massTotal), 'k-', label='total mass')
+    ax2 = ax.twinx()
+    l2 = ax2.plot(t, (100./ massTotal[0]) * np.asarray(massDetrained), color='royalblue', linestyle='--', label='detrained mass')
+    l3 = ax.plot(t, (100./ massTotal[0]) * (np.asarray(massTotal)-massDetrainedTotal), 'r--', label='total mass + detrained mass')
+    ax3 = ax.twinx()
+    ax3.plot(t, pfvTimeMax, color='lightgray', linestyle='-')
+
+    ax.set_xlabel('time [s]')
+    ax.set_ylabel('total mass [% of initial mass]')
+    ax2.set_ylabel('detrained mass [% of initial mass]', color='royalblue')
+    ax3.set_ylabel('max velocity [ms-1]', color='lightgray')
+
+    ax2.spines['right'].set_color('royalblue')
+    ax2.tick_params(axis='y', colors='royalblue')
+    ax3.spines['right'].set_color('lightgray')
+    ax3.tick_params(axis='y', colors='lightgray')
+    ax3.spines["right"].set_position(("axes", 1.2))
+
+    lns = l1 + l2 + l3
+    labs = [l.get_label() for l in lns]
+    plt.legend(lns, labs, fontsize=9)
+
+    # save and or plot
+    plotName = 'detrainedMass_%s' % (logName)
+    outDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'reports')
+    fU.makeADir(outDir)
+    pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)

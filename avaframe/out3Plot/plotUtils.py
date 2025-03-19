@@ -250,7 +250,6 @@ colorMaps = {
     "zdelta": cmapZdelta,
     "dmDet": cmapProb,
     "FTDet": cmapThickness,
-    "FTDetV2": cmapThickness,
 }
 
 cmapDEM = cmapGreys

@@ -1422,7 +1422,6 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
-    fields["FTDet"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
@@ -1789,6 +1788,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     massEntrained = []
     massDetrained = []
     massTotal = []
+    pfvTimeMax = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
     resultsDF = setupresultsDF(resTypesLast, cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"))
@@ -1854,6 +1854,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         massDetrained.append(particles["massDetrained"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
+        pfvTimeMax.append(np.nanmax(fields['FV']))
         # print progress to terminal
         print("time step t = %f s\r" % t, end="")
 
@@ -1959,6 +1960,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         "entrained mass": np.sum(massEntrained),
         "detrained mass": np.sum(massDetrained),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
+        "pfvTimeMax": pfvTimeMax,
     }
 
     # determine if stop criterion is reached or end time
@@ -2141,6 +2143,12 @@ def writeMBFile(infoDict, avaDir, logName):
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
     massTotal = infoDict["massTotal"]
+    massDetrainedTotal = np.zeros(len(massDetrained))
+    for m in range(1, len(massDetrained)):
+        massDetrainedTotal[m] = massDetrainedTotal[m-1] + massDetrained[m]
+
+    # create mass plot
+    outCom1DFA.massPlot(infoDict, massDetrainedTotal, t, avaDir, logName)
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
@@ -2149,8 +2157,8 @@ def writeMBFile(infoDict, avaDir, logName):
         mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,    %.06f\n"
-                % (t[m], massTotal[m], massEntrained[m], massDetrained[m])
+                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f\n"
+                % (t[m], massTotal[m], massEntrained[m], massDetrained[m], massDetrainedTotal[m])
             )
 
 
@@ -2547,10 +2555,10 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
                 IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
-                if resType == 'FTDet':
+                if resType == 'DmDet':
                     dmDet = fieldsList[countTime]['dmDet']
                     thDet = dmDet / (cfg['GENERAL'].getfloat('rho') * dem['areaRaster'])
-                    dataName2 = logName + "_" + resType + 'V2'
+                    dataName2 = logName + "_" + 'FTDet'
                     outFile2 = outDirPeakAll / dataName2
                     IOf.writeResultToRaster(dem["originalHeader"], thDet, outFile2, flip=True)
             else:
