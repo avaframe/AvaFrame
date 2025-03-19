@@ -17,6 +17,7 @@ import avaframe.in3Utils.initialiseDirs as inDirs
 from avaframe.com1DFA import com1DFA
 from avaframe.in1Data import getInput as gI
 from avaframe.in3Utils import cfgUtils
+from avaframe.in2Trans import rasterUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -378,7 +379,7 @@ def checkCfgInfoType(cfgInfo):
     return typeCfgInfo
 
 
-def updateResCoeffFields(fields, cfg):
+def updateResCoeffFields(fields, cfg, t, dem):
     """ update fields of cRes and detK, coefficients of resistance parameter and detrainment parameter
         according to the thresholds of FV and FT
         if FV OR FT below min thresholds -> apply detrainment in that area
@@ -407,22 +408,32 @@ def updateResCoeffFields(fields, cfg):
     thMax = cfg.getfloat('forestThMax')
 
     # create new rasters using FV, FT and thresholds to mask
-    cResRaster = np.where((((fields['FV'] > vMin) & (fields['FV'] < vMax)) & ((fields['FT'] > thMin) & (fields['FT'] < thMax))), cResOrig, 0.)
     detRaster = np.where(((fields['FV'] <= vMin) | (fields['FT'] <= thMin)), detOrig, 0.)
+    cResRasterInt = np.where(
+        ((fields['FV'] > vMin ) & ((fields['FT'] > thMin))), cResOrig,
+        0.)
+    cResRaster = np.where(((fields['FV'] > vMax) | ((fields['FT'] > thMax))), 0, cResRasterInt)
+
+    if len(np.where((detRaster > 0) & (cResRaster > 0))[0]) > 0:
+        message = 'Detrainment and increased friction within same cell!'
+        log.error(message)
+        raise AssertionError(message)
 
     # if max thresholds are exceeded: forest destroyed remove forest
-    lTh = len(np.where((fields['FV'] > vMax) & (fields['FT'] > thMax))[0])
+    lTh = len(np.where((fields['FV'] > vMax) | (fields['FT'] > thMax))[0])
     if lTh > 0:
-        cResOrig = np.where(((fields['FV'] > vMax) & (fields['FT'] > thMax)), 0, cResOrig)
-        detOrig = np.where(((fields['FV'] > vMax) & (fields['FT'] > thMax)), 0, detOrig)
+        cResOrig = np.where(((fields['FV'] > vMax) | (fields['FT'] > thMax)), 0, cResOrig)
+        detOrig = np.where(((fields['FV'] > vMax) | (fields['FT'] > thMax)), 0, detOrig)
         fields['cResRasterOrig'] = cResOrig
         fields['detRasterOrig'] = detOrig
-        log.info('Resistance area removed %d cells because FV, FT exceeded %.2f ms-1, %.2f m' % (lTh, vMax, thMax))
+        log.info('Resistance area removed %d cells because FV or FT exceeded %.2f ms-1, %.2f m' % (lTh, vMax, thMax))
+        outFileRes = pathlib.Path(cfg['avalancheDir'], 'Outputs', 'com1DFA', 'reports',
+                                  ('resArea_t%.2f' % t))
+        IOf.writeResultToRaster(dem["originalHeader"], fields['cResRasterOrig'], outFileRes, flip=True)
 
     # update fields dictionary
     fields['cResRaster'] = cResRaster
     fields['detRaster'] = detRaster
-
 
     return fields
 

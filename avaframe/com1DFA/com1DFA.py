@@ -1422,6 +1422,7 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
+    fields["FTDet"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
@@ -2190,7 +2191,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     # only if entres or res sim and detrainment is used
     if cfg['simTypeActual'] in ['entres', 'res'] and cfg.getboolean('detrainment'):
         # update resistance area fields using threshold
-        fields = com1DFATools.updateResCoeffFields(fields, cfg)
+        fields = com1DFATools.updateResCoeffFields(fields, cfg, float(particles['t']), dem)
         #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem)
 
 
@@ -2546,6 +2547,12 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
                 IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+                if resType == 'FTDet':
+                    dmDet = fieldsList[countTime]['dmDet']
+                    thDet = dmDet / (cfg['GENERAL'].getfloat('rho') * dem['areaRaster'])
+                    dataName2 = logName + "_" + resType + 'V2'
+                    outFile2 = outDirPeakAll / dataName2
+                    IOf.writeResultToRaster(dem["originalHeader"], thDet, outFile2, flip=True)
             else:
                 log.debug(
                     "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "

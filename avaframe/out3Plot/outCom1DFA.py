@@ -586,7 +586,8 @@ def plotResFields(fields, cfg, tPlot, dem):
 
     # plot resistance model parameter and detrainment parameter
     im1 = ax[0,0].imshow(cRes, vmin=0, vmax=cfg.getfloat('cRes'), extent=extentCellCenters, zorder=4)
-    im2 = ax[0, 1].imshow(np.where(fields['FV']==0, np.nan,det), vmin=0, vmax=cfg.getfloat('detK'), extent=extentCellCenters, zorder=4)
+    im2 = ax[0, 1].imshow(det, vmin=0, vmax=cfg.getfloat('detK'),
+                          extent=extentCellCenters, zorder=4)
     # set title
     ax[0,0].set_title('cResRaster')
     ax[0,1].set_title('detRaster')
@@ -618,7 +619,6 @@ def plotResFields(fields, cfg, tPlot, dem):
     fig.colorbar(im4, ax=ax[1,1])
 
     # add resistance area as transparent field
-    ax[0, 1].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=3)
     ax[1, 0].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
     ax[1, 1].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
 
