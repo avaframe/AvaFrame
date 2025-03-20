@@ -33,7 +33,7 @@ def test_runCom6RockAvalanche(tmp_path, caplog):
     modCfg, modInfo = cfgUtils.getModuleConfig(com6RockAvalanche, modInfo=True)
 #    print(modCfg)
 
-    dem, plotDict, reportDictList, simDF = com6RockAvalanche.runRockAvalanche(cfgMain, modCfg)
+    dem, plotDict, reportDictList, simDF = com6RockAvalanche.com6RockAvalancheMain(cfgMain, modCfg)
 
     outDir = avaDir / "Outputs" / "com1DFA"
     for ext in ["FT", "pft", "pfv"]:

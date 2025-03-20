@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.com6RockAvalanche import com6RockAvalanche
 
 
-def runRockAvalanche(avalancheDir=""):
+def runCom6RockAvalanche(avalancheDir=""):
     """Run com1DFA with rock avalanche parameters with only an avalanche directory as input
 
     Parameters
@@ -58,7 +58,7 @@ def runRockAvalanche(avalancheDir=""):
     rockAvalancheCfg = cfgUtils.getModuleConfig(com6RockAvalanche)
 
     # perform com1DFA simulation with rock avalanche settings
-    _, plotDict, reportDictList, _ = com6RockAvalanche.runRockAvalanche(cfgMain, rockAvalancheCfg)
+    _, plotDict, reportDictList, _ = com6RockAvalanche.com6RockAvalancheMain(cfgMain, rockAvalancheCfg)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
@@ -79,4 +79,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    runRockAvalanche(str(args.avadir))
+    runCom6RockAvalanche(str(args.avadir))

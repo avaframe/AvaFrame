@@ -34,7 +34,7 @@ def test_snowSlide(tmp_path):
     snowSlideCfg['com1DFA_com1DFA_override']['entTh'] = '0.3'
 
     # call function to be tested
-    _, _, _, simDF = com5SnowSlide.runSnowSlide(cfgMain, snowSlideCfg)
+    _, _, _, simDF = com5SnowSlide.com5SnowSlideMain(cfgMain, snowSlideCfg)
 
     # print('simDF', simDF.to_string())
     assert simDF['tEnd'].iloc[0] == 5

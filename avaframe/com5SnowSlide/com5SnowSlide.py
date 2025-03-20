@@ -16,7 +16,7 @@ from avaframe.com1DFA import com1DFA
 log = logging.getLogger(__name__)
 
 
-def runSnowSlide(cfgMain, snowSlideCfg):
+def com5SnowSlideMain(cfgMain, snowSlideCfg):
     """Run snow slide tool and adjust parameters to match snow slide settings for com1DFA run,
     result files, reports and plots are saved analog to a standard com1DFA model run
 
