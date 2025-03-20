@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.com5SnowSlide import com5SnowSlide
 
 
-def runSnowSlide(avalancheDir=""):
+def runCom5SnowSlide(avalancheDir=""):
     """Run com1DFA with snow slide parameters with only an
     avalanche directory as input
 
@@ -59,7 +59,7 @@ def runSnowSlide(avalancheDir=""):
     snowSlideCfg = cfgUtils.getModuleConfig(com5SnowSlide)
 
     # perform com1DFA simulation with snow slide settings
-    _, plotDict, reportDictList, _ = com5SnowSlide.runSnowSlide(cfgMain, snowSlideCfg)
+    _, plotDict, reportDictList, _ = com5SnowSlide.com5SnowSlideMain(cfgMain, snowSlideCfg)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    runSnowSlide(str(args.avadir))
+    runCom5SnowSlide(str(args.avadir))

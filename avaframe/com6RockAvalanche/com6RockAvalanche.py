@@ -16,7 +16,7 @@ from avaframe.com1DFA import com1DFA
 log = logging.getLogger(__name__)
 
 
-def runRockAvalanche(cfgMain, rockAvalancheCfg):
+def com6RockAvalancheMain(cfgMain, rockAvalancheCfg):
     """Run and adjust parameters to match rock avalanche settings for com1DFA run,
     result files, reports and plots are saved analog to a standard com1DFA model run
 
