@@ -1383,6 +1383,7 @@ def test_writeMBFile(tmp_path):
     infoDict["massEntrained"] = np.asarray([0, 0, 10, 20, 30])
     infoDict["massDetrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massTotal"] = np.asarray([60.0, 60.0, 70.0, 90.0, 120.0])
+    infoDict["pfvTimeMax"] = np.asarray([0, 0, 0, 0, 0])
     avaName = "data/avaTest"
     avaDir = pathlib.Path(tmp_path, avaName)
     logName = "simTestName"
@@ -1400,7 +1401,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1415,7 +1416,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
     infoDict["massEntrained"] = np.asarray([0, 20, 0, 0, 10])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1430,7 +1431,7 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
     assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 4
+    assert mbInfo.shape[1] == 5
 
 
 def test_savePartToPickle(tmp_path):
