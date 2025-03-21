@@ -457,7 +457,7 @@ def fetchContCoors(demHeader, flowF, cfgVisu, simName):
     return contDictXY
 
 
-def plotReleaseScenarioView(avaDir, releaseLine, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
+def plotReleaseScenarioView(avaDir, releaseLine, relThField, reportAreaInfo, dem, titleFig, cuSimName, inputSimLines):
     """ plot release polygon, area with thickness on dem hillshade
         saved to avaDir/Outputs/com1DFA/reports
 
@@ -485,7 +485,12 @@ def plotReleaseScenarioView(avaDir, releaseLine, reportAreaInfo, dem, titleFig, 
     xL = dem['originalHeader']['xllcenter']
     yL = dem['originalHeader']['yllcenter']
     originCells = dem['header']['cellsize'] * 0.5
-    rField = np.ma.masked_where(releaseLine['rasterData'] == 0.0, releaseLine['rasterData'])
+    if len(relThField) == 0:
+        releaseF = releaseLine['rasterData'].copy()
+    else:
+        releaseF = np.where(releaseLine['rasterData'] > 0, relThField, 0)
+
+    rField = np.ma.masked_where(releaseF == 0.0, releaseF)
 
     # choose colormap
     cmap1, col, ticks, norm = pU.makeColorMap(
