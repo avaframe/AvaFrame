@@ -384,7 +384,7 @@ def updateResCoeffFields(fields, cfg, t, dem):
         according to the thresholds of FV and FT
         if FV OR FT below min thresholds -> apply detrainment in that area
         if FV AND FT above min thresholds AND below max thresholds -> apply cResH (additional friction) in that area
-        if FV and FT above max thresholds -> no impact of resistance area
+        if FV OR FT above max thresholds -> no impact of resistance area
 
         Parameters
         ------------

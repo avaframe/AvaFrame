@@ -5,7 +5,6 @@ import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
 import geopandas as gpd
 from matplotlib.patches import Patch
-import contextily as ctx
 
 # Local imports
 from avaframe.in3Utils import cfgUtils

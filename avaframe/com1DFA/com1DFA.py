@@ -2200,6 +2200,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if cfg['simTypeActual'] in ['entres', 'res'] and cfg.getboolean('detrainment'):
         # update resistance area fields using threshold
         fields = com1DFATools.updateResCoeffFields(fields, cfg, float(particles['t']), dem)
+        # plot
         #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem)
 
 
