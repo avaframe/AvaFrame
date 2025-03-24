@@ -1116,6 +1116,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     fields["cResRaster"] = cResRaster
     fields["detRaster"] = detRaster
+    fields["cResRasterOrig"] = cResRaster
+    fields["detRasterOrig"] = detRaster
 
     for fric in ['mu', 'xi']:
         if (inputSimLines[fric+'File'] == None) or (cfg['GENERAL']['frictModel'].lower() != 'spatialvoellmy'):
@@ -1278,6 +1280,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
 
     particles["massPerPart"] = massPerPart
     particles["mTot"] = np.sum(particles["m"])
+    particles['tPlot'] = 0
     particles["h"] = hPartArray
     particles["ux"] = np.zeros(np.shape(hPartArray))
     particles["uy"] = np.zeros(np.shape(hPartArray))
@@ -1786,6 +1789,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
     massEntrained = []
     massDetrained = []
     massTotal = []
+    pfvTimeMax = []
 
     # setup a result fields info data frame to save max values of fields and avalanche front
     resultsDF = setupresultsDF(resTypesLast, cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"))
@@ -1851,6 +1855,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         massDetrained.append(particles["massDetrained"])
         massTotal.append(particles["mTot"])
         timeM.append(t)
+        pfvTimeMax.append(np.nanmax(fields['FV']))
         # print progress to terminal
         print("time step t = %f s\r" % t, end="")
 
@@ -1956,6 +1961,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, simHash=""):
         "entrained mass": np.sum(massEntrained),
         "detrained mass": np.sum(massDetrained),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
+        "pfvTimeMax": pfvTimeMax,
     }
 
     # determine if stop criterion is reached or end time
@@ -2138,6 +2144,12 @@ def writeMBFile(infoDict, avaDir, logName):
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
     massTotal = infoDict["massTotal"]
+    massDetrainedTotal = np.zeros(len(massDetrained))
+    for m in range(1, len(massDetrained)):
+        massDetrainedTotal[m] = massDetrainedTotal[m-1] + massDetrained[m]
+
+    # create mass plot
+    outCom1DFA.massPlot(infoDict, massDetrainedTotal, t, avaDir, logName)
 
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
@@ -2146,8 +2158,8 @@ def writeMBFile(infoDict, avaDir, logName):
         mFile.write("time, current, entrained, detrained\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,    %.06f\n"
-                % (t[m], massTotal[m], massEntrained[m], massDetrained[m])
+                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f\n"
+                % (t[m], massTotal[m], massEntrained[m], massDetrained[m], massDetrainedTotal[m])
             )
 
 
@@ -2182,6 +2194,17 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPU : dict
         computation time dictionary
     """
+
+    # update cRes and detK rasters according to thresholds of FV and FT
+    particles['tPlot'] = particles['tPlot'] + 1
+    # only if entres or res sim and detrainment is used
+    if cfg['simTypeActual'] in ['entres', 'res'] and cfg.getboolean('detrainment'):
+        # update resistance area fields using threshold
+        fields = com1DFATools.updateResCoeffFields(fields, cfg, float(particles['t']), dem)
+        # plot
+        #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem)
+
+
     # get forces
     startTime = time.time()
     # loop version of the compute force
@@ -2534,6 +2557,12 @@ def exportFields(cfg, Tsave, fieldsList, dem, outDir, logName):
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
                 IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+                if resType == 'DmDet':
+                    dmDet = fieldsList[countTime]['dmDet']
+                    thDet = dmDet / (cfg['GENERAL'].getfloat('rho') * dem['areaRaster'])
+                    dataName2 = logName + "_" + 'FTDet'
+                    outFile2 = outDirPeakAll / dataName2
+                    IOf.writeResultToRaster(dem["originalHeader"], thDet, outFile2, flip=True)
             else:
                 log.debug(
                     "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
@@ -2663,6 +2692,14 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # add info about dam file path to the cfg
         if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
             cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'ent' in row._asdict()["simTypeList"] and inputSimFiles['entFile'] != None:
+            cfgSim['INPUT']['entrainment'] = str(pathlib.Path('ENT', inputSimFiles['entFile'].name))
+
+        # add info about entrainment file path to the cfg
+        if 'res' in row._asdict()["simTypeList"] and inputSimFiles['resFile'] != None:
+            cfgSim['INPUT']['resistance'] = str(pathlib.Path('RES', inputSimFiles['resFile'].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
