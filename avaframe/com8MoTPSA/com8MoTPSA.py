@@ -215,7 +215,10 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
 
 
 def com8MoTPSATask(rcfFile):
+    # TODO: Obvious...
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     command = ['./MoT-PSA', rcfFile]
+    # command = ['/home/felix/Versioning/AvaFrame/avaframe/com8MoTPSA/MoT-PSA', rcfFile]
     log.info("Run simulation: %s" % rcfFile)
     _runAndCheck(command)
     return command
@@ -284,7 +287,7 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         bedDepo = workInputDir / "dummyBedDepo"
         bedShear = workInputDir / "dummyBedShear"
         rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1, flip=True)
-        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL2, flip=True)
+        rU.writeResultToRaster(dem["header"], zeroRaster, releaseL2, flip=True)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedDepo)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
@@ -294,13 +297,13 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         cfgInfo["Run information"]["UTM zone"] = "32N"
         cfgInfo["Run information"]["EPSG geodetic datum code"] = "31287"
         cfgInfo["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["File names"]["Grid filename"] = "./" + str(inputSimFiles["demFile"])
-        cfgInfo["File names"]["Release depth 1 filename"] = "./" + str(releaseL1) + ".asc"
-        cfgInfo["File names"]["Release depth 2 filename"] = "./" + str(releaseL2) + ".asc"
-        cfgInfo["File names"]["Bed depth filename"] = "./" + str(bedDepth) + ".asc"
-        cfgInfo["File names"]["Bed deposition filename"] = "./" + str(bedDepo) + ".asc"
-        cfgInfo["File names"]["Bed shear strength filename"] = "./" + str(bedShear) + ".asc"
-        cfgInfo["File names"]["Output filename root"] = "./" + str(workOutputDir)
+        cfgInfo["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
+        cfgInfo["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
+        cfgInfo["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
+        cfgInfo["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
+        cfgInfo["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
+        cfgInfo["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfgInfo["File names"]["Output filename root"] = str(workOutputDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
