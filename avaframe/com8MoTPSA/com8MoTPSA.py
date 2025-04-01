@@ -268,7 +268,20 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         # TODO: split releaseheight -> question NGI
         dem = rU.readRaster(inputSimFiles["demFile"])
         dem["originalHeader"] = dem["header"].copy()
-        releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
+        #releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
+        if len(inputSimLines['relThField']) == 0:
+            # if no release thickness field or function - set release according to shapefile or ini file
+            # this is a list of release rasters that we want to combine
+            releaseLine = geoTrans.prepareArea(
+                releaseLine, dem, np.sqrt(2), thList=releaseLine["thickness"], combine=True, checkOverlap=False
+            )
+            releaseField = releaseLine['rasterData']
+        else:
+            # if relTh provided - set release thickness with field or function
+            releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
+            relRasterPoly = releaseLine['rasterData'].copy()
+            releaseRelThCombined = np.where(relRasterPoly>0, inputSimLines['relThField'], 0)
+            releaseField = releaseRelThCombined
 
         # Generate the work and data dirs for the current simHash
 
@@ -286,7 +299,7 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         bedDepth = workInputDir / "dummyBedDepth"
         bedDepo = workInputDir / "dummyBedDepo"
         bedShear = workInputDir / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseLine["rasterData"], releaseL1, flip=True)
+        rU.writeResultToRaster(dem["header"], releaseField, releaseL1, flip=True)
         rU.writeResultToRaster(dem["header"], zeroRaster, releaseL2, flip=True)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedDepo)
