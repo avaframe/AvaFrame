@@ -2687,7 +2687,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
 
         # check if RELTH in Inputs has desired mesh size
-        # if "relThFromFile" in cfgSim["GENERAL"]:
         if cfgSim["GENERAL"]["relThFromFile"] == "True":
             pathToRelTh = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['relThFile'], dem, 'RELTH')
             cfgSim["INPUT"]["relThFile"] = pathToRelTh

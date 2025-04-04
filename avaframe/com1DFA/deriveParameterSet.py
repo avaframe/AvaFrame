@@ -82,10 +82,9 @@ def getVariationDict(avaDir, fullCfg, modDict):
                         variations[key] = locValue
                         log.info("%s: %s (default value was: %s)" % (key, locValue, defValue))
                     except KeyError:
-                        defValue = None
                         log.warning(
                             "Parameter %s: has a variation, seems to be added, is it acutally used? Ignored for now "
-                            % (key)
+                            % key
                         )
 
     # add releaseScenario info to variations dict - also if this parameter is not varied
@@ -367,7 +366,7 @@ def checkThicknessSettings(cfg, thName):
                 raise AssertionError(message)
 
     else:
-        message = "Check %s - needs to be True or False" % (thFlag)
+        message = "Check %s - needs to be True or False" % thFlag
         log.error(message)
         raise AssertionError(message)
 
@@ -885,10 +884,7 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
     cellSizeOld = inputField["header"]["cellsize"]
     demHeader = dem["header"]
 
-    if fileType == "RELTH":
-        rT = 0.0
-    else:
-        rT = float(cfg["GENERAL"]["resizeThreshold"])
+    rT = float(cfg["GENERAL"]["resizeThreshold"])
 
     diffX0, diffX1, diffY0, diffY1 = checkSizeExtent(inputField, demHeader, inputFile, fileType, rT)
 
@@ -898,16 +894,16 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
         and inputField["header"]["cellsize"] == demHeader["cellsize"]
     ):
         if fileType == "RELTH":
-            return str(pathlib.Path("RELTH", inputFile.name))
+            returnStr = str(pathlib.Path("RELTH", inputFile.name))
         else:
-            return str(pathlib.Path("RASTERS", inputFile.name))
+            returnStr = str(pathlib.Path("RASTERS", inputFile.name))
     else:
         # resize data, project data from inputFile onto computational domain
         inputField["rasterData"], _ = geoTrans.resizeData(inputField, dem)
 
         # add warning
         log.warning(
-            "Friction field %s interpolated onto DEM extent and corresponding spatial resolution, "
+            "Field %s interpolated onto DEM extent and corresponding spatial resolution, "
             "cellSize changed from %.2f to %.2f; difference of llcenter was in x: %.2f, in y: %.2f m"
             "and urcenter was in x: %.2f, in y %.2f"
             % (fileType, cellSizeOld, dem["header"]["cellsize"], diffX0, diffY0, diffX1, diffY1)
@@ -931,12 +927,16 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
             log.error(message)
             raise FileExistsError(message)
 
+        # Type release thickness requires all nan values to be set to 0
+        if fileType == "RELTH":
+            inputField["rasterData"][np.isnan(inputField["rasterData"])] = 0.0
+
         # write raster to file
         outFile = IOf.writeResultToRaster(dem["header"], inputField["rasterData"], outFile, flip=True)
         log.info("Saved remeshed raster to %s" % outFile)
-        pathRaster = str(pathlib.Path("remeshedRasters", outFile.name))
+        returnStr = str(pathlib.Path("remeshedRasters", outFile.name))
 
-        return pathRaster
+    return returnStr
 
 
 def checkSizeExtent(inputField, demHeader, inputFile, fileType, rT):
@@ -987,14 +987,6 @@ def checkSizeExtent(inputField, demHeader, inputFile, fileType, rT):
         )
         log.error(message)
         raise AssertionError(message)
-    if fileType == "RELTH":
-        if inputField["header"]["cellsize"] != demHeader["cellsize"]:
-            message = (
-                "Cell size of RELTH file: %s does not match the desired computational meshCellSize"
-                % inputFile.stem
-            )
-            log.error(message)
-            raise AssertionError(message)
 
     return diffX0, diffX1, diffY0, diffY1
 

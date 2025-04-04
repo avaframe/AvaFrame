@@ -150,7 +150,9 @@ Only available for release thickness:
   - set the flag 'relThFromFile' to True
   - save a raster file with info on release thickness as raster file in
     ``Inputs/RELTH`` the number of rows and columns must match the DEM raster
-    with desired meshCellSize
+    with desired meshCellSize (recommended)
+  - if the cellsize does not match the requested meshCellSize, the file is
+    remeshed.
 
 
 Friction parameters
