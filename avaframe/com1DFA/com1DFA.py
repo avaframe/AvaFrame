@@ -40,6 +40,7 @@ import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.com1DFA.DFAToolsCython as DFAtllsC
 import avaframe.com1DFA.damCom1DFA as damCom1DFA
 import avaframe.in2Trans.rasterUtils as IOf
+import avaframe.in2Trans.transformFields as transF
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
@@ -3105,12 +3106,21 @@ def adaptDEM(dem, fields, cfg):
     demAdapted["damLine"] = dem["damLine"].copy()
     fieldsAdapted = fields.copy()
 
+
+    _, _, NzNormed = DFAtls.normalize(dem["Nx"], dem["Ny"], dem["Nz"])
+
     if cfg.getboolean("adaptSfcStopped"):
-        ZDEMadapt += hStop
+        # compute thickness to depth
+        depthStop = hStop / NzNormed
+        ZDEMadapt += depthStop
     if cfg.getboolean("adaptSfcDetrainment"):
-        ZDEMadapt += hDet
+        # compute thickness to depth
+        depthDet = hDet / NzNormed
+        ZDEMadapt += depthDet
     if cfg.getboolean("adaptSfcEntrainment"):
-        ZDEMadapt += hEro
+        # compute thickness to depth
+        depthEnt = hEro / NzNormed
+        ZDEMadapt += depthEnt
 
     demAdapted["rasterData"] = ZDEMadapt
     fieldsAdapted["demAdapted"] = ZDEMadapt
