@@ -2518,5 +2518,3 @@ def test_adaptDEM():
     assert np.any(demAdapted["Ny"] != dem["Ny"])
     assert np.all(demAdapted["Nz"] == dem["Nz"])
     assert np.any(dem["areaRaster"] != demAdapted["areaRaster"])
-
-test_adaptDEM()
