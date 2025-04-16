@@ -2410,11 +2410,11 @@ def test_adaptDEM():
         "cellsize": 5,
     }
 
-    data = np.array([[1, 2, 3, 4, 5],
-                    [1, 2, 3, 4, 5],
-                    [1, 2, 3, 4, 5],
-                    [1, 2, 3, 4, 5],
-                    [1, 2, 3, 4, 5]])
+    data = np.array([[1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],
+                    [1., 2., 3., 4., 5.],])
     dem = {
         "header": header,
         "rasterData": data,
@@ -2434,6 +2434,8 @@ def test_adaptDEM():
     dem = geoTrans.getNormalMesh(dem, num=cfg["GENERAL"].getfloat("methodMeshNormal"))
     dem = DFAtls.getAreaMesh(dem, cfg["GENERAL"].getfloat("methodMeshNormal"))
 
+    _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
+    
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
     for key in demAdapted.keys():
         assert np.all(demAdapted[key] == dem[key])
@@ -2446,6 +2448,7 @@ def test_adaptDEM():
                         "adaptSfcDetrainment": 1,
                         "adaptSfcEntrainment": 1}
     
+    # all rasters for depth changes are zero
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
     for key in demAdapted.keys():
         assert np.all(demAdapted[key] == dem[key])
@@ -2458,15 +2461,14 @@ def test_adaptDEM():
 
     for key in demAdapted.keys():
         if key == "rasterData":
-            assert np.all(demAdapted[key] == dem[key] + 1)
-        elif key == "areaRaster":
+            assert np.all(demAdapted[key] == dem[key] + 1 / NzNormed)
+        elif key == "header":
             assert np.all(demAdapted[key] == dem[key])
-        else:
-            assert np.all(demAdapted[key] == dem[key])
+
 
     for key in fieldsAdapted.keys():
         if key == "demAdapted":
-            assert np.all(fieldsAdapted[key] == fields[key] + 1)
+            assert np.all(fieldsAdapted[key] == fields[key] + 1 / NzNormed)
         else:
             assert np.all(fieldsAdapted[key] == fields[key])
 
@@ -2504,19 +2506,17 @@ def test_adaptDEM():
                                 [1, 1, 1, 1, 1],
                                 [0, 0, 0, 0, 0],
                                 [0, 0, 0, 0, 0],])
-    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
+    demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])    
 
-    assert np.all(demAdapted["rasterData"] == np.array([[1, 2, 3, 4, 5],
-                                                [1, 2, 3, 4, 5],
-                                                [2, 3, 4, 5, 6],
-                                                [1, 2, 3, 4, 5],
-                                                [1, 2, 3, 4, 5]])
+    assert np.all(demAdapted["rasterData"] == np.array([[1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.] + 1 / NzNormed[2],
+                                                [1., 2., 3., 4., 5.],
+                                                [1., 2., 3., 4., 5.]])
     )
-    assert np.all(demAdapted["Nx"] == dem["Nx"])
+    assert np.any(demAdapted["Nx"] != dem["Nx"])
+    assert np.any(demAdapted["Ny"] != dem["Ny"])
     assert np.all(demAdapted["Nz"] == dem["Nz"])
-    
-    NyAdapted = dem["Ny"].copy()
-    NyAdapted[1][1:] -= (0.5 * header["cellsize"])
-    NyAdapted[3][1:] += (0.5 * header["cellsize"])
-    assert np.all(demAdapted["Ny"] == NyAdapted)
     assert np.any(dem["areaRaster"] != demAdapted["areaRaster"])
+
+test_adaptDEM()

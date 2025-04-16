@@ -1845,6 +1845,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         dt = cfgGen.getfloat("dt")
     particles["dt"] = dt
     t = t + dt
+    IOf.writeResultToRaster(dem["header"], dem["Nx"], pathlib.Path('/home/paula/Downloads/Nx'), flip=False)
 
     # Start time step computation
     while t <= tEnd * (1.0 + 1.0e-13) and particles["iterate"]:
@@ -1938,7 +1939,6 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         nIter0 = nIter0 + 1
         tCPUtimeLoop = time.time() - startTime
         tCPU["timeLoop"] = tCPU["timeLoop"] + tCPUtimeLoop
-
     tCPU["nIter"] = nIter
     log.info("Ending computation at time t = %f s", t - dt)
     log.debug("Saving results for time step t = %f s", t - dt)
@@ -3107,7 +3107,7 @@ def adaptDEM(dem, fields, cfg):
     fieldsAdapted = fields.copy()
 
 
-    _, _, NzNormed = DFAtls.normalize(dem["Nx"], dem["Ny"], dem["Nz"])
+    _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
 
     if cfg.getboolean("adaptSfcStopped"):
         # compute thickness to depth
