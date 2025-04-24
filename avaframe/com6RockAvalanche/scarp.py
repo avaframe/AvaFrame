@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 def runScarpAnalysis(configFile):
+    # TODO: rename this to scarpMain or similar
     """Run the scarp analysis using parameters from an .ini configuration file.
 
     Parameters
@@ -25,17 +26,18 @@ def runScarpAnalysis(configFile):
     """
     config = configparser.ConfigParser()
     config.read(configFile)
-   
+
     # Read input parameters from the configuration file
     elevation = config['INPUT']['elevation']
     perimeterInput = config['INPUT']['perimeter']
     shapefilePath = config['INPUT'].get('shapefile', '').strip()
     perimeterShapefilePath = config['INPUT'].get('perimeter_shapefile', '').strip()
     features = config['INPUT'].get('features', '')
-    
+
+    # TODO: outputs should go to Outputs/com6RockAvalanche, so these configs should be removed
     elevScarp = config['OUTPUT']['elevscarp']
     hRelease = config['OUTPUT']['hrelease']
-    
+
     method = config['SETTINGS']['method'].lower()
 
     # Initialize feature parameters
@@ -276,6 +278,7 @@ def calculateScarpWithEllipsoids(elevData, periData, elevTransform, ellipsoids):
     return scarpData
 
 def saveRaster(filename, data, transform, crs):
+    # TODO: use the functions we have in avaframe.in3Utils.rasterUtils.writeResultToRaster
     """Save raster data to a specified format.
 
     Parameters
