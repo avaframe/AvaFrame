@@ -62,9 +62,10 @@ type of plots exists, not to show all available plots!
      - Thalweg time
    * - .. image:: _static/gallery/ValongThalweg.png
                 :target: _static/gallery/ValongThalweg.png
-     -
+     - .. image:: _static/gallery/pftAlonProfileDEM.png
+                :target: _static/gallery/pftAlonProfileDEM.png
      -
    * - Velocity along thalweg; outAIMEC -> plotVelThAlongThalweg
-     -
+     - Profil along given line; out3Plot -> outProfilePlots
      -
 
