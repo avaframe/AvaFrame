@@ -1,170 +1,198 @@
 import rasterio
 import numpy as np
 import math
-import configparser
 import logging
-from avaframe.in2Trans.shpConversion import SHP2Array
+import pathlib
 from rasterio.features import rasterize
 from shapely.geometry import shape, mapping
+
+
+from avaframe.in2Trans.shpConversion import SHP2Array
+from avaframe.in1Data import getInput as gI
+from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.in2Trans.rasterUtils as IOf
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-def runScarpAnalysis(configFile):
-    # TODO: rename this to scarpMain or similar
-    """Run the scarp analysis using parameters from an .ini configuration file.
+
+def scarpAnalysisMain(cfg, baseDir):
+    """Run the scarp analysis using parameters from an .ini cfguration file and input from a directory
 
     Parameters
     ----------
-    configFile : str
-        Path to the configuration file in .ini format.
+    cfg : cfgparser
+        with all required fields in scarpCfg.ini
+    baseDir: str
+        path to directory of data to analyze
 
     Returns
     -------
     None
     """
-    config = configparser.ConfigParser()
-    config.read(configFile)
 
-    # Read input parameters from the configuration file
-    elevation = config['INPUT']['elevation']
-    perimeterInput = config['INPUT']['perimeter']
-    shapefilePath = config['INPUT'].get('shapefile', '').strip()
-    perimeterShapefilePath = config['INPUT'].get('perimeter_shapefile', '').strip()
-    features = config['INPUT'].get('features', '')
+    # Get input from baseDir and check if all files exist
+    if cfg["INPUT"].getboolean("useShapefiles"):
 
-    # TODO: outputs should go to Outputs/com6RockAvalanche, so these configs should be removed
-    elevScarp = config['OUTPUT']['elevscarp']
-    hRelease = config['OUTPUT']['hrelease']
+        # Set directories for inputs, outputs and current work
+        inputDir = pathlib.Path(baseDir, "Inputs")
 
-    method = config['SETTINGS']['method'].lower()
+        # get the path to the perimeter shapefile
+        perimeterShapefilePath, periFile = gI.getAndCheckInputFiles(
+            inputDir, "POLYGONS", "scarp perimeter", fileExt="shp", fileSuffix="_perimeter"
+        )
+        if periFile:
+            log.info("Perimeterfile is: %s" % perimeterShapefilePath)
+        else:
+            log.error("Perimeter shapefile not found in %s", inputDir)
+
+        # get the path to the coordinates shapefile
+        coordinatesShapefilePath, coordFile = gI.getAndCheckInputFiles(
+            inputDir, "POINTS", "scarp coordinates", fileExt="shp", fileSuffix="_coordinates"
+        )
+        if coordFile:
+            log.info("Coordinate shapefile is: %s" % coordinatesShapefilePath)
+        else:
+            log.error("Coordinate shapefile not found in %s", inputDir)
+
+    else:
+        log.error(
+            "Shapefile option not selected. Please set 'useShapefiles' to True in the configuration file. A "
+            "raster version is currently not implemented."
+        )
 
     # Initialize feature parameters
     planeFeatures = []
     ellipsoidFeatures = []
 
-    with rasterio.open(elevation) as elevSrc:
-        elevData = elevSrc.read(1)
-        elevTransform = elevSrc.transform
-        elevCRS = elevSrc.crs
-        n, m = elevData.shape
+    # Read the DEM
+    dem = gI.readDEM(baseDir)
+    n = dem["header"]["nrows"]
+    m = dem["header"]["ncols"]
 
-    periData = readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, (n, m), elevCRS)
+    periData = readPerimeterSHP(perimeterShapefilePath, dem["header"]["transform"], (n, m))
 
-    if shapefilePath:
-        SHPdata = SHP2Array(shapefilePath)
-        log.debug("Feature shapefile data loaded: %s", SHPdata)
+    SHPdata = SHP2Array(coordinatesShapefilePath)
+    log.debug("Feature shapefile data loaded: %s", SHPdata)
 
-        if method == 'plane':
-            planesZseed = list(map(float, config['SETTINGS']['planes_zseed'].split(',')))
-            planesDip = list(map(float, config['SETTINGS']['planes_dip'].split(',')))
-            planesSlope = list(map(float, config['SETTINGS']['planes_slope'].split(',')))
+    method = cfg["SETTINGS"]["method"].lower()
 
-            if not (len(planesZseed) == len(planesDip) == len(planesSlope) == SHPdata['nFeatures']):
-                raise ValueError("Mismatch between number of shapefile features and plane parameters in the .ini file.")
+    if method == "plane":
+        planesZseed = list(map(float, cfg["SETTINGS"]["planes_zseed"].split(",")))
+        planesDip = list(map(float, cfg["SETTINGS"]["planes_dip"].split(",")))
+        planesSlope = list(map(float, cfg["SETTINGS"]["planes_slope"].split(",")))
 
-            for i in range(SHPdata['nFeatures']):
-                xSeed = SHPdata['x'][int(SHPdata['Start'][i])]
-                ySeed = SHPdata['y'][int(SHPdata['Start'][i])]
-                zSeed = planesZseed[i]
-                dip = planesDip[i]
-                slopeAngle = planesSlope[i]
-                planeFeatures.extend([xSeed, ySeed, zSeed, dip, slopeAngle])
+        if not (len(planesZseed) == len(planesDip) == len(planesSlope) == SHPdata["nFeatures"]):
+            raise ValueError(
+                "Mismatch between number of shapefile features and plane parameters in the .ini file."
+            )
 
-            features = ','.join(map(str, planeFeatures))
-            log.debug("Plane features extracted and combined: %s", features)
+        for i in range(SHPdata["nFeatures"]):
+            xSeed = SHPdata["x"][int(SHPdata["Start"][i])]
+            ySeed = SHPdata["y"][int(SHPdata["Start"][i])]
+            zSeed = planesZseed[i]
+            dip = planesDip[i]
+            slopeAngle = planesSlope[i]
+            planeFeatures.extend([xSeed, ySeed, zSeed, dip, slopeAngle])
 
-        elif method == 'ellipsoid':
-            ellipsoidsMaxDepth = list(map(float, config['SETTINGS']['ellipsoids_max_depth'].split(',')))
-            ellipsoidsSemiMajor = list(map(float, config['SETTINGS']['ellipsoids_semi_major'].split(',')))
-            ellipsoidsSemiMinor = list(map(float, config['SETTINGS']['ellipsoids_semi_minor'].split(',')))
+        features = ",".join(map(str, planeFeatures))
+        log.debug("Plane features extracted and combined: %s", features)
 
-            if not (len(ellipsoidsMaxDepth) == len(ellipsoidsSemiMajor) == len(ellipsoidsSemiMinor) == SHPdata['nFeatures']):
-                raise ValueError("Mismatch between number of shapefile features and ellipsoid parameters in the .ini file.")
+    elif method == "ellipsoid":
+        ellipsoidsMaxDepth = list(map(float, cfg["SETTINGS"]["ellipsoids_max_depth"].split(",")))
+        ellipsoidsSemiMajor = list(map(float, cfg["SETTINGS"]["ellipsoids_semi_major"].split(",")))
+        ellipsoidsSemiMinor = list(map(float, cfg["SETTINGS"]["ellipsoids_semi_minor"].split(",")))
 
-            for i in range(SHPdata['nFeatures']):
-                xCenter = SHPdata['x'][int(SHPdata['Start'][i])]
-                yCenter = SHPdata['y'][int(SHPdata['Start'][i])]
-                maxDepth = ellipsoidsMaxDepth[i]
-                semiMajor = ellipsoidsSemiMajor[i]
-                semiMinor = ellipsoidsSemiMinor[i]
-                ellipsoidFeatures.extend([xCenter, yCenter, maxDepth, semiMajor, semiMinor])
+        if not (
+            len(ellipsoidsMaxDepth)
+            == len(ellipsoidsSemiMajor)
+            == len(ellipsoidsSemiMinor)
+            == SHPdata["nFeatures"]
+        ):
+            raise ValueError(
+                "Mismatch between number of shapefile features and ellipsoid parameters in the .ini file."
+            )
 
-            features = ','.join(map(str, ellipsoidFeatures))
-            log.debug("Ellipsoid features extracted and combined: %s", features)
+        for i in range(SHPdata["nFeatures"]):
+            xCenter = SHPdata["x"][int(SHPdata["Start"][i])]
+            yCenter = SHPdata["y"][int(SHPdata["Start"][i])]
+            maxDepth = ellipsoidsMaxDepth[i]
+            semiMajor = ellipsoidsSemiMajor[i]
+            semiMinor = ellipsoidsSemiMinor[i]
+            ellipsoidFeatures.extend([xCenter, yCenter, maxDepth, semiMajor, semiMinor])
 
-    else:
-        if not features:
-            raise ValueError("No features provided. Please specify features in the .ini file or provide a shapefile.")
-
-    scarpData = np.zeros_like(elevData, dtype=np.float32)
-    hRelData = np.zeros_like(elevData, dtype=np.float32)
+        features = ",".join(map(str, ellipsoidFeatures))
+        log.debug("Ellipsoid features extracted and combined: %s", features)
 
     if method == 'plane':
-        scarpData = calculateScarpWithPlanes(elevData, periData, elevTransform, features)
+        scarpData = calculateScarpWithPlanes(
+            dem["rasterData"], periData, dem["header"]["transform"], features
+        )
     elif method == 'ellipsoid':
-        scarpData = calculateScarpWithEllipsoids(elevData, periData, elevTransform, features)
+        scarpData = calculateScarpWithEllipsoids(
+            dem["rasterData"], periData, dem["header"]["transform"], features
+        )
     else:
         raise ValueError("Unsupported method. Choose 'plane' or 'ellipsoid'.")
 
-    hRelData = elevData - scarpData
-    saveRaster(elevScarp, scarpData, elevTransform, elevCRS)
-    saveRaster(hRelease, hRelData, elevTransform, elevCRS)
+    hRelData = dem["rasterData"] - scarpData
 
-def readPerimeter(perimeterInput, perimeterShapefilePath, elevTransform, elevShape, elevCRS):
-    """Read perimeter from raster or shapefile and return as numpy array.
+    # create output directory and files
+    outDir = pathlib.Path(baseDir)
+    outDir = outDir / "Outputs" / "com6RockAvalanche" / "scarp"
+    fU.makeADir(outDir)
+
+    # Set file names and write
+    elevationOut = outDir / "scarpElevation"
+    hRelOut = outDir / "scarpHRel"
+    IOf.writeResultToRaster(dem["header"], scarpData, elevationOut)
+    IOf.writeResultToRaster(dem["header"], hRelData, hRelOut)
+
+
+def readPerimeterSHP(perimeterShapefilePath, elevTransform, elevShape):
+    """Read perimeter from shapefile and return as numpy array.
 
     Parameters
     ----------
-    perimeterInput : str
-        Path to the perimeter raster file.
     perimeterShapefilePath : str
         Path to the perimeter shapefile.
     elevTransform : Affine
         transformation of the elevation raster.
     elevShape : tuple
         Shape (height, width) of the elevation raster.
-    elevCrs : rasterio.crs.CRS
-        Coordinate Reference System of the elevation raster.
 
     Returns
     -------
     periData : np.ndarray
         2D array representing the perimeter mask.
     """
-    if perimeterShapefilePath:
-        log.debug("Processing perimeter shapefile: %s", perimeterShapefilePath)
-        SHPdata = SHP2Array(perimeterShapefilePath)
-        log.debug("Perimeter shapefile data loaded: %s", SHPdata)
 
-        shapes = []
-        for i in range(SHPdata['nFeatures']):
-            start = int(SHPdata['Start'][i])
-            length = int(SHPdata['Length'][i])
-            coords = [(SHPdata['x'][j], SHPdata['y'][j]) for j in range(start, start + length)]
-            poly = shape({'type': 'Polygon', 'coordinates': [coords]})
-            shapes.append(poly)
+    log.debug("Processing perimeter shapefile: %s", perimeterShapefilePath)
+    SHPdata = SHP2Array(perimeterShapefilePath)
+    log.debug("Perimeter shapefile data loaded: %s", SHPdata)
 
-        periData = rasterize(
-            [(mapping(poly), 1) for poly in shapes],
-            out_shape=elevShape,
-            transform=elevTransform,
-            fill=0,
-            all_touched=True,
-            dtype=np.uint8
-        )
-        log.debug("Perimeter shapefile rasterized.")
+    shapes = []
+    for i in range(SHPdata["nFeatures"]):
+        start = int(SHPdata["Start"][i])
+        length = int(SHPdata["Length"][i])
+        coords = [(SHPdata["x"][j], SHPdata["y"][j]) for j in range(start, start + length)]
+        poly = shape({"type": "Polygon", "coordinates": [coords]})
+        shapes.append(poly)
 
-    elif perimeterInput.lower().endswith(('.tif', '.tiff', '.asc')):
-        log.debug("Reading perimeter raster: %s", perimeterInput)
-        with rasterio.open(perimeterInput) as periSrc:
-            periData = periSrc.read(1)
-        log.debug("Perimeter raster loaded.")
-    else:
-        raise ValueError("Unsupported perimeter input format. Provide a raster (.tif, .asc) or a shapefile (.shp).")
+    periData = rasterize(
+        [(mapping(poly), 1) for poly in shapes],
+        out_shape=elevShape,
+        transform=elevTransform,
+        fill=0,
+        all_touched=True,
+        dtype=np.uint8,
+    )
+    log.debug("Perimeter shapefile rasterized.")
 
     return periData
+
 
 def calculateScarpWithPlanes(elevData, periData, elevTransform, planes):
     """Calculate the scarp using sliding planes.
@@ -276,36 +304,3 @@ def calculateScarpWithEllipsoids(elevData, periData, elevTransform, ellipsoids):
                 scarpData[row, col] = elevData[row, col]
 
     return scarpData
-
-def saveRaster(filename, data, transform, crs):
-    # TODO: use the functions we have in avaframe.in3Utils.rasterUtils.writeResultToRaster
-    """Save raster data to a specified format.
-
-    Parameters
-    ----------
-    output_path : str
-        The file path where the output raster will be saved.
-    data : np.ndarray
-        The 2D array of data to be saved.
-    elevTransform : Affine
-        The affine transformation matrix of the elevation raster.
-    elevCRS : rasterio.crs.CRS
-        The Coordinate Reference System of the elevation raster.
-
-    Returns
-    -------
-    None
-    """
-    with rasterio.open(
-        filename,
-        'w',
-        driver='GTiff',
-        height=data.shape[0],
-        width=data.shape[1],
-        count=1,
-        dtype=data.dtype,
-        crs=crs,
-        transform=transform,
-    ) as dst:
-        dst.write(data, 1)
-    log.debug("Raster saved: %s", filename)

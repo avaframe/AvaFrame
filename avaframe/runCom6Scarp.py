@@ -7,7 +7,7 @@ import pathlib
 import argparse
 
 # Local imports
-from com6RockAvalanche.scarp import runScarpAnalysis
+from avaframe.com6RockAvalanche import scarp
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
@@ -47,10 +47,10 @@ def runScarpAnalysisWorkflow(inputDir=""):
     initProj.cleanSingleAvaDir(inputDir, deleteOutput=False)
 
     # load scarp config
-    scarpCfg = cfgUtils.getModuleConfig(runScarpAnalysis)
+    scarpCfg = cfgUtils.getModuleConfig(scarp)
 
     # Run the scarp analysis
-    runScarpAnalysis(str(inputDir))
+    scarp.scarpAnalysisMain(scarpCfg, str(inputDir))
 
     log.info('Scarp analysis completed successfully.')
 
