@@ -1845,7 +1845,6 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         dt = cfgGen.getfloat("dt")
     particles["dt"] = dt
     t = t + dt
-    IOf.writeResultToRaster(dem["header"], dem["Nx"], pathlib.Path('/home/paula/Downloads/Nx'), flip=False)
 
     # Start time step computation
     while t <= tEnd * (1.0 + 1.0e-13) and particles["iterate"]:
@@ -2325,6 +2324,10 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if particles["t"] > 0:
         if adaptStop or adaptDet or adaptEnt:
             demAdapted, fields = adaptDEM(dem, fields, cfg)
+            IOf.writeResultToRaster(dem["header"], dem["Nx"], pathlib.Path(f"/home/paula/Downloads/normals/Nx_t{np.round(particles["t"], decimals=1)}"), flip=False)
+            IOf.writeResultToRaster(dem["header"], dem["Ny"], pathlib.Path(f"/home/paula/Downloads/normals/Ny_t{np.round(particles["t"], decimals=1)}"), flip=False)
+            IOf.writeResultToRaster(dem["header"], dem["Nz"], pathlib.Path(f"/home/paula/Downloads/normals/Nz_t{np.round(particles["t"], decimals=1)}"), flip=False)
+
             del dem
             dem = demAdapted
     tCPUField = time.time() - startTime
