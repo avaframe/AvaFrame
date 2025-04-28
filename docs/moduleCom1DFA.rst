@@ -63,7 +63,9 @@ projection:
   - if you want to simulate different scenarios with the same features, you have to copy them to separate shapefiles
 
 
-and the following files are optional:
+and the following files are optional. Please note: in the standard configuration (i.e. ``simTypeList = available``) ,
+the *null* variant is always run! I.e. if a resistance and/or an entrainment file is given (as described below),
+at least two results are generated: the *null* variant and the variant with entrainment and/or resistance.
 
 * one entrainment area (multi-) polygon shapefile (in Inputs/ENT)
 
@@ -243,7 +245,21 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
         This kind of storage of configurations from actually performed simulations allows a run that has been terminated
         to be resumed without re-running simulations that have already been performed. For this, just restart the run.
 
-optional outputs
+The naming of the output files has the following structure, shown with the example of
+*relAlr_ff5f9b78c6_C_L_null_dfa_ppr*:
+
+* *relAlr* - release area name, usually the name of the shapefile
+* *ff5f9b78c6* - individual hash of the configuration file used for the simulation. All files related to this simulation
+  have the same hash in their name. This allows to identify which files belong to which simulation.
+* *C* - indicator of the setup used: D for default setup, C for custom setup, i.e. something was changed in the
+  configuration file
+* *L* - indicator of the size category used for the friction model: L for large, M for medium, S for small
+* *null* - indicator of the run type: null for null variant, ent for entrainment variant, res for resistance variant, etc
+* *dfa* - indicator of the simulation type: dfa for dense flow avalanche
+* *ppr* - indicator of the result type: ppr for peak pressure, pfv for peak flow velocity, pft for peak flow thickness, etc
+
+
+Optional outputs
 
 * pickles of particles properties (:ref:`com1DFAAlgorithm:Particle properties`.) for saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini``
 * a csv file of specified particle properties for the saving time steps if particles are added to the list of resTypes in your local copy of ``com1DFACfg.ini`` and if in the VISUALISATION section writePartToCsv is set to True
