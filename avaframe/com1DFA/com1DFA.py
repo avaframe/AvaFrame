@@ -2763,7 +2763,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
     log.info("Done preparing variations -----")
     # TODO: maybe treat this in some other way, i.e. adding an "finalDEM" or similar
     # inputSimFiles.pop("demFile")
-    inputSimFiles["demFile"] = pathToDemFull
+    # inputSimFiles["demFile"] = pathToDemFull
 
     return simDict
 
