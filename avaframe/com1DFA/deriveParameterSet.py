@@ -16,6 +16,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import geoTrans
+import avaframe.com1DFA.com1DFA as com1DFA
 
 log = logging.getLogger(__name__)
 
@@ -1034,14 +1035,14 @@ def writeToCfgLine(values):
     return valString
 
 
-def createSimDict(avalancheDir, com1DFA, cfgInitial, inputSimFiles, simNameExisting):
+def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisting):
     """Create a simDict with all the simulations that shall be performed
 
     Parameters
     -----------
     avalancheDir: pathlib path
         path to avalanche directory
-    com1DFA: module
+    module: module
         computational module
     cfgStart: configparser object
         configuration settings for com1DFA
@@ -1068,19 +1069,19 @@ def createSimDict(avalancheDir, com1DFA, cfgInitial, inputSimFiles, simNameExist
 
     # create a dictionary with information on which parameter shall be varied for individual simulations
     # compare cfgStart to default module config for this
-    modCfg, variationDict = getParameterVariationInfo(avalancheDir, com1DFA, cfgInitial)
+    modCfg, variationDict = getParameterVariationInfo(avalancheDir, module, cfgInitial)
 
     # create a configuration object per simulation to run (from configuration) gathered in simDict
     # only new simulations are included in this simDict
     # key is simName and corresponds to one simulation
     simDict = {}
     simDict = com1DFA.prepareVarSimDict(
-        modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting
+        modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting, module=module
     )
 
     # write full configuration (.ini file) to file
     date = datetime.today()
     fileName = "sourceConfiguration_" + "{:%d_%m_%Y_%H_%M_%S}".format(date)
-    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+    cfgUtils.writeCfgFile(avalancheDir, module, modCfg, fileName=fileName)
 
     return simDict

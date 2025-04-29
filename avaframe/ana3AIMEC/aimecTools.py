@@ -157,7 +157,6 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
         valRef: str
             value of vapParList[0] used to define reference sim
     """
-
     cfgSetup = cfg['AIMECSETUP']
     if inputDir != '':
         inputDir = pathlib.Path(inputDir)
@@ -172,12 +171,24 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
     referenceSimName = cfgSetup['referenceSimName']
     colorVariation = False
     # look for a configuration
+    # ToDo change filename of com8MoTPSA files
     try:
         # load dataFrame for all configurations
         configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModule)
-        # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
-        inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
+
+        if comModule == 'com8MoTPSA':
+            # Reset the index of configurationDF so that the index (simHash) becomes a column and rename simName that it doesn't appear twice
+            configurationDF = configurationDF.reset_index().rename(columns={'index': 'simHash'})
+            configurationDF = configurationDF.rename(columns={'simName': 'simName_renamed'})
+
+            # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simHash'
+            inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simHash', 'modelType']).set_index('index')
+        else:
+            # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
+            inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
+
         configFound = True
+
     except (NotADirectoryError, FileNotFoundError) as e:
         if cfgSetup['varParList'] != '' and (any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')) == False):
             message = ('No configuration directory found. This is needed for sorting simulation according to '
