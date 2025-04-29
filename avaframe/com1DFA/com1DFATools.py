@@ -8,7 +8,6 @@ import configparser
 import logging
 import math
 import pathlib
-
 from deepdiff import DeepDiff
 
 # local imports
@@ -96,7 +95,7 @@ def setFrictTypeIndicator(simCfg):
     return frictTypeIdentifier
 
 
-def compareSimCfgToDefaultCfgCom1DFA(simCfg):
+def compareSimCfgToDefaultCfgCom1DFA(simCfg, module=com1DFA):
     """Compares the given simulation configuration (as dict) to the default
     com1DFA configuration. Disregards values like avalancheDir that are expected to
     change. Returns True if it is the default + an identifier string: D = Default and
@@ -106,6 +105,8 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
     -----------
     simCfg: dict
         simulation configuration
+    module: module
+        module to be used for task (optional)
 
     Returns
     --------
@@ -113,6 +114,9 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
         D if default and C if changed
 
     """
+
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
 
     log.info("Comparing simCfg to default cfg")
 
@@ -150,9 +154,10 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg):
 
     # sphKernelSize is set during runtime, make sure it is not reported
     # as changed if default is set to meshCellSize
-    if defCfg["GENERAL"]["sphKernelRadius"] == "meshCellSize":
-        if simCfg["GENERAL"]["sphKernelRadius"] == simCfg["GENERAL"]["meshCellSize"]:
-            excludeItems.append("root['GENERAL']['sphKernelRadius']")
+    if modName == "com1DFA":
+        if defCfg["GENERAL"]["sphKernelRadius"] == "meshCellSize":
+            if simCfg["GENERAL"]["sphKernelRadius"] == simCfg["GENERAL"]["meshCellSize"]:
+                excludeItems.append("root['GENERAL']['sphKernelRadius']")
 
     # do the diff and analyse
     # this is the deepdiff > 8.0 version
@@ -241,7 +246,7 @@ def _cleanDiffKey(keyString):
     return keyStr
 
 
-def createSimDictFromCfgs(cfgMain, cfgPath):
+def createSimDictFromCfgs(cfgMain, cfgPath, module=com1DFA):
     """From multiple cfg files create a simDict with one item for each simulation to perform
     within these cfg files still parameter variations are allowed
 
@@ -251,6 +256,8 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
         main configuration of AvaFrame
     cfgPath: pathlib Path or str
         path to directory with cfg files
+    module: module
+        module to be used for task (optional)
 
     Returns
     --------
@@ -264,7 +271,7 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
 
     # fetch input data and create work and output directories
     # TODO: so for now remeshed dir is cleaned before a run
-    inputSimFilesAll, outDir, simDFExisting, simNameExisting = initializeInputs(avalancheDir, True)
+    inputSimFilesAll, outDir, simDFExisting, simNameExisting = initializeInputs(avalancheDir, True, module)
 
     # save dem file path as it is deleted from input sim files dict once it is set in the config
     demFile = inputSimFilesAll["demFile"]
@@ -285,12 +292,12 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
     # loop over all cfgFiles and create simDict
     for index, cfgFile in enumerate(cfgFilesAll):
         # read configuration
-        cfgFromFile = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, toPrint=False)
+        cfgFromFile = cfgUtils.getModuleConfig(module, fileOverride=cfgFile, toPrint=False)
 
         # create dictionary with one key for each simulation that shall be performed
         # NOTE: sims that are added don't need to be added to the simNameExisting list as
         # if new identical sims are added the simDict entry is just updated and not a duplicate one added
-        simDict = dP.createSimDict(avalancheDir, com1DFA, cfgFromFile, inputSimFilesAll, simNameExisting)
+        simDict = dP.createSimDict(avalancheDir, module, cfgFromFile, inputSimFilesAll, simNameExisting)
         simDictAll.update(simDict)
 
         # reset dem file
@@ -299,7 +306,7 @@ def createSimDictFromCfgs(cfgMain, cfgPath):
     return simDictAll, inputSimFilesAll, simDFExisting, outDir
 
 
-def initializeInputs(avalancheDir, cleanRemeshedRasters):
+def initializeInputs(avalancheDir, cleanRemeshedRasters, module=com1DFA):
     """Create work and output directories, fetch input files and thickness info
     If cleanRemeshedRasters is true, the remesh folder contents will be deleted at the beginning
 
@@ -309,6 +316,8 @@ def initializeInputs(avalancheDir, cleanRemeshedRasters):
         to avalanche directory
     cleanRemeshedRasters: bool
         flag if the remesh directory shall be cleaned
+    module: module
+        module to be used for task (optional)
 
     Returns
     --------
@@ -318,8 +327,8 @@ def initializeInputs(avalancheDir, cleanRemeshedRasters):
         path to store outputs
     """
 
-    # fetch name of module
-    modName = str(pathlib.Path(com1DFA.__file__).stem)
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
 
     # Create output and work directories
     _, outDir = inDirs.initialiseRunDirs(avalancheDir, modName, cleanRemeshedRasters)
