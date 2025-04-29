@@ -1348,6 +1348,12 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['hDetrained'] = np.asarray(hDetrained)
   fields['hStopped'] = np.asarray(hStopped)
   fields['hEntrained'] = np.asarray(hEntrained)
+
+  fields['hDetrained'] = np.asarray(hDetBilinear)
+  fields['hStopped'] = np.asarray(hStopBilinear)
+  fields['hEntrained'] = np.asarray(hEroBilinear)
+
+
   if computeP:
     fields['ppr'] = np.asarray(PP)
     fields['P'] = np.asarray(PBilinear)
