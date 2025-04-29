@@ -9,6 +9,8 @@ import numpy as np
 import logging
 import pathlib
 from scipy.stats import qmc
+from SALib.sample import morris
+
 
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
@@ -779,8 +781,22 @@ def createSample(cfgProb, varParList):
     # random generator initialized with seed
     randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
 
+    # create a sample of parameter values using salib morris sampling
+    if cfgProb['PROBRUN']['sampleMethod'].lower() == 'morris':
+        param_ranges = {
+            'num_vars': len(varParList),
+            'names': varParList,
+            'bounds': [[0, 1]] * len(varParList)
+        }
+
+        sample = morris.sample(
+            param_ranges,
+            N=3,  # number of trajectories
+            num_levels=6  # how many discrete values per parameter
+        )
+
     # create a sample of parameter values using scipy latin hypercube sampling
-    if cfgProb['PROBRUN']['sampleMethod'].lower() == 'latin':
+    elif cfgProb['PROBRUN']['sampleMethod'].lower() == 'latin':
         sampler = qmc.LatinHypercube(d=len(varParList), seed=randomGen)
         sample = sampler.random(n=int(cfgProb['PROBRUN']['nSample']))
         log.info('Parameter sample created using latin hypercube sampling')
