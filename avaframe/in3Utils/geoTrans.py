@@ -171,7 +171,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp="bilinear", getXYField=
 
 def resizeData(raster, rasterRef):
     """
-    Reproject raster on a grid of shape rasterRef
+    Reproject raster on a grid of shape rasterRef, raster adapts cellsize and extend of rasterRef
 
     Parameters
     ----------
