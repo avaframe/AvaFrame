@@ -3,17 +3,14 @@ Advanced Installation (Windows)
 
 This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
-machines** (Ubuntu/Manjaro/Arch) with recent Python versions > 3.8. Caution: currently unavailable for Version 3.13
+machines** (Ubuntu/Manjaro/Arch) with recent Python versions > 3.8.
 These instructions assume you are familiar with working in a terminal. This
 guide is described for **Windows**. For *Linux*, see :ref:`developinstall:Advanced Installation (Linux)`.
 
 Requirements
 ^^^^^^^^^^^^
 
-Install `git <https://github.com/git-guides/install-git>`_ and python, we
-suggest to work with miniconda/anaconda. For installation see `miniconda
-<https://docs.conda.io/en/latest/miniconda.html>`_ or
-`anaconda <https://docs.anaconda.com/anaconda/install/linux/>`_.
+Install `git <https://github.com/git-guides/install-git>`_
 
 Install `Microsoft C++ compiler <https://wiki.python.org/moin/WindowsCompilers>`_.
 Follow the installation steps for the version corresponding to the installed python version.
@@ -21,19 +18,24 @@ Follow the installation steps for the version corresponding to the installed pyt
 Setup AvaFrame
 ^^^^^^^^^^^^^^
 
-Open conda shell and create a new `conda environment
-<https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_
-for AvaFrame, activate it and install pip, numpy and cython in this environment::
-
-  conda create --name avaframe_env
-  conda activate avaframe_env
-  conda install pip numpy cython
+Might be needed:
 
 Clone the AvaFrame repository (in a directory of your choice: [YOURDIR]) and change into it::
 
   cd [YOURDIR]
   git clone https://github.com/avaframe/AvaFrame.git
   cd AvaFrame
+
+
+
+Run pixi::
+
+  pixi shell
+
+.. Note::
+    If you get some access denied error in Powershell, you might need to run the command
+
+    ``Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser``
 
 Compile the cython com1DFA part::
 
@@ -46,13 +48,10 @@ Compile the cython com1DFA part::
    **Before** compilation in Windows, make sure to delete ``AvaFrame/build`` directory, in addition to any .pyd, .c, and
    .pycache files in ``AvaFrame/avaframe/com1DFA``
 
-Install avaframe and its requirements by **either** doing::
+If you want to have the lastet stable release instead, run::
 
-  pip install -e .
+  pixi shell --environment prod
 
-or if this fails (see `github issue 986 <https://github.com/avaframe/AvaFrame/issues/986>`_), do::
-
-  python setup.py develop
 
 This installs avaframe in editable mode, so every time you import avaframe the
 current (local) version will be used.
