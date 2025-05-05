@@ -1,8 +1,53 @@
 [build-system]
 # Cython dependency is optional, see setup.py for details.
 # For the package (run-time) dependencies, see setup.cfg.
-requires = ["setuptools", "wheel", "numpy", "Cython"]
-build-backend = "setuptools.build_meta"
+#requires = ["setuptools", "wheel", "numpy", "Cython"]
+#build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "avaframe"
+description = "The Open Avalanche Framework"
+readme = "README.md"
+dynamic = ["version"]
+license = { text = "EUPL" }
+authors = [
+    { name = "AvaFrame Contributors", email = "felix@avaframe.org" }
+]
+urls = { Homepage = "http://avaframe.org" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "pyshp",
+    "scipy",
+    "cmcrameri",
+    "seaborn",
+    "cython",
+    "pandas",
+    "shapely",
+    "configUpdater",
+    "tabulate",
+    "deepdiff",
+    "deepmerge",
+    "psutil",
+    "rasterio",
+    "contextily",
+    "geopandas",
+    "fiona"
+]
 
 [tool.flake8]
 max-line-length = 109
@@ -11,3 +56,38 @@ extend-ignore = ['E203', 'E501']
 
 [tool.black]
 line-length = 109
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+local_scheme = "node-and-date"
+
+[tool.pixi.workspace]
+channels = ["conda-forge/label/qgis_ltr", "https://prefix.dev/conda-forge"]
+platforms = ["linux-64", "win-64", "osx-64"]
+
+[tool.pixi.dependencies]
+pytest = "*"
+setuptools = "*"
+
+[tool.pixi.pypi-dependencies]
+#avaframe = { path = "./", editable = true }
+# avaframe = "==1.11"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+avaframe = { path = "./", editable = true }
+
+[tool.pixi.feature.prod.pypi-dependencies]
+avaframe = "*"
+
+[tool.pixi.feature.qgis.dependencies]
+qgis = "*"
+
+[tool.pixi.environments]
+default = { features = ["dev"], solve-group = "default" }
+dev = ["dev"]
+prod = ["prod"]
+qgis = ["qgis", "dev"]
+
