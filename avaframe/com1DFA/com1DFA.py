@@ -2324,9 +2324,14 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     if particles["t"] > 0:
         if adaptStop or adaptDet or adaptEnt:
             demAdapted, fields = adaptDEM(dem, fields, cfg)
-            IOf.writeResultToRaster(dem["header"], dem["Nx"], pathlib.Path(f"/home/paula/Downloads/normals/Nx_t{np.round(particles["t"], decimals=1)}"), flip=False)
-            IOf.writeResultToRaster(dem["header"], dem["Ny"], pathlib.Path(f"/home/paula/Downloads/normals/Ny_t{np.round(particles["t"], decimals=1)}"), flip=False)
-            IOf.writeResultToRaster(dem["header"], dem["Nz"], pathlib.Path(f"/home/paula/Downloads/normals/Nz_t{np.round(particles["t"], decimals=1)}"), flip=False)
+
+            nsqr = np.sqrt(demAdapted["Nx"].copy()**2 + demAdapted["Ny"].copy()**2 + demAdapted["Nz"].copy()**2)
+            Nxnorm = np.where(nsqr > 0, demAdapted["Nx"].copy() / nsqr, 0)
+            Nynorm = np.where(nsqr > 0, demAdapted["Ny"].copy() / nsqr, 0)
+            Nznorm = np.where(nsqr > 0, demAdapted["Nz"].copy() / nsqr, 0)
+            IOf.writeResultToRaster(dem["header"], Nxnorm, pathlib.Path(f"/home/paula/Downloads/normals/Nx_t{np.round(particles["t"], decimals=1)}"), flip=False)
+            IOf.writeResultToRaster(dem["header"], Nynorm, pathlib.Path(f"/home/paula/Downloads/normals/Ny_t{np.round(particles["t"], decimals=1)}"), flip=False)
+            IOf.writeResultToRaster(dem["header"], Nznorm, pathlib.Path(f"/home/paula/Downloads/normals/Nz_t{np.round(particles["t"], decimals=1)}"), flip=False)
 
             del dem
             dem = demAdapted
