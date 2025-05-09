@@ -760,6 +760,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] velocityMagArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   cdef int[:] notStopParticle = np.ones(nPart, dtype=np.int32)
+
+  cdef double[:,:] normals = np.zeros((3,nPart), dtype=np.float64)
   # declare intermediate step variables
   cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
@@ -978,6 +980,9 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
       sNewArray[k] = sNew
       sCorNewArray[k] = sCorNew
       mNewArray[k] = mNew
+      normals[1, k] = nxNew
+      normals[2, k] = nyNew
+      normals[3, k] = nzNew
 
       # compute acceleration
       uMagt1 = DFAtlsC.norm(uxNew, uyNew, uzNew)
@@ -988,6 +993,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
   particles['uz'] = np.asarray(uzArrayNew)
+  particles['normals'] = np.asarray(normals)
   particles['velocityMag'] = np.asarray(velocityMagArrayNew)
   particles['uAcc'] = np.asarray(uAccArray)
   particles['trajectoryLengthXYZ'] = np.asarray(lNewArray)
