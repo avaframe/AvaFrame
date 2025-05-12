@@ -10,6 +10,7 @@ import logging
 import pathlib
 from scipy.stats import qmc
 from SALib.sample import morris
+import pickle
 
 
 import avaframe.out3Plot.plotUtils as pU
@@ -582,6 +583,13 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
                                                                    varType)
         paramValuesDList = [paramValuesD]
 
+    # save dictionary to path
+    outDir = pathlib.Path(avaDir, 'Outputs', 'ana4Prob')
+    fU.makeADir(outDir)
+    fi = open(pathlib.Path(avaDir, 'Outputs', 'ana4Prob', 'paramValuesD.pickle'), "wb")
+    pickle.dump(paramValuesDList[0], fi)
+    fi.close()
+
     return paramValuesDList
 
 
@@ -780,6 +788,7 @@ def createSample(cfgProb, varParList):
 
     # random generator initialized with seed
     randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
+    sampleSeed = cfgProb['PROBRUN'].getint('sampleSeed')
 
     # create a sample of parameter values using salib morris sampling
     if cfgProb['PROBRUN']['sampleMethod'].lower() == 'morris':
@@ -791,8 +800,9 @@ def createSample(cfgProb, varParList):
 
         sample = morris.sample(
             param_ranges,
-            N=3,  # number of trajectories
-            num_levels=6  # how many discrete values per parameter
+            N=10,  # number of trajectories
+            num_levels=6,  # how many discrete values per parameter
+            seed=sampleSeed
         )
 
     # create a sample of parameter values using scipy latin hypercube sampling
