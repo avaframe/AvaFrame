@@ -174,14 +174,11 @@ repository/origin will be handled by the pull request)::
 Build the documentation
 ------------------------
 
-If you want to work on the documentation you need to install *Sphinx*. You can install Sphinx, the *ReadTheDocs*
-theme, and the *sphinxcontrib-bibtex*, which we use to include references, by running::
+We provide a pixi environment for building the documentation called `doc`. So to build the documentation first run::
 
-  pip install sphinx
-  pip install sphinx-rtd-theme
-  pip install sphinxcontrib-bibtex
+    pixi shell --environment doc
 
-In order to build the documentation you need to install make ::
+In order to build the documentation you need to install make (depends on your system package manger) ::
 
   sudo apt install make
 
