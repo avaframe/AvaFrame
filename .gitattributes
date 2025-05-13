@@ -1,0 +1,3 @@
+*.asc linguist-detectable=false
+*.python linguist-detectable=true
+*.py linguist-detectable=true
