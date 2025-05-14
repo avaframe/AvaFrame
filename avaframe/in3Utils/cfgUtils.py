@@ -129,12 +129,6 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
 
     # Finally read it
     cfg, modDict = readCompareConfig(iniFile, modName, compare, toPrint)
-
-    for section in cfg.sections():
-        print(f"\n[{section}]")
-        for key, val in cfg.items(section):
-            print(f"{key} = {val}")
-
     if modInfo:
         return cfg, modDict
 
