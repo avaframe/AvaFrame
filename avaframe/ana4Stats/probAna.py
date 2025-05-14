@@ -280,6 +280,7 @@ def checkParameterSettings(cfg, varParList):
     # loop over all parameters and check if no variation is set and if read from shp
     for varPar in varParList:
         if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
+        #if any(chars in cfg['Physical_parameters'][varPar] for chars in ['|', '$', ':']):
             message = ('Only one reference value is allowed for %s: but %s is given' %
                 (varPar, cfg['GENERAL'][varPar]))
             log.error(message)
@@ -800,7 +801,7 @@ def createSample(cfgProb, varParList):
 
         sample = morris.sample(
             param_ranges,
-            N=10,  # number of trajectories
+            N=2,  # number of trajectories
             num_levels=6,  # how many discrete values per parameter
             seed=sampleSeed
         )
