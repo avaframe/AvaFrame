@@ -26,7 +26,7 @@ import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
 
 
-def main():
+def main(avalancheDir=''):
     """this is a wrapper around com4FlowPy.py that handles the following tasks:
     * reading inputs from (local_)avaframeCfg.ini and (local_)com4FlowPyCfg.ini
     * constructing cfgPath and cfgSetup dictionaries for passing to com4FlowPy.com4FlowPyMain()
@@ -52,10 +52,14 @@ def main():
     if cfgCustomPaths["useCustomPaths"] == "False":
         # if "useCustomPaths" == False, we also use the AvaDir Info for the
         # creation of the simulaiton uid
+
+        if avalancheDir != '':
+            cfgMain['MAIN']['avalancheDir'] = avalancheDir
+        else:
+            # Load avalanche directory from general configuration file
+            avalancheDir = cfgMain["MAIN"]["avalancheDir"]
         cfg['GENERAL']['avaDir'] = cfgMain["MAIN"]["avalancheDir"]
         uid = cfgUtils.cfgHash(cfg)
-        # Load avalanche directory from general configuration file
-        avalancheDir = cfgMain["MAIN"]["avalancheDir"]
         # Clean input directory of old work and output files from module
         initProj.cleanModuleFiles(avalancheDir, com4FlowPy, deleteOutput=False)
 
@@ -68,6 +72,10 @@ def main():
 
         # Extract input file locations
         cfgPath = readFlowPyinputs(avalancheDir, cfg, log)
+
+        # use all input data from AvaFrame structure except DEM
+        if cfgCustomPaths["useCustomPathDEM"] == "True":
+            cfgPath["demPath"] = pathlib.Path(cfgCustomPaths["demPath"])
 
         # IMPORTANT!! - this is a quick'n'dirty hack to set nSims to 9999, so that
         # min(nCPU,nSims) in cfgUtils.getNumberOfProcesses returns nCPU
@@ -322,31 +330,11 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
     cfgPath["forestPath"] = forestPath
 
     # read DEM
-    demDir = avalancheDir / "Inputs"
-    patterns = ("*.tif", "*.asc", "*.TIF", "*.tiff", "*.TIFF", "*.ASC")
+    if cfgFlowPy.getboolean("PATHS", "useCustomPathDEM") is False:
+        demPath = gI.getDEMPath(avalancheDir)
 
-    _demPath = [f for f in demDir.iterdir() if any(f.match(p) for p in patterns)]
-
-    if len(_demPath) == 0:
-        message = (
-                "Please provide a DEM file in %s" % demDir
-                  )
-        log.error(message)
-        raise AssertionError(message)
-    elif len(_demPath) > 1:
-        message = (
-                "Please provide exactly 1 (One!) DEM file in %s" % demDir
-                  )
-        log.error(message)
-        raise AssertionError(message)
-    else:
-        if os.path.splitext(_demPath[0])[1] in [".asc", ".ASC"]:
-            demPath = gI.getDEMPath(avalancheDir)
-        else:
-            demPath = _demPath[0]
-
-    log.info("DEM file is: %s" % demPath)
-    cfgPath["demPath"] = demPath
+        log.info("DEM file is: %s" % demPath)
+        cfgPath["demPath"] = demPath
 
     # make output path
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, "com4FlowPy", False)
