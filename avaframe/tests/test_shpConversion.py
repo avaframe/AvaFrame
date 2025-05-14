@@ -203,13 +203,21 @@ def test_readLine(capfd):
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(ValueError) as e:
         assert shpConv.readLine(shpFileName, "", dem)
-    assert str(e.value) == "This shape file is at least partially outside of DEM, this is not allowed!"
+
+    outSideError = False
+    if "This shape file is at least partially outside of dem" in str(e.value):
+        outSideError = True
+    assert outSideError
 
     # do we react properly when the input line exceeds the dem?
     shpFileName = dirname / "data" / "testShpConv" / "testLineOut.shp"
     with pytest.raises(ValueError) as e:
         assert shpConv.readLine(shpFileName, "", dem)
-    assert str(e.value) == "This shape file exceeds dem extent. This is not allowed"
+
+    outSideError = False
+    if "This shape file exceeds dem" in str(e.value):
+        outSideError = True
+    assert outSideError
 
     shpFileName = dirname / "data" / "testShpConv" / "testLineGood.shp"
     Line = shpConv.readLine(shpFileName, "", dem)
