@@ -124,10 +124,14 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # fetch type of cfgInfo
     typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
 
-    # preprocessing to create configuration objects for all simulations to run
-    simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
+    if typeCfgInfo == "cfgFromDir":
+        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)
+    else:
+        # preprocessing to create configuration objects for all simulations to run
+        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
 
-    # convert DEM from nan to 0 values
+        # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
     rewriteDEMtoZeroValues(inputSimFiles["demFile"])
 
