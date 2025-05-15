@@ -885,12 +885,13 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
     demHeader = dem["header"]
 
     rT = float(cfg["GENERAL"]["resizeThreshold"])
+    cT = float(cfg["GENERAL"]["meshCellSizeThreshold"])
 
     diffX0, diffX1, diffY0, diffY1 = checkSizeExtent(inputField, demHeader, inputFile, fileType, rT)
 
     # check if identical extent, if so use unchanged
     if (
-        np.allclose([diffX0, diffY0], [diffY1, diffX1])
+        np.allclose([diffX0, diffY0, diffX1, diffY1], [0, 0, 0, 0], atol=cT)
         and inputField["header"]["cellsize"] == demHeader["cellsize"]
     ):
         if fileType == "RELTH":

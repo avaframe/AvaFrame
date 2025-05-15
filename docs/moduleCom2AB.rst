@@ -18,7 +18,12 @@ Please be aware that all input data have to be provided in the same projection.
   - recommended attribute *name*
 
 * Split points as (multi-) point shapefile. I.e. there can be multiple split points in the shapefile. For each
-  profile/path the closest split point is considered.
+  profile/path the closest split point is considered. A split point is the point below which `com2AB` searches for
+  the beta point. This allows for a better control of the final location of the beta point, since sometimes small
+  flatter sections of the profile can lead to an unwanted beta point. In an operational setting, the split points are
+  set slightly above the expected beta point. It does not need to be precise and it does not have to be on the
+  profile itself (it will get snapped onto the profile).
+
 
 Outputs
 --------

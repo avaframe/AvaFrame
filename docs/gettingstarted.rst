@@ -11,7 +11,8 @@
 First run
 ---------
 
-Follow these steps to run your first simulation:
+Follow these steps to run your first simulation (assuming you finished the advanced installation steps; if you come
+back later, make sure to run ``pixi shell`` again to activate the environment):
 
 * change into your ``AvaFrame`` directory (replace [YOURDIR]
   with your path from the installation steps)::

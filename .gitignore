@@ -37,3 +37,7 @@ avaframe/**/**/Inputs/remeshedRasters
 avaframe/com1DFA/*.c
 
 avaframe/com1DFA/*.so
+
+/pixi.lock
+
+/.pixi/
