@@ -42,7 +42,7 @@ def tileRaster(fNameIn, fNameOut, dirName, xDim, yDim, U, isInit=False):
     #    os.makedirs(dirName)
 
     # largeRaster, largeHeader = iof.f_readASC(fNameIn, dType='float')
-    largeData = IOf.readRaster(fNameIn)
+    largeData = IOf.readRaster(fNameIn, noDataToNan=False)
     largeRaster = largeData["rasterData"]
     # einlesen des Rasters und der Header
 

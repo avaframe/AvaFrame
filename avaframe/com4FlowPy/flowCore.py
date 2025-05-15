@@ -235,6 +235,7 @@ def run(optTuple):
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
     release[release < 0] = 0
+    release[release == nodata] = 0 # added in case nodata is non-negative
     release[release > 0] = 1
 
     nRel = np.sum(release)
