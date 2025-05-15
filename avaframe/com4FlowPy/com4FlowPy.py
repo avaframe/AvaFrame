@@ -535,12 +535,12 @@ def mergeAndWriteResults(modelPaths, modelOptions):
 
     demHeader = IOf.readRasterHeader(modelPaths["demPath"])
     outputHeader = demHeader.copy()
+    outputHeader["nodata_value"]=-9999
+    
     if _oF == ".asc":
         outputHeader["driver"] = "AAIGrid"
     elif _oF == ".tif":
         outputHeader["driver"] = "GTiff"
-
-    # TODO: do we want -99909 as nodata values or the DEM - nodata
 
     if 'flux' in _outputs:
         output = IOf.writeResultToRaster(outputHeader, flux,
@@ -602,7 +602,7 @@ def checkConvertReleaseShp2Tif(modelPaths):
 
         dem = IOf.readRaster(modelPaths["demPath"])
         demHeader = dem["header"]
-        dem['originalHeader'] = demHeader # TODO: why?
+        dem['originalHeader'] = demHeader
 
         releaseLine = shpConv.SHP2Array(modelPaths["releasePath"], "releasePolygon")
         thresholdPointInPoly = 0.01
