@@ -26,6 +26,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 
 import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
+from pathlib import PosixPath
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -229,6 +230,34 @@ def com8MoTPSATask(rcfFile):
 
 
 def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
+
+    # need cfgInfo as configparser, but ana 4 gives path to dir,
+    # if cfgInfo is path --> convert to configparser, check later if this makes sense, or if cfgInfo should be more than 1 ini file
+    if isinstance(cfgInfo, PosixPath):
+        cfgInfo = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
+
+
+    # simDict erster eintrag und cfgInfo sind verschieden,
+
+    # fetch all cfg files in configuration directory
+    #cfgDir = pathlib.Path(cfgInfo)
+    #cfgFilesAll = list(cfgDir.glob("*.ini"))
+    #print(cfgFilesAll)
+
+    #print('vorher\n\n\n\n\n\n')
+    #for section in cfgInfo.sections():
+    #    print(f"\n[{section}]")
+    #    for key, val in cfgInfo.items(section):
+    #        print(f"{key} = {val}")
+
+
+    #print('nachher\n\n\n\n\n\n')
+    #for section in cfgInfo.sections():
+    #    print(f"\n[{section}]")
+    #    for key, val in cfgInfo.items(section):
+    #        print(f"{key} = {val}")
+
+
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
