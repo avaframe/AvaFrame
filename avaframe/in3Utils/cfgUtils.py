@@ -195,14 +195,6 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
-
-        print("# cfgSim is loaded correctly")
-        for section in locCfg.sections():
-            print(f"\n[{section}]")
-            for key, val in locCfg.items(section):
-                print(f"{key} = {val}")
-
-
         log.debug('Writing cfg for: %s', modName)
         # compare to default config and get modification dictionary and config
         modDict, modCfg = compareTwoConfigs(defCfg, locCfg, toPrint=toPrint)
@@ -244,7 +236,16 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
             new value
     """
 
-    splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
+    # relevant for com8, treat parameter variations in those sections differently (they contain whitespace and ^)
+    relevantCom8Sections = ["Physical_parameters", "FOREST_EFFECTS", "ENTRAINMENT", "Numerical parameters"]
+
+    if any(section in inKey for section in relevantCom8Sections):
+        splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
+        print('new regex')
+    else:
+        splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
+        print('old regex')
+
     section = splitKey[0]
     key = splitKey[1]
 

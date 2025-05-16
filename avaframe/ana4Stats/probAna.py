@@ -274,24 +274,31 @@ def checkParameterSettings(cfg, varParList):
 
     """
 
-    # set a list of all thickness parameters that are set to be read from shp file
+    #set a list of all thickness parameters that are set to be read from shp file
     thReadFromShp = []
 
-    # loop over all parameters and check if no variation is set and if read from shp
     for varPar in varParList:
-        if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
-        #if any(chars in cfg['Physical_parameters'][varPar] for chars in ['|', '$', ':']):
-            message = ('Only one reference value is allowed for %s: but %s is given' %
-                (varPar, cfg['GENERAL'][varPar]))
-            log.error(message)
-            raise AssertionError(message)
-        elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
-            thFromShp = varPar + 'FromShp'
-            # check if reference settings have already variation of varPar
-            _ = checkForNumberOfReferenceValues(cfg['GENERAL'], varPar)
-            # check if th read from shp file
-            if cfg['GENERAL'].getboolean(thFromShp):
-                thReadFromShp.append(varPar)
+        # loop for checking all section of ini file, not just the GENERAL section
+        for section in cfg.sections():
+            if section == 'GENERAL' and varPar in cfg[section]:
+                if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
+                    message = ('Only one reference value is allowed for %s: but %s is given' %
+                               (varPar, cfg['GENERAL'][varPar]))
+                    log.error(message)
+                    raise AssertionError(message)
+                elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
+                    thFromShp = varPar + 'FromShp'
+                    # check if reference settings have already variation of varPar
+                    _ = checkForNumberOfReferenceValues(cfg['GENERAL'], varPar)
+                    # check if th read from shp file
+                    if cfg['GENERAL'].getboolean(thFromShp):
+                        thReadFromShp.append(varPar)
+            elif section != 'GENERAL' and varPar in cfg[section]:
+                if any(chars in cfg[section][varPar] for chars in ['|', '$', ':']):
+                    message = ('Only one reference value is allowed for %s: but %s is given' %
+                               (varPar, cfg['GENERAL'][varPar]))
+                    log.error(message)
+                    raise AssertionError(message)
 
     return True, thReadFromShp
 
@@ -626,8 +633,15 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
     lowerBounds = []
     upperBounds = []
     for idx, varPar in enumerate(varParList):
-        # if parameter value directly set in configuration modify the value directly
-        varVal = cfgStart['GENERAL'].getfloat(varPar)
+
+        # get variation value from starting config, search in all sections of the ini file
+        for section in cfgStart.sections():
+            if varPar in cfgStart[section]:
+                varVal = cfgStart[section].getfloat(varPar)
+                break
+        else:
+            raise KeyError(f"{varPar} not found in any section")
+
         if varType[idx].lower() == 'percent':
             lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
             uB = varVal + varVal * (float(valVariationValue[idx]) / 100.)
@@ -896,7 +910,9 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
         cfgStart = fetchStartCfg(comMod, cfg)
         for count1, pVal in enumerate(paramValuesD['values']):
             for index, par in enumerate(paramValuesD['names']):
-                cfgStart['GENERAL'][par] = str(pVal[index])
+                for section in cfgStart.sections(): # additionally search in all sections of ini file not only GENERAL
+                    if par in cfgStart[section]:
+                        cfgStart[section][par] = str(pVal[index])
             if modName.lower() == 'com1dfa':
                 cfgStart['VISUALISATION']['scenario'] = str(count1)
                 cfgStart['INPUT']['thFromIni'] = paramValuesD['thFromIni']

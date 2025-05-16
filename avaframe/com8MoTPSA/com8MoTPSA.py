@@ -24,9 +24,11 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.ana4Stats import probAna
 
 import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 from pathlib import PosixPath
+import configparser
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -120,22 +122,11 @@ def rewriteDEMtoZeroValues(demFile):
 
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get all necessary information from the configuration files
+    simDict, inputSimFiles = com8MoTPSAGenerateConfigs(cfgMain, cfgInfo)
 
-
-    # fetch type of cfgInfo
-    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
-
-    if typeCfgInfo == "cfgFromDir":
-        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
-        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)
-    else:
-        # preprocessing to create configuration objects for all simulations to run
-        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
-
-        # convert DEM from nan to 0 values
+    # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
     rewriteDEMtoZeroValues(inputSimFiles["demFile"])
-
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -230,33 +221,14 @@ def com8MoTPSATask(rcfFile):
 
 
 def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
-
     # need cfgInfo as configparser, but ana 4 gives path to dir,
     # if cfgInfo is path --> convert to configparser, check later if this makes sense, or if cfgInfo should be more than 1 ini file
     if isinstance(cfgInfo, PosixPath):
         cfgInfo = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
 
-
-    # simDict erster eintrag und cfgInfo sind verschieden,
-
-    # fetch all cfg files in configuration directory
-    #cfgDir = pathlib.Path(cfgInfo)
-    #cfgFilesAll = list(cfgDir.glob("*.ini"))
-    #print(cfgFilesAll)
-
-    #print('vorher\n\n\n\n\n\n')
-    #for section in cfgInfo.sections():
-    #    print(f"\n[{section}]")
-    #    for key, val in cfgInfo.items(section):
-    #        print(f"{key} = {val}")
-
-
-    #print('nachher\n\n\n\n\n\n')
-    #for section in cfgInfo.sections():
-    #    print(f"\n[{section}]")
-    #    for key, val in cfgInfo.items(section):
-    #        print(f"{key} = {val}")
-
+    # Load configuration file for probabilistic run, later solve this different
+    cfgProb = cfgUtils.getModuleConfig(probAna)
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
 
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
@@ -351,11 +323,48 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         cfgInfo["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
         cfgInfo["File names"]["Output filename root"] = str(workOutputDir)
 
+        # ToDo: solve this different
+        # for now: overwrite the parameters that vary in config info with cfg (cfg contain the real ones, cfg path the standard params from ini file)
+        for par in varParList:
+            cfgInfo['Physical_parameters'][par] = cfg['Physical_parameters'][par]
+
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
-
         cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfgInfo, str(key))
-
         cfgToRcf(cfgInfo, rcfFileName)
         rcfFiles.append(rcfFileName)
-
     return rcfFiles
+
+
+def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
+    """
+    The goal is to create configuration objects for running com8MoTPSA.
+
+    Parameters
+    ------------
+    cfgMain: configparser object
+        main configuration of AvaFrame
+    cfgInfo: str or pathlib Path or configparser object
+        path to configuration file if overwrite is desired - optional
+        if not local (if available) or default configuration will be loaded
+        if cfgInfo is a configparser object take this as initial config
+
+    Returns
+    --------
+    simDict: dict
+        dictionary with one key per simulation to perform including its config object
+    inputSimFiles: dict
+        dictionary with input files info
+    """
+
+    # fetch type of cfgInfo
+    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
+
+    if typeCfgInfo == "cfgFromDir":
+        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)    # outDir is Outputs/com1DFA --> wrong, but not used I think
+    else:
+        # preprocessing to create configuration objects for all simulations to run
+        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
+
+    # ToDo change ini file variation reading process, currently inifile from com1 is also read, change simDict that only com8 inifile is read or change handling of cfgInfo
+    return simDict, inputSimFiles
