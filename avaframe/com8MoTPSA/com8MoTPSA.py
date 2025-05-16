@@ -17,6 +17,7 @@ else:
 
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import rasterUtils as rU
 from avaframe.com1DFA import particleInitialisation as pI
@@ -25,8 +26,6 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 
-import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
-from pathlib import PosixPath
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -120,22 +119,11 @@ def rewriteDEMtoZeroValues(demFile):
 
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get all necessary information from the configuration files
+    simDict, inputSimFiles = com8MoTPSAGenerateConfigs(cfgMain, cfgInfo)
 
-
-    # fetch type of cfgInfo
-    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
-
-    if typeCfgInfo == "cfgFromDir":
-        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
-        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)
-    else:
-        # preprocessing to create configuration objects for all simulations to run
-        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
-
-        # convert DEM from nan to 0 values
+    # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
     rewriteDEMtoZeroValues(inputSimFiles["demFile"])
-
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -143,7 +131,7 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
     # Preprocess the simulations, mainly creating the rcf files
-    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo)
+    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain)
 
     # And now we run the simulations
     startTime = time.time()
@@ -229,35 +217,7 @@ def com8MoTPSATask(rcfFile):
     return command
 
 
-def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
-
-    # need cfgInfo as configparser, but ana 4 gives path to dir,
-    # if cfgInfo is path --> convert to configparser, check later if this makes sense, or if cfgInfo should be more than 1 ini file
-    if isinstance(cfgInfo, PosixPath):
-        cfgInfo = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
-
-
-    # simDict erster eintrag und cfgInfo sind verschieden,
-
-    # fetch all cfg files in configuration directory
-    #cfgDir = pathlib.Path(cfgInfo)
-    #cfgFilesAll = list(cfgDir.glob("*.ini"))
-    #print(cfgFilesAll)
-
-    #print('vorher\n\n\n\n\n\n')
-    #for section in cfgInfo.sections():
-    #    print(f"\n[{section}]")
-    #    for key, val in cfgInfo.items(section):
-    #        print(f"{key} = {val}")
-
-
-    #print('nachher\n\n\n\n\n\n')
-    #for section in cfgInfo.sections():
-    #    print(f"\n[{section}]")
-    #    for key, val in cfgInfo.items(section):
-    #        print(f"{key} = {val}")
-
-
+def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
@@ -317,7 +277,6 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
             releaseField = releaseRelThCombined
 
         # Generate the work and data dirs for the current simHash
-
         cuWorkDir = workDir / key
         workInputDir = cuWorkDir / "Input"
         workOutputDir = cuWorkDir / key
@@ -339,23 +298,53 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
 
         # set configuration for MoT-PSA
-        cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["Run information"]["UTM zone"] = "32N"
-        cfgInfo["Run information"]["EPSG geodetic datum code"] = "31287"
-        cfgInfo["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfgInfo["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
-        cfgInfo["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
-        cfgInfo["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfgInfo["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
-        cfgInfo["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
-        cfgInfo["File names"]["Output filename root"] = str(workOutputDir)
+        cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
+        cfg["Run information"]["UTM zone"] = "32N"
+        cfg["Run information"]["EPSG geodetic datum code"] = "31287"
+        cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
+        cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
+        cfg["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
+        cfg["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
+        cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
+        cfg["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
+        cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfg["File names"]["Output filename root"] = str(workOutputDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
-
-        cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfgInfo, str(key))
-
-        cfgToRcf(cfgInfo, rcfFileName)
+        cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfg, str(key))
+        cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
-
     return rcfFiles
+
+
+def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
+    """
+    Creates configuration objects for com8MoTPSA.
+
+    Parameters
+    ------------
+    cfgMain: configparser object
+        main configuration of AvaFrame
+    cfgInfo: str or pathlib Path or configparser object
+        path to configuration file if overwrite is desired - optional
+        if not local (if available) or default configuration will be loaded
+        if cfgInfo is a configparser object take this as initial config
+
+    Returns
+    --------
+    simDict: dict
+        dictionary with one key per simulation to perform including its config object
+    inputSimFiles: dict
+        dictionary with input files info
+    """
+
+    # fetch type of cfgInfo
+    typeCfgInfo = com1DFATools.checkCfgInfoType(cfgInfo)
+
+    if typeCfgInfo == "cfgFromDir":
+        # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo, modName='com8MoTPSA')
+    else:
+        # preprocessing to create configuration objects for all simulations to run
+        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com8MoTPSA)
+    return simDict, inputSimFiles

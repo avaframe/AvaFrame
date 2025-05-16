@@ -195,14 +195,6 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
-
-        print("# cfgSim is loaded correctly")
-        for section in locCfg.sections():
-            print(f"\n[{section}]")
-            for key, val in locCfg.items(section):
-                print(f"{key} = {val}")
-
-
         log.debug('Writing cfg for: %s', modName)
         # compare to default config and get modification dictionary and config
         modDict, modCfg = compareTwoConfigs(defCfg, locCfg, toPrint=toPrint)
@@ -244,7 +236,13 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
             new value
     """
 
-    splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
+    # relevant for com8, treat parameter variations in those sections differently (they contain whitespace and ^)
+    relevantCom8Sections = ["Physical_parameters", "FOREST_EFFECTS", "ENTRAINMENT", "Numerical parameters"]
+
+    if any(section in inKey for section in relevantCom8Sections):
+        splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
+    else:
+        splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
     section = splitKey[0]
     key = splitKey[1]
 
@@ -418,7 +416,6 @@ def readCfgFile(avaDir, module='', fileName=''):
 
     return cfg
 
-
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
     or a dictionary - then typeDict=True, returns a uid hash
@@ -562,7 +559,8 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
 
 def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """ append simulation configuration to the simulation dataframe
-        only account for sections GENERAL and INPUT
+        only account for sections GENERAL and INPUT for com1DFA, for com8MoTPSA sections Physical_parameters, FOREST_EFFECTS,
+        ENTRAINMENT and Numerical parameters have to be considered as well.
 
         Parameters
         -----------
@@ -587,6 +585,13 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     if 'VISUALISATION' in cfgDict:
         simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
+    # ToDo use any wie oben
+    elif 'Physical_parameters' in cfgDict:
+        simItemDFPhysical = pd.DataFrame(data=cfgDict['Physical_parameters'], index=indexItem)
+        simItemDFForest = pd.DataFrame(data=cfgDict['FOREST_EFFECTS'], index=indexItem)
+        simItemDFEntrainment = pd.DataFrame(data=cfgDict['ENTRAINMENT'], index=indexItem)
+        simItemDFNumerical = pd.DataFrame(data=cfgDict['Numerical parameters'], index=indexItem)
+        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFPhysical, simItemDFForest, simItemDFEntrainment, simItemDFNumerical], axis=1)
     else:
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
     simItemDF = simItemDF.assign(simName=simName)
