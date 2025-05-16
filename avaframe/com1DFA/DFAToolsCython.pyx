@@ -100,7 +100,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 cpdef double norm(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
 
-  (x, y, z) can be numpy arrays.
+  (x, y, z) can be numpy arrays. (TODO: but this works only for 1-length arrays!!!)
 
   Parameters
   ----------
@@ -143,7 +143,7 @@ cpdef double norm2(double x, double y, double z):
 cpdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
-  (x, y, z) can be np arrays.
+  (x, y, z) can be np arrays. (TODO: but this works only for 1-length arrays!!!)
 
   Parameters
   ----------
