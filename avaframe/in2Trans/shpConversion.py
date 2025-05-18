@@ -56,7 +56,18 @@ def SHP2Array(infile, defname=None):
             list of parts of polygon (added the total number of points as list item, so if multiple parts len>2)
         nFeatures: int
             number of features per line (parts)
-
+        zseed
+            np array with the height of each scarp plane-feature (as many values as features)
+        slopeAngle
+            np array with the slope angle of each scarp plane-feature (as many values as features)
+        dip
+            np array with the dip angle of each scarp plane-feature (as many values as features)
+        semiminor
+            np array with the semi-minor axis of each scarp ellipsoid-feature (as many values as features)
+        maxdepth
+            np array with the masimum depth of each scarp ellipsoid-feature (as many values as features)
+        semimajor
+            np array with the semi-major axis of each scarp ellipsoid-feature (as many values as features)
     """
     #  Input shapefile
     sf = shapefile.Reader(str(infile))
@@ -71,6 +82,13 @@ def SHP2Array(infile, defname=None):
     id = None
     ci95 = None
     layerN = None
+    zseed_value = None
+    dip_value = None
+    slopeAngle_value = None
+    semiminor_value = None
+    maxdepth_value = None
+    semimajor_value = None
+    
 
     # get coordinate system
     sks = getSHPProjection(infile)
@@ -86,6 +104,13 @@ def SHP2Array(infile, defname=None):
     idList = []
     ci95List = []
     layerNameList = []
+    zseedList = []
+    dipList = []
+    slopeList = []
+    slopeAngleList = []
+    semiminorList = []
+    semimajorList = []
+    maxdepthList = []
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -125,6 +150,19 @@ def SHP2Array(infile, defname=None):
                 if name == "slope":
                     # for dams
                     slope = value
+                if name == "slopeangle":
+                    # for dams
+                    slopeAngle_value = value
+                if name == "zseed":
+                    zseed_value = value
+                if name == "dip":
+                    dip_value = value
+                if name == "semiminor":
+                    semiminor_value = value
+                if name == "maxdepth":
+                    maxdepth_value = value
+                if name == "semimajor":
+                    semimajor_value = value
                 if name == "rho":
                     rho = value
                 if name == "sks":
@@ -149,6 +187,13 @@ def SHP2Array(infile, defname=None):
         ci95List.append(str(ci95))
         layerNameList.append(layerN)
         idList.append(str(rec.oid))
+        zseedList.append(zseed_value)
+        dipList.append(dip_value)
+        slopeList.append(slope)
+        slopeAngleList.append(slopeAngle_value)
+        semiminorList.append(semiminor_value)
+        semimajorList.append(semimajor_value)
+        maxdepthList.append(maxdepth_value)
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -173,6 +218,12 @@ def SHP2Array(infile, defname=None):
     SHPdata["layerName"] = layerNameList
     SHPdata["nParts"] = nParts
     SHPdata["nFeatures"] = len(Start)
+    SHPdata["slopeangle"] = slopeAngleList
+    SHPdata["zseed"] = zseedList
+    SHPdata["dip"] = dipList
+    SHPdata["maxdepth"] = maxdepthList
+    SHPdata["semimajor"] = semimajorList
+    SHPdata["semiminor"] = semiminorList
 
     sf.close()
 

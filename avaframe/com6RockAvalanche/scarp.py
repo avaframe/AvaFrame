@@ -5,13 +5,10 @@ import logging
 import pathlib
 from rasterio.features import rasterize
 from shapely.geometry import shape, mapping
-
-
 from avaframe.in2Trans.shpConversion import SHP2Array
 from avaframe.in1Data import getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.rasterUtils as IOf
-
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -69,20 +66,31 @@ def scarpAnalysisMain(cfg, baseDir):
 
     # Read the DEM
     dem = gI.readDEM(baseDir)
+    dem["rasterData"] = np.flipud(dem["rasterData"])
+        
     n = dem["header"]["nrows"]
     m = dem["header"]["ncols"]
 
     periData = readPerimeterSHP(perimeterShapefilePath, dem["header"]["transform"], (n, m))
 
     SHPdata = SHP2Array(coordinatesShapefilePath)
+ 
     log.debug("Feature shapefile data loaded: %s", SHPdata)
 
     method = cfg["SETTINGS"]["method"].lower()
 
+
     if method == "plane":
-        planesZseed = list(map(float, cfg["SETTINGS"]["planes_zseed"].split(",")))
-        planesDip = list(map(float, cfg["SETTINGS"]["planes_dip"].split(",")))
-        planesSlope = list(map(float, cfg["SETTINGS"]["planes_slope"].split(",")))
+        # Read required attributes directly from the shapefile's attribute table
+        try:
+            planesZseed = list(map(float, SHPdata['zseed']))
+            planesDip = list(map(float, SHPdata['dip']))
+            planesSlope = list(map(float, SHPdata['slopeangle']))
+        except KeyError as e:
+            raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Make sure 'zseed', 'dip', and 'slope' fields exist.")
+        
+        if not (len(planesZseed) == len(planesDip) == len(planesSlope) == SHPdata["nFeatures"]):
+            raise ValueError("Mismatch between number of features and extracted plane attributes in the shapefile.")
 
         if not (len(planesZseed) == len(planesDip) == len(planesSlope) == SHPdata["nFeatures"]):
             raise ValueError(
@@ -101,9 +109,12 @@ def scarpAnalysisMain(cfg, baseDir):
         log.debug("Plane features extracted and combined: %s", features)
 
     elif method == "ellipsoid":
-        ellipsoidsMaxDepth = list(map(float, cfg["SETTINGS"]["ellipsoids_max_depth"].split(",")))
-        ellipsoidsSemiMajor = list(map(float, cfg["SETTINGS"]["ellipsoids_semi_major"].split(",")))
-        ellipsoidsSemiMinor = list(map(float, cfg["SETTINGS"]["ellipsoids_semi_minor"].split(",")))
+        try:
+            ellipsoidsMaxDepth = list(map(float, SHPdata['maxdepth']))
+            ellipsoidsSemiMajor = list(map(float, SHPdata['semimajor']))
+            ellipsoidsSemiMinor = list(map(float, SHPdata['semiminor']))
+        except KeyError as e:
+            raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Ensure the fields 'maxdepth', 'semimajor', and 'semiminor' exist.")
 
         if not (
             len(ellipsoidsMaxDepth)
@@ -143,13 +154,14 @@ def scarpAnalysisMain(cfg, baseDir):
     outDir = pathlib.Path(baseDir)
     outDir = outDir / "Outputs" / "com6RockAvalanche" / "scarp"
     fU.makeADir(outDir)
+    
+
 
     # Set file names and write
     elevationOut = outDir / "scarpElevation"
     hRelOut = outDir / "scarpHRel"
     IOf.writeResultToRaster(dem["header"], scarpData, elevationOut)
     IOf.writeResultToRaster(dem["header"], hRelData, hRelOut)
-
 
 def readPerimeterSHP(perimeterShapefilePath, elevTransform, elevShape):
     """Read perimeter from shapefile and return as numpy array.
@@ -240,6 +252,7 @@ def calculateScarpWithPlanes(elevData, periData, elevTransform, planes):
     for row in range(n):
         for col in range(m):
             west, north = rasterio.transform.xy(elevTransform, row, col, offset='center')
+
             scarpVal = zSeed[0] + (north - ySeed[0]) * betaY[0] - (west - xSeed[0]) * betaX[0]
             for k in range(1, nPlanes):
                 scarpVal = max(scarpVal, zSeed[k] + (north - ySeed[k]) * betaY[k] - (west - xSeed[k]) * betaX[k])
