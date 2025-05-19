@@ -417,7 +417,6 @@ def readCfgFile(avaDir, module='', fileName=''):
     cfg.read(inFile)
     cfg.optionxform = str
 
-    return cfg
 
 
 def cfgHash(cfg, typeDict=False):
@@ -544,6 +543,9 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
                     infoParts = nameParts[1:]
                 simHash = infoParts[0]
                 cfgObject = readCfgFile(avaDir, fileName=cFile)
+
+                # bis hier sollte alles passen
+
                 simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 
         # convert numeric parameters to numerics
@@ -563,7 +565,8 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
 
 def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """ append simulation configuration to the simulation dataframe
-        only account for sections GENERAL and INPUT
+        only account for sections GENERAL and INPUT for com1DFA, for com8MoTPSA sections Physical_parameters, FOREST_EFFECTS,
+        ENTRAINMENT and Numerical parameters have to be considered as well.
 
         Parameters
         -----------
@@ -588,6 +591,12 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     if 'VISUALISATION' in cfgDict:
         simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
+    elif 'Physical_parameters' in cfgDict:
+        simItemDFPhysical = pd.DataFrame(data=cfgDict['Physical_parameters'], index=indexItem)
+        simItemDFForest = pd.DataFrame(data=cfgDict['FOREST_EFFECTS'], index=indexItem)
+        simItemDFEntrainment = pd.DataFrame(data=cfgDict['ENTRAINMENT'], index=indexItem)
+        simItemDFNumerical = pd.DataFrame(data=cfgDict['Numerical parameters'], index=indexItem)
+        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFPhysical, simItemDFForest, simItemDFEntrainment, simItemDFNumerical], axis=1)
     else:
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
     simItemDF = simItemDF.assign(simName=simName)
