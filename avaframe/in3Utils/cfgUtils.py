@@ -417,7 +417,7 @@ def readCfgFile(avaDir, module='', fileName=''):
     cfg.read(inFile)
     cfg.optionxform = str
 
-
+    return cfg
 
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
@@ -543,9 +543,6 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
                     infoParts = nameParts[1:]
                 simHash = infoParts[0]
                 cfgObject = readCfgFile(avaDir, fileName=cFile)
-
-                # bis hier sollte alles passen
-
                 simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 
         # convert numeric parameters to numerics
@@ -591,6 +588,7 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     if 'VISUALISATION' in cfgDict:
         simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
+    # ToDo use any wie oben
     elif 'Physical_parameters' in cfgDict:
         simItemDFPhysical = pd.DataFrame(data=cfgDict['Physical_parameters'], index=indexItem)
         simItemDFForest = pd.DataFrame(data=cfgDict['FOREST_EFFECTS'], index=indexItem)
