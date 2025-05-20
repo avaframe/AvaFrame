@@ -221,6 +221,7 @@ def com8MoTPSATask(rcfFile):
 
 
 def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
+    # ToDo Check if this makes sense
     # need cfgInfo as configparser, but ana 4 gives path to dir,
     # if cfgInfo is path --> convert to configparser, check later if this makes sense, or if cfgInfo should be more than 1 ini file
     if isinstance(cfgInfo, PosixPath):
