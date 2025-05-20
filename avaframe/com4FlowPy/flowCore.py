@@ -778,24 +778,41 @@ def handleMemoryAvailability(recheckInterval=30):
 
 def backTracking(topologyDict, valDict):
     """
-    performs the back-tracking ...
+    peform the back-tracking of infrastructure values across the dir-graph
+    that is constructed if 'infra' option is set to 'True'
+
+    Parameters
+    -----------
+    topologyDict: dict
+        dictionary containing the topology of the modeled process path
+        where parent nodes (colindex, rowindex) serve as keys and children of the
+        respective parent node are stored as list items for the respective key
+    valDict: dict
+        dictionay containing information if a node is an infrastructure cell 
+        (value at key 'node' > 0) or not (value at key 'node' == 0)
+    
+    Returns
+    -----------
+    valDict: dict
+        dictionary with updated values "back-tracked" from the infrastructure
+        cells to the start-cell along the modeled path topology
     """
     # sort valDict (so we start traversing from highest infrastructure cells first)
+    # this makes the algorithm more efficient
     valDictSorted = {k: v for k, v in sorted(valDict.items(), key= lambda item: item[1], reverse=True)}
     # reverse the graph topology, so "parents" become "children"
     reverseGraph = reverseTopology(topologyDict)
     
     def propagateInfraVal(node, valToPropagate, visited):
-        # if node in visited:
-        #    return
-        # 
+        # if a node has been visited already --> no need to process again
         if node in visited:
             return
+        # if the current propagation value is larger or equal to the one in
+        # the processed node --> no need to look further
         elif (valDict.get(node, 0) >= valToPropagate) and (bool(visited)):
             return
-        #if (valDict.get(node, 0) >= valToPropagate) or (node in visited):
-        #    return
-        # valDict[node] = valToPropagate
+        # in all other cases update the value of the current node and add node
+        # to the set of visited nodes
         valDict[node] = max(valDict[node], valToPropagate)
         visited.add(node)
 
@@ -812,6 +829,19 @@ def backTracking(topologyDict, valDict):
 def reverseTopology(graphDict):
     '''
     reverse graph topology
+    i.e. directions of graph edges connecting the nodes in the dir graph
+
+    Parameters
+    -----------
+    graphDict: dict
+        dictionary containing the topology of the modeled process path
+        where parent nodes (colindex, rowindex) serve as keys and children of the
+        respective parent node are stored as list items for the respective key
+    
+    Returns
+    -----------
+    reverseGraph: dict
+        dir-graph with reversed edges in same dictionary format as orignial input
     '''
     reverseGraph = {}
 
