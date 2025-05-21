@@ -17,6 +17,7 @@ else:
 
 import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import rasterUtils as rU
 from avaframe.com1DFA import particleInitialisation as pI
@@ -24,11 +25,7 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.ana4Stats import probAna
 
-import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
-from pathlib import PosixPath
-import configparser
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -134,7 +131,7 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
     # Preprocess the simulations, mainly creating the rcf files
-    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo)
+    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain)
 
     # And now we run the simulations
     startTime = time.time()
@@ -220,17 +217,7 @@ def com8MoTPSATask(rcfFile):
     return command
 
 
-def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
-    # ToDo Check if this makes sense
-    # need cfgInfo as configparser, but ana 4 gives path to dir,
-    # if cfgInfo is path --> convert to configparser, check later if this makes sense, or if cfgInfo should be more than 1 ini file
-    if isinstance(cfgInfo, PosixPath):
-        cfgInfo = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
-
-    # Load configuration file for probabilistic run, later solve this different
-    cfgProb = cfgUtils.getModuleConfig(probAna)
-    varParList = cfgProb['PROBRUN']['varParList'].split('|')
-
+def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
@@ -290,7 +277,6 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
             releaseField = releaseRelThCombined
 
         # Generate the work and data dirs for the current simHash
-
         cuWorkDir = workDir / key
         workInputDir = cuWorkDir / "Input"
         workOutputDir = cuWorkDir / key
@@ -312,33 +298,28 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain, cfgInfo):
         rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
 
         # set configuration for MoT-PSA
-        cfgInfo["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["Run information"]["UTM zone"] = "32N"
-        cfgInfo["Run information"]["EPSG geodetic datum code"] = "31287"
-        cfgInfo["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfgInfo["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfgInfo["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
-        cfgInfo["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
-        cfgInfo["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfgInfo["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
-        cfgInfo["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
-        cfgInfo["File names"]["Output filename root"] = str(workOutputDir)
-
-        # ToDo: solve this different
-        # for now: overwrite the parameters that vary in config info with cfg (cfg contain the real ones, cfg path the standard params from ini file)
-        for par in varParList:
-            cfgInfo['Physical_parameters'][par] = cfg['Physical_parameters'][par]
+        cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
+        cfg["Run information"]["UTM zone"] = "32N"
+        cfg["Run information"]["EPSG geodetic datum code"] = "31287"
+        cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
+        cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
+        cfg["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
+        cfg["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
+        cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
+        cfg["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
+        cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfg["File names"]["Output filename root"] = str(workOutputDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
-        cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfgInfo, str(key))
-        cfgToRcf(cfgInfo, rcfFileName)
+        cfgUtils.writeCfgFile(avalancheDir, com8MoTPSA, cfg, str(key))
+        cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
     return rcfFiles
 
 
 def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
     """
-    The goal is to create configuration objects for running com8MoTPSA.
+    Creates configuration objects for com8MoTPSA.
 
     Parameters
     ------------
@@ -362,10 +343,8 @@ def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
 
     if typeCfgInfo == "cfgFromDir":
         # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
-        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo)    # outDir is Outputs/com1DFA --> wrong, but not used I think
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo, modName='com8MoTPSA')
     else:
         # preprocessing to create configuration objects for all simulations to run
-        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo)
-
-    # ToDo change ini file variation reading process, currently inifile from com1 is also read, change simDict that only com8 inifile is read or change handling of cfgInfo
+        simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com8MoTPSA)
     return simDict, inputSimFiles
