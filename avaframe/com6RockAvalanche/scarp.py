@@ -67,18 +67,17 @@ def scarpAnalysisMain(cfg, baseDir):
     # Read the DEM
     dem = gI.readDEM(baseDir)
     dem["rasterData"] = np.flipud(dem["rasterData"])
-        
+
     n = dem["header"]["nrows"]
     m = dem["header"]["ncols"]
 
     periData = readPerimeterSHP(perimeterShapefilePath, dem["header"]["transform"], (n, m))
 
     SHPdata = SHP2Array(coordinatesShapefilePath)
- 
+
     log.debug("Feature shapefile data loaded: %s", SHPdata)
 
     method = cfg["SETTINGS"]["method"].lower()
-
 
     if method == "plane":
         # Read required attributes directly from the shapefile's attribute table
@@ -88,7 +87,7 @@ def scarpAnalysisMain(cfg, baseDir):
             planesSlope = list(map(float, SHPdata['slopeangle']))
         except KeyError as e:
             raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Make sure 'zseed', 'dip', and 'slope' fields exist.")
-        
+
         if not (len(planesZseed) == len(planesDip) == len(planesSlope) == SHPdata["nFeatures"]):
             raise ValueError("Mismatch between number of features and extracted plane attributes in the shapefile.")
 
@@ -154,8 +153,6 @@ def scarpAnalysisMain(cfg, baseDir):
     outDir = pathlib.Path(baseDir)
     outDir = outDir / "Outputs" / "com6RockAvalanche" / "scarp"
     fU.makeADir(outDir)
-    
-
 
     # Set file names and write
     elevationOut = outDir / "scarpElevation"
