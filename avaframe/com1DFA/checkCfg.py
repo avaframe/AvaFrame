@@ -157,3 +157,25 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=''):
                      (inputSimFiles['muFile'].name, inputSimFiles['xiFile'].name, cfg['INPUT']['muFile'], cfg['INPUT']['xiFile']))
 
     return cfg
+
+
+def checkCfgPlausibility(cfg):
+    """check if parameters from the ini - file are plausible
+
+    Parameters
+    -------------
+    cfg: dict
+        configuration settings
+
+    """
+
+    num = float(cfg['GENERAL']['methodMeshNormal'])
+
+    if num not in [1, 4, 6, 8]:
+            # raise an error
+            message = ('The methodMeshNormal set in the ini file does NOT have a plausible value. '
+            'Please set the parameter either to 1, 4, 6 or 8.')
+            log.error(message)
+            raise AssertionError(message)
+    else:
+        log.debug('MethodMeshNormal value is plausible')
