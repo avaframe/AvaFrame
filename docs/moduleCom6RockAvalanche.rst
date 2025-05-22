@@ -30,8 +30,8 @@ To run
     python runCom6RockAvalanche.py
 
 
-SCARP
-=====
+Scarp Calculation
+-----------------
 
 
 * first go to ``AvaFrame/avaframe``
@@ -39,7 +39,7 @@ SCARP
 * create an avalanche directory - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 
 Input
-------
+~~~~~
 
 * All input files are automatically read from the set avalancheDir. No file paths need to be specified
 * elevation: DEM (ASCII), which serves as the basis for calculating the scarps. Must be in avalancheDir/Inputs.
@@ -51,7 +51,7 @@ Input
 * perimeter_shapefile: A shapefile that specifies a boundary area. Must be located in avalancheDir/Inputs/POLYGONS and file name must end with “_perimeter”.
 
 Output
-------
+~~~~~~
 
 * elevscarp: Output DGM (ASCII or GeoTIFF), which maps the input DGM minus the calculated scarp. Is saved under
 “raster_scarp.asc” in avalancheDir/Inputs/RASTERS.
@@ -59,15 +59,17 @@ Output
 under “raster_rel.asc” in avalancheDir/Inputs/REL.
 
 Config
-------
+~~~~~~
 
 Prepare the config file (scarpCfg.ini):
+
 * copy ``com6RockAvalanche/scarpCfg.ini`` to ``com6RockAvalanche/local_scarpCfg.ini`` and if desired change
 configuration settings
+
 * Input:
-	o set useShapefiles = True
+    o set useShapefiles = True
 * Settings:
-	o method: Here you specify whether the plane or the ellipsoid method should be used
+    o method: Here you specify whether the plane or the ellipsoid method should be used
 
 If all the data is provided successfully, start the script by running::
 
