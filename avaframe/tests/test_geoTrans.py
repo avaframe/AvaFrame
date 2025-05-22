@@ -571,7 +571,7 @@ def test_remeshDEM(tmp_path):
     dataSol = getIPZ(z0, xExtent, yExtent, 2.0)
 
     # compare solution to result from function
-    testRes = np.allclose(dataRaster[:-1, :-1], dataSol[:-1, :-1], atol=1.0e-3)
+    testRes = np.allclose(dataRaster[:-1, :-1], dataSol[:-1, :-1], atol=1.0e-6)
     assert dataNew["rasterData"].shape[0] == 11
     assert dataNew["rasterData"].shape[1] == 8
     # Make sure xllcorner = -1
