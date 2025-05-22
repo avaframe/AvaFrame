@@ -241,11 +241,8 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
 
     if any(section in inKey for section in relevantCom8Sections):
         splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
-        print('new regex')
     else:
         splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
-        print('old regex')
-
     section = splitKey[0]
     key = splitKey[1]
 
