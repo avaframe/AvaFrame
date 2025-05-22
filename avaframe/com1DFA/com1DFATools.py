@@ -265,6 +265,9 @@ def createSimDictFromCfgs(cfgMain, cfgPath, modName="com1DFA"):
         simType and contains full configuration configparser object for simulation run
     """
 
+    # get module from name with full import path
+    module = importlib.import_module(f'avaframe.{modName}.{modName}')
+
     # fetch avaDir
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
@@ -290,7 +293,6 @@ def createSimDictFromCfgs(cfgMain, cfgPath, modName="com1DFA"):
 
     # loop over all cfgFiles and create simDict
     for index, cfgFile in enumerate(cfgFilesAll):
-        module = importlib.import_module(modName)
         # read configuration
         cfgFromFile = cfgUtils.getModuleConfig(module, fileOverride=cfgFile, toPrint=False)
 

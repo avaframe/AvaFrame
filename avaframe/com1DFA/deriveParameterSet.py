@@ -1063,6 +1063,6 @@ def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisti
     # write full configuration (.ini file) to file
     date = datetime.today()
     fileName = "sourceConfiguration_" + "{:%d_%m_%Y_%H_%M_%S}".format(date)
-    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+    cfgUtils.writeCfgFile(avalancheDir, module, modCfg, fileName=fileName)
 
     return simDict

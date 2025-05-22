@@ -99,9 +99,12 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com1DFA):
     elif typeCfgInfo == "cfgFromObject":
         cfgStart = cfgInfo
 
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
+
     # fetch input data and create work and output directories
     inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(
-        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters")
+        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters"), modName=modName
     )
 
     # create dictionary with one key for each simulation that shall be performed
@@ -2694,7 +2697,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             if cfgSim["GENERAL"]["relThFromFile"] == "True":
                 dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
 
-
         # check if RELTH in Inputs has desired mesh size
         if cfgSim["GENERAL"]["relThFromFile"] == "True":
             pathToRelTh = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['relThFile'], dem, 'RELTH')
@@ -2778,10 +2780,11 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 "relFile": rel,
                 "cfgSim": cfgSimObject,
             }
-            # write configuration file
-            cfgUtils.writeCfgFile(
-                cfgSimObject["GENERAL"]["avalancheDir"], com1DFA, cfgSimObject, fileName=simName
-            )
+            if modName == 'com1DFA':
+                # write configuration file, dont need to write cfg file for com8MoTPSA (does this later when creating rcf file)
+                cfgUtils.writeCfgFile(
+                    cfgSimObject["GENERAL"]["avalancheDir"], com1DFA, cfgSimObject, fileName=simName
+                )
         else:
             log.warning("Simulation %s already exists, not repeating it" % simName)
 
