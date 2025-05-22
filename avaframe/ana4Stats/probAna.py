@@ -592,11 +592,10 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
         paramValuesDList = [paramValuesD]
 
     # save dictionary to path
-    outDir = pathlib.Path(avaDir, 'Outputs', 'ana4Prob')
+    outDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
     fU.makeADir(outDir)
-    fi = open(pathlib.Path(avaDir, 'Outputs', 'ana4Prob', 'paramValuesD.pickle'), "wb")
-    pickle.dump(paramValuesDList[0], fi)
-    fi.close()
+    with open(outDir / 'paramValuesD.pickle', 'wb') as fi:
+        pickle.dump(paramValuesDList[0], fi)
 
     return paramValuesDList
 
@@ -802,8 +801,9 @@ def createSample(cfgProb, varParList):
     """
 
     # random generator initialized with seed
-    randomGen = np.random.default_rng(cfgProb['PROBRUN'].getint('sampleSeed'))
     sampleSeed = cfgProb['PROBRUN'].getint('sampleSeed')
+    randomGen = np.random.default_rng(sampleSeed)
+    nTrajectories = cfgProb['PROBRUN'].getint('nSample')
 
     # create a sample of parameter values using salib morris sampling
     if cfgProb['PROBRUN']['sampleMethod'].lower() == 'morris':
@@ -812,10 +812,9 @@ def createSample(cfgProb, varParList):
             'names': varParList,
             'bounds': [[0, 1]] * len(varParList)
         }
-
         sample = morris.sample(
             param_ranges,
-            N=2,  # number of trajectories
+            N=nTrajectories,  # number of trajectories
             num_levels=6,  # how many discrete values per parameter
             seed=sampleSeed
         )
@@ -910,9 +909,16 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
         cfgStart = fetchStartCfg(comMod, cfg)
         for count1, pVal in enumerate(paramValuesD['values']):
             for index, par in enumerate(paramValuesD['names']):
+                # found for checking if parameter is in ini file
+                found = False
                 for section in cfgStart.sections(): # additionally search in all sections of ini file not only GENERAL
                     if par in cfgStart[section]:
                         cfgStart[section][par] = str(pVal[index])
+                        found = True
+                        break
+                # If parameter not found in any section, add it to 'GENERAL'
+                if not found:
+                    cfgStart['GENERAL'][par] = str(pVal[index])
             if modName.lower() == 'com1dfa':
                 cfgStart['VISUALISATION']['scenario'] = str(count1)
                 cfgStart['INPUT']['thFromIni'] = paramValuesD['thFromIni']
