@@ -54,9 +54,9 @@ Output
 ~~~~~~
 
 * elevscarp: Output DGM (ASCII or GeoTIFF), which maps the input DGM minus the calculated scarp. Is saved under
-“raster_scarp.asc” in avalancheDir/Inputs/RASTERS.
+  ``raster_scarp.asc`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
 * hrelease: File path to the output DGM (ASCII or GeoTIFF), which represents the calculated scarp volumes.Is saved
-under “raster_rel.asc” in avalancheDir/Inputs/REL.
+  under ``raster_rel.asc`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
 
 Config
 ~~~~~~
