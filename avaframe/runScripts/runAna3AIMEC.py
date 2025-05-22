@@ -8,7 +8,7 @@ from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import os
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -32,12 +32,6 @@ def runAna3AIMEC(avalancheDir, cfg, inputDir='', demFileName=''):
 
 
 if __name__ == '__main__':
-
-    # debugging is in a different working directory, change work dir that debugging is in the right work dir
-    print("Current Working Directory:", os.getcwd())
-    os.chdir("/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe")
-
-
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
     avalancheDir = cfgMain['MAIN']['avalancheDir']
