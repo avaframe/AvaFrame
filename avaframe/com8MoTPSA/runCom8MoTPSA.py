@@ -83,5 +83,4 @@ if __name__ == '__main__':
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    #runCom8MoTPSA(str(args.avadir))
-    runCom8MoTPSA('../data/avaEiskar')
+    runCom8MoTPSA(str(args.avadir))

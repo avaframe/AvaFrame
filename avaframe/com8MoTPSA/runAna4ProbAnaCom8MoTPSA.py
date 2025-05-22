@@ -131,4 +131,3 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     runProbAna(str(args.avadir))
-    # runProbAna('../data/avaEiskar')
