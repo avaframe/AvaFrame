@@ -175,8 +175,15 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
     try:
         # load dataFrame for all configurations
         configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=comModule)
+
+        # ToDo solve this different, check if this is correct, how to merge if simName is not equal
+        # Reset the index of configurationDF so that the index (simHash) becomes a column and rename simName that it doesnt appear twice
+        configurationDF = configurationDF.reset_index().rename(columns={'index': 'simHash'})
+        configurationDF = configurationDF.rename(columns={'simName': 'simName_renamed'})
+
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
-        inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
+        # inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
+        inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simHash', 'modelType']).set_index('index')
         configFound = True
     except (NotADirectoryError, FileNotFoundError) as e:
         if cfgSetup['varParList'] != '' and (any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')) == False):

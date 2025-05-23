@@ -63,7 +63,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA["FLAGS"].getboolean("debugPlot")
 
 
-def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
+def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com1DFA):
     """preprocess information from configuration, read input data and gather into inputSimFiles,
     create one config object for each of all desired simulations,
     create dataFrame with one line per simulations of already existing sims in avalancheDir
@@ -78,6 +78,8 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
         path to configuration file if overwrite is desired - optional
         if not local (if available) or default configuration will be loaded
         if cfgInfo is a configparser object take this as initial config
+    module: module
+        module to be used for task (optional)
 
     Returns
     --------
@@ -93,17 +95,20 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo):
 
     # read initial configuration
     if typeCfgInfo in ["cfgFromFile", "cfgFromDefault"]:
-        cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgInfo, toPrint=False)
+        cfgStart = cfgUtils.getModuleConfig(module, fileOverride=cfgInfo, toPrint=False)
     elif typeCfgInfo == "cfgFromObject":
         cfgStart = cfgInfo
 
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
+
     # fetch input data and create work and output directories
     inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(
-        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters")
+        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters"), modName=modName
     )
 
     # create dictionary with one key for each simulation that shall be performed
-    simDict = dP.createSimDict(avalancheDir, com1DFA, cfgStart, inputSimFilesAll, simNameExisting)
+    simDict = dP.createSimDict(avalancheDir, module, cfgStart, inputSimFilesAll, simNameExisting)
 
     return simDict, outDir, inputSimFilesAll, simDFExisting
 
@@ -2582,7 +2587,7 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
             )
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting=""):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", modName='com1DFA'):
     """Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
     Parameters
@@ -2596,6 +2601,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
     simNameExisting: list
         list of simulation names that already exist (optional). If provided,
         only carry on simulations that do not exist
+    modName: str
+        string of module name (optional)
 
     Returns
     -------
@@ -2683,8 +2690,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
         cfgSim["INPUT"]["DEM"] = pathToDem
-        if cfgSim["GENERAL"]["relThFromFile"] == "True" or cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
-            dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
+        if modName == 'com1DFA':
+            if cfgSim["GENERAL"]["relThFromFile"] == "True" or cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+                dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
+        elif modName == 'com8MoTPSA':
+            if cfgSim["GENERAL"]["relThFromFile"] == "True":
+                dem = IOf.readRaster(pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', pathToDem))
 
         # check if RELTH in Inputs has desired mesh size
         if cfgSim["GENERAL"]["relThFromFile"] == "True":
@@ -2693,56 +2704,72 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         else:
             cfgSim["INPUT"]["relThFile"] = ""
 
-        # check if spatialVoellmy is chosen that friction fields have correct extent
-        if cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
-            for fric in ['mu', 'xi']:
-                pathToFric = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['%sFile' % fric], dem, fric)
-                cfgSim['INPUT']['%sFile' % fric] = pathToFric
+        if modName == 'com1DFA':
+            # check if spatialVoellmy is chosen that friction fields have correct extent
+            if cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+                for fric in ['mu', 'xi']:
+                    pathToFric = dP.checkExtentAndCellSize(cfgSim, inputSimFiles['%sFile' % fric], dem, fric)
+                    cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
-        # add info about dam file path to the cfg
-        if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
-            cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
+            # add info about dam file path to the cfg
+            if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
+                cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
 
         # check differences to default and add indicator to name
-        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim)
+        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, modName)
 
         # if frictModel is samosATAuto compute release vol
-        if cfgSim["GENERAL"]["frictModel"].lower() == "samosatauto":
-            pathToDemFull = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem)
-            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
-        else:
-            relVolume = ""
+        if modName == 'com1DFA':
+            if cfgSim["GENERAL"]["frictModel"].lower() == "samosatauto":
+                pathToDemFull = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem)
+                relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
+            else:
+                relVolume = ""
 
-        # check sphKernelRadius setting
-        cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
+            # check sphKernelRadius setting
+            cfgSim = checkCfg.checkCellSizeKernelRadius(cfgSim)
 
-        # only keep friction model parameters that are used
-        cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, inputSimFiles, relVolume=relVolume)
+            # only keep friction model parameters that are used
+            cfgSim = checkCfg.checkCfgFrictionModel(cfgSim, inputSimFiles, relVolume=relVolume)
 
-        # set frictModelIndicator, this needs to happen AFTER checkCfgFrictModel
-        frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
+            # set frictModelIndicator, this needs to happen AFTER checkCfgFrictModel
+            frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
 
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
 
-        simName = "_".join(
-            filter(
-                None,
-                [
-                    relNameSim,
-                    simHash,
-                    defID,
-                    frictIndi,
-                    row._asdict()["simTypeList"],
-                    cfgSim["GENERAL"]["modelType"],
-                ],
+        if modName == 'com1DFA':
+            simName = "_".join(
+                filter(
+                    None,
+                    [
+                        relNameSim,
+                        simHash,
+                        defID,
+                        frictIndi,
+                        row._asdict()["simTypeList"],
+                        cfgSim["GENERAL"]["modelType"],
+                    ],
+                )
             )
-        )
+        elif modName == 'com8MoTPSA':
+            simName = "_".join(
+                filter(
+                    None,
+                    [
+                        relNameSim,
+                        simHash,
+                        defID,
+                        row._asdict()["simTypeList"],
+                        cfgSim["GENERAL"]["modelType"],
+                    ],
+                )
+            )
 
         # check if simulation exists. If yes do not append it
         if simName not in simNameExisting:
@@ -2753,17 +2780,18 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 "relFile": rel,
                 "cfgSim": cfgSimObject,
             }
-            # write configuration file
-            cfgUtils.writeCfgFile(
-                cfgSimObject["GENERAL"]["avalancheDir"], com1DFA, cfgSimObject, fileName=simName
-            )
+            if modName == 'com1DFA':
+                # write configuration file, dont need to write cfg file for com8MoTPSA (does this later when creating rcf file)
+                cfgUtils.writeCfgFile(
+                    cfgSimObject["GENERAL"]["avalancheDir"], com1DFA, cfgSimObject, fileName=simName
+                )
         else:
             log.warning("Simulation %s already exists, not repeating it" % simName)
 
     log.info("Done preparing variations -----")
     # TODO: maybe treat this in some other way, i.e. adding an "finalDEM" or similar
     # inputSimFiles.pop("demFile")
-    inputSimFiles["demFile"] = pathToDemFull
+    # inputSimFiles["demFile"] = pathToDemFull
 
     return simDict
 
