@@ -272,11 +272,8 @@ def run(optTuple):
         pool.close()
         pool.join()
 
-    # TODO - provide option in com4FlowPyCfg.ini file for which output layers to write
-    # e.g.: default  [zDelta, cellCounts, fpTravelAngle, (backCalc if Infra)]
-    #       optional [flux, slTravelAngle]
     # TODO - NOTE:
-    # also move this part into a separate function
+    # Move this part into a separate function
     # initializing arrays for storing the results from the multiprocessing step
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     fluxArray = np.zeros_like(dem, dtype=np.float32)
@@ -395,7 +392,7 @@ def calculation(args):
     zDeltaSumArray: numpy array
         the maximum of zDelta in every cell per path and the sum over the paths
     backcalc: numpy array
-          Array with back calculation, still TODO!!!
+          Array with back calculation results
     fpTravelAngleArray: numpy array
         maximum of flow-path travel-angle in every cell
     slTravelAngleArray: numpy array
@@ -466,18 +463,14 @@ def calculation(args):
         backcalc = None
 
     if infraBool:
-        # initialize directed graph for storing of path topology
+        # initialize infrastructure array
+        # NOTE-TODO: check if 
         infraArr = infra  # infrastructure array (input file)
-        # pathTopology = {} # topology of path as directed graph
-        # nodeValues = {}   # values
-        # maxValInfra = 0  #
-        # back_list = []
 
     if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     # Core
-    # start = datetime.now().replace(microsecond=0)
     # NOTE-TODO: row_list, col_list are tuples - rethink variable naming
     row_list, col_list = get_start_idx(dem, release)
 
