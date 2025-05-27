@@ -208,23 +208,14 @@ Resistance:
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
 as a function of the characteristic
-coefficient :math:`c_{\text{res}}` that depends on the structure of the obstacles and the effective height :math:`h^{\text{eff}}`, defined as :math:`\min(\overline{h}, h_{res} )`:
+coefficient :math:`c_{\text{resH}}`:
 
 .. math::
-   F_i^{\text{res}} = -c_{\text{res}}\,\rho_0\,A\,
-    h^{\text{eff}}\,\overline{u}^2\,
-    \frac{\overline{u}_i}{\|\overline{u}\|}
-
-Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. Please check out previous documentation versions for details.
-
-There is also the option to compute the resistance force :math:`F_i^{\text{res}}`  independent of the effective height :math:`h^{\text{eff}}`:
-
-- .. math::
-   F_i^{\text{res}} = -c_{\text{resH}}\,\rho_0\,A\,
+   F_i^{\text{res}} = -c_{\text{res}H}\,\rho_0\,A\,
     \overline{u}^2\,
     \frac{\overline{u}_i}{\|\overline{u}\|}
-    
-with characteristic coefficient :math:`c_{\text{resH}}`.
+
+Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. and was dependent on an effective thickness (a function of flow thickness). Please check out previous documentation versions for details.
 
 
 Surface integral forces:

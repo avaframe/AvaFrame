@@ -642,12 +642,11 @@ reads:
 
 Added resistance force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
-is a function of the average flow thickness :math:`\overline{h}_{k}`):
+The resistance force on each particle reads:
 
 .. math::
     F_{k,i}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
+    = - \rho_0\,A_{k}\,C_{\text{resH}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
     :label: resistance force
 
 Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
