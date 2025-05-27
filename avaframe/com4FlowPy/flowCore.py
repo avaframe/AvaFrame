@@ -112,34 +112,6 @@ def split_release(release, pieces):
     return release_list
 
 
-def back_calculation(back_cell):
-    """Here the back calculation from a run out pixel that hits a infrastructure
-    to the release pixel is performed.
-
-    Parameters
-    -----------
-    back_cell:  class-object cell
-        cell that hit a Infrastructure
-
-    Returns
-    -----------
-    back_list: list
-        List of cells that are on the way to the start cell TODO:Maybe change it to array like DEM?
-    """
-
-    back_list = []
-    for parent in back_cell.lOfParents:
-        if parent not in back_list:
-            back_list.append(parent)
-    for cell in back_list:
-        for parent in cell.lOfParents:
-            # Check if parent already in list
-            if parent not in back_list:
-                back_list.append(parent)
-
-    return back_list
-
-
 def run(optTuple):
     """This is a wrapper around calculation() for performing model runs for a single tile of the model domain
     using multiprocessing across multiple CPUs and for saving results for processed tile to temp folder
