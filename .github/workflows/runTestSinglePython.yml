@@ -54,16 +54,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -ra --cov --cov-report=xml --cov-report lcov:cov.info --cov-config=.coveragerc
-    - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v9.0.0
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_ID }}
-      #    - name: Upload coverage to Codecov
-      #      uses: codecov/codecov-action@v3
-      #      with:
-      #        fail_ci_if_error: false
-      #        name: codecov-umbrella
-      #        verbose: true
     - uses: qltysh/qlty-action/coverage@main
       with:
         coverage-token: ${{secrets.QLTY_COVERAGE_TOKEN}}
