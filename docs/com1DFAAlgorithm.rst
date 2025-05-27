@@ -298,7 +298,6 @@ Take detrainment into account
 Snow detrainment can be added to the simulation. One must provide a resistance shapefile
 in ``Inputs/RES`` and set the ``simType`` to ``res``, ``entres`` or ``available``
 (see :ref:`com1DFAAlgorithm:Initialize release, entrainment and resistance areas`) and set the flag ``detrainment = True``.
-If the flag ``detWithoutRes = True``, the resistance force (see :ref:`com1DFAAlgorithm:Compute friction forces`) is not computed. If ``detWithoutRes = False``, the detrainment effect and the resistance force are taken into account.
 
 In the areas defined by the resistance shapefile (for example in forests), mass of particles can be detrained causing a change of mass due to the detrainment.
 
