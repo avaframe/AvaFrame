@@ -553,7 +553,7 @@ def plotReleaseScenarioView(avaDir, releaseLine, relThField, reportAreaInfo, dem
     pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
 
 
-def plotResFields(fields, cfg, tPlot, dem):
+def plotResFields(fields, cfg, tPlot, dem, totalMass):
     """ Plot active resistance area fields for com1DFArun
 
         Parameters
@@ -580,18 +580,21 @@ def plotResFields(fields, cfg, tPlot, dem):
     extentCellCenters, extentCellCorners = pU.createExtentMinMax(dem['rasterData'], header, originLLCenter=True)
 
     # create figure
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(pU.figW*2, pU.figH))
+    fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(pU.figW*2, pU.figH))
 
     # mask 0 values in arrays for plots
     cRes = np.flipud(np.where(fields['cResRaster']==0, np.nan, fields['cResRaster']))
     det = np.flipud(np.where(fields['detRaster']==0, np.nan, fields['detRaster']))
     fv = np.flipud(np.where(fields['FV']==0, np.nan, fields['FV']))
     ft = np.flipud(np.where(fields['FT'] == 0, np.nan, fields['FT']))
+    dmDet = np.flipud(np.where(fields['dmDet'] == 0, np.nan, fields['dmDet']))
+    FTDet = dmDet / (cfg.getfloat('rho') * dem['areaRaster'])
 
     # plot resistance model parameter and detrainment parameter
     im1 = ax[0,0].imshow(cRes, vmin=0, vmax=cfg.getfloat('cRes'), extent=extentCellCenters, zorder=4)
     im2 = ax[0, 1].imshow(det, vmin=0, vmax=cfg.getfloat('detK'),
                           extent=extentCellCenters, zorder=4)
+
     # set title
     ax[0,0].set_title('cResRaster')
     ax[0,1].set_title('detRaster')
@@ -603,11 +606,11 @@ def plotResFields(fields, cfg, tPlot, dem):
     cmap1, col, ticks, norm = pU.makeColorMap(
         pU.colorMaps['FV'], vMin, vMax, continuous=pU.contCmap)
     cmap2, col, ticks, norm = pU.makeColorMap(
-        pU.colorMaps['FT'], thMin, thMax, continuous=pU.contCmap)
-    cmap1.set_under(color='white')
-    cmap1.set_over(color='lightblue')
-    cmap2.set_under(color='white')
-    cmap2.set_over(color='lightblue')
+        pU.colorMaps['FV'], thMin, thMax, continuous=pU.contCmap)
+    cmap1.set_under(color='lightblue')
+    cmap1.set_over(color='red')
+    cmap2.set_under(color='lightblue')
+    cmap2.set_over(color='red')
     cmap1.set_bad(color='k', alpha=0.)
     cmap2.set_bad(color='k', alpha=0.)
 
@@ -616,8 +619,8 @@ def plotResFields(fields, cfg, tPlot, dem):
     im4 = ax[1,1].imshow(ft, cmap=cmap2, vmin=thMin, vmax=thMax
                          , extent=extentCellCenters, zorder=4)
     # set title
-    ax[1,0].set_title('FV')
-    ax[1,1].set_title('FT')
+    ax[1,0].set_title('FV [ms-1]')
+    ax[1,1].set_title('FT [m]')
     # add colorbar
     fig.colorbar(im3, ax=ax[1,0])
     fig.colorbar(im4, ax=ax[1,1])
@@ -626,11 +629,41 @@ def plotResFields(fields, cfg, tPlot, dem):
     ax[1, 0].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
     ax[1, 1].imshow(np.flipud(np.where(fields['cResRasterOrig'] > 0, 1, np.nan)), alpha=0.5, extent=extentCellCenters, zorder=4)
 
+    # fetch colormaps for FV and FT colorcode values below and above thresholds, mask 0 values
+    dmMin, dmMax = setMinMax(dmDet)
+    FTDetMin, FTDetMax = setMinMax(FTDet)
+
+    cmap5, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps['dmDet'], dmMin, dmMax, continuous=pU.contCmap)
+    cmap6, col, ticks, norm = pU.makeColorMap(
+        pU.colorMaps['FTDet'], FTDetMin, FTDetMax, continuous=pU.contCmap)
+    cmap5.set_bad(color='k', alpha=0.)
+    cmap6.set_bad(color='k', alpha=0.)
+    # add FV and FT fields
+    im5 = ax[0,2].imshow(dmDet, cmap=cmap5, vmin=dmMin, vmax=dmMax, extent=extentCellCenters, zorder=4)
+    im6 = ax[1,2].imshow(FTDet, cmap=cmap6, vmin=FTDetMin, vmax=FTDetMax, extent=extentCellCenters, zorder=4)
+    # set title
+    ax[0,2].set_title('dmDet [kg]')
+    ax[1,2].set_title('FTDet [m]')
+    # add colorbar
+    fig.colorbar(im5, ax=ax[0,2])
+    fig.colorbar(im6, ax=ax[1,2])
+
     # save and or plot
     plotName = 'resistance_t%04d' % (tPlot)
     outDir = pathlib.Path(cfg['avalancheDir'], 'Outputs', 'com1DFA', 'cResPlots')
     fU.makeADir(outDir)
     pU.saveAndOrPlot({"pathResult": outDir}, plotName, fig)
+
+def setMinMax(resTypeField):
+    if np.isnan(resTypeField).all():
+        minVal = 0
+        maxVal = 0
+    else:
+        minVal = np.nanmin(resTypeField)
+        maxVal = np.nanmax(resTypeField)
+
+    return minVal, maxVal
 
 
 def massPlot(infoDict, massDetrainedTotal, t, avaDir, logName):

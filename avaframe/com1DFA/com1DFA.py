@@ -1631,19 +1631,27 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     """
     K = cfg.getfloat("detK")
     detrainment = cfg.getboolean("detrainment")
-    detWithoutRes = cfg.getboolean("detWithoutRes")
 
-    ResModel = cfg["ResistanceModel"].lower()
-    if ResModel == "cres":
-        cRes = cfg.getfloat("cRes")
-    if ResModel == "cresh":
-        cRes = cfg.getfloat("cResH")
     # read dem header
     header = dem["originalHeader"]
     ncols = header["ncols"]
     nrows = header["nrows"]
 
     if simTypeActual in ["entres", "res"]:
+        ResModel = cfg["ResistanceModel"].lower()
+        if ResModel == "default":
+            cRes = cfg.getfloat("cResH")
+            if detrainment:
+                log.info('Resistance model default: if FT < %.2f OR FV < %.2f detrainment (detK %.2f) else increased friction (cResH %.2f) and no effect if FT > %.2f OR FV > %.2f' %
+                         (cfg.getfloat('forestThMin'), cfg.getfloat('forestVMin'), K, cfg.getfloat('cResH'),
+                          cfg.getfloat('forestThMax'), cfg.getfloat('forestVMax')))
+            else:
+                log.warning('Resistance model default chosen, but detrainment is deactivated apply increased friction (cResH %.2f) everywhere within resistance area' % cfg.getfloat('cResH'))
+        else:
+            message = 'Resistance model %s not a valid option' % ResModel
+            log.error(message)
+            raise AssertionError(message)
+
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
@@ -1658,10 +1666,6 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
             log.info("Detrainment (Resistance) area features: %s" % (resLine["Name"]))
             detRaster = K * mask
             reportAreaInfo["detrainment"] = "Yes"
-
-            if detWithoutRes:
-                cResRaster = np.zeros((nrows, ncols))
-                reportAreaInfo["resistance"] = "No"
         else:
             detRaster = np.zeros((nrows, ncols))
             reportAreaInfo["detrainment"] = "No"
@@ -1753,8 +1757,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # turn resistance model into integer
     ResModel = cfgGen["ResistanceModel"].lower()
     ResModelsList = [
-        "cres",
-        "cresh",
+        "default",
     ]
     resistanceType = ResModelsList.index(ResModel) + 1
     log.debug("Resistance Model used: %s, %s" % (ResModelsList[resistanceType - 1], resistanceType))
@@ -2055,7 +2058,7 @@ def setupresultsDF(resTypes, cfgRangeTime):
 
     resDict = {"timeStep": [0.0]}
     for resT in resTypes:
-        if resT != "particles":
+        if (resT != "particles" and resT != 'FTDet'):
             resDict["max" + resT] = [0.0]
     if cfgRangeTime:
         resDict["rangeList"] = [0.0]
@@ -2089,7 +2092,7 @@ def addMaxValuesToDF(resultsDF, fields, timeStep, resTypes, rangeValue=""):
 
     newLine = []
     for resT in resTypes:
-        if resT != "particles":
+        if (resT != "particles" and resT != 'FTDet'):
             newLine.append(np.nanmax(fields[resT]))
 
     if rangeValue != "":
@@ -2229,11 +2232,11 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     # update cRes and detK rasters according to thresholds of FV and FT
     particles['tPlot'] = particles['tPlot'] + 1
     # only if entres or res sim and detrainment is used
-    if cfg['simTypeActual'] in ['entres', 'res'] and cfg.getboolean('detrainment'):
-        # update resistance area fields using threshold
+    if cfg['simTypeActual'] in ['entres', 'res'] and (cfg['ResistanceModel'].lower() == 'default' and cfg.getboolean('detrainment')):
+        # update resistance area fields using thresholds
         fields = com1DFATools.updateResCoeffFields(fields, cfg, float(particles['t']), dem)
         # plot
-        #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem)
+        #outCom1DFA.plotResFields(fields, cfg, particles['tPlot'], dem, particles['mTot'])
 
 
     # get forces
@@ -2570,6 +2573,7 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
     else:
         resTypes = resTypesGen
 
+
     if resTypesForced != []:
         resTypes = resTypesForced
     for resType in resTypes:
@@ -2602,6 +2606,11 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
             fU.makeADir(outDirPeakAll)
             outFile = outDirPeakAll / dataName
             IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+        else:
+            log.debug(
+                "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
+                % (resType, timeStep)
+            )
 
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting=""):
