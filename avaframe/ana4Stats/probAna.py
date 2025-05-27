@@ -576,7 +576,7 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
     _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
 
     modNameString = str(pathlib.Path(comMod.__file__).stem)
-    if modNameString.lower() == "com1dfa":
+    if modNameString.lower() in ["com1dfa", "com8motpsa"]:
         # check if thickness parameters are actually read from shp file
         _, thReadFromShp = checkParameterSettings(cfgStart, varParList)
     else:
@@ -591,7 +591,7 @@ def createSampleFromConfig(avaDir, cfgProb, comMod):
                                                                    varType)
         paramValuesDList = [paramValuesD]
 
-    # save dictionary to path
+    # save dictionary to pickle file
     outDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
     fU.makeADir(outDir)
     with open(outDir / 'paramValuesD.pickle', 'wb') as fi:
