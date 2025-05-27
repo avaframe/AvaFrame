@@ -202,6 +202,11 @@ The detrained snow :math:`M_{det}` at obstacles (e.g., trees) is computed by fol
    
 The parameter :math:`K` (:math:`Pa`) depends on the structure of the obstacles and the properties of the snow.
 
+.. Note::
+
+   Currently, detrainment is only applicable when using the ``default ResistanceModel``. In this case,
+   if flow thickness or flow velocity fall below minimum thresholds defined in the configuration file, detrainment is applied.
+
 
 Resistance:
 """""""""""""
@@ -215,8 +220,17 @@ coefficient :math:`c_{\text{resH}}`:
     \overline{u}^2\,
     \frac{\overline{u}_i}{\|\overline{u}\|}
 
-Note: in previous versions, this formula included information about tree diameter, tree spacing, etc. and was dependent on an effective thickness (a function of flow thickness). Please check out previous documentation versions for details.
+.. Note::
 
+    In previous versions, this formula included information about tree diameter, tree spacing, etc. and was dependent on an effective thickness (a function of flow thickness). Please check out previous documentation versions for details.
+
+.. Note::
+
+   When using the ``default ResistanceModel`` and setting the detrainment flag to True, if flow thickness or
+   flow velocity fall below minimum thresholds defined in the configuration file, ONLY detrainment is applied.
+   If flow thickness and flow velocity lie between minimum and maximum thresholds, increased friction in the form of
+   the resistance force is applied and if at least one maximum threshold is exceeded, no additional resistance is accounted for.
+   If the detrainment flag is set to False, the additional resistance force is accounted for in the entire resistance area.
 
 Surface integral forces:
 """""""""""""""""""""""""
