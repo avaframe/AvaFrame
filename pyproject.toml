@@ -46,7 +46,8 @@ dependencies = [
     "rasterio",
     "contextily",
     "geopandas",
-    "fiona"
+    "fiona",
+    "salib"
 ]
 
 [tool.flake8]
