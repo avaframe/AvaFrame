@@ -81,11 +81,21 @@ ii) additional modules (forest, infrastructure)
 - ``forest``: if set to ``True`` the runout calculation is performed with the *forest module* (a forest layer has to be provided)
 - ``infra``: if set to ``True`` the calculation is performend with the *backcalculation module* (an infrastructure layer has to be provided)
 
-iii) forest module parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if ``infra`` is set to ``True`` the infrastructure layer has to be provided either in ``avalancheDir/INPUTS/INFRA`` (if ``useCustomPaths=False``) or at the defined
+``infraPath`` (if ``useCustomPaths=True``). The layer has to be of the same resolution and extent as the other input layers; infrastructure cells have to be coded with values > 0, while 
+values >= 0 will be interpreted as non-infrastructure. If infrastructure cells should contain an ordinal ranking (e.g. infrastructure importance), then higher values indicate higher
+infrastructure priority.
 
 .. Note::
-  Forest modules and parameters are currently updated/developed; we will update the description of parameters accordingly
+  - ``previewMode``: if this option is set to ``True`` not all release cells will be processed separately. Instead, release cells that are already contained in a previously modeled process path will not be modeled again.
+  Using this option can be useful for preliminary parameter studys since it saves computational time.
+  The previewMode will allow a rough approximation of results for output layers like ``zdelta``, ``travelLength``, or ``backCalculation`` with faster model run times.
+  However, model results relying on separate processing of all release cells (``cellCounts``, ``fpTravelAngle``, ``zDeltaSum``, ``slTravelAngle``, ``routFluxSum``, ``depFluxSum``) will
+  deviate strongly from ''full'' runs (``previewMode=False``) and should be interpreted with caution or simply removed from the output file list in ``(local_)com4FlowPyCfg.ini``.
+  
+
+iii) forest module parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``forestModule``: if ``forest=True`` different forest modules ``[ForestFriction, ForestDetrainment, ForestFrictionLayer]`` can be selected.
 
@@ -233,6 +243,10 @@ In addition these output layers are also available:
 If ``forestInteraction = True`` this layer will be written automatically (no need to separately define in ``outputFiles``):
 
 - ``forestInteraction``: minimum number of forested raster cells a path runs through
+
+If ``infra = True`` this layer will be written automatically (no need to separately define in ``outputFiles``):
+
+- ``backcalculation``: Parts of modeled process paths upslope of infrastructure cells that are ''hit'' by (a) modeled process(es).
 
  .. Model Parameterisation
  .. ------------------------
