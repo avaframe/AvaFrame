@@ -11,7 +11,7 @@ import pathlib
 from scipy.stats import qmc
 from SALib.sample import morris
 import pickle
-
+from deepdiff import grep
 
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
@@ -278,30 +278,94 @@ def checkParameterSettings(cfg, varParList):
     thReadFromShp = []
 
     for varPar in varParList:
-        # loop for checking all section of ini file, not just the GENERAL section
-        for section in cfg.sections():
-            if section == 'GENERAL' and varPar in cfg[section]:
-                if any(chars in cfg['GENERAL'][varPar] for chars in ['|', '$', ':']):
-                    message = ('Only one reference value is allowed for %s: but %s is given' %
-                               (varPar, cfg['GENERAL'][varPar]))
-                    log.error(message)
-                    raise AssertionError(message)
-                elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
-                    thFromShp = varPar + 'FromShp'
-                    # check if reference settings have already variation of varPar
-                    _ = checkForNumberOfReferenceValues(cfg['GENERAL'], varPar)
-                    # check if th read from shp file
-                    if cfg['GENERAL'].getboolean(thFromShp):
-                        thReadFromShp.append(varPar)
-            elif section != 'GENERAL' and varPar in cfg[section]:
-                if any(chars in cfg[section][varPar] for chars in ['|', '$', ':']):
-                    message = ('Only one reference value is allowed for %s: but %s is given' %
-                               (varPar, cfg['GENERAL'][varPar]))
-                    log.error(message)
-                    raise AssertionError(message)
+        # Check if valid parameter exists in any section and check for duplicates
+        _ = checkParameterInConfig(cfg, varPar)
+
+        # Fetch section where parameter was found
+        section = fetchParameterSection(cfg, varPar)
+
+        if any(chars in cfg[section][varPar] for chars in ['|', '$', ':']):
+            message = ('Only one reference value is allowed for %s: but %s is given' %
+                       (varPar, cfg[section][varPar]))
+            log.error(message)
+            raise AssertionError(message)
+        elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
+            thFromShp = varPar + 'FromShp'
+            # check if reference settings have already variation of varPar
+            _ = checkForNumberOfReferenceValues(cfg['GENERAL'], varPar)
+            # check if th read from shp file
+            if cfg['GENERAL'].getboolean(thFromShp):
+                    thReadFromShp.append(varPar)
 
     return True, thReadFromShp
 
+
+def checkParameterInConfig(cfg, varPar):
+    """
+    Checks the existence and uniqueness of a parameter within a configuration object.
+
+    This function searches for a specified parameter within a configuration object, ensuring the
+    parameter exists and is not duplicated across sections. If the parameter is found multiple
+    times or not found at all, an error is logged. If the parameter is found in only one section,
+    that section is returned.
+
+    Parameters
+    ----------
+    cfg : configparser object
+        The configuration object in which to search for the specified parameter.
+    varPar : str
+        The name of the parameter to locate within the configuration.
+
+    Returns
+    -------
+    True if the parameter is found and unique.
+    """
+
+    # search for parameter in cfg object
+    matches = cfg | grep(varPar, verbose_level=2)
+
+    # Check if matches is empty
+    if not matches.get('matched_paths'):
+        message = "'%s' is not a valid parameter" % varPar
+        log.error(message)
+        raise AssertionError(message)
+
+    # Exact key match (case-insensitive)
+    exactKeyMatch = {
+        path: val for path, val in matches['matched_paths'].items()
+        if path.lower().endswith(f"['{varPar.lower()}']")
+    }
+
+    # Check for duplicates
+    if len(exactKeyMatch) != 1:
+        message = "Parameter '%s' does not uniquely match a single configuration parameter." % varPar
+        log.error(message)
+        raise AssertionError(message)
+
+    return True
+
+
+def fetchParameterSection(cfg, parameter):
+    """Fetch the section name that contains the specified parameter in a configuration file.
+
+    Parameters
+    ----------
+    cfg : configparser object
+        Configuration settings
+    parameter : str
+        Name of the parameter to find
+
+    Returns
+    -------
+    str
+        Name of the section containing the parameter or None if the parameter is not found.
+    """
+
+    for section in cfg.sections():
+        if parameter in cfg[section]:
+            return section
+
+    return None
 
 def checkForNumberOfReferenceValues(cfgGen, varPar):
     """ check if in reference configuration no variation option of varPar is set
@@ -632,15 +696,8 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
     lowerBounds = []
     upperBounds = []
     for idx, varPar in enumerate(varParList):
-
-        # get variation value from starting config, search in all sections of the ini file
-        for section in cfgStart.sections():
-            if varPar in cfgStart[section]:
-                varVal = cfgStart[section].getfloat(varPar)
-                break
-        else:
-            raise KeyError(f"{varPar} not found in any section")
-
+        section = fetchParameterSection(cfgStart, varPar)
+        varVal = cfgStart[section].getfloat(varPar)
         if varType[idx].lower() == 'percent':
             lB = varVal - varVal * (float(valVariationValue[idx]) / 100.)
             uB = varVal + varVal * (float(valVariationValue[idx]) / 100.)
@@ -732,7 +789,9 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
 
         # initialize lower and upper bounds required to get a sample for the parameter values
         # numpy arrays required to do masking as lists don't work for a list indices
-        varValList = np.asarray([cfgStart['GENERAL'].getfloat(varPar) if varPar in staParameter else thValues[idx] for idx, varPar in enumerate(fullListOfParameters)])
+        varValList = np.asarray([cfgStart[fetchParameterSection(cfgStart, varPar)].getfloat(varPar)
+                                 if varPar in staParameter
+                                 else thValues[idx] for idx, varPar in enumerate(fullListOfParameters)])
         fullValVar = np.asarray([float(valVariationValue[i]) if valVariationValue[i] != 'ci95' else np.nan for i in parentParameterId])
         fullVarType = np.asarray([varType[i].lower() for i in parentParameterId])
         lowerBounds = np.asarray([None]*len(fullListOfParameters))
@@ -909,15 +968,11 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=''):
         cfgStart = fetchStartCfg(comMod, cfg)
         for count1, pVal in enumerate(paramValuesD['values']):
             for index, par in enumerate(paramValuesD['names']):
-                # found for checking if parameter is in ini file
-                found = False
-                for section in cfgStart.sections(): # additionally search in all sections of ini file not only GENERAL
-                    if par in cfgStart[section]:
-                        cfgStart[section][par] = str(pVal[index])
-                        found = True
-                        break
-                # If parameter not found in any section, add it to 'GENERAL'
-                if not found:
+                section = fetchParameterSection(cfgStart, par)
+                # If parameter not found in any section, add it to 'GENERAL'.
+                if section is not None:
+                    cfgStart[section][par] = str(pVal[index])
+                else:
                     cfgStart['GENERAL'][par] = str(pVal[index])
             if modName.lower() == 'com1dfa':
                 cfgStart['VISUALISATION']['scenario'] = str(count1)
