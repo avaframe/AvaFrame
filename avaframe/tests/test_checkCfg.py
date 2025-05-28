@@ -18,19 +18,26 @@ def test_checkCfgConsistency():
 
     # setup requuired input data
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'viscOption': 2, 'sphOption': 2}
+    cfg['GENERAL'] = {'viscOption': 2, 'sphOption': 2, 'methodMeshNormal': 1}
 
     # call function to be tested
     testFlag = checkCfg.checkCfgConsistency(cfg)
 
     assert testFlag == True
 
-    cfg['GENERAL'] = {'viscOption': 2, 'sphOption': 1}
+    cfg['GENERAL'] = {'viscOption': 2, 'sphOption': 1, 'methodMeshNormal': 1}
 
     # call function to be tested
     with pytest.raises(AssertionError) as e:
         assert checkCfg.checkCfgConsistency(cfg)
     assert 'If viscOption is set to 2' in str(e.value)
+
+    cfg['GENERAL'] = {'viscOption': 2, 'sphOption': 2, 'methodMeshNormal': 2}
+
+    # call function to be tested
+    with pytest.raises(AssertionError) as e:
+        assert checkCfg.checkCfgConsistency(cfg)
+    assert 'The methodMeshNormal set in the ini file does NOT have' in str(e.value)
 
 
 def test_checkCellSizeKernelRadius():
