@@ -1,0 +1,48 @@
+{
+  "TAGS": [
+    "res",
+    "standardTest",
+    "real"
+  ],
+  "DESCRIPTION": " this is Kot resistance test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "relKot_5f7151e370_D_S_res_dfa_pft.asc",
+    "relKot_5f7151e370_D_S_res_dfa_pfv.asc",
+    "relKot_5f7151e370_D_S_res_dfa_ppr.asc"
+  ],
+  "TOPOTYPE": "real",
+  "AVANAME": "avaKot",
+  "AVADIR": "data/avaKot",
+  "simNameRef": "relKot_5f7151e370_D_S_res_dfa",
+  "NAME": "avaKotResTest",
+  "Test Info": {
+    "type": "text",
+    "Test Info": "This test runs the Kot resistance test."
+  },
+  "simType": "res",
+  "simName": {
+    "type": "simName",
+    "name": "relKot_5f7151e370_D_S_res_dfa"
+  },
+  "Simulation Parameters": {
+    "type": "list",
+    "Program version": "1.12+15.g5020492b.dirty",
+    "Parameter set": "Default",
+    "Release Area Scenario": "relKot",
+    "Entrainment": "No",
+    "Resistance": "Yes",
+    "Secondary release area": "No",
+    "Density [kgm-3]": "200",
+    "Friction model": "samosATSmall",
+    "Initial mass [kg]": "4328073.73",
+    "Final mass [kg]": "24949108.21",
+    "Entrained mass [kg]": "0.00",
+    "Entrained volume [m3]": "0.00",
+    "Stop criterion": "< 1.00 percent of PKE",
+    "Avalanche run time [s]": "103.70",
+    "Computation time [s]": "14.83"
+  }
+}
