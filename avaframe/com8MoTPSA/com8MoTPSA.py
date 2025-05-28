@@ -343,7 +343,7 @@ def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
 
     if typeCfgInfo == "cfgFromDir":
         # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
-        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo, modName='com8MoTPSA')
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo, module=com8MoTPSA)
     else:
         # preprocessing to create configuration objects for all simulations to run
         simDict, outDir, inputSimFiles, simDFExisting = com1DFA.com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com8MoTPSA)

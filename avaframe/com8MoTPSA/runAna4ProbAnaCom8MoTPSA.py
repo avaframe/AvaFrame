@@ -130,5 +130,4 @@ if __name__ == '__main__':
                         help='the avalanche directory')
 
     args = parser.parse_args()
-    #runProbAna(str(args.avadir))
-    runProbAna('../data/avaEiskar')
+    runProbAna(str(args.avadir))

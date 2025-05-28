@@ -1049,15 +1049,12 @@ def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisti
     # compare cfgStart to default module config for this
     modCfg, variationDict = getParameterVariationInfo(avalancheDir, module, cfgInitial)
 
-    # extract the name of the module
-    modName = module.__name__.split(".")[-1]
-
     # create a configuration object per simulation to run (from configuration) gathered in simDict
     # only new simulations are included in this simDict
     # key is simName and corresponds to one simulation
     simDict = {}
     simDict = com1DFA.prepareVarSimDict(
-        modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting, modName=modName
+        modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting, module=module
     )
 
     # write full configuration (.ini file) to file

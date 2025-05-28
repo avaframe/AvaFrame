@@ -99,12 +99,9 @@ def com1DFAPreprocess(cfgMain, typeCfgInfo, cfgInfo, module=com1DFA):
     elif typeCfgInfo == "cfgFromObject":
         cfgStart = cfgInfo
 
-    # extract the name of the module
-    modName = module.__name__.split(".")[-1]
-
     # fetch input data and create work and output directories
     inputSimFilesAll, outDir, simDFExisting, simNameExisting = com1DFATools.initializeInputs(
-        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters"), modName=modName
+        avalancheDir, cfgStart["GENERAL"].getboolean("cleanRemeshedRasters"), module
     )
 
     # create dictionary with one key for each simulation that shall be performed
@@ -2587,7 +2584,7 @@ def exportFields(cfg, timeStep, fields, dem, outDir, cuSimName, TSave="intermedi
             )
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", modName='com1DFA'):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", module=com1DFA):
     """Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
     Parameters
@@ -2601,8 +2598,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
     simNameExisting: list
         list of simulation names that already exist (optional). If provided,
         only carry on simulations that do not exist
-    modName: str
-        string of module name (optional)
+    module: module
+        module to be used for task (optional)
 
     Returns
     -------
@@ -2610,6 +2607,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         dicionary with info on simHash, releaseScenario, release area file path,
         simType and contains full configuration configparser object for simulation run
     """
+
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
 
     # get list of simulation types that are desired
     if "simTypeList" in variationDict:
@@ -2719,7 +2719,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         cfgSim = dP.appendShpThickness(cfgSim)
 
         # check differences to default and add indicator to name
-        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, modName)
+        defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, module)
 
         # if frictModel is samosATAuto compute release vol
         if modName == 'com1DFA':
