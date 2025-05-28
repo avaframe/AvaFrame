@@ -436,7 +436,7 @@ def calculation(args):
 
     if infraBool:
         # initialize infrastructure array
-        # NOTE-TODO: check if 
+        # TODO: check if this can be simplified
         infraArr = infra  # infrastructure array (input file)
 
     if forestInteraction:
@@ -509,7 +509,7 @@ def calculation(args):
             
             if infraBool:
                 # if the current cell is not already in the dir-graph, then we add it here
-                if not (cell.rowindex, cell.colindex) in pathTopology:
+                if (cell.rowindex, cell.colindex) not in pathTopology:
                     pathTopology[(cell.rowindex, cell.colindex)] = []
                     nodeValues[(cell.rowindex, cell.colindex)] = max(0, infraArr[cell.rowindex, cell.colindex])
 
@@ -549,7 +549,7 @@ def calculation(args):
                     continue
 
                 if infraBool:
-                    if not (row[k], col[k]) in pathTopology:
+                    if (row[k], col[k]) not in pathTopology:
                         # if the child node is not a key in the dir-graph
                         # it is added here along with it's infrastructure value
                         pathTopology[(row[k], col[k])] = []
