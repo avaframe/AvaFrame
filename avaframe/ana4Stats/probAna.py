@@ -813,13 +813,18 @@ def createSampleWithVariationForThParameters(avaDir, cfgProb, cfgStart, varParLi
         upperBounds[fullVarType == 'rangefromci'] = (varValList[fullVarType == 'rangefromci'] +
                 ciValues[fullVarType == 'rangefromci'])
 
-        # create a sample of parameter values using scipy latin hypercube sampling
+        # create a sample of parameter values using scipy latin hypercube or morris sampling
         sample = createSample(cfgProb, varParList)
 
         # create a full sample including those thickness values for the potentially multiple features
         # however, the thickness values for one parameter (relTh or entTh or secondaryRelTh) should not
         # be independent for the different features within one parameter
-        fullSample = np.zeros((int(cfgProb['PROBRUN']['nSample']), len(fullListOfParameters)))
+        if cfgProb['PROBRUN']['sampleMethod'] == 'morris':
+            fullSample = np.zeros(
+                (int(cfgProb['PROBRUN']['nSample']) * (len(varParList) + 1), len(fullListOfParameters)))
+        else:
+            fullSample = np.zeros((int(cfgProb['PROBRUN']['nSample']), len(fullListOfParameters)))
+
         for idx, varPar in enumerate(fullListOfParameters):
             lB = [0]*len(varParList)
             uB = [1]*len(varParList)

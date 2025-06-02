@@ -235,14 +235,7 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
         newVal: str
             new value
     """
-
-    # relevant for com8, treat parameter variations in those sections differently (they contain whitespace and ^)
-    relevantCom8Sections = ["Physical_parameters", "FOREST_EFFECTS", "ENTRAINMENT", "Numerical parameters"]
-
-    if any(section in inKey for section in relevantCom8Sections):
-        splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
-    else:
-        splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
+    splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
     section = splitKey[0]
     key = splitKey[1]
 
@@ -416,6 +409,7 @@ def readCfgFile(avaDir, module='', fileName=''):
 
     return cfg
 
+
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
     or a dictionary - then typeDict=True, returns a uid hash
@@ -585,13 +579,6 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     if 'VISUALISATION' in cfgDict:
         simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
-    # ToDo use any wie oben
-    elif 'Physical_parameters' in cfgDict:
-        simItemDFPhysical = pd.DataFrame(data=cfgDict['Physical_parameters'], index=indexItem)
-        simItemDFForest = pd.DataFrame(data=cfgDict['FOREST_EFFECTS'], index=indexItem)
-        simItemDFEntrainment = pd.DataFrame(data=cfgDict['ENTRAINMENT'], index=indexItem)
-        simItemDFNumerical = pd.DataFrame(data=cfgDict['Numerical parameters'], index=indexItem)
-        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFPhysical, simItemDFForest, simItemDFEntrainment, simItemDFNumerical], axis=1)
     else:
         simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
     simItemDF = simItemDF.assign(simName=simName)

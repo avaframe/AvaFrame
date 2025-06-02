@@ -1999,7 +1999,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
 
     if cfg["EXPORTS"].getboolean("exportData"):
         exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="final")
-        
+
         # export particles dictionaries of saving time steps
         savePartToPickle(particles, outDirData, cuSimName)
     else:
@@ -2721,10 +2721,15 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check differences to default and add indicator to name
         defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, module)
 
-        # if frictModel is samosATAuto compute release vol
+        # predefine different size classification indices
+        frictIndi = None
+        volIndi = None
+
+        pathToDemFull = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem)
+
         if modName == 'com1DFA':
+            # if frictModel is samosATAuto compute release vol
             if cfgSim["GENERAL"]["frictModel"].lower() == "samosatauto":
-                pathToDemFull = pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem)
                 relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
             else:
                 relVolume = ""
@@ -2738,38 +2743,30 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             # set frictModelIndicator, this needs to happen AFTER checkCfgFrictModel
             frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
 
+        elif modName == 'com8MoTPSA':
+            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
+
+            # set Volume class identificator
+            volIndi = setVolumeIndicator(cfgSim, relVolume)
+
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
 
-        if modName == 'com1DFA':
-            simName = "_".join(
-                filter(
-                    None,
-                    [
-                        relNameSim,
-                        simHash,
-                        defID,
-                        frictIndi,
-                        row._asdict()["simTypeList"],
-                        cfgSim["GENERAL"]["modelType"],
-                    ],
-                )
+        simName = "_".join(
+            filter(
+                None,
+                [
+                    relNameSim,
+                    simHash,
+                    defID,
+                    frictIndi or volIndi,
+                    row._asdict()["simTypeList"],
+                    cfgSim["GENERAL"]["modelType"],
+                ],
             )
-        elif modName == 'com8MoTPSA':
-            simName = "_".join(
-                filter(
-                    None,
-                    [
-                        relNameSim,
-                        simHash,
-                        defID,
-                        row._asdict()["simTypeList"],
-                        cfgSim["GENERAL"]["modelType"],
-                    ],
-                )
-            )
+        )
 
         # check if simulation exists. If yes do not append it
         if simName not in simNameExisting:
@@ -2790,8 +2787,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
     log.info("Done preparing variations -----")
     # TODO: maybe treat this in some other way, i.e. adding an "finalDEM" or similar
-    # inputSimFiles.pop("demFile")
-    # inputSimFiles["demFile"] = pathToDemFull
+    inputSimFiles.pop("demFile")
+    inputSimFiles["demFile"] = pathToDemFull
 
     return simDict
 
@@ -2947,6 +2944,8 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
     demVol = geoTrans.getNormalMesh(demVol, num=methodMeshNormal)
     demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
 
+
+
     # compute volume of release area
     relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary")
 
@@ -3041,6 +3040,32 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
         relVolume = np.nansum(releaseLine["rasterData"] * demVol["areaRaster"])
 
     return relVolume
+
+
+def setVolumeIndicator(simCfg, relVolume):
+    """Sets the Volume indicator for the simname based on the threshold defined in ini file
+
+    Parameters
+    -----------
+    simCfg: dict
+        simulation configuration
+    relVolume: float
+        Volume of the release area in m^3
+
+    Returns
+    --------
+    VolIndi: str
+        S, M or L
+
+    """
+    if relVolume < float(simCfg["GENERAL"]["volClassSmall"]):
+        volIndi = "S"
+    elif relVolume > float(simCfg["GENERAL"]["volClassMedium"]):
+        volIndi = "L"
+    else:
+        volIndi = "M"
+
+    return volIndi
 
 
 def saveContToPickle(contourDictXY, outDir, cuSimName):
