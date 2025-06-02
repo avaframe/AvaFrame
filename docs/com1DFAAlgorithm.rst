@@ -166,6 +166,10 @@ Other particles properties are also initialized here:
     
     - ``dmDet`` - detrained mass of particle [kg]
 
+    - ``dmEnt`` - entrained mass of particle [kg]
+
+    - ``stoppedParticles`` - particles that are stopped (mass or velocity is zero) and deleted from the particles
+
 For more details, see :py:func:`com1DFA.com1DFA.initializeParticles`.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
@@ -307,6 +311,32 @@ used to compute these processes can be set in the configuration file.
 
 In the numerics, the mass is updated according to the detrainment model in
 :py:func:`com1DFA.DFAfunctionsCython.computeDetMass`. 
+
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
+
+
+Adapt surface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The surface (digital elevation model) can be adapted when snow masses change the surface due to
+:ref:`detrainment <com1DFAAlgorithm:Take detrainment into account>`, 
+:ref:`entrainment <com1DFAAlgorithm:Take entrainment into account>` or stopping (mass or velocity of a particle is zero).
+The surface is adapted, if the flags are set: ``adaptSfcDetrainment = 1``, 
+``adaptSfcEntrainment = 1``, ``adaptSfcStopped = 1``, respectively.
+
+The stopped/ entrained/ detrained masses are converted into the corresponding 
+snow height changes :math:`h_{det}, h_{stop}, h_{ent}`
+using the :ref:`com1DFAAlgorithm:Particles to mesh` method.
+
+The adapted surface at a specific time step :math:`z(t)` is computed as:
+
+.. math::
+  z(t) = z(t=0) + \sum_{i=0}^t (h_{det}(i) + h_{stop}(i) - h_{ent}(i))
+
+In every time step, the surface is adapted, the :ref:`DFAnumerics:Cell normals` and
+:ref:`DFAnumerics:Cell area` are also adapted.
 
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
