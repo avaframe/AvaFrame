@@ -78,6 +78,7 @@ at least two results are generated: the *null* variant and the variant with entr
 
   - marks the (multiple) areas where resistance is considered
   - resistance areas must not contain any "holes" or inner rings
+  - please consider the information about resistance below :ref:`moduleCom1DFA:Resistance setup`
 
 
 * one secondary release area (multi-) polygon shapefile (in Inputs/SECREL)
@@ -105,6 +106,7 @@ at least two results are generated: the *null* variant and the variant with entr
 
 Release-, entrainment thickness settings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. Note::
     Thickness is unambiguous: it is measured normal to the slope.
 
@@ -164,6 +166,19 @@ By default the friction parameter set *samosATAuto* is active. This uses the cal
 secondary release areas) to determine the parameters used for the samosAT friction model.
 See :ref:`samosatfrict` for the limits regarding release volumes.
 
+Resistance setup
+^^^^^^^^^^^^^^^^^^^
+
+.. Note::
+
+    In  versions earlier than 1.13, the default resistance setup included information about tree diameter, tree spacing,
+    etc. and was dependent on an effective thickness (a function of flow thickness). Please check out previous
+    documentation versions for details. This change leads to different results, so please assess whether the new
+    default setup is appropriate for your project. We provide a difference report at
+    `our homepage <https://avaframe.org/reports/>`_.
+
+By default, the resistance setup includes detrainment depending on the flow thickness (FT) and velocity (FV). Please 
+see :ref:`resistance` for more information.
 
 
 DEM input data

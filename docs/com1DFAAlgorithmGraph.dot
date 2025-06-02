@@ -38,7 +38,7 @@ digraph "com1DFA algorithm graph" {
   computeGravityForce [label="Compute gravity driving force",
   href="../com1DFAAlgorithm.html#compute-driving-force" tooltip="Go to: Gravity force" target="_top"];
 
-  computeResForce [label="Compute additional resistance forces",
+  computeResForce [label="Compute additional resistance force",
   href="../com1DFAAlgorithm.html#added-resistance-force" tooltip="Go to: Additional resistance" target="_top"];
 
   updateMassEntr [label="Take entrainment into account, update mass and velocity",

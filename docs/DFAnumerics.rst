@@ -653,6 +653,9 @@ Both the bottom friction and resistance force are friction forces. The expressio
 friction force that can be added. This maximal force is added if the particles are flowing. If not, the friction force
 equals the driving forces. See :cite:`MaVi2003` for more information.
 
+In the default setup (``ResistanceModel =  default``), either detrainment or the extra resistance force is applied within the resistance area, depending on the thickness and speed of the flow.
+See :ref:`theoryCom1DFA:Resistance:` for more details.
+
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The term :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
