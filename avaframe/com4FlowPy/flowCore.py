@@ -254,7 +254,7 @@ def run(optTuple):
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     if infraBool:
-        backcalc = np.zeros_like(dem, dtype=np.int32)
+        backcalc = np.ones_like(dem, dtype=np.int32) * -9999
     fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
     travelLengthArray = np.zeros_like(dem, dtype=np.float32)
@@ -380,6 +380,19 @@ def calculation(args):
 
     """
 
+    # helper function for backTracking, a bit slower than inline but improves
+    # readability by avoiding repetitions
+    def updateInfraDirGraph(row, col, parentRow=None, parentCol=None):
+        if (row, col) not in pathTopology:
+            # if the current node is not a key in the dir-graph
+            # it is added here along with it's infrastructure value
+            pathTopology[(row, col)] = []
+            infraValues[(row, col)] = max(0, infraArr[row, col])
+        # adding the child node as a child to the parent cell in the dir-graph
+        # if a parent is provided
+        if parentRow and parentCol:
+            pathTopology[(parentRow, parentCol)].append((row, col))
+
     # check if there's enough RAM available (default value set to 5%)
     # if not, wait for 30 secs and check again
     # should prevent the occurence of broken pipe errors or similar issues related
@@ -428,9 +441,8 @@ def calculation(args):
 
     travelLengthArray = np.zeros_like(dem, dtype=np.float32)
 
-    # NOTE-TODO maybe also include a switch for INFRA (like Forest) and not implicitly always use an empty infra array ?
     if infraBool:
-        backcalc = np.zeros_like(dem, dtype=np.int32)
+        backcalc = np.ones_like(dem, dtype=np.int32) * -9999
     else:
         backcalc = None
 
@@ -452,7 +464,7 @@ def calculation(args):
         if infraBool:
             # if infraBool - here we initialize a directed graph structure
             pathTopology = {} # topology of path as directed graph
-            nodeValues = {}   # values
+            infraValues = {}   # values
 
         processedCells = {}  # dictionary of cells that have been processed already
         zDeltaPathArray = np.zeros_like(dem, dtype=np.float32)
@@ -491,10 +503,7 @@ def calculation(args):
 
         if infraBool:
             # adding start-cell as "root-node" to directed graph of the modeled process path
-            pathTopology[(startcell.rowindex, startcell.colindex)] = []
-            # assigning original infrastructure value on start-cell / it is unlikely that a start-cell is
-            # also an infrastructure cell, but we still check here
-            nodeValues[(startcell.rowindex, startcell.colindex)] = max(0, infraArr[startcell.rowindex, startcell.colindex])
+            updateInfraDirGraph(startcell.rowindex, startcell.colindex)
 
         for idx, cell in enumerate(cell_list):
 
@@ -509,11 +518,9 @@ def calculation(args):
             
             if infraBool:
                 # if the current cell is not already in the dir-graph, then we add it here
-                if (cell.rowindex, cell.colindex) not in pathTopology:
-                    pathTopology[(cell.rowindex, cell.colindex)] = []
-                    nodeValues[(cell.rowindex, cell.colindex)] = max(0, infraArr[cell.rowindex, cell.colindex])
+                updateInfraDirGraph(cell.rowindex, cell.colindex)                
 
-            # check if cell already exists
+            # check if child cells already exist
             for i in range(idx, len(cell_list)):
                 k = 0
                 while k < len(row):
@@ -522,13 +529,7 @@ def calculation(args):
                         cell_list[i].add_parent(cell)
 
                         if infraBool:
-                            if (row[k], col[k]) not in pathTopology:
-                                # if the child node is not a key in the dir-graph
-                                # it is added here along with it's infrastructure value
-                                pathTopology[(row[k], col[k])] = []
-                                nodeValues[(row[k], col[k])] = max(0, infraArr[row[k], col[k]])
-                            # adding the child node as a child to the cell in the dir-graph
-                            pathTopology[(cell.rowindex, cell.colindex)].append((row[k], col[k]))
+                            updateInfraDirGraph(row[k], col[k], cell.rowindex, cell.colindex)
                             
                         if z_delta[k] > cell_list[i].z_delta:
                             cell_list[i].z_delta = z_delta[k]
@@ -549,13 +550,7 @@ def calculation(args):
                     continue
 
                 if infraBool:
-                    if (row[k], col[k]) not in pathTopology:
-                        # if the child node is not a key in the dir-graph
-                        # it is added here along with it's infrastructure value
-                        pathTopology[(row[k], col[k])] = []
-                        nodeValues[(row[k], col[k])] = max(0, infraArr[row[k], col[k]])
-                    # adding the child node as a child to the cell in the dir-graph
-                    pathTopology[(cell.rowindex, cell.colindex)].append((row[k], col[k]))
+                    updateInfraDirGraph(row[k], col[k], cell.rowindex, cell.colindex)
 
                 # if the current child cell is already in processedCells
                 # just add +1 to the visit-counter, else add it to the
@@ -602,12 +597,12 @@ def calculation(args):
             # if 'infraBool' is True - i.e. calculation is performed with infrastructure information
             # then we perform the back-tracking of the stored directed graph (topology and node values)
 
-            updatedNodeValues = backTracking(pathTopology, nodeValues) # actual "back-tracking" for current process-path
+            updatedInfraValues = backTracking(pathTopology, infraValues) # actual "back-tracking" for current process-path
 
-            for key, val in updatedNodeValues.items():
+            for key, val in updatedInfraValues.items():
                 backcalc[key[0], key[1]] = max(backcalc[key[0], key[1]], val) # writing max-values to back-tracking array
             
-            del pathTopology, nodeValues, updatedNodeValues
+            del pathTopology, infraValues, updatedInfraValues
             gc.collect()
         
         if previewMode:
@@ -741,7 +736,7 @@ def handleMemoryAvailability(recheckInterval=30):
     while not enoughMemoryAvailable():
         time.sleep(recheckInterval)
 
-def backTracking(topologyDict, valDict):
+def backTracking(topologyDict, infraValDict):
     """
     peform the back-tracking of infrastructure values across the dir-graph
     that is constructed if 'infra' option is set to 'True'
@@ -752,44 +747,46 @@ def backTracking(topologyDict, valDict):
         dictionary containing the topology of the modeled process path
         where parent nodes (colindex, rowindex) serve as keys and children of the
         respective parent node are stored as list items for the respective key
-    valDict : dict
+    infraValDict : dict
         dictionay containing information if a node is an infrastructure cell 
         (value at key 'node' > 0) or not (value at key 'node' == 0)
     
     Returns
     -----------
-    valDict : dict
+    infraValDict : dict
         dictionary with updated values "back-tracked" from the infrastructure
         cells to the start-cell along the modeled path topology
     """
     # sort valDict (so we start traversing from highest infrastructure cells first)
     # this makes the algorithm more efficient
-    valDictSorted = {k: v for k, v in sorted(valDict.items(), key= lambda item: item[1], reverse=True)}
+    valDictSorted = {k: v for k, v in sorted(infraValDict.items(), key= lambda item: item[1], reverse=True)}
     # reverse the graph topology, so "parents" become "children"
     reverseGraph = reverseTopology(topologyDict)
     
-    def propagateInfraVal(node, valToPropagate, visited):
+    # helper function to recursively traverse the reverseGraph and
+    # propagate the infraValues "upslope"
+    def propagateInfraVal(node, infraValToPropagate, visited):
         # if a node has been visited already --> no need to process again
         if node in visited:
             return
         # if the current propagation value is larger or equal to the one in
         # the processed node --> no need to look further
-        elif (valDict.get(node, 0) >= valToPropagate) and (bool(visited)):
+        elif (infraValDict.get(node, 0) >= infraValToPropagate) and (bool(visited)):
             return
         # in all other cases update the value of the current node and add node
         # to the set of visited nodes
-        valDict[node] = max(valDict[node], valToPropagate)
+        infraValDict[node] = max(infraValDict[node], infraValToPropagate)
         visited.add(node)
 
         for parentNode in reverseGraph.get(node, []):
-            propagateInfraVal(parentNode, valToPropagate, visited)
-    
+            propagateInfraVal(parentNode, infraValToPropagate, visited)
+
 
     for node, val in valDictSorted.items():
         if val > 0:
             propagateInfraVal(node, val, set())
     
-    return valDict
+    return infraValDict
     
 def reverseTopology(topologyDict):
     '''
@@ -810,12 +807,12 @@ def reverseTopology(topologyDict):
     '''
     reverseGraph = {}
 
-    for node, children in topologyDict.items():
-        childSet = set(children)
+    for parentNode, childNodes in topologyDict.items():
+        childSet = set(childNodes)
         for child in childSet:
             if child not in reverseGraph:
                 reverseGraph[child] = []
-            reverseGraph[child].append(node)
+            reverseGraph[child].append(parentNode)
 
     return reverseGraph
 

@@ -1,13 +1,6 @@
 """
-    Pytest for module com1DFA
+    Pytest for module com4FlowPy
 """
-
-import configparser
-import copy
-import logging
-import pathlib
-import pickle
-import shutil
 
 #  Load modules
 import numpy as np
