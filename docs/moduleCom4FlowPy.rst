@@ -83,7 +83,7 @@ ii) additional modules (forest, infrastructure)
 
 if ``infra`` is set to ``True`` the infrastructure layer has to be provided either in ``avalancheDir/INPUTS/INFRA`` (if ``useCustomPaths=False``) or at the defined
 ``infraPath`` (if ``useCustomPaths=True``). The layer has to be of the same resolution and extent as the other input layers; infrastructure cells have to be coded with values > 0, while 
-values >= 0 will be interpreted as non-infrastructure. If infrastructure cells should contain an ordinal ranking (e.g. infrastructure importance), then higher values indicate higher
+values <= 0 will be interpreted as non-infrastructure. If infrastructure cells should contain an ordinal ranking (e.g. infrastructure importance), then higher values indicate higher
 infrastructure priority.
 
 .. Note::
