@@ -156,5 +156,8 @@ name = "trufflehog"
 [[plugin]]
 name = "yamllint"
 
+[[plugin]]
+name = "black"
+
 #[[plugin]]
 #name = "flake8"
