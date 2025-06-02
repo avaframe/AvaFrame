@@ -73,6 +73,9 @@ digraph "com1DFA algorithm graph" {
 
   updateParticlesFlowThickness [label="Update particles flow thickness",
   href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_top"];
+  
+  adaptSurface [label="Adapt surface", 
+  href="../com1DFAAlgorithm.html#adapt-surface" tooltip="Go to: Adapt surface" target="_top"];
 
   endSimulation [label="End simulation, return and export results",
   href="../com1DFAAlgorithm.html#simulation-outputs" tooltip="Go to: Simulation outputs" target="_top"];
@@ -87,7 +90,8 @@ digraph "com1DFA algorithm graph" {
   correctPartPos -> addSecRelease [weight=10,ltail=cluster_2];
   addSecRelease -> intermediate2 [weight=10, arrowhead=none];
   intermediate2 -> updateFields [weight=10,lhead=cluster_3];
-  updateParticlesFlowThickness -> endTimeLoop [weight=10,ltail=cluster_3, arrowhead=none];
+  updateParticlesFlowThickness -> adaptSurface [weight=10,ltail=cluster_3];
+  adaptSurface -> endTimeLoop [weight=10, arrowhead=none];
   endTimeLoop -> endSimulation [weight=10];
   endTimeLoop -> timeLoop [weight=1, constraint=false];
 
