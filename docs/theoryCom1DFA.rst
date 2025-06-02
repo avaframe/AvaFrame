@@ -7,7 +7,7 @@ Governing Equations for the Dense Flow Avalanche
 The governing equations of the dense flow avalanche are derived from the
 incompressible mass and momentum balance on a Lagrange control volume (:cite:`Zw2000,ZwKlSa2003`).
 
-Mass balance:
+Mass balance
 ~~~~~~~~~~~~~~~
 
 .. math::
@@ -19,7 +19,7 @@ Mass balance:
 Where :math:`q^{\text{ent}}` represents the snow entrainment rate, 
 :math:`q^{\text{det}}` the snow detrainment rate (:math:`q^{\text{det}} < 0`).
 
-Momentum balance:
+Momentum balance
 ~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -64,7 +64,7 @@ Using the mass balance equation :eq:`mass-balance1`, we get:
    
    \quad i=(1,2,3)
 
-Boundary conditions:
+Boundary conditions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The free surface is defined by :
@@ -97,7 +97,7 @@ The normals at the free surface (:math:`n_i^{(s)}`) and bottom surface (:math:`n
    \frac{\partial F_{s,b}}{\partial x_j}\right)^{-1/2}
 ..   :label: surface-normals
 
-Choice of the coordinate system:
+Choice of the coordinate system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The previous equations will be developed in the orthonormal coordinate
@@ -119,7 +119,7 @@ leads to:
    \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
 ..   :label: NCS-consequence
 
-Thickness averaged equations:
+Thickness averaged equations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In this NCS and considering a prism-like Control volume, the volume
 content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
@@ -139,7 +139,7 @@ the flow thickness,
 
         Small Lagrangian prism-like Control volume
 
-Entrainment:
+Entrainment
 """""""""""""
 
 The Snow entrainment processes are plowing at the front of the avalanche and erosion
@@ -191,7 +191,7 @@ defined by :math:`q^{\text{ent}}: =\rho^{\text{ent}} h^{\text{ent}}` which depen
 or erosion, is derived using the integral of :math:`\dot{q}^{\text{plo}}`, or respectively
 :math:`\dot{q}^{\text{ero}}`, over time.
 
-Detrainment:
+Detrainment
 """""""""""""
 
 The detrained snow :math:`M_{det}` at obstacles (e.g., trees) is computed by following the approach of (:cite:`FeBeTeBuChThBa2014`):
@@ -202,18 +202,17 @@ The detrained snow :math:`M_{det}` at obstacles (e.g., trees) is computed by fol
    
 The parameter :math:`K` (:math:`Pa`) depends on the structure of the obstacles and the properties of the snow.
 
-.. Note::
-
-   Currently, detrainment is only applicable when using the ``default ResistanceModel``. In this case,
-   if flow thickness or flow velocity fall below minimum thresholds defined in the configuration file, detrainment is applied.
+Currently, detrainment is only applicable when using the ``ResistanceModel =  default``. In this case,
+if flow thickness or flow velocity fall below minimum thresholds defined in the configuration file, detrainment is applied.
 
 
-Resistance:
+.. _resistance:
+
+Resistance
 """""""""""""
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
-as a function of the characteristic
-coefficient :math:`c_{\text{resH}}`:
+as a function of the characteristic coefficient :math:`c_{\text{resH}}`:
 
 .. math::
    F_i^{\text{res}} = -c_{\text{res}H}\,\rho_0\,A\,
@@ -222,17 +221,21 @@ coefficient :math:`c_{\text{resH}}`:
 
 .. Note::
 
-    In previous versions, this formula included information about tree diameter, tree spacing, etc. and was dependent on an effective thickness (a function of flow thickness). Please check out previous documentation versions for details.
+    In  versions earlier than 1.13, this formula included information about tree diameter, tree spacing, etc. and
+    was dependent on an effective thickness (a function of flow thickness). Please check out previous documentation
+    versions for details.
 
-.. Note::
+In the default setup (``ResistanceModel =  default`` and ``detrainment = True``) either detrainment or increased
+friction (using :math:`F_i^{\text{res}}`) is applied, depending on the flow thickness (FT) and velocity (FV) at the
+current cell and time step:
 
-   When using the ``default ResistanceModel`` and setting the detrainment flag to True, if flow thickness or
-   flow velocity fall below minimum thresholds defined in the configuration file, ONLY detrainment is applied.
-   If flow thickness and flow velocity lie between minimum and maximum thresholds, increased friction in the form of
-   the resistance force is applied and if at least one maximum threshold is exceeded, no additional resistance is accounted for.
-   If the detrainment flag is set to False, the additional resistance force is accounted for in the entire resistance area.
+   * FV OR FT below min thresholds: apply only detrainment, no increased friction
+   * FV AND FT within min and max thresholds: no detrainment, only apply increased friction
+   * FV OR FT above max thresholds: no detrainment and no increased friction applied
 
-Surface integral forces:
+If ``detrainment = False``, the additional resistance force is accounted for in the entire resistance area.
+
+Surface integral forces
 """""""""""""""""""""""""
 
 The surface integral is split in three terms, an integral over

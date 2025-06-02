@@ -222,12 +222,14 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Compute friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 The friction force encompasses all forces that oppose the motion of the particles.
 One of those forces is the bottom shear force. The other is an optional resistance force.
 Both components are added to the :math:`F_{fric}` force term.
 
 Bottom shear force
-"""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 This force accounts for the friction between the snow particles and the bottom surface.
 The expression of the bottom shear stress depends on the friction model chosen but can be written in the
 following general form, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
@@ -238,9 +240,12 @@ gravity force and the curvature acceleration term as shown in :eq:`sigmab`. It i
 to deactivate the curvature acceleration component of the shear stress by setting the
 ``curvAcceleration`` coefficient to 0 in the configuration file.
 
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
 
 Added resistance force
-"""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 An additional friction force called resistance can be added. This force aims to model the added
 resistance due to the specificity of the terrain on which the avalanche evolves, for example
 due to forests. To add a resistance force, one must provide a resistance shapefile in the ``Inputs/RES``
@@ -305,7 +310,11 @@ This is further detailed in :ref:`Detrainment <theoryCom1DFA:Detrainment:>`. The
 used to compute these processes can be set in the configuration file.
 
 In the numerics, the mass is updated according to the detrainment model in
-:py:func:`com1DFA.DFAfunctionsCython.computeDetMass`. 
+:py:func:`com1DFA.DFAfunctionsCython.computeDetMass`.
+
+Detrainment is only applied when ``ResistanceModel =  default`` and ``detrainment = True``; depending on actual flow thickness and velocity,
+either detrainment or the additional resistance force is applied within the resistance area.
+See :ref:`theoryCom1DFA:Resistance:` for more details.
 
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
