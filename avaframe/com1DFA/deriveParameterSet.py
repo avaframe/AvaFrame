@@ -1,5 +1,5 @@
 """
-    Create dictionary for parameter variations
+Create dictionary for parameter variations
 """
 
 import logging
@@ -149,7 +149,7 @@ def checkResType(fullCfg, section, key, value):
             "TA",
             "particles",
             "dmDet",
-            "FTDet"
+            "FTDet",
         ]
         message = "The parameter % s is not a valid resType. It will not be saved"
         newResType = []
@@ -386,15 +386,27 @@ def checkThicknessSettings(cfg, thName):
     thRV = thName + "RangeVariation"
     thPV = thName + "PercentVariation"
     thRCiV = thName + "RangeFromCiVariation"
-    flagsList = [cfg["GENERAL"][thRV] != "", cfg["GENERAL"][thPV] != "", cfg["GENERAL"][thRCiV] != ""]
+    flagsList = [
+        cfg["GENERAL"][thRV] != "",
+        cfg["GENERAL"][thPV] != "",
+        cfg["GENERAL"][thRCiV] != "",
+    ]
 
     if sum(flagsList) > 1:
-        message = "Only one variation type is allowed - check %s and %s, %s" % (thRV, thPV, thRCiV)
+        message = "Only one variation type is allowed - check %s and %s, %s" % (
+            thRV,
+            thPV,
+            thRCiV,
+        )
         log.error(message)
         raise AssertionError(message)
 
     if cfg["GENERAL"].getboolean(thFile) and (sum(flagsList) > 0):
-        message = "RelThFromFile is True - no variation allowed: check %s, %s or %s" % (thRV, thPV, thRCiV)
+        message = "RelThFromFile is True - no variation allowed: check %s, %s or %s" % (
+            thRV,
+            thPV,
+            thRCiV,
+        )
         log.error(message)
         raise AssertionError(message)
 
@@ -908,7 +920,15 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
             "Field %s interpolated onto DEM extent and corresponding spatial resolution, "
             "cellSize changed from %.2f to %.2f; difference of llcenter was in x: %.2f, in y: %.2f m"
             "and urcenter was in x: %.2f, in y %.2f"
-            % (fileType, cellSizeOld, dem["header"]["cellsize"], diffX0, diffY0, diffX1, diffY1)
+            % (
+                fileType,
+                cellSizeOld,
+                dem["header"]["cellsize"],
+                diffX0,
+                diffY0,
+                diffX1,
+                diffY1,
+            )
         )
 
         # save to inputField

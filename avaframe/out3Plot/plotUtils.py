@@ -1,7 +1,7 @@
 """
-    Plot settings for output figures
+Plot settings for output figures
 
-    This file is part of Avaframe.
+This file is part of Avaframe.
 """
 
 import warnings
@@ -177,7 +177,7 @@ cmapS = copy.copy(cmapCrameri.batlow.reversed())
 # multi sequential colormap for Travel Angle
 levTA = list(fU.splitIniValueToArraySteps(cfgPlotUtils["travelAngleColorLevels"]))
 # Nuuk color map
-colorsTA = ['#fefeb2', '#d2d184', '#bab98d', '#a0a598', '#6f878d', '#386982', '#05598c']
+colorsTA = ["#fefeb2", "#d2d184", "#bab98d", "#a0a598", "#6f878d", "#386982", "#05598c"]
 cmapTA = copy.copy(cmapCrameri.nuuk.reversed())
 
 # colormap used if no resType provided
@@ -397,8 +397,8 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, aspect=None, **kwargs):
     ax.set_ylim([y.min(), y.max()])
     ax.set_xlabel(xlab)
     ax.set_ylabel(ylab)
-    if aspect == 'equal':
-        ax.set_aspect('equal')
+    if aspect == "equal":
+        ax.set_aspect("equal")
     return ref, im
 
 
@@ -911,7 +911,7 @@ def fetchContourCoords(xGrid, yGrid, data, level):
         # use codes of path
         labelID = 0
         if isinstance(contourP.get_paths()[0].codes, np.ndarray) == False:
-            log.warning('No contour found for level %.2f' % level)
+            log.warning("No contour found for level %.2f" % level)
         else:
             for ind, val in enumerate(contourP.get_paths()[0].codes):
                 if val == 1:
@@ -1038,7 +1038,14 @@ def createExtent(rowsMin, rowsMax, colsMin, colsMax, header, originLLCenter=True
     # create extent for cell centers lower left to upper right in meters
     extentCellCenters = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
 
-    return extentCellCenters, extentCellCorners, rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot
+    return (
+        extentCellCenters,
+        extentCellCorners,
+        rowsMinPlot,
+        rowsMaxPlot,
+        colsMinPlot,
+        colsMaxPlot,
+    )
 
 
 def createExtentMinMax(data, header, originLLCenter=True):
@@ -1065,22 +1072,22 @@ def createExtentMinMax(data, header, originLLCenter=True):
     nrows = data.shape[0]
     ncols = data.shape[1]
 
-    if nrows != header['nrows'] or ncols != header['ncols']:
-        message = 'Shape of data does not match nrows or ncols provided in header'
+    if nrows != header["nrows"] or ncols != header["ncols"]:
+        message = "Shape of data does not match nrows or ncols provided in header"
         log.error(message)
         raise AssertionError(message)
 
     # set extent in meters using cellSize and llcenter location
     if originLLCenter:
         rowsMinPlot = header["yllcenter"]
-        rowsMaxPlot = (nrows-1) * cellSize + header["yllcenter"]
+        rowsMaxPlot = (nrows - 1) * cellSize + header["yllcenter"]
         colsMinPlot = header["xllcenter"]
-        colsMaxPlot = (ncols-1) * cellSize + header["xllcenter"]
+        colsMaxPlot = (ncols - 1) * cellSize + header["xllcenter"]
     else:
         rowsMinPlot = 0
-        rowsMaxPlot = (nrows-1) * cellSize
+        rowsMaxPlot = (nrows - 1) * cellSize
         colsMinPlot = 0
-        colsMaxPlot = (ncols-1) * cellSize
+        colsMaxPlot = (ncols - 1) * cellSize
 
     # create extent of cell corners lower left to upper right in meters
     extentCellCorners = [
