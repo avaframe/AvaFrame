@@ -730,13 +730,15 @@ def readConfigurationInfoFromDone(avaDir, specDir='', latest=False):
         simDF = createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCSV=False, specDir=specDir,
                                         simNameList=simNameExisting)
 
+
+
     # check for allConfigurationsInfo to find computation info and add to info fetched from ini files
     if latest == False and isinstance(simDF, pd.DataFrame):
         # check if in allConfigurationsInfo also info for existing sims
         simDFALL, _ = readAllConfigurationInfo(avaDir, specDir='', configCsvName='allConfigurations')
         if isinstance(simDFALL, pd.DataFrame):
-            simDF = simDF.merge(simDFALL[['nPart', 'timeLoop', 'timeForce', 'timeForceSPH', 'timePos', 'timeNeigh',
-                                          'timeField', 'nSave', 'nIter', 'simName']], how='left', on='simName')
+            simDF = simDF.reset_index().merge(simDFALL[['nPart', 'timeLoop', 'timeForce', 'timeForceSPH', 'timePos', 'timeNeigh',
+                                          'timeField', 'nSave', 'nIter', 'simName']], how='left', on='simName').set_index('index')
 
     return simDF, simNameExisting
 
