@@ -1482,9 +1482,11 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))
     fields["Vz"] = np.zeros((nrows, ncols))
     fields["dmDet"] = np.zeros((nrows, ncols))
-    fields["hDetrained"] = np.zeros((nrows, ncols))
-    fields["hStopped"] = np.zeros((nrows, ncols))
-    fields["hEntrained"] = np.zeros((nrows, ncols))
+    fields["FTStop"] = np.zeros((nrows, ncols))
+    fields["FTDet"] = np.zeros((nrows, ncols))
+    fields["FTEnt"] = np.zeros((nrows, ncols))
+    fields["sfcChange"] = np.zeros((nrows, ncols))
+    fields["sfcChangeTotal"] = np.zeros((nrows, ncols))
     fields["demAdapted"] = np.zeros((nrows, ncols))
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
@@ -2299,7 +2301,7 @@ def writeMBFile(infoDict, avaDir, logName):
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained, detrained, stopped\n")
+        mFile.write("time, current, entrained, detrained, detrainedTotal, stopped\n")
         for m in range(len(t)):
             mFile.write(
                 "%.02f,    %.06f,    %.06f,   %.06f,    %.06f,    %.06f\n"
@@ -2433,9 +2435,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     
     # adapt DEM considering erosion and deposition
     # only adapt DEM when in one grid cell the changing height > 0.1 m
-    adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(fields['hStop'] > 0.1)
-    adaptDet = cfg.getboolean("adaptSfcDetrainment") and  np.any(fields['hDet'] > 0.1)
-    adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(fields['hEro'] > 0.1)
+    adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(abs(fields['FTStop']) > 0.01)
+    adaptDet = cfg.getboolean("adaptSfcDetrainment") and np.any(abs(fields['FTDet']) > 0.01)
+    adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(abs(fields['FTEnt']) > 0.01)
     if particles["t"] > 0:
         if adaptStop or adaptDet or adaptEnt:
             demAdapted, fields = adaptDEM(dem, fields, cfg)
@@ -2731,12 +2733,8 @@ def exportFields(
         if resType == "FTDet":
             dmDet = fields["dmDet"]
             resField = dmDet / (cfg["GENERAL"].getfloat("rho") * dem["areaRaster"])
-        elif TSave != "final" and resType == "hDetrained":
-            resField = fields["hDet"]
-        elif TSave != "final" and resType == "hEntrained":
-            resField = fields["hEro"]
-        elif TSave != "final" and resType == "hStopped":
-            resField = fields["hStop"]
+        elif TSave == "final" and resType == "sfcChange":
+            resField = fields["sfcChangeTotal"]
         else:
             resField = fields[resType]
         if resType == "ppr":
@@ -3261,10 +3259,13 @@ def adaptDEM(dem, fields, cfg):
     """
 
     ZDEM = dem["rasterData"].copy()
-    hDet = fields["hDet"]
-    hStop = fields["hStop"]
-    hEro = fields["hEro"]
+    FTDet = fields["FTDet"]
+    FTStop = fields["FTStop"]
+    FTEnt = fields["FTEnt"]
+    sfcChangeTotal = fields["sfcChangeTotal"]
+    sfcChange = np.zeros_like(FTDet)
     ZDEMadapt = ZDEM
+
     demAdapted = {}
     demAdapted["originalHeader"] = dem["originalHeader"].copy()
     demAdapted["originalRasterData"] = dem["originalRasterData"].copy()
@@ -3277,16 +3278,19 @@ def adaptDEM(dem, fields, cfg):
 
     if cfg.getboolean("adaptSfcStopped"):
         # compute thickness to depth
-        depthStop = hStop / NzNormed
+        depthStop = FTStop / NzNormed
         ZDEMadapt += depthStop
+        sfcChange += depthStop
     if cfg.getboolean("adaptSfcDetrainment"):
         # compute thickness to depth
-        depthDet = hDet / NzNormed
+        depthDet = FTDet / NzNormed
         ZDEMadapt += depthDet
+        sfcChange += depthDet
     if cfg.getboolean("adaptSfcEntrainment"):
         # compute thickness to depth
-        depthEnt = hEro / NzNormed
+        depthEnt = FTEnt / NzNormed
         ZDEMadapt += depthEnt
+        sfcChange += depthEnt
 
     demAdapted["rasterData"] = ZDEMadapt
     fieldsAdapted["demAdapted"] = ZDEMadapt
@@ -3294,5 +3298,8 @@ def adaptDEM(dem, fields, cfg):
     num = cfg.getfloat("methodMeshNormal")
     demAdapted = geoTrans.getNormalMesh(demAdapted, num=num)
     demAdapted = DFAtls.getAreaMesh(demAdapted, num)
+
+    fieldsAdapted["sfcChange"] = sfcChange
+    fieldsAdapted["sfcChangeTotal"] = sfcChangeTotal + sfcChange
 
     return demAdapted, fieldsAdapted
