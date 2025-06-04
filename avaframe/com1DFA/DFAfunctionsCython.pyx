@@ -1191,9 +1191,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
-  cdef double[:, :] hDetrained = fields['hDetrained']
-  cdef double[:, :] hEntrained = fields['hEntrained']
-  cdef double[:, :] hStopped = fields['hStopped']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
@@ -1210,9 +1207,9 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] kineticEnergy = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
-  cdef double[:, :] hDetBilinear = np.zeros((nrows, ncols))
-  cdef double[:, :] hStopBilinear = np.zeros((nrows, ncols))
-  cdef double[:, :] hEntBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FTDetBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FTStopBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FTEntBilinear = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
   cdef double m, dmDet, demEnt, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
@@ -1282,7 +1279,6 @@ def updateFieldsC(cfg, particles, dem, fields):
     for j in range(nrows):
       m = MassBilinear[j, i]
 
-      #PS: TODO: sinnvoll??
       DMDet[j, i] = DMDet[j, i] + MassDetBilinear[j, i]
 
       if m > 0:
@@ -1310,13 +1306,10 @@ def updateFieldsC(cfg, particles, dem, fields):
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
 
-      # height change due to detrainment, stopping and entrainment
-      hDetBilinear[j, i] = - MassDetBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
-      hDetrained[j, i] = hDetrained[j, i] + hDetBilinear[j, i]
-      hStopBilinear[j, i] = - MassStopBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
-      hStopped[j, i] = hStopped[j, i] + hStopBilinear[j, i]
-      hEntBilinear[j, i] = - MassEntBilinear[j, i] / (areaRaster[j, i] * rhoEnt)
-      hEntrained[j, i] = hEntrained[j, i] + hEntBilinear[j, i]
+      # thickness change due to detrainment, stopping and entrainment
+      FTDetBilinear[j, i] = - MassDetBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i]
+      FTStopBilinear[j, i] = - MassStopBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
+      FTEntBilinear[j, i] = - MassEntBilinear[j, i] / (areaRaster[j, i] * rhoEnt)
 
   fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
@@ -1327,12 +1320,9 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfv'] = np.asarray(PFV)
   fields['pft'] = np.asarray(PFT)
   fields['dmDet'] = np.asarray(DMDet)
-  fields['hStop'] = np.asarray(hStopBilinear)
-  fields['hDet'] = np.asarray(hDetBilinear)
-  fields['hEro'] = np.asarray(hEntBilinear)
-  fields['hDetrained'] = np.asarray(hDetrained)
-  fields['hStopped'] = np.asarray(hStopped)
-  fields['hEntrained'] = np.asarray(hEntrained)
+  fields['FTStop'] = np.asarray(FTStopBilinear)
+  fields['FTDet'] = np.asarray(FTDetBilinear)
+  fields['FTEnt'] = np.asarray(FTEntBilinear)
 
   if computeP:
     fields['ppr'] = np.asarray(PP)

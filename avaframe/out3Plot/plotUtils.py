@@ -202,6 +202,11 @@ levProb = list(fU.splitIniValueToArraySteps(cfgPlotUtils["probaColorLevels"]))
 colorsProb = ["#FEF1F1", "#B2AB96", "#5B8BA3", "#2D5393", "#1A0C64"]
 cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
 
+levSfcC = list(fU.splitIniValueToArraySteps(cfgPlotUtils["surfaceChangeLevels"]))
+colorsSfcC = ['#fefeb2', '#d2d184', '#bab98d', '#a0a598', '#6f878d', '#386982', '#05598c']
+cmapSfcChange = copy.copy(cmapCrameri.nuuk.reversed())
+
+
 ###############################################
 # Set colormaps to use
 ###############################################
@@ -222,6 +227,8 @@ cmapProb = {"cmap": cmapProbmap, "colors": colorsProb, "levels": levProb}
 
 cmapEnergy = {"cmap": cmapE, "colors": colorsE, "levels": levE}
 
+cmapSfcChange = {"cmap": cmapSfcChange, "colors": colorsSfcC, "levels": levSfcC}
+
 # for zdelta
 # Remark FSO: the try except comes from cmcrameri v1.5 not having lipari, but it is still
 # widely used (Okt 2024). TODO: remove in future versions
@@ -231,9 +238,6 @@ except AttributeError:
     cmapZdelta = {"cmap": copy.copy(cmapCrameri.lapaz), "colors": [], "levels": []}
 
 cmapDmDet = copy.copy(cmapCrameri.lapaz.reversed())
-cmapHStopped = copy.copy(cmapCrameri.davos.reversed())
-cmapHDetrained = copy.copy(cmapCrameri.davos.reversed())
-cmapHEntrained = copy.copy(cmapCrameri.davos)
 
 colorMaps = {
     "ppr": cmapPres,
@@ -255,9 +259,7 @@ colorMaps = {
     "FTDet": cmapThickness,
     "dmDet": cmapDmDet,
     "demAdapted": cmapGreys,
-    "hDetrained": cmapHDetrained,
-    "hStopped": cmapHStopped,
-    "hEntrained": cmapHEntrained
+    "sfcChange": cmapSfcChange,
 }
 
 cmapDEM = cmapGreys
