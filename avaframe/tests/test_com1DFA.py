@@ -25,8 +25,6 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.DFAtools as DFAtls
 
 
-
-
 def test_prepareInputData(tmp_path):
     """test preparing input data"""
 
@@ -1568,9 +1566,9 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
-    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
-    assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 5
+    assert np.array_equal(mbInfo[:, 5], infoDict["massStopped"])
+    assert mbInfo.shape[0] == 6
+    assert mbInfo.shape[1] == 6
 
     infoDict["massEntrained"] = np.asarray([0, 0, 0, 0, 0])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1585,9 +1583,9 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
-    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
-    assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 5
+    assert np.array_equal(mbInfo[:, 5], infoDict["massStopped"])
+    assert mbInfo.shape[0] == 6
+    assert mbInfo.shape[1] == 6
 
     infoDict["massEntrained"] = np.asarray([0, 20, 0, 0, 10])
     infoDict["massDetrained"] = np.asarray([0, 10, 0, 30, 0])
@@ -1602,9 +1600,9 @@ def test_writeMBFile(tmp_path):
     assert np.array_equal(mbInfo[:, 2], infoDict["massEntrained"])
     assert np.array_equal(mbInfo[:, 3], infoDict["massDetrained"])
     assert np.array_equal(mbInfo[:, 1], infoDict["massTotal"])
-    assert np.array_equal(mbInfo[:, 4], infoDict["massStopped"])
-    assert mbInfo.shape[0] == 5
-    assert mbInfo.shape[1] == 5
+    assert np.array_equal(mbInfo[:, 5], infoDict["massStopped"])
+    assert mbInfo.shape[0] == 6
+    assert mbInfo.shape[1] == 6
 
 
 def test_savePartToPickle(tmp_path):
@@ -1851,19 +1849,17 @@ def test_initializeFields():
     assert np.sum(fields["FT"]) != 0.0
     assert np.sum(fields["FM"]) != 0.0
     assert np.sum(fields["dmDet"]) == 0.0
-    assert np.sum(fields["hDetrained"]) == 0.0
-    assert np.sum(fields["hStopped"]) == 0.0
-    assert np.sum(fields["hEntrained"]) == 0.0
+    assert np.sum(fields["sfcChange"]) == 0.0
     assert np.sum(fields["demAdapted"]) == 0.0
-    assert np.sum(fields["hDet"]) == 0.0
+    assert np.sum(fields["FTDet"]) == 0.0
     assert np.sum(fields["hStop"]) == 0.0
-    assert np.sum(fields["hEro"]) == 0.0
+    assert np.sum(fields["FTEnt"]) == 0.0
 
     cfg["REPORT"] = {"plotFields": "pft|pfv"}
     cfg["GENERAL"] = {"resType": "pke|pta|pft|pfv", "rho": "200.", "interpOption": "2", "rhoEnt": 200}
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
-    assert len(fields) == 24
+    assert len(fields) == 23
     assert fields["computeTA"]
     assert fields["computeKE"]
     assert fields["computeP"] is False
@@ -2650,17 +2646,18 @@ def test_adaptDEM():
     }
 
     fields = {
-        "hDet": np.zeros_like(data),
-        "hStop": np.zeros_like(data),
-        "hEro": np.zeros_like(data),
+        "FTDet": np.zeros_like(data),
+        "FTStop": np.zeros_like(data),
+        "FTEnt": np.zeros_like(data),
         "demAdapted": data,
+        "sfcChangeTotal": np.zeros_like(data),
     }
-    
+
     dem = geoTrans.getNormalMesh(dem, num=cfg["GENERAL"].getfloat("methodMeshNormal"))
     dem = DFAtls.getAreaMesh(dem, cfg["GENERAL"].getfloat("methodMeshNormal"))
 
     _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
-    
+
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
     for key in demAdapted.keys():
         assert np.all(demAdapted[key] == dem[key])
@@ -2672,7 +2669,7 @@ def test_adaptDEM():
                         "adaptSfcStopped": 1,
                         "adaptSfcDetrainment": 1,
                         "adaptSfcEntrainment": 1}
-    
+
     # all rasters for depth changes are zero
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
     for key in demAdapted.keys():
@@ -2680,7 +2677,7 @@ def test_adaptDEM():
     for key in fieldsAdapted.keys():
         assert np.all(fieldsAdapted[key] == fields[key])
 
-    fields["hDet"] += 1
+    fields["FTDet"] += 1
 
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
 
@@ -2690,10 +2687,13 @@ def test_adaptDEM():
         elif key == "header":
             assert np.all(demAdapted[key] == dem[key])
 
-
     for key in fieldsAdapted.keys():
         if key == "demAdapted":
             assert np.all(fieldsAdapted[key] == fields[key] + 1 / NzNormed)
+        elif key == "sfcChange":
+            assert np.all(fieldsAdapted[key] == fields["FTDet"])
+        elif key == "sfcChangeTotal":
+            assert np.all(fieldsAdapted[key] == fields["FTDet"])
         else:
             assert np.all(fieldsAdapted[key] == fields[key])
 
@@ -2702,7 +2702,7 @@ def test_adaptDEM():
                         "adaptSfcStopped": 1,
                         "adaptSfcDetrainment": 0,
                         "adaptSfcEntrainment": 1}
-    
+
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
 
     for key in demAdapted.keys():
@@ -2715,8 +2715,8 @@ def test_adaptDEM():
                         "adaptSfcStopped": 1,
                         "adaptSfcDetrainment": 1,
                         "adaptSfcEntrainment": 1}
-    
-    fields["hEro"] -= 1
+
+    fields["FTEnt"] -= 1
 
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])
 
@@ -2725,12 +2725,16 @@ def test_adaptDEM():
     for key in fieldsAdapted.keys():
         assert np.all(fieldsAdapted[key] == fields[key])
 
-    fields["hEro"] = np.zeros_like(fields["hDet"])
-    fields["hDet"] =  np.array([[0, 0, 0, 0, 0],
-                                [0, 0, 0, 0, 0],
-                                [1, 1, 1, 1, 1],
-                                [0, 0, 0, 0, 0],
-                                [0, 0, 0, 0, 0],])
+    fields["FTEnt"] = np.zeros_like(fields["FTDet"])
+    fields["FTDet"] = np.array(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ]
+    )
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(dem, fields, cfg["GENERAL"])    
 
     assert np.all(demAdapted["rasterData"] == np.array([[1., 2., 3., 4., 5.],
@@ -2743,3 +2747,5 @@ def test_adaptDEM():
     assert np.any(demAdapted["Ny"] != dem["Ny"])
     assert np.all(demAdapted["Nz"] == dem["Nz"])
     assert np.any(dem["areaRaster"] != demAdapted["areaRaster"])
+    assert np.all(fieldsAdapted["sfcChange"] == fields["FTDet"])
+    assert np.all(fieldsAdapted["sfcChangeTotal"] == fields["FTDet"])
