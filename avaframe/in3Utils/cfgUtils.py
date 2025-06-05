@@ -129,7 +129,6 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
 
     # Finally read it
     cfg, modDict = readCompareConfig(iniFile, modName, compare, toPrint)
-
     if modInfo:
         return cfg, modDict
 
@@ -196,7 +195,6 @@ def readCompareConfig(iniFile, modName, compare, toPrint=True):
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
-
         log.debug('Writing cfg for: %s', modName)
         # compare to default config and get modification dictionary and config
         modDict, modCfg = compareTwoConfigs(defCfg, locCfg, toPrint=toPrint)
@@ -237,7 +235,7 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
         newVal: str
             new value
     """
-    splitKey = re.findall(r"\['?([A-Za-z0-9_]+)'?\]", inKey)
+    splitKey = re.findall(r"\[\s*['\"]([^'\"]+)['\"]\s*\]", inKey)
     section = splitKey[0]
     key = splitKey[1]
 
@@ -411,7 +409,6 @@ def readCfgFile(avaDir, module='', fileName=''):
 
     return cfg
 
-
 def cfgHash(cfg, typeDict=False):
     """ UID hash of a config. Given a configParser object cfg,
     or a dictionary - then typeDict=True, returns a uid hash
@@ -555,7 +552,7 @@ def createConfigurationInfo(avaDir, comModule='com1DFA', standardCfg='', writeCS
 
 def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """ append simulation configuration to the simulation dataframe
-        only account for sections GENERAL and INPUT
+        append all sections to the dataframe
 
         Parameters
         -----------
@@ -575,19 +572,53 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """
     indexItem = [simHash]
     cfgDict = convertConfigParserToDict(cfgObject)
-    simItemDFGeneral = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
-    simItemDFInput = pd.DataFrame(data=cfgDict['INPUT'], index=indexItem)
-    if 'VISUALISATION' in cfgDict:
-        simItemDFVisualisation = pd.DataFrame(data=cfgDict['VISUALISATION'], index=indexItem)
-        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput, simItemDFVisualisation], axis=1)
-    else:
-        simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
+    simItemDFList = []
+    for section in cfgDict:
+        simItemDFSection = pd.DataFrame(data=cfgDict[section], index=indexItem)
+        simItemDFList.append(simItemDFSection)
+    simItemDF = pd.concat(simItemDFList, axis=1)
     simItemDF = simItemDF.assign(simName=simName)
+
+    # check for duplicates: if yes, rename them by adding Dupl1 to the duplicate name
+    if simItemDF.columns.duplicated().any():
+        renameDuplicates(simItemDF)
+
     if isinstance(simDF, str):
         simDF = simItemDF
     else:
         simDF = pd.concat([simDF, simItemDF], axis=0)
     return simDF
+
+
+def renameDuplicates(df):
+    """
+    Rename duplicate column names in the given DataFrame. This ensures all column names in the DataFrame
+    are unique by adding a suffix 'DuplX' where X is the occurrence number, starting
+    from 1 for the first duplicate.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The input DataFrame whose column names need to be checked for duplicates.
+
+    Returns
+    -------
+    bool
+        Returns True to indicate the renaming of duplicate column names was successful.
+    """
+    seen = {}
+    new_cols = []
+
+    for col in df.columns:
+        if col not in seen:
+            seen[col] = 0
+            new_cols.append(col)
+        else:
+            seen[col] += 1
+            new_cols.append(f"{col}_{seen[col]}")
+
+    df.columns = new_cols
+    return True
 
 
 def appendTcpu2DF(simHash, tCPU, tCPUDF):

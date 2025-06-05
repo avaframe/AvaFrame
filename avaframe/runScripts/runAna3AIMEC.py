@@ -8,6 +8,8 @@ from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+
+
 # create local logger
 log = logging.getLogger(__name__)
 

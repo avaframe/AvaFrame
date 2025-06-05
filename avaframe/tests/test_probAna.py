@@ -223,7 +223,7 @@ def test_createComModConfig(tmp_path):
     assert cfgTest21['GENERAL']['relThPercentVariation'] == ''
     assert cfgTest21['GENERAL']['musamosat'] == cfgTest2['GENERAL']['musamosat']
     assert cfgTest21['INPUT']['releaseScenario'] == 'relParabolaTwo'
-    assert cfgTest2.has_option('GENERAL', 'relTh0')
+    assert cfgTest21.has_option('GENERAL', 'relTh0')
     assert len(cfgFiles2) == 80
 
     cfgProb = configparser.ConfigParser()
