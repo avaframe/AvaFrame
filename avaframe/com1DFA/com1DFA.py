@@ -2301,7 +2301,7 @@ def writeMBFile(infoDict, avaDir, logName):
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained, detrained, stopped\n")
+        mFile.write("time, current, entrained, detrained, detrainedTotal, stopped\n")
         for m in range(len(t)):
             mFile.write(
                 "%.02f,    %.06f,    %.06f,   %.06f,    %.06f,    %.06f\n"

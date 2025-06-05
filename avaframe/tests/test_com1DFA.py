@@ -1832,7 +1832,7 @@ def test_initializeFields():
     #    print("compute TA", fields["computeTA"])
     #    print("compute P", fields["computeP"])
 
-    assert len(fields) == 24
+    assert len(fields) == 23
     assert fields["computeTA"] is False
     assert fields["computeKE"] is False
     assert fields["computeP"]
@@ -2651,6 +2651,7 @@ def test_adaptDEM():
         "FTEnt": np.zeros_like(data),
         "demAdapted": data,
         "sfcChangeTotal": np.zeros_like(data),
+        "sfcChange": np.zeros_like(data),
     }
 
     dem = geoTrans.getNormalMesh(dem, num=cfg["GENERAL"].getfloat("methodMeshNormal"))
