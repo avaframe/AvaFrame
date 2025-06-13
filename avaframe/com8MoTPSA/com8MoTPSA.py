@@ -174,24 +174,24 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # TODO: functionize it
         # Copy ppr files
         pprFiles = list(workDir.glob("*p?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_p1_max', 'lay1_psa_ppr')) for f in pprFiles]
-        targetFiles = [pathlib.Path(str(f).replace('null_psa_p2_max', 'lay2_psa_ppr')) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_p1_max', 'null_dfa_ppr')) for f in pprFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_p2_max', 'null_psa_ppr')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pprFiles, targetFiles):
             shutil.copy2(source, target)
 
         # Copy pfd files
         pfdFiles = list(workDir.glob("*h?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_h1_max', 'lay1_psa_pfd')) for f in pfdFiles]
-        targetFiles = [pathlib.Path(str(f).replace('null_psa_h2_max', 'lay2_psa_pfd')) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_h1_max', 'null_dfa_pfd')) for f in pfdFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_h2_max', 'null_psa_pfd')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfdFiles, targetFiles):
             shutil.copy2(source, target)
 
         # Copy pfv files
         pfvFiles = list(workDir.glob("*s?_max*"))
-        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_s1_max', 'lay1_psa_pfv')) for f in pfvFiles]
-        targetFiles = [pathlib.Path(str(f).replace('null_psa_s2_max', 'lay2_psa_pfv')) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f.name).replace('null_psa_s1_max', 'null_dfa_pfv')) for f in pfvFiles]
+        targetFiles = [pathlib.Path(str(f).replace('null_psa_s2_max', 'null_psa_pfv')) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
