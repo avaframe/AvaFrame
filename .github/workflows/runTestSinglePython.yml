@@ -8,12 +8,10 @@ on:
     branches: [ master ]
     paths-ignore:
           - 'docs/**'
-          - 'avaframe/com4FlowPy/**'
   pull_request:
     branches: [ master ]
     paths-ignore:
           - 'docs/**'
-          - 'avaframe/com4FlowPy/**'
   workflow_dispatch:
 
 jobs:
@@ -36,34 +34,16 @@ jobs:
         pip install flake8 pytest pytest-cov
         pip install numpy cython
         pip install setuptools
-        pip install pytest_mock
-    # This compilation is necessary to have the .c file for the next step
-    # Alternative is to include the .c file in the repo
+        pip install pytest-mock
     - name: Compile cython code
       run: |
         python setup.py build_ext --inplace --define CYTHON_TRACE
     - name: Install avaframe
       run: |
         pip install  .
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
         pytest -ra --cov --cov-report=xml --cov-report lcov:cov.info --cov-config=.coveragerc
-    - name: Test & publish code coverage
-      uses: paambaati/codeclimate-action@v9.0.0
-      env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_ID }}
-      #    - name: Upload coverage to Codecov
-      #      uses: codecov/codecov-action@v3
-      #      with:
-      #        fail_ci_if_error: false
-      #        name: codecov-umbrella
-      #        verbose: true
     - uses: qltysh/qlty-action/coverage@main
       with:
         coverage-token: ${{secrets.QLTY_COVERAGE_TOKEN}}
