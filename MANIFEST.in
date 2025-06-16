@@ -1,6 +1,8 @@
 include avaframe/RELEASE-VERSION
 include avaframe/version.py
 include avaframe/in3Utils/logging.conf
+include avaframe/com1DFA/*.pyx
+include avaframe/com1DFA/*.pxd
 recursive-include avaframe *Cfg.ini
 global-exclude local_*Cfg.ini
 prune benchmarks
