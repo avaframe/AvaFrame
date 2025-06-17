@@ -50,7 +50,7 @@ dependencies = [
 
 # Setuptools
 [tool.setuptools]
-include-package-data = false
+include-package-data = true
 
 [tool.setuptools.packages.find]
 exclude = ["docs*", "tests*"]
