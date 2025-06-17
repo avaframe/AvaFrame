@@ -58,6 +58,7 @@ exclude = ["docs*", "tests*"]
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
 local_scheme = "node-and-date"
+version_file = "avaframe/RELEASE-VERSION.txt"
 
 # Cibuildwhell
 [tool.cibuildwheel]

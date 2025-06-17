@@ -4,7 +4,7 @@
 # scheme that setuptools uses.  If “git describe” returns an error
 # (most likely because we're in an unpacked copy of a release tarball,
 # rather than in a git working copy), then we fall back on reading the
-# contents of the RELEASE-VERSION file.
+# contents of the RELEASE-VERSION.txt file.
 #
 # To use this script, simply import it your setup.py file, and use the
 # results of getVersion() as your package version:
@@ -27,7 +27,7 @@
 # sdist tarballs; to do this, just create a MANIFEST.in file that
 # contains the following line:
 #
-#   include RELEASE-VERSION
+#   include RELEASE-VERSION.txt
 
 from subprocess import check_output, run, CalledProcessError, DEVNULL, Popen, PIPE
 import os
@@ -89,7 +89,7 @@ def releaseFile():
         -------
         path to RELEASE-VERSION file
     """
-    return os.path.join(getProjectPath(), 'RELEASE-VERSION')
+    return os.path.join(getProjectPath(), 'RELEASE-VERSION.txt')
 
 
 def readReleaseVersion():

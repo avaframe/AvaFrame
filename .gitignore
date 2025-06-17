@@ -16,7 +16,7 @@ Work
 
 build
 
-RELEASE-VERSION
+RELEASE-VERSION.txt
 
 *.egg*
 
