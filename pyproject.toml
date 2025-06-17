@@ -50,11 +50,10 @@ dependencies = [
 
 # Setuptools
 [tool.setuptools]
-include-package-data = true
+include-package-data = false
 
 [tool.setuptools.packages.find]
-exclude = ["docs"]
-namespaces = false
+exclude = ["docs*", "tests*"]
 
 [tool.setuptools_scm]
 version_scheme = "no-guess-dev"
@@ -84,8 +83,6 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "win-64", "osx-64"]
 
 [tool.pixi.dependencies]
-pytest = "*"
-pytest-mock ="*"
 setuptools = "*"
 setuptools-scm = "*"
 
@@ -95,6 +92,9 @@ avaframe = { path = "./", editable = true }
 
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-mock ="*"
 
 #Feature doc
 [tool.pixi.feature.doc.dependencies]
