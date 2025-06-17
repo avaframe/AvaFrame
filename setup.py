@@ -35,12 +35,12 @@ setup_options = {"build_ext": {"inplace": True}}
 setup(
     options=setup_options,
     ext_modules=ext_modules,
-    install_requires=[
-        'numpy',
-        'scipy',
-        'cython',
-        'matplotlib',
-        'pandas'
-    ],
-    python_requires='>=3.8',
+    # install_requires=[
+    #     'numpy',
+    #     'scipy',
+    #     'cython',
+    #     'matplotlib',
+    #     'pandas'
+    # ],
+    # python_requires='>=3.8',
 )
