@@ -157,6 +157,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
         valRef: str
             value of vapParList[0] used to define reference sim
     """
+
     cfgSetup = cfg['AIMECSETUP']
     if inputDir != '':
         inputDir = pathlib.Path(inputDir)
@@ -177,7 +178,6 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfg, inputDir=''):
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
         inputsDF = inputsDF.reset_index().merge(configurationDF, on=['simName', 'modelType']).set_index('index')
         configFound = True
-        
     except (NotADirectoryError, FileNotFoundError) as e:
         if cfgSetup['varParList'] != '' and (any(item in inputsDF.columns.tolist() for item in cfgSetup['varParList'].split('|')) == False):
             message = ('No configuration directory found. This is needed for sorting simulation according to '

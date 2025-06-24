@@ -2712,7 +2712,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
             # add info about dam file path to the cfg
-            if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] != None:
+            if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] is not None:
                 cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
 
         # add thickness values if read from shp and not varied
