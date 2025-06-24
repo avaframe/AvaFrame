@@ -2728,7 +2728,7 @@ def exportFields(
             )
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting=""):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", module=com1DFA):
     """Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
     Parameters
@@ -2742,6 +2742,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
     simNameExisting: list
         list of simulation names that already exist (optional). If provided,
         only carry on simulations that do not exist
+    module: module
+        module to be used for task (optional)
 
     Returns
     -------
@@ -2749,6 +2751,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         dicionary with info on simHash, releaseScenario, release area file path,
         simType and contains full configuration configparser object for simulation run
     """
+
+    # extract the name of the module
+    modName = module.__name__.split(".")[-1]
 
     # get list of simulation types that are desired
     if "simTypeList" in variationDict:
