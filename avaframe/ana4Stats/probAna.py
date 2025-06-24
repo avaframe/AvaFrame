@@ -119,8 +119,6 @@ def cfgFilesLocalApproach(variationsDict, cfgProb, modName, outDir):
             dictionary with for each varName, varVariation, varSteps, and type of variation
         cfgProb: configParser object
             configuration settings
-        avaDir: pathlib path
-            path to avalanche directory
         modName: module
             computational module
 
@@ -279,7 +277,7 @@ def checkParameterSettings(cfg, varParList):
 
     for varPar in varParList:
         # Check if valid parameter exists in any section and check for duplicates
-        _ = checkParameterInConfig(cfg, varPar)
+        _ = checkIfParameterInConfig(cfg, varPar)
 
         # Fetch section where parameter was found
         section = fetchParameterSection(cfg, varPar)
@@ -300,7 +298,7 @@ def checkParameterSettings(cfg, varParList):
     return True, thReadFromShp
 
 
-def checkParameterInConfig(cfg, varPar):
+def checkIfParameterInConfig(cfg, varPar):
     """
     Checks the existence and uniqueness of a parameter within a configuration object.
 
@@ -582,8 +580,6 @@ def fetchThicknessInfo(avaDir):
 
         Parameters
         ------------
-        cfg: configparser object
-            configuration settings
         avaDir: pathlib path or str
             path to avalanche directory
 
