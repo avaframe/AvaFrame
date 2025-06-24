@@ -435,7 +435,7 @@ def updateResCoeffFields(fields, cfg, t, dem):
         detOrig = np.where(((fields["FV"] > vMax) | (fields["FT"] > thMax)), 0, detOrig)
         fields["cResRasterOrig"] = cResOrig
         fields["detRasterOrig"] = detOrig
-        log.info(
+        log.debug(
             "Resistance area removed %d cells because FV or FT exceeded %.2f ms-1, %.2f m"
             % (lTh, vMax, thMax)
         )
