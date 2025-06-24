@@ -70,10 +70,7 @@ def _runAndCheck(command):
                 printCounter = printCounter + 1
                 if printCounter > 100:
                     # print('\r' + line, flush=True, end='')
-                    msg = (
-                            "Process is running. Reported time steps: "
-                            + str(counter)
-                    )
+                    msg = "Process is running. Reported time steps: " + str(counter)
                     log.info(msg)
                     printCounter = 0
 
