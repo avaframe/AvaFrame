@@ -1,5 +1,5 @@
 """
-    Fetch input data for avalanche simulations
+Fetch input data for avalanche simulations
 """
 
 import logging
@@ -250,12 +250,14 @@ def getInputDataCom1DFA(avaDir):
     demFile = getDEMPath(avaDir)
 
     # check if frictionParameter file  is available
-    muFile, entResInfo["mu"] = getAndCheckInputFiles(inputDir, "RASTERS", "mu parameter data", fileExt="raster",
-                                                     fileSuffix='_mu')
+    muFile, entResInfo["mu"] = getAndCheckInputFiles(
+        inputDir, "RASTERS", "mu parameter data", fileExt="raster", fileSuffix="_mu"
+    )
 
     # check if frictionParameter file  is available
-    xiFile, entResInfo["xi"] = getAndCheckInputFiles(inputDir, "RASTERS", "xi parameter data", fileExt="raster",
-                                                     fileSuffix='_xi')
+    xiFile, entResInfo["xi"] = getAndCheckInputFiles(
+        inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
+    )
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
@@ -327,7 +329,12 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:
-        message = "More than one %s .%s file in %s/%s/ not allowed" % (inputType, fileExt, inputDir, folder)
+        message = "More than one %s .%s file in %s/%s/ not allowed" % (
+            inputType,
+            fileExt,
+            inputDir,
+            folder,
+        )
         log.error(message)
         raise AssertionError(message)
     else:
@@ -335,7 +342,9 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
         OutputFile = OutputFile[0]
 
         if OutputFile.suffix not in supportedFileFormats:
-            message = "Unsupported file format found for OutputFile %s; shp, asc, tif are allowed" % OutputFile
+            message = (
+                "Unsupported file format found for OutputFile %s; shp, asc, tif are allowed" % OutputFile
+            )
             log.error(message)
             raise AssertionError(message)
 
@@ -375,7 +384,11 @@ def getThicknessInputSimFiles(inputSimFiles):
     for releaseA in inputSimFiles["relFiles"]:
         # fetch thickness and id info from input data
         thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
-        inputSimFiles[releaseA.stem] = {"thickness": thicknessList, "id": idList, "ci95": ci95List}
+        inputSimFiles[releaseA.stem] = {
+            "thickness": thicknessList,
+            "id": idList,
+            "ci95": ci95List,
+        }
         # append release scenario name to list
         releaseScenarioList.append(releaseA.stem)
 
@@ -443,7 +456,10 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
     if inputSimFiles["secondaryReleaseFile"] != None and "secondaryReleaseFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
-            cfgInitial, inputSimFiles, inputSimFiles["secondaryReleaseFile"].stem, "secondaryRelTh"
+            cfgInitial,
+            inputSimFiles,
+            inputSimFiles["secondaryReleaseFile"].stem,
+            "secondaryRelTh",
         )
         cfgInitial["INPUT"]["secondaryReleaseScenario"] = inputSimFiles["secondaryReleaseFile"].stem
 
