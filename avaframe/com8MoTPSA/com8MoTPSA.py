@@ -8,6 +8,8 @@ import pathlib
 import time
 import shutil
 
+from avaframe.in3Utils.cfgUtils import cfgToRcf
+
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
 elif platform.system() == "Darwin":
@@ -86,22 +88,6 @@ def _runAndCheck(command):
                 log.info(line)
 
 
-# TODO move to utils
-def cfgToRcf(cfg, fileName):
-    with open(fileName, "w") as f:
-        for section in cfg.sections():
-            if section in ("FOREST_EFFECTS", "ENTRAINMENT"):
-                pass
-            elif section in ("GENERAL", "INPUT"):
-                continue
-            else:
-                f.write(f"# {section.replace('_', ' ')}\n")
-                f.write("#\n")
-            for key, value in cfg.items(section):
-                # key = key.replace('_', ' ')
-                key = key.strip()
-                f.write(f"{key:<40}{value}\n")
-            f.write("#\n")
 
 
 def rewriteDEMtoZeroValues(demFile):
@@ -125,7 +111,6 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
     log.info("The following simulations will be performed")
     for key in simDict:
         log.info("Simulation: %s" % key)
-        exportFlag = simDict[key]["cfgSim"]["EXPORTS"].getboolean("exportData")
 
     # Preprocess the simulations, mainly creating the rcf files
     rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain)
@@ -221,7 +206,7 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
 
     dem = rU.readRaster(inputSimFiles["demFile"])
     # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(
+    oP.plotAllPeakFields(
         avalancheDir, cfgMain["FLAGS"], modName, demData=dem
     )
 
@@ -251,16 +236,9 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
 
-        simDF = pd.DataFrame()
 
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
-
-        # fetch simHash for current sim
-        simHash = simDict[key]["simHash"]
-
-        # # append configuration to dataframe
-        # simDF = cfgUtils.appendCgf2DF(simHash, key, cfg, simDF)
 
         # convert release shape to raster with values for current sim
         # select release area input data according to chosen release scenario

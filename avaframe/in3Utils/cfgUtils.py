@@ -925,3 +925,32 @@ def getModPathName(module):
     modName = str(pathlib.Path(module.__file__).stem)
 
     return modPath, modName
+
+
+def cfgToRcf(cfg, fileName):
+    """Convert configuration object to RCF format file (used by NGI MoT).
+
+    Takes a ConfigParser object and writes its contents to a file in rcf format,
+    excluding certain sections and formatting others according to RCF requirements.
+
+    Parameters
+    ----------
+    cfg : configparser.ConfigParser
+        Configuration object containing sections and their key-value pairs
+    fileName : str or pathlib.Path
+        Path to the output file where the RCF format will be written
+    """
+    with open(fileName, "w") as f:
+        for section in cfg.sections():
+            if section in ("FOREST_EFFECTS", "ENTRAINMENT"):
+                pass
+            elif section in ("GENERAL", "INPUT"):
+                continue
+            else:
+                f.write(f"# {section.replace('_', ' ')}\n")
+                f.write("#\n")
+            for key, value in cfg.items(section):
+                # key = key.replace('_', ' ')
+                key = key.strip()
+                f.write(f"{key:<40}{value}\n")
+            f.write("#\n")
