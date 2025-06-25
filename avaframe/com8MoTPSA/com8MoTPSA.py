@@ -88,16 +88,12 @@ def _runAndCheck(command):
                 log.info(line)
 
 
-
-
 def rewriteDEMtoZeroValues(demFile):
     demData = rU.readRaster(demFile)
     demData["rasterData"][np.isnan(demData["rasterData"])] = 0.0
     demData["header"]["nodata_value"] = 0.0
     newFileName = demFile.parent / demFile.stem
-    rU.writeResultToRaster(
-        demData["header"], demData["rasterData"], newFileName, flip=True
-    )
+    rU.writeResultToRaster(demData["header"], demData["rasterData"], newFileName, flip=True)
 
 
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
@@ -143,9 +139,7 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     # Copy max files to output directory
 
     outputDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA"
-    outputDirPeakFile = (
-        pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "peakFiles"
-    )
+    outputDirPeakFile = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "peakFiles"
     fU.makeADir(outputDirPeakFile)
 
     for key in simDict:
@@ -159,13 +153,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy ppr files
         pprFiles = list(workDir.glob("*p?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_p1_max", "null_dfa_ppr"))
-            for f in pprFiles
+            pathlib.Path(str(f.name).replace("null_psa_p1_max", "null_dfa_ppr")) for f in pprFiles
         ]
-        targetFiles = [
-            pathlib.Path(str(f).replace("null_psa_p2_max", "null_psa_ppr"))
-            for f in targetFiles
-        ]
+        targetFiles = [pathlib.Path(str(f).replace("null_psa_p2_max", "null_psa_ppr")) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pprFiles, targetFiles):
             shutil.copy2(source, target)
@@ -173,13 +163,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfd files
         pfdFiles = list(workDir.glob("*h?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_h1_max", "null_dfa_pfd"))
-            for f in pfdFiles
+            pathlib.Path(str(f.name).replace("null_psa_h1_max", "null_dfa_pfd")) for f in pfdFiles
         ]
-        targetFiles = [
-            pathlib.Path(str(f).replace("null_psa_h2_max", "null_psa_pfd"))
-            for f in targetFiles
-        ]
+        targetFiles = [pathlib.Path(str(f).replace("null_psa_h2_max", "null_psa_pfd")) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfdFiles, targetFiles):
             shutil.copy2(source, target)
@@ -187,13 +173,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfv files
         pfvFiles = list(workDir.glob("*s?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_s1_max", "null_dfa_pfv"))
-            for f in pfvFiles
+            pathlib.Path(str(f.name).replace("null_psa_s1_max", "null_dfa_pfv")) for f in pfvFiles
         ]
-        targetFiles = [
-            pathlib.Path(str(f).replace("null_psa_s2_max", "null_psa_pfv"))
-            for f in targetFiles
-        ]
+        targetFiles = [pathlib.Path(str(f).replace("null_psa_s2_max", "null_psa_pfv")) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
@@ -206,9 +188,7 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
 
     dem = rU.readRaster(inputSimFiles["demFile"])
     # Generate plots for all peakFiles
-    oP.plotAllPeakFields(
-        avalancheDir, cfgMain["FLAGS"], modName, demData=dem
-    )
+    oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
 
 
 def com8MoTPSATask(rcfFile):
@@ -226,9 +206,7 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
     workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA"
-    cfgFileDir = (
-        pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "configurationFiles"
-    )
+    cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "configurationFiles"
     fU.makeADir(cfgFileDir)
     rcfFiles = list()
 
@@ -236,15 +214,12 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
 
-
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
 
         # convert release shape to raster with values for current sim
         # select release area input data according to chosen release scenario
-        inputSimFiles = gI.selectReleaseFile(
-            inputSimFiles, cfg["INPUT"]["releaseScenario"]
-        )
+        inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
         # create required input from input files
         demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
@@ -281,9 +256,7 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
                 releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False
             )
             relRasterPoly = releaseLine["rasterData"].copy()
-            releaseRelThCombined = np.where(
-                relRasterPoly > 0, inputSimLines["relThField"], 0
-            )
+            releaseRelThCombined = np.where(relRasterPoly > 0, inputSimLines["relThField"], 0)
             releaseField = releaseRelThCombined
 
         # Generate the work and data dirs for the current simHash
@@ -353,8 +326,8 @@ def com8MoTPSAGenerateConfigs(cfgMain, cfgInfo):
 
     if typeCfgInfo == "cfgFromDir":
         # preprocessing to create configuration objects for all simulations to run by reading multiple cfg files
-        simDict, inputSimFiles, simDFExisting, outDir = (
-            com1DFATools.createSimDictFromCfgs(cfgMain, cfgInfo, module=com8MoTPSA)
+        simDict, inputSimFiles, simDFExisting, outDir = com1DFATools.createSimDictFromCfgs(
+            cfgMain, cfgInfo, module=com8MoTPSA
         )
     else:
         # preprocessing to create configuration objects for all simulations to run
