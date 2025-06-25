@@ -1147,6 +1147,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     )
     fields["cResRaster"] = cResRaster
     fields["detRaster"] = detRaster
+    fields["cResRasterOrig"] = cResRaster
+    fields["detRasterOrig"] = detRaster
 
     for fric in ["mu", "xi"]:
         if (inputSimLines[fric + "File"] == None) or (
@@ -1323,9 +1325,9 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
         particles["idFixed"] = idFixed
     # initialize enthalpy
     particles["totalEnthalpy"] = TIni * cpIce + gravAcc * particles["z"]
-
     particles["massPerPart"] = massPerPart
     particles["mTot"] = np.sum(particles["m"])
+    particles["tPlot"] = 0
     particles["h"] = hPartArray
     particles["ux"] = np.zeros(np.shape(hPartArray))
     particles["uy"] = np.zeros(np.shape(hPartArray))
@@ -2859,11 +2861,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     cfgSim['INPUT']['%sFile' % fric] = pathToFric
 
             # add info about dam file path to the cfg
-            if cfgSim['GENERAL']['dam'] == 'True' and inputSimFiles['damFile'] is not None:
-                cfgSim['INPUT']['DAM'] = str(pathlib.Path('DAM', inputSimFiles['damFile'].name))
-        # add info about dam file path to the cfg
-        if cfgSim["GENERAL"]["dam"] == "True" and inputSimFiles["damFile"] is not None:
-            cfgSim["INPUT"]["DAM"] = str(pathlib.Path("DAM", inputSimFiles["damFile"].name))
+            if cfgSim["GENERAL"]["dam"] == "True" and inputSimFiles["damFile"] is not None:
+                cfgSim["INPUT"]["DAM"] = str(pathlib.Path("DAM", inputSimFiles["damFile"].name))
 
         # add info about entrainment file path to the cfg
         if "ent" in row._asdict()["simTypeList"] and inputSimFiles["entFile"] is not None:

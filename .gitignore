@@ -16,6 +16,8 @@ Work
 
 build
 
+dist
+
 RELEASE-VERSION.txt
 
 *.egg*
