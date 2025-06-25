@@ -159,7 +159,7 @@ def test_createComModConfig(tmp_path):
     assert cfgRelTh["GENERAL"]["relThPercentVariation"] == "50$3"
     assert cfgRelTh["GENERAL"]["relThFromShp"] == "True"
     assert cfgMu["GENERAL"]["relThFromShp"] == "True"
-    assert cfgRelTh.has_option("GENERAL", "addStandardConfig") == False
+    assert cfgRelTh.has_option("GENERAL", "addStandardConfig") is False
 
     cfgProb["com1DFA_com1DFA_override"] = {
         "defaultConfig": "True",
