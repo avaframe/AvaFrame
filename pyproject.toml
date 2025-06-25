@@ -86,7 +86,6 @@ platforms = ["linux-64", "win-64", "osx-64"]
 [tool.pixi.dependencies]
 setuptools = "*"
 setuptools-scm = "*"
-pip = ""
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
