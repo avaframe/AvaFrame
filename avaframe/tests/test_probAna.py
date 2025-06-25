@@ -553,7 +553,6 @@ def test_makeDictFromVars():
         "variationValue": "60|ci95|0.15",
         "numberOfSteps": "2|3|4",
         "samplingStrategy": "2",
-        "varParType": "float|float",
         "varParType": "float|float|float",
         "nSample": "30",
         "sampleSeed": "12345",
@@ -895,7 +894,6 @@ def test_cfgFilesGlobalApproach(tmp_path):
     inputDir = dirPath / "data" / avaName
     avaDir = pathlib.Path(tmp_path, avaName)
     shutil.copytree(inputDir, avaDir)
-    cfgFile = dirPath / "data" / "testCom1DFA" / "probA_com1DFACfg.ini"
     outDir = avaDir / "Outputs"
 
     cfgProb = configparser.ConfigParser()
