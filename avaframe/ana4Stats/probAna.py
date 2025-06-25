@@ -582,7 +582,6 @@ def makeDictFromVars(cfg):
     """
 
     varParList = cfg["varParList"].split("|")
-    varParTypes = cfg["varParType"].split("|")
     varValues = cfg["variationValue"].split("|")
     varSteps = cfg["numberOfSteps"].split("|")
     varTypes = cfg["variationType"].split("|")
