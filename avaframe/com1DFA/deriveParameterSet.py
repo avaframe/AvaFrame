@@ -1076,7 +1076,11 @@ def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisti
     # key is simName and corresponds to one simulation
     simDict = {}
     simDict = com1DFA.prepareVarSimDict(
-        modCfg, inputSimFiles, variationDict, simNameExisting=simNameExisting, module=module
+        modCfg,
+        inputSimFiles,
+        variationDict,
+        simNameExisting=simNameExisting,
+        module=module,
     )
 
     # write full configuration (.ini file) to file
