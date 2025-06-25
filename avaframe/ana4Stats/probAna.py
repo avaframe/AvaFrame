@@ -503,7 +503,7 @@ def probAnalysis(avaDir, cfg, modName, parametersDict="", inputDir="", probConf=
     # Loop through peakFiles and compute probability
     for m in range(len(peakFilesDF["names"])):
         # only take simulations that match filter criteria from parametersDict
-        if (peakFilesDF["simName"][m] in simNameList) or filtering is False:
+        if (peakFilesDF["simName"][m] in simNameList) or filtering == False:
             # Load peak field for desired peak field parameter
             if peakFilesDF["resType"][m] == cfg["GENERAL"]["peakVar"]:
                 # Load data
