@@ -235,6 +235,7 @@ colorMaps = {
     "ppr": cmapPres,
     "pfv": cmapSpeed,
     "pft": cmapThickness,
+    "pfd": cmapThickness,
     "P": cmapPres,
     "FV": cmapSpeed,
     "FM": cmapThickness,

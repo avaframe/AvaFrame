@@ -1,5 +1,5 @@
 """
-    Run script for performing an com1DFA avalanche simulation with parameter variation and performing a
+    Run script for performing an com8MoTPSA avalanche simulation with parameter variation and performing a
     probability analysis with the simulation results
     Define settings in ana4Stats/probAnaCfg.ini or your local copy - local_probAnaCfg.ini
 """
@@ -10,6 +10,7 @@ import argparse
 
 # Local imports
 from avaframe.com1DFA import com1DFA
+import avaframe.com8MoTPSA.com8MoTPSA as com8MoTPSA
 from avaframe.out3Plot import statsPlots as sP
 from avaframe.ana4Stats import probAna
 from avaframe.in3Utils import initializeProject as initProj
@@ -17,6 +18,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out3Plot import outQuickPlot as oP
+import configparser
 
 
 def runProbAna(avalancheDir=''):
@@ -59,15 +61,16 @@ def runProbAna(avalancheDir=''):
     # Load configuration file for probabilistic run and analysis
     cfgProb = cfgUtils.getModuleConfig(probAna)
 
-    # create configuration files for com1DFA simulations including parameter
+    # create configuration files for com8MoTPSA simulations including parameter
     # variation - defined in the probabilistic config
     # prob4AnaCfg.ini or its local copy
-    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com1DFA)
+    cfgFiles, cfgPath = probAna.createComModConfig(cfgProb, avalancheDir, com8MoTPSA)
 
-    # perform com1DFA simulations
-    outDir = pathlib.Path(avalancheDir, 'Outputs')
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgPath)
-    # fetch simDF of only sims that were created in above call to com1DFAMain - do not include sims
+    # perform com8MoTPSA simulations
+    # dem, plotDict, reportDictList, simDF = com8MoTPSA.com8MoTPSAMain(cfgMain, cfgInfo=cfgPath)
+    com8MoTPSA.com8MoTPSAMain(cfgMain, cfgInfo=cfgPath)
+
+    # fetch simDF of only sims that were created in above call to com8MoTPSAMain - do not include sims
     # that were run previously and are still located in outDir
     simDFActual, _ = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='', configCsvName='latestSims')
 
@@ -86,7 +89,7 @@ def runProbAna(avalancheDir=''):
         # perform probability analysis
         anaPerformed, contourDict = probAna.probAnalysis(avalancheDir,
                                                          cfgProb,
-                                                         'com1DFA',
+                                                         'com8MoTPSA',
                                                          parametersDict=parametersDict,
                                                          probConf=probConf,
                                                          simDFActual=simDFActual
