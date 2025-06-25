@@ -595,7 +595,6 @@ def test_createSampleWithVariationStandardParameters():
         "numberOfSteps": "2|3|4",
         "samplingStrategy": "1",
         "varParType": "float|float|float",
-        "varParType": "float|float|float",
         "nSample": "30",
         "sampleSeed": "12345",
         "sampleMethod": "latin",
@@ -977,7 +976,6 @@ def test_cfgFilesLocalApproach(tmp_path):
     inputDir = dirPath / "data" / avaName
     avaDir = pathlib.Path(tmp_path, avaName)
     shutil.copytree(inputDir, avaDir)
-    cfgFile = dirPath / "data" / "testCom1DFA" / "probA_com1DFACfg.ini"
     outDir = avaDir
 
     cfgProb = configparser.ConfigParser()
