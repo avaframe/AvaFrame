@@ -2,7 +2,6 @@ import os
 import subprocess
 import platform
 import logging
-import pandas as pd
 import numpy as np
 import pathlib
 import time
