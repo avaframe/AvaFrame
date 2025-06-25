@@ -5,11 +5,10 @@ All details about installation, running etc can be found there.
 ### Tests
 
 [<img src="https://readthedocs.org/projects/avaframe/badge/?version=latest">](http://docs.avaframe.org/en/latest/)
-![Test single python version](https://github.com/avaframe/AvaFrame/workflows/Test%20single%20python%20version/badge.svg)
-[![codecov](https://codecov.io/gh/avaframe/AvaFrame/branch/master/graph/badge.svg)](https://codecov.io/gh/avaframe/AvaFrame)
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/37487a0314a6cfee9c9f/maintainability)](https://codeclimate.com/github/avaframe/AvaFrame/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/37487a0314a6cfee9c9f/test_coverage)](https://codeclimate.com/github/avaframe/AvaFrame/test_coverage)
+[![Maintainability](https://qlty.sh/badges/61301001-b02c-4706-9603-bc0bb1269b58/maintainability.svg)](https://qlty.sh/gh/avaframe/projects/AvaFrame)
+
+[![Code Coverage](https://qlty.sh/badges/61301001-b02c-4706-9603-bc0bb1269b58/test_coverage.svg)](https://qlty.sh/gh/avaframe/projects/AvaFrame)
 
 ### License
 
