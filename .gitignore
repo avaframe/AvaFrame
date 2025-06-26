@@ -50,3 +50,5 @@ avaframe/com1DFA/*.so
 # Byte-compiled / optimized / DLL files
 # see https://github.com/github/gitignore/blob/main/Python.gitignore
 *.py[cod]
+
+*.rcf
