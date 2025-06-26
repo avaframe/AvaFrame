@@ -1,13 +1,12 @@
 import os
-import sys
 import platform
 import logging
 import numpy as np
 import pathlib
 import time
 import shutil
+import sys
 
-from avaframe.in3Utils.cfgUtils import cfgToRcf
 
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
@@ -24,15 +23,47 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs
+from avaframe.in3Utils.cfgUtils import cfgToRcf
+from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs, copyMoTFiles
 
-# create local logger
+
+# create a local logger
 log = logging.getLogger(__name__)
 
 
-def com8MoTPSAMain(cfgMain, cfgInfo=None):
+def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
+    """Run MoT-Voellmy simulations using specified configurations.
+
+    This function executes MoT-Voellmy simulations by handling
+    preprocessing, parallel execution, and postprocessing steps.
+
+    Parameters
+    ----------
+    cfgMain : configparser.ConfigParser
+        Main configuration settings for the simulation
+    cfgInfo : str or pathlib.Path or configparser.ConfigParser, optional
+        Additional configuration information, by default None
+        Can be:
+        - Path to configuration file for overrides
+        - ConfigParser object with initial configuration
+        - None to use local/default configuration
+
+    Returns
+    -------
+    None
+        Results are written to the output directory structure
+
+    Notes
+    -----
+    The function performs several key steps:
+    - Generates configuration settings for all simulations
+    - Preprocesses input data and creates RCF configuration files
+    - Executes simulations in parallel using multiple processes
+    - Handles DEM preparation by converting NaN values to zeros
+    """
+
     # Get all necessary information from the configuration files
-    currentModule = sys.modules[__name__]
+    currentModule = sys.modules[__name__] # As if you would to import com9MoTVoellmy
     simDict, inputSimFiles = MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
 
     # convert DEM from nan to 0 values
@@ -44,7 +75,7 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
         log.info("Simulation: %s" % key)
 
     # Preprocess the simulations, mainly creating the rcf files
-    rcfFiles = com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain)
+    rcfFiles = com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain)
 
     # And now we run the simulations
     startTime = time.time()
@@ -57,91 +88,146 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Create parallel pool and run
     # with multiprocessing.Pool(processes=nCPU) as pool:
     with Pool(processes=nCPU) as pool:
-        results = pool.map(com8MoTPSATask, rcfFiles)
+        results = pool.map(com9MoTVoellmyTask, rcfFiles)
         pool.close()
         pool.join()
 
     timeNeeded = "%.2f" % (time.time() - startTime)
-    log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
+    log.info("Overall (parallel) com9MoTVoellmy computation took: %s s " % timeNeeded)
     log.info("--- ENDING (potential) PARALLEL PART ----")
 
     # Postprocess the simulations
-    com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles)
+    com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles)
 
 
-def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
+def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
+    """Post-process MoT-Voellmy simulation results.
+
+    This function handles post-processing tasks after MoT-Voellmy simulations complete,
+    including copying result files to output directories and generating visualization plots.
+
+    Parameters
+    ----------
+    simDict : dict
+        Dictionary containing simulation configurations, with one entry per simulation
+    cfgMain : configparser.ConfigParser
+        Main configuration settings for the simulation
+    inputSimFiles : dict
+        Dictionary containing paths to input files (DEM, release areas, etc.)
+
+    Returns
+    -------
+    None
+        Results are written to the output directory structure
+
+    Notes
+    -----
+    The function performs several key tasks:
+    - Creates output directory structure
+    - Copies simulation result files (DataTime.txt, ppr, pfd, pfv files)
+    - Renames files according to conventions
+    - Generates visualization plots of peak fields
+    """
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
-    # Copy max files to output directory
 
-    outputDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA"
-    outputDirPeakFile = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "peakFiles"
+    # Copy max files to output directory
+    outputDirPeakFile = pathlib.Path(avalancheDir) / "Outputs" / "com9MoTVoellmy" / "peakFiles"
     fU.makeADir(outputDirPeakFile)
 
     for key in simDict:
-        workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA" / str(key)
+        workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy" / str(key)
 
-        # Copy DataTime.txt
-        dataTimeFile = workDir / "DataTime.txt"
-        shutil.copy2(dataTimeFile, outputDir / (str(key) + "_DataTime.txt"))
-
-        # TODO: functionize it
         # Copy ppr files
-        pprFiles = list(workDir.glob("*p?_max*"))
-        targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_p1_max", "null_dfa_ppr")) for f in pprFiles
-        ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_p2_max", "null_psa_ppr")) for f in targetFiles]
-        targetFiles = [outputDirPeakFile / f for f in targetFiles]
-        for source, target in zip(pprFiles, targetFiles):
-            shutil.copy2(source, target)
+        copyMoTFiles(workDir, outputDirPeakFile, "p_max", "ppr")
 
         # Copy pfd files
-        pfdFiles = list(workDir.glob("*h?_max*"))
-        targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_h1_max", "null_dfa_pfd")) for f in pfdFiles
-        ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_h2_max", "null_psa_pfd")) for f in targetFiles]
-        targetFiles = [outputDirPeakFile / f for f in targetFiles]
-        for source, target in zip(pfdFiles, targetFiles):
-            shutil.copy2(source, target)
+        copyMoTFiles(workDir, outputDirPeakFile, "h_max", "pfd")
 
         # Copy pfv files
-        pfvFiles = list(workDir.glob("*s?_max*"))
-        targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_s1_max", "null_dfa_pfv")) for f in pfvFiles
-        ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_s2_max", "null_psa_pfv")) for f in targetFiles]
-        targetFiles = [outputDirPeakFile / f for f in targetFiles]
-        for source, target in zip(pfvFiles, targetFiles):
-            shutil.copy2(source, target)
+        copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
 
     # create plots and report
     modName = __name__.split(".")[-1]
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
     fU.makeADir(reportDir)
-    print(inputSimFiles["demFile"])
 
     dem = rU.readRaster(inputSimFiles["demFile"])
+
     # Generate plots for all peakFiles
     oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
 
 
-def com8MoTPSATask(rcfFile):
-    # TODO: Obvious...
+def com9MoTVoellmyTask(rcfFile):
+    """Execute a single MoT-PSA simulation using the provided configuration file.
+
+    Parameters
+    ----------
+    rcfFile : pathlib.Path
+        Path to the RCF configuration file for the simulation
+
+    Returns
+    -------
+    list
+        The command that was executed as a list containing the executable path
+        and configuration file path
+
+    Notes
+    -----
+    Changes to the directory containing this module before executing the simulation.
+    Uses runAndCheckMoT to execute and monitor the simulation process.
+    """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    command = ["./MoT-PSA", rcfFile]
-    # command = ['/home/felix/Versioning/AvaFrame/avaframe/com8MoTPSA/MoT-PSA', rcfFile]
+
+    if os.name == "nt":
+        exeName = "./MoT-Voellmy_win.exe"
+    elif platform.system() == "Darwin":
+        message = "MoT-Voellmy does not support MacOS at the moment"
+        log.error(message)
+        raise OSError(message)
+    else:
+        exeName = "./MoT-Voellmy_linux.exe"
+
+    command = [exeName, rcfFile]
     log.info("Run simulation: %s" % rcfFile)
     runAndCheckMoT(command)
     return command
 
 
-def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
+def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
+    """Preprocess data for MoT-PSA simulations.
+
+    This function prepares the input data and configuration files needed to run
+    MoT-PSA simulations. It processes release areas, creates required directories,
+    and generates configuration files for each simulation.
+
+    Parameters
+    ----------
+    simDict : dict
+        Dictionary containing simulation configurations with one entry per simulation
+    inputSimFiles : dict
+        Dictionary containing paths to input files (DEM, release areas, etc.)
+    cfgMain : configparser.ConfigParser
+        Main configuration settings for the simulation
+
+    Returns
+    -------
+    list
+        List of pathlib.Path objects pointing to generated RCF configuration files
+        that will be used to run the simulations
+
+    Notes
+    -----
+    The function performs several key steps:
+    - Creates working directories for each simulation
+    - Processes release areas and converts them to raster format 
+    - Generates configuration files in RCF format
+    - Handles both single and multiple release scenarios
+    """
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
-    workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA"
-    cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "configurationFiles"
+    workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy"
+    cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com9MoTVoellmy" / "configurationFiles"
     fU.makeADir(cfgFileDir)
     rcfFiles = list()
 
@@ -153,9 +239,9 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         cfg = simDict[key]["cfgSim"]
 
         # convert release shape to raster with values for current sim
-        # select release area input data according to chosen release scenario
+        # select release area input data according to a chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
-        # create required input from input files
+        # create the required input from input files
         demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
         if cfg["GENERAL"].getboolean("iniStep"):
@@ -204,31 +290,26 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
 
         zeroRaster = np.full_like(releaseLine["rasterData"], 0)
 
-        releaseL1 = workInputDir / "releaseLayer1"
-        releaseL2 = workInputDir / "releaseLayer2"
+        release = workInputDir / "release"
         bedDepth = workInputDir / "dummyBedDepth"
-        bedDepo = workInputDir / "dummyBedDepo"
         bedShear = workInputDir / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseField, releaseL1, flip=True)
-        rU.writeResultToRaster(dem["header"], zeroRaster, releaseL2, flip=True)
+        rU.writeResultToRaster(dem["header"], releaseField, release, flip=True)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepo)
         rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
 
-        # set configuration for MoT-PSA
+        # set configuration for MoT-Voellmy
         cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
         cfg["Run information"]["UTM zone"] = "32N"
         cfg["Run information"]["EPSG geodetic datum code"] = "31287"
         cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
         cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfg["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
-        cfg["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
+        cfg["File names"]["Release depth filename"] = str(release) + ".asc"
         cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfg["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
         cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
         cfg["File names"]["Output filename root"] = str(workOutputDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
+
         currentModule = sys.modules[__name__]
         cfgUtils.writeCfgFile(avalancheDir, currentModule, cfg, str(key))
         cfgToRcf(cfg, rcfFileName)
