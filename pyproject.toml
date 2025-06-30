@@ -63,10 +63,14 @@ version_file = "avaframe/RELEASE-VERSION.txt"
 # Cibuildwhell
 [tool.cibuildwheel]
 # Only build on CPython 3.12
-#build = "cp312-*"
+#build = ["cp312-*"]
 skip = ["*musllinux*","*-win32"]
 build-verbosity = 1
 before-build = "pip install cython numpy"
+
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "auditwheel --verbose repair   -w {dest_dir} {wheel} --plat manylinux_2_34_x86_64"
 
 #Flake8
 [tool.flake8]
@@ -86,6 +90,7 @@ platforms = ["linux-64", "win-64", "osx-64"]
 [tool.pixi.dependencies]
 setuptools = "*"
 setuptools-scm = "*"
+cibuildwheel = ">=3.0.0,<4"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
