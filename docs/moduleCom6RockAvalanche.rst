@@ -41,22 +41,24 @@ Scarp Calculation
 Input
 ~~~~~
 
-* All input files are automatically read from the set avalancheDir. No file paths need to be specified
+* all input files are automatically read from the set avalancheDir. No file paths need to be specified
 * elevation: DEM (ASCII), which serves as the basis for calculating the scarps. Must be in avalancheDir/Inputs.
-* shapefile: A shapefile containing point geometries. These points represent the centers of the ellipsoids or planes.
-    The coordinates (x,y) of these points are used. If the plane method is used, the shape file must contain the
-    Attributes "zseed", "dip" and "slopeangle" as float values. If the ellipsoid method is used, the shape file must
-    contain the Attributes "maxdepth", "semimajor" and "semiminor". The file must be located in avalancheDir/Inputs/
-    POINTS and file name must end with “_coordinates”.
-* perimeter_shapefile: A shapefile that specifies a boundary area. Must be located in avalancheDir/Inputs/POLYGONS and file name must end with “_perimeter”.
+* geometries: a shapefile containing point geometries. These points represent the centers of the ellipsoids or planes.
+  The coordinates (x,y) of these points are used. If the plane method is used, the shape file must contain the
+  Attributes "zseed", "dip" and "slopeangle" as float values. If the ellipsoid method is used, the shape file must
+  contain the Attributes "maxdepth", "semimajor" and "semiminor". The file must be located in avalancheDir/Inputs/
+  POINTS and file name must end with “_coordinates”. If you are using the QGis Connector, the naming and location of the
+  file is not relevant.
+* perimeter: A shapefile that specifies a boundary area. Must be located in avalancheDir/Inputs/POLYGONS and file name
+  must end with “_perimeter”. If you are using the QGis Connector, the naming and location of the file is not relevant.
 
 Output
 ~~~~~~
 
 * elevscarp: Output DGM (ASCII or GeoTIFF), which maps the input DGM minus the calculated scarp. Is saved under
-  ``raster_scarp.asc`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
+  ``scarpElevation.(asc/tif)`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
 * hrelease: File path to the output DGM (ASCII or GeoTIFF), which represents the calculated scarp volumes.Is saved
-  under ``raster_rel.asc`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
+  under ``scarpHRel.(asc/tif)`` in ``avalancheDir/Outputs/com6RockAvalanche/scarp``.
 
 Config
 ~~~~~~
