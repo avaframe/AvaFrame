@@ -179,7 +179,7 @@ def com9MoTVoellmyTask(rcfFile):
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     if os.name == "nt":
-        exeName = "./MoT-Voellmy_win.exe"
+        exeName = "MoT-Voellmy_win.exe"
     elif platform.system() == "Darwin":
         message = "MoT-Voellmy does not support MacOS at the moment"
         log.error(message)
