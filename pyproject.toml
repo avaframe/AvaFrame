@@ -63,7 +63,7 @@ version_file = "avaframe/RELEASE-VERSION.txt"
 # Cibuildwhell
 [tool.cibuildwheel]
 # Only build on CPython 3.12
-#build = "cp312-*"
+build = ["cp312-*","cp311-*","cp313-*"]
 skip = ["*musllinux*","*-win32"]
 build-verbosity = 1
 before-build = "pip install cython numpy"
