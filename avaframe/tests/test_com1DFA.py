@@ -700,6 +700,7 @@ def test_initializeMassEnt():
         "cpIce": "2050.",
         "TIni": "-10.",
     }
+    cfg['EXPORTS'] = {'exportRasters': False}
 
     simTypeActual = "entres"
     dirName = pathlib.Path(__file__).parents[0]
@@ -727,7 +728,7 @@ def test_initializeMassEnt():
         entLine,
         reportAreaInfo,
         thresholdPointInPoly,
-        cfg["GENERAL"],
+        cfg,
     )
     testData = np.zeros((nrows, ncols))
     testData[0:11, 0:11] = 1.0 * 200.0
@@ -750,7 +751,7 @@ def test_initializeMassEnt():
         entLine,
         reportAreaInfo,
         thresholdPointInPoly,
-        cfg["GENERAL"],
+        cfg,
     )
 
     assert np.array_equal(entrMassRaster, np.zeros((nrows, ncols)))
@@ -2122,6 +2123,7 @@ def test_initializeSimulation(tmp_path):
         "TIni": "-10.",
         "ResistanceModel": "cRes",
     }
+    cfg['EXPORTS'] = {'exportRasters': "False"}
     # setup dem input
     demHeader = {}
     demHeader["xllcenter"] = 1.0
@@ -2291,6 +2293,7 @@ def test_initializeSimulation(tmp_path):
         "restitutionCoefficient": 1,
         "nIterDam": 1,
     }
+    cfg['EXPORTS'] = {'exportRasters': "False"}
     releaseLine = {
         "x": np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]),
         "y": np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),

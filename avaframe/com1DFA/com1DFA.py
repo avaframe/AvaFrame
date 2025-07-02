@@ -1051,6 +1051,12 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # create primary release area particles and fields
     releaseLine["header"] = dem["originalHeader"]
     inputSimLines["releaseLine"]["header"] = dem["originalHeader"]
+    # export release area raster to file
+    if cfg['EXPORTS'].getboolean('exportRasters'):
+        outDir = pathlib.Path(cfgGen['avalancheDir'], 'Outputs', 'internalRasters')
+        fU.makeADir(outDir)
+        IOf.writeResultToRaster(dem["originalHeader"], relRaster, (outDir / 'releaseRaster'), flip=True)
+        log.info('Release area raster derived from shp file saved to %s' % str(outDir / 'releaseRaster'))
     particles = initializeParticles(
         cfgGen,
         releaseLine,
@@ -1105,7 +1111,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         inputSimLines["entLine"],
         reportAreaInfo,
         thresholdPointInPoly,
-        cfgGen,
+        cfg,
     )
 
     # check if entrainment and release overlap
@@ -1621,7 +1627,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
     return secondaryReleaseInfo, reportAreaInfo
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfgGen):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, cfg):
     """Initialize mass for entrainment
 
     Parameters
@@ -1637,8 +1643,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     thresholdPointInPoly: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-    cfgGen: config parser
-        General configuration
+    cfg: config parser
+        configuration
 
     Returns
     -------
@@ -1657,14 +1663,18 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         log.info("Entrainment area features: %s" % (entLine["Name"]))
         entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine["thickness"])
         entrMassRaster = entLine["rasterData"]
+        if cfg['EXPORTS'].getboolean('exportRasters'):
+            outDir = pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Outputs', 'internalRasters')
+            IOf.writeResultToRaster(dem["originalHeader"], entrMassRaster, (outDir / 'entrainmentRaster'), flip=True)
+            log.info('Release area raster derived from shp file saved to %s' % str(outDir / 'entrainmentRaster'))
         # ToDo: not used in samos but implemented
-        # tempRaster = cfgGen.getfloat('entTempRef') + (dem['rasterData'] - cfgGen.getfloat('entMinZ'))
-        # * cfgGen.getfloat('entTempGrad')
-        # entrEnthRaster = np.where(tempRaster < 0, tempRaster*cfgGen.getfloat('cpIce'),
-        #                           tempRaster*cfgGen.getfloat('cpWtr')/cfgGen.getfloat('hFusion'))
+        # tempRaster = cfg['GENERAL'].getfloat('entTempRef') + (dem['rasterData'] - cfg['GENERAL'].getfloat('entMinZ'))
+        # * cfg['GENERAL'].getfloat('entTempGrad')
+        # entrEnthRaster = np.where(tempRaster < 0, tempRaster*cfg['GENERAL'].getfloat('cpIce'),
+        #                           tempRaster*cfg['GENERAL'].getfloat('cpWtr')/cfg['GENERAL'].getfloat('hFusion'))
         entrEnthRaster = np.where(
             entrMassRaster > 0,
-            cfgGen.getfloat("entTempRef") * cfgGen.getfloat("cpIce"),
+            cfg['GENERAL'].getfloat("entTempRef") * cfg['GENERAL'].getfloat("cpIce"),
             0,
         )
         reportAreaInfo["entrainment"] = "Yes"
@@ -1673,7 +1683,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entrEnthRaster = np.zeros((nrows, ncols))
         reportAreaInfo["entrainment"] = "No"
 
-    entrMassRaster = entrMassRaster * cfgGen.getfloat("rhoEnt")
+    entrMassRaster = entrMassRaster * cfg['GENERAL'].getfloat("rhoEnt")
 
     return entrMassRaster, entrEnthRaster, reportAreaInfo
 
