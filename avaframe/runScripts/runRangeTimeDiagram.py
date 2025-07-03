@@ -14,10 +14,24 @@ import avaframe.in1Data.getInput as gI
 import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
-
 #+++++++++++++USER INPUT++++++++
 # if True use preprocessedData
 preProcessedData = False
+comModule = 'com1DFA'
+#++++++++++++++++++++++++++++++
+# IF comModule != com1DFA
+# required simulation results: FV or FT fields for desired time steps (e.g every second) in avalancheDir/Outputs/comModule/peakFiles/timeSteps
+# in addition, peak files (pft or pfv) for each simulation are required in avalancheDir/Outputs/comModule/peakFiles
+# file name format A_B_C_D_E., where:
+# A - releaseAreaScenario: refers to the name of the release shape file
+# B - simulationID: needs to be unique for the respective simulation
+# C - simType: refers to null (no entrainment, no resistance), ent (with entrainment), res (with resistance), entres (with entrainment and resistance)
+# D - modelType: can be any descriptive string of the employed model (here dfa for dense flow avalanche)
+# E - result type: is pft (peak flow thickness) and pfv (peak flow velocity)
+
+# if not com1DFA was used to create FV or FT fields, provide here a path to the DEM file that has been used to perform to the simulations
+# path needs to be relative to avalancheDir/Inputs
+demPath = ""
 #++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
@@ -72,24 +86,31 @@ if preProcessedData:
 else:
 
     # fetch all flow parameter result fields
-    configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    configDir = pathlib.Path(avalancheDir, 'Outputs', comModule, 'configurationFiles')
     if (configDir.is_dir() is False) or ( len(list(configDir.glob('*.ini'))) == 0):
-        fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
-            configDir))
+        log.warning('No configuration files found in %s' % configDir)
+        # fetch info on available simulations
+        simDF, resTypeListAll = fU.makeSimFromResDF(avalancheDir, comModule=comModule, inputDir="", simName="")
+    else:
+        simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
 
-    # fetch info on available simulations
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
     for index, simDFrow in simDF.iterrows():
 
         log.info('Perform range-time diagram for simulation: %s' % index)
 
         # fetch simulation dem
         # get dem dictionary - already read DEM with correct mesh cell size
-        dem = gI.initializeDEM(avalancheDir, demPath=simDF['DEM'].loc[index])
+        if comModule == 'com1DFA':
+            dem = gI.initializeDEM(avalancheDir, demPath=simDF['DEM'].loc[index])
+        else:
+            dem = gI.initializeDEM(avalancheDir, demPath=demPath)
         dem['originalHeader'] = dem['header'].copy()
 
         # add simHash info
-        cfgRangeTime['GENERAL']['simHash'] = index
+        if comModule == 'com1DFA':
+            cfgRangeTime['GENERAL']['simHash'] = index
+        else:
+            cfgRangeTime['GENERAL']['simHash'] = simDFrow['simHash']
 
         # setup required data
         mtiInfo = dtAna.setupRangeTimeDiagram(dem, cfgRangeTime)
