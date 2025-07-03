@@ -218,9 +218,9 @@ def _splitDeepDiffValuesChangedItem(inKey, inVal):
 
     Parameters
     -----------
-    inputKey: str
+    inKey: str
         key of a deepdiff changed_values item
-    inputValue: dict
+    inVal: dict
         value of a deepdiff changed_values item
 
     Returns
@@ -985,3 +985,4 @@ def cfgToRcf(cfg, fileName):
                 key = key.strip()
                 f.write(f"{key:<40}{value}\n")
             f.write("#\n")
+

@@ -16,6 +16,9 @@ import pytest
 import configparser
 import shutil
 import pathlib
+from scipy.stats import qmc
+
+
 
 
 def test_probAnalysis(tmp_path):
@@ -1136,3 +1139,129 @@ def test_checkForNumberOfReferenceValues():
     with pytest.raises(AssertionError) as e:
         assert pA.checkForNumberOfReferenceValues(cfg["GENERAL"], "relTh")
     assert "Only one reference value is allowed for relTh" in str(e.value)
+
+
+
+
+def test_createSample_latin():
+    """Test Latin Hypercube sampling method"""
+
+    # Create test configuration
+    testConfig = configparser.ConfigParser()
+    testConfig["PROBRUN"] = {
+        "nSample": "50",
+        "sampleSeed": "12345",
+        "sampleMethod": "latin"
+    }
+
+    testParList = ["param1", "param2", "param3"]
+
+    from avaframe.ana4Stats.probAna import createSample
+    resultSample = createSample(testConfig, testParList)
+
+    # Check sample properties
+    assert isinstance(resultSample, np.ndarray)
+    assert resultSample.shape == (50, 3)  # nSample x number of parameters
+    assert np.all(resultSample >= 0) and np.all(resultSample <= 1)  # Values should be in [0,1]
+
+    # Check Latin Hypercube properties
+    for colIdx in range(resultSample.shape[1]):
+        # Check if values are well distributed (no clustering)
+        binCounts = np.histogram(resultSample[:, colIdx], bins=10)[0]
+        assert np.all(binCounts > 0)  # Each bin should have at least one sample
+
+
+def test_createSample_morris():
+    """Test Morris sampling method"""
+
+    # Create test configuration
+    testConfig = configparser.ConfigParser()
+    testConfig["PROBRUN"] = {
+        "nSample": "4",
+        "sampleSeed": "12345",
+        "sampleMethod": "morris"
+    }
+
+    testParList = ["param1", "param2"]
+
+    from avaframe.ana4Stats.probAna import createSample
+    resultSample = createSample(testConfig, testParList)
+
+    # Check sample properties for Morris method
+    expectedSampleSize = 4 * (len(testParList) + 1)  # Morris method formula
+    assert resultSample.shape == (expectedSampleSize, 2)
+    assert np.all(resultSample >= 0) and np.all(resultSample <= 1)
+
+
+def test_createSample_reproducibility():
+    """Test reproducibility with same seed"""
+
+    # Create test configuration
+    testConfig = configparser.ConfigParser()
+    testConfig["PROBRUN"] = {
+        "nSample": "30",
+        "sampleSeed": "54321",
+        "sampleMethod": "latin"
+    }
+
+    testParList = ["param1", "param2"]
+
+    from avaframe.ana4Stats.probAna import createSample
+
+    # Generate two samples with same seed
+    firstSample = createSample(testConfig, testParList)
+    secondSample = createSample(testConfig, testParList)
+
+    # Check if samples are identical
+    np.testing.assert_array_equal(firstSample, secondSample)
+
+
+def test_createSample_different_seeds():
+    """Test different seeds produce different samples"""
+
+    # Create test configurations with different seeds
+    testConfig1 = configparser.ConfigParser()
+    testConfig1["PROBRUN"] = {
+        "nSample": "30",
+        "sampleSeed": "12345",
+        "sampleMethod": "latin"
+    }
+
+    testConfig2 = configparser.ConfigParser()
+    testConfig2["PROBRUN"] = {
+        "nSample": "30",
+        "sampleSeed": "54321",
+        "sampleMethod": "latin"
+    }
+
+    testParList = ["param1", "param2"]
+
+    from avaframe.ana4Stats.probAna import createSample
+
+    # Generate samples with different seeds
+    firstSample = createSample(testConfig1, testParList)
+    secondSample = createSample(testConfig2, testParList)
+
+    # Check if samples are different
+    with pytest.raises(AssertionError):
+        np.testing.assert_array_equal(firstSample, secondSample)
+
+
+def test_createSample_invalid_method():
+    """Test handling of invalid sampling method"""
+
+    # Create test configuration with invalid method
+    testConfig = configparser.ConfigParser()
+    testConfig["PROBRUN"] = {
+        "nSample": "30",
+        "sampleSeed": "12345",
+        "sampleMethod": "invalid_method"
+    }
+
+    testParList = ["param1", "param2"]
+
+    from avaframe.ana4Stats.probAna import createSample
+
+    # Check if appropriate error is raised
+    with pytest.raises(AssertionError):
+        createSample(testConfig, testParList)
