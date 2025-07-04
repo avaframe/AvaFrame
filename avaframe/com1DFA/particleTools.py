@@ -227,6 +227,8 @@ def removePart(particles, mask, nRemove, reasonString='', snowSlide=0):
     for key in particles:
         if key == 'nPart':
             particles['nPart'] = particles['nPart'] - nRemove
+        elif key == 'stoppedParticles':
+            continue
         # for all keys in particles that are arrays of size nPart do:
         elif type(particles[key]).__module__ == np.__name__:
             if np.size(particles[key]) == nPart:
