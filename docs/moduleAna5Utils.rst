@@ -99,7 +99,7 @@ kinetic energy :math:`\overline{\frac{1}{2}m\mathbf{u^2}}(t)` or travel distance
 
 Path extension
 ==============
-The mass average path is extended towards the top of the release area to produce meaningful results when usedin modules
+The mass average path is extended towards the top of the release area to produce meaningful results when used in modules
 such as com2AB. Since the outcomes from the :math:`\alpha\beta` analysis depend on the starting point of the path
 profile, adjusting the starting point will shift the :math:`\alpha` angle upwards or downwards, subsequently affecting
 the runout value.
