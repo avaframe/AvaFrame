@@ -99,7 +99,7 @@ kinetic energy :math:`\overline{\frac{1}{2}m\mathbf{u^2}}(t)` or travel distance
 
 Path extension
 ==============
-The mass average path is extended towards the top of the release area to produce meaningful results when used in modules
+The mass average path is extended towards the top of the release area to produce meaningful results when usedin modules
 such as com2AB. Since the outcomes from the :math:`\alpha\beta` analysis depend on the starting point of the path
 profile, adjusting the starting point will shift the :math:`\alpha` angle upwards or downwards, subsequently affecting
 the runout value.
@@ -207,6 +207,19 @@ As a postprocessing step:
 
 * in your local copy of ``ana5Utils/distanceTimeAnalysisCfg.ini`` you can adjust the default settings
   for the generation of the diagrams
+
+Using result fields from another module than :py:mod:`com1DFA`:
+
+* provide name of comModule in the user input part of :py:mod:`runScripts.runThalwegTimeDiagram.py`
+* save your result files for FV or FT in ``avalancheDirectory/Outputs/comModule/peakFiles/timesteps`` and the peak
+  files for the corresponding simulation and result type to ``avalancheDirectory/Outputs/comModule/peakFiles``.
+* file names have to be of this format: *A_B_C_D_E.*, where:
+
+   - A - *releaseAreaScenario*: refers to the name of the release shape file
+   - B - *simulationID*: needs to be unique for the respective simulation
+   - C - *simType*: refers to null (no entrainment, no resistance), ent (with entrainment), res (with resistance), entres (with entrainment and resistance)
+   - D - *modelType*: can be any descriptive string of the employed model (here dfa for dense flow  avalanche)
+   - E - *result type*: is pft (peak flow thickness) and pfv (peak flow velocity)
 
 The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
 
