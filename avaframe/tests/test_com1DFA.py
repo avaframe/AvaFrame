@@ -702,7 +702,7 @@ def test_initializeMassEnt():
         "cpIce": "2050.",
         "TIni": "-10.",
     }
-    cfg['EXPORTS'] = {'exportRasters': False}
+    cfg["EXPORTS"] = {"exportRasters": False}
 
     simTypeActual = "entres"
     dirName = pathlib.Path(__file__).parents[0]
@@ -1824,7 +1824,12 @@ def test_initializeFields():
     }
     cfg = configparser.ConfigParser()
     cfg["REPORT"] = {"plotFields": "ppr|pft|pfv"}
-    cfg["GENERAL"] = {"rho": "200.", "interpOption": "2", "resType": "ppr|pft|pfv", "rhoEnt": 200}
+    cfg["GENERAL"] = {
+        "rho": "200.",
+        "interpOption": "2",
+        "resType": "ppr|pft|pfv",
+        "rhoEnt": 200,
+    }
 
     dem["originalHeader"] = dem["header"]
     dem["header"]["xllcenter"] = 0.0
@@ -1863,7 +1868,12 @@ def test_initializeFields():
     assert np.sum(fields["FTEnt"]) == 0.0
 
     cfg["REPORT"] = {"plotFields": "pft|pfv"}
-    cfg["GENERAL"] = {"resType": "pke|pta|pft|pfv", "rho": "200.", "interpOption": "2", "rhoEnt": 200}
+    cfg["GENERAL"] = {
+        "resType": "pke|pta|pft|pfv",
+        "rho": "200.",
+        "interpOption": "2",
+        "rhoEnt": 200,
+    }
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
     assert len(fields) == 23
@@ -2147,7 +2157,7 @@ def test_initializeSimulation(tmp_path):
         "TIni": "-10.",
         "ResistanceModel": "cRes",
     }
-    cfg['EXPORTS'] = {'exportRasters': "False"}
+    cfg["EXPORTS"] = {"exportRasters": "False"}
     # setup dem input
     demHeader = {}
     demHeader["xllcenter"] = 1.0
@@ -2317,7 +2327,7 @@ def test_initializeSimulation(tmp_path):
         "restitutionCoefficient": 1,
         "nIterDam": 1,
     }
-    cfg['EXPORTS'] = {'exportRasters': "False"}
+    cfg["EXPORTS"] = {"exportRasters": "False"}
     releaseLine = {
         "x": np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]),
         "y": np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
@@ -2441,7 +2451,7 @@ def test_runCom1DFA(tmp_path, caplog):
         "tPlot",
         "dmEnt",
         "massStopped",
-        "stoppedParticles"
+        "stoppedParticles",
     ]
 
     # read one particles dictionary
@@ -2626,8 +2636,8 @@ def test_fetchRelVolume(tmp_path):
 
     assert relVolume == 38.0
 
-def test_adaptDEM():
 
+def test_adaptDEM():
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "methodMeshNormal": 1,
@@ -2642,11 +2652,15 @@ def test_adaptDEM():
         "cellsize": 5,
     }
 
-    data = np.array([[1., 2., 3., 4., 5.],
-                    [1., 2., 3., 4., 5.],
-                    [1., 2., 3., 4., 5.],
-                    [1., 2., 3., 4., 5.],
-                    [1., 2., 3., 4., 5.],])
+    data = np.array(
+        [
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+        ]
+    )
     dem = {
         "header": header,
         "rasterData": data,
@@ -2767,11 +2781,17 @@ def test_adaptDEM():
     demInput = dem.copy()
     demAdapted, fieldsAdapted = com1DFA.adaptDEM(demInput, fieldsInput, cfg["GENERAL"])
 
-    assert np.all(demAdapted["rasterData"] == np.array([[1., 2., 3., 4., 5.],
-                                                [1., 2., 3., 4., 5.],
-                                                [1., 2., 3., 4., 5.] + 1 / NzNormed[2],
-                                                [1., 2., 3., 4., 5.],
-                                                [1., 2., 3., 4., 5.]])
+    assert np.all(
+        demAdapted["rasterData"]
+        == np.array(
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+                [1.0, 2.0, 3.0, 4.0, 5.0] + 1 / NzNormed[2],
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+            ]
+        )
     )
     assert np.any(demAdapted["Nx"] != dem["Nx"])
     assert np.any(demAdapted["Ny"] != dem["Ny"])

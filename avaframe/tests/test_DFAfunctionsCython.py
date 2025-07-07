@@ -240,7 +240,7 @@ def test_updatePositionC():
         "iterate": True,
         "totalEnthalpy": np.asarray([0.0, 0.0, 0.0]),
         "velocityMag": np.asarray([1.0, 1.0, 1.0]),
-        "h": np.asarray([1., 1., 1.]),
+        "h": np.asarray([1.0, 1.0, 1.0]),
         "ID": np.array([0, 1, 2]),
         "stoppedParticles": {},
     }
@@ -351,7 +351,7 @@ def test_updatePositionC():
         "peakMassFlowing": 0.0,
         "iterate": True,
         "totalEnthalpy": np.asarray([0.0, 0.0, 0.0]),
-        "h": np.asarray([1., 1., 1.]),
+        "h": np.asarray([1.0, 1.0, 1.0]),
         "ID": np.array([0, 1, 2]),
         "stoppedParticles": {},
     }
@@ -397,7 +397,7 @@ def test_updatePositionC():
         "peakMassFlowing": 0.0,
         "iterate": True,
         "totalEnthalpy": np.asarray([0.0, 0.0, 0.0]),
-        "h": np.asarray([1., 1., 1.]),
+        "h": np.asarray([1.0, 1.0, 1.0]),
         "ID": np.array([0, 1, 2]),
         "stoppedParticles": {},
     }
@@ -463,7 +463,7 @@ def test_updatePositionC():
         "peakMassFlowing": 0.0,
         "iterate": True,
         "totalEnthalpy": np.asarray([0.0, 0.0, 0.0]),
-        "h": np.asarray([1., 1., 1.]),
+        "h": np.asarray([1.0, 1.0, 1.0]),
         "ID": np.array([0, 1, 2]),
         "stoppedParticles": {},
     }
@@ -496,35 +496,61 @@ def test_updatePositionC():
     assert (potEneNew - 1.0e-4) < particles["potentialEne"] < (potEneNew + 1.0e-4)
     assert particles["iterate"] == True
 
-    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 'trajectoryLengthXY': np.asarray([0., 0., 0.]),
-                  'trajectoryLengthXYCor': np.asarray([0., 0., 0.]), 'trajectoryLengthXYZ': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
-                  'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([0., 1., 1.]), 'uy': np.asarray([0., 1., 1.]),
-                  'uz': np.asarray([0., 0., 0.]), 'uAcc': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 0.0,
-                  'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
-                  'peakMassFlowing': 0.0, 'iterate': True, 'totalEnthalpy': np.asarray([0., 0., 0.]),
-                  'velocityMag': np.asarray([0., 1., 1.]), 'h': np.asarray([1., 1., 1.]), 'ID': np.array([0, 1, 2]), 'stoppedParticles': {}}
-    particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
+    particles = {
+        "dt": 1.0,
+        "m": np.asarray([10.0, 10.0, 10.0]),
+        "idFixed": np.asarray([0.0, 0.0, 0.0]),
+        "trajectoryLengthXY": np.asarray([0.0, 0.0, 0.0]),
+        "trajectoryLengthXYCor": np.asarray([0.0, 0.0, 0.0]),
+        "trajectoryLengthXYZ": np.asarray([0.0, 0.0, 0.0]),
+        "x": np.asarray([0.0, 1.0, 2.0]),
+        "y": np.asarray([2.0, 3.0, 4.0]),
+        "z": np.asarray([1.0, 1.0, 1.0]),
+        "ux": np.asarray([0.0, 1.0, 1.0]),
+        "uy": np.asarray([0.0, 1.0, 1.0]),
+        "uz": np.asarray([0.0, 0.0, 0.0]),
+        "uAcc": np.asarray([0.0, 0.0, 0.0]),
+        "kineticEne": 0.0,
+        "peakKinEne": 0.0,
+        "peakForceSPH": 0.0,
+        "forceSPHIni": 0.0,
+        "nPart": 3,
+        "peakMassFlowing": 0.0,
+        "iterate": True,
+        "totalEnthalpy": np.asarray([0.0, 0.0, 0.0]),
+        "velocityMag": np.asarray([0.0, 1.0, 1.0]),
+        "h": np.asarray([1.0, 1.0, 1.0]),
+        "ID": np.array([0, 1, 2]),
+        "stoppedParticles": {},
+    }
+    particles["potentialEne"] = np.sum(9.81 * particles["z"] * particles["m"])
 
-    force = {'forceZ': np.asarray([0., 0., 0.]), 'forceFrict': np.asarray([10., 10., 10.]),
-            'dM': np.asarray([0., 0., 0.]), 'dMDet': np.asarray([0., 0., 0.]),
-            'forceX': np.asarray([0., 50., 50.]), 'forceY': np.asarray([0., 50., 50.]),
-            'forceSPHX': np.asarray([0., 50., 50.]),
-            'forceSPHY': np.asarray([0., 50., 50.]), 'forceSPHZ': np.asarray([0., 0., 0.])}
-    
-    cfg['GENERAL']['delStoppedParticles'] = '1'
-    cfg['GENERAL']['explicitFriction'] = '1'
-    cfg['GENERAL']['snowSlide'] = '0'
+    force = {
+        "forceZ": np.asarray([0.0, 0.0, 0.0]),
+        "forceFrict": np.asarray([10.0, 10.0, 10.0]),
+        "dM": np.asarray([0.0, 0.0, 0.0]),
+        "dMDet": np.asarray([0.0, 0.0, 0.0]),
+        "forceX": np.asarray([0.0, 50.0, 50.0]),
+        "forceY": np.asarray([0.0, 50.0, 50.0]),
+        "forceSPHX": np.asarray([0.0, 50.0, 50.0]),
+        "forceSPHY": np.asarray([0.0, 50.0, 50.0]),
+        "forceSPHZ": np.asarray([0.0, 0.0, 0.0]),
+    }
+
+    cfg["GENERAL"]["delStoppedParticles"] = "1"
+    cfg["GENERAL"]["explicitFriction"] = "1"
+    cfg["GENERAL"]["snowSlide"] = "0"
     typeStop = 1
 
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, fields, typeStop=typeStop)
-    assert np.array_equal(particles['stoppedParticles']['m'], np.array([10.]))
-    assert particles['stoppedParticles']['x'] == 0.
-    assert particles['stoppedParticles']['y'] == 2.
-    assert particles['stoppedParticles']['ID'] == 0
-    assert np.array_equal(particles['ID'], np.array([1, 2]))
-    assert particles['nPart'] == 2
-    assert np.all(particles['velocityMag'] > 0)
-    assert particles['massStopped'] == - np.sum(particles['stoppedParticles']['m'])
+    particles = DFAfunC.updatePositionC(cfg["GENERAL"], particles, dem, force, fields, typeStop=typeStop)
+    assert np.array_equal(particles["stoppedParticles"]["m"], np.array([10.0]))
+    assert particles["stoppedParticles"]["x"] == 0.0
+    assert particles["stoppedParticles"]["y"] == 2.0
+    assert particles["stoppedParticles"]["ID"] == 0
+    assert np.array_equal(particles["ID"], np.array([1, 2]))
+    assert particles["nPart"] == 2
+    assert np.all(particles["velocityMag"] > 0)
+    assert particles["massStopped"] == -np.sum(particles["stoppedParticles"]["m"])
 
 
 def test_computeTrajectoryAngle():
