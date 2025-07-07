@@ -189,7 +189,7 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         timeNeeded = "%.2f" % (time.time() - startTime)
         log.info("Overall (parallel) com1DFA computation took: %s s " % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
-        
+
         dem = com1DFATools.chooseDemPlot(dem, adaptedDemBackground=adaptDemPlot)
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
@@ -1058,11 +1058,11 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     releaseLine["header"] = dem["originalHeader"]
     inputSimLines["releaseLine"]["header"] = dem["originalHeader"]
     # export release area raster to file
-    if cfg['EXPORTS'].getboolean('exportRasters'):
-        outDir = pathlib.Path(cfgGen['avalancheDir'], 'Outputs', 'internalRasters')
+    if cfg["EXPORTS"].getboolean("exportRasters"):
+        outDir = pathlib.Path(cfgGen["avalancheDir"], "Outputs", "internalRasters")
         fU.makeADir(outDir)
-        IOf.writeResultToRaster(dem["originalHeader"], relRaster, (outDir / 'releaseRaster'), flip=True)
-        log.info('Release area raster derived from shp file saved to %s' % str(outDir / 'releaseRaster'))
+        IOf.writeResultToRaster(dem["originalHeader"], relRaster, (outDir / "releaseRaster"), flip=True)
+        log.info("Release area raster derived from shp file saved to %s" % str(outDir / "releaseRaster"))
     particles = initializeParticles(
         cfgGen,
         releaseLine,
@@ -1683,10 +1683,17 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         log.info("Entrainment area features: %s" % (entLine["Name"]))
         entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine["thickness"])
         entrMassRaster = entLine["rasterData"]
-        if cfg['EXPORTS'].getboolean('exportRasters'):
-            outDir = pathlib.Path(cfg['GENERAL']['avalancheDir'], 'Outputs', 'internalRasters')
-            IOf.writeResultToRaster(dem["originalHeader"], entrMassRaster, (outDir / 'entrainmentRaster'), flip=True)
-            log.info('Release area raster derived from shp file saved to %s' % str(outDir / 'entrainmentRaster'))
+        if cfg["EXPORTS"].getboolean("exportRasters"):
+            outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
+            IOf.writeResultToRaster(
+                dem["originalHeader"],
+                entrMassRaster,
+                (outDir / "entrainmentRaster"),
+                flip=True,
+            )
+            log.info(
+                "Release area raster derived from shp file saved to %s" % str(outDir / "entrainmentRaster")
+            )
         # ToDo: not used in samos but implemented
         # tempRaster = cfg['GENERAL'].getfloat('entTempRef') + (dem['rasterData'] - cfg['GENERAL'].getfloat('entMinZ'))
         # * cfg['GENERAL'].getfloat('entTempGrad')
@@ -1694,7 +1701,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         #                           tempRaster*cfg['GENERAL'].getfloat('cpWtr')/cfg['GENERAL'].getfloat('hFusion'))
         entrEnthRaster = np.where(
             entrMassRaster > 0,
-            cfg['GENERAL'].getfloat("entTempRef") * cfg['GENERAL'].getfloat("cpIce"),
+            cfg["GENERAL"].getfloat("entTempRef") * cfg["GENERAL"].getfloat("cpIce"),
             0,
         )
         reportAreaInfo["entrainment"] = "Yes"
@@ -1703,7 +1710,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entrEnthRaster = np.zeros((nrows, ncols))
         reportAreaInfo["entrainment"] = "No"
 
-    entrMassRaster = entrMassRaster * cfg['GENERAL'].getfloat("rhoEnt")
+    entrMassRaster = entrMassRaster * cfg["GENERAL"].getfloat("rhoEnt")
 
     return entrMassRaster, entrEnthRaster, reportAreaInfo
 

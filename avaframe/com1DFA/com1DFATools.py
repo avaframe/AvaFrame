@@ -469,7 +469,7 @@ def chooseDemPlot(dem, adaptedDemBackground=False):
     -----------
     adaptedDemBackground: bool
         if True the adapted DEM is used as background in the plots
-    
+
     Returns
     -------
     demPlot: dict
@@ -479,9 +479,9 @@ def chooseDemPlot(dem, adaptedDemBackground=False):
     demPlot = dem.copy()
     # choose if the input DEM or the adapted DEM is used as background
     if adaptedDemBackground:
-        demPlot['rasterData'] = dem['rasterData']
+        demPlot["rasterData"] = dem["rasterData"]
         log.info("The resulting adapted DEM is used in the plots.")
     else:
-        demPlot['rasterData'] = dem["originalRasterData"]
+        demPlot["rasterData"] = dem["originalRasterData"]
         log.info("The original DEM is used in the plots.")
     return demPlot

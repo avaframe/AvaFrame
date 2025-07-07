@@ -203,7 +203,15 @@ colorsProb = ["#FEF1F1", "#B2AB96", "#5B8BA3", "#2D5393", "#1A0C64"]
 cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
 
 levSfcC = list(fU.splitIniValueToArraySteps(cfgPlotUtils["surfaceChangeLevels"]))
-colorsSfcC = ['#fefeb2', '#d2d184', '#bab98d', '#a0a598', '#6f878d', '#386982', '#05598c']
+colorsSfcC = [
+    "#fefeb2",
+    "#d2d184",
+    "#bab98d",
+    "#a0a598",
+    "#6f878d",
+    "#386982",
+    "#05598c",
+]
 cmapSfcChange = copy.copy(cmapCrameri.nuuk.reversed())
 
 

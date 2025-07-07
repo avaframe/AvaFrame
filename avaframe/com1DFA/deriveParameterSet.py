@@ -152,7 +152,7 @@ def checkResType(fullCfg, section, key, value):
             "dmDet",
             "FTDet",
             "sfcChange",
-            "demAdapted"
+            "demAdapted",
         ]
         message = "The parameter % s is not a valid resType. It will not be saved"
         newResType = []
