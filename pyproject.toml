@@ -18,14 +18,13 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13"
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "numpy",
     "matplotlib",
@@ -90,7 +89,7 @@ platforms = ["linux-64", "win-64", "osx-64"]
 [tool.pixi.dependencies]
 setuptools = "*"
 setuptools-scm = "*"
-cibuildwheel = ">=3.0.0,<4"
+cibuildwheel = "*"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
