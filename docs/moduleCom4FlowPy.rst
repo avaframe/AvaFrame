@@ -229,8 +229,8 @@ By default the following four output layers are written to disk at the end of th
 
 - ``zdelta``: the maximum z_delta of all paths for every raster cell (geometric measure of process magnitude, can be associated to kinetic energy/velocity)
 - ``cellCounts``: number of paths/release cells that route flux through a raster cell
-- ``travelLength``: the travel length along the flow path
-- ``fpTravelAngle``: the gamma angle along the flow path
+- ``travelLengthMax``: the travel length along the flow path (the maximum value of all paths for every raster cell) - **this output is equivalent to the ``travelLength`` output from previous code versions!**
+- ``fpTravelAngleMax``: the gamma angle along the flow path (the maximum value of all paths for every raster cell) - **this output is equivalent to the ``fpTravelAngle``output used in previous versions of the code!!**
 
 In addition these output layers are also available:
 
@@ -239,6 +239,8 @@ In addition these output layers are also available:
 - ``slTravelAngle``: gamma angle calculated along a straight-line between release cell and current cell
 - ``routFluxSum``: routing flux summed up over all paths
 - ``depFluxSum``: deposited flux summed up over all paths
+- ``travelLengthMin``: the travel length along the flow path (the minimum value of all paths for every raster cell)
+- ``fpTravelAngleMin``: the gamma angle along the flow path (the minimum value of all paths for every raster cell)
 
 If ``forestInteraction = True`` this layer will be written automatically (no need to separately define in ``outputFiles``):
 
