@@ -518,13 +518,15 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     # Merge calculated tiles
     zDelta = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta")
     flux = SPAM.mergeRaster(modelPaths["tempDir"], "res_flux")
-    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method='sum')
-    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method='sum')
-    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method='sum')
-    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method='sum')
-    fpTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp")
+    cellCounts = SPAM.mergeRaster(modelPaths["tempDir"], "res_count", method="sum")
+    zDeltaSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_z_delta_sum", method="sum")
+    routFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_rout_flux_sum", method="sum")
+    depFluxSum = SPAM.mergeRaster(modelPaths["tempDir"], "res_dep_flux_sum", method="sum")
+    fpTaMax = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp_max")
+    fpTaMin = SPAM.mergeRaster(modelPaths["tempDir"], "res_fp_min", method="min")
     slTa = SPAM.mergeRaster(modelPaths["tempDir"], "res_sl")
-    travelLength = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length")
+    travelLengthMax = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length_max")
+    travelLengthMin = SPAM.mergeRaster(modelPaths["tempDir"], "res_travel_length_min", method="min")
 
     if modelOptions["infraBool"]:
         backcalc = SPAM.mergeRaster(modelPaths["tempDir"], "res_backcalc")
@@ -542,7 +544,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     demHeader = IOf.readRasterHeader(modelPaths["demPath"])
     outputHeader = demHeader.copy()
     outputHeader["nodata_value"]=-9999
-    
+
     if _oF == ".asc":
         outputHeader["driver"] = "AAIGrid"
     elif _oF == ".tif":
@@ -566,20 +568,42 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if 'depFluxSum' in _outputs:
         output = IOf.writeResultToRaster(outputHeader, depFluxSum,
                                          modelPaths["resDir"] / "com4_{}_{}_depFluxSum".format(_uid, _ts), flip=True)
-    if 'fpTravelAngle' in _outputs:
-        output = IOf.writeResultToRaster(outputHeader, fpTa,
-                                         modelPaths["resDir"] / "com4_{}_{}_fpTravelAngle".format(_uid, _ts), flip=True)
+    if "fpTravelAngle" in _outputs or "fpTravelAngleMax" in _outputs:
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            fpTaMax,
+            modelPaths["resDir"] / "com4_{}_{}_fpTravelAngleMax".format(_uid, _ts),
+            flip=True,
+        )
+    if "fpTravelAngleMin" in _outputs:
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            fpTaMin,
+            modelPaths["resDir"] / "com4_{}_{}_fpTravelAngleMin".format(_uid, _ts),
+            flip=True,
+        )
     if 'slTravelAngle' in _outputs:
         output = IOf.writeResultToRaster(outputHeader, slTa,
                                          modelPaths["resDir"] / "com4_{}_{}_slTravelAngle".format(_uid, _ts), flip=True)
-    if 'travelLength' in _outputs:
-        output = IOf.writeResultToRaster(outputHeader, travelLength,
-                                         modelPaths["resDir"] / "com4_{}_{}_travelLength".format(_uid, _ts), flip=True)
+    if "travelLength" in _outputs or "travelLengthMax" in _outputs:
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            travelLengthMax,
+            modelPaths["resDir"] / "com4_{}_{}_travelLengthMax".format(_uid, _ts),
+            flip=True,
+        )
+    if "travelLengthMin" in _outputs:
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            travelLengthMin,
+            modelPaths["resDir"] / "com4_{}_{}_travelLengthMin".format(_uid, _ts),
+            flip=True,
+        )
 
     # NOTE:
     # if not modelOptions["infraBool"]:  # if no infra
-        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
-        # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
+    # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
+    # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
     if modelOptions["infraBool"]:  # if infra
         output = IOf.writeResultToRaster(outputHeader, backcalc,
                                          modelPaths["resDir"] / "com4_{}_{}_backcalculation".format(_uid, _ts), flip=True)
