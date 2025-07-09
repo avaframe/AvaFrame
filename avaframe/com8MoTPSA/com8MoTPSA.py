@@ -56,18 +56,21 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
     # Create parallel pool and run
     # with multiprocessing.Pool(processes=nCPU) as pool:
-    with Pool(processes=nCPU) as pool:
-        results = pool.map(com8MoTPSATask, rcfFiles)
-        pool.close()
-        pool.join()
+    # check prior if there is any simulation to run
+    if bool(simDict):
+        with Pool(processes=nCPU) as pool:
+            results = pool.map(com8MoTPSATask, rcfFiles)
+            pool.close()
+            pool.join()
 
-    timeNeeded = "%.2f" % (time.time() - startTime)
-    log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
-    log.info("--- ENDING (potential) PARALLEL PART ----")
+        timeNeeded = "%.2f" % (time.time() - startTime)
+        log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
+        log.info("--- ENDING (potential) PARALLEL PART ----")
 
-    # Postprocess the simulations
-    com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles)
-
+        # Postprocess the simulations
+        com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles)
+    else:
+        log.warning("There is no simulation to be performed for releaseScenario")
 
 def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
@@ -114,6 +117,14 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
+
+        # write text file to Outputs/com8MoTPSA/configurationFilesDone to indicate that this simulation has been performed
+        configFileName = "%s.ini" % key
+        for saveDir in ["configurationFilesDone", "configurationFilesLatest"]:
+            configDir = pathlib.Path(avalancheDir, "Outputs", "com8MoTPSA", "configurationFiles", saveDir)
+            with open((configDir / configFileName), "w") as fi:
+                fi.write("see directory configurationFiles for info on config")
+            fi.close()
 
     # create plots and report
     modName = __name__.split(".")[-1]
