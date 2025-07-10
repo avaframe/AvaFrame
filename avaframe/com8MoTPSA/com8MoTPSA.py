@@ -25,6 +25,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs
+from avaframe.in3Utils.initializeProject import _checkForFolderAndDelete
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -54,25 +55,60 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get number of CPU Cores wanted
     nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(rcfFiles))
 
-    # Create parallel pool and run
-    # with multiprocessing.Pool(processes=nCPU) as pool:
-    # check prior if there is any simulation to run
-    if bool(simDict):
-        with Pool(processes=nCPU) as pool:
-            results = pool.map(com8MoTPSATask, rcfFiles)
-            pool.close()
-            pool.join()
+    # if length of rcfFiles is too long, split it into chunks, this is easier to handle
+    # else: run all simulations at once
+    chunkSize = 2
+    if len(rcfFiles) > chunkSize:
+        for i in range(0, len(rcfFiles), chunkSize):
+            # splits rcfFiles into segments
+            rcfFilesChunk = rcfFiles[i:i + chunkSize]
+            simNamesChunk = [p.stem for p in rcfFilesChunk]
+            
+            # check if there is any simulation to run
+            if bool(simNamesChunk):
+                # Create parallel pool and run
+                # with multiprocessing.Pool(processes=nCPU) as pool:
+                with Pool(processes=nCPU) as pool:
+                    results = pool.map(com8MoTPSATask, rcfFilesChunk)
+                    pool.close()
+                    pool.join()
 
-        timeNeeded = "%.2f" % (time.time() - startTime)
-        log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
-        log.info("--- ENDING (potential) PARALLEL PART ----")
+                timeNeeded = "%.2f" % (time.time() - startTime)
+                log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
+                log.info("--- ENDING (potential) PARALLEL PART ----")
 
-        # Postprocess the simulations
-        com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles)
+                # Postprocess the simulations
+                com8MoTPSAPostprocess(simNamesChunk, cfgMain, inputSimFiles)
+
+                # Delete folder in Work directory after postprocessing to reduce memory costs
+                avaDir = cfgMain['MAIN']['avalancheDir']
+                for sim in simNamesChunk:
+                    folderName = 'Work/com8MoTPSA/' + sim
+                    _checkForFolderAndDelete(avaDir, folderName)
+            else:
+                log.warning("There is no simulation to be performed for releaseScenario")
     else:
-        log.warning("There is no simulation to be performed for releaseScenario")
+        simNames = [p.stem for p in rcfFiles]
+        # check if there is any simulation to run
+        if bool(simNames):
+            # Create parallel pool and run
+            # with multiprocessing.Pool(processes=nCPU) as pool:
+            with Pool(processes=nCPU) as pool:
+                results = pool.map(com8MoTPSATask, rcfFiles)
+                pool.close()
+                pool.join()
 
-def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
+            timeNeeded = "%.2f" % (time.time() - startTime)
+            log.info("Overall (parallel) com8MoTPSA computation took: %s s " % timeNeeded)
+            log.info("--- ENDING (potential) PARALLEL PART ----")
+
+            # Postprocess the simulations
+            com8MoTPSAPostprocess(simNames, cfgMain, inputSimFiles)
+        else:
+            log.warning("There is no simulation to be performed for releaseScenario")
+
+
+def com8MoTPSAPostprocess(simNames, cfgMain, inputSimFiles):
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
     # Copy max files to output directory
 
@@ -80,7 +116,7 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     outputDirPeakFile = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "peakFiles"
     fU.makeADir(outputDirPeakFile)
 
-    for key in simDict:
+    for key in simNames:
         workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA" / str(key)
 
         # Copy DataTime.txt
