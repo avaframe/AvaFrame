@@ -57,13 +57,13 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
     # if length of rcfFiles is too long, split it into chunks, this is easier to handle
     # else: run all simulations at once
-    chunkSize = 2
+    chunkSize = 10
     if len(rcfFiles) > chunkSize:
         for i in range(0, len(rcfFiles), chunkSize):
             # splits rcfFiles into segments
             rcfFilesChunk = rcfFiles[i:i + chunkSize]
             simNamesChunk = [p.stem for p in rcfFilesChunk]
-            
+
             # check if there is any simulation to run
             if bool(simNamesChunk):
                 # Create parallel pool and run

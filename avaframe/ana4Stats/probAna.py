@@ -99,8 +99,8 @@ def cfgFilesGlobalApproach(avaDir, cfgProb, modName, outDir):
         plotDir = avaDir / "Outputs" / "ana4Stats" / "plots"
         if len(paramValuesD["names"]) == 2:
             sP.plotSample(paramValuesD, plotDir, releaseScenario=releaseScenario)
-        elif len(paramValuesD["varParNamesInitial"]) == 2:
-            sP.plotThSampleFromVals(paramValuesD, plotDir)
+        # elif len(paramValuesD["varParNamesInitial"]) == 2:
+        #    sP.plotThSampleFromVals(paramValuesD, plotDir)
         else:
             log.debug("More or less than two parameters have been varied - no plot of sample available")
 
