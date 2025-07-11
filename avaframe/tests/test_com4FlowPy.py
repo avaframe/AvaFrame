@@ -170,6 +170,64 @@ def test_backTracking():
         assert calcValsBT[key] == testValsBT[key]
 
 
+def test_calculation():
+    dem = np.array([[20, 20, 20], [10, 10, 10], [0, 0, 0]])
+    infra = None
+    pra = np.array([[0, 1, 0], [0, 0, 0], [0, 0, 0]])
+    alpha = 10
+    exp = 99
+    fluxTh = 1 * e - 3
+    zDeltaMax = 270
+    nodata = -9999
+    cellsize = 10
+    infraBool = False
+    forestBool = False
+    variableParameters = {
+        "varUmaxBool": False,
+        "varUmaxArray": None,
+        "varAlphaBool": False,
+        "varAlphaArray": None,
+        "varExponentBool": False,
+        "varExponentArray": None,
+    }
+    fluxDistOldVersionBool = False
+    previewMode = False
+    outputs = ['travelLengthMin']
+    forestArray = None
+    forestParams = None
+
+    args[0] = dem
+    args[1] = infra
+    args[2] = pra
+    args[3] = alpha
+    args[4] = exp
+    args[5] = fluxTh
+    args[6] = zDeltaMax
+    args[7] = nodata
+    args[8] = cellsize
+    args[9] = infraBool
+    args[10] = forestBool
+    args[11] = variableParameters
+    ars[12] = fluxDistOldVersionBool
+    args[13] = previewMode
+    args[14] = forestArray
+    args[15] = forestParams
+    args[16] = outputs
+
+    flux = np.array([-9999, 1, -9999], [-9999, 1, -9999], [-9999, 1, -9999])
+    routFluxSum = flux.copy()
+    depFluxSum = np.array([-9999, 0, -9999], [-9999, 0, -9999], [-9999, 0, -9999])
+    travelLengthMin = np.array([-9999, 0, -9999], [-9999, np.sqrt(200), -9999], [-9999, np.sqrt(200) * 2, -9999])
+    results = flowCore.calculation(args)
+
+    assert len(results) == 12
+    assert results[1] == flux
+    assert results[10] == routFluxSum
+    assert results[11] == depFluxSum
+    assert results[9] == travelLengthMin
+    assert results[8] == np.ones_like(flux) * -9999
+
+
 if __name__=='__main__':
     test_add_os()
     test_reverseTopology()
