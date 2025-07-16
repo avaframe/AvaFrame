@@ -84,4 +84,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     # runCom8MoTPSA(str(args.avadir))
-    runCom8MoTPSA('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/avaParabola')
+    runCom8MoTPSA('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/avaEiskar')

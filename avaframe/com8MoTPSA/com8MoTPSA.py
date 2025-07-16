@@ -52,17 +52,17 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
 
     log.info("--- STARTING (potential) PARALLEL PART ----")
 
-    # Get number of CPU Cores wanted
-    nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(rcfFiles))
-
     # if length of rcfFiles is too long, split it into chunks, this is easier to handle
     # else: run all simulations at once
-    chunkSize = 10
+    chunkSize = 8
     if len(rcfFiles) > chunkSize:
         for i in range(0, len(rcfFiles), chunkSize):
             # splits rcfFiles into segments
             rcfFilesChunk = rcfFiles[i:i + chunkSize]
             simNamesChunk = [p.stem for p in rcfFilesChunk]
+
+            # Get number of CPU Cores wanted
+            nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(rcfFilesChunk))
 
             # check if there is any simulation to run
             if bool(simNamesChunk):
@@ -88,6 +88,9 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
             else:
                 log.warning("There is no simulation to be performed for releaseScenario")
     else:
+        # Get number of CPU Cores wanted
+        nCPU = cfgUtils.getNumberOfProcesses(cfgMain, len(rcfFiles))
+
         simNames = [p.stem for p in rcfFiles]
         # check if there is any simulation to run
         if bool(simNames):
