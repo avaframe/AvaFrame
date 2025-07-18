@@ -1217,6 +1217,7 @@ def test_releaseSecRelArea():
         "Name": ["secRel1", "secRel2", "secRel3"],
         "thickness": [0.5, 1.0, 0.5],
         "rasterData": [secRelRaster1, secRelRaster2, secRelRaster3],
+        "type": "secondary release",
     }
     secondaryReleaseInfo["header"] = demHeader
     secondaryReleaseInfo["header"]["xllcenter"] = dem["originalHeader"]["xllcenter"]
@@ -1294,7 +1295,7 @@ def test_getRelThFromPart():
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {"relThFromShp": "True", "relThFromFile": "False", "relTh": ""}
-    inputSimLines = {"releaseLine": {"thickness": ["1.2", "1.5"], "id": ["0", "1"]}}
+    inputSimLines = {"releaseLine": {"thickness": ["1.2", "1.5"], "id": ["0", "1"], "type": "Release"}}
     relThField = ""
 
     # call function to be tested
@@ -1373,6 +1374,7 @@ def test_initializeParticles():
         "Name": [""],
         "thickness": [1.0],
         "rasterData": relRaster,
+        "type": "Release",
     }
 
     releaseLine["header"] = demHeader
