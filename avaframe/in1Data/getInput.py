@@ -259,6 +259,10 @@ def getInputDataCom1DFA(avaDir):
         inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
     )
 
+    hydrographFile, entResInfo["hydrograph"] = getAndCheckInputFiles(
+        inputDir, "HYDR", "Hydrograph", fileExt="shp"
+    )
+
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
         "demFile": demFile,
@@ -271,6 +275,7 @@ def getInputDataCom1DFA(avaDir):
         "relThFile": relThFile,
         "muFile": muFile,
         "xiFile": xiFile,
+        "hydrographFile": hydrographFile,
     }
 
     return inputSimFiles
@@ -368,13 +373,14 @@ def getThicknessInputSimFiles(inputSimFiles):
     """
 
     # fetch thickness attribute of entrainment area and secondary release
-    for thType in ["entFile", "secondaryReleaseFile"]:
+    for thType in ["entFile", "secondaryReleaseFile", "hydrographFile"]:
         if inputSimFiles[thType] is not None:
             thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
             inputSimFiles[inputSimFiles[thType].stem] = {
                 "thickness": thicknessList,
                 "id": idList,
                 "ci95": ci95List,
+                # "timestep": timestepList,
             }
 
     # initialize release scenario list
@@ -388,6 +394,7 @@ def getThicknessInputSimFiles(inputSimFiles):
             "thickness": thicknessList,
             "id": idList,
             "ci95": ci95List,
+            # "timestep": timestepList,
         }
         # append release scenario name to list
         releaseScenarioList.append(releaseA.stem)
@@ -427,6 +434,8 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         thTypeList.append("entFile")
     if cfgInitial["GENERAL"].getboolean("secRelArea"):
         thTypeList.append("secondaryReleaseFile")
+    if cfgInitial["GENERAL"].getboolean("hydrograph"):
+        thTypeList.append("hydrFile")
 
     # initialize release scenario list
     releaseScenarioIni = cfgInitial["INPUT"]["releaseScenario"]
@@ -454,6 +463,12 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles["entFile"].stem, "entTh")
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
+    if inputSimFiles["hydrographFile"] != None and "hydrFile" in thTypeList:
+        cfgInitial = dP.getThicknessValue(
+            cfgInitial, inputSimFiles, inputSimFiles["hydrographFile"].stem, "hydrTh"
+        )
+        cfgInitial["INPUT"]["hydrScenario"] = inputSimFiles["hydrographFile"].stem
+
     if inputSimFiles["secondaryReleaseFile"] != None and "secondaryReleaseFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,

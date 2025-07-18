@@ -264,6 +264,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     thicknessList = inputSimFiles[fName]["thickness"]
     idList = inputSimFiles[fName]["id"]
     ci95List = inputSimFiles[fName]["ci95"]
+    # timestepList = inputSimFiles[fName]["timestep"]
 
     # create key name for flag
     thFlag = thType + "FromShp"
@@ -314,16 +315,19 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             thId = idList[0]
             thThickness = thicknessList[0]
             thCi95 = ci95List[0]
+            # timestep = timestepList[0]
             for count, id in enumerate(idList[1:]):
                 thId = thId + "|" + id
                 thThickness = thThickness + "|" + thicknessList[count + 1]
                 thCi95 = thCi95 + "|" + ci95List[count + 1]
+                # timestep = timestep + "|" + timestepList[count + 1]
 
             # add in INPUT section for each feature thickness, id and ci95 values
             # append name of release Scenario in case multiple are provided
             cfg["INPUT"][fNamePrefix + thType + "Id"] = thId
             cfg["INPUT"][fNamePrefix + thType + "Thickness"] = thThickness
             cfg["INPUT"][fNamePrefix + thType + "Ci95"] = thCi95
+            # cfg["INPUT"][fNamePrefix + thType + "Timestep"] = timestep
 
     else:
         # if thickness should be read from ini file - check if format is correct
@@ -803,6 +807,8 @@ def appendShpThickness(cfg):
         thTypes.append("entTh")
     if cfgGen["secRelArea"] == "True":
         thTypes.append("secondaryRelTh")
+    if cfgGen["hydrograph"] == "True":
+        thTypes.append("hydrTh")
 
     # loop over all types and if thickness value read from shp file and no variation has been applied
     # (in this case already added to GENERAL section) - add to section GENERAL
@@ -1061,7 +1067,7 @@ def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisti
     """
 
     # check if thickness settings in ini file are valid
-    for thType in ["entTh", "relTh", "secondaryRelTh"]:
+    for thType in ["entTh", "relTh", "secondaryRelTh", "hydrTh"]:
         _ = checkThicknessSettings(cfgInitial, thType)
     # update thickness settings, e.g. fetch if th read from shp
     cfgInitial = gI.updateThicknessCfg(inputSimFiles, cfgInitial)
