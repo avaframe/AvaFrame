@@ -494,11 +494,12 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
 
     if cfg.getboolean("GENERAL", "hydrograph"):
         # hydrLine = setThickness(cfg, inputSimLines["hydrographLine"], "hydrTh")
-        timesteps = cfg["GENERAL"]["hydrographTimeStep"].split("|")
-        thicknessValues = cfg["GENERAL"]["hydrographThickness"].split("|")
+        timesteps = cfg["GENERAL"]["hydrographTimeStep"].split("-")
+        thicknessValues = cfg["GENERAL"]["hydrographThickness"].split("-")
         inputSimLines["hydrographLine"]["thickness"] = []
+        inputSimLines["hydrographLine"]["timestep"] = {}
         for ti, th in zip(timesteps, thicknessValues):
-            inputSimLines["hydrographLine"]["timestep"] = {float(ti): float(th)}
+            inputSimLines["hydrographLine"]["timestep"][float(ti)] = float(th)
             inputSimLines["hydrographLine"]["thickness"].append(float(th))
         inputSimLines["hydrographLine"]["thicknessSource"] = ["ini file"]
     else:
@@ -1967,7 +1968,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
 
         if cfgGen.getboolean("hydrograph"):
             if round(t, 1) in inputSimLines["hydrographLine"]["timestep"]:
-                print(t)
+                log.info(f"add thickness from hydrograph at timestep: {t}")
                 # see secondary release!
                 particles = addHydrographParticles(
                     cfg,
