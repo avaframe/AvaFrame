@@ -496,10 +496,13 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         # hydrLine = setThickness(cfg, inputSimLines["hydrographLine"], "hydrTh")
         timesteps = cfg["GENERAL"]["hydrographTimeStep"].split("-")
         thicknessValues = cfg["GENERAL"]["hydrographThickness"].split("-")
+        velocityValues = cfg["GENERAL"]["hydrographVelocity"].split("-")
         inputSimLines["hydrographLine"]["thickness"] = []
-        inputSimLines["hydrographLine"]["timestep"] = {}
-        for ti, th in zip(timesteps, thicknessValues):
-            inputSimLines["hydrographLine"]["timestep"][float(ti)] = float(th)
+        inputSimLines["hydrographLine"]["thicknessDict"] = {}
+        inputSimLines["hydrographLine"]["velocityDict"] = {}
+        for ti, th, v in zip(timesteps, thicknessValues, velocityValues):
+            inputSimLines["hydrographLine"]["thicknessDict"][float(ti)] = float(th)
+            inputSimLines["hydrographLine"]["velocityDict"][float(ti)] = float(v)
             inputSimLines["hydrographLine"]["thickness"].append(float(th))
         inputSimLines["hydrographLine"]["thicknessSource"] = ["ini file"]
     else:
@@ -1967,14 +1970,15 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
 
         if cfgGen.getboolean("hydrograph"):
-            if round(t, 1) in inputSimLines["hydrographLine"]["timestep"]:
+            if round(t, 1) in inputSimLines["hydrographLine"]["thicknessDict"]:
                 log.info(f"add thickness from hydrograph at timestep: {t}")
                 # see secondary release!
                 particles = addHydrographParticles(
                     cfg,
                     particles,
                     inputSimLines,
-                    inputSimLines["hydrographLine"]["timestep"][round(t, 1)],
+                    inputSimLines["hydrographLine"]["thicknessDict"][round(t, 1)],
+                    inputSimLines["hydrographLine"]["velocityDict"][round(t, 1)],
                     dem,
                 )
                 particles = DFAfunC.getNeighborsC(particles, dem)
@@ -3413,14 +3417,19 @@ def adaptDEM(dem, fields, cfg):
     return dem, fields
 
 
-def addHydrographParticles(cfg, particles, inputSimLines, thickness, dem):
+def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
     """ """
     hydrLine = inputSimLines["hydrographLine"]
     # log.info(inputSimLines["hydrographLine"]["timestep"])
 
     hydrLine["header"] = dem["originalHeader"]
     hydrLine = geoTrans.prepareArea(
-        hydrLine, dem, np.sqrt(2), thList=[thickness], combine=True, checkOverlap=False
+        hydrLine,
+        dem,
+        np.sqrt(2),
+        thList=[thickness],
+        combine=True,
+        checkOverlap=False,
     )
     particlesHydrograph = initializeParticles(
         cfg["GENERAL"],
@@ -3428,5 +3437,6 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, dem):
         dem,
         inputSimLines=inputSimLines,
     )
+    DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
     return particles
