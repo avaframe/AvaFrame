@@ -496,10 +496,13 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         # hydrLine = setThickness(cfg, inputSimLines["hydrographLine"], "hydrTh")
         timesteps = cfg["GENERAL"]["hydrographTimeStep"].split("-")
         thicknessValues = cfg["GENERAL"]["hydrographThickness"].split("-")
+        velocityValues = cfg["GENERAL"]["hydrographVelocity"].split("-")
         inputSimLines["hydrographLine"]["thickness"] = []
-        inputSimLines["hydrographLine"]["timestep"] = {}
-        for ti, th in zip(timesteps, thicknessValues):
-            inputSimLines["hydrographLine"]["timestep"][float(ti)] = float(th)
+        inputSimLines["hydrographLine"]["thicknessDict"] = {}
+        inputSimLines["hydrographLine"]["velocityDict"] = {}
+        for ti, th, v in zip(timesteps, thicknessValues, velocityValues):
+            inputSimLines["hydrographLine"]["thicknessDict"][float(ti)] = float(th)
+            inputSimLines["hydrographLine"]["velocityDict"][float(ti)] = float(v)
             inputSimLines["hydrographLine"]["thickness"].append(float(th))
         inputSimLines["hydrographLine"]["thicknessSource"] = ["ini file"]
     else:
@@ -541,7 +544,6 @@ def setThickness(cfg, lineTh, typeTh):
         if cfg["GENERAL"].getboolean(thFlag):
             thName = typeTh + id
             lineTh["thickness"][count] = cfg["GENERAL"].getfloat(thName)
-            # lineTh["timestep"][count] = cfg["GENERAL"].getfloat(thName)
 
         else:
             thName = typeTh
@@ -678,13 +680,18 @@ def prepareInputData(inputSimFiles, cfg):
         damLine = None
 
     if cfg["GENERAL"].getboolean("hydrograph"):
-        hydrFile = inputSimFiles["hydrographFile"]
-        hydrLine = shpConv.readLine(hydrFile, "", demOri)
-        hydrLine["fileName"] = hydrFile
-        hydrLine["type"] = "Hydrograph"
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
-        )
+        try:
+            hydrFile = inputSimFiles["hydrographFile"]
+            hydrLine = shpConv.readLine(hydrFile, "", demOri)
+            hydrLine["fileName"] = hydrFile
+            hydrLine["type"] = "Hydrograph"
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
+            )
+        except:
+            message = "No hydrograph file found"
+            log.error(message)
+            raise FileNotFoundError(message)
     else:
         hydrLine = None
 
@@ -1967,14 +1974,15 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
 
         if cfgGen.getboolean("hydrograph"):
-            if round(t, 1) in inputSimLines["hydrographLine"]["timestep"]:
+            if round(t, 1) in inputSimLines["hydrographLine"]["thicknessDict"]:
                 log.info(f"add thickness from hydrograph at timestep: {t}")
                 # see secondary release!
                 particles = addHydrographParticles(
                     cfg,
                     particles,
                     inputSimLines,
-                    inputSimLines["hydrographLine"]["timestep"][round(t, 1)],
+                    inputSimLines["hydrographLine"]["thicknessDict"][round(t, 1)],
+                    inputSimLines["hydrographLine"]["velocityDict"][round(t, 1)],
                     dem,
                 )
                 particles = DFAfunC.getNeighborsC(particles, dem)
@@ -2910,10 +2918,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 "relThDistVariation",
                 "entThDistVariation",
                 "secondaryRelThDistVariation",
-                "hydrThDistVariation",
-                "hydrThPercentVariation",
-                "hydrThRangeVariation",
-                "hydrThRangeFromCiVariation",
             ]
             if parameter in keyList:
                 # set thickness value according to percent variation info
@@ -2936,8 +2940,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgSim["INPUT"].pop("secondaryRelThId", None)
             cfgSim["INPUT"].pop("secondaryRelThThickness", None)
             cfgSim["INPUT"].pop("secondaryRelThCi95", None)
-        if cfgSim["GENERAL"]["hydrograph"] == "False":
-            cfgSim["INPUT"].pop("hydrThThickness", None)
 
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
@@ -3413,20 +3415,26 @@ def adaptDEM(dem, fields, cfg):
     return dem, fields
 
 
-def addHydrographParticles(cfg, particles, inputSimLines, thickness, dem):
+def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
     """ """
     hydrLine = inputSimLines["hydrographLine"]
-    # log.info(inputSimLines["hydrographLine"]["timestep"])
-
-    hydrLine["header"] = dem["originalHeader"]
+    hydrLine["header"] = dem["originalHeader"].copy()
     hydrLine = geoTrans.prepareArea(
-        hydrLine, dem, np.sqrt(2), thList=[thickness], combine=True, checkOverlap=False
+        hydrLine,
+        dem,
+        np.sqrt(2),
+        thList=[thickness],
+        combine=True,
+        checkOverlap=False,
     )
     particlesHydrograph = initializeParticles(
         cfg["GENERAL"],
         hydrLine,
         dem,
         inputSimLines=inputSimLines,
+    )
+    particlesHydrograph = DFAfunC.updateInitialVelocity(
+        cfg["GENERAL"], particlesHydrograph, dem, velocityMag
     )
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
     return particles

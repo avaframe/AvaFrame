@@ -380,7 +380,6 @@ def getThicknessInputSimFiles(inputSimFiles):
                 "thickness": thicknessList,
                 "id": idList,
                 "ci95": ci95List,
-                # "timestep": timestepList,
             }
 
     # initialize release scenario list
@@ -394,7 +393,6 @@ def getThicknessInputSimFiles(inputSimFiles):
             "thickness": thicknessList,
             "id": idList,
             "ci95": ci95List,
-            # "timestep": timestepList,
         }
         # append release scenario name to list
         releaseScenarioList.append(releaseA.stem)
@@ -463,12 +461,6 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles["entFile"].stem, "entTh")
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
-    if inputSimFiles["hydrographFile"] != None and "hydrFile" in thTypeList:
-        cfgInitial = dP.getThicknessValue(
-            cfgInitial, inputSimFiles, inputSimFiles["hydrographFile"].stem, "hydrTh"
-        )
-        cfgInitial["INPUT"]["hydrScenario"] = inputSimFiles["hydrographFile"].stem
-
     if inputSimFiles["secondaryReleaseFile"] != None and "secondaryReleaseFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,
