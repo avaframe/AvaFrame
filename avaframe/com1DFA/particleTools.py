@@ -561,7 +561,11 @@ def mergeParticleDict(particles1, particles2):
         # the key is in both dictionaries, it is not an array but it is a
         # number (int, double, float) then we sum the 2 values
         elif (key in particles2) and (isinstance(particles1[key], numbers.Number)):
-            particles[key] = particles1[key] + particles2[key]
+            if (key == "xllcenter") or (key == "yllcenter"):
+                # TODO: do we also need to include "t", "tPlot", "stoppCriteria" here?
+                particles[key] = particles1[key]
+            else:
+                particles[key] = particles1[key] + particles2[key]
         # finaly, if the key is only in particles1 then we give this value to
         # the new particles
         else:
@@ -925,6 +929,7 @@ def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv=None):
             particles = dictList[count]
         simName = particles["simName"]
         csvData = {}
+        # print(f' {count}: {particles["yllcenter"]}')
         csvData["X"] = particles["x"] + particles["xllcenter"]
         csvData["Y"] = particles["y"] + particles["yllcenter"]
         csvData["Z"] = particles["z"]
