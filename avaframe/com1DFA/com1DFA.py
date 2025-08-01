@@ -681,13 +681,18 @@ def prepareInputData(inputSimFiles, cfg):
         damLine = None
 
     if cfg["GENERAL"].getboolean("hydrograph"):
-        hydrFile = inputSimFiles["hydrographFile"]
-        hydrLine = shpConv.readLine(hydrFile, "", demOri)
-        hydrLine["fileName"] = hydrFile
-        hydrLine["type"] = "Hydrograph"
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
-        )
+        try:
+            hydrFile = inputSimFiles["hydrographFile"]
+            hydrLine = shpConv.readLine(hydrFile, "", demOri)
+            hydrLine["fileName"] = hydrFile
+            hydrLine["type"] = "Hydrograph"
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
+            )
+        except:
+            message = "No hydrograph file found"
+            log.error(message)
+            raise FileNotFoundError(message)
     else:
         hydrLine = None
 
@@ -3420,9 +3425,7 @@ def adaptDEM(dem, fields, cfg):
 def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
     """ """
     hydrLine = inputSimLines["hydrographLine"]
-    # log.info(inputSimLines["hydrographLine"]["timestep"])
-
-    hydrLine["header"] = dem["originalHeader"]
+    hydrLine["header"] = dem["originalHeader"].copy()
     hydrLine = geoTrans.prepareArea(
         hydrLine,
         dem,
