@@ -5,11 +5,10 @@
 """
 import logging
 import logging.config
-import os
 import pathlib
-from pathlib import Path, PureWindowsPath
 from datetime import datetime
 import avaframe.version as gv
+from contextlib import contextmanager
 
 
 def writeCfg2Log(cfg, cfgName='Unspecified'):
@@ -72,3 +71,30 @@ def initiateLogger(targetDir, logName='runLog', modelInfo=''):
         log.info('Used by: %s' % modelInfo)
 
     return log
+
+
+@contextmanager
+def silentLogger(loggerName='avaframe'):
+    """Context manager to temporarily silence a logger.
+    
+    Parameters
+    ----------
+    loggerName : str
+        Name of the logger to silence. Defaults to 'avaframe'
+    
+    Example
+    -------
+    >>> with silentLogger():
+    >>>     # This code block will not produce any log output
+    >>>     function_with_noisy_logs()
+    """
+    logger = logging.getLogger(loggerName)
+    # Store the original level
+    originalLevel = logger.level
+    # Temporarily set the level to ERROR (will suppress INFO and DEBUG messages)
+    logger.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        # Restore the original level
+        logger.setLevel(originalLevel)
