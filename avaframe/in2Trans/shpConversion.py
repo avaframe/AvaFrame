@@ -283,7 +283,6 @@ def readThickness(infile, defname=None):
     thickness = None
     id = None
     ci95 = None
-    # timestep = None
 
     # Start reading the shapefile
     records = sf.shapeRecords()
@@ -292,7 +291,6 @@ def readThickness(infile, defname=None):
     thicknessList = []
     idList = []
     ci95List = []
-    # timestepList = []
 
     for n, item in enumerate(shps):
         pts = item.points
@@ -308,12 +306,9 @@ def readThickness(infile, defname=None):
                     thickness = value
                 if name == "ci95":
                     ci95 = value
-                # if name == "timestep":
-                # timestep = value
 
         thicknessList.append(str(thickness))
         ci95List.append(str(ci95))
-        # timestepList.append(str(timestep))
 
     # get unique ID of features in shapefile
     for rec in sf.records():

@@ -544,7 +544,6 @@ def setThickness(cfg, lineTh, typeTh):
         if cfg["GENERAL"].getboolean(thFlag):
             thName = typeTh + id
             lineTh["thickness"][count] = cfg["GENERAL"].getfloat(thName)
-            # lineTh["timestep"][count] = cfg["GENERAL"].getfloat(thName)
 
         else:
             thName = typeTh
@@ -2919,10 +2918,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 "relThDistVariation",
                 "entThDistVariation",
                 "secondaryRelThDistVariation",
-                "hydrThDistVariation",
-                "hydrThPercentVariation",
-                "hydrThRangeVariation",
-                "hydrThRangeFromCiVariation",
             ]
             if parameter in keyList:
                 # set thickness value according to percent variation info
@@ -2945,8 +2940,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgSim["INPUT"].pop("secondaryRelThId", None)
             cfgSim["INPUT"].pop("secondaryRelThThickness", None)
             cfgSim["INPUT"].pop("secondaryRelThCi95", None)
-        if cfgSim["GENERAL"]["hydrograph"] == "False":
-            cfgSim["INPUT"].pop("hydrThThickness", None)
 
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
