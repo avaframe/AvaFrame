@@ -929,7 +929,6 @@ def savePartToCsv(particleProperties, dictList, outDir, countParticleCsv=None):
             particles = dictList[count]
         simName = particles["simName"]
         csvData = {}
-        # print(f' {count}: {particles["yllcenter"]}')
         csvData["X"] = particles["x"] + particles["xllcenter"]
         csvData["Y"] = particles["y"] + particles["yllcenter"]
         csvData["Z"] = particles["z"]
