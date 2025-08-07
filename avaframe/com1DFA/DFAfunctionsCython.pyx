@@ -2233,6 +2233,25 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
 
 
 def updateInitialVelocity(cfg, particles, dem, float velocityMag):
+  """
+  update particles' velocity in direction of the steepest descent
+
+  Parameters
+  ------------
+  cfg: configparser
+    configuration for DFA simulation
+  particles : dict
+    particles dictionary at t
+  dem : dict
+    dictionary with dem information
+  velocityMag: float
+    velocity of the particles
+
+  Returns
+  ------------
+  particles : dict
+    particles dictionary at t with updated velocity
+  """
 
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
@@ -2264,10 +2283,10 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
 
     # get normal at the particle location
     nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-    nx, ny, _ = DFAtlsC.normalize(nx, ny, 0)
+    nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
     uxArray[k] = nx * velocityMag
     uyArray[k] = ny * velocityMag
-
+    uzArray[k] = nz * velocityMag
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
