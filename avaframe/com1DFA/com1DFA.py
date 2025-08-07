@@ -3353,6 +3353,7 @@ def adaptDEM(dem, fields, cfg):
     """adapt topography in respect to erosion and deposition
 
     Parameters
+    ---------
     dem: dict
         dictionary with info on DEM data
     fields : dict
@@ -3408,7 +3409,29 @@ def adaptDEM(dem, fields, cfg):
 
 
 def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
-    """ """
+    """
+    add new particles initialized by a hydrograph to particles that are in the flow already
+
+    Parameters
+    ---------
+    cfg: dict
+        configuration settings
+    particles : dict
+        particles dictionary at t that are in the flow already
+    inputSimLines : dict
+        dictionary with input data dictionaries (releaseLine, hydrographLine,...)
+    thickness: float
+        thickness of incoming hydrograph
+    velocityMag: float
+        velocity of incoming hydrograph
+    dem: dict
+        dictionary with info on DEM data
+
+    Returns
+    ---------
+    particles: dict
+        particles dictionary at t including the hydrograph particles
+    """
     hydrLine = inputSimLines["hydrographLine"]
     hydrLine["header"] = dem["originalHeader"].copy()
     hydrLine = geoTrans.prepareArea(
