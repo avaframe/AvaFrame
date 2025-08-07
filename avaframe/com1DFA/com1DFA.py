@@ -664,6 +664,24 @@ def prepareInputData(inputSimFiles, cfg):
     else:
         damLine = None
 
+    if cfg["GENERAL"].getboolean("hydrograph"):
+        try:
+            hydrFile = inputSimFiles["hydrographFile"]
+            hydrLine = shpConv.readLine(hydrFile, "", demOri)
+            hydrLine["fileName"] = hydrFile
+            hydrLine["type"] = "Hydrograph"
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
+            )
+            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+            hydrLine["thicknessSource"] = ["csv file"]
+        except:
+            message = "No hydrograph file found"
+            log.error(message)
+            raise FileNotFoundError(message)
+    else:
+        hydrLine = None
+
     inputSimLines = {
         "releaseLine": releaseLine,
         "secondaryReleaseLine": secondaryReleaseLine,
@@ -676,6 +694,7 @@ def prepareInputData(inputSimFiles, cfg):
         "relThField": relThFieldData,
         "muFile": inputSimFiles["muFile"],
         "xiFile": inputSimFiles["xiFile"],
+        "hydrographLine": hydrLine,
     }
 
     return demOri, inputSimLines
@@ -1480,26 +1499,26 @@ def initializeFields(cfg, dem, particles, releaseLine):
     nrows = header["nrows"]
     # initialize fields
     fields = {}
-    fields["pfv"] = np.zeros((nrows, ncols))
-    fields["pft"] = np.zeros((nrows, ncols))
-    fields["FV"] = np.zeros((nrows, ncols))
-    fields["FT"] = np.zeros((nrows, ncols))
-    fields["FM"] = np.zeros((nrows, ncols))
-    fields["Vx"] = np.zeros((nrows, ncols))
-    fields["Vy"] = np.zeros((nrows, ncols))
-    fields["Vz"] = np.zeros((nrows, ncols))
-    fields["dmDet"] = np.zeros((nrows, ncols))
-    fields["FTStop"] = np.zeros((nrows, ncols))
-    fields["FTDet"] = np.zeros((nrows, ncols))
-    fields["FTEnt"] = np.zeros((nrows, ncols))
-    fields["sfcChange"] = np.zeros((nrows, ncols))
-    fields["sfcChangeTotal"] = np.zeros((nrows, ncols))
-    fields["demAdapted"] = np.zeros((nrows, ncols))
+    fields["pfv"] = np.zeros((nrows, ncols))  # peak flow velocity [m/s]
+    fields["pft"] = np.zeros((nrows, ncols))  # peal flow thickness [m]
+    fields["FV"] = np.zeros((nrows, ncols))  # flow velocity [m/s]
+    fields["FT"] = np.zeros((nrows, ncols))  # flow thickness [m]
+    fields["FM"] = np.zeros((nrows, ncols))  # flow mass [kg]
+    fields["Vx"] = np.zeros((nrows, ncols))  # velocity in x direction [m/s]
+    fields["Vy"] = np.zeros((nrows, ncols))  # velocity in y direction [m/s]
+    fields["Vz"] = np.zeros((nrows, ncols))  # velocity in z direction [m/s]
+    fields["dmDet"] = np.zeros((nrows, ncols))  # flowing mass change due to detrainment [kg]
+    fields["FTStop"] = np.zeros((nrows, ncols))  # flow thickness that is stopped [m]
+    fields["FTDet"] = np.zeros((nrows, ncols))  # flow thickness that is detrained [m]
+    fields["FTEnt"] = np.zeros((nrows, ncols))  # flow thickness that is entrained [m]
+    fields["sfcChange"] = np.zeros((nrows, ncols))  # depth that changes the surface [m]
+    fields["sfcChangeTotal"] = np.zeros((nrows, ncols))  # total depth that changed the surface [m]
+    fields["demAdapted"] = np.zeros((nrows, ncols))  # adapted topography [m]
     # for optional fields, initialize with dummys (minimum size array). The cython functions then need something
     # even if it is empty to run properly
     if ("TA" in resTypesLast) or ("pta" in resTypesLast):
-        fields["pta"] = np.zeros((nrows, ncols))
-        fields["TA"] = np.zeros((nrows, ncols))
+        fields["pta"] = np.zeros((nrows, ncols))  # peak travel angle [°]
+        fields["TA"] = np.zeros((nrows, ncols))  # travel angle [°]
         fields["computeTA"] = True
         log.debug("Computing Travel Angle")
     else:
@@ -1507,15 +1526,15 @@ def initializeFields(cfg, dem, particles, releaseLine):
         fields["TA"] = np.zeros((1, 1))
         fields["computeTA"] = False
     if "pke" in resTypesLast:
-        fields["pke"] = np.zeros((nrows, ncols))
+        fields["pke"] = np.zeros((nrows, ncols))  # peak kinetic energy [kJ/m²]
         fields["computeKE"] = True
         log.debug("Computing Kinetic energy")
     else:
         fields["pke"] = np.zeros((1, 1))
         fields["computeKE"] = False
     if ("P" in resTypesLast) or ("ppr" in resTypesLast):
-        fields["P"] = np.zeros((nrows, ncols))
-        fields["ppr"] = np.zeros((nrows, ncols))
+        fields["P"] = np.zeros((nrows, ncols))  # pressure [kPa]
+        fields["ppr"] = np.zeros((nrows, ncols))  # peak pressure [kPa]
         fields["computeP"] = True
         log.debug("Computing Pressure")
     else:
@@ -1940,6 +1959,29 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     while t <= tEnd * (1.0 + 1.0e-13) and particles["iterate"]:
         startTime = time.time()
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
+
+        if cfgGen.getboolean("hydrograph"):
+            hydrValues = inputSimLines["hydrographLine"]["values"]
+            if round(t, 1) in hydrValues["timeStep"]:
+                i = np.where(hydrValues["timeStep"] == round(t, 1))
+                log.info(
+                    "add hydrograph at timestep: %f with thickness %s and velocity %s"
+                    % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
+                )
+                # see secondary release!
+                particles = addHydrographParticles(
+                    cfg,
+                    particles,
+                    inputSimLines,
+                    hydrValues["thickness"][i],
+                    hydrValues["velocity"][i],
+                    dem,
+                )
+                particles = DFAfunC.getNeighborsC(particles, dem)
+                # update fields (compute grid values)
+                if fields["computeTA"]:
+                    particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
+                particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
         # Perform computations
         particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
             cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
@@ -3311,6 +3353,7 @@ def adaptDEM(dem, fields, cfg):
     """adapt topography in respect to erosion and deposition
 
     Parameters
+    ---------
     dem: dict
         dictionary with info on DEM data
     fields : dict
@@ -3363,3 +3406,50 @@ def adaptDEM(dem, fields, cfg):
     fields["sfcChangeTotal"] = sfcChangeTotal + sfcChange
 
     return dem, fields
+
+
+def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
+    """
+    add new particles initialized by a hydrograph to particles that are in the flow already
+
+    Parameters
+    ---------
+    cfg: dict
+        configuration settings
+    particles : dict
+        particles dictionary at t that are in the flow already
+    inputSimLines : dict
+        dictionary with input data dictionaries (releaseLine, hydrographLine,...)
+    thickness: float
+        thickness of incoming hydrograph
+    velocityMag: float
+        velocity of incoming hydrograph
+    dem: dict
+        dictionary with info on DEM data
+
+    Returns
+    ---------
+    particles: dict
+        particles dictionary at t including the hydrograph particles
+    """
+    hydrLine = inputSimLines["hydrographLine"]
+    hydrLine["header"] = dem["originalHeader"].copy()
+    hydrLine = geoTrans.prepareArea(
+        hydrLine,
+        dem,
+        np.sqrt(2),
+        thList=[thickness],
+        combine=True,
+        checkOverlap=False,
+    )
+    particlesHydrograph = initializeParticles(
+        cfg["GENERAL"],
+        hydrLine,
+        dem,
+        inputSimLines=inputSimLines,
+    )
+    particlesHydrograph = DFAfunC.updateInitialVelocity(
+        cfg["GENERAL"], particlesHydrograph, dem, velocityMag
+    )
+    particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
+    return particles
