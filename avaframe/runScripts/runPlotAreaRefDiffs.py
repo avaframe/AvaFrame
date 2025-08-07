@@ -21,6 +21,7 @@ import avaframe.com1DFA.DFAtools as DFAtls
 ################USER Input#############
 resType = "ppr"
 thresholdValueSimulation = 0.9
+modName = 'com1DFA'
 ############################################################
 
 # Load avalanche directory from general configuration file
@@ -62,28 +63,49 @@ if cropInfo:
     cropLine = shpConv.readLine(cropFile, "cropFile", dem)
     cropLine = gT.prepareArea(cropLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
 
-# load dataFrame for all configurations of simulations in avalancheDir
-simDF = cfgUtils.createConfigurationInfo(avalancheDir)
-# create data frame that lists all available simulations and path to their result type result files
-inputsDF, resTypeList = fU.makeSimFromResDF(avalancheDir, "com1DFA")
-# merge  parameters as columns to dataDF for matching simNames
-dataDF = inputsDF.merge(simDF, left_on="simName", right_on="simName")
+if modName == 'com1DFA':
+    # load dataFrame for all configurations of simulations in avalancheDir
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir)
+    # create data frame that lists all available simulations and path to their result type result files
+    inputsDF, resTypeList = fU.makeSimFromResDF(avalancheDir, "com1DFA")
+    # merge  parameters as columns to dataDF for matching simNames
+    dataDF = inputsDF.merge(simDF, left_on="simName", right_on="simName")
 
-# loop over all simulations and load desired resType
-for index, row in dataDF.iterrows():
-    simFile = row[resType]
-    simData = IOf.readRaster(simFile)
-
+    ## loop over all simulations and load desired resType
+    for index, row in dataDF.iterrows():
+        simFile = row[resType]
+        simData = IOf.readRaster(simFile)
 
     # compute referenceMask and simulationMask and true positive, false positive and false neg. arrays
     refMask, compMask, indicatorDict = oPD.computeAreaDiff(referenceLine['rasterData'],
                                                            simData['rasterData'],
-                                                            0.9,
-                                                            thresholdValueSimulation,
-                                                            dem,
-                                                            cropToArea=cropLine['rasterData'])
+                                                           0.9,
+                                                           thresholdValueSimulation,
+                                                           dem,
+                                                           cropToArea=cropLine['rasterData'])
 
     # plot differences
     oPD.plotAreaDiff(referenceLine['rasterData'], refMask, simData['rasterData'], compMask, resType, simData['header'],
-                thresholdValueSimulation, outDir,
-                indicatorDict, row['simName'], cropFile=cropFile)
+                     thresholdValueSimulation, outDir,
+                     indicatorDict, row['simName'], cropFile=cropFile)
+else:
+    # load all result files
+    resultDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'peakFiles')
+    peakFilesList = list(resultDir.glob("*_%s.tif" % resType)) + list(resultDir.glob("*_%s.asc" % resType))
+    for pF in peakFilesList:
+        simData = IOf.readRaster(pF)
+        simName = pF.stem
+
+        # compute referenceMask and simulationMask and true positive, false positive and false neg. arrays
+        refMask, compMask, indicatorDict = oPD.computeAreaDiff(referenceLine['rasterData'],
+                                                               simData['rasterData'],
+                                                               0.9,
+                                                               thresholdValueSimulation,
+                                                               dem,
+                                                               cropToArea=cropLine['rasterData'])
+
+        # plot differences
+        oPD.plotAreaDiff(referenceLine['rasterData'], refMask, simData['rasterData'], compMask, resType,
+                         simData['header'],
+                         thresholdValueSimulation, outDir,
+                         indicatorDict, simName, cropFile=cropFile)
