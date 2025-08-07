@@ -492,21 +492,6 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         entLine = setThickness(cfg, inputSimLines["entLine"], "entTh")
         inputSimLines["entLine"] = entLine
 
-    if cfg.getboolean("GENERAL", "hydrograph"):
-        # hydrLine = setThickness(cfg, inputSimLines["hydrographLine"], "hydrTh")
-        timesteps = cfg["GENERAL"]["hydrographTimeStep"].split("-")
-        thicknessValues = cfg["GENERAL"]["hydrographThickness"].split("-")
-        velocityValues = cfg["GENERAL"]["hydrographVelocity"].split("-")
-        inputSimLines["hydrographLine"]["thickness"] = []
-        inputSimLines["hydrographLine"]["thicknessDict"] = {}
-        inputSimLines["hydrographLine"]["velocityDict"] = {}
-        for ti, th, v in zip(timesteps, thicknessValues, velocityValues):
-            inputSimLines["hydrographLine"]["thicknessDict"][float(ti)] = float(th)
-            inputSimLines["hydrographLine"]["velocityDict"][float(ti)] = float(v)
-            inputSimLines["hydrographLine"]["thickness"].append(float(th))
-        inputSimLines["hydrographLine"]["thicknessSource"] = ["ini file"]
-    else:
-        inputSimLines["hydrographLine"] = None
     return relName, inputSimLines, badName
 
 
@@ -688,6 +673,8 @@ def prepareInputData(inputSimFiles, cfg):
             gI.checkForMultiplePartsShpArea(
                 cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
             )
+            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+            hydrLine["thicknessSource"] = ["csv file"]
         except:
             message = "No hydrograph file found"
             log.error(message)
@@ -1974,15 +1961,20 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
 
         if cfgGen.getboolean("hydrograph"):
-            if round(t, 1) in inputSimLines["hydrographLine"]["thicknessDict"]:
-                log.info(f"add thickness from hydrograph at timestep: {t}")
+            hydrValues = inputSimLines["hydrographLine"]["values"]
+            if round(t, 1) in hydrValues["timeStep"]:
+                i = np.where(hydrValues["timeStep"] == round(t, 1))
+                log.info(
+                    "add hydrograph at timestep: %f with thickness %s and velocity %s"
+                    % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
+                )
                 # see secondary release!
                 particles = addHydrographParticles(
                     cfg,
                     particles,
                     inputSimLines,
-                    inputSimLines["hydrographLine"]["thicknessDict"][round(t, 1)],
-                    inputSimLines["hydrographLine"]["velocityDict"][round(t, 1)],
+                    hydrValues["thickness"][i],
+                    hydrValues["velocity"][i],
                     dem,
                 )
                 particles = DFAfunC.getNeighborsC(particles, dem)
