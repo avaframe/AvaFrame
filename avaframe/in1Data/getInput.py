@@ -378,7 +378,7 @@ def getThicknessInputSimFiles(inputSimFiles):
     """
 
     # fetch thickness attribute of entrainment area and secondary release
-    for thType in ["entFile", "secondaryReleaseFile", "hydrographFile"]:
+    for thType in ["entFile", "secondaryReleaseFile"]:
         if inputSimFiles[thType] is not None:
             thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
             inputSimFiles[inputSimFiles[thType].stem] = {
@@ -437,8 +437,6 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         thTypeList.append("entFile")
     if cfgInitial["GENERAL"].getboolean("secRelArea"):
         thTypeList.append("secondaryReleaseFile")
-    if cfgInitial["GENERAL"].getboolean("hydrograph"):
-        thTypeList.append("hydrFile")
 
     # initialize release scenario list
     releaseScenarioIni = cfgInitial["INPUT"]["releaseScenario"]
