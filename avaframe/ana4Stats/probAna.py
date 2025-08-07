@@ -1068,7 +1068,7 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=""):
                     cfgStart[section][par] = str(pVal[index])
                 else:
                     cfgStart["GENERAL"][par] = str(pVal[index])
-            if modName.lower() == "com1dfa":
+            if modName.lower() in ("com1dfa", "com8motpsa"):
                 cfgStart["VISUALISATION"]["scenario"] = str(count1)
                 cfgStart["INPUT"]["thFromIni"] = paramValuesD["thFromIni"]
                 if "releaseScenario" in paramValuesD.keys():
