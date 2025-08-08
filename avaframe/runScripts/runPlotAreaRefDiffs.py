@@ -77,6 +77,8 @@ if modName == 'com1DFA':
         simData = IOf.readRaster(simFile)
 
     # compute referenceMask and simulationMask and true positive, false positive and false neg. arrays
+    # here thresholdValueReference is set to 0.9 as when converting the polygon to a raster,
+    # values inside polygon are set to 1 and outside to 0
     refMask, compMask, indicatorDict = oPD.computeAreaDiff(referenceLine['rasterData'],
                                                            simData['rasterData'],
                                                            0.9,
