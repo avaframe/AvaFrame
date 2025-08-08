@@ -235,6 +235,30 @@ current cell and time step:
 
 If ``detrainment = False``, the additional resistance force is accounted for in the entire resistance area.
 
+Adaptive surface
+"""""""""""""
+
+When the flowing mass changes (due to detrainment, entrainment and/or stopping = velocity is zero),
+the surface topography can be adapted (if ``adaptSfcDetrainment = 1``, ``adaptSfcEntrainment = 1`` and/or
+``adaptSfcStopped = 1``, respectively).
+
+The detrained/ entrained/ stopped mass is converted into the corresponding
+snow depth changes :math:`h_{det}, h_{ent}, h_{stop}` at the location of the particle
+using the :ref:`DFAnumerics:Particles to mesh` method.
+
+The adapted surface at a specific time step :math:`z(t)` is computed as (with :math:`h_{det}, h_{ent}, h_{stop} > 0`):
+
+.. math::
+  z(t) = z(t=0) + \sum_{i=0}^t (h_{det}(i) + h_{stop}(i) - h_{ent}(i))
+
+In every time step the surface is adapted, the :ref:`DFAnumerics:Cell normals` and
+:ref:`DFAnumerics:Cell area` are also adapted.
+
+.. Note::
+
+    This feature requires more detailed testing and may cause numerical problems if the change in snow
+    depth is very high.
+
 Surface integral forces
 """""""""""""""""""""""""
 

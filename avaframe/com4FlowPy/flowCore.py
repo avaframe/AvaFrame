@@ -151,6 +151,9 @@ def run(optTuple):
     # Temp-Dir (all input files are located here and results are written back in here)
     tempDir = optTuple[3]["tempDir"]
 
+    # List of output layers
+    outputs = optTuple[3]["outputFileList"]
+
     # raster-layer Attributes
     cellsize = float(optTuple[4]["cellsize"])
     nodata = float(optTuple[4]["nodata"])
@@ -229,14 +232,24 @@ def run(optTuple):
         results = pool.map(
             calculation,
             [
-                [   # TODO: write in dicts:
-                    dem, infra, release_sub,
-                    alpha, exp, flux_threshold, max_z_delta,
-                    nodata, cellsize,
-                    infraBool, forestBool,
-                    varParams, fluxDistOldVersionBool,
+                [  # TODO: write in dicts:
+                    dem,
+                    infra,
+                    release_sub,
+                    alpha,
+                    exp,
+                    flux_threshold,
+                    max_z_delta,
+                    nodata,
+                    cellsize,
+                    infraBool,
+                    forestBool,
+                    varParams,
+                    fluxDistOldVersionBool,
                     previewMode,
-                    forestArray, forestParams,
+                    forestArray,
+                    forestParams,
+                    outputs,
                 ]
                 for release_sub in release_list
             ],
@@ -248,16 +261,18 @@ def run(optTuple):
     # Move this part into a separate function
     # initializing arrays for storing the results from the multiprocessing step
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
-    fluxArray = np.zeros_like(dem, dtype=np.float32)
+    fluxArray = np.ones_like(dem, dtype=np.float32) * -9999
     countArray = np.zeros_like(dem, dtype=np.int32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     if infraBool:
         backcalc = np.ones_like(dem, dtype=np.int32) * -9999
-    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
-    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    fpTravelAngleMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
+    fpTravelAngleMinArray = np.ones_like(dem, dtype=np.float32) * -9999
+    slTravelAngleArray = np.ones_like(dem, dtype=np.float32) * -9999
+    travelLengthMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
+    travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
     if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
 
@@ -269,9 +284,11 @@ def run(optTuple):
     depFluxSumList = []
     if infraBool:
         backcalcList = []
-    fpTravelAngleList = []
+    fpTravelAngleMaxList = []
+    fpTravelAngleMinList = []
     slTravelAngleList = []
-    travelLengthList = []
+    travelLengthMaxList = []
+    travelLengthMinList = []
     if forestInteraction:
         forestIntList = []
 
@@ -284,13 +301,15 @@ def run(optTuple):
         zDeltaSumList.append(res[3])
         if infraBool:
             backcalcList.append(res[4])
-        fpTravelAngleList.append(res[5])
+        fpTravelAngleMaxList.append(res[5])
         slTravelAngleList.append(res[6])
-        travelLengthList.append(res[7])
-        routFluxSumList.append(res[8])
-        depFluxSumList.append(res[9])
+        travelLengthMaxList.append(res[7])
+        travelLengthMinList.append(res[8])
+        fpTravelAngleMinList.append(res[9])
+        routFluxSumList.append(res[10])
+        depFluxSumList.append(res[11])
         if forestInteraction:
-            forestIntList.append(res[10])
+            forestIntList.append(res[12])
 
     logging.info("Calculation finished, getting results.")
     for i in range(len(zDeltaList)):
@@ -302,9 +321,23 @@ def run(optTuple):
         depFluxSumArray += depFluxSumList[i]
         if infraBool:
             backcalc = np.maximum(backcalc, backcalcList[i])
-        fpTravelAngleArray = np.maximum(fpTravelAngleArray, fpTravelAngleList[i])
+        if "fpTravelAngleMax" in outputs or "fpTravelAngle" in outputs:
+            fpTravelAngleMaxArray = np.maximum(fpTravelAngleMaxArray, fpTravelAngleMaxList[i])
+        if "fpTravelAngleMin" in outputs:
+            fpTravelAngleMinArray = np.where(
+                (travelLengthMinArray >= 0) & (fpTravelAngleMinList[i] >= 0),
+                np.minimum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
+                np.maximum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
+            )
         slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
-        travelLengthArray = np.maximum(travelLengthArray, travelLengthList[i])
+        if "travelLengthMax" in outputs or "travelLength" in outputs:
+            travelLengthMaxArray = np.maximum(travelLengthMaxArray, travelLengthMaxList[i])
+        if "travelLengthMin" in outputs:
+            travelLengthMinArray = np.where(
+                (travelLengthMinArray >= 0) & (travelLengthMinList[i] >= 0),
+                np.minimum(travelLengthMinArray, travelLengthMinList[i]),
+                np.maximum(travelLengthMinArray, travelLengthMinList[i]),
+            )
         if forestInteraction:
             forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
                                     np.minimum(forestIntArray, forestIntList[i]),
@@ -317,9 +350,11 @@ def run(optTuple):
     np.save(tempDir / ("res_dep_flux_sum_%s_%s" % (optTuple[0], optTuple[1])), depFluxSumArray)
     np.save(tempDir / ("res_flux_%s_%s" % (optTuple[0], optTuple[1])), fluxArray)
     np.save(tempDir / ("res_count_%s_%s" % (optTuple[0], optTuple[1])), countArray)
-    np.save(tempDir / ("res_fp_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleArray)
+    np.save(tempDir / ("res_fp_max_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleMaxArray)
+    np.save(tempDir / ("res_fp_min_%s_%s" % (optTuple[0], optTuple[1])), fpTravelAngleMinArray)
     np.save(tempDir / ("res_sl_%s_%s" % (optTuple[0], optTuple[1])), slTravelAngleArray)
-    np.save(tempDir / ("res_travel_length_%s_%s" % (optTuple[0], optTuple[1])), travelLengthArray)
+    np.save(tempDir / ("res_travel_length_max_%s_%s" % (optTuple[0], optTuple[1])), travelLengthMaxArray)
+    np.save(tempDir / ("res_travel_length_min_%s_%s" % (optTuple[0], optTuple[1])), travelLengthMinArray)
     if infraBool:
         np.save(tempDir / ("res_backcalc_%s_%s" % (optTuple[0], optTuple[1])), backcalc)
     if forestInteraction:
@@ -352,6 +387,7 @@ def calculation(args):
 
         - args[14] (numpy array) - contains forest information (None if forestBool=False)
         - args[15] (dict) - contains parameters for forest interaction models (None if forestBool=False)
+        - args[16] (list) - output names
 
     Returns
     -----------
@@ -418,6 +454,7 @@ def calculation(args):
     varExponentArray = args[11]['varExponentArray']
     fluxDistOldVersionBool = args[12]
     previewMode = args[13]
+    outputs = args[16]
 
     if forestBool:
         forestArray = args[14]
@@ -433,13 +470,15 @@ def calculation(args):
     zDeltaPathList = []
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    fluxArray = np.zeros_like(dem, dtype=np.float32)
+    fluxArray = np.ones_like(dem, dtype=np.float32) * -9999
     countArray = np.zeros_like(dem, dtype=np.int32)
 
-    fpTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # fp = Flow Path
-    slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)  # sl = Straight Line
+    fpTravelAngleMaxArray = np.ones_like(dem, dtype=np.float32) * -9999  # fp = Flow Path
+    fpTravelAngleMinArray = np.ones_like(dem, dtype=np.float32) * -9999  # fp = Flow Path
+    slTravelAngleArray = np.ones_like(dem, dtype=np.float32) * -9999  # sl = Straight Line
 
-    travelLengthArray = np.zeros_like(dem, dtype=np.float32)
+    travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
+    travelLengthMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
 
     if infraBool:
         backcalc = np.ones_like(dem, dtype=np.int32) * -9999
@@ -515,7 +554,7 @@ def calculation(args):
             if len(flux) > 0: #i.e. if there are child cells
                 # Sort this lists by z_delta, to start with the highest cell
                 z_delta, flux, row, col = list(zip(*sorted(zip(z_delta, flux, row, col), reverse=False)))
-            
+
             if infraBool:
                 # if the current cell is not already in the dir-graph, then we add it here
                 updateInfraDirGraph(cell.rowindex, cell.colindex)                
@@ -530,7 +569,7 @@ def calculation(args):
 
                         if infraBool:
                             updateInfraDirGraph(row[k], col[k], cell.rowindex, cell.colindex)
-                            
+
                         if z_delta[k] > cell_list[i].z_delta:
                             cell_list[i].z_delta = z_delta[k]
                         row = np.delete(row, k)
@@ -576,12 +615,34 @@ def calculation(args):
             routFluxSumArray[cell.rowindex, cell.colindex] += cell.flux
             depFluxSumArray[cell.rowindex, cell.colindex] += cell.fluxDep
             zDeltaPathArray[cell.rowindex, cell.colindex] = max(zDeltaPathArray[cell.rowindex, cell.colindex], cell.z_delta)
-            fpTravelAngleArray[cell.rowindex, cell.colindex] = max(fpTravelAngleArray[cell.rowindex, cell.colindex],
-                                                                   cell.max_gamma)
+            if "fpTravelAngleMax" in outputs or "fpTravelAngle" in outputs:
+                fpTravelAngleMaxArray[cell.rowindex, cell.colindex] = max(
+                    fpTravelAngleMaxArray[cell.rowindex, cell.colindex], cell.max_gamma
+                )
+            if "fpTravelAngleMin" in outputs:
+                if fpTravelAngleMinArray[cell.rowindex, cell.colindex] >= 0 and cell.max_gamma >= 0:
+                    fpTravelAngleMinArray[cell.rowindex, cell.colindex] = min(
+                        fpTravelAngleMinArray[cell.rowindex, cell.colindex], cell.max_gamma
+                    )
+                else:
+                    fpTravelAngleMinArray[cell.rowindex, cell.colindex] = max(
+                        fpTravelAngleMinArray[cell.rowindex, cell.colindex], cell.max_gamma
+                    )
             slTravelAngleArray[cell.rowindex, cell.colindex] = max(slTravelAngleArray[cell.rowindex, cell.colindex],
                                                                    cell.sl_gamma)
-            travelLengthArray[cell.rowindex, cell.colindex] = max(travelLengthArray[cell.rowindex, cell.colindex],
-                                                                  cell.min_distance)
+            if "travelLengthMax" in outputs or "travelLength" in outputs:
+                travelLengthMaxArray[cell.rowindex, cell.colindex] = max(
+                    travelLengthMaxArray[cell.rowindex, cell.colindex], cell.min_distance
+                )
+            if "travelLengthMin" in outputs:
+                if travelLengthMinArray[cell.rowindex, cell.colindex] >= 0 and cell.min_distance >= 0:
+                    travelLengthMinArray[cell.rowindex, cell.colindex] = min(
+                        travelLengthMinArray[cell.rowindex, cell.colindex], cell.min_distance
+                    )
+                else:
+                    travelLengthMinArray[cell.rowindex, cell.colindex] = max(
+                        travelLengthMinArray[cell.rowindex, cell.colindex], cell.min_distance
+                    )
             if processedCells[(cell.rowindex, cell.colindex)] == 1:
                 countArray[cell.rowindex, cell.colindex] += int(1)
 
@@ -601,10 +662,10 @@ def calculation(args):
 
             for key, val in updatedInfraValues.items():
                 backcalc[key[0], key[1]] = max(backcalc[key[0], key[1]], val) # writing max-values to back-tracking array
-            
+
             del pathTopology, infraValues, updatedInfraValues
             gc.collect()
-        
+
         if previewMode:
             # if the 'previewMode' is On/'True', then we check here if the current modeled process zones already
             # includes other release Cells (i.e. if release cells are "hit from above")
@@ -624,11 +685,36 @@ def calculation(args):
     gc.collect()
 
     if forestInteraction:
-        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, routFluxSumArray, depFluxSumArray, forestIntArray
+        return (
+            zDeltaArray,
+            fluxArray,
+            countArray,
+            zDeltaSumArray,
+            backcalc,
+            fpTravelAngleMaxArray,
+            slTravelAngleArray,
+            travelLengthMaxArray,
+            travelLengthMinArray,
+            fpTravelAngleMinArray,
+            routFluxSumArray,
+            depFluxSumArray,
+            forestIntArray,
+        )
     else:
-        return zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc, fpTravelAngleArray, slTravelAngleArray, \
-            travelLengthArray, routFluxSumArray, depFluxSumArray
+        return (
+            zDeltaArray,
+            fluxArray,
+            countArray,
+            zDeltaSumArray,
+            backcalc,
+            fpTravelAngleMaxArray,
+            slTravelAngleArray,
+            travelLengthMaxArray,
+            travelLengthMinArray,
+            fpTravelAngleMinArray,
+            routFluxSumArray,
+            depFluxSumArray,
+        )
 
 
 def enoughMemoryAvailable(limit=0.05):
@@ -762,7 +848,7 @@ def backTracking(topologyDict, infraValDict):
     valDictSorted = {k: v for k, v in sorted(infraValDict.items(), key= lambda item: item[1], reverse=True)}
     # reverse the graph topology, so "parents" become "children"
     reverseGraph = reverseTopology(topologyDict)
-    
+
     # helper function to recursively traverse the reverseGraph and
     # propagate the infraValues "upslope"
     def propagateInfraVal(node, infraValToPropagate, visited):
@@ -781,13 +867,12 @@ def backTracking(topologyDict, infraValDict):
         for parentNode in reverseGraph.get(node, []):
             propagateInfraVal(parentNode, infraValToPropagate, visited)
 
-
     for node, val in valDictSorted.items():
         if val > 0:
             propagateInfraVal(node, val, set())
-    
+
     return infraValDict
-    
+
 def reverseTopology(topologyDict):
     '''
     reverse graph topology
@@ -815,5 +900,3 @@ def reverseTopology(topologyDict):
             reverseGraph[child].append(parentNode)
 
     return reverseGraph
-
-

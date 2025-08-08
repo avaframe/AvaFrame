@@ -289,7 +289,7 @@ In both mechanisms, one must account for three things:
 
     - loss of momentum due to the plowing or erosion processes -entrained mass bounds with the ground needs to be broken
 
-These three terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`. The parameters
+These three terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment>`. The parameters
 used to compute these processes can be set in the configuration file.
 
 In the numerics, the mass is updated according to the entrainment model in
@@ -310,7 +310,7 @@ in ``Inputs/RES`` and set the ``simType`` to ``res``, ``entres`` or ``available`
 
 In the areas defined by the resistance shapefile (for example in forests), mass of particles can be detrained causing a change of mass due to the detrainment.
 
-This is further detailed in :ref:`Detrainment <theoryCom1DFA:Detrainment:>`. The parameter
+This is further detailed in :ref:`Detrainment <theoryCom1DFA:Detrainment>`. The parameter
 used to compute these processes can be set in the configuration file.
 
 In the numerics, the mass is updated according to the detrainment model in
@@ -318,8 +318,31 @@ In the numerics, the mass is updated according to the detrainment model in
 
 Detrainment is only applied when ``ResistanceModel =  default`` and ``detrainment = True``; depending on actual flow thickness and velocity,
 either detrainment or the additional resistance force is applied within the resistance area.
-See :ref:`theoryCom1DFA:Resistance:` for more details.
+See :ref:`theoryCom1DFA:Resistance` for more details.
 
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
+
+
+Adapt surface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The surface (digital elevation model) can be adapted when snow masses change the surface due to
+
+    - :ref:`detrainment <com1DFAAlgorithm:Take detrainment into account>` (if ``adaptSfcDetrainment = 1``),
+
+    - :ref:`entrainment <com1DFAAlgorithm:Take entrainment into account>` (if ``adaptSfcEntrainment = 1``) and/or
+
+    - stopping (velocity of a particle is zero; if ``adaptSfcStopped = 1``).
+
+
+This is further detailed in :ref:`adaptive surface <theoryCom1DFA:Adaptive surface>`. The parameters
+used to compute these processes can be set in the configuration file.
+
+In the numerics, the surface is updated in :py:func:`com1DFA.com1DFA.adaptDEM`.
+The surface and corresponding :ref:`DFAnumerics:Cell normals` and
+:ref:`DFAnumerics:Cell area` are updated in every time step.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
