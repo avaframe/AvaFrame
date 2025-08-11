@@ -808,6 +808,52 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "mu file": inputSimLines["muFile"].name,
             "xi file": inputSimLines["xiFile"].name,
         }
+    elif cfgGen["frictModel"].lower() == "obrienandjulien":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "O´Brien and Julien",
+            "alpha": cfgGen["alphaObrienAndJulien"],
+            "Cmax": cfgGen["cmax"],
+            "Cv": cfgGen["cv"],
+            "alpha1": cfgGen["alpha1Eta"],
+            "beta1": cfgGen["beta1Eta"],
+            "alpha2": cfgGen["alpha2Tauy"],
+            "beta2": cfgGen["beta2Tauy"],
+        }
+    elif cfgGen["frictModel"].lower() == "herschelandbulkley":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Herschel and Bulkley",
+            "n": cfgGen["n"],
+            "alpha1": cfgGen["alpha1Eta"],
+            "beta1": cfgGen["beta1Eta"],
+            "alpha2": cfgGen["alpha2Tauy"],
+            "beta2": cfgGen["beta2Tauy"],
+        }
+    elif cfgGen["frictModel"].lower() == "ostwald":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Ostwald",
+            "n": cfgGen["n"],
+            "alpha1": cfgGen["alpha1Eta"],
+            "beta1": cfgGen["beta1Eta"],
+        }
+    elif cfgGen["frictModel"].lower() == "bingham":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Bingham",
+            "alpha1": cfgGen["alpha1Eta"],
+            "beta1": cfgGen["beta1Eta"],
+            "alpha2": cfgGen["alpha2Tauy"],
+            "beta2": cfgGen["beta2Tauy"],
+        }
+    elif cfgGen["frictModel"].lower() == "newton":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Newton",
+            "alpha1": cfgGen["alpha1Eta"],
+            "beta1": cfgGen["beta1Eta"],
+        }
 
     # check if secondary release area
     if secRelAreaFlag == "Yes":
@@ -1855,6 +1901,11 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "voellmyminshear",
         "coulombminshear",
         "spatialvoellmy",
+        "obrienandjulien",
+        "herschelandbulkley",
+        "ostwald",
+        "bingham",
+        "newton"
     ]
     frictModel = cfgGen["frictModel"].lower()
     frictType = frictModelsList.index(frictModel) + 1
