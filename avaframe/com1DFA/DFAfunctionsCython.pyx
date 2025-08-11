@@ -2226,6 +2226,25 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
 
 
 def updateInitialVelocity(cfg, particles, dem, float velocityMag):
+  """
+  update particles' velocity in direction of the steepest descent
+
+  Parameters
+  ------------
+  cfg: configparser
+    configuration for DFA simulation
+  particles : dict
+    particles dictionary at t
+  dem : dict
+    dictionary with dem information
+  velocityMag: float
+    velocity of the particles
+
+  Returns
+  ------------
+  particles : dict
+    particles dictionary at t with updated velocity
+  """
 
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
