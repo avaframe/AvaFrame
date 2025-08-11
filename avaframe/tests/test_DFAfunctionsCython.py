@@ -844,3 +844,7 @@ def test_updateFieldsC():
     assert np.allclose(fields['dmDet'], dmDet_calculated2, atol=atol)
 #    print(fields['dmDet'])
     """
+
+"""
+TODO: Add test_computeForceC()
+    """
