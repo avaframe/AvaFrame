@@ -76,6 +76,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double entShearResistance = cfg.getfloat('entShearResistance')
   cdef double entDefResistance = cfg.getfloat('entDefResistance')
   cdef double rho = cfg.getfloat('rho')
+  cdef double rhos = cfg.getfloat('rhos')
+  cdef double ds = cfg.getfloat('ds')
+  cdef double cmax = cfg.getfloat('cmax')
+  cdef double cv = cfg.getfloat('cv')
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsiVoellmy = cfg.getfloat('xsivoellmy')
@@ -86,6 +90,12 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double muCoulombMinShear = cfg.getfloat('mucoulombminshear')
   cdef double tau0CoulombMinShear = cfg.getfloat('tau0coulombminshear')
+  cdef double alphaObrienAndJulien = cfg.getfloat('alphaObrienAndJulien')
+  cdef double alpha1Eta = cfg.getfloat('alpha1Eta')
+  cdef double beta1Eta = cfg.getfloat('beta1Eta')
+  cdef double alpha2Tauy = cfg.getfloat('alpha2Tauy')
+  cdef double beta2Tauy = cfg.getfloat('beta2Tauy')
+  cdef double n = cfg.getfloat('n')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -298,6 +308,29 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             xsiVoellmyRaster = xsiRaster[indCellY, indCellX]
             # Voellmy with optional spatially variable mu and xi values provided as rasters
             tau = muVoellmyRaster * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyRaster
+          elif frictType >= 10:
+            # viscosity
+            eta = alpha1Eta * math.exp(beta1Eta * cv)
+            # yield shear stress
+            tauy = alpha2Tauy * math.exp(beta2Tauy * cv)
+            if frictType == 10:
+              # O`Brien and Julien
+              lmObrienAndJulien = 0.4 * h
+              lambdaBagnold = 1 / (math.pow(cmax / cv, 1 / 3) - 1)
+              cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhos * lambdaBagnold * lambdaBagnold * ds * ds
+              tau = tauy + eta * 3 * uMag / h + cObrienAndJulien * (3 * uMag / h * 3 * uMag / h)
+            if frictType == 11:
+              # Herschel and Bulkley
+              tau = tauy + eta * math.pow(3 * uMag / h, n)
+            if frictType == 12:
+              # Ostwald
+              tau = eta * math.pow(3 * uMag / h, n)
+            if frictType == 13:
+              # Bingham
+              tau = tauy + eta * 3 * uMag / h
+            if frictType == 14:
+              # Newton
+              tau = eta * 3 * uMag / h
           else:
             tau = 0.0
 
