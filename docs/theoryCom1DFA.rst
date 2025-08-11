@@ -613,6 +613,149 @@ Throughout the computation, the particles specific enthalpy is then computed fol
 .. math::
   enthalpy = totalEnthalpy - g\,z - 0.5\,\bar{u}^2
 
+Rheological Models
+~~~~~~~~~~~~~~~~~~~
+
+.. Note:: This documentation about rheological models is currently under development and therefore not complete yet!
+    Also the parameters are not calibrated yet!
+
+General
+"""""""""
+
+.. todo:: Introduction non-newtonian fluids, Bogen spannen zwischen fluid und solid rheology
+    Which model under which conditions (e.g. Hec-RAS); literature in combination with reference scenarios -> one block
+    Einheiten der Parameter ergänzen?
+    Grafik Modelle anpassen
+    Referenzen in references_all.bib ergänzen
+
+The rheological models implemented in AvaFrame can be written in a general form:
+
+.. math::
+    \tau = \tau_y + k \cdot \left( \frac{du}{dz} \right)^n + C \cdot \left( \frac{du}{dz} \right)^2
+    :label: rheology-general
+
+:numref:`Overview-rheological-models-table` gives an overview about the relation between the implemented rheological models and the used parameters:
+
+.. _Overview-rheological-models-table:
+
+.. table:: Overview of the implemented rheological models and their parameters according to :eq:`rheology-general`
+
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    | :math:`\boldsymbol{Model}`          | :math:`\boldsymbol{\tau_y}` | :math:`\boldsymbol{k}` | :math:`\boldsymbol{n}` | :math:`\boldsymbol{C}` |
+    +=====================================+=============================+========================+========================+========================+
+    | *O´Brien and Julien (1985)*         | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`> 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    | *Herschel and Bulkley (1926)*       | :math:`> 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    | *Ostwald (1929)*                    | :math:`= 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    | *Bingham (1919)*                    | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    | *Newton (1687)*                     | :math:`= 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+
+where :math:`\tau_y` is the yield shear stress, :math:`\eta` is the dynamic viscosity, :math:`n` is a flow exponent and :math:`C` is
+the dispersive shear stress.
+
+:numref:`Overview-rheological-models-fig` illustrates the behaviour of the graphs of the rheological model for different shear rates.
+
+.. _Overview-rheological-models-fig:
+
+.. figure:: _static/Overview_rheological_models.png
+    :width: 90%
+
+    Overview rheological models
+
+
+It is well known that the viscosity :math:`\eta` and the yield shear stress :math:`\tau_y` are both a function of the
+volumetric sediment concentration :math:`C_v`. The dependencies are expressed by following equations (e.g. O´Brien and Julien 1993):
+
+.. math::
+    \eta = \alpha_1 \cdot e^{\beta_1 \cdot C_v}
+    :label: eta-cv
+
+.. math::
+    \tau_y = \alpha_2 \cdot e^{\beta_2 \cdot C_v}
+    :label: tauy-cv
+
+where :math:`\alpha_1` and :math:`\beta_1`, :math:`\alpha_2` and :math:`\beta_2`, respectively, are empirical coefficients which
+are determined in lab experiments.
+
+Since the governing equations to be solved are depth-averaged, the shear rate :math:`\frac{du}{dz} = \dot\gamma`
+cannot be considered directly. Assuming a parabolic vertical flow velocity distribution the integration
+over the flow depth results in following substitution (e.g. Iverson 1997, Iverson and Denlinger 2001, Gibson et al. 2020):
+
+.. math::
+    \dot{\gamma} = \frac{3 \cdot |V|}{h}
+    :label: shearRate_substitution
+
+where :math:`|V|` is the depth-averaged magnitude of the flow velocity and :math:`h` is the flow depth.
+
+O´Brien and Julien (1985)
+"""""""""""""""""""""""""""
+The quadratic rheological model proposed by O´Brien and Julien (1985) accounts for various shear stress components, including
+cohesive yield stress, viscous stress, turbulent stress, and dispersive stress, which arise from sediment particle
+collisions under high deformation rates.
+The resulting shear stress reads:
+
+.. math::
+    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right) + C \cdot \left(\frac{3 \cdot |V|}{h} \right)^2
+    :label: oBrienAndJulien
+
+The dispersive shear stress is taken into account by the factor :math:`C` which incorporates the sediment concentration
+:math:`\lambda` (Bagnold 1954):
+
+.. math::
+    C = \rho_m \cdot l_m^2 + \alpha_i \cdot \rho_s \cdot \lambda^2 \cdot d_s^2
+    :label: dispersiveShearStress
+
+.. math::
+    \frac{1}{\lambda} = \left(\frac{C_m}{C_v}\right)^{1/3} - 1
+    :label: sedimentConcentration
+
+where :math:`\rho_m` is the mass density of the solid-fluid mixture, :math:`\rho_s` is the mass density of sediment,
+:math:`l_m` is the Prandtl mixing length (approximate :math:`0.4 \cdot h`), :math:`d_s` is the sediment size and
+:math:`\alpha_i` is a coefficient (= 0.01, Takahashi 1978).
+
+Herschel and Bulkley (1926)
+"""""""""""""""""""""""""""""
+If the dispersive stress is not accounted for the simulation (:math:`C = 0`),  the last term on the right handside of equation (ganz oben)
+is neglected and the rheology results in the model by Herschel and Bulkley (1926):
+
+.. math::
+    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
+    :label: herschelAndBulkley
+
+with :math:`k = \eta`.
+
+Ostwald (1929)
+"""""""""""""""""""""""""""
+Like Herschel and Bulkley (1926) the rheological model proposed by Ostwald (1929) is a power-law but with the difference that
+no yield stress is taken into account. The resulting shear stress reads:
+
+.. math::
+    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
+    :label: ostwald
+
+Bingham (1919)
+"""""""""""""""""""""""""""
+The rheological model proposed by Bingham (1919) is an extension of the one developed by Newton (1687) describing newtonian fluids. Like the
+newtonian model, the Bingham model is linear with the difference that a yield shear stress has to be exceeded before
+the deformation of the fluid is initialized. The equation reads:
+
+.. math::
+    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
+    :label: bingham
+
+Newton (1687)
+"""""""""""""""""""""""""""
+Newton´s law of viscosity describes ideal fluids (e.g. pure water) where the viscosity remains constant and the relationship
+between shear stress :math:`\tau` and shear rate :math:`\dot\gamma` is linear. The equation is as follows:
+
+.. math::
+    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
+    :label: newton
+
 
 Dam
 ~~~
