@@ -668,6 +668,7 @@ def prepareInputData(inputSimFiles, cfg):
     if cfg["GENERAL"].getboolean("hydrograph"):
         try:
             hydrFile = inputSimFiles["hydrographFile"]
+            print(hydrFile)
             hydrLine = shpConv.readLine(hydrFile, "", demOri)
             hydrLine["fileName"] = hydrFile
             hydrLine["type"] = "Hydrograph"
@@ -2832,7 +2833,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
     Returns
     -------
     simDict: dict
-        dicionary with info on simHash, releaseScenario, release area file path,
+        dictionary with info on simHash, releaseScenario, release area file path,
         simType and contains full configuration configparser object for simulation run
     """
 
@@ -3189,8 +3190,11 @@ def fetchRelVolume(releaseFile, cfg, pathToDem, secondaryReleaseFile, radius=0.0
     demVol = geoTrans.getNormalMesh(demVol, num=methodMeshNormal)
     demVol = DFAtls.getAreaMesh(demVol, methodMeshNormal)
 
-    # compute volume of release area
-    relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary")
+    if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
+        relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="hydrograph")
+    else:
+        # compute volume of release area
+        relVolume = initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary")
 
     if cfg["GENERAL"]["secRelArea"] == "True":
         # compute volume of secondary release area
@@ -3237,6 +3241,8 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
 
     if releaseType == "primary":
         typeTh = "relTh"
+    elif releaseType == "hydrograph":
+        typeTh = "hydr"
     else:
         typeTh = "secondaryRelTh"
 
@@ -3269,6 +3275,17 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
 
         if debugPlot:
             debPlot.plotVolumeRelease(releaseLine, relThField, releaseLineField)
+    if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
+        hydrLine = geoTrans.prepareArea(
+            releaseLine,
+            demVol,
+            radius,
+            # thList=releaseLine["thickness"],
+            combine=True,
+            checkOverlap=False,
+        )
+
+        relVolume = np.nansum(hydrLine["rasterData"] * demVol["areaRaster"])
     else:
         relThField = ""
 
