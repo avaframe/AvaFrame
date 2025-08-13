@@ -263,6 +263,7 @@ def getInputDataCom1DFA(avaDir):
     hydrographFile, entResInfo["hydrograph"] = getAndCheckInputFiles(
         inputDir, "HYDR", "Hydrograph", fileExt="shp"
     )
+    # hydrographFile = sorted(list((inputDir / "HYDR").glob("*.shp")))
     hydrographCsv, entResInfo["hydrographCsv"] = getAndCheckInputFiles(
         inputDir, "HYDR", "Hydrograph parameters (csv)", fileExt="csv"
     )
@@ -446,20 +447,22 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     else:
         releaseScenarioList = cfgInitial["INPUT"]["releaseScenario"].split("|")
 
-    # add input data info to cfg object
-    # fetch thickness attribute of release areas and add info to input dict
-    for releaseA in releaseScenarioList:
-        # update configuration with thickness value to be used for simulations
-        cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, "relTh")
-        if cfgInitial["GENERAL"].getboolean("relThFromFile"):
-            if inputSimFiles["relThFile"] is None:
-                message = "relThFromFile set to True but no relTh file found"
-                log.error(message)
-                raise FileNotFoundError(message)
-            else:
-                cfgInitial["INPUT"]["relThFile"] = str(
-                    pathlib.Path("RELTH", inputSimFiles["relThFile"].name)
-                )
+    if (cfgInitial["GENERAL"]["hydrograph"] == "True" and cfgInitial["GENERAL"]["noRelArea"] == "False") or (
+            cfgInitial["GENERAL"]["hydrograph"] == "False"):
+        # add input data info to cfg object
+        # fetch thickness attribute of release areas and add info to input dict
+        for releaseA in releaseScenarioList:
+            # update configuration with thickness value to be used for simulations
+            cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, "relTh")
+            if cfgInitial["GENERAL"].getboolean("relThFromFile"):
+                if inputSimFiles["relThFile"] is None:
+                    message = "relThFromFile set to True but no relTh file found"
+                    log.error(message)
+                    raise FileNotFoundError(message)
+                else:
+                    cfgInitial["INPUT"]["relThFile"] = str(
+                        pathlib.Path("RELTH", inputSimFiles["relThFile"].name)
+                    )
 
     # add entrainment and secondary release thickness in input data info and in cfg object
     if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
@@ -583,8 +586,14 @@ def selectReleaseFile(inputSimFiles, releaseScenario):
     # fetch release file path for scenario
     relFiles = inputSimFiles["relFiles"]
     for relF in relFiles:
+        print(relF)
+        print(releaseScenario)
         if relF.stem == releaseScenario:
             releaseScenarioPath = relF
+    if len(relFiles) == 0:
+        for hydrF in [inputSimFiles["hydrographFile"]]:
+            if hydrF.stem == releaseScenario:
+                releaseScenarioPath = hydrF
 
     inputSimFiles["releaseScenario"] = releaseScenarioPath
 
@@ -616,7 +625,12 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
     """
 
     # fetch release files paths
-    relFiles = inputSimFiles["relFiles"]
+    if cfgSim["GENERAL"]["hydrograph"] == "False" or (
+            cfgSim["GENERAL"]["noRelArea"] == "False" and cfgSim["GENERAL"]["hydrograph"] == "True"):
+        relFiles = inputSimFiles["relFiles"]
+    else:
+        relFiles = [inputSimFiles["hydrographFile"]]
+        cfgSim["GENERAL"]["relThFromShp"] = "False"
 
     foundScenario = False
     for relF in relFiles:
