@@ -591,8 +591,7 @@ def selectReleaseFile(inputSimFiles, releaseScenario):
         if relF.stem == releaseScenario:
             releaseScenarioPath = relF
     if len(relFiles) == 0:
-        # print(inputSimFiles["hydrFiles"])
-        for hydrF in inputSimFiles["hydrographFile"]:
+        for hydrF in [inputSimFiles["hydrographFile"]]:
             if hydrF.stem == releaseScenario:
                 releaseScenarioPath = hydrF
 
@@ -626,11 +625,11 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
     """
 
     # fetch release files paths
-    print(releaseScenario)
-    if cfgSim["GENERAL"]["hydrograph"] == "False":
+    if cfgSim["GENERAL"]["hydrograph"] == "False" or (
+            cfgSim["GENERAL"]["noRelArea"] == "False" and cfgSim["GENERAL"]["hydrograph"] == "True"):
         relFiles = inputSimFiles["relFiles"]
     else:
-        relFiles = inputSimFiles["hydrographFile"]
+        relFiles = [inputSimFiles["hydrographFile"]]
         cfgSim["GENERAL"]["relThFromShp"] = "False"
 
     foundScenario = False
