@@ -459,9 +459,10 @@ has to be introduced in order to completely solve the equations.
 Friction Model
 ~~~~~~~~~~~~~~~~~
 
-The problem can be solved by introducing a constitutive equation which
-describes the basal shear stress tensor :math:`\tau^{(b)}` as a function
-of the flow state of the avalanche.
+The problem can be solved by introducing constitutive equations which
+describe the behaviour of a material due to stress. 
+For granular materials like avalanches the basal shear stress tensor :math:`\tau^{(b)}`
+is expressed as a function of the flow state of the avalanche (:ref:`theoryCom1DFA:Granular friction models`).
 
 .. math::
     \tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})
@@ -478,13 +479,33 @@ With
    &t \qquad &\text{time}\\
    &\mathbf{x} \qquad &\text{position vector}\end{aligned}
 
+For solid-fluid mixtures like debris flows, where the properties of the fluid phase are dominating the flow process,
+the shear stress tensor is, among other things, a function of dynamic viscosity :math:`\eta_m` and shear rate :math:`\dot\gamma` (:ref:`theoryCom1DFA:Rheological models`).
+
+.. math::
+    \tau_i = f(\eta_m,\dot\gamma,\overline{h},\rho_m,t,\mathbf{x})
+    :label: samosAT friction model
+
+With
+
+.. math::
+   \begin{aligned}
+   &\eta_m \qquad &\text{dynamic viscosity of the solid-fluid mixture}\\
+   &\dot\gamma \qquad &\text{shear rate}\\
+   &\overline{h} \qquad &\text{average flow thickness}\\
+   &\rho_m \qquad &\text{density of the solid-fluid mixture}\\
+   &t \qquad &\text{time}\\
+   &\mathbf{x} \qquad &\text{position vector}\end{aligned}
+
 Several friction models already implemented in the simulation tool are
-described here.
+described in the following sections.
 
 
+Granular friction models
+""""""""""""""""""""""""""
 
 Mohr-Coulomb friction model
-"""""""""""""""""""""""""""""""
+++++++++++++++++++++++++++++
 The Mohr-Coulomb friction model describes the friction interaction between twos solids.
 The bottom shear stress simply reads:
 
@@ -503,7 +524,7 @@ granular flow. Because of its relative simplicity, this friction model is also
 very convenient to derive analytic solutions and validate the numerical implementation.
 
 Chezy friction model
-""""""""""""""""""""""""
+++++++++++++++++++++++
 The Chezy friction model describes viscous friction interaction.
 The bottom shear stress then reads:
 
@@ -518,7 +539,7 @@ The draw back is that the avalanche doesn't stop flowing before the slope inclin
 This implies that the avalanche flows to the lowest local point.
 
 Voellmy friction model
-""""""""""""""""""""""
++++++++++++++++++++++++
 Anton Voellmy was a Swiss engineer interested in avalanche dynamics :cite:`Vo1955`.
 He first had the idea to combine both the Mohr-Coulomb and the Chezy model by summing them up
 in order to take advantage of both. This leads to the following friction law:
@@ -535,7 +556,7 @@ For this option, raster files with values for :math:`\mu` and :math:`\xi` need t
 
 
 VoellmyMinShear friction model
-"""""""""""""""""""""""""""""""
++++++++++++++++++++++++++++++++
 In order to increase the friction force and make the avalanche flow stop on steeper slopes than with the Voellmy friction relation, a minimum shear stress can be added to the Voellmy friction relation. This minimum value defines a shear stress under which the snowpack doesn’t move, and induces a strong flow deceleration. This expression of the basal layer friction model also resembles the one used in the swiss RAMMS model, where the Voellmy model is modified by adding a yield stress supposed to account for the snow cohesion (https://ramms.slf.ch/en/modules/debrisflow/theory/friction-parameters.html).
 
 .. math::
@@ -545,7 +566,7 @@ In order to increase the friction force and make the avalanche flow stop on stee
 .. _samosatfrict:
 
 SamosAT friction model
-""""""""""""""""""""""""
++++++++++++++++++++++++
 
 SamosAT friction model is a modification of some more classical models
 such as Voellmy model :ref:`theoryCom1DFA:Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
@@ -585,7 +606,7 @@ The default configuration also provides two additional calibrations for small-
 avalanches. A further constraint is the altitude of runout below 1600m msl for both.
 
 Wet snow friction type
-""""""""""""""""""""""""
++++++++++++++++++++++++
 
 .. Note::
 
@@ -614,50 +635,59 @@ Throughout the computation, the particles specific enthalpy is then computed fol
   enthalpy = totalEnthalpy - g\,z - 0.5\,\bar{u}^2
 
 Rheological Models
-~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""
 
 .. Note:: This documentation about rheological models is currently under development and therefore not complete yet!
     Also the parameters are not calibrated yet!
 
 General
-"""""""""
+++++++++
+Debris flows are gravity-driven masses of poorly sorted and water saturated sediments whose dynamics are strongly influenced by
+solid and fluid forces :cite:`Iv1997`. Unlike the granular friction models presented in the previous section, which consider the solid
+fraction of a material, the rheological models implemented in :py:mod:`com1DFA` are intended to simulate the visco-turbulent behaviour of the solid-fluid mixtures.
+A rheological constitutive law describes the shear stress applied at a given shear rate (:numref:`Overview-rheological-models-fig`).
+In general, these laws can be subdivided into: Newtonian rheologies, in which shear stress increases linearly with shear rate (e.g. clear water), 
+and non-Newtonian fluids, in which a yield shear stress has to be exceeded or shear stress increases non-linearly with shear rate (e.g. debris flows, mudflows).
 
-.. todo:: Introduction non-newtonian fluids, Bogen spannen zwischen fluid und solid rheology
-    Which model under which conditions (e.g. Hec-RAS); literature in combination with reference scenarios -> one block
-    Einheiten der Parameter ergänzen?
-    Grafik Modelle anpassen
-    Referenzen in references_all.bib ergänzen
-
-The rheological models implemented in AvaFrame can be written in a general form:
+The rheological models are incorporated into a single, general form, which can be expressed as follows:
 
 .. math::
-    \tau = \tau_y + k \cdot \left( \frac{du}{dz} \right)^n + C \cdot \left( \frac{du}{dz} \right)^2
+    \tau = \tau_y + \eta_m \cdot \dot\gamma^n + C \cdot \dot\gamma^2
     :label: rheology-general
 
-:numref:`Overview-rheological-models-table` gives an overview about the relation between the implemented rheological models and the used parameters:
+The yield shear stress :math:`\tau_y` :math:`[Pa]` defines a lower limit below which no flow takes place. 
+The dynamic viscosity :math:`\eta_m` :math:`[Pa \cdot s]` quantifies the internal frictional force between two neighbouring layers of the mixture in relative motion. 
+:math:`\dot\gamma` is the flow velocity gradient, or shear rate, :math:`\frac{du}{dz}` :math:`[s^{-1}]` along the axis normal to the slope (flow thickness).
+The flow index :math:`n` describes the rheological behaviour of the mixture as :cite:`KaZhHaHe2025`:
+
+- :math:`n = 0` a rate-independent solid-like behaviour,
+- :math:`n = 1` a Newtonian fluid-like behaviour,
+- :math:`0 < n < 1` a shear-thinning non-Newtonian fluid-like behaviour,
+- :math:`1 < n < 2` a shear-thickening non-Newtonian fluid-like behaviour,
+- :math:`n = 2` an intertial mixture (fluid or solid).
+
+:math:`C` incorporates the turbulent and dispersive shear stresses :math:`[kg \cdot m^{-1}]`,
+which considers the inertial impact between the mixture particles as well :cite:`ObJu1985`.
+
+Depending on how the parameters are selected, you can choose between three different models. :numref:`Overview-rheological-models-table` gives an overview
+about the relation between the implemented rheological models and the used parameters:
 
 .. _Overview-rheological-models-table:
 
 .. table:: Overview of the implemented rheological models and their parameters according to :eq:`rheology-general`
 
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | :math:`\boldsymbol{Model}`          | :math:`\boldsymbol{\tau_y}` | :math:`\boldsymbol{k}` | :math:`\boldsymbol{n}` | :math:`\boldsymbol{C}` |
-    +=====================================+=============================+========================+========================+========================+
-    | *O´Brien and Julien (1985)*         | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`> 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Herschel and Bulkley (1926)*       | :math:`> 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Ostwald (1929)*                    | :math:`= 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Bingham (1919)*                    | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Newton (1687)*                     | :math:`= 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | :math:`\boldsymbol{Model}`          | :math:`\boldsymbol{\tau_y}` | :math:`\boldsymbol{n}` | :math:`\boldsymbol{C}` |
+    +=====================================+=============================+========================+========================+
+    | *O´Brien and Julien*                | :math:`> 0`                 | :math:`= 1`            | :math:`> 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Herschel and Bulkley*              | :math:`> 0`                 | :math:`\neq 1`         | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Bingham*                           | :math:`> 0`                 | :math:`= 1`            | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
 
-where :math:`\tau_y` is the yield shear stress, :math:`\eta` is the dynamic viscosity, :math:`n` is a flow exponent and :math:`C` is
-the dispersive shear stress.
 
-:numref:`Overview-rheological-models-fig` illustrates the behaviour of the graphs of the rheological model for different shear rates.
+:numref:`Overview-rheological-models-fig` illustrates the behaviour of the graphs of the rheological models due to shear rate.
 
 .. _Overview-rheological-models-fig:
 
@@ -667,11 +697,11 @@ the dispersive shear stress.
     Overview rheological models
 
 
-It is well known that the viscosity :math:`\eta` and the yield shear stress :math:`\tau_y` are both a function of the
-volumetric sediment concentration :math:`C_v`. The dependencies are expressed by following equations (e.g. O´Brien and Julien 1993):
+It is well known that the bulk viscosity :math:`\eta_m` and the yield shear stress :math:`\tau_y` are both a function of the
+volumetric sediment concentration :math:`C_v`. The dependencies are expressed by following equations :cite:`ObJu1985, ObJu1993`:
 
 .. math::
-    \eta = \alpha_1 \cdot e^{\beta_1 \cdot C_v}
+    \eta_m = \alpha_1 \cdot e^{\beta_1 \cdot C_v}
     :label: eta-cv
 
 .. math::
@@ -681,29 +711,29 @@ volumetric sediment concentration :math:`C_v`. The dependencies are expressed by
 where :math:`\alpha_1` and :math:`\beta_1`, :math:`\alpha_2` and :math:`\beta_2`, respectively, are empirical coefficients which
 are determined in lab experiments.
 
-Since the governing equations to be solved are depth-averaged, the shear rate :math:`\frac{du}{dz} = \dot\gamma`
-cannot be considered directly. Assuming a parabolic vertical flow velocity distribution the integration
-over the flow depth results in following substitution (e.g. Iverson 1997, Iverson and Denlinger 2001, Gibson et al. 2020):
+Since the governing equations to be solved are depth-averaged, the shear rate :math:`\dot\gamma = \frac{du}{dz}`
+cannot be computed directly. Assuming a parabolic vertical flow velocity distribution the integration over the flow thickness results 
+in following substitution :cite:`Iv1997, DeIv2001, GiFlSaHe2020`:
 
 .. math::
-    \dot{\gamma} = \frac{3 \cdot |V|}{h}
+    \dot{\gamma} = \frac{3 \cdot \overline{u}}{\overline{h}}
     :label: shearRate_substitution
 
-where :math:`|V|` is the depth-averaged magnitude of the flow velocity and :math:`h` is the flow depth.
+where :math:`\overline{u}` is the depth-averaged flow velocity and :math:`\overline{h}` is the flow thickness.
 
-O´Brien and Julien (1985)
-"""""""""""""""""""""""""""
-The quadratic rheological model proposed by O´Brien and Julien (1985) accounts for various shear stress components, including
+O´Brien and Julien
++++++++++++++++++++
+The quadratic rheological model proposed by O´Brien and Julien :cite:`ObJu1985` accounts for various shear stress components, including
 cohesive yield stress, viscous stress, turbulent stress, and dispersive stress, which arise from sediment particle
 collisions under high deformation rates.
 The resulting shear stress reads:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right) + C \cdot \left(\frac{3 \cdot |V|}{h} \right)^2
+    \tau = \tau_y + \eta_m \cdot \dot{\gamma} + C \cdot \dot{\gamma}^2
     :label: oBrienAndJulien
 
-The dispersive shear stress is taken into account by the factor :math:`C` which incorporates the sediment concentration
-:math:`\lambda` (Bagnold 1954):
+The turbulence and dispersive shear stresses, which are both functions of the second power of the shear rate,
+are taken into account by the factor :math:`C` which incorporates :
 
 .. math::
     C = \rho_m \cdot l_m^2 + \alpha_i \cdot \rho_s \cdot \lambda^2 \cdot d_s^2
@@ -713,49 +743,36 @@ The dispersive shear stress is taken into account by the factor :math:`C` which 
     \frac{1}{\lambda} = \left(\frac{C_m}{C_v}\right)^{1/3} - 1
     :label: sedimentConcentration
 
-where :math:`\rho_m` is the mass density of the solid-fluid mixture, :math:`\rho_s` is the mass density of sediment,
-:math:`l_m` is the Prandtl mixing length (approximate :math:`0.4 \cdot h`), :math:`d_s` is the sediment size and
-:math:`\alpha_i` is a coefficient (= 0.01, Takahashi 1978).
+where :math:`\rho_m` is the mass density of the solid-fluid mixture :math:`[kg \cdot m^{-3}]`, :math:`l_m` is the Prandtl mixing length :math:`[m]` 
+(approximate :math:`0.4 \cdot h`), :math:`\alpha_i` is a coefficient (= 0.01, :cite:`Ta1978`), :math:`\rho_s` is the mass density
+of sediment :math:`[kg \cdot m^{-3}]`, :math:`d_s` is the sediment size :math:`[m]`, :math:`\lambda` is the linear sediment concentration :cite:`Ba1954`,
+:math:`C_m` is the maximum concentration of sediment particles (= 0.615, :cite:`Ba1954`) and :math:`C_v` is the volumetric sediment concentration.
 
-Herschel and Bulkley (1926)
-"""""""""""""""""""""""""""""
-If the dispersive stress is not accounted for the simulation (:math:`C = 0`),  the last term on the right handside of equation (ganz oben)
-is neglected and the rheology results in the model by Herschel and Bulkley (1926):
+The quadratic rheological model is particularly suitable for simulating debris flows with high sediment concentrations, in which energy dissipation and
+resistance due to turbulence and particle collisions are significant.
+
+Herschel and Bulkley
++++++++++++++++++++++++++
+The model by Herschel and Bulkley :cite:`HeBu1926` is expressed by an empirical power-law equation:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
+    \tau = \tau_y + \eta_m \cdot \dot{\gamma}^n
     :label: herschelAndBulkley
 
-with :math:`k = \eta`.
-
-Ostwald (1929)
-"""""""""""""""""""""""""""
-Like Herschel and Bulkley (1926) the rheological model proposed by Ostwald (1929) is a power-law but with the difference that
-no yield stress is taken into account. The resulting shear stress reads:
-
-.. math::
-    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
-    :label: ostwald
+where the flow index :math:`n` describes the rheological behaviour of the mixture (see above). The factor in front of the shear rate
+was originally introduced as a consistency factor :math:`K`. In :py:mod:`com1DFA` :math:`K` equals to the bulk dynamic viscosity :math:`\eta_m`.
+This rheology applies to fine-grained soil-water mixtures that exhibit shear-thinning or shear-thickening behavior, respectively, with increasing shear rates.
 
 Bingham (1919)
-"""""""""""""""""""""""""""
-The rheological model proposed by Bingham (1919) is an extension of the one developed by Newton (1687) describing newtonian fluids. Like the
-newtonian model, the Bingham model is linear with the difference that a yield shear stress has to be exceeded before
-the deformation of the fluid is initialized. The equation reads:
+++++++++++++++++
+After exceeding a threshold shear stress the rheological model proposed by Bingham :cite:`Bi1919` describes a linear relationship 
+between shear stress and shear rate. The equation reads:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
+    \tau = \tau_y + \eta_m \cdot \dot{\gamma}
     :label: bingham
 
-Newton (1687)
-"""""""""""""""""""""""""""
-Newton´s law of viscosity describes ideal fluids (e.g. pure water) where the viscosity remains constant and the relationship
-between shear stress :math:`\tau` and shear rate :math:`\dot\gamma` is linear. The equation is as follows:
-
-.. math::
-    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
-    :label: newton
-
+The Bingham model is well-suited to homogeneous suspensions of fine particles at low shear rates (e.g. mudflows, :cite:`Ju2010`).
 
 Dam
 ~~~
