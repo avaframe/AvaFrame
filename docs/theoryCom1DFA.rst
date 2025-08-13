@@ -618,17 +618,10 @@ Rheological Models
 
 General
 """""""""
-
-.. todo:: Introduction non-newtonian fluids, Bogen spannen zwischen fluid und solid rheology
-    Which model under which conditions (e.g. Hec-RAS); literature in combination with reference scenarios -> one block
-    Einheiten der Parameter ergänzen?
-    Grafik Modelle anpassen
-    Referenzen in references_all.bib ergänzen
-
-The rheological models implemented in AvaFrame can be written in a general form:
+The rheological models implemented in :py:mod:`com1DFA` can be written in a general form:
 
 .. math::
-    \tau = \tau_y + k \cdot \left( \frac{du}{dz} \right)^n + C \cdot \left( \frac{du}{dz} \right)^2
+    \tau = \tau_y + \eta \cdot \left( \frac{du}{dz} \right)^n + C \cdot \left( \frac{du}{dz} \right)^2
     :label: rheology-general
 
 :numref:`Overview-rheological-models-table` gives an overview about the relation between the implemented rheological models and the used parameters:
@@ -637,22 +630,22 @@ The rheological models implemented in AvaFrame can be written in a general form:
 
 .. table:: Overview of the implemented rheological models and their parameters according to :eq:`rheology-general`
 
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | :math:`\boldsymbol{Model}`          | :math:`\boldsymbol{\tau_y}` | :math:`\boldsymbol{k}` | :math:`\boldsymbol{n}` | :math:`\boldsymbol{C}` |
-    +=====================================+=============================+========================+========================+========================+
-    | *O´Brien and Julien (1985)*         | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`> 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Herschel and Bulkley (1926)*       | :math:`> 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Ostwald (1929)*                    | :math:`= 0`                 | :math:`\eta`           | :math:`\neq 1`         | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Bingham (1919)*                    | :math:`> 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
-    | *Newton (1687)*                     | :math:`= 0`                 | :math:`\eta`           | :math:`= 1`            | :math:`= 0`            |
-    +-------------------------------------+-----------------------------+------------------------+------------------------+------------------------+
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | :math:`\boldsymbol{Model}`          | :math:`\boldsymbol{\tau_y}` | :math:`\boldsymbol{n}` | :math:`\boldsymbol{C}` |
+    +=====================================+=============================+========================+========================+
+    | *O´Brien and Julien (1985)*         | :math:`> 0`                 | :math:`= 1`            | :math:`> 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Herschel and Bulkley (1926)*       | :math:`> 0`                 | :math:`\neq 1`         | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Ostwald (1929)*                    | :math:`= 0`                 | :math:`\neq 1`         | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Bingham (1919)*                    | :math:`> 0`                 | :math:`= 1`            | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
+    | *Newton (1687)*                     | :math:`= 0`                 | :math:`= 1`            | :math:`= 0`            |
+    +-------------------------------------+-----------------------------+------------------------+------------------------+
 
-where :math:`\tau_y` is the yield shear stress, :math:`\eta` is the dynamic viscosity, :math:`n` is a flow exponent and :math:`C` is
-the dispersive shear stress.
+where :math:`\tau_y` is the yield shear stress :math:`[Pa]`, :math:`\eta` is the dynamic viscosity :math:`[Pa \cdot s]`, :math:`n` is a flow exponent and
+:math:`C` is the dispersive shear stress :math:`[kg \cdot m^2 \cdot m^{-3}]`.
 
 :numref:`Overview-rheological-models-fig` illustrates the behaviour of the graphs of the rheological model for different shear rates.
 
@@ -696,7 +689,7 @@ collisions under high deformation rates.
 The resulting shear stress reads:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right) + C \cdot \left(\frac{3 \cdot |V|}{h} \right)^2
+    \tau = \tau_y + \eta \cdot \dot{\gamma} + C \cdot \dot{\gamma}^2
     :label: oBrienAndJulien
 
 The dispersive shear stress is taken into account by the factor :math:`C` which incorporates the sediment concentration
@@ -710,20 +703,19 @@ The dispersive shear stress is taken into account by the factor :math:`C` which 
     \frac{1}{\lambda} = \left(\frac{C_m}{C_v}\right)^{1/3} - 1
     :label: sedimentConcentration
 
-where :math:`\rho_m` is the mass density of the solid-fluid mixture, :math:`\rho_s` is the mass density of sediment,
-:math:`l_m` is the Prandtl mixing length (approximate :math:`0.4 \cdot h`), :math:`d_s` is the sediment size and
-:math:`\alpha_i` is a coefficient (= 0.01, Takahashi 1978).
+where :math:`\rho_m` is the mass density of the solid-fluid mixture :math:`[kg \cdot m^{-3}]`, :math:`l_m` is the Prandtl mixing length :math:`[m]` 
+(approximate :math:`0.4 \cdot h`), :math:`\alpha_i` is a coefficient (= 0.01, Takahashi 1978), :math:`\rho_s` is the mass density
+of sediment :math:`[kg \cdot m^{-3}]`, :math:`d_s` is the sediment size :math:`[m]`, :math:`C_m` is the maximum concentration of
+sediment particles (= 0.615, Bagnold 1954) and :math:`C_v` is the volumetric sediment concentration.
 
 Herschel and Bulkley (1926)
 """""""""""""""""""""""""""""
-If the dispersive stress is not accounted for the simulation (:math:`C = 0`),  the last term on the right handside of equation (ganz oben)
+If the dispersive stress is not accounted for the simulation (:math:`C = 0`),  the last term on the right handside of :eq:`rheology-general`
 is neglected and the rheology results in the model by Herschel and Bulkley (1926):
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
+    \tau = \tau_y + \eta \cdot \dot{\gamma}^n
     :label: herschelAndBulkley
-
-with :math:`k = \eta`.
 
 Ostwald (1929)
 """""""""""""""""""""""""""
@@ -731,7 +723,7 @@ Like Herschel and Bulkley (1926) the rheological model proposed by Ostwald (1929
 no yield stress is taken into account. The resulting shear stress reads:
 
 .. math::
-    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)^n
+    \tau = \eta \cdot \dot{\gamma}^n
     :label: ostwald
 
 Bingham (1919)
@@ -741,7 +733,7 @@ newtonian model, the Bingham model is linear with the difference that a yield sh
 the deformation of the fluid is initialized. The equation reads:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
+    \tau = \tau_y + \eta \cdot \dot{\gamma}
     :label: bingham
 
 Newton (1687)
@@ -750,7 +742,7 @@ Newton´s law of viscosity describes ideal fluids (e.g. pure water) where the vi
 between shear stress :math:`\tau` and shear rate :math:`\dot\gamma` is linear. The equation is as follows:
 
 .. math::
-    \tau = \eta \cdot \left(\frac{3 \cdot |V|}{h} \right)
+    \tau = \eta \cdot \dot{\gamma}
     :label: newton
 
 

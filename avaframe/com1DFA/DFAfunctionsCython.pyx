@@ -313,24 +313,26 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             eta = alpha1Eta * math.exp(beta1Eta * cv)
             # yield shear stress
             tauy = alpha2Tauy * math.exp(beta2Tauy * cv)
+            # substitution of shear rate gamma
+            shearRate = 3 * uMag / h
             if frictType == 10:
               # O`Brien and Julien
               lmObrienAndJulien = 0.4 * h
               lambdaBagnold = 1 / (math.pow(cmax / cv, 1 / 3) - 1)
               cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhos * lambdaBagnold * lambdaBagnold * ds * ds
-              tau = tauy + eta * 3 * uMag / h + cObrienAndJulien * (3 * uMag / h * 3 * uMag / h)
-            if frictType == 11:
+              tau = tauy + eta * shearRate + cObrienAndJulien * (shearRate * shearRate)
+            elif frictType == 11:
               # Herschel and Bulkley
-              tau = tauy + eta * math.pow(3 * uMag / h, n)
-            if frictType == 12:
+              tau = tauy + eta * math.pow(shearRate, n)
+            elif frictType == 12:
               # Ostwald
-              tau = eta * math.pow(3 * uMag / h, n)
-            if frictType == 13:
+              tau = eta * math.pow(shearRate, n)
+            elif frictType == 13:
               # Bingham
-              tau = tauy + eta * 3 * uMag / h
-            if frictType == 14:
+              tau = tauy + eta * shearRate
+            elif frictType == 14:
               # Newton
-              tau = eta * 3 * uMag / h
+              tau = eta * shearRate
           else:
             tau = 0.0
 
