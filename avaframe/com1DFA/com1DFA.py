@@ -1969,13 +1969,14 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
                     % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
                 )
                 # see secondary release!
-                particles = addHydrographParticles(
+                particles, zPartArray0 = addHydrographParticles(
                     cfg,
                     particles,
                     inputSimLines,
                     hydrValues["thickness"][i],
                     hydrValues["velocity"][i],
                     dem,
+                    zPartArray0,
                 )
                 particles = DFAfunC.getNeighborsC(particles, dem)
                 # update fields (compute grid values)
@@ -3408,7 +3409,7 @@ def adaptDEM(dem, fields, cfg):
     return dem, fields
 
 
-def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem):
+def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem, zPartArray0):
     """
     add new particles initialized by a hydrograph to particles that are in the flow already
 
@@ -3426,11 +3427,15 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         velocity of incoming hydrograph
     dem: dict
         dictionary with info on DEM data
+    zPartArray0: dict
+        dictionary containing z - value of particles at timestep 0
 
     Returns
     ---------
     particles: dict
         particles dictionary at t including the hydrograph particles
+    zPartArray0: dict
+        dictionary containing z - value of particles at timestep 0
     """
     hydrLine = inputSimLines["hydrographLine"]
     hydrLine["header"] = dem["originalHeader"].copy()
@@ -3452,4 +3457,6 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         cfg["GENERAL"], particlesHydrograph, dem, velocityMag
     )
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
-    return particles
+    # save initial z position for travel angle computation
+    zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
+    return particles, zPartArray0
