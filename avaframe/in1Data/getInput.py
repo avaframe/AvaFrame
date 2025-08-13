@@ -590,8 +590,7 @@ def selectReleaseFile(inputSimFiles, releaseScenario):
         if relF.stem == releaseScenario:
             releaseScenarioPath = relF
     if len(relFiles) == 0:
-        # print(inputSimFiles["hydrFiles"])
-        for hydrF in inputSimFiles["hydrographFile"]:
+        for hydrF in [inputSimFiles["hydrographFile"]]:
             if hydrF.stem == releaseScenario:
                 releaseScenarioPath = hydrF
 
@@ -625,11 +624,11 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
     """
 
     # fetch release files paths
-    print(releaseScenario)
-    if cfgSim["GENERAL"]["hydrograph"] == "False":
+    if cfgSim["GENERAL"]["hydrograph"] == "False" or (
+            cfgSim["GENERAL"]["noRelArea"] == "False" and cfgSim["GENERAL"]["hydrograph"] == "True"):
         relFiles = inputSimFiles["relFiles"]
     else:
-        relFiles = inputSimFiles["hydrographFile"]
+        relFiles = [inputSimFiles["hydrographFile"]]
         cfgSim["GENERAL"]["relThFromShp"] = "False"
 
     foundScenario = False
@@ -972,11 +971,18 @@ def getHydrographCsv(hydrCsv):
         contains hydrograph values: timestep, thickness, velocity
     """
     hydrParameters = np.genfromtxt(hydrCsv, delimiter=",", filling_values=0, skip_header=1)
-    hydrographValues = {
-        "timeStep": hydrParameters[:, 0],
-        "thickness": hydrParameters[:, 1],
-        "velocity": hydrParameters[:, 2],
-    }
+    if hydrParameters.ndim == 2:
+        hydrographValues = {
+            "timeStep": hydrParameters[:, 0],
+            "thickness": hydrParameters[:, 1],
+            "velocity": hydrParameters[:, 2],
+        }
+    else:
+        hydrographValues = {
+            "timeStep": hydrParameters[0],
+            "thickness": hydrParameters[1],
+            "velocity": hydrParameters[2],
+        }
     # check that timesteps are unique
     timeStepUnique = np.unique(hydrographValues["timeStep"])
     if len(timeStepUnique) != len(hydrographValues["timeStep"]):

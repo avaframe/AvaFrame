@@ -470,7 +470,10 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         )
 
     # set release thickness
-    if cfg["GENERAL"].getboolean("relThFromFile") is False:
+    if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
+        inputSimLines["hydrographLine"]["thicknessSource"] = ["csv file"]
+        log.info("Release scenario with hydrograph and without REL area.")
+    elif cfg["GENERAL"].getboolean("relThFromFile") is False:
         releaseLine = setThickness(cfg, inputSimLines["releaseLine"], "relTh")
         inputSimLines["releaseLine"] = releaseLine
     log.debug("Release area scenario: %s - perform simulations" % (relName))
@@ -594,6 +597,11 @@ def prepareInputData(inputSimFiles, cfg):
     releaseLine = shpConv.readLine(relFile, "release1", demOri)
     releaseLine["file"] = relFile
     releaseLine["type"] = "Release"
+    if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
+        releaseLine["type"] = "Hydrograph"
+        hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+        releaseLine["thickness"] = hydrValues["thickness"][hydrValues["timeStep"] == 0]
+        releaseLine["thicknessSource"] = ["csv file"]
     # check for holes in release area polygons
     gI.checkForMultiplePartsShpArea(cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release")
 
@@ -667,7 +675,6 @@ def prepareInputData(inputSimFiles, cfg):
     if cfg["GENERAL"].getboolean("hydrograph"):
         try:
             hydrFile = inputSimFiles["hydrographFile"]
-            print(hydrFile)
             hydrLine = shpConv.readLine(hydrFile, "", demOri)
             hydrLine["fileName"] = hydrFile
             hydrLine["type"] = "Hydrograph"
@@ -1405,7 +1412,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     # initialize time
     t = 0
     particles["t"] = t
-
     relCells = np.size(indRelY)
     partPerCell = particles["nPart"] / relCells
 
@@ -1461,6 +1467,8 @@ def getRelThFromPart(cfg, releaseLine, relThField):
         relThForPart = np.amax(relThField)
     elif cfg.getboolean("relThFromShp"):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
+    elif cfg.getboolean("hydrograph") and cfg.getboolean("noRelArea"):
+        relThForPart = releaseLine["thickness"]
     else:
         relThForPart = cfg.getfloat("relTh")
 
