@@ -813,46 +813,31 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "type": "columns",
             "model": "O´Brien and Julien",
             "alpha": cfgGen["alphaObrienAndJulien"],
-            "Cmax": cfgGen["cmax"],
-            "Cv": cfgGen["cv"],
-            "alpha1": cfgGen["alpha1Eta"],
-            "beta1": cfgGen["beta1Eta"],
-            "alpha2": cfgGen["alpha2Tauy"],
-            "beta2": cfgGen["beta2Tauy"],
+            "Cmax": cfgGen["cvMaxSediment"],
+            "Cv": cfgGen["cvSediment"],
+            "alpha1": cfgGen["alpha1EtaObrienAndJulien"],
+            "beta1": cfgGen["beta1EtaObrienAndJulien"],
+            "alpha2": cfgGen["alpha2TauyObrienAndJulien"],
+            "beta2": cfgGen["beta2TauyObrienAndJulien"],
         }
     elif cfgGen["frictModel"].lower() == "herschelandbulkley":
         reportST["Friction model"] = {
             "type": "columns",
             "model": "Herschel and Bulkley",
-            "n": cfgGen["n"],
-            "alpha1": cfgGen["alpha1Eta"],
-            "beta1": cfgGen["beta1Eta"],
-            "alpha2": cfgGen["alpha2Tauy"],
-            "beta2": cfgGen["beta2Tauy"],
-        }
-    elif cfgGen["frictModel"].lower() == "ostwald":
-        reportST["Friction model"] = {
-            "type": "columns",
-            "model": "Ostwald",
-            "n": cfgGen["n"],
-            "alpha1": cfgGen["alpha1Eta"],
-            "beta1": cfgGen["beta1Eta"],
+            "n": cfgGen["nHerschelAndBulkley"],
+            "alpha1": cfgGen["alpha1EtaHerschelAndBulkley"],
+            "beta1": cfgGen["beta1EtaHerschelAndBulkley"],
+            "alpha2": cfgGen["alpha2TauyHerschelAndBulkley"],
+            "beta2": cfgGen["beta2TauyHerschelAndBulkley"],
         }
     elif cfgGen["frictModel"].lower() == "bingham":
         reportST["Friction model"] = {
             "type": "columns",
             "model": "Bingham",
-            "alpha1": cfgGen["alpha1Eta"],
-            "beta1": cfgGen["beta1Eta"],
-            "alpha2": cfgGen["alpha2Tauy"],
-            "beta2": cfgGen["beta2Tauy"],
-        }
-    elif cfgGen["frictModel"].lower() == "newton":
-        reportST["Friction model"] = {
-            "type": "columns",
-            "model": "Newton",
-            "alpha1": cfgGen["alpha1Eta"],
-            "beta1": cfgGen["beta1Eta"],
+            "alpha1": cfgGen["alpha1EtaBingham"],
+            "beta1": cfgGen["beta1EtaBingham"],
+            "alpha2": cfgGen["alpha2TauyBingham"],
+            "beta2": cfgGen["beta2TauyBingham"],
         }
 
     # check if secondary release area
@@ -1903,9 +1888,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "spatialvoellmy",
         "obrienandjulien",
         "herschelandbulkley",
-        "ostwald",
-        "bingham",
-        "newton"
+        "bingham"
     ]
     frictModel = cfgGen["frictModel"].lower()
     frictType = frictModelsList.index(frictModel) + 1
