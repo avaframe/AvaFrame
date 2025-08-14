@@ -813,7 +813,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "type": "columns",
             "model": "O´Brien and Julien",
             "alpha": cfgGen["alphaObrienAndJulien"],
-            "Cmax": cfgGen["cmax"],
+            "Cmax": cfgGen["cvMax"],
             "Cv": cfgGen["cv"],
             "alpha1": cfgGen["alpha1Eta"],
             "beta1": cfgGen["beta1Eta"],
