@@ -52,6 +52,7 @@ from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.com1DFA import checkCfg
 from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
+import avaframe.com1DFA.debrisFunctions as debF
 import threading
 
 #######################################
@@ -1458,8 +1459,12 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
+    elif releaseLine["type"] == "Hydrograph":
+        relThForPart = releaseLine["thickness"]
     elif cfg.getboolean("relThFromShp"):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
+    elif cfg.getboolean("hydrograph") and cfg.getboolean("noRelArea"):
+        relThForPart = releaseLine["thickness"]
     else:
         relThForPart = cfg.getfloat("relTh")
 
@@ -1961,28 +1966,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
 
         if cfgGen.getboolean("hydrograph"):
-            hydrValues = inputSimLines["hydrographLine"]["values"]
-            if round(t, 1) in hydrValues["timeStep"]:
-                i = np.where(hydrValues["timeStep"] == round(t, 1))
-                log.info(
-                    "add hydrograph at timestep: %f with thickness %s and velocity %s"
-                    % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
-                )
-                # see secondary release!
-                particles, zPartArray0 = addHydrographParticles(
-                    cfg,
-                    particles,
-                    inputSimLines,
-                    hydrValues["thickness"][i],
-                    hydrValues["velocity"][i],
-                    dem,
-                    zPartArray0,
-                )
-                particles = DFAfunC.getNeighborsC(particles, dem)
-                # update fields (compute grid values)
-                if fields["computeTA"]:
-                    particles = DFAfunC.computeTrajectoryAngleC(particles, zPartArray0)
-                particles, fields = DFAfunC.updateFieldsC(cfgGen, particles, dem, fields)
+            particles, fields, zPartArray0 = debF.updateParticlesHydrograph(cfg, inputSimLines, particles, fields,
+                                                                            dem, zPartArray0, t)
         # Perform computations
         particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
             cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
@@ -3407,56 +3392,3 @@ def adaptDEM(dem, fields, cfg):
     fields["sfcChangeTotal"] = sfcChangeTotal + sfcChange
 
     return dem, fields
-
-
-def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem, zPartArray0):
-    """
-    add new particles initialized by a hydrograph to particles that are in the flow already
-
-    Parameters
-    ---------
-    cfg: dict
-        configuration settings
-    particles : dict
-        particles dictionary at t that are in the flow already
-    inputSimLines : dict
-        dictionary with input data dictionaries (releaseLine, hydrographLine,...)
-    thickness: float
-        thickness of incoming hydrograph
-    velocityMag: float
-        velocity of incoming hydrograph
-    dem: dict
-        dictionary with info on DEM data
-    zPartArray0: dict
-        dictionary containing z - value of particles at timestep 0
-
-    Returns
-    ---------
-    particles: dict
-        particles dictionary at t including the hydrograph particles
-    zPartArray0: dict
-        dictionary containing z - value of particles at timestep 0
-    """
-    hydrLine = inputSimLines["hydrographLine"]
-    hydrLine["header"] = dem["originalHeader"].copy()
-    hydrLine = geoTrans.prepareArea(
-        hydrLine,
-        dem,
-        np.sqrt(2),
-        thList=[thickness],
-        combine=True,
-        checkOverlap=False,
-    )
-    particlesHydrograph = initializeParticles(
-        cfg["GENERAL"],
-        hydrLine,
-        dem,
-        inputSimLines=inputSimLines,
-    )
-    particlesHydrograph = DFAfunC.updateInitialVelocity(
-        cfg["GENERAL"], particlesHydrograph, dem, velocityMag
-    )
-    particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
-    # save initial z position for travel angle computation
-    zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
-    return particles, zPartArray0
