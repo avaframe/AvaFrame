@@ -88,6 +88,9 @@ def SHP2Array(infile, defname=None):
     semiminor_value = None
     maxdepth_value = None
     semimajor_value = None
+    tilt_value = None
+    direc_value = None
+    offset_value = None
     
 
     # get coordinate system
@@ -111,6 +114,10 @@ def SHP2Array(infile, defname=None):
     semiminorList = []
     semimajorList = []
     maxdepthList = []
+    tiltList = []
+    direcList = []
+    offsetList = []   
+    
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -163,6 +170,12 @@ def SHP2Array(infile, defname=None):
                     maxdepth_value = value
                 if name == "semimajor":
                     semimajor_value = value
+                if name == "tilt":
+                    tilt_value = value
+                if name == "direc":
+                    direc_value = value
+                if name == "offset":
+                    offset_value = value
                 if name == "rho":
                     rho = value
                 if name == "sks":
@@ -194,6 +207,9 @@ def SHP2Array(infile, defname=None):
         semiminorList.append(semiminor_value)
         semimajorList.append(semimajor_value)
         maxdepthList.append(maxdepth_value)
+        tiltList.append(tilt_value)
+        direcList.append(direc_value)
+        offsetList.append(offset_value)
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -224,6 +240,9 @@ def SHP2Array(infile, defname=None):
     SHPdata["maxdepth"] = maxdepthList
     SHPdata["semimajor"] = semimajorList
     SHPdata["semiminor"] = semiminorList
+    SHPdata["tilt"] = tiltList
+    SHPdata["direc"] = direcList
+    SHPdata["offset"] = offsetList
 
     sf.close()
 

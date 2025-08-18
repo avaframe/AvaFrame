@@ -46,11 +46,26 @@ Input
 * geometries: a shapefile containing point geometries. These points represent the centers of the ellipsoids or planes.
   The coordinates (x,y) of these points are used. If the plane method is used, the shape file must contain the
   Attributes "zseed", "dip" and "slopeangle" as float values. If the ellipsoid method is used, the shape file must
-  contain the Attributes "maxdepth", "semimajor" and "semiminor". The file must be located in avalancheDir/Inputs/
-  POINTS and file name must end with “_coordinates”. If you are using the QGis Connector, the naming and location of the
-  file is not relevant.
+  contain the attributes "maxdepth", "semimajor", "semiminor", "tilt", "direc", "dip", "offset" (see below).
+  The file must be located in avalancheDir/Inputs/POINTS and file name must end with “_coordinates”.
+  If you are using the QGis Connector, the naming and location of the file is not relevant.
+
 * perimeter: A shapefile that specifies a boundary area. Must be located in avalancheDir/Inputs/POLYGONS and file name
   must end with “_perimeter”. If you are using the QGis Connector, the naming and location of the file is not relevant.
+
+**Attribute meanings:**
+
+* zseed: defines z coordinate of plane Center (m)
+* dip: direction in which the plane/slope is facing (degree)
+* slopeangle: steepness/angle of the slope (degree)
+
+* maxdepth: maximum depth of the ellipsoid (m)
+* semimajor: length of the major axis (m)
+* semiminor: length of the minor axis (m)
+* tilt: steepness/angle of the slope (degree)
+* direc: direction in which the slope is facing (degree)
+* dip: direction in which the ellipsoid is facing (degree)
+* offset: offset, normal to the DEM slope (m)
 
 Output
 ~~~~~~

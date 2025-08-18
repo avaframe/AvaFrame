@@ -112,28 +112,30 @@ def scarpAnalysisMain(cfg, baseDir):
             ellipsoidsMaxDepth = list(map(float, SHPdata['maxdepth']))
             ellipsoidsSemiMajor = list(map(float, SHPdata['semimajor']))
             ellipsoidsSemiMinor = list(map(float, SHPdata['semiminor']))
+            ellipsoidsTilt = list(map(float, SHPdata['tilt']))
+            ellipsoidsDir = list(map(float, SHPdata['direc']))
+            ellipsoidsOffset = list(map(float, SHPdata['offset']))
+            ellipsoidDip = list(map(float, SHPdata['dip']))
         except KeyError as e:
-            raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Ensure the fields 'maxdepth', 'semimajor', and 'semiminor' exist.")
-
-        if not (
-            len(ellipsoidsMaxDepth)
-            == len(ellipsoidsSemiMajor)
-            == len(ellipsoidsSemiMinor)
-            == SHPdata["nFeatures"]
-        ):
-            raise ValueError(
-                "Mismatch between number of shapefile features and ellipsoid parameters in the .ini file."
-            )
-
+            raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Ensure the fields 'maxdepth', 'semimajor', 'semiminor', 'tilt', 'dir', 'dip', and 'offset' exist.")
+        
+        if not all(len(lst) == SHPdata["nFeatures"] for lst in [ellipsoidsMaxDepth, ellipsoidsSemiMajor, ellipsoidsSemiMinor, ellipsoidsTilt, ellipsoidsDir, ellipsoidsOffset, ellipsoidDip]):
+            raise ValueError("Mismatch between number of shapefile features and ellipsoid parameters.")
+        
         for i in range(SHPdata["nFeatures"]):
             xCenter = SHPdata["x"][int(SHPdata["Start"][i])]
             yCenter = SHPdata["y"][int(SHPdata["Start"][i])]
             maxDepth = ellipsoidsMaxDepth[i]
             semiMajor = ellipsoidsSemiMajor[i]
             semiMinor = ellipsoidsSemiMinor[i]
-            ellipsoidFeatures.extend([xCenter, yCenter, maxDepth, semiMajor, semiMinor])
-
+            tilt = ellipsoidsTilt[i]
+            direction = ellipsoidsDir[i]
+            offset = ellipsoidsOffset[i]
+            dip = ellipsoidDip[i]
+            ellipsoidFeatures.extend([xCenter, yCenter, maxDepth, semiMajor, semiMinor, tilt, direction, offset, dip])
+        
         features = ",".join(map(str, ellipsoidFeatures))
+
         log.debug("Ellipsoid features extracted and combined: %s", features)
 
     if method == 'plane':
@@ -262,55 +264,104 @@ def calculateScarpWithPlanes(elevData, periData, elevTransform, planes):
     return scarpData
 
 def calculateScarpWithEllipsoids(elevData, periData, elevTransform, ellipsoids):
-    """Calculate the scarp using sliding circles (rotational ellipsoids).
+    """Calculate the scarp using tilted and offset ellipsoids.
 
     Parameters
     ----------
     elevData : np.ndarray
         The elevation data as a 2D array.
     periData : np.ndarray
-        The perimeter data as a 2D array, which defines the extent of the scarp.
+        The perimeter data as a 2D array.
     elevTransform : Affine
-        The affine transformation matrix of the raster (used to convert pixel to geographic coordinates).
+        The affine transformation matrix of the raster.
     ellipsoids : str
-        Comma-separated string defining ellipsoids (x_center, y_center, max_depth, semi_major_axis, semi_minor_axis).
+        Comma-separated string defining ellipsoids with parameters:
+        (x_center, y_center, max_depth, semi_major, semi_minor, tilt, dir, offset)
 
     Returns
     -------
     np.ndarray
         A 2D array with the calculated scarp values.
     """
+
     n, m = elevData.shape
     scarpData = np.zeros_like(elevData, dtype=np.float32)
 
+    # Parse ellipsoid definitions
     ellipsoids = list(map(float, ellipsoids.split(',')))
-    nEllipsoids = int(len(ellipsoids) / 5)
+    nEllipsoids = int(len(ellipsoids) / 9)
 
-    xCenter = [ellipsoids[0]]
-    yCenter = [ellipsoids[1]]
-    maxDepth = [ellipsoids[2]]
-    semiMajor = [ellipsoids[3]]
-    semiMinor = [ellipsoids[4]]
+    xCenter, yCenter, maxDepth = [], [], []
+    semiMajor, semiMinor = [], []
+    tilt, tiltDir, offset, dip = [], [], [], []
 
-    for i in range(1, nEllipsoids):
-        xCenter.append(ellipsoids[5 * i])
-        yCenter.append(ellipsoids[5 * i + 1])
-        maxDepth.append(ellipsoids[5 * i + 2])
-        semiMajor.append(ellipsoids[5 * i + 3])
-        semiMinor.append(ellipsoids[5 * i + 4])
+    for i in range(nEllipsoids):
+        xCenter.append(ellipsoids[9 * i])
+        yCenter.append(ellipsoids[9 * i + 1])
+        maxDepth.append(ellipsoids[9 * i + 2])
+        semiMajor.append(ellipsoids[9 * i + 3])
+        semiMinor.append(ellipsoids[9 * i + 4])
+        tilt.append(ellipsoids[9 * i + 5])
+        tiltDir.append(np.radians(ellipsoids[9 * i + 6]))  # tilt direction in radians
+        offset.append(ellipsoids[9 * i + 7])
+        dip.append(np.radians(ellipsoids[9 * i + 8]))      # rotation of base ellipse in radians
+
+    # Compute slope direction and magnitude from DEM gradients
+    grad_y, grad_x = np.gradient(elevData, abs(elevTransform[4]), elevTransform[0])
+    slopeDir = np.arctan2(-grad_y, grad_x)  # Azimuth of steepest descent
+    slopeMagnitude = np.sqrt(grad_x**2 + grad_y**2)
 
     for row in range(n):
         for col in range(m):
             west, north = rasterio.transform.xy(elevTransform, row, col, offset='center')
             scarpVal = elevData[row, col]
+
             for k in range(nEllipsoids):
-                x2 = ((west - xCenter[k]) / semiMajor[k]) ** 2
-                y2 = ((north - yCenter[k]) / semiMinor[k]) ** 2
-                if x2 + y2 < 1:
-                    scarpVal = min(scarpVal, elevData[row, col] - maxDepth[k] * (1 - (x2 + y2)))
-            if periData[row, col] > 0:
-                scarpData[row, col] = scarpVal
-            else:
-                scarpData[row, col] = elevData[row, col]
+                center_col, center_row = ~elevTransform * (xCenter[k], yCenter[k])
+                center_row = int(round(center_row))
+                center_col = int(round(center_col))
+
+                if 0 <= center_row < n and 0 <= center_col < m:
+                    slopeAzimuth = slopeDir[center_row, center_col]
+                    slopeAzimuth = (slopeAzimuth + 2 * np.pi) % (2 * np.pi)
+                    slopeMag = slopeMagnitude[center_row, center_col]
+
+                    if not np.isnan(slopeAzimuth) and slopeMag > 0:
+                        normal_dx = np.cos(slopeAzimuth)
+                        normal_dy = np.sin(slopeAzimuth)
+                        slopeAngle = math.atan(slopeMag)
+                        dxOffset = -offset[k] * normal_dx * math.sin(slopeAngle)
+                        dyOffset = -offset[k] * normal_dy * math.sin(slopeAngle)
+                        dzOffset = -offset[k] * math.cos(slopeAngle)
+                    else:
+                        dxOffset = dyOffset = dzOffset = 0
+                else:
+                    dxOffset = dyOffset = dzOffset = 0
+
+                x0 = xCenter[k] + dxOffset
+                y0 = yCenter[k] + dyOffset
+                z0 = dzOffset
+
+                dxPos = west - x0
+                dyPos = north - y0
+
+                # Rotate the position by dip angle
+                dxRot = dxPos * np.cos(dip[k]) + dyPos * np.sin(dip[k])
+                dyRot = -dxPos * np.sin(dip[k]) + dyPos * np.cos(dip[k])
+
+                # Normalize to ellipsoid axes
+                xNorm = dxRot / semiMajor[k]
+                yNorm = dyRot / semiMinor[k]
+                distance = xNorm**2 + yNorm**2
+
+                if distance <= 1:
+                    baseDepth = maxDepth[k] * (1 - distance)
+                    tiltEffect = math.tan(math.radians(tilt[k])) * (
+                        dxRot * np.cos(tiltDir[k]) + dyRot * np.sin(tiltDir[k])
+                    )
+                    totalDepth = baseDepth + tiltEffect + z0
+                    scarpVal = min(scarpVal, elevData[row, col] - totalDepth)
+
+            scarpData[row, col] = scarpVal if periData[row, col] > 0 else elevData[row, col]
 
     return scarpData
