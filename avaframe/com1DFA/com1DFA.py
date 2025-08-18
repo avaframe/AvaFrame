@@ -1459,8 +1459,12 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
+    elif releaseLine["type"] == "Hydrograph":
+        relThForPart = releaseLine["thickness"]
     elif cfg.getboolean("relThFromShp"):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
+    elif cfg.getboolean("hydrograph") and cfg.getboolean("noRelArea"):
+        relThForPart = releaseLine["thickness"]
     else:
         relThForPart = cfg.getfloat("relTh")
 
