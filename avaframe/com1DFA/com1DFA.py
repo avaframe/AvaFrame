@@ -600,7 +600,7 @@ def prepareInputData(inputSimFiles, cfg):
     releaseLine["type"] = "Release"
     if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
         releaseLine["type"] = "Hydrograph"
-        hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+        hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
         releaseLine["thickness"] = [hydrValues["thickness"][hydrValues["timeStep"] == 0]]
         releaseLine["thicknessSource"] = ["csv file"]
     # check for holes in release area polygons
