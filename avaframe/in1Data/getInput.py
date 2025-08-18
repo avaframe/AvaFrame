@@ -586,8 +586,6 @@ def selectReleaseFile(inputSimFiles, releaseScenario):
     # fetch release file path for scenario
     relFiles = inputSimFiles["relFiles"]
     for relF in relFiles:
-        print(relF)
-        print(releaseScenario)
         if relF.stem == releaseScenario:
             releaseScenarioPath = relF
     if len(relFiles) == 0:
