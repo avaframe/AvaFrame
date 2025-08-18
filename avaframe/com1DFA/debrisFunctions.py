@@ -115,7 +115,6 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         cfg["GENERAL"],
         hydrLine,
         dem,
-        inputSimLines=inputSimLines,
     )
     particlesHydrograph = DFAfunC.updateInitialVelocity(
         cfg["GENERAL"], particlesHydrograph, dem, velocityMag
