@@ -88,9 +88,6 @@ def getVariationDict(avaDir, fullCfg, modDict):
                             % key
                         )
 
-    # if no release area is given, but a hydrograph, change the releaseScenario
-    # if fullCfg["GENERAL"]["hydrograph"] == "True" and fullCfg["GENERAL"]["noRelArea"] == "True":
-    #    fullCfg["INPUT"]["releaseScenario"] = "hydr"
     # add releaseScenario info to variations dict - also if this parameter is not varied
     variations["releaseScenario"] = fullCfg["INPUT"]["releaseScenario"].split("|")
 

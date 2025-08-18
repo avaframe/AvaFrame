@@ -1210,7 +1210,6 @@ def prepareArea(line, dem, radius, thList="", combine=True, checkOverlap=True):
         }
         # if relTh is given - set relTh
         if thList != "":
-            print(thList)
             log.info(
                 "%s feature %s, thickness: %.2f - read from %s"
                 % (line["type"], name, thList[i], line["thicknessSource"][i])
