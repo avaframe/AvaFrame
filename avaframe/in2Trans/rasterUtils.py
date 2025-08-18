@@ -7,6 +7,10 @@ import logging
 import rasterio
 import numpy as np
 
+from avaframe.ana4Stats.getStats import extractMaxValues
+from avaframe.ana5Utils.distanceTimeAnalysis import extractFrontAndMeanValuesRadar
+from setup import ext_modules
+
 # create local logger
 log = logging.getLogger(__name__)
 
@@ -172,43 +176,27 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
         to file being written
     """
 
-    if header["driver"] == "AAIGrid":
-        outFile = outFileName.parent / (outFileName.name + ".asc")
-        rasterOut = rasterio.open(
-            outFile,
-            "w",
-            driver=header["driver"],
-            crs=header["crs"],
-            nodata=header["nodata_value"],
-            transform=header["transform"],
-            height=resultArray.shape[0],
-            width=resultArray.shape[1],
-            count=1,
-            dtype=resultArray.dtype,
-            # decimal_precision=3,
-        )
-    elif header["driver"] == "GTiff":
-        outFile = outFileName.parent / (outFileName.name + ".tif")
-        # Difference to asc is the compression
-        rasterOut = rasterio.open(
-            outFile,
-            "w",
-            driver=header["driver"],
-            compress="lzw",
-            crs=header["crs"],
-            nodata=header["nodata_value"],
-            transform=header["transform"],
-            height=resultArray.shape[0],
-            width=resultArray.shape[1],
-            count=1,
-            dtype=resultArray.dtype,
-            # decimal_precision=3,
-        )
+    driver = header["driver"]
+    if driver not in ("AAIGrid", "GTiff"):
+        raise ValueError(f"Unsupported driver: {driver}")
 
-    if flip:
-        rasterOut.write(np.flipud(resultArray), 1)
-    else:
-        rasterOut.write(resultArray, 1)
-    rasterOut.close()
+    extMap = {"AAIGrid": ".asc", "GTiff": ".tif"}
+    outFile = outFileName.parent / (outFileName.name + extMap[driver])
+
+    commonKwargs = {
+        "driver": driver,
+        "crs": header["crs"],
+        "nodata": header["nodata_value"],
+        "transform": header["transform"],
+        "height": resultArray.shape[0],
+        "width": resultArray.shape[1],
+        "count": 1,
+        "dtype": resultArray.dtype,
+    }
+    extraKwargs = {"compress": "lzw"} if driver == "GTiff" else {}
+
+    with rasterio.open(outFile, "w", **commonKwargs, **extraKwargs) as rasterOut:
+        data = np.flipud(resultArray) if flip else resultArray
+        rasterOut.write(data, 1)
 
     return outFile
