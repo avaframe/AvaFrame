@@ -7,10 +7,6 @@ import logging
 import rasterio
 import numpy as np
 
-from avaframe.ana4Stats.getStats import extractMaxValues
-from avaframe.ana5Utils.distanceTimeAnalysis import extractFrontAndMeanValuesRadar
-from setup import ext_modules
-
 # create local logger
 log = logging.getLogger(__name__)
 
