@@ -1,5 +1,5 @@
 """
-    Raster (ascii and tif) file reader and handler
+Raster (ascii and tif) file reader and handler
 
 """
 
@@ -174,28 +174,41 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
 
     if header["driver"] == "AAIGrid":
         outFile = outFileName.parent / (outFileName.name + ".asc")
+        rasterOut = rasterio.open(
+            outFile,
+            "w",
+            driver=header["driver"],
+            crs=header["crs"],
+            nodata=header["nodata_value"],
+            transform=header["transform"],
+            height=resultArray.shape[0],
+            width=resultArray.shape[1],
+            count=1,
+            dtype=resultArray.dtype,
+            # decimal_precision=3,
+        )
     elif header["driver"] == "GTiff":
         outFile = outFileName.parent / (outFileName.name + ".tif")
+        # Difference to asc is the compression
+        rasterOut = rasterio.open(
+            outFile,
+            "w",
+            driver=header["driver"],
+            compress="lzw",
+            crs=header["crs"],
+            nodata=header["nodata_value"],
+            transform=header["transform"],
+            height=resultArray.shape[0],
+            width=resultArray.shape[1],
+            count=1,
+            dtype=resultArray.dtype,
+            # decimal_precision=3,
+        )
 
-    # try:
-    rasterOut = rasterio.open(
-        outFile,
-        "w",
-        driver=header["driver"],
-        crs=header["crs"],
-        nodata=header["nodata_value"],
-        transform=header["transform"],
-        height=resultArray.shape[0],
-        width=resultArray.shape[1],
-        count=1,
-        dtype=resultArray.dtype,
-        # decimal_precision=3,
-    )
     if flip:
         rasterOut.write(np.flipud(resultArray), 1)
     else:
         rasterOut.write(resultArray, 1)
     rasterOut.close()
-    # except:
-    #     log.error("could not write {} to {}".format(resultArray, outFileName))
+
     return outFile
