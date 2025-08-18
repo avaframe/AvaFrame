@@ -2764,12 +2764,19 @@ def exportFields(
             # convert from J/cell to kJ/m²
             # (by dividing the peak kinetic energy per cell by the real area of the cell)
             resField = resField * 0.001 / dem["areaRaster"]
-        dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
-        # create directory
-        outDirPeak = outDir / "peakFiles" / "timeSteps"
-        fU.makeADir(outDirPeak)
-        outFile = outDirPeak / dataName
-        # IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+
+        if not cfg["EXPORTS"].getboolean("dataSave"):
+            dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
+            # create directory
+            outDirPeak = outDir / "peakFiles" / "timeSteps"
+            fU.makeADir(outDirPeak)
+            outFile = outDirPeak / dataName
+            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+            log.debug(
+                "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
+                % (resType, timeStep)
+            )
+
         if TSave == "final":
             log.debug(
                 "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
@@ -2781,11 +2788,6 @@ def exportFields(
             fU.makeADir(outDirPeakAll)
             outFile = outDirPeakAll / dataName
             IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
-        else:
-            log.debug(
-                "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
-                % (resType, timeStep)
-            )
 
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", module=com1DFA):
