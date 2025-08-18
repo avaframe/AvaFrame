@@ -562,7 +562,6 @@ def mergeParticleDict(particles1, particles2):
         # number (int, double, float) then we sum the 2 values
         elif (key in particles2) and (isinstance(particles1[key], numbers.Number)):
             if (key == "xllcenter") or (key == "yllcenter"):
-                # TODO: do we also need to include "t", "tPlot", "stoppCriteria" here?
                 particles[key] = particles1[key]
             else:
                 particles[key] = particles1[key] + particles2[key]
