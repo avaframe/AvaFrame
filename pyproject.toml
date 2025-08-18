@@ -9,7 +9,7 @@ name = "avaframe"
 description = "The Open Avalanche Framework"
 readme = "README.md"
 dynamic = ["version"]
-license = { text = "EUPL" }
+license = "EUPL-1.2"
 authors = [
     { name = "AvaFrame Contributors", email = "felix@avaframe.org" }
 ]
@@ -17,7 +17,6 @@ urls = { Homepage = "http://avaframe.org" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -99,7 +98,8 @@ avaframe = { path = "./", editable = true }
 pixi-pycharm = "*"
 pytest = "*"
 pytest-cov = "*"
-pytest-mock ="*"
+pytest-mock = "*"
+black = "*"
 
 #Feature doc
 [tool.pixi.feature.doc.dependencies]
