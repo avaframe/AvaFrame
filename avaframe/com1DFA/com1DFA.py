@@ -675,7 +675,7 @@ def prepareInputData(inputSimFiles, cfg):
 
     if cfg["GENERAL"].getboolean("hydrograph"):
         try:
-            hydrFile = inputSimFiles["hydrographFile"]
+            hydrFile = inputSimFiles["hydrographFile"][0]
             hydrLine = shpConv.readLine(hydrFile, "", demOri)
             hydrLine["fileName"] = hydrFile
             hydrLine["type"] = "Hydrograph"
