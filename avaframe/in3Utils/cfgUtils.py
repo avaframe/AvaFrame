@@ -985,4 +985,3 @@ def cfgToRcf(cfg, fileName):
                 key = key.strip()
                 f.write(f"{key:<40}{value}\n")
             f.write("#\n")
-
