@@ -2248,7 +2248,6 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
 
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
-  cdef double[:] zArray = particles['z']
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
