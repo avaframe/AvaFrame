@@ -160,3 +160,18 @@ def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
             message = "For every release time step a thickness > 0 needs to be provided in %s" % (hydrCsv)
             log.error(message)
             raise ValueError(message)
+
+    # check if time steps of hydrograph are not to close that the particle density becomes too high
+    # check that particles moved out of hydrograph area before new particles are initialized
+    # time between hydrograph time steps
+    # first timestep is skipped since this is always ok.
+    if timeStepUnique.ndim > 0:
+        hydrDT = np.append(hydrographValues["timeStep"], 0) - np.append(0, hydrographValues["timeStep"])
+        vel = np.where(np.array(hydrographValues["velocity"]) > 0, np.array(hydrographValues["velocity"]), 1)
+        distance = vel[:-1] * hydrDT[1:-1]
+
+        if np.any(distance < cfgGen.getfloat("timeStepDistance")):
+            message = "Please select timesteps with greater spacing in %s." % (hydrCsv)
+            # TODO: error or warning?
+            log.error(message)
+            raise ValueError(message)

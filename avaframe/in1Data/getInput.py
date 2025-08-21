@@ -960,17 +960,21 @@ def getHydrographCsv(hydrCsv, cfgGen):
         contains hydrograph values: timestep, thickness, velocity
     """
     hydrParameters = np.genfromtxt(hydrCsv, delimiter=",", filling_values=0, skip_header=1)
-    hydrographValues = {
-        "timeStep": hydrParameters[:, 0],
-        "thickness": hydrParameters[:, 1],
-        "velocity": hydrParameters[:, 2],
-    }
-    # check that timesteps are unique
-    timeStepUnique = np.unique(hydrographValues["timeStep"])
-    if len(timeStepUnique) != len(hydrographValues["timeStep"]):
-        message = "The provided hydrograph timesteps in %s are not unique" % (hydrCsv)
-        log.error(message)
-        raise ValueError(message)
+
+    if hydrParameters.ndim == 2:
+        # sort the columns according to the first column (timestep)
+        hydrParameters = hydrParameters[np.argsort(hydrParameters[:, 0])]
+        hydrographValues = {
+            "timeStep": hydrParameters[:, 0],
+            "thickness": hydrParameters[:, 1],
+            "velocity": hydrParameters[:, 2],
+        }
+    else:
+        hydrographValues = {
+            "timeStep": [hydrParameters[0]],
+            "thickness": [hydrParameters[1]],
+            "velocity": [hydrParameters[2]],
+        }
     debF.checkHydrograph(cfgGen, hydrographValues, hydrCsv)
 
     return hydrographValues
