@@ -91,8 +91,8 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         velocity of incoming hydrograph
     dem: dict
         dictionary with info on DEM data
-    zPartArray0: dict
-        dictionary containing z - value of particles at timestep 0
+    zPartArray0: numpy array
+        z - value of particles at timestep 0
 
     Returns
     ---------
@@ -119,6 +119,21 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
     particlesHydrograph = DFAfunC.updateInitialVelocity(
         cfg["GENERAL"], particlesHydrograph, dem, velocityMag
     )
+
+    # check if the hydrograph is above the process to avoid numerical instabilities
+    # due to an increased particle density
+    if np.nanmin(particlesHydrograph["z"]) >= np.nanmin(zPartArray0):
+        log.debug(
+            "The lower part of the hydrograph area is above the process, which reduces potential "
+            "for numerical instabilities!"
+        )
+    else:
+        message = (
+            "The hydrograph polygon lies below the release area, which can cause numerical instabilities"
+        )
+        log.error(message)
+        raise ValueError(message)
+
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
     # save initial z position for travel angle computation
     zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
