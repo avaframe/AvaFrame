@@ -54,7 +54,7 @@ def updateParticlesHydrograph(cfg, inputSimLines, particles, fields, dem, zPartA
             "add hydrograph at timestep: %f with thickness %s and velocity %s"
             % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
         )
-        # see secondary release!
+        # similar workflow to secondary release!
         particles, zPartArray0 = addHydrographParticles(
             cfg,
             particles,
@@ -123,3 +123,40 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
     # save initial z position for travel angle computation
     zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
     return particles, zPartArray0
+
+
+def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
+    """
+    check if hydrograph satisfied some requirements
+    Parameters
+    -----------
+    hydrCsv: str
+        directory to csv table containing hydrograph values
+    cfgGen: configparser
+        configuration settings, part "GENERAL"
+    hydrographValues: dict
+        contains hydrograph values: timestep, thickness, velocity
+    """
+    # check if timesteps are unique
+    timeStepUnique = np.unique(hydrographValues["timeStep"])
+    if timeStepUnique.ndim == 0:
+        if timeStepUnique != hydrographValues["timeStep"]:
+            message = "The provided hydrograph time steps in %s are not unique" % (hydrCsv)
+    elif len(timeStepUnique) != len(hydrographValues["timeStep"]):
+        message = "The provided hydrograph timesteps in %s are not unique" % (hydrCsv)
+        log.error(message)
+        raise ValueError(message)
+
+    if cfgGen.getboolean("hydrograph") and cfgGen.getboolean("noRelArea"):
+        if 0 not in timeStepUnique:
+            message = (
+                "If no release area is released, a thickness needs to be provided for  time step 0 s in %s"
+                % (hydrCsv)
+            )
+            log.error(message)
+            raise ValueError(message)
+    for th in hydrographValues["thickness"]:
+        if th <= 0:
+            message = "For every release time step a thickness > 0 needs to be provided in %s" % (hydrCsv)
+            log.error(message)
+            raise ValueError(message)

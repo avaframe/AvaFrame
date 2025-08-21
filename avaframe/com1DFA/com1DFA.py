@@ -674,7 +674,7 @@ def prepareInputData(inputSimFiles, cfg):
             gI.checkForMultiplePartsShpArea(
                 cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
             )
-            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
             hydrLine["thicknessSource"] = ["csv file"]
         except:
             message = "No hydrograph file found"
