@@ -1428,6 +1428,7 @@ def test_initializeParticles():
         "tPlot",
         "dmEnt",
         "stoppedParticles",
+        "addArtVisc",
     ]
 
     # call function to be tested
@@ -2457,6 +2458,7 @@ def test_runCom1DFA(tmp_path, caplog):
         "dmEnt",
         "massStopped",
         "stoppedParticles",
+        "addArtVisc",
     ]
 
     # read one particles dictionary

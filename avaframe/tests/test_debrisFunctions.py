@@ -145,7 +145,7 @@ def test_addHydrographParticles():
 TODO: When calling pytest, the following function raises an error ("Fatal Python error: Aborted")
 (see issue #1002?)
 
-def test_updateParticlesHydrograph():
+def test_releaseHydrograph():
     inputSimLines = {
         "hydrographLine": {
             "Name": ["testHydr"],

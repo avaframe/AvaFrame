@@ -18,6 +18,7 @@ import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.com1DFA.debrisFunctions as debF
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -940,7 +941,7 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
         raise AssertionError(message)
 
 
-def getHydrographCsv(hydrCsv):
+def getHydrographCsv(hydrCsv, cfgGen):
     """
      get hydrograph values from the csv table
      TODO: now the first column is defined as timestep, the second as thickness, third as velocity
@@ -950,6 +951,8 @@ def getHydrographCsv(hydrCsv):
     -----------
     hydrCsv: str
         directory to csv table containing hydrograph values
+    cfgGen: configparser
+        configuration settings, part "GENERAL"
 
     Returns
     -----------
@@ -957,15 +960,21 @@ def getHydrographCsv(hydrCsv):
         contains hydrograph values: timestep, thickness, velocity
     """
     hydrParameters = np.genfromtxt(hydrCsv, delimiter=",", filling_values=0, skip_header=1)
-    hydrographValues = {
-        "timeStep": hydrParameters[:, 0],
-        "thickness": hydrParameters[:, 1],
-        "velocity": hydrParameters[:, 2],
-    }
-    # check that timesteps are unique
-    timeStepUnique = np.unique(hydrographValues["timeStep"])
-    if len(timeStepUnique) != len(hydrographValues["timeStep"]):
-        message = "The provided hydrograph timesteps in %s are not unique" % (hydrCsv)
-        log.error(message)
-        raise ValueError(message)
+
+    if hydrParameters.ndim == 2:
+        # sort the columns according to the first column (timestep)
+        hydrParameters = hydrParameters[np.argsort(hydrParameters[:, 0])]
+        hydrographValues = {
+            "timeStep": hydrParameters[:, 0],
+            "thickness": hydrParameters[:, 1],
+            "velocity": hydrParameters[:, 2],
+        }
+    else:
+        hydrographValues = {
+            "timeStep": [hydrParameters[0]],
+            "thickness": [hydrParameters[1]],
+            "velocity": [hydrParameters[2]],
+        }
+    debF.checkHydrograph(cfgGen, hydrographValues, hydrCsv)
+
     return hydrographValues

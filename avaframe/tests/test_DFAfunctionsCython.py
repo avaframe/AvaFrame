@@ -794,6 +794,8 @@ def test_updateInitialVelocity():
         "uy": np.array([0.0]),
         "uz": np.array([0.0]),
         "nPart": 1,
+        "velocityMag": np.array([0.0]),
+        "addArtVisc": np.array([1]),
     }
 
     dem = {
@@ -822,11 +824,16 @@ def test_updateInitialVelocity():
         "uy": np.array([np.sqrt(50)]),
         "uz": np.array([np.sqrt(50)]),
         "nPart": 1,
+        "velocityMag": np.array([velocityMag]),
+        "addArtVisc": np.array([0]),
     }
 
     particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
     for key in particlesTest:
         assert np.isclose(particlesTest[key], particlesVelocity[key], atol=1e-4)
+    assert (
+        DFAtls.norm(particlesVelocity["ux"], particlesVelocity["uy"], particlesVelocity["uz"]) == velocityMag
+    )
 
 
 """

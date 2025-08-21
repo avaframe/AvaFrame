@@ -674,7 +674,7 @@ def prepareInputData(inputSimFiles, cfg):
             gI.checkForMultiplePartsShpArea(
                 cfg["GENERAL"]["avalancheDir"], hydrLine, "com1DFA", type="hydrograph"
             )
-            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
+            hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
             hydrLine["thicknessSource"] = ["csv file"]
         except:
             message = "No hydrograph file found"
@@ -1383,6 +1383,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["nExitedParticles"] = 0.0
     particles["dmDet"] = np.zeros(np.shape(hPartArray))
     particles["dmEnt"] = np.zeros(np.shape(hPartArray))
+    particles["addArtVisc"] = np.ones(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):
@@ -1463,8 +1464,6 @@ def getRelThFromPart(cfg, releaseLine, relThField):
         relThForPart = releaseLine["thickness"]
     elif cfg.getboolean("relThFromShp"):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
-    elif cfg.getboolean("hydrograph") and cfg.getboolean("noRelArea"):
-        relThForPart = releaseLine["thickness"]
     else:
         relThForPart = cfg.getfloat("relTh")
 
@@ -1966,8 +1965,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
 
         if cfgGen.getboolean("hydrograph"):
-            particles, fields, zPartArray0 = debF.updateParticlesHydrograph(cfg, inputSimLines, particles, fields,
-                                                                            dem, zPartArray0, t)
+            particles, fields, zPartArray0 = debF.releaseHydrograph(
+                cfg, inputSimLines, particles, fields, dem, zPartArray0, t
+            )
         # Perform computations
         particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
             cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
