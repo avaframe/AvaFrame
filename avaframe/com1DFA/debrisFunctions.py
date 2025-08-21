@@ -17,13 +17,13 @@ import avaframe.com1DFA.com1DFA as com1DFA
 log = logging.getLogger(__name__)
 
 
-def updateParticlesHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t):
+def releaseHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t, atol=1e-05):
     """
     Update particles with "new" particles initialised by a hydrograph.
 
     Parameters
     ---------
-    cfg: dict
+    cfg: configparser
         configuration settings
     inputSimLines : dict
         dictionary with input data dictionaries (releaseLine, hydrographLine,...)
@@ -37,6 +37,8 @@ def updateParticlesHydrograph(cfg, inputSimLines, particles, fields, dem, zPartA
         dictionary containing z - value of particles at timestep 0
     t: float
         timestep of iteration
+    atol: float
+        look for matching time steps with atol tolerance - default is atol=1.e-5
 
     Returns
     ---------
@@ -48,13 +50,13 @@ def updateParticlesHydrograph(cfg, inputSimLines, particles, fields, dem, zPartA
         dictionary containing z - value of particles at timestep 0
     """
     hydrValues = inputSimLines["hydrographLine"]["values"]
-    if round(t, 1) in hydrValues["timeStep"]:
-        i = np.where(hydrValues["timeStep"] == round(t, 1))
+    if np.isclose(t, hydrValues["timeStep"], atol=atol, rtol=0).any():
+        i = np.where(np.isclose(t, hydrValues["timeStep"], atol=atol, rtol=0))
         log.info(
-            "add hydrograph at timestep: %f with thickness %s and velocity %s"
-            % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
+            "add hydrograph at timestep: %f s with thickness %s m and velocity %s m/s"
+            % (t, hydrValues["thickness"][i][0], hydrValues["velocity"][i][0])
         )
-        # see secondary release!
+        # similar workflow to secondary release!
         particles, zPartArray0 = addHydrographParticles(
             cfg,
             particles,
@@ -91,8 +93,8 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         velocity of incoming hydrograph
     dem: dict
         dictionary with info on DEM data
-    zPartArray0: dict
-        dictionary containing z - value of particles at timestep 0
+    zPartArray0: numpy array
+        z - value of particles at timestep 0
 
     Returns
     ---------
@@ -119,7 +121,69 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
     particlesHydrograph = DFAfunC.updateInitialVelocity(
         cfg["GENERAL"], particlesHydrograph, dem, velocityMag
     )
+
+    # check if the hydrograph is above the process to avoid numerical instabilities
+    # due to an increased particle density
+    # TODO: give a tolerance of e.g. 0.5 m ?
+    if np.nanmin(particlesHydrograph["z"]) >= np.nanmin(zPartArray0):
+        log.debug(
+            "The lower part of the hydrograph area is above the process, which reduces potential "
+            "for numerical instabilities!"
+        )
+    else:
+        message = (
+            "The hydrograph polygon lies below the release area, which can cause numerical instabilities"
+        )
+        log.error(message)
+        raise ValueError(message)
+
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
     # save initial z position for travel angle computation
     zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
     return particles, zPartArray0
+
+
+def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
+    """
+    check if hydrograph satisfied some requirements
+
+    Parameters
+    -----------
+    hydrCsv: str
+        directory to csv table containing hydrograph values
+    cfgGen: configparser
+        configuration settings, part "GENERAL"
+    hydrographValues: dict
+        contains hydrograph values: timestep, thickness, velocity
+    """
+    # check if timesteps are unique
+    timeStepUnique = np.unique(hydrographValues["timeStep"])
+    if timeStepUnique.ndim == 0:
+        if timeStepUnique != hydrographValues["timeStep"]:
+            message = "The provided hydrograph time steps in %s are not unique" % (hydrCsv)
+    elif len(timeStepUnique) != len(hydrographValues["timeStep"]):
+        message = "The provided hydrograph timesteps in %s are not unique" % (hydrCsv)
+        log.error(message)
+        raise ValueError(message)
+
+    # check that hydrograph thickness > 0
+    for th in hydrographValues["thickness"]:
+        if th <= 0:
+            message = "For every release time step a thickness > 0 needs to be provided in %s" % (hydrCsv)
+            log.error(message)
+            raise ValueError(message)
+
+    # check if time steps of hydrograph are not to close that the particle density becomes too high
+    # check that particles moved out of hydrograph area before new particles are initialized
+    # time between hydrograph time steps
+    # first timestep is skipped since this is always ok.
+    if timeStepUnique.ndim > 0:
+        hydrDT = np.append(hydrographValues["timeStep"], 0) - np.append(0, hydrographValues["timeStep"])
+        vel = np.where(np.array(hydrographValues["velocity"]) > 0, np.array(hydrographValues["velocity"]), 1)
+        distance = vel[:-1] * hydrDT[1:-1]
+
+        if np.any(distance < cfgGen.getfloat("timeStepDistance")):
+            message = "Please select timesteps with greater spacing in %s." % (hydrCsv)
+            # TODO: error or warning?
+            log.error(message)
+            raise ValueError(message)
