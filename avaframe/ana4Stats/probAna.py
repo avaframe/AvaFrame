@@ -777,6 +777,7 @@ def createSampleWithVariationStandardParameters(cfgProb, cfgStart, varParList, v
         "values": sampleWBounds,
         "typeList": cfgProb["PROBRUN"]["varParType"].split("|"),
         "thFromIni": "",
+        "bounds": np.column_stack((lowerBounds, upperBounds)).tolist()
     }
 
     return paramValuesD
@@ -1068,11 +1069,20 @@ def createCfgFiles(paramValuesDList, comMod, cfg, cfgPath=""):
                     cfgStart[section][par] = str(pVal[index])
                 else:
                     cfgStart["GENERAL"][par] = str(pVal[index])
-            if modName.lower() in ("com1dfa", "com8motpsa"):
+
+            if modName.lower() == "com1dfa":
                 cfgStart["VISUALISATION"]["scenario"] = str(count1)
                 cfgStart["INPUT"]["thFromIni"] = paramValuesD["thFromIni"]
                 if "releaseScenario" in paramValuesD.keys():
                     cfgStart["INPUT"]["releaseScenario"] = paramValuesD["releaseScenario"]
+
+            elif modName.lower() == "com8motpsa":
+                cfgStart["VISUALISATION"]["scenario"] = str(count1)
+                cfgStart["INPUT"]["thFromIni"] = paramValuesD["thFromIni"]
+                if "releaseScenario" in paramValuesD.keys():
+                    cfgStart["INPUT"]["releaseScenario"] = paramValuesD["releaseScenario"]
+                cfgStart["VISUALISATION"]["sampleMethod"] = cfg['PROBRUN']['sampleMethod']
+
             cfgF = pathlib.Path(cfgPath, ("%d_%sCfg.ini" % (countS, modName)))
             with open(cfgF, "w") as configfile:
                 cfgStart.write(configfile)

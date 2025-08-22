@@ -5,6 +5,7 @@
 # importing general python modules
 import pathlib
 import numpy as np
+import pickle
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -20,8 +21,8 @@ import avaframe.com1DFA.DFAtools as DFAtls
 
 ################USER Input#############
 resType = "ppr"
-thresholdValueSimulation = 0.9
-modName = 'com1DFA'
+thresholdValueSimulation = 1
+modName = 'com8MoTPSA'
 ############################################################
 
 # Load avalanche directory from general configuration file
@@ -94,9 +95,17 @@ else:
     # load all result files
     resultDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'peakFiles')
     peakFilesList = list(resultDir.glob("*_%s.tif" % resType)) + list(resultDir.glob("*_%s.asc" % resType))
+
+    allResults = []  # for saving Results as pickle file
+
     for pF in peakFilesList:
         simData = IOf.readRaster(pF)
         simName = pF.stem
+
+        # Skip if "psa" not in name, only process psa simulations
+        if "psa" not in simName.lower():
+            continue
+
 
         # compute referenceMask and simulationMask and true positive, false positive and false neg. arrays
         refMask, compMask, indicatorDict = oPD.computeAreaDiff(referenceLine['rasterData'],
@@ -107,7 +116,18 @@ else:
                                                                cropToArea=cropLine['rasterData'])
 
         # plot differences
-        oPD.plotAreaDiff(referenceLine['rasterData'], refMask, simData['rasterData'], compMask, resType,
-                         simData['header'],
-                         thresholdValueSimulation, outDir,
-                         indicatorDict, simName, cropFile=cropFile)
+        # oPD.plotAreaDiff(referenceLine['rasterData'], refMask, simData['rasterData'], compMask, resType,
+        #                 simData['header'],
+        #                 thresholdValueSimulation, outDir,
+        #                 indicatorDict, simName, cropFile=cropFile)
+
+        # ToDo: save only, simName, TP/FP/FN areaSum and ncells, to reduce pickle size
+        allResults.append({
+            "sim_name": simName,
+            "res_type": resType,
+            "threshold": thresholdValueSimulation,
+            "indicator_dict": indicatorDict
+        })
+
+    with open(outDir / 'arealIndicators.pkl', "wb") as f:
+        pickle.dump(allResults, f)
