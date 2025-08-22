@@ -17,13 +17,13 @@ import avaframe.com1DFA.com1DFA as com1DFA
 log = logging.getLogger(__name__)
 
 
-def updateParticlesHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t):
+def releaseHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t):
     """
     Update particles with "new" particles initialised by a hydrograph.
 
     Parameters
     ---------
-    cfg: dict
+    cfg: configparser
         configuration settings
     inputSimLines : dict
         dictionary with input data dictionaries (releaseLine, hydrographLine,...)
@@ -122,6 +122,7 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
 
     # check if the hydrograph is above the process to avoid numerical instabilities
     # due to an increased particle density
+    # TODO: give a tolerance of e.g. 0.5 m ?
     if np.nanmin(particlesHydrograph["z"]) >= np.nanmin(zPartArray0):
         log.debug(
             "The lower part of the hydrograph area is above the process, which reduces potential "
@@ -143,6 +144,7 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
 def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
     """
     check if hydrograph satisfied some requirements
+
     Parameters
     -----------
     hydrCsv: str
@@ -162,14 +164,7 @@ def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
         log.error(message)
         raise ValueError(message)
 
-    if cfgGen.getboolean("hydrograph") and cfgGen.getboolean("noRelArea"):
-        if 0 not in timeStepUnique:
-            message = (
-                "If no release area is released, a thickness needs to be provided for  time step 0 s in %s"
-                % (hydrCsv)
-            )
-            log.error(message)
-            raise ValueError(message)
+    # check that hydrograph thickness > 0
     for th in hydrographValues["thickness"]:
         if th <= 0:
             message = "For every release time step a thickness > 0 needs to be provided in %s" % (hydrCsv)
