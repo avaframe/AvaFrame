@@ -51,8 +51,8 @@ def releaseHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t
     if round(t, 1) in hydrValues["timeStep"]:
         i = np.where(hydrValues["timeStep"] == round(t, 1))
         log.info(
-            "add hydrograph at timestep: %f with thickness %s and velocity %s"
-            % (t, hydrValues["thickness"][i], hydrValues["velocity"][i])
+            "add hydrograph at timestep: %f s with thickness %s m and velocity %s m/s"
+            % (t, hydrValues["thickness"][i][0], hydrValues["velocity"][i][0])
         )
         # similar workflow to secondary release!
         particles, zPartArray0 = addHydrographParticles(
