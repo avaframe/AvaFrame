@@ -52,6 +52,7 @@ Computational modules
     * :doc:`moduleCom4FlowPy`
     * :doc:`moduleCom5SnowSlide`
     * :doc:`moduleCom6RockAvalanche`
+    * :doc:`moduleCom7Regional`
     * :doc:`moduleCom8MoTPSA`
     * :doc:`moduleCom8MoTVoellmy`
 
@@ -66,6 +67,7 @@ Computational modules
    moduleCom4FlowPy.rst
    moduleCom5SnowSlide.rst
    moduleCom6RockAvalanche.rst
+   moduleCom7Regional.rst
    moduleCom8MoTPSA.rst
    moduleCom9MoTVoellmy.rst
 
@@ -77,6 +79,7 @@ Input/transformation modules
     * :doc:`moduleIn1Data`
     * :doc:`moduleIn2Trans`
     * :doc:`moduleIn3Utils`
+    * :doc:`moduleIn4Region`
 
 .. toctree::
    :maxdepth: 3
@@ -86,6 +89,7 @@ Input/transformation modules
    moduleIn1Data.rst
    moduleIn2Trans.rst
    moduleIn3Utils.rst
+   moduleIn4Region.rst
 
 Analysis/helper modules
 =======================
