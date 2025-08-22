@@ -2251,6 +2251,7 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] velocityMagArray = particles['velocityMag']
   cdef int nPart = particles['nPart']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -2279,7 +2280,10 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
     uxArray[k] = nx * velocityMag
     uyArray[k] = ny * velocityMag
     uzArray[k] = nz * velocityMag
+    velocityMagArray[k] = velocityMag
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
+  particles['velocityMag'] = np.asarray(velocityMagArray)
+
   return particles
