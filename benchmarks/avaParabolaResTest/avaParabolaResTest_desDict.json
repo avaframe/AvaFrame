@@ -1,6 +1,7 @@
 {
   "TAGS": [
     "resistance",
+    "res",
     "standardTest",
     "idealized"
   ],
@@ -9,15 +10,15 @@
     "2DPeak"
   ],
   "FILES": [
-    "release1PF_39f1d08fa9_C_L_res_dfa_ppr",
-    "release1PF_39f1d08fa9_C_L_res_dfa_pft",
-    "release1PF_39f1d08fa9_C_L_res_dfa_pfv",
-    "mass_release1PF_39f1d08fa9_C_L_res_dfa"
+    "release1PF_0b9974d222_C_L_res_dfa_ppr",
+    "release1PF_0b9974d222_C_L_res_dfa_pft",
+    "release1PF_0b9974d222_C_L_res_dfa_pfv",
+    "mass_release1PF_0b9974d222_C_L_res_dfa"
   ],
   "TOPOTYPE": "idealised",
   "AVANAME": "avaParabola",
   "AVADIR": "data/avaParabola",
-  "simNameRef": "release1PF_39f1d08fa9_C_L_res_dfa",
+  "simNameRef": "release1PF_0b9974d222_C_L_res_dfa",
   "NAME": "avaParabolaResTest",
   "Test Info": {
     "type": "text",
@@ -26,11 +27,11 @@
   "simType": "res",
   "simName": {
     "type": "simName",
-    "name": "release1PF_39f1d08fa9_C_L_res_dfa"
+    "name": "release1PF_0b9974d222_C_L_res_dfa"
   },
   "Simulation Parameters": {
     "type": "list",
-    "Program version": "1.11",
+    "Program version": "1.13",
     "Parameter set": "Changed",
     "Release Area Scenario": "release1PF",
     "Entrainment": "No",
@@ -39,11 +40,11 @@
     "Density [kgm-3]": "200",
     "Friction model": "samosAT",
     "Initial mass [kg]": "20672345.82",
-    "Final mass [kg]": "20672345.82",
+    "Final mass [kg]": "12637804.38",
     "Entrained mass [kg]": "0.00",
     "Entrained volume [m3]": "0.00",
     "Stop criterion": "< 1.00 percent of PKE",
-    "Avalanche run time [s]": "158.50",
-    "Computation time [s]": "45.59"
+    "Avalanche run time [s]": "115.90",
+    "Computation time [s]": "63.11"
   }
 }

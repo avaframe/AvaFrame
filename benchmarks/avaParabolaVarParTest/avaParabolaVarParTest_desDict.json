@@ -1,1 +1,21 @@
-{"TAGS": ["resistance", "varParTest", "idealized"], "DESCRIPTION": " this is Parabola test", "TYPE": ["2DPeak"], "FILES": ["release1PF_res_ref_0.50000_pfv.asc", "release1PF_res_ref_0.50000_ppr.asc", "release1PF_res_ref_0.50000_pft.asc"], "TOPOTYPE": "idealised",  "AVANAME": "avaParabola", "AVADIR": "data/avaParabola", "simNameRef": "release1PF_res_ref_0.50000"}
+{
+  "TAGS": [
+    "resistance",
+    "res",
+    "varParTest",
+    "idealized"
+  ],
+  "DESCRIPTION": " this is Parabola test",
+  "TYPE": [
+    "2DPeak"
+  ],
+  "FILES": [
+    "release1PF_res_ref_0.50000_pfv.asc",
+    "release1PF_res_ref_0.50000_ppr.asc",
+    "release1PF_res_ref_0.50000_pft.asc"
+  ],
+  "TOPOTYPE": "idealised",
+  "AVANAME": "avaParabola",
+  "AVADIR": "data/avaParabola",
+  "simNameRef": "release1PF_res_ref_0.50000"
+}
