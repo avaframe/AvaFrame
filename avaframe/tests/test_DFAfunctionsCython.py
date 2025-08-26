@@ -120,7 +120,6 @@ def test_computeDetMass(capfd):
 
     detCell = 10
     dmDet = DFAfunC.computeDetMass(dt, detCell, areaPart, uMag)
-    #    print(dmDet)
     assert dmDet == -0.1
 
 
@@ -845,7 +844,6 @@ def test_updateInitialVelocity():
         "nPart": 1,
         "velocityMag": np.array([0.0]),
     }
-
     particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
     for key in particlesTest:
         assert np.isclose(particlesTest[key], particlesVelocity[key], atol=1e-3)
