@@ -1383,7 +1383,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["nExitedParticles"] = 0.0
     particles["dmDet"] = np.zeros(np.shape(hPartArray))
     particles["dmEnt"] = np.zeros(np.shape(hPartArray))
-    particles["addArtVisc"] = np.ones(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):

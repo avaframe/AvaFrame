@@ -123,7 +123,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:] uzArray = particles['uz']
   cdef long long[:] ID = particles['ID']
   cdef double[:] totalEnthalpyArray = particles['totalEnthalpy']
-  cdef double[:] addArtViscArray = particles['addArtVisc']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
@@ -184,11 +183,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
 
       if viscOption == 1:
         # add artificial viscosity
-        if addArtViscArray[k] == 1:
-            ux, uy, uz = addArtificialViscosity(m, h, dt, rho, ux, uy, uz, subgridMixingFactor, Lx0, Ly0,
-                                                w[0], w[1], w[2], w[3], VX, VY, VZ, nx, ny, nz)
-        else:
-            addArtViscArray[k] = 1
+        ux, uy, uz = addArtificialViscosity(m, h, dt, rho, ux, uy, uz, subgridMixingFactor, Lx0, Ly0,
+                                            w[0], w[1], w[2], w[3], VX, VY, VZ, nx, ny, nz)
 
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
@@ -396,7 +392,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   particles['dmDet'] = np.asarray(dMDet)
   particles['dmEnt'] = np.asarray(dM)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
-  particles['addArtVisc'] = np.asarray(addArtViscArray)
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
@@ -2263,7 +2258,6 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
   cdef double[:] velocityMagArray = particles['velocityMag']
-  cdef double[:] addArtVisc = particles['addArtVisc']
   cdef int nPart = particles['nPart']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -2275,6 +2269,7 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
 
   cdef double x, y, z
   cdef double nx, ny, nz
+  cdef double tangentialTopoX, tangentialTopoY, tangentialTopoZ, tangentialTopoXNorm, tangentialTopoYNorm, tangentialTopoZNorm
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
   cdef int k
@@ -2289,16 +2284,20 @@ def updateInitialVelocity(cfg, particles, dem, float velocityMag):
     # get normal at the particle location
     nx, ny, nz = DFAtlsC.getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = DFAtlsC.normalize(nx, ny, nz)
-    uxArray[k] = nx * velocityMag
-    uyArray[k] = ny * velocityMag
-    uzArray[k] = nz * velocityMag
-    velocityMagArray[k] = velocityMag
-    # don't add artifical viscosity in the first timestep
-    addArtVisc[k] = 0
+    # get vector in the tangent plane that points in the direction gravity would pull a particle along the surface
+    tangentialTopoX = nx * nz
+    tangentialTopoY = ny * nz
+    tangentialTopoZ = nz * nz -1
+    tangentialTopoXNorm, tangentialTopoYNorm, tangentialTopoZNorm = DFAtlsC.normalize(tangentialTopoX, tangentialTopoY, tangentialTopoZ)
+
+    uxArray[k] = tangentialTopoXNorm * velocityMag
+    uyArray[k] = tangentialTopoYNorm * velocityMag
+    uzArray[k] = tangentialTopoZNorm * velocityMag
+
+    velocityMagArray[k] = DFAtlsC.norm(uxArray[k], uyArray[k], uzArray[k])
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
   particles['velocityMag'] = np.asarray(velocityMagArray)
-  particles['addArtVisc'] = np.asarray(addArtVisc)
 
   return particles

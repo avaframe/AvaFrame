@@ -795,9 +795,9 @@ def test_updateInitialVelocity():
         "uz": np.array([0.0]),
         "nPart": 1,
         "velocityMag": np.array([0.0]),
-        "addArtVisc": np.array([1]),
     }
 
+    # incline plane
     dem = {
         "header": {"nrows": 5, "ncols": 5, "cellsize": 5},
         "rasterData": np.array(
@@ -822,10 +822,9 @@ def test_updateInitialVelocity():
         "y": np.array([10.0]),
         "ux": np.array([0.0]),
         "uy": np.array([np.sqrt(50)]),
-        "uz": np.array([np.sqrt(50)]),
+        "uz": np.array([-np.sqrt(50)]),
         "nPart": 1,
         "velocityMag": np.array([velocityMag]),
-        "addArtVisc": np.array([0]),
     }
 
     particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
@@ -834,6 +833,23 @@ def test_updateInitialVelocity():
     assert (
         DFAtls.norm(particlesVelocity["ux"], particlesVelocity["uy"], particlesVelocity["uz"]) == velocityMag
     )
+
+    # flat plane
+    dem["rasterData"] = np.ones((dem["header"]["ncols"], dem["header"]["nrows"]))
+    dem = geoTrans.getNormalMesh(dem, num=1)
+    particlesTest = {
+        "x": np.array([10.0]),
+        "y": np.array([10.0]),
+        "ux": np.array([0.0]),
+        "uy": np.array([0.0]),
+        "uz": np.array([0.0]),
+        "nPart": 1,
+        "velocityMag": np.array([0.0]),
+    }
+
+    particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
+    for key in particlesTest:
+        assert np.isclose(particlesTest[key], particlesVelocity[key], atol=1e-3)
 
 
 """
