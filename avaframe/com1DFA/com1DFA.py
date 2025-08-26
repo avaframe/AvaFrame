@@ -603,6 +603,7 @@ def prepareInputData(inputSimFiles, cfg):
         hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
         releaseLine["thickness"] = [hydrValues["thickness"][hydrValues["timeStep"] == 0]]
         releaseLine["thicknessSource"] = ["csv file"]
+        releaseLine["velocity"] = hydrValues["velocity"][hydrValues["timeStep"] == 0]
     # check for holes in release area polygons
     gI.checkForMultiplePartsShpArea(cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release")
 
@@ -1099,6 +1100,8 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         logName=logName,
         relThField=relThField,
     )
+    if cfgGen.getboolean("hydrograph") and cfgGen.getboolean("noRelArea"):
+        particles = DFAfunC.updateInitialVelocity(cfgGen, particles, dem, releaseLine["velocity"])
     particles, fields = initializeFields(cfg, dem, particles, releaseLine)
 
     reportAreaInfo["Release area info"]["Model release volume [m3]"] = "%.2f" % (
