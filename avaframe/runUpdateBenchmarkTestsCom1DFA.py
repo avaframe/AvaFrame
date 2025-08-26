@@ -47,7 +47,7 @@ log = logUtils.initiateLogger(outDir, logName)
 fU.makeADir(outDir)
 
 # version = getVersion()
-version = "1.11"
+version = "1.13"
 
 log.info("The following benchmark tests will be updated ")
 for test in testList:

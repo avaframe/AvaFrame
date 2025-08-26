@@ -10,14 +10,15 @@
     "2DPeak"
   ],
   "FILES": [
-    "relKot_5f7151e370_D_S_res_dfa_pft.asc",
-    "relKot_5f7151e370_D_S_res_dfa_pfv.asc",
-    "relKot_5f7151e370_D_S_res_dfa_ppr.asc"
+    "relKot_280985ebb1_C_S_res_dfa_ppr",
+    "relKot_280985ebb1_C_S_res_dfa_pft",
+    "relKot_280985ebb1_C_S_res_dfa_pfv",
+    "mass_relKot_280985ebb1_C_S_res_dfa"
   ],
   "TOPOTYPE": "real",
   "AVANAME": "avaKot",
   "AVADIR": "data/avaKot",
-  "simNameRef": "relKot_5f7151e370_D_S_res_dfa",
+  "simNameRef": "relKot_280985ebb1_C_S_res_dfa",
   "NAME": "avaKotResTest",
   "Test Info": {
     "type": "text",
@@ -26,12 +27,12 @@
   "simType": "res",
   "simName": {
     "type": "simName",
-    "name": "relKot_5f7151e370_D_S_res_dfa"
+    "name": "relKot_280985ebb1_C_S_res_dfa"
   },
   "Simulation Parameters": {
     "type": "list",
-    "Program version": "1.12+15.g5020492b.dirty",
-    "Parameter set": "Default",
+    "Program version": "1.13",
+    "Parameter set": "Changed",
     "Release Area Scenario": "relKot",
     "Entrainment": "No",
     "Resistance": "Yes",
@@ -39,11 +40,11 @@
     "Density [kgm-3]": "200",
     "Friction model": "samosATSmall",
     "Initial mass [kg]": "4328073.73",
-    "Final mass [kg]": "24949108.21",
+    "Final mass [kg]": "3417671.81",
     "Entrained mass [kg]": "0.00",
     "Entrained volume [m3]": "0.00",
     "Stop criterion": "< 1.00 percent of PKE",
-    "Avalanche run time [s]": "103.70",
-    "Computation time [s]": "14.83"
+    "Avalanche run time [s]": "106.60",
+    "Computation time [s]": "21.94"
   }
 }
