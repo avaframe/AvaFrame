@@ -308,7 +308,8 @@ cpdef (int, int, double, double, double, double, double, double, double, double,
   zT: float
     z component of the tangent vector to the dam at the intersection point
   """
-  cdef int i, intersection
+  cdef int i
+  cdef int intersection = 0
   cdef double xF1, yF1, zF1, xF2, yF2, zF2
   cdef double xF, yF, zF
   cdef double xC, yC, zC, xC1, yC1, zC1, xC2, yC2, zC2

@@ -163,7 +163,11 @@ cpdef (double, double, double) normalize(double x, double y, double z):
       zn: numpy array
           z component of the normalized vector
   """
-  cdef double norme, xn, yn, zn
+  cdef double norme
+  cdef double xn = 0.0
+  cdef double yn = 0.0
+  cdef double zn = 0.0
+
   norme = norm(x, y, z)
   if norme>0:
     xn = x / norme

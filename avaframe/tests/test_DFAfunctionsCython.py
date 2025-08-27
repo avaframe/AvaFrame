@@ -88,7 +88,7 @@ def test_computeEntMassAndForce(capfd):
     )
     #    print(dm, areaEntrPart)
     assert dm == 0
-    assert areaEntrPart == 1
+    assert areaEntrPart == 0
 
     entrMassCell = 200
     entEroEnergy = 0

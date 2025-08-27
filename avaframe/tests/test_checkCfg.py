@@ -74,6 +74,7 @@ def test_checkCfgFrictionModel():
             "Bsamosat": "4.13",
             "muvoellmy": "4000.",
             "xsivoellmy": "4000.",
+            "explicitFriction": "0",
         }
     }
     inputSimFiles = {}
@@ -100,6 +101,7 @@ def test_checkCfgFrictionModel():
             "Bsamosat": "9.13",
             "muvoellmy": "4000.",
             "xsivoellmy": "nan",
+            "explicitFriction": "0",
         }
     }
 
@@ -125,6 +127,7 @@ def test_checkCfgFrictionModel():
             "Bsamosat": "nan",
             "muvoellmy": "4000.",
             "xsivoellmy": "nan",
+            "explicitFriction": "0",
         }
     }
 
@@ -144,6 +147,7 @@ def test_checkCfgFrictionModel():
             "Bsamosat": "test",
             "muvoellmy": "4000.",
             "xsivoellmy": "nan",
+            "explicitFriction": "0",
         }
     }
 
@@ -178,6 +182,7 @@ def test_checkCfgFrictionModel():
             "volClassSmall": "25000.",
             "volClassMedium": "60000.",
             "meshCellSize": "5",
+            "explicitFriction": "1",
         }
     }
 
@@ -219,6 +224,7 @@ def test_checkCfgFrictionModel():
             "volClassSmall": "25000.",
             "volClassMedium": "60000.",
             "meshCellSize": "5",
+            "explicitFriction": "1",
         }
     }
 
@@ -260,6 +266,7 @@ def test_checkCfgFrictionModel():
             "volClassSmall": "25000.",
             "volClassMedium": "60000.",
             "meshCellSize": "5",
+            "explicitFriction": "1",
         }
     }
 

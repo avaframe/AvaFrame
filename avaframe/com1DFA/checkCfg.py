@@ -218,4 +218,10 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=""):
                 )
             )
 
+    # check if explicitFriction has valid values
+    if cfg["GENERAL"]["explicitFriction"] not in ["0", "1"]:
+        message = "explicitFriction should be either 0 (implicit method) or 1 (explicit method)."
+        log.error(message)
+        raise ValueError(message)
+
     return cfg
