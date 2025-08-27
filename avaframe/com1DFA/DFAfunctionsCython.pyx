@@ -442,9 +442,11 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
   rhoEnt: float
     entrainement density
   """
-  cdef double width, ABotSwiped, areaEntrPart
+  cdef double width, ABotSwiped
   # compute entrained mass
-  cdef double dm = 0
+  cdef double dm = 0.0
+  cdef double areaEntrPart = 0.0
+
   if entrMassCell > 0:
       # either erosion or ploughing but not both
 
@@ -527,7 +529,7 @@ cpdef double computeResForce(double areaPart, double rho, double cResCell,
       resistance component for particle
   """
 
-  cdef double cRecResPart
+  cdef double cRecResPart = 0.0
   # explicit formulation (explicitFriction == 1)
   if explicitFriction == 1:
     if resistanceType == 1:
@@ -1100,7 +1102,12 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
   dtStop : float
       time step (smaller then dt if the particle stops during this time step)
   """
-  cdef double xDir, yDir, zDir, uxNew, uyNew, uzNew, uMagNew, dtStop
+  cdef double xDir, yDir, zDir
+  cdef double uxNew = 0.0
+  cdef double uyNew = 0.0
+  cdef double uzNew = 0.0
+  cdef double uMagNew = 0.0
+  cdef double dtStop = 0.0
 
   if explicitFriction == 1:
     # explicite method
