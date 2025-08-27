@@ -2423,7 +2423,6 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType, resistanceType)
     tCPUForce = time.time() - startTime
     tCPU["timeForce"] = tCPU["timeForce"] + tCPUForce
-
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     if cfg.getint("sphOption") == 0:
