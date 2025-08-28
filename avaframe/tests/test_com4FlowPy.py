@@ -208,16 +208,14 @@ def test_calculation():
     travelLengthMin[1, 2] = 0
     travelLengthMin[2, 2] = np.sqrt(cellsize ** 2)
     travelLengthMin[3, 2] = 2 * np.sqrt(cellsize ** 2)
-    affectedCells = routFluxSum
     results = flowCore.calculation(args)
 
-    assert len(results) == 13
+    assert len(results) == 12
     assert np.all(results[1] == flux)
     assert np.all(results[10] == routFluxSum)
     assert np.all(results[11] == depFluxSum)
     assert np.all(results[8] == travelLengthMin)
     assert np.all(results[7] == np.ones_like(flux) * -9999)
-    assert np.all(results[12] == affectedCells)
 
 
 if __name__=='__main__':
