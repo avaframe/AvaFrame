@@ -99,7 +99,7 @@ def com7RegionalMain(cfgMain, cfg):
     allPeakFilesDir = None
     allTimeStepsDir = None
     if cfg['GENERAL'].getboolean('copyPeakFiles'):
-        allPeakFilesDir, allTimeStepsDir = moveOrCopyPeakFiles(cfg, regionalDir, avaDirs)
+        allPeakFilesDir, allTimeStepsDir = moveOrCopyPeakFiles(cfg, avaDirs)
 
     # Merge output rasters if configured
     mergedRastersDir = None
@@ -239,8 +239,8 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
         return None, None
 
     # Get avalanche directories
-    with logUtils.silentLogger():
-        avaDirs = findAvaDirs(avalancheDir)
+    # with logUtils.silentLogger():
+    avaDirs = findAvaDirs(avalancheDir)
     if not avaDirs:
         log.warning("No avalanche directories found to copy/move files from")
         return None, None

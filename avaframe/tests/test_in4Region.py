@@ -3,15 +3,17 @@
 import pathlib
 import configparser
 import shutil
-from avaframe.in4Region import splitInputs
+from avaframe.com7Regional import splitInputs
 
 def test_splitInputsMain(tmp_path):
     """Test splitInputsMain function using pre-generated test data."""
     # Set up test data
     test_data_dir = pathlib.Path(__file__).parent / 'data' / 'testIn4Region'
+    print(test_data_dir)
     inputDir = tmp_path / 'input'
     shutil.copytree(test_data_dir, inputDir)
     outputDir = tmp_path / 'output'
+    print(inputDir)
     
     # Configure test parameters
     cfg = configparser.ConfigParser()
