@@ -86,6 +86,29 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double muCoulombMinShear = cfg.getfloat('mucoulombminshear')
   cdef double tau0CoulombMinShear = cfg.getfloat('tau0coulombminshear')
+  cdef double rhoS = cfg.getfloat('rhoS')
+  cdef double ds = cfg.getfloat('ds')
+  cdef double cvMax = cfg.getfloat('cvMax')
+  cdef double cv = cfg.getfloat('cv')
+  cdef double alpha1EtaObrienAndJulien = cfg.getfloat('alpha1EtaObrienAndJulien')
+  cdef double beta1EtaObrienAndJulien = cfg.getfloat('beta1EtaObrienAndJulien')
+  cdef double alpha2TauyObrienAndJulien = cfg.getfloat('alpha2TauyObrienAndJulien')
+  cdef double beta2TauyObrienAndJulien = cfg.getfloat('beta2TauyObrienAndJulien')
+  cdef double alphaObrienAndJulien = cfg.getfloat('alphaObrienAndJulien')
+  cdef double alpha1EtaHerschelAndBulkley = cfg.getfloat('alpha1EtaHerschelAndBulkley')
+  cdef double beta1EtaHerschelAndBulkley = cfg.getfloat('beta1EtaHerschelAndBulkley')
+  cdef double alpha2TauyHerschelAndBulkley = cfg.getfloat('alpha2TauyHerschelAndBulkley')
+  cdef double beta2TauyHerschelAndBulkley = cfg.getfloat('beta2TauyHerschelAndBulkley')
+  cdef double nHerschelAndBulkley = cfg.getfloat('nHerschelAndBulkley')
+  cdef double alpha1EtaOstwald = cfg.getfloat('alpha1EtaOstwald')
+  cdef double beta1EtaOstwald = cfg.getfloat('beta1EtaOstwald')
+  cdef double nOstwald = cfg.getfloat('nOstwald')
+  cdef double alpha1EtaBingham = cfg.getfloat('alpha1EtaBingham')
+  cdef double beta1EtaBingham = cfg.getfloat('beta1EtaBingham')
+  cdef double alpha2TauyBingham = cfg.getfloat('alpha2TauyBingham')
+  cdef double beta2TauyBingham = cfg.getfloat('beta2TauyBingham')
+  cdef double alpha1EtaNewton = cfg.getfloat('alpha1EtaNewton')
+  cdef double beta1EtaNewton = cfg.getfloat('beta1EtaNewton')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -298,6 +321,51 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             xsiVoellmyRaster = xsiRaster[indCellY, indCellX]
             # Voellmy with optional spatially variable mu and xi values provided as rasters
             tau = muVoellmyRaster * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyRaster
+          elif frictType >= 10:
+            # substitution of shear rate gamma
+            shearRate = 3 * uMag / h
+            if frictType == 10:
+              ## O`Brien and Julien
+              # viscosity
+              etaObrienAndJulien = alpha1EtaObrienAndJulien * math.exp(beta1EtaObrienAndJulien * cv)
+              # yield shear stress
+              tauyObrienAndJulien = alpha2TauyObrienAndJulien * math.exp(beta2TauyObrienAndJulien * cv)
+              # Prandtl mixing length
+              lmObrienAndJulien = 0.4 * h
+              # grain concentration
+              lambdaBagnold = 1 / (math.pow(cvMax / cv, 1 / 3) - 1)
+              # dispersive shear stress
+              cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhoS * lambdaBagnold * lambdaBagnold * ds * ds
+              # shear stress
+              tau = tauyObrienAndJulien + etaObrienAndJulien * shearRate + cObrienAndJulien * (shearRate * shearRate)
+            elif frictType == 11:
+              ## Herschel and Bulkley
+              # viscosity
+              etaHerschelAndBulkley = alpha1EtaHerschelAndBulkley * math.exp(beta1EtaHerschelAndBulkley * cv)
+              # yield shear stress
+              tauyHerschelAndBulkley = alpha2TauyHerschelAndBulkley * math.exp(beta2TauyHerschelAndBulkley * cv)
+              # shear stress
+              tau = tauyHerschelAndBulkley + etaHerschelAndBulkley * math.pow(shearRate, nHerschelAndBulkley)
+            elif frictType == 12:
+              ## Ostwald
+              # viscosity
+              etaOstwald = alpha1EtaOstwald * math.exp(beta1EtaOstwald * cv)
+              # shear stress
+              tau = etaOstwald * math.pow(shearRate, nOstwald)
+            elif frictType == 13:
+              ## Bingham
+              # viscosity
+              etaBingham = alpha1EtaBingham * math.exp(beta1EtaBingham * cv)
+              # yield shear stress
+              tauyBingham = alpha2TauyBingham * math.exp(beta2TauyBingham * cv)
+              # shear stress
+              tau = tauyBingham + etaBingham * shearRate
+            elif frictType == 14:
+              ## Newton
+              # viscosity
+              etaNewton = alpha1EtaNewton * math.exp(beta1EtaNewton * cv)
+              # shear stress
+              tau = etaNewton * shearRate
           else:
             tau = 0.0
 
