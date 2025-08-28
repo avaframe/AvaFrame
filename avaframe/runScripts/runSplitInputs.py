@@ -39,7 +39,7 @@ def runSplitInputs(avalancheDir=''):
     inputDir = pathlib.Path(avalancheDir) / 'Inputs'
 
     # Define the output directory
-    outputDir = pathlib.Path(avalancheDir) / 'Outputs' / 'com7Regional'/ 'splitInputs'
+    outputDir = pathlib.Path(avalancheDir) / 'com7Regional'
 
     # Load module configuration
     cfg = cfgUtils.getModuleConfig(splitInputs)
