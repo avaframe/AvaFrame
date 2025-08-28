@@ -79,7 +79,6 @@ Input/transformation modules
     * :doc:`moduleIn1Data`
     * :doc:`moduleIn2Trans`
     * :doc:`moduleIn3Utils`
-    * :doc:`moduleIn4Region`
 
 .. toctree::
    :maxdepth: 3
@@ -89,7 +88,6 @@ Input/transformation modules
    moduleIn1Data.rst
    moduleIn2Trans.rst
    moduleIn3Utils.rst
-   moduleIn4Region.rst
 
 Analysis/helper modules
 =======================

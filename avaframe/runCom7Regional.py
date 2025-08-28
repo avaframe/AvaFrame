@@ -46,13 +46,13 @@ def runCom7Regional(avalancheDir=''):
     cfg = cfgUtils.getModuleConfig(com7, fileOverride='', toPrint=False, onlyDefault=False)
 
     # Call main function
-    allPeakFilesDir, allTimeStepsDir, mergedRastersDir = com7.com7RegionalMain(cfgMain, cfg)
+    allPeakFilesDir, mergedRastersDir = com7.com7RegionalMain(cfgMain, cfg)
 
     # Print time needed
     endTime = time.time()
     log.info('Regional process finished after %.1f seconds.' % (endTime - startTime))
 
-    return allPeakFilesDir, allTimeStepsDir, mergedRastersDir
+    return allPeakFilesDir, mergedRastersDir
 
 if __name__ == '__main__':
 
