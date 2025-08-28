@@ -35,9 +35,6 @@ def runSplitInputs(avalancheDir=''):
     log = logUtils.initiateLogger(avalancheDir, logName='runSplitInputs')
     log.info('MAIN SCRIPT')
 
-    # Define the input directory
-    inputDir = pathlib.Path(avalancheDir) / 'Inputs'
-
     # Define the output directory
     outputDir = pathlib.Path(avalancheDir) / 'com7Regional'
 
@@ -45,7 +42,7 @@ def runSplitInputs(avalancheDir=''):
     cfg = cfgUtils.getModuleConfig(splitInputs)
 
     # Run splitting process
-    splitInputs.splitInputsMain(inputDir, outputDir, cfg, cfgMain)
+    splitInputs.splitInputsMain(pathlib.Path(avalancheDir), outputDir, cfg, cfgMain)
 
     # Print time needed
     endTime = time.time()

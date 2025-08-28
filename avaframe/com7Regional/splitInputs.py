@@ -11,18 +11,21 @@ import time
 
 from avaframe.out3Plot import plotUtils as pU
 from avaframe.in2Trans import rasterUtils
+from avaframe.in1Data import getInput
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
+import sys
 
 # create local logger
 log = logging.getLogger(__name__)
 
-def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
+
+def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
     """Process and organize avalanche input data into individual avalanche directories based 
     on release area's "group" and "scenario" attributes provided in the release area file.
 
     Parameters
     ----------
-    inputDir : pathlib.Path object
+    avalancheDir : pathlib.Path object
         Path to input directory containing release areas (REL) and DEM files
     outputDir : pathlib.Path object
         Path to output directory where organized folders will be created
@@ -52,18 +55,17 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
         └── *.asc or *.tif    # digital elevation model (DEM)
     """
     # Fetch the necessary input
-    inputRELDir = inputDir / 'REL'
-    inputShp = next(inputRELDir.glob("*.shp"), None)
-    if not inputShp:
-        log.error(f"No shapefile found in {inputRELDir}.")
+    inputSimFilesAll = getInput.getInputDataCom1DFA(avalancheDir)
+
+    # extract release shapefile, make sure only one exists
+    if len(inputSimFilesAll['relFiles']) == 1:
+        inputShp = inputSimFilesAll['relFiles'][0]
+    else:
+        log.error(f"Expected 1 release area file, found {len(inputSimFilesAll['relFiles'])}.")
         return
-    inputDEM = next(inputDir.glob("*.asc"), None)
-    if inputDEM is None:
-        inputDEM = next(inputDir.glob("*.tif"), None)
-    if inputDEM is None:
-        message = f"No DEM file (*.asc or *.tif) found in {inputDir}"
-        log.error(message)
-        raise FileNotFoundError(message)
+
+    # Get the input DEM
+    inputDEM = getInput.getDEMPath(avalancheDir)
 
     # Create the output directory
     outputDir.mkdir(parents=True, exist_ok=True)
@@ -93,7 +95,7 @@ def splitInputsMain(inputDir, outputDir, cfg, cfgMain):
 
     # Step 5: Clip and move optional input (currently only ENT and RES)
     log.info("Clipping and moving optional input...")
-    groupFeatures = clipAndMoveOptionalInput(inputDir, outputDir, groupExtents)
+    groupFeatures = clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents)
     log.info("Finished clipping and moving optional input")
 
     # Step 6: Divide release areas into scenarios
@@ -400,8 +402,6 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
         # Convert y-coordinates to row indices (flipped for bottom-left origin)
         rowStart = max(0, int((yOrigin + nRows * cellSize - yMax) / cellSize))
         rowEnd = min(nRows, int((yOrigin + nRows * cellSize - yMin) / cellSize) + 1)
-        rowStart = max(0, int((yMin - (yOrigin + nRows * cellSize)) / cellSize) + nRows)
-        rowEnd = min(nRows, int((yMax - (yOrigin + nRows * cellSize)) / cellSize) + nRows)
 
         # Ensure valid row indices
         if rowEnd <= rowStart:
@@ -438,15 +438,16 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     
     return groupExtents
 
-def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
+
+def clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents):
     """Clip and move ENT and RES files based on group DEM extent.
 
     #ToDo: extend to include other input types
     
     Parameters
     ----------
-    inputDir : pathlib.Path
-        Path to input directory containing ENT and RES folders
+    avalancheDir : pathlib.Path
+        Path to avalanche directory containing Inputs subdirectorie
     outputDir : pathlib.Path
         Path to output directory where clipped files will be saved
     groupExtents : dict
@@ -462,9 +463,9 @@ def clipAndMoveOptionalInput(inputDir, outputDir, groupExtents):
     groupFeatures = {}
     # Process ENT and RES directories
     for dirType in ['ENT', 'RES']:
-        typeDir = inputDir / dirType
+        typeDir = avalancheDir / 'Inputs' / dirType
         if not typeDir.exists():
-            log.warning(f"No {dirType} directory found in {inputDir}")
+            log.warning(f"No {dirType} directory found in {avalancheDir}")
             continue
 
         # Find shapefile in directory
