@@ -95,7 +95,6 @@ def com7RegionalMain(cfgMain, cfg):
 
     # Copy/move peak files if configured
     allPeakFilesDir = None
-    allTimeStepsDir = None
     if cfg['GENERAL'].getboolean('copyPeakFiles'):
         allPeakFilesDir = moveOrCopyPeakFiles(cfg, regionalDir)
 
