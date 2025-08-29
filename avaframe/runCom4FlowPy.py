@@ -162,6 +162,7 @@ def main(avalancheDir=''):
         cfgPath["tempDir"] = pathlib.Path(temp_dir)
         cfgPath["demPath"] = pathlib.Path(cfgCustomPaths["demPath"])
         cfgPath["releasePath"] = pathlib.Path(cfgCustomPaths["releasePath"])
+        cfgPath["relIdPath"] = pathlib.Path(cfgCustomPaths["relIdPath"])
         cfgPath["infraPath"] = pathlib.Path(cfgCustomPaths["infraPath"])
         cfgPath["forestPath"] = pathlib.Path(cfgCustomPaths["forestPath"])
         cfgPath["varUmaxPath"] = pathlib.Path(cfgCustomPaths["varUmaxPath"])
@@ -214,7 +215,7 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
 
     inputDir = avalancheDir / "Inputs"
     relFile, available = gI.getAndCheckInputFiles(inputDir, "REL", "Release Area", fileExt="shp")
-    
+
     if available == "No":
         relFile, available = gI.getAndCheckInputFiles(inputDir, "REL", "Release Area", fileExt="raster")
     if available == "No":
@@ -223,7 +224,7 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         raise AssertionError(message)
     log.info("Release area file is: %s" % relFile)
     cfgPath["releasePath"] = relFile
-    
+
     # TODO: also use the getAndCheckInputFiles to get the paths for the following files?
     # read infra area
     if cfgFlowPy.getboolean("GENERAL", "infra") is True:
@@ -289,6 +290,20 @@ def readFlowPyinputs(avalancheDir, cfgFlowPy, log):
         forestPath = ""
     cfgPath["forestPath"] = forestPath
 
+    # read release ID raster
+    if "relIdPolygon" in cfgFlowPy["PATHS"]["outputFiles"].split("|") or "relIdCount" in cfgFlowPy["PATHS"][
+        "outputFiles"
+    ].split("|"):
+        relIdPath, available = gI.getAndCheckInputFiles(inputDir, "RELID", "release ID", fileExt="raster")
+        if available == "No":
+            message = f"There is no release id file in supported format provided in {avalancheDir}/RELID"
+            log.error(message)
+            raise AssertionError(message)
+        log.info("Release ID file is: %s" % relIdPath)
+    else:
+        relIdPath = ""
+    cfgPath["relIdPath"] = relIdPath
+
     # read DEM
     if cfgFlowPy.getboolean("PATHS", "useCustomPathDEM") is False:
         demPath = gI.getDEMPath(avalancheDir)
@@ -323,11 +338,33 @@ def checkOutputFilesFormat(strOutputFiles):
 
     try:
         setA = set(strOutputFiles.split('|'))
-        setB = set(['zDelta', 'cellCounts', 'fpTravelAngle', 'travelLength', 'fpTravelAngleMax',
-                    'fpTravelAngleMin', 'travelLengthMax', 'travelLengthMin',
-                    'slTravelAngle', 'flux', 'zDeltaSum', 'routFluxSum', 'depFluxSum'])
+        setB = set(
+            [
+                "zDelta",
+                "cellCounts",
+                "fpTravelAngle",
+                "travelLength",
+                "fpTravelAngleMax",
+                "fpTravelAngleMin",
+                "travelLengthMax",
+                "travelLengthMin",
+                "slTravelAngle",
+                "flux",
+                "zDeltaSum",
+                "routFluxSum",
+                "depFluxSum",
+                "relVolMin",
+                "relVolMax",
+                "relIdPolygon",
+                "relIdCount",
+            ]
+        )
         # if there is at least 1 correct outputfile defined, we use the string provided in the .ini file
         if (setA & setB):
+            outNotValid = setA - setB
+            if outNotValid:
+                for outFile in outNotValid:
+                    print("WARNING! - {} is not a valid output file and is not computed".format(outFile))
             return strOutputFiles
         else:
             raise ValueError('outputFiles defined in .ini have wrong format - using default settings')
