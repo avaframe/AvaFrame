@@ -157,6 +157,18 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     else:
         modelPaths["varExponentPath"] = ""
 
+    if "relId" in modelPaths["outputFileList"]:
+        modelPaths["relIdPath"] = cfgPath["relIdPath"]
+        modelParameters["outputRelIdBool"] = True
+    else:
+        modelPaths["relIdPath"] = ""
+        modelParameters["outputRelIdBool"] = False
+
+    if "relVolMin" in modelPaths["outputFileList"] or "relVolMax" in modelPaths["outputFileList"]:
+        modelParameters["outputRelVolBool"] = True
+    else:
+        modelParameters["outputRelVolBool"] = False
+
     # TODO: provide some kind of check for the model Parameters
     #       i.e. * sensible value ranges
     #            * contradicting options ...
@@ -451,6 +463,8 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
         SPAM.tileRaster(modelPaths["varExponentPath"], "varExponent", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["outputRelIdBool"]:
+        SPAM.tileRaster(modelPaths["relIdPath"], "relId", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     log.info("Finished Tiling All Input Rasters.")
     log.info("==================================")
 

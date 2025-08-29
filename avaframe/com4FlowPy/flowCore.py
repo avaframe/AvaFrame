@@ -146,6 +146,8 @@ def run(optTuple):
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
     fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
+    relIdBool = optTuple[2]["relIdBool"]
+    relVolBool = optTuple[2]["relVolBool"]
     previewMode = optTuple[2]["previewMode"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
@@ -199,6 +201,16 @@ def run(optTuple):
     else:
         varExponentArray = None
 
+    if relIdBool:
+        relIdArray = np.load(tempDir / ("relId%s_%s.npy" % (optTuple[0], optTuple[1])))
+    else:
+        relIdArray = None
+
+    if relVolBool:
+        relVolArray = release.copy()
+    else:
+        relVolArray = None
+
     varParams = {
         'varUmaxBool': varUmaxBool,
         'varUmaxArray': varUmaxArray,
@@ -206,6 +218,12 @@ def run(optTuple):
         'varAlphaArray': varAlphaArray,
         'varExponentBool': varExponentBool,
         'varExponentArray': varExponentArray,
+    }
+    relOutputParams = {
+        "relIdBool": relIdBool,
+        "relIdArray": relIdArray,
+        "relVolBool": relIdBool,
+        "relVolArray": relVolArray,
     }
 
     # convert release areas to binary (0: no release areas, 1: release areas)
@@ -250,6 +268,7 @@ def run(optTuple):
                     forestArray,
                     forestParams,
                     outputs,
+                    relOutputParams
                 ]
                 for release_sub in release_list
             ],
@@ -275,6 +294,7 @@ def run(optTuple):
     travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
     if forestInteraction:
         forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
+    processedStartCellIdDict = {}
 
     zDeltaList = []
     fluxList = []
@@ -289,6 +309,7 @@ def run(optTuple):
     slTravelAngleList = []
     travelLengthMaxList = []
     travelLengthMinList = []
+    processedStartCellIdList = []
     if forestInteraction:
         forestIntList = []
 
@@ -308,8 +329,9 @@ def run(optTuple):
         fpTravelAngleMinList.append(res[9])
         routFluxSumList.append(res[10])
         depFluxSumList.append(res[11])
+        processedStartCellIdList.append(res[12])
         if forestInteraction:
-            forestIntList.append(res[12])
+            forestIntList.append(res[13])
 
     logging.info("Calculation finished, getting results.")
     for i in range(len(zDeltaList)):
@@ -342,7 +364,16 @@ def run(optTuple):
             forestIntArray = np.where((forestIntArray >= 0) & (forestIntList[i] >= 0),
                                     np.minimum(forestIntArray, forestIntList[i]),
                                     np.maximum(forestIntArray, forestIntList[i]))
+        for key in processedStartCellIdList[i]:
+            if key in processedStartCellIdDict:
+                ids = np.append(processedStartCellIdList[i][key], processedStartCellIdDict[key])
+                processedStartCellIdDict[key] = np.unique(ids)
+            else:
+                processedStartCellIdDict[key] = processedStartCellIdList[i][key]
 
+    dict_file = open(tempDir / ("res_startCellIdDict_%s_%s.txt" % (optTuple[0], optTuple[1])), 'wt')
+    dict_file.write(str(processedStartCellIdDict))
+    dict_file.close()
     # Save Calculated tiles
     np.save(tempDir / ("res_z_delta_%s_%s" % (optTuple[0], optTuple[1])), zDeltaArray)
     np.save(tempDir / ("res_z_delta_sum_%s_%s" % (optTuple[0], optTuple[1])), zDeltaSumArray)
@@ -388,6 +419,7 @@ def calculation(args):
         - args[14] (numpy array) - contains forest information (None if forestBool=False)
         - args[15] (dict) - contains parameters for forest interaction models (None if forestBool=False)
         - args[16] (list) - output names
+        - args[17] (dict) - contains flags and rasters for release - information outputs
 
     Returns
     -----------
@@ -455,6 +487,9 @@ def calculation(args):
     fluxDistOldVersionBool = args[12]
     previewMode = args[13]
     outputs = args[16]
+    relIdArray = args[17]["relIdArray"]
+    relVolArray = args[17]["relVolArray"]
+    relIdBool = args[17]["relIdBool"]
 
     if forestBool:
         forestArray = args[14]
@@ -480,6 +515,10 @@ def calculation(args):
     travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
     travelLengthMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
 
+    relCountIdArray = np.zeros_like(dem, dtype=np.int32)
+    relVolMinArray = np.ones_like(dem, dtype=np.float32) * -9999
+    relVolMaxArray = np.zeros_like(dem, dtype=np.float32)
+
     if infraBool:
         backcalc = np.ones_like(dem, dtype=np.int32) * -9999
     else:
@@ -498,6 +537,7 @@ def calculation(args):
     row_list, col_list = get_start_idx(dem, release)
 
     startcell_idx = 0
+    startCellIdDict = {}
     while startcell_idx < len(row_list):
 
         if infraBool:
@@ -525,6 +565,11 @@ def calculation(args):
             startcell_idx += 1
             continue
 
+        if relIdBool:
+            startcellId = relIdArray[row_idx, col_idx]
+        else:
+            startcellId = None
+
         startcell = Cell(
             row_idx, col_idx,
             dem_ng, cellsize,
@@ -532,11 +577,12 @@ def calculation(args):
             alpha, exp, flux_threshold, max_z_delta,
             startcell=True, fluxDistOldVersionBool=fluxDistOldVersionBool,
             FSI=forestArray[row_idx, col_idx] if isinstance(forestArray, np.ndarray) else None,
-            forestParams=forestParams,
+            forestParams=forestParams
         )
 
         # dictionary of all the cells that have been processed and the number of times the cell has been visited
         processedCells[(startcell.rowindex, startcell.colindex)] = 1
+
         # list of flowClass.Cell() Objects that is contains the "path" for each release-cell
         cell_list.append(startcell)
 
@@ -545,6 +591,12 @@ def calculation(args):
             updateInfraDirGraph(startcell.rowindex, startcell.colindex)
 
         for idx, cell in enumerate(cell_list):
+            if "relId" in outputs:
+                if (cell.rowindex, cell.colindex) in startCellIdDict:
+                    startCellIdDict[(cell.rowindex, cell.colindex)] = np.append(
+                        startCellIdDict[(cell.rowindex, cell.colindex)], startcellId)
+                else:
+                    startCellIdDict[(cell.rowindex, cell.colindex)] = np.array([startcellId])
 
             # calculate flux, z_delta from current cell (cell) to child-cells
             # lenght of row, col, flux, and z_delta vectors correspond to
@@ -643,6 +695,7 @@ def calculation(args):
                     travelLengthMinArray[cell.rowindex, cell.colindex] = max(
                         travelLengthMinArray[cell.rowindex, cell.colindex], cell.min_distance
                     )
+
             if processedCells[(cell.rowindex, cell.colindex)] == 1:
                 countArray[cell.rowindex, cell.colindex] += int(1)
 
@@ -698,6 +751,7 @@ def calculation(args):
             fpTravelAngleMinArray,
             routFluxSumArray,
             depFluxSumArray,
+            startCellIdDict,
             forestIntArray,
         )
     else:
@@ -714,6 +768,7 @@ def calculation(args):
             fpTravelAngleMinArray,
             routFluxSumArray,
             depFluxSumArray,
+            startCellIdDict,
         )
 
 
