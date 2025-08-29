@@ -140,7 +140,11 @@ def createDirList(inputShp):
 
         # Initialize group if not exists
         if groupName not in groups:
-            groups[groupName] = {"dirName": groupName, "properties": [], "geometries": []}
+            groups[groupName] = {
+                "dirName": groupName,
+                "properties": [],
+                "geometries": [],
+            }
 
         # Add feature to group
         groups[groupName]["properties"].append(props)
