@@ -233,3 +233,44 @@ def mergeRaster(inDirPath, fName, method='max'):
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
     return mergedRas
+
+
+def mergeDict(inDirPath, fName):
+    """
+    Merges the dictionary-results for each tile to one array using
+    the length of the array assigned to each cell
+
+    Parameters
+    ----------
+    inDirPath: str
+        Path to the temporary files, that are results for each tile
+    fName : str
+        file name of the parameter which should be merged from tile-results
+
+    Returns
+    -------
+    mergedRas : numpy array
+        merged raster
+    """
+    extL = pickle.load(open(inDirPath / "extentLarge", "rb"))
+    nTiles = pickle.load(open(inDirPath / "nTiles", "rb"))
+    mergedRas = np.zeros((extL[0], extL[1]))
+
+    mergedDict = {}
+
+    for i in range(nTiles[0] + 1):
+        for j in range(nTiles[1] + 1):
+            pos = pickle.load(open(inDirPath / ("ext_%i_%i" % (i, j)), "rb"))
+            with open(inDirPath / ("%s_%i_%i.pickle" % (fName, i, j)), "rb") as file:
+                smallDict = pickle.load(file)
+                if bool(smallDict):
+                    for cellindSmall in smallDict:
+                        cellind = (cellindSmall[0] + pos[0][0], cellindSmall[1] + pos[1][0])
+                        if cellind in mergedDict:
+                            mergedDict[cellind] = np.append(smallDict[cellindSmall], mergedDict[cellind])
+                        else:
+                            mergedDict[cellind] = smallDict[cellindSmall]
+                    log.info("appended result %s_%i_%i", fName, i, j)
+    for cellind in mergedDict:
+        mergedRas[cellind] = len(np.unique(mergedDict[cellind]))
+    return mergedRas

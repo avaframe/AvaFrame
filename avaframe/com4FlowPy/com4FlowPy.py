@@ -157,6 +157,18 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     else:
         modelPaths["varExponentPath"] = ""
 
+    if "relId" in modelPaths["outputFileList"]:
+        modelPaths["relIdPath"] = cfgPath["relIdPath"]
+        modelParameters["outputRelIdBool"] = True
+    else:
+        modelPaths["relIdPath"] = ""
+        modelParameters["outputRelIdBool"] = False
+
+    if "relVolMin" in modelPaths["outputFileList"] or "relVolMax" in modelPaths["outputFileList"]:
+        modelParameters["outputRelVolBool"] = True
+    else:
+        modelParameters["outputRelVolBool"] = False
+
     # TODO: provide some kind of check for the model Parameters
     #       i.e. * sensible value ranges
     #            * contradicting options ...
@@ -451,6 +463,8 @@ def tileInputLayers(modelParameters, modelPaths, rasterAttributes, tilingParamet
         SPAM.tileRaster(modelPaths["varExponentPath"], "varExponent", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     if modelParameters["forestBool"]:
         SPAM.tileRaster(modelPaths["forestPath"], "forest", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
+    if modelParameters["outputRelIdBool"]:
+        SPAM.tileRaster(modelPaths["relIdPath"], "relId", modelPaths["tempDir"], _tileCOLS, _tileROWS, _U)
     log.info("Finished Tiling All Input Rasters.")
     log.info("==================================")
 
@@ -536,6 +550,14 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if modelOptions["forestInteraction"]:
         forestInteraction = SPAM.mergeRaster(modelPaths["tempDir"], "res_forestInt", method='min')
 
+    if modelOptions["outputRelIdBool"]:
+        countRelId = SPAM.mergeDict(modelPaths["tempDir"], "res_startCellIdDict")
+
+    if "relVolMin" in _outputs:
+        relVolMin = SPAM.mergeRaster(modelPaths["tempDir"], "res_relVol_min", method="min")
+    if "relVolMax" in _outputs:
+        relVolMax = SPAM.mergeRaster(modelPaths["tempDir"], "res_relVol_max")
+
     # Write Output Files to Disk
     log.info("-------------------------")
     log.info(" writing output files ...")
@@ -610,6 +632,30 @@ def mergeAndWriteResults(modelPaths, modelOptions):
             outputHeader,
             travelLengthMin,
             modelPaths["resDir"] / "com4_{}_{}_travelLengthMin".format(_uid, _ts),
+            flip=True,
+        )
+    if "relId" in _outputs:
+        countRelId = defineNotAffectedCells(countRelId, cellCounts, noDataValue=_outputNoDataValue)
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            countRelId,
+            modelPaths["resDir"] / "com4_{}_{}_countRelId".format(_uid, _ts),
+            flip=True,
+        )
+    if "relVolMin" in _outputs:
+        relVolMin = defineNotAffectedCells(relVolMin, cellCounts, noDataValue=_outputNoDataValue)
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            relVolMin,
+            modelPaths["resDir"] / "com4_{}_{}_relVolMin".format(_uid, _ts),
+            flip=True,
+        )
+    if "relVolMax" in _outputs:
+        relVolMax = defineNotAffectedCells(relVolMax, cellCounts, noDataValue=_outputNoDataValue)
+        output = IOf.writeResultToRaster(
+            outputHeader,
+            relVolMax,
+            modelPaths["resDir"] / "com4_{}_{}_relVolMax".format(_uid, _ts),
             flip=True,
         )
 
