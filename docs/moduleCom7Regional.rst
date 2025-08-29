@@ -2,6 +2,9 @@
 com7Regional: Regional Modeling
 ######################################
 
+.. note::
+    This module is still under development and may contain bugs or incomplete features.
+
 :py:mod:`com7Regional` is an experimental module targeted at the application of the :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>`
 kernel on a regional scale.
 In essence, it is a wrapper module that allows for the concurrent execution of com1DFA within multiple avalanche directories,
@@ -16,18 +19,14 @@ The log output gives information about the processing status of each individual 
 of how many simulations were processed successfully.
 
 .. note::
-    Experience with :ref:`com1DFA <com1DFA>` is recommended before using this module.
+    Experience with :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>` is recommended before using this module.
 
-Regional Input Management - Splitting
+Regional Input Management
 =====================================
 :py:mod:`com7Regional.splitInputs` is a module for organizing large amounts of avalanche input data into multiple avalanche directories, based
 on the AvaFrame data structure, thus enabling efficient and controlled input management of larger datasets for further processing.
 Importantly, the module also provides a simple, automatic method for clipping the input DEM around each release area group,
-which then forms the basis for the organization of other input. Ultimately, in combination with :ref:`com7Regional <com7Regional>`,
-the module provides an efficient processing workflow for regional scale avalanche simulations with :ref:`com1DFA <com1DFA>`.
-
-.. note::
-    This module is still under development and may contain bugs or incomplete features.
+which then forms the basis for the organization of other input.
 
 Input
 -----
@@ -35,11 +34,11 @@ The module is currently compatible with the following input file types:
 
 **Required:**
     * Digital elevation model (as .asc or .tif file)
-    * Release areas: ONE shapefile in REL directory, with attributes ``group`` and ``scenario``
+    * Release areas: ONE shapefile in ``Inputs/REL`` directory, with attributes ``group`` and ``scenario``
 
 **Optional:**
-    * Entrainment areas (shapefile in ENT directory)
-    * Resistance areas (shapefile in RES directory)
+    * Entrainment areas (shapefile in ``Inputs/ENT`` directory)
+    * Resistance areas (shapefile in ``Inputs/RES`` directory)
 
 The module is intended to work with only one of each of these files. The first file that is found is the one that is used.
 
@@ -48,10 +47,10 @@ Where the expected input directory structure is::
   avalancheDir/
   └── Inputs/
       ├── REL/
-      │   └── *.shp         # release areas
-      ├── ENT/              # entrainment areas
+      │   └── *.shp         # release areas (one file)
+      ├── ENT/              # entrainment areas (one file; optional)
       │   └── *.shp
-      ├── RES/              # resistance areas
+      ├── RES/              # resistance areas (one file; optional)
       │   └── *.shp
       └── *.asc or *.tif    # digital elevation model (DEM)
 
@@ -59,12 +58,12 @@ Group and scenario creation
 ---------------------------
 Input data organization is based on two key concepts:
 
-1. **Groups**: Collections of avalanche release areas (single polygon features) that are located in the same spatial domain and may be
-wanted to be simulated together. We recommend setting one group per avalanche path.
+*  **Groups**: Collections of avalanche release areas (single polygon features) that are located in the same spatial domain and may be
+   wanted to be simulated together. We recommend setting one group per avalanche path.
 
-2. **Scenarios**: Collections of release area features WITHIN each group, that would be simulated together in :ref:`com1DFA <com1DFA>`.
+* **Scenarios**: Collections of release area features WITHIN each group, that are simulated together in :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>`.
 
-These may be defined through two new attributes in the input release area shapefile attribute table:
+These are defined through two new attributes in the input release area shapefile attribute table:
 
 * ``group``: expected format: string (e.g. *"group1"*)
 
@@ -110,7 +109,7 @@ in the case that release areas are located in close proximity to each other.
 
 Output
 ------
-Running ``runScripts/runSplitInputs.py`` with valid input data will result in the following output in ``<avalancheDir>/Outputs/in4Region/splitInputs``:
+Running ``runScripts/runSplitInputs.py`` with valid input data will result in the following output in ``<avalancheDir>/com7Regional``:
 
 1. Individual avalanche directories for each group containing:
 
@@ -166,9 +165,9 @@ Configuration
 Settings are controlled through ``splitInputsCfg.ini``, in which the ``bufferSize`` for the group extent is defined (which is used for DEM, RES, and ENT clipping into
 smaller chunks). By default, this value is set to 2500 m. For each group, a bounding box is created from the maximum x-y extent of all release features in the group.
 The value for ``bufferSize`` is then added to each direction (+x, -x, +y, -y). This buffer may be adjusted according to the expected maximum runout length of your avalanches -
-a larger value will ensure that no simulation will exit its domain, while a larger value will result in smaller output file sizes.
+a larger value will ensure that no simulation will exit its domain, but with the drawback of producing larger output files.
 
-Procedure
+Algorithm
 ---------
 The ``splitInputsMain`` function, which is called in ``runScripts/runSplitInputs.py``, performs the following steps:
 
@@ -180,16 +179,17 @@ The ``splitInputsMain`` function, which is called in ``runScripts/runSplitInputs
 6. Divide release areas into scenarios
 7. Write reports
 
-To Run
-------
+To Run - Script based
+---------------------
 1. Prepare inputs in your ``<avalancheDir>/Inputs``
 2. Configure settings in ``splitInputsCfg.ini`` (or local version ``local_splitInputsCfg.ini``)
-3. Set path to avalanche directory in ``avaframeCfg.ini`` (or local version ``local_avaframeCfg.ini``)
-4. Execute from AvaFrame/avaframe directory:
+3. Either set path to avalanche directory in ``avaframeCfg.ini`` (or local version ``local_avaframeCfg.ini``) or
+   call command below with the avalanche directory as argument
+4. Execute from ``AvaFrame/avaframe`` directory:
 
 .. code-block:: bash
 
-    python3 runScripts/runSplitInputs.py
+    python runScripts/runSplitInputs.py
 
 
 Running multiple avalanche dirs
@@ -197,8 +197,9 @@ Running multiple avalanche dirs
 
 Input
 -----
-A directory structure containing pre-configured avalanche directories (containing an ``Inputs`` folder) is required. For input preparation, we recommend using 
-:ref:`in4Region <in4Region>`, which splits merged input data into standard :ref:`com1DFA <com1DFA>` inputs across multiple avalanche directories.
+A directory structure containing pre-configured avalanche directories (containing an ``Inputs`` folder) is required. For input preparation use
+:ref:`moduleCom7Regional:Regional Input Management`, which splits merged input data into standard :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>`
+inputs across multiple avalanche directories.
 
 Example of a valid directory structure::
 

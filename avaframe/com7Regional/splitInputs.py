@@ -13,7 +13,6 @@ from avaframe.out3Plot import plotUtils as pU
 from avaframe.in2Trans import rasterUtils
 from avaframe.in1Data import getInput
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
-import sys
 
 # create local logger
 log = logging.getLogger(__name__)
