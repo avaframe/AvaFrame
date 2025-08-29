@@ -2,7 +2,7 @@
 
 # Steps to take to generate a new topo manually (instead of script below):
 # 1. go to https://www.data.gv.at/katalog/dataset/land-tirol_tirolgelnde#resources and get DGM 5m Tirol
-# 2. Load zip into QGis, make sure the correct projection is used
+# 2. Extract zip and load tif into QGis, make sure the correct projection is used
 # 3. Use Raster - Warp to reproject to epsg31287 (use resampling method: cubic) -> save as tiff
 # 4. Draw the extend in a shapefile with epsg31287
 # 5. Use Raster - Clip raster by mask layer to cut out the new DGM -> set .asc as output right away

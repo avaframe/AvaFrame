@@ -33,7 +33,8 @@ Input
 The module is currently compatible with the following input file types:
 
 **Required:**
-    * Digital elevation model (as .asc or .tif file)
+    * Digital elevation model (as .asc or .tif file). *Please note that the maximum possible size of this DEM depends on your
+      compute hardware; You might run into problems if it is too big and maxes out your resources*.
     * Release areas: ONE shapefile in ``Inputs/REL`` directory, with additional attributes ``group`` and ``scenario``. Please
       also provide attributes required by com1DFA.
 
@@ -60,7 +61,7 @@ Group and scenario creation
 Input data organization is based on two key concepts:
 
 *  **Groups**: Collections of avalanche release areas (single polygon features) that are located in the same spatial domain and may be
-   wanted to be simulated together. We recommend setting one group per avalanche path.
+   wanted to be simulated together. We recommend setting one group per avalanche path/track.
 
 * **Scenarios**: Collections of release area features WITHIN each group, that are simulated together in :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>`.
 
@@ -89,17 +90,19 @@ For example:
       - avaPath2
       - 1
 
-In this example, four release scenarios (shapefiles) would be created, in two separate avalanche directories::
+In this example, four release scenarios (shapefiles) would be created, in two separate sub-avalanche directories::
 
-  avaPath1/
-  └── REL/
-      ├── avaPath1_1.shp     - containing [1] feature: rel1
-      ├── avaPath1_2.shp     - containing [1] feature: rel2
-      └── avaPath1_all.shp   - containing [2] features: rel1, rel2
-
-  avaPath2/
-  └── REL/
-      └── avaPath2_1.shp     - containing [1] feature: rel3
+  avalancheDir/
+  ├── ...
+  └── com7Regional/
+      ├── avaPath1/
+      │   └── REL/
+      │       ├── avaPath1_1.shp     - containing [1] feature: rel1
+      │       ├── avaPath1_2.shp     - containing [1] feature: rel2
+      │       └── avaPath1_all.shp   - containing [2] features: rel1, rel2
+      └── avaPath2/
+          └── REL/
+              └── avaPath2_1.shp     - containing [1] feature: rel3
 
 In the case that scenarios are defined for only some release features within a group, the rest will be grouped together as a single 'NULL' scenario.
 
@@ -192,6 +195,7 @@ To Run - Script based
 
     python runScripts/runSplitInputs.py
 
+---------------
 
 Running multiple avalanche dirs
 ===============================
@@ -207,11 +211,11 @@ Example of a valid directory structure (as produced by the regional input manage
     avalancheDir
     ├── Inputs/       #NOT being used for running; optional
     └── com7Regional/ #This is the default name, can be changed via .ini setup
-        ├── avalanche1/
+        ├── sub_avalanche1/
         │   └── Inputs/
         │       ├── REL/*.shp
         │       └── *.asc or *.tif
-        ├── avalanche2/
+        ├── sub_avalanche2/
         │   └── Inputs/
         │       ├── REL/*.shp
         │       └── *.asc or *.tif
@@ -222,7 +226,7 @@ Output
 ------
 Outputs are organized in two levels:
 
-**1. Merged rasters** and **2. Individual outputs (per avalanche directory)**
+**1. Merged rasters** and **2. Individual outputs (per sub_avalanche directory)**
 
 Merged rasters
 ^^^^^^^^^^^^^^
@@ -233,15 +237,25 @@ Configure in ``com7RegionalCfg.ini`` (or local):
     [GENERAL]
     mergeOutput = True
     mergeTypes = pfv # Available options: [ppr|pfv|pft|pta|FT|FV|P|FM|Vx|Vy|Vz|TA]
-    mergeMethod = max  # Available options: [max|min|mean|sum|count]
+    mergeMethod = max  # Available options: [max|min|sum|count]
 
-Produces merged rasters of all peakFile results found within the avalanche directories, for each
-``mergeTypes`` and ``mergeMethod`` configured, in ``<avalancheDir>/com7Regional/mergedRasters/``.
+Produces merged rasters of all peakFile results found within the sub-avalanche directories, for each
+``mergeTypes`` and ``mergeMethod`` configured, in ``<avalancheDir>/com7Regional/mergedRasters/``. The merged
+raster combines output from ALL sub-avalanches.
+
+Creates::
+
+    avalancheDir
+    ├── ....
+    └── com7Regional/
+        ├── sub_avalanche1/
+        ...
+        └── mergedRasters/ <- this one is created
 
 Individual outputs
 ^^^^^^^^^^^^^^^^^^
 After running com7 with the given module (e.g. :ref:`com1DFA <com1DFA>`), the standard output is located
-within each of the avalanche directories within e.g. ``<avalancheDir>/com7Regional/<avalancheDir>/Outputs/com1DFA``.
+within each of the sub-avalanche directories within e.g. ``<avalancheDir>/com7Regional/<avalancheDir>/Outputs/com1DFA``.
 Additionally, com7 provides the option of aggregating all output peakFiles and tSteps results into a single directory
 for easier management, either through copying or moving the files after an executed run.
 
@@ -255,8 +269,12 @@ Configure in ``com7RegionalCfg.ini`` (or local):
 
 Creates::
 
-    com7Regional/
-    └── allPeakFiles/
+    avalancheDir
+    ├── ....
+    └── com7Regional/
+        ├── sub_avalanche1/
+        ...
+        └── allPeakFiles/ <- this one is created
 
 Configuration
 -------------

@@ -2,11 +2,12 @@
 
 import logging
 import shapefile  # pyshp
-from shapely.geometry import box, MultiPolygon
+from shapely.geometry import box
 import pathlib
 import time
 
 from avaframe.in2Trans import rasterUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in1Data import getInput
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 from avaframe.in2Trans import shpConversion as shpConv
@@ -18,7 +19,9 @@ log = logging.getLogger(__name__)
 
 def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
     """Process and organize avalanche input data into individual avalanche directories based
-    on release area's "group" and "scenario" attributes provided in the release area file.
+    on release area's "group" and "scenario" attributes provided in the release area file. If no
+    "group" attribute is provided, one avalanche directory per feature will be created (scenario is
+    ignored in this case).
 
     Parameters
     ----------
@@ -58,14 +61,14 @@ def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
     if len(inputSimFilesAll["relFiles"]) == 1:
         inputShp = inputSimFilesAll["relFiles"][0]
     else:
-        log.error(f"Expected 1 release area file, found {len(inputSimFilesAll['relFiles'])}.")
+        log.error(f"Expected only one release area file, found {len(inputSimFilesAll['relFiles'])}.")
         return
 
     # Get the input DEM
     inputDEM = getInput.getDEMPath(avalancheDir)
 
     # Create the output directory
-    outputDir.mkdir(parents=True, exist_ok=True)
+    fU.makeADir(outputDir)
 
     # Step 1: Create the directory list
     log.info("Initializing folder structure for each group...")
@@ -92,7 +95,7 @@ def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
 
     # Step 5: Clip and move optional input (currently only ENT and RES)
     log.info("Clipping and moving optional input...")
-    groupFeatures = clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents)
+    groupFeatures = clipAndMoveOptionalInput(inputSimFilesAll, outputDir, groupExtents)
     log.info("Finished clipping and moving optional input")
 
     # Step 6: Divide release areas into scenarios
@@ -361,15 +364,13 @@ def clipDEMByReleaseGroup(dirList, inputDEM, outputDir, cfg):
     return groupExtents
 
 
-def clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents):
+def clipAndMoveOptionalInput(allSimInputFiles, outputDir, groupExtents):
     """Clip and move ENT and RES files based on group DEM extent.
-
-    #ToDo: extend to include other input types
 
     Parameters
     ----------
-    avalancheDir : pathlib.Path
-        Path to avalanche directory containing Inputs subdirectorie
+    allSimInputFiles: dict
+        With all input information for a com1DFA sim
     outputDir : pathlib.Path
         Path to output directory where clipped files will be saved
     groupExtents : dict
@@ -385,16 +386,20 @@ def clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents):
     groupFeatures = {}
     # Process ENT and RES directories
     for dirType in ["ENT", "RES"]:
-        typeDir = avalancheDir / "Inputs" / dirType
-        if not typeDir.exists():
-            log.warning(f"No {dirType} directory found in {avalancheDir}")
-            continue
 
-        # Find shapefile in directory
-        shpFile = next(typeDir.glob("*.shp"), None)
-        if not shpFile:
-            log.warning(f"No shapefile found in {typeDir}")
-            continue
+        if dirType == "ENT":
+            if allSimInputFiles["entFile"]:
+                shpFile = allSimInputFiles["entFile"]
+            else:
+                log.info("No entrainment file found")
+                continue
+
+        if dirType == "RES":
+            if allSimInputFiles["resFile"]:
+                shpFile = allSimInputFiles["resFile"]
+            else:
+                log.info("No resistance file found")
+                continue
 
         # Read shapefile
         fields, fieldNames, properties, geometries, srs = shpConv.readShapefile(shpFile)
@@ -427,7 +432,7 @@ def clipAndMoveOptionalInput(avalancheDir, outputDir, groupExtents):
 
             # Create output directory and save clipped shp
             targetDir = entry / "Inputs" / dirType
-            targetDir.mkdir(parents=True, exist_ok=True)
+            fU.makeADir(targetDir)
             outputPath = targetDir / f"{entry.name}_{dirType}.shp"
             shpConv.writeShapefile(outputPath, fields, fieldNames, clippedFeatures, srs)
             log.debug(f"Clipped {dirType} shapefile saved to: {outputPath}")
@@ -649,25 +654,6 @@ def writeScenarioReport(dirListGrouped, outputDir):
             f.write("\n")
 
     log.info(f"Scenario report written to: {reportPath}")
-
-
-def getExteriorCoords(geom):
-    """Get the exterior coordinates of a shapely geometry to handle both single and multi-polygon geometries.
-
-    Parameters
-    ----------
-    geom : shapely.geometry
-        The shapely geometry to get the exterior coordinates from.
-
-    Returns
-    -------
-    list
-        A list of tuples containing the x and y coordinates of the geometry exterior.
-    """
-    if isinstance(geom, MultiPolygon):
-        return [poly.exterior.xy for poly in geom.geoms]
-    else:
-        return [geom.exterior.xy]
 
 
 def createReportPlots(dirListGrouped, inputDEM, outputDir, groupExtents, groupFeatures):
