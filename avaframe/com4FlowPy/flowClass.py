@@ -48,7 +48,6 @@ class Cell:
         self.flux_threshold = float(flux_threshold)
 
         self.fluxDistOldVersionBool = fluxDistOldVersionBool
-        self.startcellIdArray = np.array([startcellId])
 
         self.tanAlpha = np.tan(np.deg2rad(self.alpha))  # moved to constructor, so this doesn't have to be calculated on
         # every iteration of calc_z_delta(self)

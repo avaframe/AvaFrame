@@ -146,8 +146,8 @@ def run(optTuple):
     varAlphaBool = optTuple[2]["varAlphaBool"]
     varExponentBool = optTuple[2]["varExponentBool"]
     fluxDistOldVersionBool = optTuple[2]["fluxDistOldVersionBool"]
-    relIdBool = optTuple[2]["relIdBool"]
-    relVolBool = optTuple[2]["relVolBool"]
+    relIdBool = optTuple[2]["outputRelIdBool"]
+    relVolBool = optTuple[2]["outputRelVolBool"]
     previewMode = optTuple[2]["previewMode"]
 
     # Temp-Dir (all input files are located here and results are written back in here)
@@ -202,7 +202,7 @@ def run(optTuple):
         varExponentArray = None
 
     if relIdBool:
-        relIdArray = np.load(tempDir / ("relId%s_%s.npy" % (optTuple[0], optTuple[1])))
+        relIdArray = np.load(tempDir / ("relId_%s_%s.npy" % (optTuple[0], optTuple[1])))
     else:
         relIdArray = None
 

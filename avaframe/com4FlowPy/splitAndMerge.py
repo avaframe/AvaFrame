@@ -233,3 +233,20 @@ def mergeRaster(inDirPath, fName, method='max'):
             del smallRas
             log.info("appended result %s_%i_%i", fName, i, j)
     return mergedRas
+
+
+def mergeDict(inDirPath, fName):
+    # next steps: open "tiled" dictionarys containing PRA ids for every cell
+    # -> create raster with number of PRA idss
+
+    extL = pickle.load(open(inDirPath / "extentLarge", "rb"))
+    nTiles = pickle.load(open(inDirPath / "nTiles", "rb"))
+    mergedRas = np.zeros((extL[0], extL[1]))
+
+    for i in range(nTiles[0] + 1):
+        for j in range(nTiles[1] + 1):
+            with open(inDirPath / ("%s_%i_%i.npy" % (fName, i, j)), 'r') as file:
+                smallDict = {key.strip(): value.strip() for key, value in (line.split(':', 1) for line in file)}
+
+    with open(modelPaths["tempDir"] / "res_startCellIdDict_0_0.txt", 'r') as file:
+        res = {key.strip(): value.strip() for key, value in (line.split(':', 1) for line in file)}

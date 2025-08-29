@@ -550,6 +550,12 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     if modelOptions["forestInteraction"]:
         forestInteraction = SPAM.mergeRaster(modelPaths["tempDir"], "res_forestInt", method='min')
 
+    if modelOptions["outputRelIdBool"]:
+        with open(modelPaths["tempDir"] / "res_startCellIdDict_0_0.txt", 'r') as file:
+            res = {key.strip(): value.strip() for key, value in (line.split(':', 1) for line in file)}
+
+        print(type(res))
+
     # Write Output Files to Disk
     log.info("-------------------------")
     log.info(" writing output files ...")
