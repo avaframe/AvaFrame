@@ -1,8 +1,8 @@
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle, Patch
+from shapely import MultiPolygon
 
-from avaframe.com7Regional.splitInputs import getExteriorCoords
 from avaframe.in2Trans import rasterUtils
 from avaframe.out3Plot import plotUtils as pU
 
@@ -185,3 +185,22 @@ def createReportPlot(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
     plt.close()
 
     return reportPath
+
+
+def getExteriorCoords(geom):
+    """Get the exterior coordinates of a shapely geometry to handle both single and multi-polygon geometries.
+
+    Parameters
+    ----------
+    geom : shapely.geometry
+        The shapely geometry to get the exterior coordinates from.
+
+    Returns
+    -------
+    list
+        A list of tuples containing the x and y coordinates of the geometry exterior.
+    """
+    if isinstance(geom, MultiPolygon):
+        return [poly.exterior.xy for poly in geom.geoms]
+    else:
+        return [geom.exterior.xy]
