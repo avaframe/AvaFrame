@@ -34,7 +34,8 @@ The module is currently compatible with the following input file types:
 
 **Required:**
     * Digital elevation model (as .asc or .tif file)
-    * Release areas: ONE shapefile in ``Inputs/REL`` directory, with attributes ``group`` and ``scenario``
+    * Release areas: ONE shapefile in ``Inputs/REL`` directory, with additional attributes ``group`` and ``scenario``. Please
+      also provide attributes required by com1DFA.
 
 **Optional:**
     * Entrainment areas (shapefile in ``Inputs/ENT`` directory)
@@ -201,22 +202,21 @@ A directory structure containing pre-configured avalanche directories (containin
 :ref:`moduleCom7Regional:Regional Input Management`, which splits merged input data into standard :ref:`com1DFA <moduleCom1DFA:com1DFA: DFA-Kernel>`
 inputs across multiple avalanche directories.
 
-Example of a valid directory structure::
+Example of a valid directory structure (as produced by the regional input management above)::
 
-    regionalDir/
-    ├── avalanche1/
-    │   └── Inputs/
-    │       ├── REL/*.shp
-    │       └── *.asc or *.tif
-    ├── avalanche2/
-    │   └── Inputs/
-    │       ├── REL/*.shp
-    │       └── *.asc or *.tif      
-    └── ...
+    avalancheDir
+    ├── Inputs/       #NOT being used for running; optional
+    └── com7Regional/ #This is the default name, can be changed via .ini setup
+        ├── avalanche1/
+        │   └── Inputs/
+        │       ├── REL/*.shp
+        │       └── *.asc or *.tif
+        ├── avalanche2/
+        │   └── Inputs/
+        │       ├── REL/*.shp
+        │       └── *.asc or *.tif
+        └── ...
 
-.. note::
-    Note the use of "regionalDir" to distinguish between the main input directory from the lower level avalanche directories. 
-    However, the regionalDir is still set in the ``avalancheDir`` parameter within ``avaframeCfg.ini``, or within the command call, like in other AvaFrame modules.
 
 Output
 ------
@@ -235,13 +235,14 @@ Configure in ``com7RegionalCfg.ini`` (or local):
     mergeTypes = pfv # Available options: [ppr|pfv|pft|pta|FT|FV|P|FM|Vx|Vy|Vz|TA]
     mergeMethod = max  # Available options: [max|min|mean|sum|count]
 
-Produces merged rasters of all peakFile results found within the avalanche directories, for each ``mergeTypes`` and ``mergeMethod``configured, in
-``<regionalDir>/Outputs/com7Regional/mergedRasters/``.
+Produces merged rasters of all peakFile results found within the avalanche directories, for each
+``mergeTypes`` and ``mergeMethod`` configured, in ``<avalancheDir>/com7Regional/mergedRasters/``.
 
 Individual outputs
 ^^^^^^^^^^^^^^^^^^
-After running com7 with the given module (e.g. :ref:`com1DFA <com1DFA>`), the standard output is located within each of the avalanche directories within e.g.
-``<regionalDir>/<avalancheDir>/Outputs/com1DFA``. Additionally, com7 provides the option of aggregating all output peakFiles and tSteps results into a single directory 
+After running com7 with the given module (e.g. :ref:`com1DFA <com1DFA>`), the standard output is located
+within each of the avalanche directories within e.g. ``<avalancheDir>/com7Regional/<avalancheDir>/Outputs/com1DFA``.
+Additionally, com7 provides the option of aggregating all output peakFiles and tSteps results into a single directory
 for easier management, either through copying or moving the files after an executed run.
 
 Configure in ``com7RegionalCfg.ini`` (or local):
@@ -254,9 +255,8 @@ Configure in ``com7RegionalCfg.ini`` (or local):
 
 Creates::
 
-    Outputs/com7Regional/
+    com7Regional/
     └── allPeakFiles/
-        └── allTimeSteps/
 
 Configuration
 -------------
@@ -287,11 +287,12 @@ variations in ``com7Regional.py``.
 
 To Run
 ------
-1. Prepare input directories, we recommend using :ref:`in4Region <in4Region>`
+1. Prepare input directories, we recommend using the regional input management above
 2. Configure settings in ``com7RegionalCfg.ini`` (or local version ``local_com7RegionalCfg.ini``)
-3. Set path to regional directory in ``avaframeCfg.ini`` (or local version ``local_avaframeCfg.ini``)
+3. Set path to avalanche directory in ``avaframeCfg.ini`` (or local version ``local_avaframeCfg.ini``)
+   or supply the directory as argument to the command below.
 4. Execute from AvaFrame/avaframe directory:
 
 .. code-block:: bash
 
-    python3 runScripts/runCom7Regional.py
+    python runCom7Regional.py

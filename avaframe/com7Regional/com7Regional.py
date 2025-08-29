@@ -488,7 +488,7 @@ def mergeOutputRasters(cfg, avalancheDir):
         for mergeMethod in mergeMethods:
             mergedHeader, mergedData = mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod=mergeMethod)
             outputPath = mergedRastersDir / f'merged_{rasterType}_{mergeMethod}'
-            rasterUtils.writeResultToRaster(mergedHeader, mergedData, outputPath, flip=True)
+            rasterUtils.writeResultToRaster(mergedHeader, mergedData, outputPath, flip=False)
             log.info(f"Saved merged {rasterType} raster (method: {mergeMethod}) to: {outputPath}")
 
     return mergedRastersDir

@@ -138,7 +138,6 @@ def test_splitInputsMain(tmp_path):
     test_data_dir = pathlib.Path(__file__).parent / 'data' / 'testIn4Region'
     inputDir = tmp_path / 'avalancheDir'
     shutil.copytree(test_data_dir, inputDir)
-    inputDir = inputDir / 'Inputs'
     outputDir = tmp_path / 'avalancheDir' / 'com7Regional'
 
     # Configure test parameters
