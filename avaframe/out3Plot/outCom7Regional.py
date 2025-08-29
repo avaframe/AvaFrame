@@ -76,7 +76,14 @@ def createReportPlot(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
         # Plot DEM extent using groupExtents
         if dirName in groupExtents:
             xMin, xMax, yMin, yMax = groupExtents[dirName]
-            rect = Rectangle((xMin, yMin), xMax - xMin, yMax - yMin, fill=False, linestyle="--", color=color)
+            rect = Rectangle(
+                (xMin, yMin),
+                xMax - xMin,
+                yMax - yMin,
+                fill=False,
+                linestyle="--",
+                color=color,
+            )
             ax.add_patch(rect)
 
             if reportType == "basic":
@@ -115,7 +122,15 @@ def createReportPlot(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
 
     # Create legend
     mapElements = [
-        Rectangle((0, 0), 1, 1, fill=False, linestyle="--", color="black", label="Clipped DEM Extent")
+        Rectangle(
+            (0, 0),
+            1,
+            1,
+            fill=False,
+            linestyle="--",
+            color="black",
+            label="Clipped DEM Extent",
+        )
     ]
     if reportType == "basic":
         mapElements.append(Patch(facecolor="black", alpha=1.0, label="Release Areas"))
