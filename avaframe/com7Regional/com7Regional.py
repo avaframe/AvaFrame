@@ -11,6 +11,9 @@ from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils, cfgHandling
 from avaframe.in3Utils import logUtils
 from avaframe.in2Trans import rasterUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
+
+from rasterio.merge import merge
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -25,7 +28,7 @@ def com7RegionalMain(cfgMain, cfg):
     Parameters
     ----------
     cfgMain : configparser.ConfigParser
-        Main configuration settings
+        Main avaframe configuration settings
     cfg : configparser.ConfigParser
         Regional configuration settings with potential overrides
 
@@ -225,7 +228,7 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
 
 
 def moveOrCopyPeakFiles(cfg, avalancheDir):
-    """Consolidate peak files from multiple avalanche directories.
+    """Collects peak files from multiple sub-avalanche directories.
 
     Creates directory allPeakFiles: Contains peak files from all avalanche directories
 
@@ -259,7 +262,7 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
     for dirPath in [allPeakFilesDir]:
         if dirPath.exists():
             shutil.rmtree(str(dirPath))
-        dirPath.mkdir(parents=True, exist_ok=True)
+        fU.makeADir(dirPath)
 
     # Get operation type
     operation = shutil.move if cfg["GENERAL"].getboolean("moveInsteadOfCopy") else shutil.copy2
@@ -331,7 +334,7 @@ def getRasterBounds(rasterFiles):
     return bounds, cellSize
 
 
-def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod="max"):
+def mergeRasters(rasterFiles, bounds, mergeMethod="max"):
     """Merge multiple rasters into a single raster.
 
     Parameters
@@ -340,15 +343,10 @@ def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod="max"
         List of paths to raster files
     bounds : dict
         Dictionary containing xMin, yMin, xMax, yMax of the union bounds
-    cellSize : float
-        Cell size of the rasters
-    noDataValue : float, optional
-        Value to use for no data cells
     mergeMethod : str, optional
         Method to use for merging overlapping cells. Options:
         - 'max': maximum value (default)
         - 'min': minimum value
-        - 'mean': average value of valid results
         - 'sum': sum of values
         - 'count': number of overlapping valid results per cell
 
@@ -359,91 +357,25 @@ def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod="max"
     mergedData : numpy.ndarray
         2D array containing the merged raster data
     """
-    # Calculate dimensions for merged raster
-    nCols = int((bounds["xMax"] - bounds["xMin"]) / cellSize)
-    nRows = int((bounds["yMax"] - bounds["yMin"]) / cellSize)
 
-    # Create merged raster header
+    # Merge data with rasterio
+    # If something other than min/max is wanted, it is possible to provide a custom function to merge
+    mergedData, outputTransform = merge(rasterFiles, method=mergeMethod, masked=True)
+
+    mergedData = np.squeeze(mergedData)
+
+    # Calculate dimensions for merged raster; helps checking if merged raster is correct
+    nCols = int((bounds["xMax"] - bounds["xMin"]) / outputTransform[0])
+    nRows = int((bounds["yMax"] - bounds["yMin"]) / outputTransform[0])
+    #
+    # # Create merged raster header
     exampleRaster = rasterUtils.readRaster(rasterFiles[0])
     mergedHeader = exampleRaster["header"]
     mergedHeader["ncols"] = nCols
     mergedHeader["nrows"] = nRows
     mergedHeader["xllcenter"] = float(bounds["xMin"])
     mergedHeader["yllcenter"] = float(bounds["yMin"])
-    mergedHeader["cellsize"] = float(cellSize)
-    mergedHeader["nodata_value"] = float(noDataValue)
-
-    # Initialize arrays based on merge method
-    if mergeMethod == "min":
-        mergedData = np.full((nRows, nCols), float("inf"), dtype=float)
-        hasValidData = np.zeros((nRows, nCols), dtype=bool)
-    elif mergeMethod == "max":
-        mergedData = np.full((nRows, nCols), -float("inf"), dtype=float)
-        hasValidData = np.zeros((nRows, nCols), dtype=bool)
-    else:
-        mergedData = np.full((nRows, nCols), 0.0, dtype=float)
-        if mergeMethod in ["mean", "count"]:
-            validCount = np.zeros((nRows, nCols), dtype=int)
-
-    # Merge rasters
-    for rasterFile in rasterFiles:
-        raster = rasterUtils.readRaster(rasterFile)
-        header = raster["header"]
-        data = raster["rasterData"]
-
-        # Calculate offsets
-        xOffset = int((float(header["xllcenter"]) - bounds["xMin"]) / cellSize)
-        yOffset = int((float(header["yllcenter"]) - bounds["yMin"]) / cellSize)
-
-        # Create slice views
-        thisNRows, thisNCols = int(header["nrows"]), int(header["ncols"])
-        targetSlice = mergedData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
-
-        # Create masks for valid data and simulation results
-        simulationMask = (data != float(header["nodata_value"])) & (data != 0)
-
-        # Update data based on merge method
-        if mergeMethod == "max":
-            hasValidDataSlice = hasValidData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
-            hasValidDataSlice |= simulationMask
-            np.maximum(
-                targetSlice,
-                np.where(simulationMask, data, -float("inf")),
-                out=targetSlice,
-            )
-        elif mergeMethod == "min":
-            hasValidDataSlice = hasValidData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
-            hasValidDataSlice |= simulationMask
-            np.minimum(
-                targetSlice,
-                np.where(simulationMask, data, float("inf")),
-                out=targetSlice,
-            )
-        elif mergeMethod == "sum":
-            targetSlice += np.where(simulationMask, data, 0)
-        elif mergeMethod in ["mean", "count"]:
-            validCountSlice = validCount[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
-            validCountSlice += simulationMask
-            if mergeMethod == "mean":
-                targetSlice += np.where(simulationMask, data, 0)
-
-    # Post-process based on merge method
-    if mergeMethod == "mean":
-        # Convert sum to mean where count > 0
-        with np.errstate(divide="ignore", invalid="ignore"):
-            mergedData = np.where(validCount > 0, mergedData / validCount, noDataValue)
-    elif mergeMethod == "count":
-        # Replace zeros with NoData
-        mergedData = np.where(validCount > 0, validCount, noDataValue)
-    elif mergeMethod == "min":
-        # Replace inf with NoData where we never had valid data
-        mergedData = np.where(hasValidData, mergedData, noDataValue)
-    elif mergeMethod == "max":
-        # Replace -inf with NoData where we never had valid data
-        mergedData = np.where(hasValidData, mergedData, noDataValue)
-    elif mergeMethod == "sum":
-        # Replace zeros with NoData
-        mergedData = np.where(mergedData > 0, mergedData, noDataValue)
+    mergedHeader["transform"] = outputTransform
 
     return mergedHeader, mergedData
 
@@ -471,8 +403,8 @@ def mergeOutputRasters(cfg, avalancheDir):
         return None
 
     # Get all avalanche directories
-    with logUtils.silentLogger():
-        avaDirs = findAvaDirs(avalancheDir)
+    # with logUtils.silentLogger():
+    avaDirs = findAvaDirs(avalancheDir)
     if not avaDirs:
         log.warning("No avalanche directories found to merge")
         return None
@@ -517,9 +449,7 @@ def mergeOutputRasters(cfg, avalancheDir):
 
         # Merge and save rasters
         for mergeMethod in mergeMethods:
-            mergedHeader, mergedData = mergeRasters(
-                rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod=mergeMethod
-            )
+            mergedHeader, mergedData = mergeRasters(rasterFiles, bounds, mergeMethod=mergeMethod)
             outputPath = mergedRastersDir / f"merged_{rasterType}_{mergeMethod}"
             rasterUtils.writeResultToRaster(mergedHeader, mergedData, outputPath, flip=False)
             log.info(f"Saved merged {rasterType} raster (method: {mergeMethod}) to: {outputPath}")
