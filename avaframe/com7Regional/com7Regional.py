@@ -15,19 +15,20 @@ from avaframe.in2Trans import rasterUtils
 # create local logger
 log = logging.getLogger(__name__)
 
+
 def com7RegionalMain(cfgMain, cfg):
     """Run com7Regional with given configuration.
-    
+
     This function processes multiple avalanche directories in parallel, running simulations
     for each directory.
-    
+
     Parameters
     ----------
     cfgMain : configparser.ConfigParser
         Main configuration settings
     cfg : configparser.ConfigParser
         Regional configuration settings with potential overrides
-        
+
     Returns
     -------
     allPeakFilesDir : pathlib.Path or None
@@ -49,8 +50,8 @@ def com7RegionalMain(cfgMain, cfg):
     - regionalDir: Subdirectory specified in cfg['GENERAL']['regionalDir']
     """
     # Define the regional directory in relation to the avalanche directory
-    regionalDirFromCfg = str(cfg['GENERAL']['regionalDir'])
-    regionalDir = pathlib.Path(cfgMain['MAIN']['avalancheDir']) / regionalDirFromCfg
+    regionalDirFromCfg = str(cfg["GENERAL"]["regionalDir"])
+    regionalDir = pathlib.Path(cfgMain["MAIN"]["avalancheDir"]) / regionalDirFromCfg
 
     # List valid avalanche directories within the regional directory
     avaDirs = findAvaDirs(regionalDir)
@@ -65,7 +66,7 @@ def com7RegionalMain(cfgMain, cfg):
     nProcesses = cfgUtils.getNumberOfProcesses(cfgMain, len(avaDirs))
 
     # Set nCPU for com1 to 1 to avoid nested parallelization
-    cfgMain['MAIN']['nCPU'] = '1'
+    cfgMain["MAIN"]["nCPU"] = "1"
 
     # Track progress and results
     completed = 0
@@ -74,20 +75,23 @@ def com7RegionalMain(cfgMain, cfg):
     # Process avalanche directories within the regional folder concurrently
     with ProcessPoolExecutor(max_workers=nProcesses) as executor:
         # Submit each avalanche directory to the executor
-        futures = {executor.submit(processAvaDirCom1Regional, cfgMain, cfg, avaDir):
-                       avaDir for avaDir in avaDirs}
+        futures = {
+            executor.submit(processAvaDirCom1Regional, cfgMain, cfg, avaDir): avaDir for avaDir in avaDirs
+        }
         # Log results as each future completes
         for future in as_completed(futures):
             avaDir = futures[future]
             try:
                 resultDir, status = future.result()
                 completed += 1
-                
+
                 if status == "Success":
                     nSuccesses += 1
 
-                log.info(f"{status} in directory: {resultDir.relative_to(pathlib.Path(regionalDir))} "
-                         f"- Overall progress: {completed}/{len(avaDirs)}")
+                log.info(
+                    f"{status} in directory: {resultDir.relative_to(pathlib.Path(regionalDir))} "
+                    f"- Overall progress: {completed}/{len(avaDirs)}"
+                )
             except Exception as e:
                 log.error(f"Error processing {avaDir}: {e}")
 
@@ -95,15 +99,16 @@ def com7RegionalMain(cfgMain, cfg):
 
     # Copy/move peak files if configured
     allPeakFilesDir = None
-    if cfg['GENERAL'].getboolean('copyPeakFiles'):
+    if cfg["GENERAL"].getboolean("copyPeakFiles"):
         allPeakFilesDir = moveOrCopyPeakFiles(cfg, regionalDir)
 
     # Merge output rasters if configured
     mergedRastersDir = None
-    if cfg['GENERAL'].getboolean('mergeOutput'):
+    if cfg["GENERAL"].getboolean("mergeOutput"):
         mergedRastersDir = mergeOutputRasters(cfg, regionalDir)
 
     return allPeakFilesDir, mergedRastersDir
+
 
 def findAvaDirs(Dir):
     """Find all valid avalanche directories within a given directory.
@@ -127,9 +132,10 @@ def findAvaDirs(Dir):
 
     return avaDirs
 
+
 def getTotalNumberOfSims(avaDirs, cfgMain, cfgCom7):
     """Get total number of simulations across all avalanche directories.
-    
+
     Parameters
     ----------
     avaDirs : list
@@ -138,7 +144,7 @@ def getTotalNumberOfSims(avaDirs, cfgMain, cfgCom7):
         Main configuration
     cfgCom7 : configparser.ConfigParser
         Regional configuration with potential overrides
-        
+
     Returns
     -------
     int
@@ -148,13 +154,17 @@ def getTotalNumberOfSims(avaDirs, cfgMain, cfgCom7):
     for avaDir in avaDirs:
         # Create copies of configs to avoid modifying originals
         cfgMainCopy = cfgUtils.convertDictToConfigParser(cfgUtils.convertConfigParserToDict(cfgMain))
-        cfgMainCopy['MAIN']['avalancheDir'] = str(avaDir)
-        
+        cfgMainCopy["MAIN"]["avalancheDir"] = str(avaDir)
+
         # Get com1DFA config with regional overrides (same as in processAvaDirCom1Regional)
-        cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False,
-                                           onlyDefault=cfgCom7['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
+        cfgCom1DFA = cfgUtils.getModuleConfig(
+            com1DFA,
+            fileOverride="",
+            toPrint=False,
+            onlyDefault=cfgCom7["com1DFA_com1DFA_override"].getboolean("defaultConfig"),
+        )
         cfgCom1DFA, _ = cfgHandling.applyCfgOverride(cfgCom1DFA, cfgCom7, com1DFA, addModValues=False)
-        
+
         # Get simulations for this directory
         try:
             simDict, _, _, _ = com1DFA.com1DFAPreprocess(cfgMainCopy, "cfgFromObject", cfgCom1DFA)
@@ -162,13 +172,14 @@ def getTotalNumberOfSims(avaDirs, cfgMain, cfgCom7):
         except Exception as e:
             log.warning(f"Could not get simulations for {avaDir}: {e}")
             continue
-            
+
     return totalSims
+
 
 def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
     """Run com1DFA simulation in a specific avalanche directory with regional settings.
 
-    Note: This function calls com1DFA within each avalanche directory within the input directory. 
+    Note: This function calls com1DFA within each avalanche directory within the input directory.
     If wanted it may be used as a template to call another operation within each directory, such as com2AB, ana5Utils, etc.
 
     Parameters
@@ -188,25 +199,30 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
         Status of the simulation, "Success" if completed
     """
     # Initialize log for each process
-    log = logUtils.initiateLogger(avalancheDir, logName='runCom1DFA')
-    log.info('COM1DFA PROCESS CALLED BY COM7REGIONAL RUN')
-    log.info('Current avalanche: %s', avalancheDir)
+    log = logUtils.initiateLogger(avalancheDir, logName="runCom1DFA")
+    log.info("COM1DFA PROCESS CALLED BY COM7REGIONAL RUN")
+    log.info("Current avalanche: %s", avalancheDir)
 
     # Update cfgMain setting to reflect the current avalancheDir
-    cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
+    cfgMain["MAIN"]["avalancheDir"] = str(avalancheDir)
 
     # Clean input directory of old work and output files from module
     initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
 
     # Create com1DFA configuration for the current avalanche directory and override with regional settings
-    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False,
-                                          onlyDefault=cfgCom7['com1DFA_com1DFA_override'].getboolean('defaultConfig'))
+    cfgCom1DFA = cfgUtils.getModuleConfig(
+        com1DFA,
+        fileOverride="",
+        toPrint=False,
+        onlyDefault=cfgCom7["com1DFA_com1DFA_override"].getboolean("defaultConfig"),
+    )
     cfgCom1DFA, cfgCom7 = cfgHandling.applyCfgOverride(cfgCom1DFA, cfgCom7, com1DFA, addModValues=False)
 
     # Run com1DFA in the current avalanche directory
     com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgCom1DFA)
 
     return avalancheDir, "Success"
+
 
 def moveOrCopyPeakFiles(cfg, avalancheDir):
     """Consolidate peak files from multiple avalanche directories.
@@ -227,7 +243,7 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
     allPeakFilesDir : pathlib.Path or None
         Path to the created allPeakFiles directory or None if copyPeakFiles is False
     """
-    if not cfg['GENERAL'].getboolean('copyPeakFiles'):
+    if not cfg["GENERAL"].getboolean("copyPeakFiles"):
         log.info("copyPeakFiles is False - no files will be copied or moved")
         return None, None
 
@@ -239,27 +255,28 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
         return None, None
 
     # Set up outdirs
-    allPeakFilesDir = pathlib.Path(avalancheDir, 'allPeakFiles')
+    allPeakFilesDir = pathlib.Path(avalancheDir, "allPeakFiles")
     for dirPath in [allPeakFilesDir]:
         if dirPath.exists():
             shutil.rmtree(str(dirPath))
         dirPath.mkdir(parents=True, exist_ok=True)
 
     # Get operation type
-    operation = shutil.move if cfg['GENERAL'].getboolean('moveInsteadOfCopy') else shutil.copy2
-    operationType = 'Moving' if operation == shutil.move else 'Copying'
+    operation = shutil.move if cfg["GENERAL"].getboolean("moveInsteadOfCopy") else shutil.copy2
+    operationType = "Moving" if operation == shutil.move else "Copying"
 
     # Process each avalanche directory
     for avaDir in avaDirs:
         log.info(f"{operationType} files from: {avaDir.name}")
-        
+
         # Process peak files
-        peakFiles = list(avaDir.glob('Outputs/**/peakFiles/*.*'))
+        peakFiles = list(avaDir.glob("Outputs/**/peakFiles/*.*"))
         for peakFile in peakFiles:
             targetPath = allPeakFilesDir / peakFile.name
             operation(str(peakFile), str(targetPath))
 
     return allPeakFilesDir
+
 
 def getRasterBounds(rasterFiles):
     """Get the union bounds and validate cell sizes of multiple rasters.
@@ -283,30 +300,38 @@ def getRasterBounds(rasterFiles):
     """
     # Read first raster to get cellSize and initialize bounds
     firstRaster = rasterUtils.readRaster(rasterFiles[0])
-    cellSize = float(firstRaster['header']['cellsize'])
+    cellSize = float(firstRaster["header"]["cellsize"])
     bounds = {
-        'xMin': float('inf'), 'yMin': float('inf'),
-        'xMax': float('-inf'), 'yMax': float('-inf')
+        "xMin": float("inf"),
+        "yMin": float("inf"),
+        "xMax": float("-inf"),
+        "yMax": float("-inf"),
     }
 
     # Find bounds and validate cell sizes
     for rasterFile in rasterFiles:
         raster = rasterUtils.readRaster(rasterFile)
-        header = raster['header']
-        
-        if float(header['cellsize']) != cellSize:
+        header = raster["header"]
+
+        if float(header["cellsize"]) != cellSize:
             raise ValueError(f"Different cell sizes found: {cellSize} vs {header['cellsize']}")
-        
+
         # Update bounds
-        bounds['xMin'] = min(bounds['xMin'], float(header['xllcenter']))
-        bounds['yMin'] = min(bounds['yMin'], float(header['yllcenter']))
-        bounds['xMax'] = max(bounds['xMax'], float(header['xllcenter']) + float(header['ncols']) * cellSize)
-        bounds['yMax'] = max(bounds['yMax'], float(header['yllcenter']) + float(header['nrows']) * cellSize)
+        bounds["xMin"] = min(bounds["xMin"], float(header["xllcenter"]))
+        bounds["yMin"] = min(bounds["yMin"], float(header["yllcenter"]))
+        bounds["xMax"] = max(
+            bounds["xMax"],
+            float(header["xllcenter"]) + float(header["ncols"]) * cellSize,
+        )
+        bounds["yMax"] = max(
+            bounds["yMax"],
+            float(header["yllcenter"]) + float(header["nrows"]) * cellSize,
+        )
 
     return bounds, cellSize
 
 
-def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod='max'):
+def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod="max"):
     """Merge multiple rasters into a single raster.
 
     Parameters
@@ -335,81 +360,88 @@ def mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod='max'
         2D array containing the merged raster data
     """
     # Calculate dimensions for merged raster
-    nCols = int((bounds['xMax'] - bounds['xMin']) / cellSize)
-    nRows = int((bounds['yMax'] - bounds['yMin']) / cellSize)
+    nCols = int((bounds["xMax"] - bounds["xMin"]) / cellSize)
+    nRows = int((bounds["yMax"] - bounds["yMin"]) / cellSize)
 
     # Create merged raster header
     exampleRaster = rasterUtils.readRaster(rasterFiles[0])
-    mergedHeader = exampleRaster['header']
+    mergedHeader = exampleRaster["header"]
     mergedHeader["ncols"] = nCols
     mergedHeader["nrows"] = nRows
-    mergedHeader["xllcenter"] = float(bounds['xMin'])
-    mergedHeader["yllcenter"] = float(bounds['yMin'])
+    mergedHeader["xllcenter"] = float(bounds["xMin"])
+    mergedHeader["yllcenter"] = float(bounds["yMin"])
     mergedHeader["cellsize"] = float(cellSize)
     mergedHeader["nodata_value"] = float(noDataValue)
 
-
     # Initialize arrays based on merge method
-    if mergeMethod == 'min':
-        mergedData = np.full((nRows, nCols), float('inf'), dtype=float)
+    if mergeMethod == "min":
+        mergedData = np.full((nRows, nCols), float("inf"), dtype=float)
         hasValidData = np.zeros((nRows, nCols), dtype=bool)
-    elif mergeMethod == 'max':
-        mergedData = np.full((nRows, nCols), -float('inf'), dtype=float)
+    elif mergeMethod == "max":
+        mergedData = np.full((nRows, nCols), -float("inf"), dtype=float)
         hasValidData = np.zeros((nRows, nCols), dtype=bool)
     else:
         mergedData = np.full((nRows, nCols), 0.0, dtype=float)
-        if mergeMethod in ['mean', 'count']:
+        if mergeMethod in ["mean", "count"]:
             validCount = np.zeros((nRows, nCols), dtype=int)
 
     # Merge rasters
     for rasterFile in rasterFiles:
         raster = rasterUtils.readRaster(rasterFile)
-        header = raster['header']
-        data = raster['rasterData']
+        header = raster["header"]
+        data = raster["rasterData"]
 
         # Calculate offsets
-        xOffset = int((float(header['xllcenter']) - bounds['xMin']) / cellSize)
-        yOffset = int((float(header['yllcenter']) - bounds['yMin']) / cellSize)
-        
+        xOffset = int((float(header["xllcenter"]) - bounds["xMin"]) / cellSize)
+        yOffset = int((float(header["yllcenter"]) - bounds["yMin"]) / cellSize)
+
         # Create slice views
-        thisNRows, thisNCols = int(header['nrows']), int(header['ncols'])
-        targetSlice = mergedData[yOffset:yOffset+thisNRows, xOffset:xOffset+thisNCols]
-        
+        thisNRows, thisNCols = int(header["nrows"]), int(header["ncols"])
+        targetSlice = mergedData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
+
         # Create masks for valid data and simulation results
-        simulationMask = (data != float(header['nodata_value'])) & (data != 0)
+        simulationMask = (data != float(header["nodata_value"])) & (data != 0)
 
         # Update data based on merge method
-        if mergeMethod == 'max':
-            hasValidDataSlice = hasValidData[yOffset:yOffset+thisNRows, xOffset:xOffset+thisNCols]
+        if mergeMethod == "max":
+            hasValidDataSlice = hasValidData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
             hasValidDataSlice |= simulationMask
-            np.maximum(targetSlice, np.where(simulationMask, data, -float('inf')), out=targetSlice)
-        elif mergeMethod == 'min':
-            hasValidDataSlice = hasValidData[yOffset:yOffset+thisNRows, xOffset:xOffset+thisNCols]
+            np.maximum(
+                targetSlice,
+                np.where(simulationMask, data, -float("inf")),
+                out=targetSlice,
+            )
+        elif mergeMethod == "min":
+            hasValidDataSlice = hasValidData[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
             hasValidDataSlice |= simulationMask
-            np.minimum(targetSlice, np.where(simulationMask, data, float('inf')), out=targetSlice)
-        elif mergeMethod == 'sum':
+            np.minimum(
+                targetSlice,
+                np.where(simulationMask, data, float("inf")),
+                out=targetSlice,
+            )
+        elif mergeMethod == "sum":
             targetSlice += np.where(simulationMask, data, 0)
-        elif mergeMethod in ['mean', 'count']:
-            validCountSlice = validCount[yOffset:yOffset+thisNRows, xOffset:xOffset+thisNCols]
+        elif mergeMethod in ["mean", "count"]:
+            validCountSlice = validCount[yOffset : yOffset + thisNRows, xOffset : xOffset + thisNCols]
             validCountSlice += simulationMask
-            if mergeMethod == 'mean':
+            if mergeMethod == "mean":
                 targetSlice += np.where(simulationMask, data, 0)
 
     # Post-process based on merge method
-    if mergeMethod == 'mean':
+    if mergeMethod == "mean":
         # Convert sum to mean where count > 0
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             mergedData = np.where(validCount > 0, mergedData / validCount, noDataValue)
-    elif mergeMethod == 'count':
+    elif mergeMethod == "count":
         # Replace zeros with NoData
         mergedData = np.where(validCount > 0, validCount, noDataValue)
-    elif mergeMethod == 'min':
+    elif mergeMethod == "min":
         # Replace inf with NoData where we never had valid data
         mergedData = np.where(hasValidData, mergedData, noDataValue)
-    elif mergeMethod == 'max':
+    elif mergeMethod == "max":
         # Replace -inf with NoData where we never had valid data
         mergedData = np.where(hasValidData, mergedData, noDataValue)
-    elif mergeMethod == 'sum':
+    elif mergeMethod == "sum":
         # Replace zeros with NoData
         mergedData = np.where(mergedData > 0, mergedData, noDataValue)
 
@@ -434,7 +466,7 @@ def mergeOutputRasters(cfg, avalancheDir):
     mergedRastersDir : pathlib.Path or None
         Path to the directory containing merged rasters or None if mergeOutput is False
     """
-    if not cfg['GENERAL'].getboolean('mergeOutput', False):
+    if not cfg["GENERAL"].getboolean("mergeOutput", False):
         log.info("mergeOutput is False - no rasters will be merged")
         return None
 
@@ -446,21 +478,21 @@ def mergeOutputRasters(cfg, avalancheDir):
         return None
 
     # Set up merged rasters directory
-    mergedRastersDir = pathlib.Path(avalancheDir, 'mergedRasters')
+    mergedRastersDir = pathlib.Path(avalancheDir, "mergedRasters")
     if mergedRastersDir.exists():
         shutil.rmtree(str(mergedRastersDir))
     mergedRastersDir.mkdir(parents=True, exist_ok=True)
 
     # Get types to merge
-    mergeTypes = cfg['GENERAL'].get('mergeTypes').split('|')
+    mergeTypes = cfg["GENERAL"].get("mergeTypes").split("|")
     log.info(f"Merging raster types: {mergeTypes}")
 
     # Get merge methods
-    mergeMethods = cfg['GENERAL'].get('mergeMethods', 'max').lower().split('|')
+    mergeMethods = cfg["GENERAL"].get("mergeMethods", "max").lower().split("|")
     log.info(f"Using merge methods: {mergeMethods}")
 
     # Validate merge methods
-    validMethods = {'max', 'min', 'mean', 'sum', 'count'}
+    validMethods = {"max", "min", "mean", "sum", "count"}
     invalidMethods = set(mergeMethods) - validMethods
     if invalidMethods:
         raise ValueError(f"Invalid merge methods: {invalidMethods}. Valid options are: {validMethods}")
@@ -470,10 +502,9 @@ def mergeOutputRasters(cfg, avalancheDir):
         # Find all files of this type across all avalanche directories
         rasterFiles = []
         for avaDir in avaDirs:
-            peakFilesDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
+            peakFilesDir = avaDir / "Outputs" / "com1DFA" / "peakFiles"
             if peakFilesDir.is_dir():
-                rasterFiles.extend(
-                    list(peakFilesDir.glob(f'*_{rasterType}.*')))
+                rasterFiles.extend(list(peakFilesDir.glob(f"*_{rasterType}.*")))
 
         if not rasterFiles:
             log.warning(f"No {rasterType} rasters found to merge")
@@ -486,8 +517,10 @@ def mergeOutputRasters(cfg, avalancheDir):
 
         # Merge and save rasters
         for mergeMethod in mergeMethods:
-            mergedHeader, mergedData = mergeRasters(rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod=mergeMethod)
-            outputPath = mergedRastersDir / f'merged_{rasterType}_{mergeMethod}'
+            mergedHeader, mergedData = mergeRasters(
+                rasterFiles, bounds, cellSize, noDataValue=0, mergeMethod=mergeMethod
+            )
+            outputPath = mergedRastersDir / f"merged_{rasterType}_{mergeMethod}"
             rasterUtils.writeResultToRaster(mergedHeader, mergedData, outputPath, flip=False)
             log.info(f"Saved merged {rasterType} raster (method: {mergeMethod}) to: {outputPath}")
 
