@@ -1,5 +1,5 @@
 """
-    Directory and file handling helper functions
+Directory and file handling helper functions
 """
 
 # Load modules
@@ -368,7 +368,7 @@ def splitTimeValueToArrayInterval(cfgValues, endTime):
     Returns
     --------
     items : 1D numpy array
-        time step values as 1D numpy array
+        sorted time step values as 1D numpy array
     """
 
     if ":" in cfgValues:
@@ -384,9 +384,6 @@ def splitTimeValueToArrayInterval(cfgValues, endTime):
         items = np.array(itemsL, dtype=float)
         items = np.sort(items)
 
-    # make sure that 0 is not in the array (initial time step is any ways saved)
-    if items[0] == 0:
-        items = np.delete(items, 0)
     # make sure the array is not empty
     # ToDo : make it work without this arbitrary 2*timeEnd
     if items.size == 0:
@@ -455,9 +452,9 @@ def exportcom1DFAOrigOutput(avaDir, cfg="", addTSteps=False):
                 "%s_fd.asc" % logDict["simName"][k],
             )
             pathTo = (
-                    outDirPF
-                    / "timeSteps"
-                    / ("%s_%.05f_tLast_ft.asc" % (logDict["simName"][k], logDict[varPar][k]))
+                outDirPF
+                / "timeSteps"
+                / ("%s_%.05f_tLast_ft.asc" % (logDict["simName"][k], logDict[varPar][k]))
             )
             shutil.copy(pathFrom, pathTo)
         pathFrom = pathlib.Path(
@@ -488,9 +485,9 @@ def exportcom1DFAOrigOutput(avaDir, cfg="", addTSteps=False):
                 "%s%.05f" % (resPath, logDict[varPar][k]), "%s_tFirst_fd.txt" % logDict["simName"][k]
             )
             pathTo = (
-                    outDirPF
-                    / "timeSteps"
-                    / ("%s_%.05f_tFirst_fd.asc" % (logDict["simName"][k], logDict[varPar][k]))
+                outDirPF
+                / "timeSteps"
+                / ("%s_%.05f_tFirst_fd.asc" % (logDict["simName"][k], logDict[varPar][k]))
             )
             shutil.copy(pathFrom, pathTo)
 
@@ -633,7 +630,7 @@ def makeSimDF(inputDir, avaDir="", simID="simID"):
             data["simType"].append(infoParts[2 + j])
             data["modelType"].append(infoParts[3 + j])
             data["resType"].append(infoParts[4 + j])
-            data["simName"].append(fNamePart + "_" + ("_".join(infoParts[0: (4 + j)])))
+            data["simName"].append(fNamePart + "_" + ("_".join(infoParts[0 : (4 + j)])))
 
             header = IOf.readRasterHeader(datafiles[m])
             data["cellSize"].append(header["cellsize"])
@@ -720,14 +717,14 @@ def makeSimFromResDF(avaDir, comModule, inputDir="", simName=""):
     # build the result data frame
     resTypeListFromFiles = list(set([file.stem.split("_")[-1] for file in datafiles]))
     columnsList = [
-                      "simName",
-                      "releaseArea",
-                      "simHash",
-                      "simModified",
-                      "simType",
-                      "modelType",
-                      "cellSize",
-                  ] + resTypeListFromFiles
+        "simName",
+        "releaseArea",
+        "simHash",
+        "simModified",
+        "simType",
+        "modelType",
+        "cellSize",
+    ] + resTypeListFromFiles
     dataDF = pd.DataFrame(columns=columnsList)
     resTypeListOne = []
 
