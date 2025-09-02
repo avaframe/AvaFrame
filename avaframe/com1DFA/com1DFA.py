@@ -1879,7 +1879,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # setup a result fields info data frame to save max values of fields and avalanche front
     resultsDF = setupresultsDF(resTypesLast, cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"))
 
-    # TODO: add here different time stepping options
+    # Add different time stepping options here
     log.debug("Use standard time stepping")
     # Initialize time and counters
     nSave = 1
@@ -2765,17 +2765,16 @@ def exportFields(
             # (by dividing the peak kinetic energy per cell by the real area of the cell)
             resField = resField * 0.001 / dem["areaRaster"]
 
-        if not cfg["EXPORTS"].getboolean("dataSave"):
-            dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
-            # create directory
-            outDirPeak = outDir / "peakFiles" / "timeSteps"
-            fU.makeADir(outDirPeak)
-            outFile = outDirPeak / dataName
-            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
-            log.debug(
-                "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
-                % (resType, timeStep)
-            )
+        dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
+        # create directory
+        outDirPeak = outDir / "peakFiles" / "timeSteps"
+        fU.makeADir(outDirPeak)
+        outFile = outDirPeak / dataName
+        IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+        log.debug(
+            "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
+            % (resType, timeStep)
+        )
 
         if TSave == "final":
             log.debug(

@@ -150,7 +150,7 @@ def isEqualASCheader(headerA, headerB):
     )
 
 
-def writeResultToRaster(header, resultArray, outFileName, flip=False):
+def writeResultToRaster(header, resultArray, outFileName, flip=False, useCompression=True):
     """Write 2D array to a raster file with header and save to location of outFileName
 
     Parameters
@@ -165,6 +165,9 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
     flip: boolean
         if True, flip the rows of the resultArray when writing. AF considers the first line in a data array to be the
         southernmost one. Some formats (e.g. tif) have the northernmost line first
+    useCompression: boolean
+        True if compression should be used on writing tiff files (lzw)
+
 
     Returns
     -------
@@ -189,7 +192,9 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
         "count": 1,
         "dtype": resultArray.dtype,
     }
-    extraKwargs = {"compress": "lzw"} if driver == "GTiff" else {}
+
+    if useCompression:
+        extraKwargs = {"compress": "lzw"} if driver == "GTiff" else {}
 
     with rasterio.open(outFile, "w", **commonKwargs, **extraKwargs) as rasterOut:
         data = np.flipud(resultArray) if flip else resultArray
