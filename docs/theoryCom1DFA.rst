@@ -698,7 +698,7 @@ It is well known that the bulk viscosity :math:`\eta_m` and the yield shear stre
 volumetric sediment concentration :math:`C_v`. The dependencies are expressed by following equations :cite:`ObJu1985, ObJu1993`:
 
 .. math::
-    \eta = \alpha_1 \cdot e^{\beta_1 \cdot C_v}
+    \eta_m = \alpha_1 \cdot e^{\beta_1 \cdot C_v}
     :label: eta-cv
 
 .. math::
