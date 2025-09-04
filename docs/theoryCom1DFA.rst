@@ -483,8 +483,8 @@ For solid-fluid mixtures like debris flows, where the properties of the fluid ph
 the shear stress tensor is, among other things, a function of dynamic viscosity :math:`\eta_m` and shear rate :math:`\dot\gamma` (:ref:`theoryCom1DFA:Rheological models`).
 
 .. math::
-    \tau_i = f(\eta_m,\dot\gamma,\overline{h},\rho_m,t,\mathbf{x})
-    :label: samosAT friction model
+    \tau^{(b)}_i = f(\eta_m,\dot\gamma,\overline{h},\rho_m,t,\mathbf{x})
+    :label: rheological model
 
 With
 
@@ -511,6 +511,7 @@ The bottom shear stress simply reads:
 
 .. math::
  \tau^{(b)} = \tan{\delta}\,\sigma^{(b)}
+ :label: Mohr-Coulomb friction model
 
 :math:`\tan{\delta}=\mu` is the friction coefficient (and :math:`\delta` the friction angle). The bottom shear stress linearly
 increases with the normal stress component :math:`\sigma^{(b)}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
@@ -530,6 +531,7 @@ The bottom shear stress then reads:
 
 .. math::
  \tau^{(b)} = c_{\text{dyn}}\,\rho_0\,\bar{u}^2
+ :label: Chezy friction model
 
 :math:`c_{\text{dyn}}` is the viscous friction coefficient. The bottom shear stress
 is a quadratic function of the velocity. (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
@@ -537,6 +539,8 @@ is a quadratic function of the velocity. (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa
 This model enables to reach more realistic velocities for avalanche simulations.
 The draw back is that the avalanche doesn't stop flowing before the slope inclination approaches zero.
 This implies that the avalanche flows to the lowest local point.
+
+.. _voellmyfrict:   
 
 Voellmy friction model
 +++++++++++++++++++++++
@@ -546,6 +550,7 @@ in order to take advantage of both. This leads to the following friction law:
 
 .. math::
  \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} + \frac{g}{\xi}\,\rho_0\,\bar{u}^2
+ :label: Voellmy friction model
 
 
 where :math:`\xi` is the turbulent friction term. This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`.
@@ -561,6 +566,7 @@ In order to increase the friction force and make the avalanche flow stop on stee
 
 .. math::
  \tau^{(b)} = \tau_0 + \tan{\delta}\,\sigma^{(b)} + \frac{g}{\xi}\,\rho_0\,\bar{u}^2
+ :label: VoellmyMinShear friction model
 
 
 .. _samosatfrict:
@@ -569,12 +575,13 @@ SamosAT friction model
 +++++++++++++++++++++++
 
 SamosAT friction model is a modification of some more classical models
-such as Voellmy model :ref:`theoryCom1DFA:Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
+such as Voellmy model :ref:`voellmyfrict`. The basal shear stress tensor :math:`\tau^{(b)}`
 is expressed as (:cite:`Sa2007`):
 
 .. math::
    \tau^{(b)} = \tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}
     + \frac{\rho_0\,\overline{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}
+ :label: SamosAT friction model
 
 With
 
@@ -618,6 +625,7 @@ This approach is based on the Voellmy friction model but with an enthalpy depend
 
 .. math::
  \tau^{(b)} = \mu\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2
+ :label: Wet snow friction model
 
 
 where,
@@ -625,6 +633,7 @@ where,
 
 .. math::
   \mu = \mu_0\,\exp(-enthalpy/enthRef)
+  :label: mu enthalpy
 
 
 The total specific enthalpy of the particles is initialized based on their initial temperature, specific heat capacity,
@@ -633,6 +642,7 @@ Throughout the computation, the particles specific enthalpy is then computed fol
 
 .. math::
   enthalpy = totalEnthalpy - g\,z - 0.5\,\bar{u}^2
+  :label: enthalpy
 
 Rheological Models
 """""""""""""""""""
@@ -652,10 +662,10 @@ and non-Newtonian fluids, in which a yield shear stress has to be exceeded or sh
 The rheological models are incorporated into a single, general form, which can be expressed as follows:
 
 .. math::
-    \tau = \tau_y + \eta_m \cdot \dot\gamma^n + C \cdot \dot\gamma^2
+    \tau^{(b)} = \tau_y + \eta_m \cdot \dot\gamma^n + C \cdot \dot\gamma^2
     :label: rheology-general
 
-The yield shear stress :math:`\tau_y` :math:`[Pa]` defines a lower limit below which no flow takes place. 
+The yield shear stress :math:`\tau_y` :math:`[Pa]` defines a lower limit below which no flow takes place (see :math:`\tau_0` at :ref:`samosatfrict`). 
 The dynamic viscosity :math:`\eta_m` :math:`[Pa \cdot s]` quantifies the internal frictional force between two neighbouring layers of the mixture in relative motion. 
 :math:`\dot\gamma` is the flow velocity gradient, or shear rate, :math:`\frac{du}{dz}` :math:`[s^{-1}]` along the axis normal to the slope (flow thickness).
 The flow index :math:`n` describes the rheological behaviour of the mixture as :cite:`KaZhHaHe2025`:
@@ -729,7 +739,7 @@ collisions under high deformation rates.
 The resulting shear stress reads:
 
 .. math::
-    \tau = \tau_y + \eta_m \cdot \dot{\gamma} + C \cdot \dot{\gamma}^2
+    \tau^{(b)} = \tau_y + \eta_m \cdot \dot{\gamma} + C \cdot \dot{\gamma}^2
     :label: oBrienAndJulien
 
 The turbulence and dispersive shear stresses, which are both functions of the second power of the shear rate,
@@ -756,20 +766,20 @@ Herschel and Bulkley
 The model by Herschel and Bulkley :cite:`HeBu1926` is expressed by an empirical power-law equation:
 
 .. math::
-    \tau = \tau_y + \eta_m \cdot \dot{\gamma}^n
+    \tau^{(b)} = \tau_y + \eta_m \cdot \dot{\gamma}^n
     :label: herschelAndBulkley
 
 where the flow index :math:`n` describes the rheological behaviour of the mixture (see above). The factor in front of the shear rate
 was originally introduced as a consistency factor :math:`K`. In :py:mod:`com1DFA` :math:`K` equals to the bulk dynamic viscosity :math:`\eta_m`.
 This rheology applies to fine-grained soil-water mixtures that exhibit shear-thinning or shear-thickening behavior, respectively, with increasing shear rates.
 
-Bingham (1919)
+Bingham
 ++++++++++++++++
 After exceeding a threshold shear stress the rheological model proposed by Bingham :cite:`Bi1919` describes a linear relationship 
 between shear stress and shear rate. The equation reads:
 
 .. math::
-    \tau = \tau_y + \eta_m \cdot \dot{\gamma}
+    \tau^{(b)} = \tau_y + \eta_m \cdot \dot{\gamma}
     :label: bingham
 
 The Bingham model is well-suited to homogeneous suspensions of fine particles at low shear rates (e.g. mudflows, :cite:`Ju2010`).

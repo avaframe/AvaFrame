@@ -169,6 +169,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef double muVoellmyRaster, xsiVoellmyRaster
+  cdef double shearRate, etaObrienAndJulien, tauyObrienAndJulien, lmObrienAndJulien
+  cdef double lambdaBagnold, cObrienAndJulien, etaHerschelAndBulkley, tauyHerschelAndBulkley, etaBingham, tauyBingham                                                                          
   # variables for interpolation
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
@@ -284,6 +286,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
       else:
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
+          if frictType >= 10:
+            # substitution of shear rate gamma
+            if h == 0.0:
+              message = "h is 0 - division by 0"
+              log.error(message)
+              raise ZeroDivisionError(message)
+            shearRate = 3 * uMag / h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
             tau = DFAtlsC.SamosATfric(rho, tau0SamosAt, Rs0SamosAt, muSamosAt, kappaSamosAt, BSamosAt, RSamosAt, uMag, sigmaB, h)
@@ -316,39 +325,40 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             xsiVoellmyRaster = xsiRaster[indCellY, indCellX]
             # Voellmy with optional spatially variable mu and xi values provided as rasters
             tau = muVoellmyRaster * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyRaster
-          elif frictType >= 10:
-            # substitution of shear rate gamma
-            shearRate = 3 * uMag / h
-            if frictType == 10:
-              ## O`Brien and Julien
-              # viscosity
-              etaObrienAndJulien = alpha1EtaObrienAndJulien * math.exp(beta1EtaObrienAndJulien * cvSediment)
-              # yield shear stress
-              tauyObrienAndJulien = alpha2TauyObrienAndJulien * math.exp(beta2TauyObrienAndJulien * cvSediment)
-              # Prandtl mixing length
-              lmObrienAndJulien = 0.4 * h
-              # grain concentration
-              lambdaBagnold = 1 / (math.pow(cvMaxSediment / cvSediment, 1 / 3) - 1)
-              # dispersive shear stress
-              cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhoSediment * lambdaBagnold * lambdaBagnold * sizeSediment * sizeSediment
-              # shear stress
-              tau = tauyObrienAndJulien + etaObrienAndJulien * shearRate + cObrienAndJulien * (shearRate * shearRate)
-            elif frictType == 11:
-              ## Herschel and Bulkley
-              # viscosity
-              etaHerschelAndBulkley = alpha1EtaHerschelAndBulkley * math.exp(beta1EtaHerschelAndBulkley * cvSediment)
-              # yield shear stress
-              tauyHerschelAndBulkley = alpha2TauyHerschelAndBulkley * math.exp(beta2TauyHerschelAndBulkley * cvSediment)
-              # shear stress
-              tau = tauyHerschelAndBulkley + etaHerschelAndBulkley * math.pow(shearRate, nHerschelAndBulkley)
-            elif frictType == 12:
-              ## Bingham
-              # viscosity
-              etaBingham = alpha1EtaBingham * math.exp(beta1EtaBingham * cvSediment)
-              # yield shear stress
-              tauyBingham = alpha2TauyBingham * math.exp(beta2TauyBingham * cvSediment)
-              # shear stress
-              tau = tauyBingham + etaBingham * shearRate
+          elif frictType == 10:
+            ## O`Brien and Julien
+            if cvSediment >= cvMaxSediment:
+              message = "cvSediment must be smaller than cvMaxSediment"
+              log.error(message)
+              raise ValueError(message)
+            # viscosity
+            etaObrienAndJulien = alpha1EtaObrienAndJulien * math.exp(beta1EtaObrienAndJulien * cvSediment)
+            # yield shear stress
+            tauyObrienAndJulien = alpha2TauyObrienAndJulien * math.exp(beta2TauyObrienAndJulien * cvSediment)
+            # Prandtl mixing length
+            lmObrienAndJulien = 0.4 * h
+            # grain concentration
+            lambdaBagnold = 1.0 / (math.pow(cvMaxSediment / cvSediment, 1.0 / 3.0) - 1.0)
+            # dispersive shear stress
+            cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhoSediment * lambdaBagnold * lambdaBagnold * sizeSediment * sizeSediment
+            # shear stress
+            tau = tauyObrienAndJulien + etaObrienAndJulien * shearRate + cObrienAndJulien * (shearRate * shearRate)
+          elif frictType == 11:
+            ## Herschel and Bulkley
+            # viscosity
+            etaHerschelAndBulkley = alpha1EtaHerschelAndBulkley * math.exp(beta1EtaHerschelAndBulkley * cvSediment)
+            # yield shear stress
+            tauyHerschelAndBulkley = alpha2TauyHerschelAndBulkley * math.exp(beta2TauyHerschelAndBulkley * cvSediment)
+            # shear stress
+            tau = tauyHerschelAndBulkley + etaHerschelAndBulkley * math.pow(shearRate, nHerschelAndBulkley)
+          elif frictType == 12:
+            ## Bingham
+            # viscosity
+            etaBingham = alpha1EtaBingham * math.exp(beta1EtaBingham * cvSediment)
+            # yield shear stress
+            tauyBingham = alpha2TauyBingham * math.exp(beta2TauyBingham * cvSediment)
+            # shear stress
+            tau = tauyBingham + etaBingham * shearRate
           else:
             tau = 0.0
 
