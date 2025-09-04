@@ -766,7 +766,7 @@ After exceeding a threshold shear stress the rheological model proposed by Bingh
 between shear stress and shear rate. The equation reads:
 
 .. math::
-    \tau = \tau_y + \eta \cdot \dot{\gamma}
+    \tau = \tau_y + \eta_m \cdot \dot{\gamma}
     :label: bingham
 
 The Bingham model is well-suited to homogeneous suspensions of fine particles at low shear rates (e.g. mudflows, :cite:`Ju2010`).
