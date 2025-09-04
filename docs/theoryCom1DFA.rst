@@ -663,7 +663,7 @@ The flow index :math:`n` describes the rheological behaviour of the mixture as :
 - :math:`1 < n < 2` a shear-thickening non-Newtonian fluid-like behaviour,
 - :math:`n = 2` an intertial mixture (fluid or solid).
 
-:math:`C` incorporates the turbulent and dispersive shear stresses :math:`[kg \cdot m^2 \cdot m^{-3}]`,
+:math:`C` incorporates the turbulent and dispersive shear stresses :math:`[kg \cdot m^{-1}]`,
 which considers the inertial impact between the mixture particles as well :cite:`ObJu1985`.
 
 Depending on how the parameters are selected, you can choose between three different models. :numref:`Overview-rheological-models-table` gives an overview
