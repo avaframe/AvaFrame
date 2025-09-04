@@ -169,6 +169,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef double muVoellmyRaster, xsiVoellmyRaster
+  cdef double shearRate, etaObrienAndJulien, tauyObrienAndJulien, lmObrienAndJulien, lambdaBagnold, cObrienAndJulien, etaHerschelAndBulkley, tauyHerschelAndBulkley, etaBingham, tauyBingham                                                                          
   # variables for interpolation
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
