@@ -2187,7 +2187,7 @@ def setupresultsDF(resTypes, cfgRangeTime):
     resultsDF: dataframe
         data frame with on line for iniital time step and max and mean values of fields
     """
-
+    # TODO catch empty resTypes
     resDict = {"timeStep": [0.0]}
     for resT in resTypes:
         if resT != "particles" and resT != "FTDet":
