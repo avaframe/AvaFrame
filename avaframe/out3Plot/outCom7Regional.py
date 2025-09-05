@@ -40,10 +40,14 @@ def createReportPlot(dirListGrouped, inputDEM, outputDir, groupExtents, groupFea
     # Read and plot DEM
     demData = rasterUtils.readRaster(inputDEM)
     header = demData["header"]
-    extentMinMax = pU.createExtentMinMax(demData["rasterData"], header)
+    cellSize = header["cellsize"]
+    xMin = header["xllcenter"]
+    yMin = header["yllcenter"]
+    xMax = xMin + cellSize * header["ncols"]
+    yMax = yMin + cellSize * header["nrows"]
     im = ax.imshow(
         demData["rasterData"],
-        extent=extentMinMax,
+        extent=[xMin, xMax, yMin, yMax],
         cmap=pU.cmapDEM.reversed(),
         alpha=1,
         origin="lower",
