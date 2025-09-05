@@ -13,5 +13,5 @@ Here is a list of external data we used, with links and sources if available:
 
   **Datenquelle: Land Tirol - data.tirol.gv.at**
 
-  https://www.data.gv.at/katalog/dataset/land-tirol_tirolgelnde
+  `Open data Austria Land Tirol <https://www.data.gv.at/datasets?query=Gelaende&locale=de&publisher=Land%20Tirol&page=1&limit=50>`_
 
