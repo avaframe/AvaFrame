@@ -11,6 +11,7 @@ from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils, cfgHandling
 from avaframe.in3Utils import logUtils
 from avaframe.in2Trans import rasterUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 from rasterio.merge import merge
 
@@ -27,7 +28,7 @@ def com7RegionalMain(cfgMain, cfg):
     Parameters
     ----------
     cfgMain : configparser.ConfigParser
-        Main configuration settings
+        Main avaframe configuration settings
     cfg : configparser.ConfigParser
         Regional configuration settings with potential overrides
 
@@ -227,7 +228,7 @@ def processAvaDirCom1Regional(cfgMain, cfgCom7, avalancheDir):
 
 
 def moveOrCopyPeakFiles(cfg, avalancheDir):
-    """Consolidate peak files from multiple avalanche directories.
+    """Collects peak files from multiple sub-avalanche directories.
 
     Creates directory allPeakFiles: Contains peak files from all avalanche directories
 
@@ -261,7 +262,7 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
     for dirPath in [allPeakFilesDir]:
         if dirPath.exists():
             shutil.rmtree(str(dirPath))
-        dirPath.mkdir(parents=True, exist_ok=True)
+        fU.makeADir(dirPath)
 
     # Get operation type
     operation = shutil.move if cfg["GENERAL"].getboolean("moveInsteadOfCopy") else shutil.copy2
@@ -363,7 +364,7 @@ def mergeRasters(rasterFiles, bounds, mergeMethod="max"):
 
     mergedData = np.squeeze(mergedData)
 
-    # Calculate dimensions for merged raster
+    # Calculate dimensions for merged raster; helps checking if merged raster is correct
     nCols = int((bounds["xMax"] - bounds["xMin"]) / outputTransform[0])
     nRows = int((bounds["yMax"] - bounds["yMin"]) / outputTransform[0])
     #

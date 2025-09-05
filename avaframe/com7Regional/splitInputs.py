@@ -7,6 +7,7 @@ import pathlib
 import time
 
 from avaframe.in2Trans import rasterUtils
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in1Data import getInput
 from avaframe.in3Utils.initializeProject import initializeFolderStruct
 from avaframe.in2Trans import shpConversion as shpConv
@@ -18,7 +19,9 @@ log = logging.getLogger(__name__)
 
 def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
     """Process and organize avalanche input data into individual avalanche directories based
-    on release area's "group" and "scenario" attributes provided in the release area file.
+    on release area's "group" and "scenario" attributes provided in the release area file. If no
+    "group" attribute is provided, one avalanche directory per feature will be created (scenario is
+    ignored in this case).
 
     Parameters
     ----------
@@ -58,14 +61,14 @@ def splitInputsMain(avalancheDir, outputDir, cfg, cfgMain):
     if len(inputSimFilesAll["relFiles"]) == 1:
         inputShp = inputSimFilesAll["relFiles"][0]
     else:
-        log.error(f"Expected 1 release area file, found {len(inputSimFilesAll['relFiles'])}.")
+        log.error(f"Expected only one release area file, found {len(inputSimFilesAll['relFiles'])}.")
         return
 
     # Get the input DEM
     inputDEM = getInput.getDEMPath(avalancheDir)
 
     # Create the output directory
-    outputDir.mkdir(parents=True, exist_ok=True)
+    fU.makeADir(outputDir)
 
     # Step 1: Create the directory list
     log.info("Initializing folder structure for each group...")
@@ -429,7 +432,7 @@ def clipAndMoveOptionalInput(allSimInputFiles, outputDir, groupExtents):
 
             # Create output directory and save clipped shp
             targetDir = entry / "Inputs" / dirType
-            targetDir.mkdir(parents=True, exist_ok=True)
+            fU.makeADir(targetDir)
             outputPath = targetDir / f"{entry.name}_{dirType}.shp"
             shpConv.writeShapefile(outputPath, fields, fieldNames, clippedFeatures, srs)
             log.debug(f"Clipped {dirType} shapefile saved to: {outputPath}")
