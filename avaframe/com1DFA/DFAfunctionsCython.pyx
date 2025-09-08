@@ -761,6 +761,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
   cdef double w[4]
   cdef double wNew[4]
+
   # loop on particles
   for k in range(nPart):
     m = mass[k]
@@ -784,6 +785,19 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     uMag = DFAtlsC.norm(ux, uy, uz)
     uMagt0 = DFAtlsC.norm(ux, uy, uz)
 
+    # check if particle's mass is zero then remove particle
+    if m == 0:
+      # if the particle's mass is zero remove particle but keep info in separate stoppedParticles dict
+      xStoppedArray = np.append(xStoppedArray, xArray[k])
+      yStoppedArray = np.append(yStoppedArray, yArray[k])
+      mStoppedArray = np.append(mStoppedArray, mass[k])
+      idStoppedArray = np.append(idStoppedArray, ID[k])
+      uMagStoppedArray = np.append(uMagStoppedArray, uMagNew)
+      massStopped = massStopped + mass[k]
+      notStopParticle[k] = 0  # particle is deleted
+      nStop = nStop + 1
+      continue  # this particle will be removed, skip what is below and directly go to the next particle
+
     # procede to time integration
     # operator splitting
     # estimate new velocity due to driving force
@@ -804,9 +818,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     massEntrained = massEntrained + dM[k]
     massDetrained = massDetrained + dMDet[k]
 
-    # Stopped particles with velocity = 0 or mass = 0
-    if delStoppedParticles == 1:
-      if uMagNew == 0 or mNew == 0:
+    # Stopped particles with velocity = 0
+    if delStoppedParticles == 1 and uMagNew == 0:
         xStoppedArray = np.append(xStoppedArray, xArray[k])
         yStoppedArray = np.append(yStoppedArray, yArray[k])
         mStoppedArray = np.append(mStoppedArray, mass[k])
@@ -1052,7 +1065,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', snowSlide=snowSlide)
 
   # remove particles that have mass = 0 or velocity = 0
-  if nStop > 0 and delStoppedParticles == 1:
+  if nStop > 0:
     indRemoveParticle = np.array([], dtype=np.int64)
     for k in range(len(keepParticle)):
       # consider particles that are removed because they exit the domain
@@ -1063,6 +1076,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     notStopParticle = np.delete(notStopParticle, indRemoveParticle)
     mask = np.array(np.asarray(notStopParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nStop, 'because their mass or velocity is zero', snowSlide=snowSlide)
+
   return particles
 
 
