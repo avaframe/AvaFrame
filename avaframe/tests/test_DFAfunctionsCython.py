@@ -211,7 +211,6 @@ def test_updatePositionC():
         "dissDam": "1",
         "snowSlide": "1",
         "wetSnow": "1",
-        "delStoppedParticles": "0",
         "adaptSfcStopped": "0",
         "adaptSfcDetrainment": "0",
         "adaptSfcEntrainment": "0",
@@ -537,7 +536,7 @@ def test_updatePositionC():
         "forceSPHZ": np.asarray([0.0, 0.0, 0.0]),
     }
 
-    cfg["GENERAL"]["delStoppedParticles"] = "1"
+    cfg["GENERAL"]["adaptSfcStopped"] = "1"
     cfg["GENERAL"]["explicitFriction"] = "1"
     cfg["GENERAL"]["snowSlide"] = "0"
     typeStop = 1
