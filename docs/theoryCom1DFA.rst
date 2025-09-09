@@ -254,6 +254,9 @@ The adapted surface at a specific time step :math:`z(t)` is computed as (with :m
 In every time step the surface is adapted, the :ref:`DFAnumerics:Cell normals` and
 :ref:`DFAnumerics:Cell area` are also adapted.
 
+If the surface is adapted due to stopped particles (velocity = 0 and ``adaptSfcStopped = 1``), the stopped particles
+are deleted and stored in a separate dictionary ``stoppedParticles`` (see :ref:`com1DFAAlgorithm:Particle properties`).
+
 .. Note::
 
     This feature requires more detailed testing and may cause numerical problems if the change in snow
