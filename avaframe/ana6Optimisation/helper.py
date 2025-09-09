@@ -16,10 +16,10 @@ from rasterio.mask import mask
 import geopandas as gpd
 import json
 import re
+import time
 
 import avaframe.out3Plot.plotUtils as pU
-from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import cfgUtils, initializeProject, logUtils
 from avaframe.in3Utils import cfgHandling
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.rasterUtils as IOf
@@ -49,12 +49,10 @@ from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
 
 from sklearn.ensemble import ExtraTreesRegressor  # robust tree surrogate (TPE-like behavior)
 
-from pyDOE import lhs
+from scipy.stats import norm, qmc
 
 
-
-
-def readParamSetDF(inDir, varParList):
+def readParamSetDF(inDir, varParList, paramSelected=None):
     """
     Read parameter sets from .ini files in a directory and build a DataFrame.
 
@@ -74,7 +72,7 @@ def readParamSetDF(inDir, varParList):
     # List to hold all parameters sets
     paramSet = []
     order = []
-    # List to hold the corresponding filenames
+    sampleMethods = []
     filenames = []
 
     # Loop over all files in the folder
@@ -90,6 +88,15 @@ def readParamSetDF(inDir, varParList):
             if 'VISUALISATION' in config.sections():
                 # config is inifile
                 index = config['VISUALISATION']['scenario']
+
+                if 'VISUALISATION' in config.sections():
+                    # config is inifile
+                    index = config['VISUALISATION']['scenario']
+                    if 'sampleMethod' in config['VISUALISATION']:
+                        sampleMethod = config['VISUALISATION']['sampleMethod']
+                    else:
+                        sampleMethod = np.nan
+
             row = []  # row contains 1 row
             for param in varParList:
                 section = probAna.fetchParameterSection(config, param)
@@ -98,6 +105,7 @@ def readParamSetDF(inDir, varParList):
                 row.append(value)
 
             order.append(index)
+            sampleMethods.append(sampleMethod)
             paramSet.append(row)  # rows contains all rows
             filenames.append(os.path.splitext(filename)[0])
 
@@ -105,8 +113,15 @@ def readParamSetDF(inDir, varParList):
     paramSetDF = pd.DataFrame({
         'simName': filenames,
         'parameterSet': paramSet,  # [row for row in paramSet], # Wrap each row as a list
-        'order': pd.to_numeric(order)  # convert to int
+        'order': pd.to_numeric(order),  # convert to int
+        'sampleMethod': sampleMethods
     })
+
+    # add selected parameters as columns
+    dummy = pd.DataFrame(paramSetDF['parameterSet'].tolist(), columns=varParList)[paramSelected]
+    paramSetDF = pd.concat([paramSetDF, dummy], axis=1)
+
+
     return paramSetDF
 
 
@@ -128,23 +143,7 @@ def readArealIndicators(inDir):
     with open(inDir, "rb") as f:
         all_results = pickle.load(f)
 
-    rows = []
-    for entry in all_results:
-        # Remove _ppr at the end if it exists
-        clean_name = re.sub(r"_ppr$", "", entry["sim_name"])
-        indicators = entry["indicator_dict"]
-        row = {"simName": clean_name}
-
-        for key, subdict in indicators.items():
-            # Store short names: e.g., TP_cells, TP_area
-            short_key = key.replace("truePositive", "TP_SimRef") \
-                .replace("falsePositive", "FP_SimRef") \
-                .replace("falseNegative", "FN_SimRef")
-            row[f"{short_key}_cells"] = subdict.get("nCells", None)
-            row[f"{short_key}_area"] = subdict.get("areaSum", None)
-        rows.append(row)
-
-    indicatorsDF = pd.DataFrame(rows)
+    indicatorsDF = pd.DataFrame(all_results)
     return indicatorsDF
 
 
@@ -202,7 +201,7 @@ def addLossMetrics(df):
     return df
 
 
-def buildFinalDF(avaName, cfgProb):
+def buildFinalDF(avalancheDir, cfgProb, paramSelected=None):
     """
     Build the final merged DataFrame for a given avalanche.
 
@@ -211,8 +210,8 @@ def buildFinalDF(avaName, cfgProb):
 
     Parameters
     ----------
-    avaName : str
-        ava + Avalanche name
+    avalancheDir : str
+        Path of avalanche directory
     cfgProb : configparser.ConfigParser
         Config parser
     Returns
@@ -222,37 +221,34 @@ def buildFinalDF(avaName, cfgProb):
         - ``simName``
         - ``parameterSet``
         - ``order``
-        - AIMEC results columns
         - Areal indicator columns
         - Evaluation metrics (recall, precision, f1_score, tversky_score, optimisationVariable)
     """
-
-    avalancheDir = 'data/' + avaName
-
     # Load variables that a varied
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
 
     # Folder where ini files from simulations are
-    inDir = pathlib.Path('../' + avalancheDir + '/Outputs/com8MoTPSA/configurationFiles')
+    inDir = pathlib.Path(avalancheDir, 'Outputs/com8MoTPSA/configurationFiles')
     # read parameterSetDF
-    paramSetDF = readParamSetDF(inDir, varParList)
+    paramSetDF = readParamSetDF(inDir, varParList, paramSelected)
 
     # dataframe from AIMEC
-    df_aimec = pd.read_csv(
-        '../' + avalancheDir + '/Outputs/ana3AIMEC/com8MoTPSA/Results_' + avaName + '_ppr_lim_1_w_600resAnalysisDF.csv')
-
+    # df_aimec = pd.read_csv(
+    #    '../' + avalancheDir + '/Outputs/ana3AIMEC/com8MoTPSA/Results_' + avaName + '_ppr_lim_1_w_600resAnalysisDF.csv')
     # merge aimec with parameterSet
-    df_merged = pd.merge(paramSetDF, df_aimec, on='simName', how='inner')
+    # df_merged = pd.merge(paramSetDF, df_aimec, on='simName', how='inner')
 
     # Folder where pickle file is saved
-    arealIndicatorDir = pathlib.Path('../' + avalancheDir + '/Outputs' + '/out1Peak' + '/arealIndicators.pkl')
+    arealIndicatorDir = pathlib.Path(avalancheDir, 'Outputs', 'out1Peak', 'arealIndicators.pkl')
     # read areal indicators
     indicatorsDF = readArealIndicators(arealIndicatorDir)
 
     # merge df
-    df_merged = df_merged.merge(indicatorsDF, on="simName", how="left")
+    df_merged = pd.merge(paramSetDF, indicatorsDF, on='simName', how='inner')
+
     # add optimisation variables
     finalDF = addLossMetrics(df_merged)
+
     return finalDF
 
 
@@ -282,10 +278,10 @@ def createDFParameterLoss(df, paramAll, paramSelected):
         Same as ``paramLossDF`` but with the selected parameters normalised
         to the range [0, 1] using min–max scaling.
     """
-    paramLossDF = pd.DataFrame(df['parameterSet'].tolist(), columns=paramAll)
-    paramLossDF = paramLossDF[paramSelected]
+    paramLossDF = df[paramSelected]
     paramLossDFScaled = (paramLossDF - paramLossDF.min()) / (paramLossDF.max() - paramLossDF.min())  # normalise
-    paramLossDF['Loss'] = df['optimisationVariable']  # merging works with different index, but it is the right value
+    paramLossDF['Loss'] = df[
+        'optimisationVariable']  # merging works with different index, but it is the right value
     paramLossDFScaled['Loss'] = df[
         'optimisationVariable']  # merging works with different index, but it is the right value
     return paramLossDF, paramLossDFScaled
@@ -308,7 +304,7 @@ def fitSurrogate(df):
             ConstantKernel(1.0, (1e-6, 1e6))
             * Matern(length_scale=np.ones(n_features),
                      length_scale_bounds=(1e-3, 1e6),
-                     nu=2.5)
+                     nu=1.5)
             + WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-8, 1e2))
     )
 
@@ -365,89 +361,332 @@ def KFoldCV(X,y, pipe, pipeName):
     return scores
 
 
-def optimiseNonSeqV1(pipe, paramSelected):
+def optimiseNonSeqV1(pipe, paramBounds):
+    """
+    Creates a number of samples, predicts loss function with surrogate. Return a dictionary with stats of the best N
+    surrogate samples.
+    Parameters
+    ----------
+    pipe :
+    paramBounds:
 
-    # ToDo create LH samples with avaframe functions
+    Returns
+    -------
+    topNStats : pandas.DataFrame
+        DataFrame with simName, and and areal indicators,
+    """
 
-    param_bounds = {
-        'Dry-friction coefficient (-)': (0.15, 0.4),
-        'Density (kg/m^3)': (50, 300),
-        'Deposition rate 21  (m/s)': (0.15, 0.5),
-        'Basal drag coeff. 1-2 (-)': (0.02, 0.05),
-        'Top drag coeff. (-)': (1e-5, 1e-3),
-        'Avalanche shear strength (Pa)': (0.0, 5.0),
-        'Turbulent drag coefficient (-)': (0.0015, 0.005),
-    }
+    paramSelected = list(paramBounds.keys())
+    bounds = np.array(list(paramBounds.values()), dtype=float)  # shape (d,2)
+    d = bounds.shape[0]
 
-    # 10.000 zufällige Punkte
-    N = 10000
-    lhs_unit = lhs(len(paramSelected), samples=N)  # neue LHS samples scaled
+    # get LH canditates
+    sampler = qmc.LatinHypercube(d=d, seed=12345)
+    sample = sampler.random(n=1000000)
+    X0 = qmc.scale(sample, bounds[:, 0], bounds[:, 1])
 
-    X_candidates = np.array([
-        lhs_unit[:, i] * (param_bounds[p][1] - param_bounds[p][0]) + param_bounds[p][0]
-        for i, p in enumerate(paramSelected)
-    ]).T
-
-    df_candidates = pd.DataFrame(X_candidates, columns=paramSelected)
+    df_candidates = pd.DataFrame(X0, columns=paramSelected)
 
     # Vorhersage des Verlusts mit GP-Modell
     mu, sigma = pipe.predict(df_candidates, return_std=True)
 
-    '''
-    # Besten Punkt finden
+    topNStat, _ = analyzeTopCandidates(df_candidates, mu, sigma, paramSelected, N=100)
+
+    return topNStat
+
+
+def analyzeTopCandidates(df_candidates, mu, sigma, param_cols, N=100):
+    """
+    Analysis of top N candidates and return statistic with topN and best surrogate values.
+
+    """
+
+    # --- Top N ---
+    idx_topN = np.argsort(mu)[:N]
+    topNData = df_candidates.iloc[idx_topN].copy()
+    topNData["mu"] = mu[idx_topN]
+    topNData["sigma"] = sigma[idx_topN]
+
+    mean_params = topNData[param_cols].mean()
+    std_params = topNData[param_cols].std()
+    mean_mu = topNData["mu"].mean()
+    std_mu = topNData["mu"].std()
+    mean_sigma = topNData["sigma"].mean()
+    std_sigma = topNData["sigma"].std()
+
+    print(f"\n🔍 Mittelwerte ± Std (Top {N}):")
+    for p in param_cols:
+        m, s = mean_params[p], std_params[p]
+        perc = (s / m * 100) if m != 0 else np.nan
+        print(f"  {p:30s}: {m:.6f} ± {s:.6f} ({perc:.1f}%)")
+    perc_mu = (std_mu / mean_mu * 100) if mean_mu != 0 else np.nan
+    perc_sigma = (std_sigma / mean_sigma * 100) if mean_sigma != 0 else np.nan
+    print(f"📉 mu:    {mean_mu:.4f} ± {std_mu:.4f} ({perc_mu:.1f}%)")
+    print(f"📊 sigma: {mean_sigma:.4f} ± {std_sigma:.4f} ({perc_sigma:.1f}%)")
+
+    # --- Bester einzelner Punkt ---
     idx_best = np.argmin(mu)
-    best_params = df_candidates.iloc[idx_best]
+    best_params = df_candidates.iloc[idx_best].copy()
     best_loss = mu[idx_best]
+    best_sigma = sigma[idx_best]
 
-    print("🔍 Beste Parameterkombination laut GP:")
-    print(best_params)
-    print(f"📉 Erwarteter Verlust: {best_loss:.4f}")
+    print("\n🔍 Beste einzelne Parameterkombination laut GP:")
+    for p in param_cols:
+        print(f"  {p:30s}: {best_params[p]:.4f}")
+    print(f"📉 mu:    {best_loss:.4f}")
+    print(f"📊 sigma: {best_sigma:.4f}")
+
+    return {
+        f"TopNBest": {
+            "mean_params": mean_params,
+            "std_params": std_params,
+            "mean_mu": mean_mu,
+            "std_mu": std_mu,
+            "mean_sigma": mean_sigma,
+            "std_sigma": std_sigma,
+        },
+        "Best": {
+            "params": best_params,
+            "mu": best_loss,
+            "sigma": best_sigma,
+        }
+    }, topNData
+
+
+def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
+    """
+    Speichert drei Tabellen als ein Bild:
+      1) TopNBest (Mittelwert/Std/Rel.-Std der Parameter + mu/sigma + optimisationVariable der gewählten Simulation)
+      2) Best (beste Parameterkombination + mu/sigma)
+      3) FinalDF-Eintrag (beste Zeile nach optimisationVariable) transponiert: ausgewählte Parameter + optimisationVariable
+    """
+    # --- TopNBest-DataFrame bauen ---
+    top = results_dict["TopNBest"]
+    mean_params = pd.Series(top["mean_params"]).astype(float)
+    std_params = pd.Series(top["std_params"]).astype(float)
+    rel_params = (std_params / mean_params.replace(0, np.nan) * 100.0)
+
+    df_top = pd.DataFrame({
+        "mean": mean_params,
+        "std": std_params,
+        "rel_std_%": rel_params
+    })
+
+    # mu/sigma Zeilen anhängen
+    mean_mu = float(top["mean_mu"])
+    std_mu = float(top["std_mu"])
+    mean_sigma = float(top["mean_sigma"])
+    std_sigma = float(top["std_sigma"])
+
+    rel_mu = (std_mu / mean_mu * 100.0) if mean_mu != 0 else np.nan
+    rel_sigma = (std_sigma / mean_sigma * 100.0) if mean_sigma != 0 else np.nan
+
+    df_top = pd.concat([
+        df_top,
+        pd.DataFrame({
+            "mean": [mean_mu, mean_sigma],
+            "std": [std_mu, std_sigma],
+            "rel_std_%": [rel_mu, rel_sigma]
+        }, index=["mu", "sigma"])
+    ])
+
+    # zusätzliche Zeile: optimisationVariable der gewünschten Simulation (aus finalDF gefiltert per simName)
+    if simName is not None:
+        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
+        if not match.empty:
+            df_top.loc[f"optimisationVariable ({simName})", ["mean", "std", "rel_std_%"]] = [float(match.iloc[0]),
+                                                                                             np.nan, np.nan]
+
+    # --- Best-DataFrame bauen ---
+    best = results_dict["Best"]
+    best_params = pd.Series(best["params"]).astype(float)
+    df_best = pd.DataFrame({"value": best_params})
+    df_best.loc["mu", "value"] = float(best["mu"])
+    df_best.loc["sigma", "value"] = float(best["sigma"])
+
+    # --- FinalDF (beste Zeile nach optimisationVariable), transponiert ---
+    if isinstance(paramSelected, (list, tuple, pd.Index, np.ndarray)):
+        param_cols = list(paramSelected)
+    else:
+        param_cols = [paramSelected]
+    need = param_cols + ["optimisationVariable"]
+
+    best_idx = finalDF["optimisationVariable"].idxmin()
+    row = finalDF.loc[best_idx, need]
+    df_final = pd.DataFrame({"value": row})
+
+    # --- Formatierhilfe ---
+    def fmt_df(df, cols=None, nd=6):
+        df = df.copy()
+        cols = df.columns if cols is None else cols
+        for c in cols:
+            orig = df[c]
+            nums = pd.to_numeric(orig, errors="coerce")
+            fmt_vals = nums.map(lambda x: f"{x:.{nd}g}" if pd.notnull(x) else None)
+            df[c] = np.where(nums.notnull(), fmt_vals, orig.astype(str))
+        return df
+
+    df_top_disp = fmt_df(df_top, ["mean", "std", "rel_std_%"], nd=6)
+    df_best_disp = fmt_df(df_best, ["value"], nd=6)
+    df_final_disp = fmt_df(df_final, ["value"], nd=6)
+
+    # --- Plot: drei Tabellen ---
+    n_rows_top = len(df_top_disp)
+    n_rows_best = len(df_best_disp)
+    n_rows_final = len(df_final_disp)
+    fig_h = 1.2 + 0.35 * (n_rows_top + n_rows_best + n_rows_final)
+
+    fig, axes = plt.subplots(3, 1, figsize=(10, fig_h))
+    if title:
+        fig.suptitle(title, fontsize=14, y=0.99)
+
+    axes[0].axis("off")
+    tbl1 = axes[0].table(
+        cellText=df_top_disp.values,
+        rowLabels=df_top_disp.index.tolist(),
+        colLabels=df_top_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl1.auto_set_font_size(False);
+    tbl1.set_fontsize(9);
+    tbl1.scale(1, 1.2)
+    axes[0].set_title("Surrogate TopNBest – Parameterstatistik & μ/σ", fontsize=12, pad=10)
+
+    axes[1].axis("off")
+    tbl2 = axes[1].table(
+        cellText=df_best_disp.values,
+        rowLabels=df_best_disp.index.tolist(),
+        colLabels=df_best_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl2.auto_set_font_size(False);
+    tbl2.set_fontsize(10);
+    tbl2.scale(1, 1.2)
+    axes[1].set_title("Surrogate Best – Best Parameterkombination ", fontsize=12, pad=10)
+
+    axes[2].axis("off")
+    tbl3 = axes[2].table(
+        cellText=df_final_disp.values,
+        rowLabels=df_final_disp.index.tolist(),
+        colLabels=df_final_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl3.auto_set_font_size(False);
+    tbl3.set_fontsize(9);
+    tbl3.scale(1, 1.2)
+    axes[2].set_title("FinalDF – Best Model Run", fontsize=12, pad=10)
+
+    plt.tight_layout(rect=(0, 0, 1, 0.98))
+    out_path = pathlib.Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return out_path
+
+
+def expectedImprovement(mu, sigma, f_best, xi=0.02):
+    sigma = np.maximum(sigma, 1e-12)  # numeric safety
+    imp = f_best - mu - xi  # minimization, thats why the sign is different, xi for finetunig exploitation
+
+    Z = imp / sigma
+    ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
+    ei[sigma <= 1e-12] = 0.0  # set EI to zero where sigma is 1e-12
+    return ei
+
+    # https://ekamperi.github.io/machine%20learning/2021/06/11/acquisition-functions.html
+
+
+def lowerConfidenceBound(mu, sigma, k=2.0):
+    return -mu + k * sigma  # then do: x_next = X0[np.argmax(lcb)]
+
+
+def EINextPoint(pipe, y, paramBounds):
+    paramSelected = list(paramBounds.keys())
+    bounds = np.array(list(paramBounds.values()), dtype=float)  # shape (d,2)
+    d = bounds.shape[0]
+    f_best = np.nanmin(y)
+
+    # get LH canditates
+    sampler = qmc.LatinHypercube(d=d)
+    sample = sampler.random(n=100000)
+    X0 = qmc.scale(sample, bounds[:, 0], bounds[:, 1])
+
+    # predict with pipe
+    mu, sigma = pipe.predict(X0, return_std=True)
+
+    print(mu.mean(), mu.max(), sigma.mean(), sigma.max())
+
+    # EI or LCB for minimization
+    ei = expectedImprovement(mu, sigma, f_best)
+    lcb = lowerConfidenceBound(mu, sigma)
+
+    xBest = X0[np.argmax(ei)].copy()
+    # xBest = X0[np.argmax(lcb)].copy()
+    xBestDict = {feat: float(val) for feat, val in zip(paramSelected, xBest)}
+
+    return xBest, xBestDict, np.max(ei), np.max(lcb)
+
+
+def runCom8MoTPSA(avalancheDir, xBestDict, cfgMain, i=0, optimisationType=None):
+    # Time the whole routine
+    startTime = time.time()
+
+    # log file name; leave empty to use default runLog.log
+    logName = 'runCom8MoTPSA'
+
+    # Start logging
+    log = logUtils.initiateLogger(avalancheDir, logName)
+    log.info('MAIN SCRIPT')
+    log.info('Current avalanche: %s', avalancheDir)
+    # ----------------
+    # Clean input directory(ies) of old work and output files
+    # If you just created the ``avalancheDir`` this one should be clean but if you
+    # already did some calculations you might want to clean it::
+    initializeProject.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
+    # Get module config
+    cfgCom8MoTPSA = cfgUtils.getModuleConfig(com8MoTPSA, toPrint=False)
+
+    # overwrite cfgcom8 with xBest values
+    for param, val in xBestDict.items():
+        # print(param, val)
+        section = probAna.fetchParameterSection(cfgCom8MoTPSA, param)
+        cfgCom8MoTPSA[section][param] = str(val)
+    # give visualisation unique scenario for identifying later
+    cfgCom8MoTPSA['VISUALISATION']['scenario'] = str(i)
+    if optimisationType == 'nonSeq':
+        cfgCom8MoTPSA["VISUALISATION"]["sampleMethod"] = 'nonSeq'
+    else:
+        cfgCom8MoTPSA["VISUALISATION"]["sampleMethod"] = 'EI/LCB'
+
+    # ----------------
+    # Run psa
+    simName = com8MoTPSA.com8MoTPSAMain(cfgMain, cfgInfo=cfgCom8MoTPSA, returnSimName=True)
+    # Print time needed
+    endTime = time.time()
+    log.info('Took %6.1f seconds to calculate.' % (endTime - startTime))
+
+    return simName
+
+
+def saveBestRow(df, y, ei=None, lcb=None, simName=None, csv_path='dummy.csv'):
     '''
-    # Top 100 Punkte mit kleinstem mu
-    idx_top = np.argsort(mu)[:100]
+    If simName = none, dann wird beste bestehende sim gespeichert
+    if simName = not None, dann wird zuletzt ausgeführte sim gespeichert
 
-    top_params = df_candidates.iloc[idx_top].copy()
-    top_params["mu"] = mu[idx_top]
-    top_params["sigma"] = sigma[idx_top]
+    '''
 
-    # Statistiken
-    mean_params = top_params[paramSelected].mean()
-    std_params = top_params[paramSelected].std()
-    mean_mu = top_params["mu"].mean()
-    std_mu = top_params["mu"].std()
-    mean_sigma = top_params["sigma"].mean()
-    std_sigma = top_params["sigma"].std()
+    if simName is not None:
 
-    print("🔍 Mittelwerte ± Std der besten 100 Parameterkombinationen:")
+        row = df.loc[df['simName'] == simName]
+    else:
+        idx = df[y].idxmin()
+        row = df.loc[[idx]].copy()
 
-    for p in paramSelected:
-        m = mean_params[p]
-        s = std_params[p]
-        print(f"  {p:30s}: {m:.4f} ± {s:.4f}")
+    # ensure the optional columns always exist (prevents CSV schema drift)
+    if ei is not None:
+        row["ei"] = ei
+    if lcb is not None:
+        row["lcb"] = lcb
 
-    print(f"\n📉 mu:    {mean_mu:.4f} ± {std_mu:.4f}")
-    print(f"📊 sigma: {mean_sigma:.4f} ± {std_sigma:.4f}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    path = pathlib.Path(csv_path)
+    row.to_csv(path, mode="a", index=False, header=not path.exists())

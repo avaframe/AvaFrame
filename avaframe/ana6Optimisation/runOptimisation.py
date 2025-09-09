@@ -18,7 +18,7 @@ import json
 import re
 
 import avaframe.out3Plot.plotUtils as pU
-from avaframe.ana6Optimisation.helper import optimiseNonSeqV1
+from avaframe.ana6Optimisation.helper import optimiseNonSeqV1, EINextPoint
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import cfgHandling
@@ -42,6 +42,7 @@ from avaframe.ana4Stats import probAna
 
 import helper
 import plotSAResults
+from avaframe.runScripts.runPlotAreaRefDiffs import runPlotAreaRefDiffs
 
 
 
@@ -67,41 +68,135 @@ cfgProb.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/da
 cfgStart.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA/morris_com8MoTPSACfg.ini')
 varParList = cfgProb['PROBRUN']['varParList'].split('|')
 
-avaName = 'avaFleisskar'
-avaDir = 'data/' + avaName
-
-
-# Read and merge results from AIMEC, parametersets for simulations, areal indicators
-finalDF = helper.buildFinalDF(avaName, cfgProb)
+# Load avalanche directory from general configuration file
+cfgMain = cfgUtils.getGeneralConfig()
+avalancheDir = cfgMain['MAIN']['avalancheDir']
+avaName = pathlib.Path(avalancheDir).name
 
 
 paramSelected = ['Dry-friction coefficient (-)', 'Density (kg/m^3)', 'Deposition rate 21  (m/s)', 'Basal drag coeff. 1-2 (-)',
               'Top drag coeff. (-)', 'Avalanche shear strength (Pa)', 'Turbulent drag coefficient (-)']
+paramBounds = {
+    'Dry-friction coefficient (-)': (0.15, 0.4),
+    'Density (kg/m^3)': (50, 300),
+    'Deposition rate 21  (m/s)': (0.15, 0.5),
+    'Basal drag coeff. 1-2 (-)': (0.02, 0.05),
+    'Top drag coeff. (-)': (1e-5, 1e-3),
+    'Avalanche shear strength (Pa)': (0.0, 5.0),
+    'Turbulent drag coefficient (-)': (0.0015, 0.005),
+}
 
-# ToDo Chose either all simulations or only LH simulations, currently --> all
-# create df with most important parameters and the loss function
-emulatorDF, emulatorScaledDF = helper.createDFParameterLoss(finalDF, varParList, paramSelected)
-# remove all entries where run out is not reached bzw where loss function is 1
-emulatorDF = emulatorDF[emulatorDF['Loss'] != 1]
+# calculate areal indicators and save pickle
+resType = "ppr"
+thresholdValueSimulation = 1
+modName = 'com8MoTPSA'
+runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
+
+# Read and merge results from parametersets for simulations, areal indicators
+finalDF = helper.buildFinalDF(avalancheDir, cfgProb, paramSelected)
+
+optimisationType = 'BO'
+
+if optimisationType == 'nonSeq':
+
+    # save sim with currently best y
+    helper.saveBestRow(finalDF, 'optimisationVariable',
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.csv"))
+
+    # ToDo Chose either all simulations or only LH simulations, currently --> all
+    # create df with most important parameters and the loss function
+    emulatorDF, emulatorScaledDF = helper.createDFParameterLoss(finalDF, varParList, paramSelected)
+    # remove all entries where run out is not reached bzw where loss function is 1
+    emulatorDF = emulatorDF[emulatorDF['Loss'] != 1]
+
+    # train surrogate
+    X, y, gp_pipe, etr_pipe = helper.fitSurrogate(emulatorDF)
+
+    # K fold cross validation
+    # helper.KFoldCV(X, y, gp_pipe, "Gaussian Process Matern 5/2 Kernel")
+    # helper.KFoldCV(X,y, etr_pipe, "Extra Trees Surrogate")
+
+    # fit final pipline ToDo: check if fit pipe can be done before CV --> can not
+    gp_pipe.fit(X, y)
+
+    # ----------------------------------------------------------------------------------------------------------------------
+    # optimize
+    # v1, non sequential (only use pipe once to find best param)
+    topNStat = helper.optimiseNonSeqV1(gp_pipe, paramBounds)
+
+    # run com8 with best x from N best surrogate mean
+    simName = helper.runCom8MoTPSA(avalancheDir, topNStat['TopNBest']['mean_params'], cfgMain,
+                                   optimisationType='nonSeq')
+    # calculate areal indicators and save pickle
+    runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
+    # Read and merge results from parametersets for simulations, areal indicators
+    finalDF = helper.buildFinalDF(avalancheDir, cfgProb, paramSelected)
+
+    # save best surrogate input params
+    helper.saveTopCandidates(topNStat, finalDF, paramSelected,
+                             out_path=avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.png",
+                             title="NonSeq-Analysis: TopN-Surrogate, Best Surrogate and Best Model Run",
+                             simName=simName)
+
+    # save latest real sim
+    helper.saveBestRow(df=finalDF, y='optimisationVariable', simName=simName,
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.csv"))
 
 
 
+else:
 
-# now bayesian optimisation
-# train surrogate
-X, y, gp_pipe, etr_pipe = helper.fitSurrogate(emulatorDF)
+    # save sim with currently best y
+    helper.saveBestRow(finalDF, 'optimisationVariable',
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestBORows.csv"))
 
-# K fold cross validation
-# helper.KFoldCV(X,y, gp_pipe, "Gaussian Process Matern 5/2 Kernel")
-# helper.KFoldCV(X,y, etr_pipe, "Extra Trees Surrogate")
+    for i in range(40):
+        # ToDo Chose either all simulations or only LH simulations, currently --> all
+        # create df with most important parameters and the loss function
+        emulatorDF, emulatorScaledDF = helper.createDFParameterLoss(finalDF, varParList, paramSelected)
+        # remove all entries where run out is not reached bzw where loss function is 1
+        emulatorDF = emulatorDF[emulatorDF['Loss'] != 1]
 
-# fit final pipline ToDo: check if fit pipe can be done before CV
-gp_pipe.fit(X, y)
+        # train surrogate
+        X, y, gp_pipe, etr_pipe = helper.fitSurrogate(emulatorDF)
+
+        # K fold cross validation
+        # helper.KFoldCV(X, y, gp_pipe, "Gaussian Process Matern 5/2 Kernel")
+        # helper.KFoldCV(X,y, etr_pipe, "Extra Trees Surrogate")
+
+        # fit final pipline ToDo: check if fit pipe can be done before CV --> can not
+        gp_pipe.fit(X, y)
+
+        # ---------------------------------------------------------------------------------------------------------------------
+        # v2, sequential
+        # get next input parameters with EI
+        xBest, xBestDict, ei, lcb = helper.EINextPoint(gp_pipe, y, paramBounds)
+
+        # run com8 with best x
+        simName = helper.runCom8MoTPSA(avalancheDir, xBestDict, cfgMain, i)
+
+        # calculate areal indicators and save pickle
+        runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
+
+        # Read and merge results from parametersets for simulations, areal indicators
+        finalDF = helper.buildFinalDF(avalancheDir, cfgProb, paramSelected)
+
+        # save latest sim
+        helper.saveBestRow(finalDF, 'optimisationVariable', ei, lcb, simName,
+                           csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestBORows.csv"))
+
+        # if ei < 0.002:
+        #    break
+
+    #
+    #
+    #
+    #
+    #
+    #
+    # ToDo Define how to optimize hyperparameters
 
 
-# optimize
-# v1, non sequential (only use pipe once to find best param) ToDo create LH samples with avaframe functions
-optimiseNonSeqV1(gp_pipe, paramSelected)
 
 
 

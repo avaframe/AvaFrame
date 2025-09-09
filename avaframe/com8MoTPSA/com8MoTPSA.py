@@ -31,7 +31,7 @@ from avaframe.in3Utils.initializeProject import _checkForFolderAndDelete
 log = logging.getLogger(__name__)
 
 
-def com8MoTPSAMain(cfgMain, cfgInfo=None):
+def com8MoTPSAMain(cfgMain, cfgInfo=None, returnSimName=None):
     # Get all necessary information from the configuration files
     currentModule = sys.modules[__name__]
     simDict, inputSimFiles = MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
@@ -109,6 +109,9 @@ def com8MoTPSAMain(cfgMain, cfgInfo=None):
             com8MoTPSAPostprocess(simNames, cfgMain, inputSimFiles)
         else:
             log.warning("There is no simulation to be performed for releaseScenario")
+
+    if returnSimName is not None and simDict:
+        return next(iter(simDict))
 
 
 def com8MoTPSAPostprocess(simNames, cfgMain, inputSimFiles):

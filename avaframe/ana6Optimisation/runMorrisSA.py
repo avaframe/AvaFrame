@@ -67,13 +67,13 @@ cfgStart = configparser.ConfigParser()
 cfgProb.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA/morris_probAnaCfg.ini')
 cfgStart.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA/morris_com8MoTPSACfg.ini')
 
+# Load avalanche directory from general configuration file
+cfgMain = cfgUtils.getGeneralConfig()  # ToDo us only config main
+avalancheDir = cfgMain['MAIN']['avalancheDir']
+avaName = pathlib.Path(avalancheDir).name
 
-avaName = 'avaFleisskar'
-avaDir = 'data/' + avaName
-
-
-# Read results from AIMEC, parametersets for simulations, areal indicators and merge
-finalDF = helper.buildFinalDF(avaName, cfgProb)
+# Read results from parametersets for simulations, areal indicators and merge
+finalDF = helper.buildFinalDF(avalancheDir, cfgProb)
 
 
 # use only morris samples
@@ -118,7 +118,7 @@ SiData = {
 SiDF = pd.DataFrame(SiData)
 
 # plot results
-outDir = pathlib.Path('../' + avaDir +  "/Outputs" + "/ana6Morris")
+outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Morris")
 # create folder if not already existing
 fU.makeADir(outDir)
 plotSAResults.barplot(SiDF, avaName, outDir)
