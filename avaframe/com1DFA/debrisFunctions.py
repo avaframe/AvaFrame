@@ -115,6 +115,23 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         combine=True,
         checkOverlap=False,
     )
+
+    # check if already existing particles are within the hydrograph polygon
+    # it's possible that there are still a few particles in the polygon with low velocities
+    # TODO: could think of a threshold of number of particles that are still allowed in the polygon or a negative buffer?
+    mask = geoTrans.checkParticlesInRelease(
+        particles, hydrLine, cfg["GENERAL"].getfloat("thresholdPointInHydr"), removeParticles=False
+    )
+    if np.sum(mask) > 0:
+        # if there is at least one particle within the polygon (including the buffer):
+        message = (
+            "Already existing particles are within the hydrograph polygon, which can cause numerical instabilities (at timestep: %02f s)"
+            % (particles["t"] + particles["dt"])
+        )
+        # timestep in particles is not updated yet
+        log.error(message)
+        raise ValueError(message)
+
     particlesHydrograph = com1DFA.initializeParticles(
         cfg["GENERAL"],
         hydrLine,
@@ -124,26 +141,13 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
         cfg["GENERAL"], particlesHydrograph, dem, velocityMag
     )
 
-    # check if the hydrograph is above the process to avoid numerical instabilities
-    # due to an increased particle density
-    # TODO: give a tolerance of e.g. 0.5 m ?
-    if np.nanmin(particlesHydrograph["z"]) >= np.nanmin(particles["z"]):
-        log.debug(
-            "The lower part of the hydrograph area is above the process, which reduces potential "
-            "for numerical instabilities!"
-        )
-    else:
-        message = "The hydrograph polygon lies not totally above the process, which can cause numerical instabilities"
-        log.error(message)
-        raise ValueError(message)
-
     particles = particleTools.mergeParticleDict(particles, particlesHydrograph)
     # save initial z position for travel angle computation
     zPartArray0 = np.append(zPartArray0, copy.deepcopy(particlesHydrograph["z"]))
     return particles, zPartArray0
 
 
-def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
+def checkHydrograph(hydrographValues, hydrCsv):
     """
     check if hydrograph satisfied the following requirements:
     - hydrograph-timesteps are unique
@@ -154,8 +158,6 @@ def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
     -----------
     hydrCsv: str
         directory to csv table containing hydrograph values
-    cfgGen: configparser
-        configuration settings, part "GENERAL"
     hydrographValues: dict
         contains hydrograph values: timestep, thickness, velocity
     """
@@ -173,21 +175,6 @@ def checkHydrograph(cfgGen, hydrographValues, hydrCsv):
     for th in hydrographValues["thickness"]:
         if th <= 0:
             message = "For every release time step a thickness > 0 needs to be provided in %s" % (hydrCsv)
-            log.error(message)
-            raise ValueError(message)
-
-    # check if time steps of hydrograph are not to close that the particle density becomes too high
-    # check that particles moved out of hydrograph area before new particles are initialized
-    # time between hydrograph time steps
-    # first timestep is skipped since this is always ok.
-    if timeStepUnique.ndim > 0:
-        hydrDT = np.append(hydrographValues["timeStep"], 0) - np.append(0, hydrographValues["timeStep"])
-        vel = np.where(np.array(hydrographValues["velocity"]) > 0, np.array(hydrographValues["velocity"]), 1)
-        distance = vel[:-1] * hydrDT[1:-1]
-
-        if np.any(distance < cfgGen.getfloat("timeStepDistance")):
-            message = "Please select timesteps with greater spacing in %s." % (hydrCsv)
-            # TODO: error or warning?
             log.error(message)
             raise ValueError(message)
 
@@ -228,11 +215,43 @@ def prepareHydrographLine(inputSimFiles, demOri, cfg):
         raise FileNotFoundError(message)
 
     try:
-        hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
+        hydrLine["values"] = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
         hydrLine["thicknessSource"] = ["csv file"]
     except:
         message = "No hydrograph csv file found"
         log.error(message)
         raise FileNotFoundError(message)
 
+    checkHydrograph(hydrLine["values"], inputSimFiles["hydrographCsv"])
+
     return hydrLine
+
+
+def checkTravelledDistance(cfgGen, hydrographValues, hydrCsv):
+    """
+    not used now!
+    check if time steps of hydrograph are not to close that the particle density becomes too high
+    check that particles moved out of hydrograph area before new particles are initialized
+    time between hydrograph time steps
+    first timestep is skipped since this is always ok.
+
+    Parameters
+    -----------
+    hydrCsv: str
+        directory to csv table containing hydrograph values
+    cfgGen: configparser
+        configuration settings, part "GENERAL"
+    hydrographValues: dict
+        contains hydrograph values: timestep, thickness, velocity
+    """
+    timeStepUnique = np.unique(hydrographValues["timeStep"])
+    if timeStepUnique.ndim > 0:
+        hydrDT = np.append(hydrographValues["timeStep"], 0) - np.append(0, hydrographValues["timeStep"])
+        vel = np.where(np.array(hydrographValues["velocity"]) > 0, np.array(hydrographValues["velocity"]), 1)
+        distance = vel[:-1] * hydrDT[1:-1]
+
+        if np.any(distance < cfgGen.getfloat("timeStepDistance")):
+            message = "Please select timesteps with greater spacing in %s." % (hydrCsv)
+            # TODO: error or warning?
+            log.error(message)
+            raise ValueError(message)

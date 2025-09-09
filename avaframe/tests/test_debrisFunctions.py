@@ -65,15 +65,18 @@ def test_addHydrographParticles():
         "initPartDistType": "uniform",
         "thresholdPointInPoly": "0.001",
         "massPerPart": "1000",
+        "thresholdPointInHydr": "0",
     }
 
     particles = {
         "nPart": 3,
-        "x": np.array([10, 20, 30]),
+        "x": np.array([12, 20, 30]),
         "y": np.array([5, 10, 30]),
         "z": np.array([1, 1, 1]),
         "m": np.array([1000, 1000, 1000]),
         "idFixed": np.array([0, 0, 0]),
+        "t": 1.0,
+        "dt": 0.1,
     }
     nPart = particles["nPart"]
     particles["totalEnthalpy"] = (
@@ -140,6 +143,11 @@ def test_addHydrographParticles():
         assert len(particlesHydr[key]) == particlesHydr["nPart"]
     assert particlesHydr["mTot"] == 7000
 
+    particles["x"] = np.array([4, 10, 30])
+    particles["y"] = np.array([5, 3, 30])
+
+    with pytest.raises(ValueError):
+        debF.addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag, dem, zPartArray0)
 
 """
 TODO: When calling pytest, the following function raises an error ("Fatal Python error: Aborted")
