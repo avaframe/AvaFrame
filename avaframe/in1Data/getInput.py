@@ -18,7 +18,6 @@ import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
-import avaframe.com1DFA.debrisFunctions as debF
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -941,7 +940,7 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
         raise AssertionError(message)
 
 
-def getHydrographCsv(hydrCsv, cfgGen):
+def getHydrographCsv(hydrCsv):
     """
      get hydrograph values from the csv table
      TODO: now the first column is defined as timestep, the second as thickness, third as velocity
@@ -951,8 +950,6 @@ def getHydrographCsv(hydrCsv, cfgGen):
     -----------
     hydrCsv: str
         directory to csv table containing hydrograph values
-    cfgGen: configparser
-        configuration settings, part "GENERAL"
 
     Returns
     -----------
@@ -975,6 +972,5 @@ def getHydrographCsv(hydrCsv, cfgGen):
             "thickness": [hydrParameters[1]],
             "velocity": [hydrParameters[2]],
         }
-    debF.checkHydrograph(cfgGen, hydrographValues, hydrCsv)
 
     return hydrographValues
