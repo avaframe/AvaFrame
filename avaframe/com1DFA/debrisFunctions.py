@@ -28,7 +28,7 @@ def releaseHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t
     cfg: configparser
         configuration settings
     inputSimLines : dict
-        dictionary with input data dictionaries (releaseLine, hydrographLine,...)
+        dictionary with input data dictionaries (releaseLine, hydrographAreaLine,...)
     particles : dict
         particles dictionary at t that are in the flow already
     fields: dict
@@ -51,7 +51,7 @@ def releaseHydrograph(cfg, inputSimLines, particles, fields, dem, zPartArray0, t
     zPartArray0: dict
         dictionary containing z - value of particles at timestep 0
     """
-    hydrValues = inputSimLines["hydrographLine"]["values"]
+    hydrValues = inputSimLines["hydrographAreaLine"]["values"]
     if np.isclose(t, hydrValues["timeStep"], atol=atol, rtol=0).any():
         i = np.where(np.isclose(t, hydrValues["timeStep"], atol=atol, rtol=0))
         log.info(
@@ -88,7 +88,7 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
     particles : dict
         particles dictionary at t that are in the flow already
     inputSimLines : dict
-        dictionary with input data dictionaries (releaseLine, hydrographLine,...)
+        dictionary with input data dictionaries (releaseLine, hydrographAreaLine,...)
     thickness: float
         thickness of incoming hydrograph
     velocityMag: float
@@ -105,7 +105,7 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
     zPartArray0: dict
         dictionary containing z - value of particles at timestep 0
     """
-    hydrLine = inputSimLines["hydrographLine"]
+    hydrLine = inputSimLines["hydrographAreaLine"]
     hydrLine["header"] = dem["originalHeader"].copy()
     hydrLine = geoTrans.prepareArea(
         hydrLine,
@@ -118,9 +118,9 @@ def addHydrographParticles(cfg, particles, inputSimLines, thickness, velocityMag
 
     # check if already existing particles are within the hydrograph polygon
     # it's possible that there are still a few particles in the polygon with low velocities
-    # TODO: could think of a threshold of number of particles that are still allowed in the polygon or a negative buffer?
-    mask = geoTrans.checkParticlesInRelease(
-        particles, hydrLine, cfg["GENERAL"].getfloat("thresholdPointInHydr"), removeParticles=False
+    # TODO: could think of a threshold of number of particles that are still allowed in the polygons?
+    mask = geoTrans.getParticlesInPolygon(
+        particles, hydrLine, cfg["GENERAL"].getfloat("thresholdPointInHydr")
     )
     if np.sum(mask) > 0:
         # if there is at least one particle within the polygon (including the buffer):
@@ -166,6 +166,8 @@ def checkHydrograph(hydrographValues, hydrCsv):
     if timeStepUnique.ndim == 0:
         if timeStepUnique != hydrographValues["timeStep"]:
             message = "The provided hydrograph time steps in %s are not unique" % (hydrCsv)
+            log.error(message)
+            raise ValueError(message)
     elif len(timeStepUnique) != len(hydrographValues["timeStep"]):
         message = "The provided hydrograph timesteps in %s are not unique" % (hydrCsv)
         log.error(message)
@@ -179,7 +181,7 @@ def checkHydrograph(hydrographValues, hydrCsv):
             raise ValueError(message)
 
 
-def prepareHydrographLine(inputSimFiles, demOri, cfg):
+def preparehydrographAreaLine(inputSimFiles, demOri, cfg):
     """
     read hydrograph polygon and values
 
@@ -229,7 +231,7 @@ def prepareHydrographLine(inputSimFiles, demOri, cfg):
 
 def checkTravelledDistance(cfgGen, hydrographValues, hydrCsv):
     """
-    not used now!
+    not used at the moment (related to timeStepDistance in the configuration file)!
     check if time steps of hydrograph are not to close that the particle density becomes too high
     check that particles moved out of hydrograph area before new particles are initialized
     time between hydrograph time steps

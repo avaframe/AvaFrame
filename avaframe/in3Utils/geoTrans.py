@@ -1305,7 +1305,7 @@ def polygon2Raster(demHeader, Line, radius, th=""):
     return Mask
 
 
-def checkParticlesInRelease(particles, line, radius, removeParticles=True):
+def checkParticlesInRelease(particles, line, radius):
     """remove particles laying outside the polygon
 
     Parameters
@@ -1317,13 +1317,42 @@ def checkParticlesInRelease(particles, line, radius, removeParticles=True):
     radius: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-    removeParticles: bool
-        if True (default), particles outside the polygon are removed
 
     Returns
     -------
     particles : dict
         particles dictionary where particles outside of the polygon have been removed
+    """
+    Mask = getParticlesInPolygon(particles, line, radius)
+    # also remove particles with negative mass
+    mask = np.where(particles["m"] <= 0, False, True)
+    Mask = np.logical_and(Mask, mask)
+    nRemove = len(Mask) - np.sum(Mask)
+    if nRemove > 0:
+        particles = particleTools.removePart(particles, Mask, nRemove, "")
+        log.debug("removed %s particles because they are not within the release polygon" % (nRemove))
+
+    return particles
+
+
+def getParticlesInPolygon(particles, line, radius):
+    """
+    check which particles are within a polygon (including a buffer)
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    line: dict
+        line dictionary of polygon
+    radius: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
+
+    Returns
+    -------
+    Mask: numpy array
+        is True at particle indices taht are inside the polygon, and False for outside the polygon
     """
     NameRel = line["Name"]
     StartRel = line["Start"]
@@ -1342,19 +1371,7 @@ def checkParticlesInRelease(particles, line, radius, removeParticles=True):
         # and a False if it is outside the polygon (including a buffer (radius))
         mask = pointInPolygon(line["header"], particles, avapath, radius)
         Mask = np.logical_or(Mask, mask)
-
-    if removeParticles:
-        # also remove particles with negative mass
-        mask = np.where(particles["m"] <= 0, False, True)
-        Mask = np.logical_and(Mask, mask)
-        nRemove = len(Mask) - np.sum(Mask)
-        if nRemove > 0:
-            particles = particleTools.removePart(particles, Mask, nRemove, "")
-            log.debug("removed %s particles because they are not within the release polygon" % (nRemove))
-
-        return particles
-    else:
-        return Mask
+    return Mask
 
 
 def pointInPolygon(demHeader, points, Line, radius):

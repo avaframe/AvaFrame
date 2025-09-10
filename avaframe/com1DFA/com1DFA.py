@@ -576,7 +576,7 @@ def prepareInputData(inputSimFiles, cfg):
         - resLine : dict, resistance line dictionary
         - entrainmentArea : str, entrainment file name
         - resistanceArea : str, resistance file name
-        - hydrographLine: dict, hydrograph line dictionary
+        - hydrographAreaLine: dict, hydrograph line dictionary
         - entResInfo : flag dict
         flag if Yes entrainment and/or resistance areas found and used for simulation
         flag True if a Secondary Release file found and activated
@@ -669,7 +669,7 @@ def prepareInputData(inputSimFiles, cfg):
         damLine = None
 
     if cfg["GENERAL"].getboolean("hydrograph"):
-        hydrLine = debF.prepareHydrographLine(inputSimFiles, demOri, cfg)
+        hydrLine = debF.preparehydrographAreaLine(inputSimFiles, demOri, cfg)
     else:
         hydrLine = None
 
@@ -685,7 +685,7 @@ def prepareInputData(inputSimFiles, cfg):
         "relThField": relThFieldData,
         "muFile": inputSimFiles["muFile"],
         "xiFile": inputSimFiles["xiFile"],
-        "hydrographLine": hydrLine,
+        "hydrographAreaLine": hydrLine,
     }
 
     return demOri, inputSimLines
