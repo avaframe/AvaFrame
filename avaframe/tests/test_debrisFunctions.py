@@ -9,7 +9,7 @@ import avaframe.com1DFA.debrisFunctions as debF
 
 def test_addHydrographParticles():
     inputSimLines = {
-        "hydrographLine": {
+        "hydrographAreaLine": {
             "Name": ["testHydr"],
             "Start": np.asarray([0.0]),
             "Length": np.asarray([5]),
@@ -29,7 +29,7 @@ def test_addHydrographParticles():
             "thickness": 1,
         }
     }
-    thickness = inputSimLines["hydrographLine"]["thickness"]
+    thickness = inputSimLines["hydrographAreaLine"]["thickness"]
     velocityMag = 0
 
     demHeader = {}
@@ -155,7 +155,7 @@ TODO: When calling pytest, the following function raises an error ("Fatal Python
 
 def test_releaseHydrograph():
     inputSimLines = {
-        "hydrographLine": {
+        "hydrographAreaLine": {
             "Name": ["testHydr"],
             "Start": np.asarray([0.0]),
             "Length": np.asarray([5]),
@@ -180,7 +180,7 @@ def test_releaseHydrograph():
             },
         }
     }
-    thickness = inputSimLines["hydrographLine"]["thickness"]
+    thickness = inputSimLines["hydrographAreaLine"]["thickness"]
     velocityMag = 0
 
     demHeader = {}
