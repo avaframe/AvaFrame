@@ -58,7 +58,7 @@ def runCom7Regional(avalancheDir="", splitInputs=False, runComputations=False):
         outputDir = pathlib.Path(avalancheDir) / "com7Regional"
 
         # Load split inputs module configuration
-        splitCfg = cfgUtils.getModuleConfig(splitInputs)
+        splitCfg = cfgUtils.getModuleConfig(sI)
 
         # Run splitting process
         sI.splitInputsMain(pathlib.Path(avalancheDir), outputDir, splitCfg, cfgMain)
