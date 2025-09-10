@@ -8,7 +8,7 @@ import pathlib
 import argparse
 
 from avaframe.com7Regional import com7Regional as com7
-from avaframe.com7Regional import splitInputs
+from avaframe.com7Regional import splitInputs as sI
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -61,7 +61,7 @@ def runCom7Regional(avalancheDir="", splitInputs=False, runComputations=False):
         splitCfg = cfgUtils.getModuleConfig(splitInputs)
 
         # Run splitting process
-        splitInputs.splitInputsMain(pathlib.Path(avalancheDir), outputDir, splitCfg, cfgMain)
+        sI.splitInputsMain(pathlib.Path(avalancheDir), outputDir, splitCfg, cfgMain)
 
         splitEndTime = time.time()
         log.info(f"Split inputs preprocessing completed after {splitEndTime - splitStartTime:.1f} seconds.")
