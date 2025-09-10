@@ -13,14 +13,14 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom7Regional(avalancheDir="", splitInputsFlag=False, runComputations=False):
+def runCom7Regional(avalancheDir="", splitInputs=False, runComputations=False):
     """Run regional avalanche simulations in parallel.
 
     Parameters
     ----------
     avalancheDir : str, optional
         Path to the main avalanche directory. If not provided, uses the path from general configuration.
-    splitInputsFlag : bool, optional
+    splitInputs : bool, optional
         Whether to run the split inputs preprocessor before running regional simulations. Default is False.
     runComputations : bool, optional
         Whether to run the main regional computations. Default is False.
@@ -50,7 +50,7 @@ def runCom7Regional(avalancheDir="", splitInputsFlag=False, runComputations=Fals
     log.info("MAIN SCRIPT")
 
     # Run split inputs preprocessing if requested
-    if splitInputsFlag:
+    if splitInputs:
         log.info("Running split inputs preprocessor...")
         splitStartTime = time.time()
 
@@ -102,6 +102,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    runCom7Regional(
-        str(args.avadir), splitInputsFlag=args.split_inputs, runComputations=args.run_computations
-    )
+    runCom7Regional(str(args.avadir), splitInputs=args.split_inputs, runComputations=args.run_computations)
