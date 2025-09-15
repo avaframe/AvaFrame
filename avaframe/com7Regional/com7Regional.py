@@ -15,6 +15,8 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 
 from rasterio.merge import merge
 
+from avaframe.in3Utils.fileHandlerUtils import findAvaDirsBasedOnInputsDir
+
 # create local logger
 log = logging.getLogger(__name__)
 
@@ -57,7 +59,7 @@ def com7RegionalMain(cfgMain, cfg):
     regionalDir = pathlib.Path(cfgMain["MAIN"]["avalancheDir"]) / regionalDirFromCfg
 
     # List valid avalanche directories within the regional directory
-    avaDirs = findAvaDirs(regionalDir)
+    avaDirs = findAvaDirsBasedOnInputsDir(regionalDir)
 
     # Get total number of simulations
     log.info(f"Getting total number of simulations to perform...")
@@ -111,29 +113,6 @@ def com7RegionalMain(cfgMain, cfg):
         mergedRastersDir = mergeOutputRasters(cfg, regionalDir)
 
     return allPeakFilesDir, mergedRastersDir
-
-
-def findAvaDirs(Dir):
-    """Find all valid avalanche directories within a given directory.
-
-    A directory is considered a valid avalanche directory if it contains an "Inputs" folder.
-
-    Parameters
-    ----------
-    Dir : pathlib.Path or str
-        Path to the directory to search in
-
-    Returns
-    -------
-    avaDirs : list
-        List of pathlib.Path objects pointing to valid avalanche directories
-    """
-    avaDirs = [pathlib.Path(p).parent for p in pathlib.Path(Dir).glob("*/Inputs")]
-    log.info(f"Found a total of '{len(avaDirs)}' avalanche directories in: {Dir}:")
-    for avaDir in avaDirs:
-        log.info(f"'{avaDir.name}'")
-
-    return avaDirs
 
 
 def getTotalNumberOfSims(avaDirs, cfgMain, cfgCom7):
@@ -252,7 +231,7 @@ def moveOrCopyPeakFiles(cfg, avalancheDir):
 
     # Get avalanche directories
     # with logUtils.silentLogger():
-    avaDirs = findAvaDirs(avalancheDir)
+    avaDirs = findAvaDirsBasedOnInputsDir(avalancheDir)
     if not avaDirs:
         log.warning("No avalanche directories found to copy/move files from")
         return None, None
@@ -404,7 +383,7 @@ def mergeOutputRasters(cfg, avalancheDir):
 
     # Get all avalanche directories
     # with logUtils.silentLogger():
-    avaDirs = findAvaDirs(avalancheDir)
+    avaDirs = findAvaDirsBasedOnInputsDir(avalancheDir)
     if not avaDirs:
         log.warning("No avalanche directories found to merge")
         return None

@@ -1,5 +1,5 @@
 """
-    Directory and file handling helper functions
+Directory and file handling helper functions
 """
 
 # Load modules
@@ -455,9 +455,9 @@ def exportcom1DFAOrigOutput(avaDir, cfg="", addTSteps=False):
                 "%s_fd.asc" % logDict["simName"][k],
             )
             pathTo = (
-                    outDirPF
-                    / "timeSteps"
-                    / ("%s_%.05f_tLast_ft.asc" % (logDict["simName"][k], logDict[varPar][k]))
+                outDirPF
+                / "timeSteps"
+                / ("%s_%.05f_tLast_ft.asc" % (logDict["simName"][k], logDict[varPar][k]))
             )
             shutil.copy(pathFrom, pathTo)
         pathFrom = pathlib.Path(
@@ -488,9 +488,9 @@ def exportcom1DFAOrigOutput(avaDir, cfg="", addTSteps=False):
                 "%s%.05f" % (resPath, logDict[varPar][k]), "%s_tFirst_fd.txt" % logDict["simName"][k]
             )
             pathTo = (
-                    outDirPF
-                    / "timeSteps"
-                    / ("%s_%.05f_tFirst_fd.asc" % (logDict["simName"][k], logDict[varPar][k]))
+                outDirPF
+                / "timeSteps"
+                / ("%s_%.05f_tFirst_fd.asc" % (logDict["simName"][k], logDict[varPar][k]))
             )
             shutil.copy(pathFrom, pathTo)
 
@@ -633,7 +633,7 @@ def makeSimDF(inputDir, avaDir="", simID="simID"):
             data["simType"].append(infoParts[2 + j])
             data["modelType"].append(infoParts[3 + j])
             data["resType"].append(infoParts[4 + j])
-            data["simName"].append(fNamePart + "_" + ("_".join(infoParts[0: (4 + j)])))
+            data["simName"].append(fNamePart + "_" + ("_".join(infoParts[0 : (4 + j)])))
 
             header = IOf.readRasterHeader(datafiles[m])
             data["cellSize"].append(header["cellsize"])
@@ -720,14 +720,14 @@ def makeSimFromResDF(avaDir, comModule, inputDir="", simName=""):
     # build the result data frame
     resTypeListFromFiles = list(set([file.stem.split("_")[-1] for file in datafiles]))
     columnsList = [
-                      "simName",
-                      "releaseArea",
-                      "simHash",
-                      "simModified",
-                      "simType",
-                      "modelType",
-                      "cellSize",
-                  ] + resTypeListFromFiles
+        "simName",
+        "releaseArea",
+        "simHash",
+        "simModified",
+        "simType",
+        "modelType",
+        "cellSize",
+    ] + resTypeListFromFiles
     dataDF = pd.DataFrame(columns=columnsList)
     resTypeListOne = []
 
@@ -791,3 +791,26 @@ def makeSimFromResDF(avaDir, comModule, inputDir="", simName=""):
             resTypeListAll.append(resType)
 
     return dataDF, resTypeListAll
+
+
+def findAvaDirsBasedOnInputsDir(Dir):
+    """Find all valid avalanche directories within a given directory.
+
+    A directory is considered a valid avalanche directory if it contains an "Inputs" folder.
+
+    Parameters
+    ----------
+    Dir : pathlib.Path or str
+        Path to the directory to search in
+
+    Returns
+    -------
+    avaDirs : list
+        List of pathlib.Path objects pointing to valid avalanche directories
+    """
+    avaDirs = [pathlib.Path(p).parent for p in pathlib.Path(Dir).glob("*/Inputs")]
+    log.info(f"Found a total of '{len(avaDirs)}' avalanche directories in: {Dir}:")
+    for avaDir in avaDirs:
+        log.info(f"'{avaDir.name}'")
+
+    return avaDirs
