@@ -16,7 +16,6 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
 
-
 def runCom1DFA(avalancheDir='', calibration=''):
     """ Run com1DFA in the default configuration with only an
     avalanche directory as input and the (optional) friction calibration
