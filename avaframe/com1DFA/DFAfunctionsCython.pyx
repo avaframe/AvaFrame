@@ -288,6 +288,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
           sigmaB = - effAccNorm * rho * h
           if frictType >= 10:
             # substitution of shear rate gamma
+            if h == 0.0:
+              message = "h is 0 - division by 0"
+              log.error(message)
+              raise ZeroDivisionError(message)
             shearRate = 3 * uMag / h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
