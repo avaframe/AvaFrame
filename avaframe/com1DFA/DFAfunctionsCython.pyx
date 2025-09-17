@@ -324,8 +324,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
           elif frictType == 10:
             ## O`Brien and Julien
             if cvSediment >= cvMaxSediment:
-              log.error("cvSediment must be less than cvMaxSediment")
-              raise ValueError("cvSediment must be less than cvMaxSediment")
+              message = "cvSediment must be smaller than cvMaxSediment"
+              log.error(message)
+              raise ValueError(message)
             # viscosity
             etaObrienAndJulien = alpha1EtaObrienAndJulien * math.exp(beta1EtaObrienAndJulien * cvSediment)
             # yield shear stress
