@@ -334,7 +334,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             # Prandtl mixing length
             lmObrienAndJulien = 0.4 * h
             # grain concentration
-            lambdaBagnold = 1 / (math.pow(cvMaxSediment / cvSediment, 1.0 / 3.0) - 1)
+            lambdaBagnold = 1.0 / (math.pow(cvMaxSediment / cvSediment, 1.0 / 3.0) - 1.0)
             # dispersive shear stress
             cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhoSediment * lambdaBagnold * lambdaBagnold * sizeSediment * sizeSediment
             # shear stress
