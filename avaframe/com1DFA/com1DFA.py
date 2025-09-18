@@ -2975,6 +2975,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 [
                     relNameSim,
                     simHash,
+                    modName,
                     defID,
                     frictIndi or volIndi,
                     row._asdict()["simTypeList"],
