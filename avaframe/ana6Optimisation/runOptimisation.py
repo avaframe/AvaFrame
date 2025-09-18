@@ -86,6 +86,13 @@ paramBounds = {
     'Turbulent drag coefficient (-)': (0.0015, 0.005),
 }
 
+# plot results
+outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Morris")
+# create folder if not already existing
+fU.makeADir(outDir)
+
+
+
 # calculate areal indicators and save pickle
 resType = "ppr"
 thresholdValueSimulation = 1
@@ -95,7 +102,7 @@ runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
 # Read and merge results from parametersets for simulations, areal indicators
 finalDF = helper.buildFinalDF(avalancheDir, cfgProb, paramSelected)
 
-optimisationType = 'BO'
+optimisationType = 'nonSeq'
 
 if optimisationType == 'nonSeq':
 
@@ -116,7 +123,7 @@ if optimisationType == 'nonSeq':
     # helper.KFoldCV(X, y, gp_pipe, "Gaussian Process Matern 5/2 Kernel")
     # helper.KFoldCV(X,y, etr_pipe, "Extra Trees Surrogate")
 
-    # fit final pipline ToDo: check if fit pipe can be done before CV --> can not
+    # fit final pipline
     gp_pipe.fit(X, y)
 
     # ----------------------------------------------------------------------------------------------------------------------
@@ -127,6 +134,12 @@ if optimisationType == 'nonSeq':
     # run com8 with best x from N best surrogate mean
     simName = helper.runCom8MoTPSA(avalancheDir, topNStat['TopNBest']['mean_params'], cfgMain,
                                    optimisationType='nonSeq')
+
+    # das gleiche für Best Surrogate
+
+
+
+
     # calculate areal indicators and save pickle
     runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
     # Read and merge results from parametersets for simulations, areal indicators
@@ -134,8 +147,8 @@ if optimisationType == 'nonSeq':
 
     # save best surrogate input params
     helper.saveTopCandidates(topNStat, finalDF, paramSelected,
-                             out_path=avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.png",
-                             title="NonSeq-Analysis: TopN-Surrogate, Best Surrogate and Best Model Run",
+                             out_path=avalancheDir + "/Outputs" + "/ana6Morris" + f"/bestNonSeq{avaName}.png",
+                             title=f"{avaName} NonSeq-Analysis: Best Surrogate vs Best Real Model Run",
                              simName=simName)
 
     # save latest real sim
@@ -159,12 +172,11 @@ else:
 
         # train surrogate
         X, y, gp_pipe, etr_pipe = helper.fitSurrogate(emulatorDF)
-
         # K fold cross validation
         # helper.KFoldCV(X, y, gp_pipe, "Gaussian Process Matern 5/2 Kernel")
         # helper.KFoldCV(X,y, etr_pipe, "Extra Trees Surrogate")
 
-        # fit final pipline ToDo: check if fit pipe can be done before CV --> can not
+        # fit final pipline
         gp_pipe.fit(X, y)
 
         # ---------------------------------------------------------------------------------------------------------------------

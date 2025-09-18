@@ -131,4 +131,3 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     runProbAna(str(args.avadir))
-    # runProbAna('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/avaParabola')

@@ -147,9 +147,41 @@ def readArealIndicators(inDir):
     return indicatorsDF
 
 
+def readMaxVelocity(avaDir):
+    '''
+
+    Parameters
+    ----------
+    avaDir
+
+    Returns
+    -------
+    df: pandas.Dataframe
+    with u2_max and simName
+    '''
+
+    # Point to the folder that contains the text files
+    folder = pathlib.Path(avaDir, "Outputs", "com8MoTPSA")
+    results = []
+
+    # Loop through all matching files
+    for file_path in folder.glob("*_DataTime.txt"):
+        # Read each file
+        df = pd.read_csv(file_path, sep=r"\s+", header=0)
+        df.columns = df.columns.str.lstrip('#')
+        # Compute the max value of 's2_max(m)'
+        s2_max_value = df['s2_max(m)'].max()
+        # Extract the base name without the suffix
+        simName = file_path.stem.replace("_DataTime", "")
+        results.append({"simName": simName, "u2_max": s2_max_value})
+
+    # Create a summary DataFrame
+    return pd.DataFrame(results)
+
+
 def addLossMetrics(df):
     """
-    Compute evaluation metrics (recall, precision, F1, Tversky score) and an
+    Nicht kpomplett, Compute evaluation metrics (recall, precision, F1, Tversky score) and an
     optimisation variable from a given DataFrame.
 
     The metrics are based on area (number of pixel would also be possible). Invalid values
@@ -195,9 +227,22 @@ def addLossMetrics(df):
     alpha = 2
     beta = 1
     denomTversky = TP + alpha * FP + beta * FN
-    df["tversky_score"] = np.where(denomTversky != 0, TP / denomTversky, 0.0)
+    df["tversky_score"] = 1 - np.where(denomTversky != 0, TP / denomTversky,
+                                       0.0)  # Subtract 1 to ensure that 0 are good values and 1 bad
 
-    df['optimisationVariable'] = 1 - df['tversky_score']  # Subtract 1 to ensure that 0 are good values and 1 bad
+    df['optimisationVariable'] = df['tversky_score']
+    '''
+    # u2_max
+    u2_max_ref = 247.931  # from ref sim: "d1867f98e6"
+    u2_diff = u2_max_ref - df['u2_max']
+
+    # Min-Max-Normalisierung für u2_diff
+    u2_diff_min = u2_diff.min()
+    u2_diff_max = u2_diff.max()
+    u2_diff_norm = (u2_diff - u2_diff_min) / (u2_diff_max - u2_diff_min)
+
+    df['optimisationVariable'] = 0.5 * df['tversky_score'] + 0.5 * u2_diff_norm
+    '''
     return df
 
 
@@ -243,8 +288,12 @@ def buildFinalDF(avalancheDir, cfgProb, paramSelected=None):
     # read areal indicators
     indicatorsDF = readArealIndicators(arealIndicatorDir)
 
+    # read u2_max df
+    u2_maxDF = readMaxVelocity(avalancheDir)
+
     # merge df
     df_merged = pd.merge(paramSetDF, indicatorsDF, on='simName', how='inner')
+    df_merged = df_merged.merge(u2_maxDF, on='simName')
 
     # add optimisation variables
     finalDF = addLossMetrics(df_merged)
@@ -278,7 +327,7 @@ def createDFParameterLoss(df, paramAll, paramSelected):
         Same as ``paramLossDF`` but with the selected parameters normalised
         to the range [0, 1] using min–max scaling.
     """
-    paramLossDF = df[paramSelected]
+    paramLossDF = df[paramSelected].copy()
     paramLossDFScaled = (paramLossDF - paramLossDF.min()) / (paramLossDF.max() - paramLossDF.min())  # normalise
     paramLossDF['Loss'] = df[
         'optimisationVariable']  # merging works with different index, but it is the right value
@@ -381,21 +430,21 @@ def optimiseNonSeqV1(pipe, paramBounds):
     d = bounds.shape[0]
 
     # get LH canditates
+    # sampler = qmc.LatinHypercube(d=d)
     sampler = qmc.LatinHypercube(d=d, seed=12345)
     sample = sampler.random(n=1000000)
     X0 = qmc.scale(sample, bounds[:, 0], bounds[:, 1])
 
+    # Vorhersage des Verlusts mit GP-Modell
+    mu, sigma = pipe.predict(X0, return_std=True)
+
     df_candidates = pd.DataFrame(X0, columns=paramSelected)
 
-    # Vorhersage des Verlusts mit GP-Modell
-    mu, sigma = pipe.predict(df_candidates, return_std=True)
-
     topNStat, _ = analyzeTopCandidates(df_candidates, mu, sigma, paramSelected, N=100)
-
     return topNStat
 
 
-def analyzeTopCandidates(df_candidates, mu, sigma, param_cols, N=100):
+def analyzeTopCandidates(df_candidates, mu, sigma, param_cols, N=5):
     """
     Analysis of top N candidates and return statistic with topN and best surrogate values.
 
@@ -453,6 +502,7 @@ def analyzeTopCandidates(df_candidates, mu, sigma, param_cols, N=100):
     }, topNData
 
 
+'''
 def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
     """
     Speichert drei Tabellen als ein Bild:
@@ -582,6 +632,305 @@ def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTa
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
     return out_path
+
+
+
+def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
+    """
+    Bild mit zwei Tabellen:
+      1) TopNBest (Surrogate): mean/std/relStd [%] + Single Best
+      2) FinalDF-Top10 (Model): mean/std/relStd [%] + Single Best + optimisationVariable
+    """
+    # --- Vorbereitung Spaltenliste ---
+    if isinstance(paramSelected, (list, tuple, pd.Index, pd.Series)):
+        param_cols = list(paramSelected)
+    else:
+        param_cols = [paramSelected]
+
+    # --- Tabelle 1 aus results_dict["TopNBest"] + "Best" ---
+    top = results_dict["TopNBest"]
+    mean_params = pd.Series(top["mean_params"])
+    std_params = pd.Series(top["std_params"])
+    rel_params = (std_params / mean_params * 100.0)
+
+    df_top = pd.DataFrame({
+        "mean": mean_params,
+        "std": std_params,
+        "relStd [%]": rel_params
+    })
+
+    # mu/sigma Zeilen anhängen
+    df_top = pd.concat([
+        df_top,
+        pd.DataFrame({
+            "mean": [top["mean_mu"], top["mean_sigma"]],
+            "std": [top["std_mu"], top["std_sigma"]],
+            "relStd [%]": [
+                (top["std_mu"] / top["mean_mu"] * 100.0) if top["mean_mu"] else None,
+                (top["std_sigma"] / top["mean_sigma"] * 100.0) if top["mean_sigma"] else None
+            ]
+        }, index=["mu", "sigma"])
+    ])
+
+    # optionale Zeile: optimisationVariable (simName)
+    if simName is not None:
+        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
+        if not match.empty:
+            df_top.loc[f"optimisationVariable ({simName})", ["mean", "std", "relStd [%]"]] = [match.iloc[0], None, None]
+
+    # "Best" (aus results_dict["Best"]) als Spalte 'best' integrieren
+    best = results_dict["Best"]
+    best_params = pd.Series(best["params"])
+    df_best = pd.DataFrame({"value": best_params})
+    df_best.loc["mu", "value"] = best["mu"]
+    df_best.loc["sigma", "value"] = best["sigma"]
+    df_top["best"] = df_best["value"]
+
+    # --- Tabelle 2: FinalDF-Top10 ---
+    best_idx = finalDF["optimisationVariable"].idxmin()
+    top10 = finalDF.nsmallest(10, "optimisationVariable")
+
+    # numerisch berechnen
+    top10_params_num = top10[param_cols].apply(pd.to_numeric, errors="coerce")
+    means_10 = top10_params_num.mean()
+    stds_10 = top10_params_num.std()
+    rel_10 = (stds_10 / means_10 * 100.0)
+
+    # best row
+    best_vals = pd.to_numeric(finalDF.loc[best_idx, param_cols], errors="coerce")
+
+    df_top10 = pd.DataFrame({
+        "mean": means_10,
+        "std": stds_10,
+        "relStd [%]": rel_10,
+        "best": best_vals
+    })
+
+    # optimisationVariable row
+    opt_mean = pd.to_numeric(top10["optimisationVariable"], errors="coerce").mean()
+    opt_std = pd.to_numeric(top10["optimisationVariable"], errors="coerce").std()
+    opt_rel = (opt_std / opt_mean * 100.0) if opt_mean else None
+    opt_best = finalDF.loc[best_idx, "optimisationVariable"]
+    df_top10.loc["optimisationVariable", ["mean", "std", "relStd [%]", "best"]] = [opt_mean, opt_std, opt_rel, opt_best]
+
+    # --- Formatierhilfe ---
+    def fmt_df(df, cols=None, nd=6):
+        df = df.copy()
+        cols = df.columns if cols is None else cols
+        for c in cols:
+            df[c] = df[c].apply(lambda x: f"{x:.{nd}g}" if pd.notnull(x) and isinstance(x, (int, float)) else str(x))
+        return df
+
+    df_top_disp = fmt_df(df_top, ["mean", "std", "relStd [%]", "best"], nd=6)
+    df_top10_disp = fmt_df(df_top10, ["mean", "std", "relStd [%]", "best"], nd=6)
+
+    # --- Plot ---
+    n_rows_top = len(df_top_disp)
+    n_rows_top10 = len(df_top10_disp)
+    fig_h = 1.2 + 0.38 * (n_rows_top + n_rows_top10)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, fig_h))
+    if title:
+        fig.suptitle(title, fontsize=14, y=0.99)
+
+    # Tabelle 1
+    axes[0].axis("off")
+    tbl1 = axes[0].table(
+        cellText=df_top_disp.values,
+        rowLabels=df_top_disp.index.tolist(),
+        colLabels=df_top_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl1.auto_set_font_size(False)
+    tbl1.set_fontsize(9)
+    tbl1.scale(1, 1.2)
+    axes[0].set_title("Top N Best + Signle Best (Surrogate)", fontsize=12, pad=10)
+
+    # Tabelle 2
+    axes[1].axis("off")
+    tbl2 = axes[1].table(
+        cellText=df_top10_disp.values,
+        rowLabels=df_top10_disp.index.tolist(),
+        colLabels=df_top10_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl2.auto_set_font_size(False)
+    tbl2.set_fontsize(9)
+    tbl2.scale(1, 1.2)
+    axes[1].set_title("Top 10 Best + Single Best (Model)", fontsize=12, pad=10)
+
+    plt.tight_layout(rect=(0, 0, 1, 0.98))
+    out_path = pathlib.Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return out_path
+'''
+
+
+def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
+    """
+    Bild mit zwei Tabellen + ein gemeinsames CSV:
+      1) TopNBest (Surrogate): mean/std/relStd [%] + Single Best
+      2) FinalDF-Top10 (Model): mean/std/relStd [%] + Single Best + optimisationVariable
+    CSV: <stem>_tables.csv — enthält pro Tabelle eine Titelzeile (als eigene Zeile), dann die Datenzeilen.
+    """
+    # --- Parameterauswahl normalisieren ---
+    if isinstance(paramSelected, (list, tuple, pd.Index, pd.Series)):
+        param_cols = list(paramSelected)
+    else:
+        param_cols = [paramSelected]
+
+    # --- Tabelle 1 (TopNBest + Best aus results_dict) ---
+    top = results_dict["TopNBest"]
+    mean_params = pd.Series(top["mean_params"])
+    std_params = pd.Series(top["std_params"])
+    rel_params = (std_params / mean_params * 100.0)
+
+    df_top = pd.DataFrame({
+        "mean": mean_params,
+        "std": std_params,
+        "relStd [%]": rel_params
+    })
+
+    # mu/sigma-Zeilen
+    df_top = pd.concat([
+        df_top,
+        pd.DataFrame({
+            "mean": [top["mean_mu"], top["mean_sigma"]],
+            "std": [top["std_mu"], top["std_sigma"]],
+            "relStd [%]": [
+                (top["std_mu"] / top["mean_mu"] * 100.0) if top["mean_mu"] else None,
+                (top["std_sigma"] / top["mean_sigma"] * 100.0) if top["mean_sigma"] else None
+            ]
+        }, index=["mu", "sigma"])
+    ])
+
+    # optionale Zeile: optimisationVariable (Wert aus finalDF für das gegebene simName)
+    if simName is not None:
+        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
+        if not match.empty:
+            df_top.loc["optimisationVariable", ["mean", "std", "relStd [%]"]] = [match.iloc[0], None, None]
+
+    # "Best" (aus results_dict["Best"]) als Spalte 'best'
+    best = results_dict["Best"]
+    best_params = pd.Series(best["params"])
+    df_best = pd.DataFrame({"value": best_params})
+    df_best.loc["mu", "value"] = best["mu"]
+    df_best.loc["sigma", "value"] = best["sigma"]
+    df_top["best"] = df_best["value"]
+
+    # --- Tabelle 2 (Top 10 in finalDF + Best + optimisationVariable) ---
+    best_idx = finalDF["optimisationVariable"].idxmin()
+    top10 = finalDF.nsmallest(10, "optimisationVariable")
+
+    top10_params_num = top10[param_cols].apply(pd.to_numeric, errors="coerce")
+    means_10 = top10_params_num.mean()
+    stds_10 = top10_params_num.std()
+    rel_10 = (stds_10 / means_10 * 100.0)
+
+    best_vals = pd.to_numeric(finalDF.loc[best_idx, param_cols], errors="coerce")
+
+    df_top10 = pd.DataFrame({
+        "mean": means_10,
+        "std": stds_10,
+        "relStd [%]": rel_10,
+        "best": best_vals
+    })
+
+    # immer eine 'optimisationVariable'-Zeile (ohne simName im Zeilenlabel)
+    opt_mean = pd.to_numeric(top10["optimisationVariable"], errors="coerce").mean()
+    opt_std = pd.to_numeric(top10["optimisationVariable"], errors="coerce").std()
+    opt_rel = (opt_std / opt_mean * 100.0) if opt_mean else None
+    opt_best = finalDF.loc[best_idx, "optimisationVariable"]
+    df_top10.loc["optimisationVariable", ["mean", "std", "relStd [%]", "best"]] = [opt_mean, opt_std, opt_rel, opt_best]
+
+    # --- Titel (mit simName im Header, nicht in den Zeilen) ---
+    title_1_base = "Top N Best + Signle Best (Surrogate)"
+    title_1 = f"{title_1_base} ({simName})" if simName else title_1_base
+
+    title_2_base = "Top 10 Best + Single Best (Model)"
+    best_sim_name = finalDF.at[best_idx, "simName"] if "simName" in finalDF.columns else None
+    title_2 = f"{title_2_base} ({best_sim_name})" if pd.notna(best_sim_name) else title_2_base
+
+    # --- Formatierung NUR für die Grafik ---
+    def fmt_df(df, cols=None, nd=6):
+        df = df.copy()
+        cols = df.columns if cols is None else cols
+        for c in cols:
+            df[c] = df[c].apply(lambda x: f"{x:.{nd}g}" if pd.notnull(x) and isinstance(x, (int, float)) else str(x))
+        return df
+
+    df_top_disp = fmt_df(df_top, ["mean", "std", "relStd [%]", "best"], nd=6)
+    df_top10_disp = fmt_df(df_top10, ["mean", "std", "relStd [%]", "best"], nd=6)
+
+    # --- Plot ---
+    n_rows_top = len(df_top_disp)
+    n_rows_top10 = len(df_top10_disp)
+    fig_h = 1.2 + 0.38 * (n_rows_top + n_rows_top10)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, fig_h))
+    if title:
+        fig.suptitle(title, fontsize=14, y=0.99)
+
+    # Tabelle 1
+    axes[0].axis("off")
+    tbl1 = axes[0].table(
+        cellText=df_top_disp.values,
+        rowLabels=df_top_disp.index.tolist(),
+        colLabels=df_top_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl1.auto_set_font_size(False)
+    tbl1.set_fontsize(9)
+    tbl1.scale(1, 1.2)
+    axes[0].set_title(title_1, fontsize=12, pad=10)
+
+    # Tabelle 2
+    axes[1].axis("off")
+    tbl2 = axes[1].table(
+        cellText=df_top10_disp.values,
+        rowLabels=df_top10_disp.index.tolist(),
+        colLabels=df_top10_disp.columns.tolist(),
+        loc="center"
+    )
+    tbl2.auto_set_font_size(False)
+    tbl2.set_fontsize(9)
+    tbl2.scale(1, 1.2)
+    axes[1].set_title(title_2, fontsize=12, pad=10)
+
+    plt.tight_layout(rect=(0, 0, 1, 0.98))
+
+    # --- Dateien speichern ---
+    out_path = pathlib.Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # PNG
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+    # --- EIN CSV mit Titelzeilen als "Header-Row" je Tabelle ---
+    csv_path = out_path.with_name(f"{out_path.stem}_tables.csv")
+    csv_cols = ["row", "mean", "std", "relStd [%]", "best"]
+
+    t1 = df_top.reset_index(names=["row"])[csv_cols]
+    t2 = df_top10.reset_index(names=["row"])[csv_cols]
+
+    # Titelzeilen (erste Spalte = Titel, restliche Spalten leer)
+    header1 = pd.DataFrame([{c: "" for c in csv_cols}])
+    header1.at[0, "row"] = title_1
+
+    header2 = pd.DataFrame([{c: "" for c in csv_cols}])
+    header2.at[0, "row"] = title_2
+
+    # Optional: Leerzeile zwischen Tabellen
+    spacer = pd.DataFrame([{c: "" for c in csv_cols}])
+
+    csv_both = pd.concat([header1, t1, spacer, header2, t2], ignore_index=True)
+    csv_both.to_csv(csv_path, index=False)
+
+    return out_path
+
 
 
 def expectedImprovement(mu, sigma, f_best, xi=0.02):
