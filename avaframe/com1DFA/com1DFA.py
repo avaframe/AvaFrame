@@ -808,6 +808,37 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfg, reportAreaInf
             "mu file": inputSimLines["muFile"].name,
             "xi file": inputSimLines["xiFile"].name,
         }
+    elif cfgGen["frictModel"].lower() == "obrienandjulien":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "O´Brien and Julien",
+            "alpha": cfgGen["alphaObrienAndJulien"],
+            "Cmax": cfgGen["cvMaxSediment"],
+            "Cv": cfgGen["cvSediment"],
+            "alpha1": cfgGen["alpha1EtaObrienAndJulien"],
+            "beta1": cfgGen["beta1EtaObrienAndJulien"],
+            "alpha2": cfgGen["alpha2TauyObrienAndJulien"],
+            "beta2": cfgGen["beta2TauyObrienAndJulien"],
+        }
+    elif cfgGen["frictModel"].lower() == "herschelandbulkley":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Herschel and Bulkley",
+            "n": cfgGen["nHerschelAndBulkley"],
+            "alpha1": cfgGen["alpha1EtaHerschelAndBulkley"],
+            "beta1": cfgGen["beta1EtaHerschelAndBulkley"],
+            "alpha2": cfgGen["alpha2TauyHerschelAndBulkley"],
+            "beta2": cfgGen["beta2TauyHerschelAndBulkley"],
+        }
+    elif cfgGen["frictModel"].lower() == "bingham":
+        reportST["Friction model"] = {
+            "type": "columns",
+            "model": "Bingham",
+            "alpha1": cfgGen["alpha1EtaBingham"],
+            "beta1": cfgGen["beta1EtaBingham"],
+            "alpha2": cfgGen["alpha2TauyBingham"],
+            "beta2": cfgGen["beta2TauyBingham"],
+        }
 
     # check if secondary release area
     if secRelAreaFlag == "Yes":
@@ -1855,6 +1886,9 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "voellmyminshear",
         "coulombminshear",
         "spatialvoellmy",
+        "obrienandjulien",
+        "herschelandbulkley",
+        "bingham"
     ]
     frictModel = cfgGen["frictModel"].lower()
     frictType = frictModelsList.index(frictModel) + 1
