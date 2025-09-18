@@ -259,6 +259,13 @@ def getInputDataCom1DFA(avaDir):
         inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
     )
 
+    hydrographFile, entResInfo["hydrograph"] = getAndCheckInputFiles(
+        inputDir, "HYDR", "Hydrograph", fileExt="shp"
+    )
+    hydrographCsv, entResInfo["hydrographCsv"] = getAndCheckInputFiles(
+        inputDir, "HYDR", "Hydrograph parameters (csv)", fileExt="csv"
+    )
+
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
         "demFile": demFile,
@@ -271,6 +278,8 @@ def getInputDataCom1DFA(avaDir):
         "relThFile": relThFile,
         "muFile": muFile,
         "xiFile": xiFile,
+        "hydrographFile": hydrographFile,
+        "hydrographCsv": hydrographCsv,
     }
 
     return inputSimFiles
@@ -308,7 +317,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     """
     available = "No"
 
-    supportedFileFormats = [".shp", ".asc", ".tif"]
+    supportedFileFormats = [".shp", ".asc", ".tif", ".csv"]
 
     # Define the directory to search and the extensions
     if fileExt == "":
@@ -343,7 +352,8 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
 
         if OutputFile.suffix not in supportedFileFormats:
             message = (
-                "Unsupported file format found for OutputFile %s; shp, asc, tif are allowed" % OutputFile
+                "Unsupported file format found for OutputFile %s; shp, asc, tif, csv are allowed"
+                % OutputFile
             )
             log.error(message)
             raise AssertionError(message)
@@ -928,3 +938,39 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
         )
         log.error(message)
         raise AssertionError(message)
+
+
+def getHydrographCsv(hydrCsv):
+    """
+     get hydrograph values from the csv table
+     TODO: now the first column is defined as timestep, the second as thickness, third as velocity
+     see DebrisFrame Issue #18
+
+    Parameters
+    -----------
+    hydrCsv: str
+        directory to csv table containing hydrograph values
+
+    Returns
+    -----------
+    hydrographValues: dict
+        contains hydrograph values: timestep, thickness, velocity
+    """
+    hydrParameters = np.genfromtxt(hydrCsv, delimiter=",", filling_values=0, skip_header=1)
+
+    if hydrParameters.ndim == 2:
+        # sort the columns according to the first column (timestep)
+        hydrParameters = hydrParameters[np.argsort(hydrParameters[:, 0])]
+        hydrographValues = {
+            "timeStep": hydrParameters[:, 0],
+            "thickness": hydrParameters[:, 1],
+            "velocity": hydrParameters[:, 2],
+        }
+    else:
+        hydrographValues = {
+            "timeStep": [hydrParameters[0]],
+            "thickness": [hydrParameters[1]],
+            "velocity": [hydrParameters[2]],
+        }
+
+    return hydrographValues

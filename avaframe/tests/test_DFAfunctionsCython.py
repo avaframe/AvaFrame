@@ -9,6 +9,7 @@ import matplotlib.tri as tri
 # Local imports
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.in3Utils.geoTrans as geoTrans
 
 
 def test_getNeighborsC(capfd):
@@ -782,6 +783,72 @@ def test_computeCohesionForceC():
     assert force["forceSPHX"][2] > 0
     assert force["forceSPHY"][2] < 0
     assert force["forceSPHY"][1] == -force["forceSPHY"][2]
+
+
+def test_updateInitialVelocity():
+    particles = {
+        "x": np.array([10.0]),
+        "y": np.array([10.0]),
+        "ux": np.array([0.0]),
+        "uy": np.array([0.0]),
+        "uz": np.array([0.0]),
+        "nPart": 1,
+        "velocityMag": np.array([0.0]),
+    }
+
+    # incline plane
+    dem = {
+        "header": {"nrows": 5, "ncols": 5, "cellsize": 5},
+        "rasterData": np.array(
+            [
+                [100, 100, 100, 100, 100],
+                [95, 95, 95, 95, 95],
+                [90, 90, 90, 90, 90],
+                [85, 85, 85, 85, 85],
+                [80, 80, 80, 80, 80],
+            ]
+        ),
+    }
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"interpOption": "2"}
+
+    velocityMag = 10.0
+    dem = geoTrans.getNormalMesh(dem, num=1)
+
+    particlesTest = {
+        "x": np.array([10.0]),
+        "y": np.array([10.0]),
+        "ux": np.array([0.0]),
+        "uy": np.array([np.sqrt(50)]),
+        "uz": np.array([-np.sqrt(50)]),
+        "nPart": 1,
+        "velocityMag": np.array([velocityMag]),
+    }
+
+    particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
+    for key in particlesTest:
+        assert np.isclose(particlesTest[key], particlesVelocity[key], atol=1e-4)
+    assert (
+        DFAtls.norm(particlesVelocity["ux"], particlesVelocity["uy"], particlesVelocity["uz"]) == velocityMag
+    )
+
+    # flat plane
+    dem["rasterData"] = np.ones((dem["header"]["ncols"], dem["header"]["nrows"]))
+    dem = geoTrans.getNormalMesh(dem, num=1)
+    particlesTest = {
+        "x": np.array([10.0]),
+        "y": np.array([10.0]),
+        "ux": np.array([0.0]),
+        "uy": np.array([0.0]),
+        "uz": np.array([0.0]),
+        "nPart": 1,
+        "velocityMag": np.array([0.0]),
+    }
+
+    particlesVelocity = DFAfunC.updateInitialVelocity(cfg["GENERAL"], particles, dem, velocityMag)
+    for key in particlesTest:
+        assert np.isclose(particlesTest[key], particlesVelocity[key], atol=1e-3)
 
 
 """
