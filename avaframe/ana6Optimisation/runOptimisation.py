@@ -87,7 +87,7 @@ paramBounds = {
 }
 
 # plot results
-outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Morris")
+outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Optimisation")
 # create folder if not already existing
 fU.makeADir(outDir)
 
@@ -108,7 +108,7 @@ if optimisationType == 'nonSeq':
 
     # save sim with currently best y
     helper.saveBestRow(finalDF, 'optimisationVariable',
-                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.csv"))
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Optimisation" + "/bestNonSeq.csv"))
 
     # ToDo Chose either all simulations or only LH simulations, currently --> all
     # create df with most important parameters and the loss function
@@ -131,12 +131,24 @@ if optimisationType == 'nonSeq':
     # v1, non sequential (only use pipe once to find best param)
     topNStat = helper.optimiseNonSeqV1(gp_pipe, paramBounds)
 
+    simName = 'AnbruchFleisskarModified_3627682333_C_L_null_psa'
+
+    helper.saveTopCandidates(topNStat, finalDF, paramSelected,
+                             out_path=avalancheDir + "/Outputs" + "/ana6Optimisation" + f"/bestNonSeq{avaName}.png",
+                             title=f"{avaName}, NonSeq-Analysis: Best Surrogate vs Best Model Run",
+                             simName=simName)
+
+
+
+
+
+
+
     # run com8 with best x from N best surrogate mean
     simName = helper.runCom8MoTPSA(avalancheDir, topNStat['TopNBest']['mean_params'], cfgMain,
                                    optimisationType='nonSeq')
 
     # das gleiche für Best Surrogate
-
 
 
 
@@ -147,13 +159,13 @@ if optimisationType == 'nonSeq':
 
     # save best surrogate input params
     helper.saveTopCandidates(topNStat, finalDF, paramSelected,
-                             out_path=avalancheDir + "/Outputs" + "/ana6Morris" + f"/bestNonSeq{avaName}.png",
-                             title=f"{avaName} NonSeq-Analysis: Best Surrogate vs Best Real Model Run",
+                             out_path=avalancheDir + "/Outputs" + "/ana6Optimisation" + f"/bestNonSeq{avaName}.png",
+                             title=f"{avaName}, NonSeq-Analysis: Best Surrogate vs Best Model Run",
                              simName=simName)
 
     # save latest real sim
     helper.saveBestRow(df=finalDF, y='optimisationVariable', simName=simName,
-                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestNonSeq.csv"))
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Optimisation" + "/bestNonSeq.csv"))
 
 
 
@@ -161,7 +173,7 @@ else:
 
     # save sim with currently best y
     helper.saveBestRow(finalDF, 'optimisationVariable',
-                       csv_path=(avalancheDir + "/Outputs" + "/ana6Morris" + "/bestBORows.csv"))
+                       csv_path=(avalancheDir + "/Outputs" + "/ana6Optimisation" + "/bestBORows.csv"))
 
     for i in range(40):
         # ToDo Chose either all simulations or only LH simulations, currently --> all

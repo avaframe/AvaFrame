@@ -40,7 +40,7 @@ from avaframe.com8MoTPSA import com8MoTPSA
 from avaframe.ana4Stats import probAna
 import helper
 import plotSAResults
-
+from avaframe.runScripts.runPlotAreaRefDiffs import runPlotAreaRefDiffs
 
 
 
@@ -64,13 +64,27 @@ import plotSAResults
 cfgProb = configparser.ConfigParser()
 cfgStart = configparser.ConfigParser()
 
-cfgProb.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA/morris_probAnaCfg.ini')
-cfgStart.read('/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA/morris_com8MoTPSACfg.ini')
+cfgProb.read(
+    '/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA_NEW/morris_probAnaCfg.ini')
+cfgStart.read(
+    '/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA_NEW/morris_com8MoTPSACfg.ini')
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()  # ToDo us only config main
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 avaName = pathlib.Path(avalancheDir).name
+
+# plot results
+outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Optimisation")
+# create folder if not already existing
+fU.makeADir(outDir)
+
+# calculate areal indicators and save pickle
+resType = "ppr"
+thresholdValueSimulation = 1
+modName = 'com8MoTPSA'
+# runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
+
 
 # Read results from parametersets for simulations, areal indicators and merge
 finalDF = helper.buildFinalDF(avalancheDir, cfgProb)
@@ -117,10 +131,6 @@ SiData = {
 # In DataFrame umwandeln
 SiDF = pd.DataFrame(SiData)
 
-# plot results
-outDir = pathlib.Path(avalancheDir, "Outputs", "ana6Morris")
-# create folder if not already existing
-fU.makeADir(outDir)
 plotSAResults.barplot(SiDF, avaName, outDir)
 # ToDo make scatter plot better, visibility better, and maybe merge scatterplot functions
 plotSAResults.scatterplot(SiDF, avaName, outDir)

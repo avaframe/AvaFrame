@@ -117,8 +117,13 @@ def readParamSetDF(inDir, varParList, paramSelected=None):
         'sampleMethod': sampleMethods
     })
 
-    # add selected parameters as columns
-    dummy = pd.DataFrame(paramSetDF['parameterSet'].tolist(), columns=varParList)[paramSelected]
+    # add selected parameters as columns if not None
+    if paramSelected is not None:
+        cols_to_add = paramSelected
+    else:
+        cols_to_add = varParList  # use all available parameter names
+
+    dummy = pd.DataFrame(paramSetDF['parameterSet'].tolist(), columns=varParList)[cols_to_add]
     paramSetDF = pd.concat([paramSetDF, dummy], axis=1)
 
 
@@ -289,11 +294,11 @@ def buildFinalDF(avalancheDir, cfgProb, paramSelected=None):
     indicatorsDF = readArealIndicators(arealIndicatorDir)
 
     # read u2_max df
-    u2_maxDF = readMaxVelocity(avalancheDir)
+    # u2_maxDF = readMaxVelocity(avalancheDir)
 
     # merge df
     df_merged = pd.merge(paramSetDF, indicatorsDF, on='simName', how='inner')
-    df_merged = df_merged.merge(u2_maxDF, on='simName')
+    # df_merged = df_merged.merge(u2_maxDF, on='simName')
 
     # add optimisation variables
     finalDF = addLossMetrics(df_merged)
@@ -502,431 +507,164 @@ def analyzeTopCandidates(df_candidates, mu, sigma, param_cols, N=5):
     }, topNData
 
 
-'''
 def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
     """
-    Speichert drei Tabellen als ein Bild:
-      1) TopNBest (Mittelwert/Std/Rel.-Std der Parameter + mu/sigma + optimisationVariable der gewählten Simulation)
-      2) Best (beste Parameterkombination + mu/sigma)
-      3) FinalDF-Eintrag (beste Zeile nach optimisationVariable) transponiert: ausgewählte Parameter + optimisationVariable
+    Create two result tables (Surrogate and Model), save them as PNG and CSV.
+    Both tables are plotted into a single PNG image (stacked) and exported into
+    one CSV file with section headers.
+
+    Parameters
+    ----------
+    results_dict : dict
+        Dictionary containing surrogate optimisation results with keys:
+          - "TopNBest": dict with entries "mean_params", "std_params",
+            "mean_mu", "std_mu", "mean_sigma", "std_sigma".
+          - "Best": dict with entries "params", "mu", "sigma".
+    finalDF : pandas.DataFrame
+        DataFrame with all model results. Must contain:
+          - Column "optimisationVariable"
+          - Column "simName"
+          - Parameter columns referenced by paramSelected.
+    paramSelected : list of str
+        List of parameter column names to analyse.
+    out_path : str or pathlib.Path, optional
+        Path to save the PNG image. Default = "analysisTable.png".
+        The CSV file will be saved in the same folder with suffix "_tables.csv".
+    title : str, optional
+        Global title for the PNG figure. Default = None.
+    simName : str, optional
+        Simulation name to highlight in Table 1 (Surrogate). If provided,
+        its optimisation variable is added as a row.
+
+    Returns
+    -------
+    pathlib.Path
+        Path to the saved PNG figure.
+
+    Notes
+    -----
+    - This code was written with AI.
     """
-    # --- TopNBest-DataFrame bauen ---
-    top = results_dict["TopNBest"]
-    mean_params = pd.Series(top["mean_params"]).astype(float)
-    std_params = pd.Series(top["std_params"]).astype(float)
-    rel_params = (std_params / mean_params.replace(0, np.nan) * 100.0)
-
-    df_top = pd.DataFrame({
-        "mean": mean_params,
-        "std": std_params,
-        "rel_std_%": rel_params
-    })
-
-    # mu/sigma Zeilen anhängen
-    mean_mu = float(top["mean_mu"])
-    std_mu = float(top["std_mu"])
-    mean_sigma = float(top["mean_sigma"])
-    std_sigma = float(top["std_sigma"])
-
-    rel_mu = (std_mu / mean_mu * 100.0) if mean_mu != 0 else np.nan
-    rel_sigma = (std_sigma / mean_sigma * 100.0) if mean_sigma != 0 else np.nan
-
-    df_top = pd.concat([
-        df_top,
-        pd.DataFrame({
-            "mean": [mean_mu, mean_sigma],
-            "std": [std_mu, std_sigma],
-            "rel_std_%": [rel_mu, rel_sigma]
-        }, index=["mu", "sigma"])
-    ])
-
-    # zusätzliche Zeile: optimisationVariable der gewünschten Simulation (aus finalDF gefiltert per simName)
-    if simName is not None:
-        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
-        if not match.empty:
-            df_top.loc[f"optimisationVariable ({simName})", ["mean", "std", "rel_std_%"]] = [float(match.iloc[0]),
-                                                                                             np.nan, np.nan]
-
-    # --- Best-DataFrame bauen ---
-    best = results_dict["Best"]
-    best_params = pd.Series(best["params"]).astype(float)
-    df_best = pd.DataFrame({"value": best_params})
-    df_best.loc["mu", "value"] = float(best["mu"])
-    df_best.loc["sigma", "value"] = float(best["sigma"])
-
-    # --- FinalDF (beste Zeile nach optimisationVariable), transponiert ---
-    if isinstance(paramSelected, (list, tuple, pd.Index, np.ndarray)):
-        param_cols = list(paramSelected)
-    else:
-        param_cols = [paramSelected]
-    need = param_cols + ["optimisationVariable"]
-
-    best_idx = finalDF["optimisationVariable"].idxmin()
-    row = finalDF.loc[best_idx, need]
-    df_final = pd.DataFrame({"value": row})
-
-    # --- Formatierhilfe ---
-    def fmt_df(df, cols=None, nd=6):
-        df = df.copy()
-        cols = df.columns if cols is None else cols
-        for c in cols:
-            orig = df[c]
-            nums = pd.to_numeric(orig, errors="coerce")
-            fmt_vals = nums.map(lambda x: f"{x:.{nd}g}" if pd.notnull(x) else None)
-            df[c] = np.where(nums.notnull(), fmt_vals, orig.astype(str))
-        return df
-
-    df_top_disp = fmt_df(df_top, ["mean", "std", "rel_std_%"], nd=6)
-    df_best_disp = fmt_df(df_best, ["value"], nd=6)
-    df_final_disp = fmt_df(df_final, ["value"], nd=6)
-
-    # --- Plot: drei Tabellen ---
-    n_rows_top = len(df_top_disp)
-    n_rows_best = len(df_best_disp)
-    n_rows_final = len(df_final_disp)
-    fig_h = 1.2 + 0.35 * (n_rows_top + n_rows_best + n_rows_final)
-
-    fig, axes = plt.subplots(3, 1, figsize=(10, fig_h))
-    if title:
-        fig.suptitle(title, fontsize=14, y=0.99)
-
-    axes[0].axis("off")
-    tbl1 = axes[0].table(
-        cellText=df_top_disp.values,
-        rowLabels=df_top_disp.index.tolist(),
-        colLabels=df_top_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl1.auto_set_font_size(False);
-    tbl1.set_fontsize(9);
-    tbl1.scale(1, 1.2)
-    axes[0].set_title("Surrogate TopNBest – Parameterstatistik & μ/σ", fontsize=12, pad=10)
-
-    axes[1].axis("off")
-    tbl2 = axes[1].table(
-        cellText=df_best_disp.values,
-        rowLabels=df_best_disp.index.tolist(),
-        colLabels=df_best_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl2.auto_set_font_size(False);
-    tbl2.set_fontsize(10);
-    tbl2.scale(1, 1.2)
-    axes[1].set_title("Surrogate Best – Best Parameterkombination ", fontsize=12, pad=10)
-
-    axes[2].axis("off")
-    tbl3 = axes[2].table(
-        cellText=df_final_disp.values,
-        rowLabels=df_final_disp.index.tolist(),
-        colLabels=df_final_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl3.auto_set_font_size(False);
-    tbl3.set_fontsize(9);
-    tbl3.scale(1, 1.2)
-    axes[2].set_title("FinalDF – Best Model Run", fontsize=12, pad=10)
-
-    plt.tight_layout(rect=(0, 0, 1, 0.98))
-    out_path = pathlib.Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=200, bbox_inches="tight")
-    plt.close(fig)
-    return out_path
-
-
-
-def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
-    """
-    Bild mit zwei Tabellen:
-      1) TopNBest (Surrogate): mean/std/relStd [%] + Single Best
-      2) FinalDF-Top10 (Model): mean/std/relStd [%] + Single Best + optimisationVariable
-    """
-    # --- Vorbereitung Spaltenliste ---
-    if isinstance(paramSelected, (list, tuple, pd.Index, pd.Series)):
-        param_cols = list(paramSelected)
-    else:
-        param_cols = [paramSelected]
-
-    # --- Tabelle 1 aus results_dict["TopNBest"] + "Best" ---
+    # --- Table 1: TopNBest (Surrogate) + Best ---
     top = results_dict["TopNBest"]
     mean_params = pd.Series(top["mean_params"])
     std_params = pd.Series(top["std_params"])
-    rel_params = (std_params / mean_params * 100.0)
+    rel_params = std_params / mean_params * 100.0
 
-    df_top = pd.DataFrame({
-        "mean": mean_params,
-        "std": std_params,
-        "relStd [%]": rel_params
-    })
-
-    # mu/sigma Zeilen anhängen
+    df_top = pd.DataFrame({"mean": mean_params, "std": std_params, "relStd [%]": rel_params})
     df_top = pd.concat([
         df_top,
-        pd.DataFrame({
-            "mean": [top["mean_mu"], top["mean_sigma"]],
-            "std": [top["std_mu"], top["std_sigma"]],
-            "relStd [%]": [
-                (top["std_mu"] / top["mean_mu"] * 100.0) if top["mean_mu"] else None,
-                (top["std_sigma"] / top["mean_sigma"] * 100.0) if top["mean_sigma"] else None
-            ]
-        }, index=["mu", "sigma"])
+        pd.DataFrame(
+            {"mean": [top["mean_mu"], top["mean_sigma"]],
+             "std": [top["std_mu"], top["std_sigma"]],
+             "relStd [%]": [top["std_mu"] / top["mean_mu"] * 100.0,
+                            top["std_sigma"] / top["mean_sigma"] * 100.0]},
+            index=["optimisationVariableSurrogate", "sigma"]  # formerly "mu"
+        )
     ])
 
-    # optionale Zeile: optimisationVariable (simName)
     if simName is not None:
-        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
-        if not match.empty:
-            df_top.loc[f"optimisationVariable ({simName})", ["mean", "std", "relStd [%]"]] = [match.iloc[0], None, None]
+        val = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"].iloc[0]
+        df_top.loc["optimisationVariable", ["mean", "std", "relStd [%]"]] = [val, None, None]
 
-    # "Best" (aus results_dict["Best"]) als Spalte 'best' integrieren
     best = results_dict["Best"]
-    best_params = pd.Series(best["params"])
-    df_best = pd.DataFrame({"value": best_params})
-    df_best.loc["mu", "value"] = best["mu"]
-    df_best.loc["sigma", "value"] = best["sigma"]
-    df_top["best"] = df_best["value"]
+    df_best = pd.Series(best["params"], name="best")
+    df_best.loc["optimisationVariableSurrogate"] = best["mu"]
+    df_best.loc["sigma"] = best["sigma"]
+    df_top["best"] = df_best
 
-    # --- Tabelle 2: FinalDF-Top10 ---
+    # --- Table 2: Top10 (Model) + Best + optimisationVariable ---
     best_idx = finalDF["optimisationVariable"].idxmin()
     top10 = finalDF.nsmallest(10, "optimisationVariable")
 
-    # numerisch berechnen
-    top10_params_num = top10[param_cols].apply(pd.to_numeric, errors="coerce")
-    means_10 = top10_params_num.mean()
-    stds_10 = top10_params_num.std()
-    rel_10 = (stds_10 / means_10 * 100.0)
-
-    # best row
-    best_vals = pd.to_numeric(finalDF.loc[best_idx, param_cols], errors="coerce")
-
+    top10_params_num = top10[paramSelected].apply(pd.to_numeric, errors="coerce")
     df_top10 = pd.DataFrame({
-        "mean": means_10,
-        "std": stds_10,
-        "relStd [%]": rel_10,
-        "best": best_vals
+        "mean": top10_params_num.mean(),
+        "std": top10_params_num.std(),
+        "relStd [%]": top10_params_num.std() / top10_params_num.mean() * 100.0,
+        "best": pd.to_numeric(finalDF.loc[best_idx, paramSelected], errors="coerce"),
     })
 
-    # optimisationVariable row
     opt_mean = pd.to_numeric(top10["optimisationVariable"], errors="coerce").mean()
     opt_std = pd.to_numeric(top10["optimisationVariable"], errors="coerce").std()
-    opt_rel = (opt_std / opt_mean * 100.0) if opt_mean else None
-    opt_best = finalDF.loc[best_idx, "optimisationVariable"]
-    df_top10.loc["optimisationVariable", ["mean", "std", "relStd [%]", "best"]] = [opt_mean, opt_std, opt_rel, opt_best]
+    df_top10.loc["optimisationVariable", ["mean", "std", "relStd [%]", "best"]] = [
+        opt_mean, opt_std, opt_std / opt_mean * 100.0, finalDF.loc[best_idx, "optimisationVariable"]
+    ]
 
-    # --- Formatierhilfe ---
-    def fmt_df(df, cols=None, nd=6):
-        df = df.copy()
-        cols = df.columns if cols is None else cols
-        for c in cols:
-            df[c] = df[c].apply(lambda x: f"{x:.{nd}g}" if pd.notnull(x) and isinstance(x, (int, float)) else str(x))
-        return df
+    # --- Titles ---
+    title_1 = f"Surrogate: Top N Best + Single Best {f'({simName})' if simName else ''}"
+    best_sim = finalDF.at[best_idx, "simName"]
+    title_2 = f"Model: Top 10 Best + Single Best {f'({best_sim})' if best_sim else ''}"
 
-    df_top_disp = fmt_df(df_top, ["mean", "std", "relStd [%]", "best"], nd=6)
-    df_top10_disp = fmt_df(df_top10, ["mean", "std", "relStd [%]", "best"], nd=6)
+    # --- Number formatting ---
+    def formatSig(x):
+        try:
+            x = float(x)
+        except (TypeError, ValueError):
+            return ""
+        if pd.isna(x):
+            return ""
+        if x == 0.0:
+            return "0"
+        if x < 1e-3:
+            return f"{x:.2e}"  # small numbers in scientific notation
+        elif x < 1000:
+            s = f"{x:.2g}"  # 2 significant digits
+            if "e" in s or "E" in s:
+                return f"{x:.6f}".rstrip("0").rstrip(".")
+            return s
+        else:
+            return str(int(x))  # large numbers as integers
 
-    # --- Plot ---
-    n_rows_top = len(df_top_disp)
-    n_rows_top10 = len(df_top10_disp)
-    fig_h = 1.2 + 0.38 * (n_rows_top + n_rows_top10)
+    # --- Apply formatting to tables ---
+    def fmt_df(df):
+        g = df.copy()
+        for c in ["mean", "std", "relStd [%]", "best"]:
+            if c in g.columns:
+                g[c] = g[c].map(formatSig)
+        return g
 
+    df_top_disp = fmt_df(df_top)
+    df_top10_disp = fmt_df(df_top10)
+
+    # --- Plot with two tables ---
+    fig_h = 1.2 + 0.38 * (len(df_top_disp) + len(df_top10_disp))
     fig, axes = plt.subplots(2, 1, figsize=(10, fig_h))
     if title:
         fig.suptitle(title, fontsize=14, y=0.99)
 
-    # Tabelle 1
-    axes[0].axis("off")
-    tbl1 = axes[0].table(
-        cellText=df_top_disp.values,
-        rowLabels=df_top_disp.index.tolist(),
-        colLabels=df_top_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl1.auto_set_font_size(False)
-    tbl1.set_fontsize(9)
-    tbl1.scale(1, 1.2)
-    axes[0].set_title("Top N Best + Signle Best (Surrogate)", fontsize=12, pad=10)
-
-    # Tabelle 2
-    axes[1].axis("off")
-    tbl2 = axes[1].table(
-        cellText=df_top10_disp.values,
-        rowLabels=df_top10_disp.index.tolist(),
-        colLabels=df_top10_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl2.auto_set_font_size(False)
-    tbl2.set_fontsize(9)
-    tbl2.scale(1, 1.2)
-    axes[1].set_title("Top 10 Best + Single Best (Model)", fontsize=12, pad=10)
+    for ax, df_disp, t in [(axes[0], df_top_disp, title_1), (axes[1], df_top10_disp, title_2)]:
+        ax.axis("off")
+        tbl = ax.table(
+            cellText=df_disp.values,
+            rowLabels=df_disp.index.tolist(),
+            colLabels=df_disp.columns.tolist(),
+            loc="center"
+        )
+        tbl.auto_set_font_size(False)
+        tbl.set_fontsize(9)
+        tbl.scale(1, 1.2)
+        ax.set_title(t, fontsize=12, pad=10)
 
     plt.tight_layout(rect=(0, 0, 1, 0.98))
+
+    # --- Save PNG ---
     out_path = pathlib.Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
-    return out_path
-'''
 
-
-def saveTopCandidates(results_dict, finalDF, paramSelected, out_path="analysisTable.png", title=None, simName=None):
-    """
-    Bild mit zwei Tabellen + ein gemeinsames CSV:
-      1) TopNBest (Surrogate): mean/std/relStd [%] + Single Best
-      2) FinalDF-Top10 (Model): mean/std/relStd [%] + Single Best + optimisationVariable
-    CSV: <stem>_tables.csv — enthält pro Tabelle eine Titelzeile (als eigene Zeile), dann die Datenzeilen.
-    """
-    # --- Parameterauswahl normalisieren ---
-    if isinstance(paramSelected, (list, tuple, pd.Index, pd.Series)):
-        param_cols = list(paramSelected)
-    else:
-        param_cols = [paramSelected]
-
-    # --- Tabelle 1 (TopNBest + Best aus results_dict) ---
-    top = results_dict["TopNBest"]
-    mean_params = pd.Series(top["mean_params"])
-    std_params = pd.Series(top["std_params"])
-    rel_params = (std_params / mean_params * 100.0)
-
-    df_top = pd.DataFrame({
-        "mean": mean_params,
-        "std": std_params,
-        "relStd [%]": rel_params
-    })
-
-    # mu/sigma-Zeilen
-    df_top = pd.concat([
-        df_top,
-        pd.DataFrame({
-            "mean": [top["mean_mu"], top["mean_sigma"]],
-            "std": [top["std_mu"], top["std_sigma"]],
-            "relStd [%]": [
-                (top["std_mu"] / top["mean_mu"] * 100.0) if top["mean_mu"] else None,
-                (top["std_sigma"] / top["mean_sigma"] * 100.0) if top["mean_sigma"] else None
-            ]
-        }, index=["mu", "sigma"])
-    ])
-
-    # optionale Zeile: optimisationVariable (Wert aus finalDF für das gegebene simName)
-    if simName is not None:
-        match = finalDF.loc[finalDF["simName"] == simName, "optimisationVariable"]
-        if not match.empty:
-            df_top.loc["optimisationVariable", ["mean", "std", "relStd [%]"]] = [match.iloc[0], None, None]
-
-    # "Best" (aus results_dict["Best"]) als Spalte 'best'
-    best = results_dict["Best"]
-    best_params = pd.Series(best["params"])
-    df_best = pd.DataFrame({"value": best_params})
-    df_best.loc["mu", "value"] = best["mu"]
-    df_best.loc["sigma", "value"] = best["sigma"]
-    df_top["best"] = df_best["value"]
-
-    # --- Tabelle 2 (Top 10 in finalDF + Best + optimisationVariable) ---
-    best_idx = finalDF["optimisationVariable"].idxmin()
-    top10 = finalDF.nsmallest(10, "optimisationVariable")
-
-    top10_params_num = top10[param_cols].apply(pd.to_numeric, errors="coerce")
-    means_10 = top10_params_num.mean()
-    stds_10 = top10_params_num.std()
-    rel_10 = (stds_10 / means_10 * 100.0)
-
-    best_vals = pd.to_numeric(finalDF.loc[best_idx, param_cols], errors="coerce")
-
-    df_top10 = pd.DataFrame({
-        "mean": means_10,
-        "std": stds_10,
-        "relStd [%]": rel_10,
-        "best": best_vals
-    })
-
-    # immer eine 'optimisationVariable'-Zeile (ohne simName im Zeilenlabel)
-    opt_mean = pd.to_numeric(top10["optimisationVariable"], errors="coerce").mean()
-    opt_std = pd.to_numeric(top10["optimisationVariable"], errors="coerce").std()
-    opt_rel = (opt_std / opt_mean * 100.0) if opt_mean else None
-    opt_best = finalDF.loc[best_idx, "optimisationVariable"]
-    df_top10.loc["optimisationVariable", ["mean", "std", "relStd [%]", "best"]] = [opt_mean, opt_std, opt_rel, opt_best]
-
-    # --- Titel (mit simName im Header, nicht in den Zeilen) ---
-    title_1_base = "Top N Best + Signle Best (Surrogate)"
-    title_1 = f"{title_1_base} ({simName})" if simName else title_1_base
-
-    title_2_base = "Top 10 Best + Single Best (Model)"
-    best_sim_name = finalDF.at[best_idx, "simName"] if "simName" in finalDF.columns else None
-    title_2 = f"{title_2_base} ({best_sim_name})" if pd.notna(best_sim_name) else title_2_base
-
-    # --- Formatierung NUR für die Grafik ---
-    def fmt_df(df, cols=None, nd=6):
-        df = df.copy()
-        cols = df.columns if cols is None else cols
-        for c in cols:
-            df[c] = df[c].apply(lambda x: f"{x:.{nd}g}" if pd.notnull(x) and isinstance(x, (int, float)) else str(x))
-        return df
-
-    df_top_disp = fmt_df(df_top, ["mean", "std", "relStd [%]", "best"], nd=6)
-    df_top10_disp = fmt_df(df_top10, ["mean", "std", "relStd [%]", "best"], nd=6)
-
-    # --- Plot ---
-    n_rows_top = len(df_top_disp)
-    n_rows_top10 = len(df_top10_disp)
-    fig_h = 1.2 + 0.38 * (n_rows_top + n_rows_top10)
-
-    fig, axes = plt.subplots(2, 1, figsize=(10, fig_h))
-    if title:
-        fig.suptitle(title, fontsize=14, y=0.99)
-
-    # Tabelle 1
-    axes[0].axis("off")
-    tbl1 = axes[0].table(
-        cellText=df_top_disp.values,
-        rowLabels=df_top_disp.index.tolist(),
-        colLabels=df_top_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl1.auto_set_font_size(False)
-    tbl1.set_fontsize(9)
-    tbl1.scale(1, 1.2)
-    axes[0].set_title(title_1, fontsize=12, pad=10)
-
-    # Tabelle 2
-    axes[1].axis("off")
-    tbl2 = axes[1].table(
-        cellText=df_top10_disp.values,
-        rowLabels=df_top10_disp.index.tolist(),
-        colLabels=df_top10_disp.columns.tolist(),
-        loc="center"
-    )
-    tbl2.auto_set_font_size(False)
-    tbl2.set_fontsize(9)
-    tbl2.scale(1, 1.2)
-    axes[1].set_title(title_2, fontsize=12, pad=10)
-
-    plt.tight_layout(rect=(0, 0, 1, 0.98))
-
-    # --- Dateien speichern ---
-    out_path = pathlib.Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # PNG
-    fig.savefig(out_path, dpi=200, bbox_inches="tight")
-    plt.close(fig)
-
-    # --- EIN CSV mit Titelzeilen als "Header-Row" je Tabelle ---
+    # --- Save CSV (both tables stacked) ---
     csv_path = out_path.with_name(f"{out_path.stem}_tables.csv")
-    csv_cols = ["row", "mean", "std", "relStd [%]", "best"]
+    cols = ["row", "mean", "std", "relStd [%]", "best"]
 
-    t1 = df_top.reset_index(names=["row"])[csv_cols]
-    t2 = df_top10.reset_index(names=["row"])[csv_cols]
+    t1 = fmt_df(df_top).reset_index(names=["row"])[cols]
+    t2 = fmt_df(df_top10).reset_index(names=["row"])[cols]
 
-    # Titelzeilen (erste Spalte = Titel, restliche Spalten leer)
-    header1 = pd.DataFrame([{c: "" for c in csv_cols}])
-    header1.at[0, "row"] = title_1
+    def header(txt):
+        return pd.DataFrame([{"row": txt, "mean": "", "std": "", "relStd [%]": "", "best": ""}])
 
-    header2 = pd.DataFrame([{c: "" for c in csv_cols}])
-    header2.at[0, "row"] = title_2
-
-    # Optional: Leerzeile zwischen Tabellen
-    spacer = pd.DataFrame([{c: "" for c in csv_cols}])
-
-    csv_both = pd.concat([header1, t1, spacer, header2, t2], ignore_index=True)
+    csv_both = pd.concat([header(title_1), t1, header(title_2), t2], ignore_index=True)
     csv_both.to_csv(csv_path, index=False)
 
     return out_path
@@ -1031,7 +769,7 @@ def saveBestRow(df, y, ei=None, lcb=None, simName=None, csv_path='dummy.csv'):
         idx = df[y].idxmin()
         row = df.loc[[idx]].copy()
 
-    # ensure the optional columns always exist (prevents CSV schema drift)
+    # ensure the optional columns always exist
     if ei is not None:
         row["ei"] = ei
     if lcb is not None:
