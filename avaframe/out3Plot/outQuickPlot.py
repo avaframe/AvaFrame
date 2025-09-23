@@ -582,14 +582,17 @@ def plotContours(contourDict, resType, thresholdValue, pathDict, addLegend=True)
 
     # loop over all sims
     for ind, simName in enumerate(contourDict):
-        keyLabel = list(contourDict[simName])[0]
-        for key in contourDict[simName]:
-            if key == keyLabel and 'line' in key:
-                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
-                    c=cmap.to_rgba(ind), label=simName)
-            elif 'line' in key:
-                ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
-                    c=cmap.to_rgba(ind))
+        if contourDict[simName] == {}:
+            log.warning('No contour lines found for %s' % simName)
+        else:
+            keyLabel = list(contourDict[simName])[0]
+            for key in contourDict[simName]:
+                if key == keyLabel and 'line' in key:
+                    ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
+                        c=cmap.to_rgba(ind), label=simName)
+                elif 'line' in key:
+                    ax1.plot(contourDict[simName][key]['x'], contourDict[simName][key]['y'],
+                        c=cmap.to_rgba(ind))
 
     if addLegend:
         ax1.legend()
