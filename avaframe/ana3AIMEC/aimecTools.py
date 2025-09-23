@@ -977,34 +977,55 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     if lindex.any():
         cUpper = min(lindex)
         cLower = max(lindex)
+        runoutFound = True
     else:
         log.warning('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpper = 0
         cLower = 0
+        runoutFound = False
     # search in mean values
     lindex = np.nonzero(PResCrossMean > thresholdValue)[0]
     if lindex.any():
         cUpperm = min(lindex)
         cLowerm = max(lindex)
+        flagMeanFound = True
     else:
         log.warning('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
         cUpperm = 0
         cLowerm = 0
-    resAnalysisDF.loc[simRowHash, 'sRunout'] = scoord[cLower]
-    index = np.nanargmax(PResRasters[cLower, :])
-    resAnalysisDF.loc[simRowHash, 'lRunout'] = lcoord[index]
-    resAnalysisDF.loc[simRowHash, 'xRunout'] = gridx[cLower, index]
-    resAnalysisDF.loc[simRowHash, 'yRunout'] = gridy[cLower, index]
+        flagMeanFound = False
+
+    if runoutFound:
+        resAnalysisDF.loc[simRowHash, "sRunout"] = scoord[cLower]
+        index = np.nanargmax(PResRasters[cLower, :])
+        resAnalysisDF.loc[simRowHash, "lRunout"] = lcoord[index]
+        resAnalysisDF.loc[simRowHash, "xRunout"] = gridx[cLower, index]
+        resAnalysisDF.loc[simRowHash, "yRunout"] = gridy[cLower, index]
+    else:
+        resAnalysisDF.loc[simRowHash, "sRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "lRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "xRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "yRunout"] = np.nan
+
     resAnalysisDF.loc[simRowHash, 'deltaSXY'] = scoord[cLower] - scoord[cUpper]
-    resAnalysisDF.loc[simRowHash, 'runoutAngle'] = np.rad2deg(np.arctan((zThalweg[cUpper] - zThalweg[cLower]) /
-                                                                        (scoord[cLower] - scoord[cUpper])))
-    resAnalysisDF.loc[simRowHash, 'zRelease'] = zThalweg[cUpper]
-    resAnalysisDF.loc[simRowHash, 'zRunout'] = zThalweg[cLower]
-    resAnalysisDF.loc[simRowHash, 'sMeanRunout'] = scoord[cLowerm]
-    resAnalysisDF.loc[simRowHash, 'xMeanRunout'] = x[cLowerm]
-    resAnalysisDF.loc[simRowHash, 'yMeanRunout'] = y[cLowerm]
+    resAnalysisDF.loc[simRowHash, "runoutAngle"] = np.rad2deg(
+        np.arctan((zThalweg[cUpper] - zThalweg[cLower]) / (scoord[cLower] - scoord[cUpper]))
+    )
+    if flagMeanFound:
+        resAnalysisDF.loc[simRowHash, "zRunout"] = zThalweg[cLower]
+        resAnalysisDF.loc[simRowHash, "sMeanRunout"] = scoord[cLowerm]
+        resAnalysisDF.loc[simRowHash, "xMeanRunout"] = x[cLowerm]
+        resAnalysisDF.loc[simRowHash, "yMeanRunout"] = y[cLowerm]
+    else:
+        resAnalysisDF.loc[simRowHash, "zRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "sMeanRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "xMeanRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "yMeanRunout"] = np.nan
+
+    resAnalysisDF.loc[simRowHash, "zRelease"] = zThalweg[cUpper]
     resAnalysisDF.loc[simRowHash, 'elevRel'] = zThalweg[cUpper]
     resAnalysisDF.loc[simRowHash, 'deltaZ'] = zThalweg[cUpper] - zThalweg[cLower]
+    resAnalysisDF.loc[simRowHash, "runoutFound"] = runoutFound
 
     return resAnalysisDF
 
@@ -1268,7 +1289,11 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathD
     inputs['simName'] = simName
 
     compPlotPath = None
-    if simRowHash != refSimRowHash and cfgPlots.getboolean('extraPlots'):
+    if (
+        simRowHash != refSimRowHash
+        and cfgPlots.getboolean("extraPlots")
+        and resAnalysisDF.loc[simRowHash, "runoutFound"]
+    ):
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
     # add contourlines to contourDict
@@ -1553,9 +1578,13 @@ def addFieldsToDF(inputsDF):
                  'sMeanRunout', 'xMeanRunout', 'yMeanRunout', 'elevRel', 'deltaZ', 'refSim_Diff_sRunout',
                  'refSim_Diff_lRunout', 'dataType', 'runoutLineDiff_line_RMSE', 'runoutLineDiff_poly_RMSE']
 
-    emptyStrFields = ['runoutLineDiff_line_pointsNotFoundInSim',
-                 'runoutLineDiff_line_pointsNotFoundInRef', 'runoutLineDiff_poly_pointsNotFoundInSim',
-                 'runoutLineDiff_poly_pointsNotFoundInRef']
+    emptyStrFields = [
+        "runoutLineDiff_line_pointsNotFoundInSim",
+        "runoutLineDiff_line_pointsNotFoundInRef",
+        "runoutLineDiff_poly_pointsNotFoundInSim",
+        "runoutLineDiff_poly_pointsNotFoundInRef",
+        "runoutFound",
+    ]
 
     for item in nanFields:
         inputsDF = pd.concat([inputsDF, pd.DataFrame({item: np.nan}, index=inputsDF.index)], axis=1).copy()
@@ -1772,8 +1801,15 @@ def analyzeDiffsRunoutLines(cfgSetup, runoutLine, refDataTransformed, resAnalysi
             RMSE = np.sqrt(np.sum(diffNoNans**2)/len(diffNoNans))
 
             # plot differences in runout lines
-            outAimec.plotRunoutLineComparisonToReference(cfgSetup, refLine, runoutLine, pathDict, simName, runoutStr,
-                                                         refLineStr, RMSE, diffNoNans)
+            if len(np.where((np.isnan(runoutLine["s"]) == False))[0]) > 0:
+                outAimec.plotRunoutLineComparisonToReference(
+                    cfgSetup, refLine, runoutLine, pathDict, simName, runoutStr, refLineStr, RMSE, diffNoNans
+                )
+            else:
+                log.warning(
+                    "No runout line found for simualtion: %s, not creating comparison to reference plot"
+                    % simName
+                )
 
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInSim' % refLine['type']] = runoutStr
             resAnalysisDF.at[simRowHash, 'runoutLineDiff_%s_pointsNotFoundInRef' % refLine['type']] = refLineStr
