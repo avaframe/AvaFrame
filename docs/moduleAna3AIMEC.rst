@@ -465,6 +465,7 @@ The result variables listed below are partly included in the above described plo
 - zRunout: altitude of the *sRunout* point
 - deltaZ: altitude difference between *zRelease* and *zRunout*
 - runoutAngle: corresponding runout angle based on *deltaSXY* and *deltaZ*
+- runoutFound: flag if runout point was found (boolean)
 
 If reference data sets are included in analysis, additionally these outputs are provided:
 
