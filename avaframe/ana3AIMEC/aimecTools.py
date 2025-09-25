@@ -1001,16 +1001,18 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
         resAnalysisDF.loc[simRowHash, "lRunout"] = lcoord[index]
         resAnalysisDF.loc[simRowHash, "xRunout"] = gridx[cLower, index]
         resAnalysisDF.loc[simRowHash, "yRunout"] = gridy[cLower, index]
+        resAnalysisDF.loc[simRowHash, "runoutAngle"] = np.rad2deg(
+            np.arctan((zThalweg[cUpper] - zThalweg[cLower]) / (scoord[cLower] - scoord[cUpper]))
+        )
     else:
         resAnalysisDF.loc[simRowHash, "sRunout"] = np.nan
         resAnalysisDF.loc[simRowHash, "lRunout"] = np.nan
         resAnalysisDF.loc[simRowHash, "xRunout"] = np.nan
         resAnalysisDF.loc[simRowHash, "yRunout"] = np.nan
+        resAnalysisDF.loc[simRowHash, "runoutAngle"] = np.nan
 
     resAnalysisDF.loc[simRowHash, 'deltaSXY'] = scoord[cLower] - scoord[cUpper]
-    resAnalysisDF.loc[simRowHash, "runoutAngle"] = np.rad2deg(
-        np.arctan((zThalweg[cUpper] - zThalweg[cLower]) / (scoord[cLower] - scoord[cUpper]))
-    )
+
     if flagMeanFound:
         resAnalysisDF.loc[simRowHash, "zRunout"] = zThalweg[cLower]
         resAnalysisDF.loc[simRowHash, "sMeanRunout"] = scoord[cLowerm]
@@ -1803,7 +1805,11 @@ def analyzeDiffsRunoutLines(cfgSetup, runoutLine, refDataTransformed, resAnalysi
             refLineStr = '%d/%d' % (refLineNoPoints, runoutLineAllPoints)
 
             # compute RMSE between runout line and refLine
-            RMSE = np.sqrt(np.sum(diffNoNans**2)/len(diffNoNans))
+            # set RMSE to nan if no runout line found for sim to compare to reference
+            if np.all(np.isnan(runoutLine["s"])):
+                RMSE = np.nan
+            else:
+                RMSE = np.sqrt(np.sum(diffNoNans**2) / len(diffNoNans))
 
             # plot differences in runout lines
             if len(np.where((np.isnan(runoutLine["s"]) == False))[0]) > 0:
