@@ -132,7 +132,17 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
 
     ax2.set_title('SL Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    pU.addColorBar(im, ax2, ticks, unit, title=runoutResType)
+    if np.any(xyRaster) == False:
+        ax2.text(
+            0.5,
+            0.5,
+            "reference only 0 values for %s" % runoutResType,
+            horizontalalignment="center",
+            verticalalignment="center",
+            transform=ax2.transAxes,
+        )
+    else:
+        pU.addColorBar(im, ax2, ticks, unit, title=runoutResType)
 
     outFileName = '_'.join([projectName, 'DomainTransformation'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -411,7 +421,17 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         pU.putAvaNameOnPlot(ax1, projectName)
 
         # add colorbar for peak field
-        pU.addColorBar(im, ax1, ticks, unit)
+        if np.any(rasterdataPres) == False:
+            ax1.text(
+                0.5,
+                0.5,
+                "reference only 0 values for %s" % runoutResType,
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax1.transAxes,
+            )
+        else:
+            pU.addColorBar(im, ax1, ticks, unit)
 
         # add third panel for statistical measures of distribution of cross max values
         ax2.fill_between(
