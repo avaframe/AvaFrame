@@ -1296,6 +1296,11 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simRowHash, newRasters, cfg, pathD
     ):
         # only plot comparisons of simulations to reference
         compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
+    elif resAnalysisDF.loc[simRowHash, "runoutFound"] == False and cfgPlots.getboolean("extraPlots"):
+        log.warning(
+            "ContourComparisonToReference plot not generated as only 0 values for comparison simulation: %s"
+            % resAnalysisDF.loc[simRowHash, "simName"]
+        )
     # add contourlines to contourDict
     contourDict = outAimec.fetchContourLines(rasterTransfo, inputs, cfgSetup.getfloat('thresholdValue'), contourDict)
 
