@@ -73,6 +73,11 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 avaName = pathlib.Path(avalancheDir).name
 
+cfgOpt12 = configparser.ConfigParser()
+cfgOpt12.optionxform = str
+cfgOpt12.read('ana6OptimisationCfg.ini')
+print(list(cfgOpt12.keys()))
+
 
 paramSelected = ['Dry-friction coefficient (-)', 'Density (kg/m^3)', 'Deposition rate 21  (m/s)', 'Basal drag coeff. 1-2 (-)',
               'Top drag coeff. (-)', 'Avalanche shear strength (Pa)', 'Turbulent drag coefficient (-)']
