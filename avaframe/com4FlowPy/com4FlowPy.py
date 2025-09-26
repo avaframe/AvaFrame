@@ -92,6 +92,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
     modelPaths["uid"] = cfgPath["uid"]
     modelPaths["timeString"] = cfgPath["timeString"]
     modelPaths["outputFileList"] = cfgPath["outputFiles"].split('|')
+    modelPaths["outputNoDataValue"] = cfgPath["outputNoDataValue"]
 
     modelPaths["outputFileFormat"] = cfgPath["outputFileFormat"]
     if modelPaths["outputFileFormat"] in [".asc", ".ASC"]:
@@ -175,7 +176,7 @@ def com4FlowPyMain(cfgPath, cfgSetup):
 
     # get information on cellsize and nodata value from demHeader
     rasterAttributes = {}
-    
+
     demHeader = IOf.readRasterHeader(modelPaths["demPath"])
     rasterAttributes["nodata"] = demHeader["nodata_value"]
     rasterAttributes["cellsize"] = demHeader["cellsize"]
@@ -511,6 +512,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     """
     _uid = modelPaths["uid"]
     _outputs = set(modelPaths['outputFileList'])
+    _outputNoDataValue = modelPaths["outputNoDataValue"]
 
     log.info(" merging results ...")
     log.info("-------------------------")
@@ -551,24 +553,31 @@ def mergeAndWriteResults(modelPaths, modelOptions):
         outputHeader["driver"] = "GTiff"
 
     if 'flux' in _outputs:
+        flux = defineNotAffectedCells(flux, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, flux,
                                          modelPaths["resDir"] / "com4_{}_{}_flux".format(_uid, _ts), flip=True)
     if 'zDelta' in _outputs:
+        zDelta = defineNotAffectedCells(zDelta, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, zDelta,
                                          modelPaths["resDir"] / "com4_{}_{}_zdelta".format(_uid, _ts), flip=True)
     if 'cellCounts' in _outputs:
+        cellCounts = defineNotAffectedCells(cellCounts, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, cellCounts,
                                          modelPaths["resDir"] / "com4_{}_{}_cellCounts".format(_uid, _ts), flip=True)
     if 'zDeltaSum' in _outputs:
+        zDeltaSum = defineNotAffectedCells(zDeltaSum, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, zDeltaSum,
                                          modelPaths["resDir"] / "com4_{}_{}_zDeltaSum".format(_uid, _ts), flip=True)
     if 'routFluxSum' in _outputs:
+        routFluxSum = defineNotAffectedCells(routFluxSum, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, routFluxSum,
                                          modelPaths["resDir"] / "com4_{}_{}_routFluxSum".format(_uid, _ts), flip=True)
     if 'depFluxSum' in _outputs:
+        depFluxSum = defineNotAffectedCells(depFluxSum, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, depFluxSum,
                                          modelPaths["resDir"] / "com4_{}_{}_depFluxSum".format(_uid, _ts), flip=True)
     if "fpTravelAngle" in _outputs or "fpTravelAngleMax" in _outputs:
+        fpTaMax = defineNotAffectedCells(fpTaMax, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(
             outputHeader,
             fpTaMax,
@@ -576,6 +585,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
             flip=True,
         )
     if "fpTravelAngleMin" in _outputs:
+        fpTaMin = defineNotAffectedCells(fpTaMin, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(
             outputHeader,
             fpTaMin,
@@ -583,9 +593,11 @@ def mergeAndWriteResults(modelPaths, modelOptions):
             flip=True,
         )
     if 'slTravelAngle' in _outputs:
+        slTa = defineNotAffectedCells(slTa, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, slTa,
                                          modelPaths["resDir"] / "com4_{}_{}_slTravelAngle".format(_uid, _ts), flip=True)
     if "travelLength" in _outputs or "travelLengthMax" in _outputs:
+        travelLengthMax = defineNotAffectedCells(travelLengthMax, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(
             outputHeader,
             travelLengthMax,
@@ -593,6 +605,7 @@ def mergeAndWriteResults(modelPaths, modelOptions):
             flip=True,
         )
     if "travelLengthMin" in _outputs:
+        travelLengthMin = defineNotAffectedCells(travelLengthMin, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(
             outputHeader,
             travelLengthMin,
@@ -605,9 +618,13 @@ def mergeAndWriteResults(modelPaths, modelOptions):
     # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("cell_counts%s" %(output_format)),cell_counts)
     # io.output_raster(modelPaths["demPath"], modelPaths["resDir"] / ("z_delta_sum%s" %(output_format)),z_delta_sum)
     if modelOptions["infraBool"]:  # if infra
+        backcalc = defineNotAffectedCells(backcalc, cellCounts, noDataValue=_outputNoDataValue)
         output = IOf.writeResultToRaster(outputHeader, backcalc,
                                          modelPaths["resDir"] / "com4_{}_{}_backcalculation".format(_uid, _ts), flip=True)
     if modelOptions["forestInteraction"]:
+        forestInteraction = defineNotAffectedCells(
+            forestInteraction, cellCounts, noDataValue=_outputNoDataValue
+        )
         output = IOf.writeResultToRaster(outputHeader, forestInteraction,
                                          modelPaths["resDir"] / "com4_{}_{}_forestInteraction".format(_uid, _ts), flip=True)
     del output
@@ -701,3 +718,25 @@ def deleteTempFolder(tempFolderPath):
         log.info(" isDir:{} isTemp:{}}".format(isDir, validTemp))
 
     log.info("+++++++++++++++++++++++")
+
+
+def defineNotAffectedCells(raster, affectedCells, noDataValue=-9999):
+    """
+    define not affected cells as -9999
+
+    Parameters
+    -----------
+    raster: np.array
+        raster whose not affected cells are specified
+    affectedCells: np.array
+        mask for affected cells
+    noDataValue: float
+        value for not affected cells (default: -9999)
+
+    Returns
+    -----------
+    raster: np. array
+        raster with not affected cells have the value noDataValue
+    """
+    raster[affectedCells <= 0] = noDataValue
+    return raster
