@@ -132,7 +132,7 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
 
     ax2.set_title('SL Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    if np.any(xyRaster) == False:
+    if not np.any(xyRaster):
         ax2.text(
             0.5,
             0.5,
@@ -421,7 +421,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         pU.putAvaNameOnPlot(ax1, projectName)
 
         # add colorbar for peak field
-        if np.any(rasterdataPres) == False:
+        if not np.any(rasterdataPres):
             ax1.text(
                 0.5,
                 0.5,
@@ -696,7 +696,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
 
-    if np.any(refData) == False:
+    if not np.any(refData):
         log.warning(
             "ContourComparisonToReference plot not generated as only 0 values for reference simulation: %s"
             % refSimName
