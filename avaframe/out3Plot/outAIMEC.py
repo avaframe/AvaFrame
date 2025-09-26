@@ -789,7 +789,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
                 labels = [str(level) for level in thresholdArray[:-1]]
                 # add legend associated to the contour plot
                 handles, _ = contourRef.legend_elements()
-                legend2 = ax2.legend(
+                ax2.legend(
                     title=runoutResType + " contour lines [" + unit + "]",
                     handles=handles,
                     labels=labels,
