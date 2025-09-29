@@ -472,7 +472,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
 
     # set release thickness
     if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
-        inputSimLines["hydrographLine"]["thicknessSource"] = ["csv file"]
+        inputSimLines["hydrographAreaLine"]["thicknessSource"] = ["csv file"]
         log.info("Release scenario with hydrograph and without REL area.")
     elif cfg["GENERAL"].getboolean("relThFromFile") is False:
         releaseLine = setThickness(cfg, inputSimLines["releaseLine"], "relTh")
@@ -603,7 +603,7 @@ def prepareInputData(inputSimFiles, cfg):
     releaseLine["type"] = "Release"
     if cfg["GENERAL"].getboolean("hydrograph") and cfg["GENERAL"].getboolean("noRelArea"):
         releaseLine["type"] = "Hydrograph"
-        hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"], cfg["GENERAL"])
+        hydrValues = gI.getHydrographCsv(inputSimFiles["hydrographCsv"])
         releaseLine["thickness"] = [hydrValues["thickness"][hydrValues["timeStep"] == 0]]
         releaseLine["thicknessSource"] = ["csv file"]
         releaseLine["velocity"] = hydrValues["velocity"][hydrValues["timeStep"] == 0]
