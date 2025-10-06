@@ -130,6 +130,20 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=""):
         "tau0coulombminshear",
         "muvoellmyminshear",
         "xsivoellmyminshear",
+        "alpha1EtaObrienAndJulien",
+        "beta1EtaObrienAndJulien",
+        "alpha2TauyObrienAndJulien",
+        "beta2TauyObrienAndJulien",
+        "alphaObrienAndJulien",
+        "alpha1EtaHerschelAndBulkley",
+        "beta1EtaHerschelAndBulkley",
+        "alpha2TauyHerschelAndBulkley",
+        "beta2TauyHerschelAndBulkley",
+        "nHerschelAndBulkley",
+        "alpha1EtaBingham",
+        "beta1EtaBingham",
+        "alpha2TauyBingham",
+        "beta2TauyBingham",
     ]
 
     # if samosATAuto check for release volume and volume class to determine which parameter setup
@@ -166,6 +180,21 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=""):
         elif frictModel.lower() == "voellmy":
             frictParameterIn = [
                 frictModel.lower() in frictP and "voellmyminshear" not in frictP
+                for frictP in frictParameters
+            ]
+        elif frictModel.lower() == "obrienandjulien":
+            frictParameterIn = [
+                frictModel.lower() in frictP.lower()
+                for frictP in frictParameters
+            ]
+        elif frictModel.lower() == "herschelandbulkley":
+            frictParameterIn = [
+                frictModel.lower() in frictP.lower()
+                for frictP in frictParameters
+            ]
+        elif frictModel.lower() == "bingham":
+            frictParameterIn = [
+                frictModel.lower() in frictP.lower()
                 for frictP in frictParameters
             ]
         else:
@@ -217,6 +246,15 @@ def checkCfgFrictionModel(cfg, inputSimFiles, relVolume=""):
                     cfg["INPUT"]["xiFile"],
                 )
             )
+    # O´Brien and Julien friction model
+    # fetch parameters and check if cvSediment < cvMaxSediment
+    if frictModel.lower() == "obrienandjulien":
+        cvSediment = cfg['GENERAL']['cvSediment']
+        cvMaxSediment = cfg['GENERAL']['cvMaxSediment']
+        if cvSediment >= cvMaxSediment:
+            message = "cvSediment must be smaller than cvMaxSediment"
+            log.error(message)
+            raise ValueError(message)
 
     # check if explicitFriction has valid values
     if cfg["GENERAL"]["explicitFriction"] not in ["0", "1"]:
