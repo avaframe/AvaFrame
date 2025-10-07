@@ -101,8 +101,13 @@ def readAIMECinputs(avalancheDir, pathDict, defineRunoutArea, dirName='com1DFA')
 
     referenceTypes = {"referenceLine": "LINE", "referencePolygon": "POLY",'referencePoint': 'POINT'}
     for refType in referenceTypes:
-        referenceFile, availableFile = gI.getAndCheckInputFiles(referenceDir, 'REFDATA', referenceTypes[refType],
-                                                                fileExt="shp", fileSuffix=referenceTypes[refType])
+        referenceFile, availableFile, _ = gI.getAndCheckInputFiles(
+            referenceDir,
+            "REFDATA",
+            referenceTypes[refType],
+            fileExt="shp",
+            fileSuffix=referenceTypes[refType],
+        )
         if availableFile == 'Yes':
             # add file paths to pathDict
             pathDict[refType] = [referenceFile]

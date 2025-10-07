@@ -37,7 +37,7 @@ def scarpAnalysisMain(cfg, baseDir):
         inputDir = pathlib.Path(baseDir, "Inputs")
 
         # get the path to the perimeter shapefile
-        perimeterShapefilePath, periFile = gI.getAndCheckInputFiles(
+        perimeterShapefilePath, periFile, _ = gI.getAndCheckInputFiles(
             inputDir, "POLYGONS", "scarp perimeter", fileExt="shp", fileSuffix="_perimeter"
         )
         if periFile:
@@ -46,7 +46,7 @@ def scarpAnalysisMain(cfg, baseDir):
             log.error("Perimeter shapefile not found in %s", inputDir)
 
         # get the path to the coordinates shapefile
-        coordinatesShapefilePath, coordFile = gI.getAndCheckInputFiles(
+        coordinatesShapefilePath, coordFile, _ = gI.getAndCheckInputFiles(
             inputDir, "POINTS", "scarp coordinates", fileExt="shp", fileSuffix="_coordinates"
         )
         if coordFile:
@@ -118,10 +118,10 @@ def scarpAnalysisMain(cfg, baseDir):
             ellipsoidDip = list(map(float, SHPdata['dip']))
         except KeyError as e:
             raise ValueError(f"Required attribute '{e.args[0]}' not found in shapefile. Ensure the fields 'maxdepth', 'semimajor', 'semiminor', 'tilt', 'dir', 'dip', and 'offset' exist.")
-        
+
         if not all(len(lst) == SHPdata["nFeatures"] for lst in [ellipsoidsMaxDepth, ellipsoidsSemiMajor, ellipsoidsSemiMinor, ellipsoidsTilt, ellipsoidsDir, ellipsoidsOffset, ellipsoidDip]):
             raise ValueError("Mismatch between number of shapefile features and ellipsoid parameters.")
-        
+
         for i in range(SHPdata["nFeatures"]):
             xCenter = SHPdata["x"][int(SHPdata["Start"][i])]
             yCenter = SHPdata["y"][int(SHPdata["Start"][i])]
@@ -133,7 +133,7 @@ def scarpAnalysisMain(cfg, baseDir):
             offset = ellipsoidsOffset[i]
             dip = ellipsoidDip[i]
             ellipsoidFeatures.extend([xCenter, yCenter, maxDepth, semiMajor, semiMinor, tilt, direction, offset, dip])
-        
+
         features = ",".join(map(str, ellipsoidFeatures))
 
         log.debug("Ellipsoid features extracted and combined: %s", features)

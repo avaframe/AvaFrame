@@ -5,6 +5,7 @@ import logging
 from matplotlib.animation import FuncAnimation, PillowWriter
 import geopandas as gpd
 from matplotlib.patches import Patch
+import matplotlib as mpl
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -14,6 +15,7 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.outQuickPlot as oQ
 import avaframe.out3Plot.outAIMEC as oA
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.rasterUtils as IOf
 
 cfgMain = cfgUtils.getGeneralConfig()
 cfgFlags = cfgMain["FLAGS"]
@@ -540,11 +542,7 @@ def plotReleaseScenarioView(
     xL = dem["originalHeader"]["xllcenter"]
     yL = dem["originalHeader"]["yllcenter"]
     originCells = dem["header"]["cellsize"] * 0.5
-    if len(relThField) == 0:
-        releaseF = releaseLine["rasterData"].copy()
-    else:
-        releaseF = np.where(releaseLine["rasterData"] > 0, relThField, 0)
-
+    releaseF = releaseLine["rasterData"].copy()
     rField = np.ma.masked_where(releaseF == 0.0, releaseF)
 
     # choose colormap
@@ -570,11 +568,12 @@ def plotReleaseScenarioView(
     addDem2Plot(ax, dem, what="hillshade", extent=extentDem, origHeader=True)
     im1 = ax.imshow(rField, extent=extentCells, cmap=cmap1)
     handles = []
-    relArea = gpd.read_file(inputSimLines["releaseLine"]["file"])
-    relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none")
-    relPatch = Patch(color="darkblue", label="release")
-    handles.append(relPatch)
 
+    if releaseLine["initializedFrom"] == "shapefile":
+        relArea = gpd.read_file(inputSimLines["releaseLine"]["file"])
+        relArea.plot(ax=ax, edgecolor="darkblue", linewidth=2, facecolor="none")
+        relPatch = Patch(color="darkblue", label="release")
+        handles.append(relPatch)
     count = 1
     if reportAreaInfo["resistance"] == "Yes":
         resArea = gpd.read_file(inputSimLines["resLine"]["fileName"])
@@ -583,15 +582,25 @@ def plotReleaseScenarioView(
         handles.append(resPatch)
         count = count + 1
     if reportAreaInfo["entrainment"] == "Yes":
-        entArea = gpd.read_file(inputSimLines["entLine"]["fileName"])
-        entArea.plot(ax=ax, edgecolor="lightblue", linewidth=2, facecolor="none")
+        if inputSimLines["entLine"]["initializedFrom"] == "shapefile":
+            entArea = gpd.read_file(inputSimLines["entLine"]["fileName"])
+            entArea.plot(ax=ax, edgecolor="lightblue", linewidth=2, facecolor="none")
+        else:
+            entArea = IOf.readRaster(inputSimLines["entLine"]["fileName"], noDataToNan=True)
+            entAreaPlot = np.where(entArea["rasterData"] > 0, 0.4, np.nan)
+            ax.imshow(entAreaPlot, extent=extentCells, cmap="Blues", vmin=0, vmax=1, zorder=1000)
         entPatch = Patch(color="lightblue", label="entrainment")
         handles.append(entPatch)
         count = count + 1
     if reportAreaInfo["secRelArea"] != "No":
-        secRelArea = gpd.read_file(inputSimLines["secondaryReleaseLine"]["fileName"])
-        secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none")
-        secRelPatch = Patch(color="blue", label="secondary release")
+        if inputSimLines["secondaryReleaseLine"]["initializedFrom"] == "shapefile":
+            secRelArea = gpd.read_file(inputSimLines["secondaryReleaseLine"]["fileName"])
+            secRelArea.plot(ax=ax, edgecolor="blue", linewidth=2, facecolor="none")
+        else:
+            secRelArea = IOf.readRaster(inputSimLines["secondaryReleaseLine"]["fileName"], noDataToNan=True)
+            secRelAreaPlot = np.where(secRelArea["rasterData"] > 0, 1.0, np.nan)
+            ax.imshow(secRelAreaPlot, extent=extentCells, cmap="Blues", vmin=0, vmax=1, zorder=1000)
+        secRelPatch = Patch(color="darkblue", label="secondary release")
         handles.append(secRelPatch)
         count = count + 1
     if reportAreaInfo["dam"] == "Yes":

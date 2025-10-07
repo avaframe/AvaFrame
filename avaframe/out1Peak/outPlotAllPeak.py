@@ -16,6 +16,7 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.rasterUtils as IOf
+import avaframe.in3Utils.geoTrans as gT
 
 import rasterio
 import rasterio.plot
@@ -129,8 +130,10 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             colorOutline = {"ent": "white", "res": "green"}
             for sType in ["ent", "res"]:
                 if sType in simType:
-                    sFile, sInfo = gI.getAndCheckInputFiles(inDir, sType.upper(), sType, fileExt="shp")
-                    if sInfo != "No":
+                    sFile, sInfo, fileSType = gI.getAndCheckInputFiles(
+                        inDir, sType.upper(), sType, fileExt=["shp", "asc", "tif"]
+                    )
+                    if fileSType == ".shp":
                         sarea = gpd.read_file(sFile)
                         sarea.plot(
                             ax=ax,
@@ -141,13 +144,24 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
                             label=("%s area" % sType),
                             alpha=0.8,
                         )
+                    elif fileSType in [".asc", ".tif"]:
+                        sarea = IOf.readRaster(sFile, noDataToNan=True)
+                        xGrid, yGrid, _, _ = gT.makeCoordGridFromHeader(sarea["header"])
+                        contourDictXY = pU.fetchContourCoords(xGrid, yGrid, sarea["rasterData"], 0.001)
+                        for key in contourDictXY:
+                            ax.plot(
+                                contourDictXY[key]["x"],
+                                contourDictXY[key]["y"],
+                                color=colorOutline[sType],
+                                zorder=12,
+                            )
 
             # set limit to axis from constrainedData
             ax.set_xlim(extentCellCorners[0], extentCellCorners[1])
             ax.set_ylim(extentCellCorners[2], extentCellCorners[3])
 
             # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
-            cropFile, cropInfo = gI.getAndCheckInputFiles(
+            cropFile, cropInfo, _ = gI.getAndCheckInputFiles(
                 inDir, "POLYGONS", "cropFile", fileExt="shp", fileSuffix="_cropshape"
             )
             if cropInfo != "No":

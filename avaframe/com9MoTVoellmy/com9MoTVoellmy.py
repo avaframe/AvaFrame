@@ -7,7 +7,6 @@ import time
 import shutil
 import sys
 
-
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
 elif platform.system() == "Darwin":
@@ -193,6 +192,52 @@ def com9MoTVoellmyTask(rcfFile):
     return command
 
 
+def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir):
+    """set file paths in cfg object for friction parameters (required if option variable is set)
+    if _mu, _k files found in Inputs/RASTERS have to be remeshed, copy remeshed files
+    to workInputDir with new file name ending _mu, _k
+
+    Parameters
+    -----------
+    cfg: configparser object
+        configuration info for simulation
+    inputSimFiles: dict
+        dictionary with info on all input data found; here mu, k file and if remeshed
+    workInputDir: str
+        pathlib path to work Inputs folder for current simulaiton
+
+    Returns
+    --------
+    cfg: configparser object
+        updated configuration info for simulation with file paths to friction parameters
+    """
+
+    fricParameters = {"mu": "Dry-friction coefficient (-)", "k": "Turbulent drag coefficient (-)"}
+    if inputSimFiles["entResInfo"]["mu"] == "Yes" and inputSimFiles["entResInfo"]["k"] == "Yes":
+        for fric in ["mu", "k"]:
+            if inputSimFiles["entResInfo"]["%sRemeshed" % fric] == "Yes":
+                fricFilePath = workInputDir / (
+                    inputSimFiles["%sFile" % fric].stem
+                    + "_%s" % fric
+                    + inputSimFiles["%sFile" % fric].suffix
+                )
+                shutil.copy2(inputSimFiles["%sFile" % fric], fricFilePath)
+                cfg["Physical_parameters"][fricParameters[fric]] = str(fricFilePath)
+                log.info(
+                    "Remeshed %s file copied to %s and set for %s"
+                    % (fric, str(fricFilePath), fricParameters[fric])
+                )
+            else:
+                cfg["Physical_parameters"]["Dry-friction coefficient (-)"] = str(inputSimFiles["muFile"])
+                cfg["Physical_parameters"]["Turbulent drag coefficient (-)"] = str(inputSimFiles["kFile"])
+    else:
+        message = "Mu and k file not found in Inputs/RASTERS - check if file ending is correct (_mu, _k)"
+        log.error(message)
+        raise FileNotFoundError(message)
+
+    return cfg
+
+
 def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
     """Preprocess data for MoT-PSA simulations.
 
@@ -226,76 +271,97 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
 
+    # create required Work und Outputs directories in avalancheDir
     workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy"
     cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com9MoTVoellmy" / "configurationFiles"
     fU.makeADir(cfgFileDir)
     rcfFiles = list()
 
+    # loop over all simulation to be performed
     for key in simDict:
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
 
+        # Generate the work and data dirs for the current simHash
+        # save derived fields from polygons, optionally zeroRasters and remeshedRasters to that folder
+        cuWorkDir = workDir / key
+        workInputDir = cuWorkDir / "Input"
+        workOutputDir = cuWorkDir / key
+        fU.makeADir(cuWorkDir)
+        fU.makeADir(workInputDir)
+
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
 
-        # convert release shape to raster with values for current sim
         # select release area input data according to a chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
         # create the required input from input files
+        # if release, entrainment area are provided as shapefile - read shapefile attributes and values for current sim
+        # if provided by raster - load raster data
+        # load DEM and dem file type information
         demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+        demOri["originalHeader"] = demOri["header"]
+        demSuffix = rU.getRasterFileTypeFromHeader(demOri["header"])
 
-        if cfg["GENERAL"].getboolean("iniStep"):
-            # append buffered release Area
-            inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
-
-        # set thickness values for the release area, entrainment and secondary release areas
+        # set thickness values for the release area, entrainment areas
         relName, inputSimLines, badName = com1DFA.prepareReleaseEntrainment(
             cfg, inputSimFiles["releaseScenario"], inputSimLines
         )
 
-        releaseLine = inputSimLines["releaseLine"]
-        # check if release features overlap between features
+        # RELEASE AREA - fetch path to release raster
         # TODO: split releaseheight -> question NGI
-        dem = rU.readRaster(inputSimFiles["demFile"])
-        dem["originalHeader"] = dem["header"].copy()
-        # releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
-        if len(inputSimLines["relThField"]) == 0:
-            # if no release thickness field or function - set release according to shapefile or ini file
-            # this is a list of release rasters that we want to combine
-            releaseLine = geoTrans.prepareArea(
-                releaseLine,
-                dem,
-                np.sqrt(2),
-                thList=releaseLine["thickness"],
-                combine=True,
-                checkOverlap=False,
-            )
-            releaseField = releaseLine["rasterData"]
+        releaseName, inputSimLines["releaseLine"] = gI.deriveLineRaster(
+            inputSimLines["releaseLine"],
+            demOri,
+            workInputDir,
+            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            rasterFileType=demSuffix,
+            rasterType="release",
+        )
+
+        # ENTRAINMENT AREA - fetch path to entrainment (bedDepth) raster
+        if "ent" in key:
+            saveZeroRaster = False
         else:
-            # if relTh provided - set release thickness with field or function
-            releaseLine = geoTrans.prepareArea(
-                releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False
-            )
-            relRasterPoly = releaseLine["rasterData"].copy()
-            releaseRelThCombined = np.where(relRasterPoly > 0, inputSimLines["relThField"], 0)
-            releaseField = releaseRelThCombined
+            saveZeroRaster = True
+        bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
+            inputSimLines["entLine"],
+            demOri,
+            workInputDir,
+            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            rasterFileType=demSuffix,
+            rasterType="bedDepth",
+            saveZeroRaster=saveZeroRaster,
+        )
 
-        # Generate the work and data dirs for the current simHash
-        cuWorkDir = workDir / key
-        workInputDir = cuWorkDir / "Input"
-        workOutputDir = cuWorkDir / key
+        # TODO: is this check if release and entrainment have overlap required?
+        # if "ent" in key:
+        #     log.info("Check for overlap?")
+        #
+        #     # check if entrainment and release area have overlap
+        #     _ = geoTrans.checkOverlap(
+        #         inputSimLines["entLine"]["rasterData"],
+        #         inputSimLines["releaseLine"]["rasterData"],
+        #         "Entrainment",
+        #         "Release",
+        #         crop=False,
+        #     )
 
-        fU.makeADir(cuWorkDir)
-        fU.makeADir(workInputDir)
-
-        zeroRaster = np.full_like(releaseLine["rasterData"], 0)
-
-        release = workInputDir / "release"
-        bedDepth = workInputDir / "dummyBedDepth"
-        bedShear = workInputDir / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseField, release, flip=True)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
+        # BED SHEAR - fetch path to tau0 raster
+        bedShearDict = {"initializedFrom": "raster", "fileName": inputSimLines["tau0File"]}
+        if inputSimLines["entResInfo"]["tau0"] == "Yes":
+            saveZeroRaster = False
+        else:
+            saveZeroRaster = True
+        bedShearName, bedShearDict = gI.deriveLineRaster(
+            bedShearDict,
+            demOri,
+            workInputDir,
+            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            rasterFileType=demSuffix,
+            rasterType="bedShear",
+            saveZeroRaster=saveZeroRaster,
+        )
 
         # set configuration for MoT-Voellmy
         cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
@@ -303,10 +369,14 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         cfg["Run information"]["EPSG geodetic datum code"] = "31287"
         cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
         cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfg["File names"]["Release depth filename"] = str(release) + ".asc"
-        cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfg["File names"]["Release depth filename"] = str(releaseName)
+        cfg["File names"]["Bed depth filename"] = str(bedDepthName)
+        cfg["File names"]["Bed shear strength filename"] = str(bedShearName)
         cfg["File names"]["Output filename root"] = str(workOutputDir)
+
+        # if friction parameters are variable - set paths to mu and k files
+        if cfg["Physical_parameters"]["Parameters"] == "variable":
+            cfg = setVariableFrictionParameters(cfg, inputSimFiles, workInputDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
@@ -315,5 +385,3 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
     return rcfFiles
-
-
