@@ -19,12 +19,10 @@ else:
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import rasterUtils as rU
-from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.in1Data import getInput as gI
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs
+import avaframe.in3Utils.MoTUtils as mT
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -33,11 +31,11 @@ log = logging.getLogger(__name__)
 def com8MoTPSAMain(cfgMain, cfgInfo=None):
     # Get all necessary information from the configuration files
     currentModule = sys.modules[__name__]
-    simDict, inputSimFiles = MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
+    simDict, inputSimFiles = mT.MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
 
     # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
-    rewriteDEMtoZeroValues(inputSimFiles["demFile"])
+    mT.rewriteDEMtoZeroValues(inputSimFiles["demFile"])
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -122,7 +120,6 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     modName = __name__.split(".")[-1]
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
     fU.makeADir(reportDir)
-    print(inputSimFiles["demFile"])
 
     dem = rU.readRaster(inputSimFiles["demFile"])
     # Generate plots for all peakFiles
@@ -135,13 +132,15 @@ def com8MoTPSATask(rcfFile):
     command = ["./MoT-PSA", rcfFile]
     # command = ['/home/felix/Versioning/AvaFrame/avaframe/com8MoTPSA/MoT-PSA', rcfFile]
     log.info("Run simulation: %s" % rcfFile)
-    runAndCheckMoT(command)
+    mT.runAndCheckMoT(command)
     return command
 
 
 def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+    # set inputsDir where original input data and remeshed rasters are stored
+    inputsDir = pathlib.Path(avalancheDir) / "Inputs"
 
     workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA"
     cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com8MoTPSA" / "configurationFiles"
@@ -152,88 +151,140 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
 
+        # Generate the work and data dirs for the current simHash
+        # save derived fields from polygons, optionally zeroRasters and remeshedRasters to that folder
+        cuWorkDir = workDir / key
+        workInputDir = cuWorkDir / "Input"
+        workOutputDir = cuWorkDir / key
+        fU.makeADir(cuWorkDir)
+        fU.makeADir(workInputDir)
+
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
+        log.info("Prepare simulation configuration for key %s" % key)
 
-        # convert release shape to raster with values for current sim
         # select release area input data according to chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
-        # create required input from input files
+
+        # create the required input from input files
+        # if release, entrainment area are provided as shapefile - read shapefile attributes and values for current sim
+        # if provided by raster - load raster data
+        # load DEM and dem file type information
         demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+        demOri["originalHeader"] = demOri["header"]
+        demSuffix = rU.getRasterFileTypeFromHeader(demOri["header"])
 
-        if cfg["GENERAL"].getboolean("iniStep"):
-            # append buffered release Area
-            inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
-
-        # set thickness values for the release area, entrainment and secondary release areas
+        # set thickness values for the release area, entrainment areas
         relName, inputSimLines, badName = com1DFA.prepareReleaseEntrainment(
             cfg, inputSimFiles["releaseScenario"], inputSimLines
         )
 
-        releaseLine = inputSimLines["releaseLine"]
-        # check if release features overlap between features
+        # RELEASE AREA - fetch path to release raster
         # TODO: split releaseheight -> question NGI
-        dem = rU.readRaster(inputSimFiles["demFile"])
-        dem["originalHeader"] = dem["header"].copy()
-        # releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
-        if len(inputSimLines["relThField"]) == 0:
-            # if no release thickness field or function - set release according to shapefile or ini file
-            # this is a list of release rasters that we want to combine
-            releaseLine = geoTrans.prepareArea(
-                releaseLine,
-                dem,
-                np.sqrt(2),
-                thList=releaseLine["thickness"],
-                combine=True,
-                checkOverlap=False,
-            )
-            releaseField = releaseLine["rasterData"]
+        releaseName, inputSimLines["releaseLine"] = gI.deriveLineRaster(
+            cfg,
+            inputSimLines["releaseLine"],
+            demOri,
+            workInputDir,
+            inputsDir,
+            "rel",
+            rasterFileType=demSuffix,
+        )
+
+        # ENTRAINMENT AREA - fetch path to entrainment (bedDepth) raster
+        if "ent" in key:
+            saveZeroRaster = False
         else:
-            # if relTh provided - set release thickness with field or function
-            releaseLine = geoTrans.prepareArea(
-                releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False
-            )
-            relRasterPoly = releaseLine["rasterData"].copy()
-            releaseRelThCombined = np.where(relRasterPoly > 0, inputSimLines["relThField"], 0)
-            releaseField = releaseRelThCombined
+            saveZeroRaster = True
+        bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
+            cfg,
+            inputSimLines["entLine"],
+            demOri,
+            workInputDir,
+            inputsDir,
+            "ent",
+            rasterFileType=demSuffix,
+            saveZeroRaster=saveZeroRaster,
+        )
 
-        # Generate the work and data dirs for the current simHash
-        cuWorkDir = workDir / key
-        workInputDir = cuWorkDir / "Input"
-        workOutputDir = cuWorkDir / key
+        # TODO: is this check if release and entrainment have overlap required?
+        # if "ent" in key:
+        #     log.info("Check for overlap?")
+        #
+        #     # check if entrainment and release area have overlap
+        #     _ = geoTrans.checkOverlap(
+        #         inputSimLines["entLine"]["rasterData"],
+        #         inputSimLines["releaseLine"]["rasterData"],
+        #         "Entrainment",
+        #         "Release",
+        #         crop=False,
+        #     )
 
-        fU.makeADir(cuWorkDir)
-        fU.makeADir(workInputDir)
+        # BED SHEAR - fetch path to tau0 raster
+        bedShearDict = {"initializedFrom": "raster", "fileName": inputSimLines["tau0File"]}
+        if inputSimLines["entResInfo"]["tau0"] == "Yes":
+            saveZeroRaster = False
+        else:
+            saveZeroRaster = True
+        bedShearName, bedShearDict = gI.deriveLineRaster(
+            cfg,
+            bedShearDict,
+            demOri,
+            workInputDir,
+            inputsDir,
+            "tau0",
+            rasterFileType=demSuffix,
+            saveZeroRaster=saveZeroRaster,
+        )
 
-        zeroRaster = np.full_like(releaseLine["rasterData"], 0)
+        # TODO: NGI shall this also be read from inputs?
 
-        releaseL1 = workInputDir / "releaseLayer1"
-        releaseL2 = workInputDir / "releaseLayer2"
-        bedDepth = workInputDir / "dummyBedDepth"
-        bedDepo = workInputDir / "dummyBedDepo"
-        bedShear = workInputDir / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseField, releaseL1, flip=True)
-        rU.writeResultToRaster(dem["header"], zeroRaster, releaseL2, flip=True)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepo)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
+        # RELEASE LAYER 2
+        releaseL2Dict = None
+        releaseL2Name, _ = gI.deriveLineRaster(
+            cfg,
+            releaseL2Dict,
+            demOri,
+            workInputDir,
+            inputsDir,
+            "releaseLayer2",
+            rasterFileType=demSuffix,
+            saveZeroRaster=True,
+        )
+        # BED DEPOSITION
+        bedDepositionDict = None
+        bedDepoName, _ = gI.deriveLineRaster(
+            cfg,
+            bedDepositionDict,
+            demOri,
+            workInputDir,
+            inputsDir,
+            "bedDepo",
+            rasterFileType=demSuffix,
+            saveZeroRaster=True,
+        )
 
         # set configuration for MoT-PSA
         cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
         cfg["Run information"]["UTM zone"] = "32N"
         cfg["Run information"]["EPSG geodetic datum code"] = "31287"
         cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfg["File names"]["Release depth 1 filename"] = str(releaseL1) + ".asc"
-        cfg["File names"]["Release depth 2 filename"] = str(releaseL2) + ".asc"
-        cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfg["File names"]["Bed deposition filename"] = str(bedDepo) + ".asc"
-        cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfg["File names"]["Grid filename"] = str(pathlib.Path(inputsDir / cfg["INPUT"]["DEM"]))
+        cfg["File names"]["Release depth 1 filename"] = str(releaseName)
+        cfg["File names"]["Release depth 2 filename"] = str(releaseL2Name)
+        cfg["File names"]["Bed depth filename"] = str(bedDepthName)
+        cfg["File names"]["Bed deposition filename"] = str(bedDepoName)
+        cfg["File names"]["Bed shear strength filename"] = str(bedShearName)
         cfg["File names"]["Output filename root"] = str(workOutputDir)
+
+        # if friction parameters are variable - set paths to mu and k files
+        if cfg["Physical_parameters"]["Parameters"] == "variable":
+            cfg = mT.setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
         currentModule = sys.modules[__name__]
         cfgUtils.writeCfgFile(avalancheDir, currentModule, cfg, str(key))
         cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
+        log.info("rcf and ini file written for key %s-------------------------" % key)
     return rcfFiles

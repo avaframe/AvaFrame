@@ -199,3 +199,28 @@ def writeResultToRaster(header, resultArray, outFileName, flip=False):
     # except:
     #     log.error("could not write {} to {}".format(resultArray, outFileName))
     return outFile
+
+
+def getRasterFileTypeFromHeader(header):
+    """derive raster filetype from header
+    Parameters
+    ------------
+    header: dict
+        dictionary with header information
+
+    Returns
+    ---------
+    fileType: str
+        raster file type, current options are .asc, .tif
+
+    """
+
+    if header["driver"] == "AAIGrid":
+        fileType = ".asc"
+    elif header["driver"] == "GTiff":
+        fileType = ".tif"
+    else:
+        log.error("Unsupported driver for DEM %s" % header["driver"])
+        raise AssertionError("Unsupported driver for DEM %s" % header["driver"])
+
+    return fileType
