@@ -49,16 +49,17 @@ dem['originalHeader'] = dem['header']
 
 # read reference data set
 inDir = pathlib.Path(avalancheDir, 'Inputs')
-referenceFile, availableFile = gI.getAndCheckInputFiles(inDir, 'REFDATA', 'POLY',
-                                                            fileExt="shp", fileSuffix='POLY')
+referenceFile, availableFile, _ = gI.getAndCheckInputFiles(
+    inDir, "REFDATA", "POLY", fileExt="shp", fileSuffix="POLY"
+)
 # convert polygon to raster with value 1 inside polygon and 0 outside the polygon
 referenceLine = shpConv.readLine(referenceFile, "reference", dem)
 referenceLine= gT.prepareArea(referenceLine, dem, np.sqrt(2),combine=True, checkOverlap=False)
 
 # if available zoom into area provided by crop shp file in Inputs/CROPSHAPE
-cropFile, cropInfo = gI.getAndCheckInputFiles(
-                inDir, "POLYGONS", "cropFile", fileExt="shp", fileSuffix="_cropshape"
-            )
+cropFile, cropInfo, _ = gI.getAndCheckInputFiles(
+    inDir, "POLYGONS", "cropFile", fileExt="shp", fileSuffix="_cropshape"
+)
 if cropInfo:
     cropLine = shpConv.readLine(cropFile, "cropFile", dem)
     cropLine = gT.prepareArea(cropLine, dem, np.sqrt(2), combine=True, checkOverlap=False)

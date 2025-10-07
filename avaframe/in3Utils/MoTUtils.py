@@ -123,7 +123,7 @@ def runAndCheckMoT(command):
 
 def MoTGenerateConfigs(cfgMain, cfgInfo, currentModule):
     """
-    Creates configuration objects for com8MoTPSA.
+    Creates configuration objects for com8MoTPSA and com9MoTVoellmy.
 
     Parameters
     ------------
@@ -189,3 +189,82 @@ def copyMoTFiles(workDir, outputDir, searchString, replaceString):
 
     for source, target in zip(varFiles, targetFiles):
         shutil.copy2(source, target)
+
+
+def prepareInputRasterFilesMoT(cfg, dem, workDir, simName, inputSimFiles):
+    """check if input data is in desired (raster file) format, if not create
+    and return corresponding file paths
+
+    Parameters
+    ------------
+    cfg: configparser object
+        configuration settings of current simulation
+    dem: dict
+        dictionary with dem header and raster data
+    workDir: pathlib path
+        path to Work directory
+    simName: str
+        current simulation name
+    inputSimFiles: dict
+        dictionary with info on all available input data
+        relFiles - list of release area file paths
+        entFile - entrainment area file path or None
+        muFile - file path or None
+        kFile - file path or None
+        tau0File - file path or None
+        relThFile - file path or None
+        entThFile - file path or None
+        demFile - file path
+        releaseScenarioList - list of file.stem of release are files found
+
+
+    Returns
+    """
+
+
+def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir):
+    """set file paths in cfg object for friction parameters (required if option variable is set)
+    if _mu, _k files found in Inputs/RASTERS have to be remeshed, copy remeshed files
+    to workInputDir with new file name ending _mu, _k
+
+    Parameters
+    -----------
+    cfg: configparser object
+        configuration info for simulation
+    inputSimFiles: dict
+        dictionary with info on all input data found; here mu, k file and if remeshed
+    workInputDir: pathlib path
+        pathlib path to work Inputs folder for current simulation
+    inputsDir: pathlib path
+        path to avalancheDir/Inputs where original input data and remeshed rasters are stored
+
+    Returns
+    --------
+    cfg: configparser object
+        updated configuration info for simulation with file paths to friction parameters
+    """
+
+    fricParameters = {"mu": "Dry-friction coefficient (-)", "k": "Turbulent drag coefficient (-)"}
+    if inputSimFiles["entResInfo"]["mu"] == "Yes" and inputSimFiles["entResInfo"]["k"] == "Yes":
+        for fric in ["mu", "k"]:
+            fricFile = inputsDir / cfg["INPUT"]["%sFile" % fric]
+            # check first if remeshed files should be used
+            if (
+                "_remeshed" in cfg["INPUT"]["%sFile" % fric]
+                and inputSimFiles["entResInfo"]["%sRemeshed" % fric] == "Yes"
+            ):
+                fricFilePathNew = workInputDir / (fricFile.stem + "_%s" % fric + fricFile.suffix)
+                shutil.copy2(fricFile, fricFilePathNew)
+                cfg["Physical_parameters"][fricParameters[fric]] = str(fricFilePathNew)
+                log.info(
+                    "Remeshed %s file copied to %s and set for %s"
+                    % (fric, str(fricFilePathNew), fricParameters[fric])
+                )
+            else:
+                cfg["Physical_parameters"][fricParameters[fric]] = str(fricFile)
+    else:
+        message = "Mu and k file not found in Inputs/RASTERS - check if file ending is correct (_mu, _k)"
+        log.error(message)
+        raise FileNotFoundError(message)
+
+    return cfg

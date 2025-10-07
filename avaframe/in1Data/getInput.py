@@ -167,16 +167,16 @@ def getInputData(avaDir, cfg):
     log.info("Release area files are: %s" % relFiles)
 
     # Initialise resistance areas
-    resFile, entResInfo["flagRes"] = getAndCheckInputFiles(inputDir, "RES", "Resistance", fileExt="shp")
+    resFile, entResInfo["flagRes"], _ = getAndCheckInputFiles(inputDir, "RES", "Resistance", fileExt="shp")
     if resFile is None:
         resFile = ""
     # Initialise entrainment areas
-    entFile, entResInfo["flagEnt"] = getAndCheckInputFiles(inputDir, "ENT", "Entrainment", fileExt="shp")
+    entFile, entResInfo["flagEnt"], _ = getAndCheckInputFiles(inputDir, "ENT", "Entrainment", fileExt="shp")
     if entFile is None:
         entFile = ""
 
     # Initialise dam line
-    wallFile, entResInfo["flagWall"] = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
+    wallFile, entResInfo["flagWall"], _ = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
@@ -216,33 +216,43 @@ def getInputDataCom1DFA(avaDir):
     entResInfo = {}
 
     releaseDir = inputDir / "REL"
-    relFiles = sorted(list(releaseDir.glob("*.shp")))
-    log.info("Release area files are: %s" % [str(relFilestr) for relFilestr in relFiles])
-
-    # check if relThFile is available
-    relThFile, entResInfo["releaseThicknessFile"] = getAndCheckInputFiles(
-        inputDir, "RELTH", "release thickness data", fileExt="raster"
+    relFiles = sorted(
+        list(releaseDir.glob("*.shp")) + list(releaseDir.glob("*.tif")) + list(releaseDir.glob("*.asc"))
     )
+    relSuffixList = [relF.suffix for relF in relFiles]
+
+    if ".shp" in relSuffixList and (".asc" in relSuffixList or ".tif" in relSuffixList):
+        message = "Release area information - use either .shp or .asc/.tif files"
+        log.error(message)
+        raise AssertionError(message)
+    else:
+        log.info("Release area files are: %s" % [str(relFilestr) for relFilestr in relFiles])
+    entResInfo["relThFileType"] = relFiles[0].suffix
+    entResInfo["flagRel"] = "Yes"
 
     # Initialise secondary release areas
-    secondaryReleaseFile, entResInfo["flagSecondaryRelease"] = getAndCheckInputFiles(
-        inputDir, "SECREL", "Secondary release", fileExt="shp"
+    secondaryReleaseFile, entResInfo["flagSecondaryRelease"], entResInfo["secondaryRelThFileType"] = (
+        getAndCheckInputFiles(inputDir, "SECREL", "Secondary release", fileExt=["shp", "asc", "tif"])
     )
     if secondaryReleaseFile:
         log.info("Secondary release file is: %s" % secondaryReleaseFile)
 
     # Initialise resistance areas
-    resFile, entResInfo["flagRes"] = getAndCheckInputFiles(inputDir, "RES", "Resistance", fileExt="shp")
+    resFile, entResInfo["flagRes"], entResInfo["resFileType"] = getAndCheckInputFiles(
+        inputDir, "RES", "Resistance", fileExt=["shp", "asc", "tif"]
+    )
     if resFile:
         log.info("Resistance file is: %s" % resFile)
 
     # Initialise entrainment areas
-    entFile, entResInfo["flagEnt"] = getAndCheckInputFiles(inputDir, "ENT", "Entrainment", fileExt="shp")
+    entFile, entResInfo["flagEnt"], entResInfo["entThFileType"] = getAndCheckInputFiles(
+        inputDir, "ENT", "Entrainment", fileExt=["shp", "asc", "tif"]
+    )
     if entFile:
         log.info("Entrainment file is: %s" % entFile)
 
     # Initialise dam line
-    damFile, entResInfo["dam"] = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
+    damFile, entResInfo["dam"], _ = getAndCheckInputFiles(inputDir, "DAM", "Dam", fileExt="shp")
     if damFile:
         log.info("Dam file is: %s" % damFile)
 
@@ -250,28 +260,56 @@ def getInputDataCom1DFA(avaDir):
     demFile = getDEMPath(avaDir)
 
     # check if frictionParameter file  is available
-    muFile, entResInfo["mu"] = getAndCheckInputFiles(
+    muFile, entResInfo["mu"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "mu parameter data", fileExt="raster", fileSuffix="_mu"
     )
 
     # check if frictionParameter file  is available
-    xiFile, entResInfo["xi"] = getAndCheckInputFiles(
+    xiFile, entResInfo["xi"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
     )
+
+    # check if frictionParameter file  is available
+    kFile, entResInfo["k"], _ = getAndCheckInputFiles(
+        inputDir, "RASTERS", "k parameter data", fileExt="raster", fileSuffix="_k"
+    )
+
+    # check if frictionParameter file  is available
+    tau0, entResInfo["tau0"], _ = getAndCheckInputFiles(
+        inputDir, "RASTERS", "tau0 parameter data", fileExt="raster", fileSuffix="_tau0"
+    )
+
+    entResInfo["relRemeshed"] = "No"
+    entResInfo["secondaryRelRemeshed"] = "No"
+    entResInfo["entRemeshed"] = "No"
+    entResInfo["tau0Remeshed"] = "No"
+    entResInfo["kRemeshed"] = "No"
+    entResInfo["muRemeshed"] = "No"
+    entResInfo["xiRemeshed"] = "No"
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
         "demFile": demFile,
         "relFiles": relFiles,
-        "secondaryReleaseFile": secondaryReleaseFile,
+        "secondaryRelFile": secondaryReleaseFile,
         "entFile": entFile,
         "resFile": resFile,
         "damFile": damFile,
         "entResInfo": entResInfo,
-        "relThFile": relThFile,
         "muFile": muFile,
         "xiFile": xiFile,
+        "kFile": kFile,
+        "tau0File": tau0,
     }
+
+    for thFile in ["rel", "secondaryRel", "ent"]:
+        if entResInfo["%sThFileType" % thFile] in [".asc", ".tif"]:
+            if thFile == "rel":
+                inputSimFiles["relThFile"] = relFiles
+            else:
+                inputSimFiles["%sThFile" % thFile] = inputSimFiles["%sFile" % thFile]
+        else:
+            inputSimFiles["%sThFile" % thFile] = None
 
     return inputSimFiles
 
@@ -294,7 +332,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
         subfolder name where the shape file should be located (SECREL, ENT or RES)
     inputType : str
         type of input (used for the logging messages).
-    fileExt: str
+    fileExt: str, list
         file extension e.g. shp, asc, tif - optional; default is shp
     fileSuffix: str
         file name part before extension
@@ -313,6 +351,8 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     # Define the directory to search and the extensions
     if fileExt == "":
         extensions = [""]
+    elif isinstance(fileExt, list):
+        extensions = fileExt
     elif fileExt.lower() == "raster":
         extensions = ["asc", "tif"]
     else:
@@ -328,6 +368,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     # check for number of files
     if len(OutputFile) < 1:
         OutputFile = None
+        fileTypeFormat = None
     elif len(OutputFile) > 1:
         message = "More than one %s .%s file in %s/%s/ not allowed" % (
             inputType,
@@ -340,6 +381,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
     else:
         available = "Yes"
         OutputFile = OutputFile[0]
+        fileTypeFormat = OutputFile.suffix
 
         if OutputFile.suffix not in supportedFileFormats:
             message = (
@@ -348,7 +390,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, fileExt="shp", fileSuffix
             log.error(message)
             raise AssertionError(message)
 
-    return OutputFile, available
+    return OutputFile, available, fileTypeFormat
 
 
 def getThicknessInputSimFiles(inputSimFiles):
@@ -368,10 +410,16 @@ def getThicknessInputSimFiles(inputSimFiles):
     """
 
     # fetch thickness attribute of entrainment area and secondary release
-    for thType in ["entFile", "secondaryReleaseFile"]:
-        if inputSimFiles[thType] is not None:
-            thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType])
-            inputSimFiles[inputSimFiles[thType].stem] = {
+    for thType in ["ent", "secondaryRel"]:
+        if inputSimFiles[thType + "File"] is not None:
+            if inputSimFiles["entResInfo"][thType + "Th" + "FileType"] == ".shp":
+                thicknessList, idList, ci95List = shpConv.readThickness(inputSimFiles[thType + "File"])
+            else:
+                thicknessList = None
+                idList = None
+                ci95List = None
+
+            inputSimFiles[inputSimFiles[thType + "File"].stem] = {
                 "thickness": thicknessList,
                 "id": idList,
                 "ci95": ci95List,
@@ -383,7 +431,13 @@ def getThicknessInputSimFiles(inputSimFiles):
     # fetch thickness attribute of release areas and add info to input dict
     for releaseA in inputSimFiles["relFiles"]:
         # fetch thickness and id info from input data
-        thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
+        if inputSimFiles["entResInfo"]["relThFileType"] == ".shp":
+            thicknessList, idList, ci95List = shpConv.readThickness(releaseA)
+        else:
+            thicknessList = None
+            idList = None
+            ci95List = None
+
         inputSimFiles[releaseA.stem] = {
             "thickness": thicknessList,
             "id": idList,
@@ -426,7 +480,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     if any(simType in ["ent", "entres", "available"] for simType in simTypeList):
         thTypeList.append("entFile")
     if cfgInitial["GENERAL"].getboolean("secRelArea"):
-        thTypeList.append("secondaryReleaseFile")
+        thTypeList.append("secondaryRelFile")
 
     # initialize release scenario list
     releaseScenarioIni = cfgInitial["INPUT"]["releaseScenario"]
@@ -440,28 +494,32 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
     for releaseA in releaseScenarioList:
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA, "relTh")
-        if cfgInitial["GENERAL"].getboolean("relThFromFile"):
-            if inputSimFiles["relThFile"] is None:
-                message = "relThFromFile set to True but no relTh file found"
-                log.error(message)
-                raise FileNotFoundError(message)
-            else:
-                cfgInitial["INPUT"]["relThFile"] = str(
-                    pathlib.Path("RELTH", inputSimFiles["relThFile"].name)
-                )
+        cfgInitial["INPUT"]["relThFile"] = ""
+        if inputSimFiles["entResInfo"]["relThFileType"] != ".shp":
+            cfgInitial["INPUT"]["relThFile"] = str(
+                pathlib.Path("REL", releaseA + inputSimFiles["entResInfo"]["relThFileType"])
+            )
 
     # add entrainment and secondary release thickness in input data info and in cfg object
     if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles["entFile"].stem, "entTh")
+        cfgInitial["INPUT"]["entThFile"] = ""
+        if inputSimFiles["entResInfo"]["entThFileType"] != ".shp":
+            cfgInitial["INPUT"]["entThFile"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
-    if inputSimFiles["secondaryReleaseFile"] != None and "secondaryReleaseFile" in thTypeList:
+    if inputSimFiles["secondaryRelFile"] != None and "secondaryRelFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,
             inputSimFiles,
-            inputSimFiles["secondaryReleaseFile"].stem,
+            inputSimFiles["secondaryRelFile"].stem,
             "secondaryRelTh",
         )
-        cfgInitial["INPUT"]["secondaryReleaseScenario"] = inputSimFiles["secondaryReleaseFile"].stem
+        cfgInitial["INPUT"]["secondaryRelThFile"] = ""
+        if inputSimFiles["entResInfo"]["secondaryRelThFileType"] != ".shp":
+            cfgInitial["INPUT"]["secondaryRelThFile"] = str(
+                pathlib.Path("SECREL", inputSimFiles["secondaryRelFile"].name)
+            )
+        cfgInitial["INPUT"]["secondaryReleaseScenario"] = inputSimFiles["secondaryRelFile"].stem
 
     # create cfg string from release scenario list and add to cfg object
     releaseScenarioName = cfgUtils.convertToCfgList(releaseScenarioList)
@@ -493,15 +551,15 @@ def initializeRelTh(cfg, dOHeader):
     --------
     relThFieldData: ndarray or str
         with release thickness field data
-        if not relThFromFile an empty string is returned
+        if no relThFile is available an empty string is returned
     relThFile: path
         updated path to relThFile (needed in case of remeshing)
     """
 
     avaDir = cfg["GENERAL"]["avalancheDir"]
-    relThFile = pathlib.Path(avaDir, "Inputs", cfg["INPUT"]["relThFile"])
 
-    if relThFile != None and cfg["GENERAL"].getboolean("relThFromFile"):
+    if cfg["INPUT"]["relThFile"] != "":
+        relThFile = pathlib.Path(avaDir, "Inputs", cfg["INPUT"]["relThFile"])
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField["rasterData"]
         if (
@@ -522,6 +580,7 @@ def initializeRelTh(cfg, dOHeader):
             raise AssertionError(message)
     else:
         relThFieldData = ""
+        relThFile = ""
 
     return relThFieldData, relThFile
 
@@ -630,8 +689,25 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
             cfgSim["INPUT"].pop(scenario + "_" + "relThId")
             cfgSim["INPUT"].pop(scenario + "_" + "relThThickness")
             cfgSim["INPUT"].pop(scenario + "_" + "relThCi95")
+    elif releaseScenarioPath.suffix in [".asc", ".tif"]:
+        cfgSim["INPUT"]["relThFile"] = str(
+            releaseScenarioPath.parts[-2] + "/" + releaseScenarioPath.parts[-1]
+        )
 
-    return releaseScenarioPath, cfgSim
+    relThFileList = [relF for relF in inputSimFiles["relFiles"] if relF.stem == releaseScenario]
+    if len(relThFileList) == 0:
+        relThFile = None
+    elif len(relThFileList) == 1:
+        relThFile = relThFileList[0]
+    else:
+        message = (
+            "multiple files found for release scenario name %s in relThFiles list - check input data"
+            % releaseScenario
+        )
+        log.error(message)
+        raise AssertionError(message)
+
+    return releaseScenarioPath, cfgSim, relThFile
 
 
 def createReleaseStats(avaDir, cfg):
@@ -700,14 +776,14 @@ def createReleaseStats(avaDir, cfg):
 
 
 def computeAreasFromRasterAndLine(line, dem):
-    """compute the area covered by a polygon by creating a raster from polygon
+    """compute the area covered by 1) a polygon by creating a raster from polygon
+    or 2) where in a raster values > 0
     projected area and actual area using a dem info
 
     Parameters
     -----------
     line: dict
-        dictionary with info on line
-        x, y coordinates start, end of each line feature
+        dictionary with info on polygon or area from raster
     dem: dict
         dictionary with dem data, header and areaRaster
 
@@ -719,18 +795,21 @@ def computeAreasFromRasterAndLine(line, dem):
         projected area in xy plane
     """
 
-    line = geoTrans.prepareArea(line, dem, 0.01, combine=False, checkOverlap=False)
-
     csz = dem["header"]["cellsize"]
     # create dict for raster data for each feature
     areaProjectedList = []
     areaActualList = []
-    for index, lineRaster in enumerate(line["rasterData"]):
+    if line["initializedFrom"] == "shapefile":
+        line = geoTrans.prepareArea(line, dem, 0.01, combine=False, checkOverlap=False)
+        rasterList = line["rasterData"]
+    else:
+        rasterList = [line["rasterData"]]
+    for index, lineRaster in enumerate(rasterList):
         lineRasterOnes = np.where(lineRaster > 0, 1.0, 0.0)
         areaActualList.append(np.nansum(lineRasterOnes * dem["areaRaster"]))
         areaProjectedList.append(np.sum(csz * csz * lineRasterOnes))
 
-    return areaActualList, areaProjectedList, line
+    return areaActualList, areaProjectedList
 
 
 def computeRelStats(line, dem):
@@ -928,3 +1007,98 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
         )
         log.error(message)
         raise AssertionError(message)
+
+
+def deriveLineRaster(
+    cfg, lineDict, dem, outDir, inputsDir, rasterType, rasterFileType="", saveZeroRaster=False
+):
+    """derive raster and return path to raster file
+    if derived from polygon, create raster with thickness read from lineDict and save to file
+    fileName based on derivedFrom_shapeFileName - same format as DEM
+
+    Parameters:
+    ------------
+    cfg: configparser object
+        configuration settings of current simulation
+    lineDict: dict
+        dictionary with info on area: thickness and polygon coordinates if initialized from shapefile
+        if read from raster fetch file Path only
+    dem: dict
+        dictionary with info on dem file including header and rasterData
+    outDir: pathlib path
+        path to directory where to save raster file
+    inputsDir: pathlib path
+        path to avalancheDir/Inputs where original input data and remeshed rasters are stored
+    rasterType: str
+        name of type of data, available options: rel, ent, tau0, secondaryRel
+    rasterFileType: str
+        type of raster file to save: .asc, .tif
+    saveZeroRaster: bool
+        whether to save raster with zero values as dummyRasterType to outDir with same
+        header as dem
+
+    Returns
+    ---------
+    rasterPath: pathlib Path
+        path to raster file
+    """
+
+    thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
+
+    if rasterType not in ["rel", "ent", "tau0", "secondaryRel", "releaseLayer2", "bedDepo"]:
+        message = "%s is not in list of available options: rel, ent, tau0, secondaryRel" % rasterType
+        log.error(message)
+        raise AssertionError(message)
+
+    rasterNameStr = {
+        "ent": "bedDepth",
+        "rel": "release",
+        "tau0": "bedShear",
+        "secondaryRel": "secondary release",
+        "releaseLayer2": "releaseLayer2",
+        "bedDepo": "bedDepo",
+    }
+    if rasterType in ["rel", "ent", "secondaryRel"]:
+        fileInd = "Th"
+    else:
+        fileInd = ""
+
+    if rasterType == "rel":
+        fileKey = "file"
+    else:
+        fileKey = "fileName"
+
+    if saveZeroRaster:
+        zeroRaster = np.full_like(dem["rasterData"], 0)
+        zeroRasterNoSuffix = outDir / ("dummy" + rasterType.upper()[0] + rasterType[1:])
+        rasterPath = pathlib.Path(str(zeroRasterNoSuffix) + rasterFileType)
+        IOf.writeResultToRaster(dem["header"], zeroRaster, zeroRasterNoSuffix)
+        log.info(
+            "Zero raster file written for %s saved to %s" % (rasterNameStr[rasterType], rasterPath.name)
+        )
+    elif lineDict["initializedFrom"] == "shapefile":
+        # check if release features overlap between features
+        geoTrans.prepareArea(lineDict, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
+        # polygon from shapefile - set thickness according to shapefile or ini file
+        lineDict = geoTrans.prepareArea(
+            lineDict,
+            dem,
+            np.sqrt(2),
+            thList=lineDict["thickness"],
+            combine=True,
+            checkOverlap=False,
+        )
+        lineArea = lineDict["rasterData"]
+        lineNameNoSuffix = outDir / ("derivedFrom_" + lineDict[fileKey].stem)
+        rasterPath = pathlib.Path(str(lineNameNoSuffix) + rasterFileType)
+        IOf.writeResultToRaster(dem["header"], lineArea, lineNameNoSuffix, flip=True)
+        log.info("%s derived from shapefile %s " % (rasterNameStr[rasterType], lineDict[fileKey].name))
+    else:
+        rasterPath = inputsDir / cfg["INPUT"]["%s%sFile" % (rasterType, fileInd)]
+        if not rasterPath.is_file():
+            message = "%s file not found" % rasterPath
+            log.error(message)
+            raise FileNotFoundError(message)
+        log.info("%s read from %s" % (rasterNameStr[rasterType], str(rasterPath)))
+
+    return rasterPath, lineDict

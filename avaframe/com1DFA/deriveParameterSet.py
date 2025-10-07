@@ -290,6 +290,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             thicknessList = [cfg["GENERAL"]["entThIfMissingInShp"]] * len(idList)
             cfg["GENERAL"]["entThFromShp"] = "False"
             cfg["GENERAL"]["entTh"] = cfg["GENERAL"]["entThIfMissingInShp"]
+            cfg["INPUT"]["entThInfo"] = "fromIni"
             log.warning(
                 "No thickness value provided for entrainment area using default value of %.2f instead"
                 % cfg["GENERAL"].getfloat("entThIfMissingInShp")
@@ -335,7 +336,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     return cfg
 
 
-def checkThicknessSettings(cfg, thName):
+def checkThicknessSettings(cfg, thName, inputSimFiles):
     """check if thickness setting format is correct
 
     Parameters
@@ -354,37 +355,68 @@ def checkThicknessSettings(cfg, thName):
 
     # create key name for thickness flag
     thFlag = thName + "FromShp"
-    thFile = thName + "FromFile"
+
+    nameTypes = {
+        "relTh": "Rel",
+        "entTh": "Ent",
+        "secondaryRelTh": "SecondaryRelease",
+    }
+    nameStrings = {
+        "relTh": "Release area",
+        "entTh": "Entrainment area",
+        "secondaryRelTh": "Secondary release area",
+    }
 
     # check if flag is set correctly and thickness parameter has correct format
     if cfg["GENERAL"][thFlag] == "True" or cfg["GENERAL"][thFlag] == "False":
-        if cfg["GENERAL"].getboolean(thFlag):
+        if (
+            cfg["GENERAL"].getboolean(thFlag)
+            and inputSimFiles["entResInfo"][thName + "FileType"] == ".shp"
+            and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
+        ):
             if cfg["GENERAL"][thName] != "":
                 message = "If %s is set to True - it is not allowed to set a value for %s" % (thFlag, thName)
                 log.error(message)
                 raise AssertionError(message)
+        elif (
+            cfg["GENERAL"].getboolean(thFlag)
+            and inputSimFiles["entResInfo"][thName + "FileType"] != "shp"
+            and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
+        ):
+            message = "If %s file is not a shapefile - it is not allowed to set %s = True" % (
+                nameStrings[thName],
+                thFlag,
+            )
+            log.error(message)
+            raise AssertionError(message)
+        elif (
+            inputSimFiles["entResInfo"][thName + "FileType"] != ".shp"
+            and cfg["GENERAL"][thName] != ""
+            and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
+        ):
+            message = "If %s file is not a shapefile - it is not allowed to set a value for %s" % (
+                nameStrings[thName],
+                thName,
+            )
+            log.error(message)
+            raise AssertionError(message)
         else:
-            if cfg["GENERAL"][thName] == "" and cfg["GENERAL"].getboolean(thFile) is False:
-                message = "If %s is set to False - it is required to set a value for %s" % (thFlag, thName)
+            if (
+                cfg["GENERAL"][thName] == ""
+                and cfg["GENERAL"].getboolean(thFlag) is False
+                and inputSimFiles["entResInfo"][thName + "FileType"] == ".shp"
+                and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
+            ):
+                message = (
+                    "If %s is set to False and %s defined by a shapefile - it is required to set a value for %s"
+                    % (thFlag, nameStrings[thName], thName)
+                )
                 log.error(message)
                 raise AssertionError(message)
-
     else:
         message = "Check %s - needs to be True or False" % thFlag
         log.error(message)
         raise AssertionError(message)
-
-    # if release thickness should be read from file check other parameters
-    if thName == "relTh":
-        if cfg["GENERAL"].getboolean(thFile) and (
-            cfg["GENERAL"].getboolean(thFlag) != False or cfg["GENERAL"][thName] != ""
-        ):
-            message = (
-                "If %s is set to True - it is not allowed to set %s to True or provide a value in %s"
-                % (thFile, thFlag, thName)
-            )
-            log.error(message)
-            raise AssertionError(message)
 
     thRV = thName + "RangeVariation"
     thPV = thName + "PercentVariation"
@@ -404,8 +436,9 @@ def checkThicknessSettings(cfg, thName):
         log.error(message)
         raise AssertionError(message)
 
-    if cfg["GENERAL"].getboolean(thFile) and (sum(flagsList) > 0):
-        message = "RelThFromFile is True - no variation allowed: check %s, %s or %s" % (
+    if inputSimFiles["entResInfo"][thName + "FileType"] != ".shp" and (sum(flagsList) > 0):
+        message = "%s read from raster - no variation allowed: check %s, %s or %s" % (
+            nameStrings[thName],
             thRV,
             thPV,
             thRCiV,
@@ -910,10 +943,11 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
         np.allclose([diffX0, diffY0, diffX1, diffY1], [0, 0, 0, 0], atol=cT)
         and inputField["header"]["cellsize"] == demHeader["cellsize"]
     ):
-        if fileType == "RELTH":
-            returnStr = str(pathlib.Path("RELTH", inputFile.name))
-        else:
-            returnStr = str(pathlib.Path("RASTERS", inputFile.name))
+
+        returnStr = str(pathlib.Path(inputFile.parts[-2], inputFile.name))
+        outFile = inputFile
+        log.info("%s matches extent and cell size of DEM - keep file" % returnStr)
+        remeshedFlag = "No"
     else:
         # resize data, project data from inputFile onto computational domain
         inputField["rasterData"], _ = geoTrans.resizeData(inputField, dem)
@@ -953,21 +987,22 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
             raise FileExistsError(message)
 
         # Type release thickness requires all nan values to be set to 0
-        if fileType == "RELTH":
+        if fileType.lower() == "rel":
             inputField["rasterData"][np.isnan(inputField["rasterData"])] = 0.0
 
         # write raster to file
         outFile = IOf.writeResultToRaster(dem["header"], inputField["rasterData"], outFile, flip=True)
         log.info("Saved remeshed raster to %s" % outFile)
         returnStr = str(pathlib.Path("remeshedRasters", outFile.name))
+        remeshedFlag = "Yes"
 
-    return returnStr
+    return returnStr, outFile, remeshedFlag
 
 
 def checkSizeExtent(inputField, demHeader, inputFile, fileType, rT):
     """check if extent of an inputfield matches the extent of the DEM
     and also cellSize in case of RELTH files
-    optionally within a specified treshold
+    optionally within a specified threshold
 
     Parameters
     ------------
@@ -1062,7 +1097,8 @@ def createSimDict(avalancheDir, module, cfgInitial, inputSimFiles, simNameExisti
 
     # check if thickness settings in ini file are valid
     for thType in ["entTh", "relTh", "secondaryRelTh"]:
-        _ = checkThicknessSettings(cfgInitial, thType)
+        _ = checkThicknessSettings(cfgInitial, thType, inputSimFiles)
+
     # update thickness settings, e.g. fetch if th read from shp
     cfgInitial = gI.updateThicknessCfg(inputSimFiles, cfgInitial)
 
