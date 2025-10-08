@@ -146,10 +146,8 @@ def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
     fU.makeADir(reportDir)
 
-    dem = rU.readRaster(inputSimFiles["demFile"])
-
     # Generate plots for all peakFiles
-    oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
+    oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName)
 
 
 def com9MoTVoellmyTask(rcfFile):

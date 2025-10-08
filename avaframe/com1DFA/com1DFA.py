@@ -191,6 +191,8 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         log.info("Overall (parallel) com1DFA computation took: %s s " % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
 
+        # TODO: needs to be moved inside the outPlotAllPeakFunction
+        # dem for plot chosen there
         dem = com1DFATools.chooseDemPlot(dem, adaptedDemBackground=adaptDemPlot)
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
@@ -323,7 +325,8 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
 
     # Generate plots for all peakFiles
     if exportData:
-        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
+        # TODO: if adaptedDEM this needs to be changed!!
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName)
     else:
         plotDict = ""
         # create contour line plot

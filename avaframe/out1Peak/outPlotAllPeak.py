@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import matplotlib
 
-matplotlib.use("agg")
+# matplotlib.use("agg")
 from matplotlib import pyplot as plt
 import pathlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -17,6 +17,7 @@ import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.rasterUtils as IOf
 import avaframe.in3Utils.geoTrans as gT
+import avaframe.in3Utils.cfgUtils as cfgUtils
 
 import rasterio
 import rasterio.plot
@@ -53,11 +54,17 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     inputDir = avaDir / "Outputs" / modName / "peakFiles"
     inDir = avaDir / "Inputs"
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    if modName in ["com1DFA", "com8MoTPSA", "com9MoTVoellmy"]:
+        configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=modName)
+        configurationDF = configurationDF.rename(columns={"resType": "resTypeList"})
+        peakFilesDF = (
+            peakFilesDF.reset_index().merge(configurationDF, on=["simName", "modelType"]).set_index("index")
+        )
 
     if demData == "":
         demFile = gI.getDEMPath(avaDir)
-        demData = IOf.readRaster(demFile, noDataToNan=True)
-        demDataField = demData["rasterData"]
+        demDataRaster = IOf.readRaster(demFile, noDataToNan=True)
+        demDataField = demDataRaster["rasterData"]
     else:
         # check if nodata_value is found and if replace with nans for plotting
         demDataField = np.where(
@@ -96,6 +103,14 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         # make sure to remove the Outputs folder if you want to regenerate the plot
         # this enables to append simulations to an already existing output without regenerating all plots
         if not plotName.is_file():
+
+            # for comModules load DEM used for computation
+            if demData == "" and modName in ["com1DFA", "com8MoTPSA", "com9MoTVoellmy"]:
+                demFile = inDir / peakFilesDF["DEM"][m]
+                demDataRaster = IOf.readRaster(demFile, noDataToNan=True)
+                demDataField = demDataRaster["rasterData"]
+                demField = demDataField
+
             # Figure  shows the result parameter data
             fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
 
@@ -226,11 +241,10 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # constrain data to where there is data
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-    dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
-    demConstrained = demField[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+    # dataConstrained = data[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
+    # demConstrained = demField[rowsMin : rowsMax + 1, colsMin : colsMax + 1]
 
-    data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-    dataConstrained = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+    dataConstrained = np.ma.masked_where(data == 0.0, data)
     unit = pU.cfgPlotUtils["unit%s" % resType]
 
     # Set extent of peak file
@@ -239,13 +253,16 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
-        pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap
+        pU.colorMaps[resType], np.amin(dataConstrained), np.amax(dataConstrained), continuous=pU.contCmap
     )
     cmap.set_bad(alpha=0)
     # uncomment this to set the under value for discrete cmap transparent
     # cmap.set_under(alpha=0)
 
     # set extent in meters using cellSize and llcenter location
+    extentCellCentersIm, extentCellCornersIm = pU.createExtentMinMax(
+        data, raster["header"], originLLCenter=True
+    )
     (
         extentCellCenters,
         extentCellCorners,
@@ -256,7 +273,8 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
     ) = pU.createExtent(rowsMin, rowsMax, colsMin, colsMax, raster["header"])
 
     # add DEM hillshade with contour lines
-    _, _ = pU.addHillShadeContours(ax, demConstrained, cellSize, extentCellCenters)
+    # set extent in meters using cellSize and llcenter location
+    _, _ = pU.addHillShadeContours(ax, demField, cellSize, extentCellCentersIm)
 
     # add peak field data
     if oneColor != "":
@@ -265,7 +283,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             dataOneColor,
             cmap=oneColor,
             norm=norm,
-            extent=extentCellCorners,
+            extent=extentCellCornersIm,
             origin="lower",
             aspect="equal",
             zorder=4,
@@ -276,7 +294,7 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
             dataConstrained,
             cmap=cmap,
             norm=norm,
-            extent=extentCellCorners,
+            extent=extentCellCornersIm,
             origin="lower",
             aspect="equal",
             zorder=4,
