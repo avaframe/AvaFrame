@@ -286,6 +286,7 @@ def getInputDataCom1DFA(avaDir):
     entResInfo["kRemeshed"] = "No"
     entResInfo["muRemeshed"] = "No"
     entResInfo["xiRemeshed"] = "No"
+    entResInfo["resRemeshed"] = "No"
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
@@ -507,6 +508,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         if inputSimFiles["entResInfo"]["entThFileType"] != ".shp":
             cfgInitial["INPUT"]["entThFile"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
+
     if inputSimFiles["secondaryRelFile"] != None and "secondaryRelFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,
@@ -749,6 +751,7 @@ def createReleaseStats(avaDir, cfg):
         releaseLine["type"] = "Release"
         releaseLine["thicknessSource"] = ["artificial"] * len(releaseLine["id"])
         releaseLine["thickness"] = ["1."] * len(releaseLine["id"])
+        releaseLine["initializedFrom"] = "shapefile"
         # convert release line to a raster with 1 set inside of the release line
         # and compute projected and actual areas
         areaActualList, areaProjectedList, releaseLine = computeAreasFromRasterAndLine(releaseLine, dem)
@@ -809,7 +812,7 @@ def computeAreasFromRasterAndLine(line, dem):
         areaActualList.append(np.nansum(lineRasterOnes * dem["areaRaster"]))
         areaProjectedList.append(np.sum(csz * csz * lineRasterOnes))
 
-    return areaActualList, areaProjectedList
+    return areaActualList, areaProjectedList, line
 
 
 def computeRelStats(line, dem):

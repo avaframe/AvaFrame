@@ -600,7 +600,8 @@ def prepareInputData(inputSimFiles, cfg):
     dOHeader = demOri["header"]
 
     # read data from relThFile if needed, already with correct mesh cell size
-    relThFieldData, inputSimFiles["relThFile"] = gI.initializeRelTh(cfg, dOHeader)
+    # TODO: remove if not required anymore
+    # relThFieldData, _ = gI.initializeRelTh(cfg, dOHeader)
 
     if cfg["INPUT"]["relThFile"] == "":
         # get line from release area polygon
@@ -612,9 +613,11 @@ def prepareInputData(inputSimFiles, cfg):
         gI.checkForMultiplePartsShpArea(
             cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release"
         )
+        relThFieldData = ""
     else:
         relRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
         relRasterDict = IOf.readRaster(relRasterPath)
+        relThFieldData = relRasterDict["rasterData"]
         releaseLine = {
             "rasterData": relRasterDict["rasterData"],
             "file": relRasterPath,
@@ -666,7 +669,7 @@ def prepareInputData(inputSimFiles, cfg):
         # set False
         entResInfo["flagSecondaryRelease"] = "No"
 
-    # get line from entrainement area polygon
+    # get line from entrainment area polygon
     if cfg["GENERAL"]["simTypeActual"] in ["ent", "entres"]:
         if cfg["INPUT"]["entThFile"] == "":
             entFile = inputSimFiles["entFile"]
@@ -695,17 +698,31 @@ def prepareInputData(inputSimFiles, cfg):
         entLine = None
         entrainmentArea = ""
 
-    # get line from resistance area polygon
+    # get line from resistance area polygon or raster
     if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]:
-        resFile = inputSimFiles["resFile"]
-        resLine = shpConv.readLine(resFile, "", demOri)
-        resistanceArea = resFile.name
-        resLine["fileName"] = resFile
-        resLine["type"] = "Resistance"
-        # check for holes in resistance area polygons
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
-        )
+        if inputSimFiles["entResInfo"]["resFileType"] == ".shp":
+            resFile = inputSimFiles["resFile"]
+            resLine = shpConv.readLine(resFile, "", demOri)
+            resistanceArea = resFile.name
+            resLine["fileName"] = resFile
+            resLine["type"] = "Resistance"
+            resLine["initializedFrom"] = "shapefile"
+            # check for holes in resistance area polygons
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
+            )
+        else:
+            resRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["resFile"])
+            resLineDict = IOf.readRaster(resRasterPath)
+            resLine = {
+                "rasterData": resLineDict["rasterData"],
+                "fileName": resRasterPath,
+                "type": "Resistance from raster",
+            }
+            resLine["initializedFrom"] = "raster"
+            resLine["Name"] = "from raster"
+            resLine["thickness"] = "from raster"
+            resistanceArea = resRasterPath.name
     else:
         resLine = None
         resistanceArea = ""
@@ -1072,6 +1089,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     cfgGen = cfg["GENERAL"]
     methodMeshNormal = cfg.getfloat("GENERAL", "methodMeshNormal")
     thresholdPointInPoly = cfgGen.getfloat("thresholdPointInPoly")
+    # this is from the current release scenario set in prepareInputData - where inputSimLines is created using releaseScenario info
     relThField = inputSimLines["relThField"]
 
     # -----------------------
@@ -1137,7 +1155,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # for area computation use smaller threshold to identify raster cells that lie within release line
     # as for creating particles a bigger radius is chosen as particles that lie outside are removed afterwards
     releaseInfoDict = copy.deepcopy(releaseLine)
-    relAreaActualList, relAreaProjectedList = gI.computeAreasFromRasterAndLine(releaseInfoDict, dem)
+    relAreaActualList, relAreaProjectedList, releaseInfoDict = gI.computeAreasFromRasterAndLine(
+        releaseInfoDict, dem
+    )
     relAreaProjected = np.sum(relAreaProjectedList)
     relAreaActual = np.sum(relAreaActualList)
     reportAreaInfo = {
@@ -1384,7 +1404,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     else:
         indRelYReal, indRelXReal = np.nonzero(relRaster)
     iReal = list(zip(indRelYReal, indRelXReal))
-
     # get approximate ratio between projected and real release area
     # because relRasterMask has a none 0 value where the release is but we want a 1 there
     realArea = np.sum(areaRaster * np.where(relRasterMask > 0, 1, 0))
@@ -1754,7 +1773,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
             )
         # remove overlaping parts of the secondary release area with the main release areas
         noOverlaprasterList = []
-        if isinstance(secondaryReleaseInfo["rasterData"], np.ndarray):
+        if secondaryReleaseInfo["initializedFrom"] == "raster":
             noOverlaprasterList = [
                 geoTrans.checkOverlap(
                     secondaryReleaseInfo["rasterData"],
@@ -1904,8 +1923,15 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
-        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
-        mask = resLine["rasterData"]
+        if resLine["initializedFrom"] == "shapefile":
+            resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
+            mask = resLine["rasterData"]
+        else:
+            log.info(
+                "Resistance area where values > 0, no resistance everywhere else based on raster file %s"
+                % resLine["fileName"]
+            )
+            mask = np.where(resLine["rasterData"] > 0, 1, 0)
         # Combine constants (d, cw, sres) to one parameter cRes
         cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
@@ -3073,15 +3099,21 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
         # check extent of inputs read from raster have correct extent and cellSize
         # first release area
-        for fType in ["rel", "secondaryRel"]:
-            if inputSimFiles["entResInfo"]["%sThFileType" % fType] in [".asc", ".tif"]:
-                if fType == "secondaryRel":
-                    relThFile = inputSimFiles["secondaryRelThFile"]
-                pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(
-                    cfgSim, relThFile, dem, fType
-                )
-                cfgSim["INPUT"]["%sThFile" % fType] = pathToRel
-                inputSimFiles["entResInfo"]["%sRemeshed" % fType] = remeshedRel
+        if inputSimFiles["entResInfo"]["relThFileType"] in [".asc", ".tif"]:
+            pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(cfgSim, relThFile, dem, "rel")
+            cfgSim["INPUT"]["relThFile"] = pathToRel
+            inputSimFiles["entResInfo"]["relRemeshed"] = remeshedRel
+
+        # secondary release area
+        if (
+            inputSimFiles["entResInfo"]["secondaryRelThFileType"] in [".asc", ".tif"]
+            and cfgSim["GENERAL"]["secRelArea"] == "True"
+        ):
+            pathToSecRel, pathToSecRelFull, remeshedSecRel = dP.checkExtentAndCellSize(
+                cfgSim, inputSimFiles["secondaryRelThFile"], dem, "secondaryRel"
+            )
+            cfgSim["INPUT"]["secondaryRelThFile"] = pathToSecRel
+            inputSimFiles["entResInfo"]["secondaryRelRemeshed"] = remeshedSecRel
 
         if modName == "com1DFA":
             # check if spatialVoellmy is chosen that friction fields have correct extent
@@ -3116,7 +3148,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 cfgSim["INPUT"]["tau0File"] = pathToFric
                 inputSimFiles["entResInfo"]["tau0Remeshed"] = remeshedFric
             # check if physical parameters = variable is chosen that friction fields have correct extent
-            if cfgSim["Physical_parameters"]["Parameters"] == "variable":
+            if cfgSim["Physical_parameters"]["Parameters"] == "auto":
                 dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
                 for fric in ["mu", "k"]:
                     if inputSimFiles["entResInfo"][fric] == "Yes":
@@ -3134,11 +3166,17 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 )
                 cfgSim["INPUT"]["entThFile"] = pathToEnt
                 inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
-            cfgSim["INPUT"]["entrainment"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
+            cfgSim["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
 
         # add info about entrainment file path to the cfg
         if "res" in row._asdict()["simTypeList"] and inputSimFiles["resFile"] is not None:
-            cfgSim["INPUT"]["resistance"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
+            if inputSimFiles["entResInfo"]["resFileType"] != ".shp":
+                pathToRes, pathToResFull, remeshedRes = dP.checkExtentAndCellSize(
+                    cfgSim, inputSimFiles["resFile"], dem, "res"
+                )
+                cfgSim["INPUT"]["resFile"] = pathToRes
+                inputSimFiles["entResInfo"]["resRemeshed"] = remeshedRes
+            cfgSim["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)

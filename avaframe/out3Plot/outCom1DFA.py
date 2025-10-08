@@ -576,8 +576,13 @@ def plotReleaseScenarioView(
         handles.append(relPatch)
     count = 1
     if reportAreaInfo["resistance"] == "Yes":
-        resArea = gpd.read_file(inputSimLines["resLine"]["fileName"])
-        resArea.plot(ax=ax, edgecolor="green", linewidth=2, facecolor="none")
+        if inputSimLines["resLine"]["initializedFrom"] == "shapefile":
+            resArea = gpd.read_file(inputSimLines["resLine"]["fileName"])
+            resArea.plot(ax=ax, edgecolor="green", linewidth=2, facecolor="none")
+        else:
+            resArea = IOf.readRaster(inputSimLines["resLine"]["fileName"], noDataToNan=True)
+            resAreaPlot = np.where(resArea["rasterData"] > 0, 0.75, np.nan)
+            ax.imshow(resAreaPlot, extent=extentCells, cmap="Greens", vmin=0, vmax=1, zorder=1000)
         resPatch = Patch(color="green", label="resistance")
         handles.append(resPatch)
         count = count + 1
