@@ -286,6 +286,7 @@ def getInputDataCom1DFA(avaDir):
     entResInfo["kRemeshed"] = "No"
     entResInfo["muRemeshed"] = "No"
     entResInfo["xiRemeshed"] = "No"
+    entResInfo["resRemeshed"] = "No"
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {
@@ -507,6 +508,7 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
         if inputSimFiles["entResInfo"]["entThFileType"] != ".shp":
             cfgInitial["INPUT"]["entThFile"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
+
     if inputSimFiles["secondaryRelFile"] != None and "secondaryRelFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,

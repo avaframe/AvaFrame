@@ -666,7 +666,7 @@ def prepareInputData(inputSimFiles, cfg):
         # set False
         entResInfo["flagSecondaryRelease"] = "No"
 
-    # get line from entrainement area polygon
+    # get line from entrainment area polygon
     if cfg["GENERAL"]["simTypeActual"] in ["ent", "entres"]:
         if cfg["INPUT"]["entThFile"] == "":
             entFile = inputSimFiles["entFile"]
@@ -695,17 +695,31 @@ def prepareInputData(inputSimFiles, cfg):
         entLine = None
         entrainmentArea = ""
 
-    # get line from resistance area polygon
+    # get line from resistance area polygon or raster
     if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]:
-        resFile = inputSimFiles["resFile"]
-        resLine = shpConv.readLine(resFile, "", demOri)
-        resistanceArea = resFile.name
-        resLine["fileName"] = resFile
-        resLine["type"] = "Resistance"
-        # check for holes in resistance area polygons
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
-        )
+        if inputSimFiles["entResInfo"]["resFileType"] == ".shp":
+            resFile = inputSimFiles["resFile"]
+            resLine = shpConv.readLine(resFile, "", demOri)
+            resistanceArea = resFile.name
+            resLine["fileName"] = resFile
+            resLine["type"] = "Resistance"
+            resLine["initializedFrom"] = "shapefile"
+            # check for holes in resistance area polygons
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
+            )
+        else:
+            resRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["resFile"])
+            resLineDict = IOf.readRaster(resRasterPath)
+            resLine = {
+                "rasterData": resLineDict["rasterData"],
+                "fileName": resRasterPath,
+                "type": "Resistance from raster",
+            }
+            resLine["initializedFrom"] = "raster"
+            resLine["Name"] = "from raster"
+            resLine["thickness"] = "from raster"
+            resistanceArea = resRasterPath.name
     else:
         resLine = None
         resistanceArea = ""
@@ -1904,8 +1918,15 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
-        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
-        mask = resLine["rasterData"]
+        if resLine["initializedFrom"] == "shapefile":
+            resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
+            mask = resLine["rasterData"]
+        else:
+            log.info(
+                "Resistance area where values > 0, no resistance everywhere else based on raster file %s"
+                % resLine["fileName"]
+            )
+            mask = np.where(resLine["rasterData"] > 0, 1, 0)
         # Combine constants (d, cw, sres) to one parameter cRes
         cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
@@ -3073,15 +3094,20 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
 
         # check extent of inputs read from raster have correct extent and cellSize
         # first release area
-        for fType in ["rel", "secondaryRel"]:
-            if inputSimFiles["entResInfo"]["%sThFileType" % fType] in [".asc", ".tif"]:
-                if fType == "secondaryRel":
-                    relThFile = inputSimFiles["secondaryRelThFile"]
-                pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(
-                    cfgSim, relThFile, dem, fType
-                )
-                cfgSim["INPUT"]["%sThFile" % fType] = pathToRel
-                inputSimFiles["entResInfo"]["%sRemeshed" % fType] = remeshedRel
+        if inputSimFiles["entResInfo"]["relThFileType"] in [".asc", ".tif"]:
+            pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(cfgSim, relThFile, dem, "rel")
+            cfgSim["INPUT"]["relThFile"] = pathToRel
+            inputSimFiles["entResInfo"]["relRemeshed"] = remeshedRel
+        # secondary release area
+        if (
+            inputSimFiles["entResInfo"]["secondaryRelThFileType"] in [".asc", ".tif"]
+            and cfgSim["GENERAL"]["secRelArea"] == "True"
+        ):
+            pathToSecRel, pathToSecRelFull, remeshedSecRel = dP.checkExtentAndCellSize(
+                cfgSim, inputSimFiles["secondaryRelThFile"], dem, "secondaryRel"
+            )
+            cfgSim["INPUT"]["secondaryRelThFile"] = pathToSecRel
+            inputSimFiles["entResInfo"]["secondaryRelRemeshed"] = remeshedSecRel
 
         if modName == "com1DFA":
             # check if spatialVoellmy is chosen that friction fields have correct extent
@@ -3134,11 +3160,17 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 )
                 cfgSim["INPUT"]["entThFile"] = pathToEnt
                 inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
-            cfgSim["INPUT"]["entrainment"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
+            cfgSim["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
 
         # add info about entrainment file path to the cfg
         if "res" in row._asdict()["simTypeList"] and inputSimFiles["resFile"] is not None:
-            cfgSim["INPUT"]["resistance"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
+            if inputSimFiles["entResInfo"]["resFileType"] != ".shp":
+                pathToRes, pathToResFull, remeshedRes = dP.checkExtentAndCellSize(
+                    cfgSim, inputSimFiles["resFile"], dem, "res"
+                )
+                cfgSim["INPUT"]["resFile"] = pathToRes
+                inputSimFiles["entResInfo"]["resRemeshed"] = remeshedRes
+            cfgSim["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
 
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
