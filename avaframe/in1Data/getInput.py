@@ -1010,7 +1010,7 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
 
 
 def deriveLineRaster(
-    lineDict, dem, outDir, thresholdPointInPoly, rasterFileType="", rasterType="", saveZeroRaster=False
+    cfg, lineDict, dem, outDir, inputsDir, rasterType, rasterFileType="", saveZeroRaster=False
 ):
     """derive raster and return path to raster file
     if derived from polygon, create raster with thickness read from lineDict and save to file
@@ -1018,6 +1018,8 @@ def deriveLineRaster(
 
     Parameters:
     ------------
+    cfg: configparser object
+        configuration settings of current simulation
     lineDict: dict
         dictionary with info on area: thickness and polygon coordinates if initialized from shapefile
         if read from raster fetch file Path only
@@ -1025,10 +1027,12 @@ def deriveLineRaster(
         dictionary with info on dem file including header and rasterData
     outDir: pathlib path
         path to directory where to save raster file
+    inputsDir: pathlib path
+        path to avalancheDir/Inputs where original input data and remeshed rasters are stored
+    rasterType: str
+        name of type of data, available options: rel, ent, tau0, secondaryRel
     rasterFileType: str
         type of raster file to save: .asc, .tif
-    rasterType: str
-        name of type of data, e.g.: release, bedDepth, bedShear, secondaryRelease
     saveZeroRaster: bool
         whether to save raster with zero values as dummyRasterType to outDir with same
         header as dem
@@ -1039,7 +1043,25 @@ def deriveLineRaster(
         path to raster file
     """
 
-    if rasterType == "release":
+    thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
+
+    if rasterType not in ["rel", "ent", "tau0", "secondaryRel"]:
+        message = "%s is not in list of available options: rel, ent, tau0, secondaryRel" % rasterType
+        log.error(message)
+        raise AssertionError(message)
+
+    rasterNameStr = {
+        "ent": "bedDepth",
+        "rel": "release",
+        "tau0": "bedShear",
+        "secondaryRel": "secondary release",
+    }
+    if rasterType in ["rel", "ent", "secondaryRel"]:
+        fileInd = "Th"
+    else:
+        fileInd = ""
+
+    if rasterType == "rel":
         fileKey = "file"
     else:
         fileKey = "fileName"
@@ -1049,7 +1071,9 @@ def deriveLineRaster(
         zeroRasterNoSuffix = outDir / ("dummy" + rasterType.upper()[0] + rasterType[1:])
         rasterPath = pathlib.Path(str(zeroRasterNoSuffix) + rasterFileType)
         IOf.writeResultToRaster(dem["header"], zeroRaster, zeroRasterNoSuffix)
-        log.info("Zero raster file written for %s saved to %s" % (rasterType, rasterPath.name))
+        log.info(
+            "Zero raster file written for %s saved to %s" % (rasterNameStr[rasterType], rasterPath.name)
+        )
     elif lineDict["initializedFrom"] == "shapefile":
         # check if release features overlap between features
         geoTrans.prepareArea(lineDict, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
@@ -1066,9 +1090,13 @@ def deriveLineRaster(
         lineNameNoSuffix = outDir / ("derivedFrom_" + lineDict[fileKey].stem)
         rasterPath = pathlib.Path(str(lineNameNoSuffix) + rasterFileType)
         IOf.writeResultToRaster(dem["header"], lineArea, lineNameNoSuffix, flip=True)
-        log.info("%s derived from shapefile %s " % (rasterType, lineDict[fileKey].name))
+        log.info("%s derived from shapefile %s " % (rasterNameStr[rasterType], lineDict[fileKey].name))
     else:
-        rasterPath = lineDict[fileKey]
-        log.info("%s read from %s" % (rasterType, lineDict[fileKey].name))
+        rasterPath = inputsDir / cfg["INPUT"]["%s%sFile" % (rasterType, fileInd)]
+        if not rasterPath.is_file():
+            message = "%s file not found" % rasterPath
+            log.error(message)
+            raise FileNotFoundError(message)
+        log.info("%s read from %s" % (rasterNameStr[rasterType], str(rasterPath)))
 
     return rasterPath, lineDict

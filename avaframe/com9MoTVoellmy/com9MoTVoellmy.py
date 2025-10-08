@@ -1,10 +1,8 @@
 import os
 import platform
 import logging
-import numpy as np
 import pathlib
 import time
-import shutil
 import sys
 
 if os.name == "nt":
@@ -17,13 +15,11 @@ else:
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import rasterUtils as rU
-from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.in1Data import getInput as gI
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils.cfgUtils import cfgToRcf
-from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs, copyMoTFiles
+import avaframe.in3Utils.MoTUtils as mT
 
 
 # create a local logger
@@ -63,11 +59,11 @@ def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
 
     # Get all necessary information from the configuration files
     currentModule = sys.modules[__name__] # As if you would to import com9MoTVoellmy
-    simDict, inputSimFiles = MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
+    simDict, inputSimFiles = mT.MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
 
     # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
-    rewriteDEMtoZeroValues(inputSimFiles["demFile"])
+    mT.rewriteDEMtoZeroValues(inputSimFiles["demFile"])
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -137,13 +133,13 @@ def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
         workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy" / str(key)
 
         # Copy ppr files
-        copyMoTFiles(workDir, outputDirPeakFile, "p_max", "ppr")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "p_max", "ppr")
 
         # Copy pfd files
-        copyMoTFiles(workDir, outputDirPeakFile, "h_max", "pfd")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "h_max", "pfd")
 
         # Copy pfv files
-        copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
 
     # create plots and report
     modName = __name__.split(".")[-1]
@@ -188,54 +184,8 @@ def com9MoTVoellmyTask(rcfFile):
 
     command = [exeName, rcfFile]
     log.info("Run simulation: %s" % rcfFile)
-    runAndCheckMoT(command)
+    mT.runAndCheckMoT(command)
     return command
-
-
-def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir):
-    """set file paths in cfg object for friction parameters (required if option variable is set)
-    if _mu, _k files found in Inputs/RASTERS have to be remeshed, copy remeshed files
-    to workInputDir with new file name ending _mu, _k
-
-    Parameters
-    -----------
-    cfg: configparser object
-        configuration info for simulation
-    inputSimFiles: dict
-        dictionary with info on all input data found; here mu, k file and if remeshed
-    workInputDir: str
-        pathlib path to work Inputs folder for current simulaiton
-
-    Returns
-    --------
-    cfg: configparser object
-        updated configuration info for simulation with file paths to friction parameters
-    """
-
-    fricParameters = {"mu": "Dry-friction coefficient (-)", "k": "Turbulent drag coefficient (-)"}
-    if inputSimFiles["entResInfo"]["mu"] == "Yes" and inputSimFiles["entResInfo"]["k"] == "Yes":
-        for fric in ["mu", "k"]:
-            if inputSimFiles["entResInfo"]["%sRemeshed" % fric] == "Yes":
-                fricFilePath = workInputDir / (
-                    inputSimFiles["%sFile" % fric].stem
-                    + "_%s" % fric
-                    + inputSimFiles["%sFile" % fric].suffix
-                )
-                shutil.copy2(inputSimFiles["%sFile" % fric], fricFilePath)
-                cfg["Physical_parameters"][fricParameters[fric]] = str(fricFilePath)
-                log.info(
-                    "Remeshed %s file copied to %s and set for %s"
-                    % (fric, str(fricFilePath), fricParameters[fric])
-                )
-            else:
-                cfg["Physical_parameters"]["Dry-friction coefficient (-)"] = str(inputSimFiles["muFile"])
-                cfg["Physical_parameters"]["Turbulent drag coefficient (-)"] = str(inputSimFiles["kFile"])
-    else:
-        message = "Mu and k file not found in Inputs/RASTERS - check if file ending is correct (_mu, _k)"
-        log.error(message)
-        raise FileNotFoundError(message)
-
-    return cfg
 
 
 def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
@@ -270,6 +220,8 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
     """
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+    # set inputsDir where original input data and remeshed rasters are stored
+    inputsDir = pathlib.Path(avalancheDir) / "Inputs"
 
     # create required Work und Outputs directories in avalancheDir
     workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy"
@@ -292,9 +244,11 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
 
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
+        log.info("Prepare simulation configuration for key %s" % key)
 
         # select release area input data according to a chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
+
         # create the required input from input files
         # if release, entrainment area are provided as shapefile - read shapefile attributes and values for current sim
         # if provided by raster - load raster data
@@ -311,12 +265,13 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         # RELEASE AREA - fetch path to release raster
         # TODO: split releaseheight -> question NGI
         releaseName, inputSimLines["releaseLine"] = gI.deriveLineRaster(
+            cfg,
             inputSimLines["releaseLine"],
             demOri,
             workInputDir,
-            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            inputsDir,
+            "rel",
             rasterFileType=demSuffix,
-            rasterType="release",
         )
 
         # ENTRAINMENT AREA - fetch path to entrainment (bedDepth) raster
@@ -325,12 +280,13 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         else:
             saveZeroRaster = True
         bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
+            cfg,
             inputSimLines["entLine"],
             demOri,
             workInputDir,
-            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            inputsDir,
+            "ent",
             rasterFileType=demSuffix,
-            rasterType="bedDepth",
             saveZeroRaster=saveZeroRaster,
         )
 
@@ -354,12 +310,13 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         else:
             saveZeroRaster = True
         bedShearName, bedShearDict = gI.deriveLineRaster(
+            cfg,
             bedShearDict,
             demOri,
             workInputDir,
-            cfg["GENERAL"].getfloat("thresholdPointInPoly"),
+            inputsDir,
+            "tau0",
             rasterFileType=demSuffix,
-            rasterType="bedShear",
             saveZeroRaster=saveZeroRaster,
         )
 
@@ -368,7 +325,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         cfg["Run information"]["UTM zone"] = "32N"
         cfg["Run information"]["EPSG geodetic datum code"] = "31287"
         cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
+        cfg["File names"]["Grid filename"] = str(pathlib.Path(inputsDir / cfg["INPUT"]["DEM"]))
         cfg["File names"]["Release depth filename"] = str(releaseName)
         cfg["File names"]["Bed depth filename"] = str(bedDepthName)
         cfg["File names"]["Bed shear strength filename"] = str(bedShearName)
@@ -376,7 +333,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
 
         # if friction parameters are variable - set paths to mu and k files
         if cfg["Physical_parameters"]["Parameters"] == "variable":
-            cfg = setVariableFrictionParameters(cfg, inputSimFiles, workInputDir)
+            cfg = mT.setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
@@ -384,4 +341,5 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         cfgUtils.writeCfgFile(avalancheDir, currentModule, cfg, str(key))
         cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
+        log.info("rcf and ini file written for key %s-------------------------" % key)
     return rcfFiles

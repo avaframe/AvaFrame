@@ -945,10 +945,6 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
     ):
 
         returnStr = str(pathlib.Path(inputFile.parts[-2], inputFile.name))
-        # if fileType == "RELTH":
-        #     returnStr = str(pathlib.Path("RELTH", inputFile.name))
-        # else:
-        #     returnStr = str(pathlib.Path("RASTERS", inputFile.name))
         outFile = inputFile
         log.info("%s matches extent and cell size of DEM - keep file" % returnStr)
         remeshedFlag = "No"

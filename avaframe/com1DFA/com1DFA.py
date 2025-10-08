@@ -3088,7 +3088,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     cfgSim, relThFile, dem, fType
                 )
                 cfgSim["INPUT"]["%sThFile" % fType] = pathToRel
-                inputSimFiles[rel.stem] = pathToRelFull
                 inputSimFiles["entResInfo"]["%sRemeshed" % fType] = remeshedRel
 
         if modName == "com1DFA":
@@ -3114,7 +3113,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             if cfgSim["GENERAL"]["dam"] == "True" and inputSimFiles["damFile"] is not None:
                 cfgSim["INPUT"]["DAM"] = str(pathlib.Path("DAM", inputSimFiles["damFile"].name))
 
-        # if ta00, mu, k used in com8 and com9 check extent of cellSize
+        # if ta0, mu, k used in com8 and com9 check extent of cellSize
         if modName in ["com8MoTPSA", "com9MoTVoellmy"]:
             dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
             if inputSimFiles["entResInfo"]["tau0"] == "Yes":
@@ -3122,7 +3121,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     cfgSim, inputSimFiles["tau0File"], dem, "tau0"
                 )
                 cfgSim["INPUT"]["tau0File"] = pathToFric
-                inputSimFiles["tau0File"] = pathToFricFull
                 inputSimFiles["entResInfo"]["tau0Remeshed"] = remeshedFric
             # check if physical parameters = variable is chosen that friction fields have correct extent
             if cfgSim["Physical_parameters"]["Parameters"] == "variable":
@@ -3133,7 +3131,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                             cfgSim, inputSimFiles["%sFile" % fric], dem, fric
                         )
                         cfgSim["INPUT"]["%sFile" % fric] = pathToFric
-                        inputSimFiles["%sFile" % fric] = pathToFricFull
                         inputSimFiles["entResInfo"]["%sRemeshed" % fric] = remeshedFric
 
         # add info about entrainment file path to the cfg
@@ -3143,7 +3140,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     cfgSim, inputSimFiles["entThFile"], dem, "ent"
                 )
                 cfgSim["INPUT"]["entThFile"] = pathToEnt
-                inputSimFiles["entThFile"] = pathToEntFull
                 inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
             cfgSim["INPUT"]["entrainment"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
 
