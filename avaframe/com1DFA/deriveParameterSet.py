@@ -933,6 +933,16 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
     cellSizeOld = inputField["header"]["cellsize"]
     demHeader = dem["header"]
 
+    # check if negative values or nan values
+    if np.any(np.isnan(inputField["rasterData"])):
+        message = "In %s file (%s) nan values found - this is not allowed" % (fileType, inputFile.name)
+        log.error(message)
+        raise AssertionError(message)
+    elif np.any(inputField["rasterData"] < 0):
+        message = "In %s file (%s) negative values found - this is not allowed" % (fileType, inputFile.name)
+        log.error(message)
+        raise AssertionError(message)
+
     rT = float(cfg["GENERAL"]["resizeThreshold"])
     cT = float(cfg["GENERAL"]["meshCellSizeThreshold"])
 
@@ -985,10 +995,6 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
             message = "Name for saving remeshedRaster already used: %s" % outFile.name
             log.error(message)
             raise FileExistsError(message)
-
-        # Type release thickness requires all nan values to be set to 0
-        if fileType.lower() == "rel":
-            inputField["rasterData"][np.isnan(inputField["rasterData"])] = 0.0
 
         # write raster to file
         outFile = IOf.writeResultToRaster(dem["header"], inputField["rasterData"], outFile, flip=True)

@@ -262,9 +262,21 @@ def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir):
                 )
             else:
                 cfg["Physical_parameters"][fricParameters[fric]] = str(fricFile)
+        cfg["Physical_parameters"]["Parameters"] = "variable"
     else:
-        message = "Mu and k file not found in Inputs/RASTERS - check if file ending is correct (_mu, _k)"
-        log.error(message)
-        raise FileNotFoundError(message)
+        # TODO FSO implement if setting is variable or constant that if variable but file not found then error
+        message = "Mu and k file not found in Inputs/RASTERS - check if file ending is correct (_mu, _k) - setting constant values of configuration file"
+        log.warning(message)
+        message2 = "Setting %s to constant value of %s, and %s to %s" % (
+            fricParameters["mu"],
+            cfg["Physical_parameters"][fricParameters["mu"]],
+            fricParameters["k"],
+            cfg["Physical_parameters"][fricParameters["k"]],
+        )
+        log.warning(message2)
+        cfg["Physical_parameters"]["Parameters"] = "constant"
+
+        # log.error(message)
+        # raise FileNotFoundError(message)
 
     return cfg

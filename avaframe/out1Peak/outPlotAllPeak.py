@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import matplotlib
 
-# matplotlib.use("agg")
+matplotlib.use("agg")
 from matplotlib import pyplot as plt
 import pathlib
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -54,7 +54,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     inputDir = avaDir / "Outputs" / modName / "peakFiles"
     inDir = avaDir / "Inputs"
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-    if modName in ["com1DFA", "com9MoTVoellmy"]:
+    if modName in ["com1DFA", "com9MoTVoellmy"] and demData == "":
         configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=modName)
         configurationDF = configurationDF.rename(columns={"resType": "resTypeList"})
         peakFilesDF = (
