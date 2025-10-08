@@ -610,17 +610,17 @@ def prepareInputData(inputSimFiles, cfg):
             cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release"
         )
     else:
-        relRasterDict = IOf.readRaster(
-            pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
-        )
+        relRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
+        relRasterDict = IOf.readRaster(relRasterPath)
         releaseLine = {
             "rasterData": relRasterDict["rasterData"],
-            "file": pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"]),
+            "file": relRasterPath,
             "type": "Release from raster",
         }
         releaseLine["initializedFrom"] = "raster"
         releaseLine["Name"] = "from raster"
         releaseLine["thickness"] = "from raster"
+        log.info("Set %s for relThField" % relRasterPath)
 
     # get line from secondary release area polygon
     if cfg["GENERAL"].getboolean("secRelArea"):
@@ -640,24 +640,19 @@ def prepareInputData(inputSimFiles, cfg):
                     type="secondary release",
                 )
             else:
-                secrelRasterDict = IOf.readRaster(
-                    pathlib.Path(
-                        cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["secondaryRelThFile"]
-                    )
+                secRelRasterPath = pathlib.Path(
+                    cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["secondaryRelThFile"]
                 )
+                secrelRasterDict = IOf.readRaster(secRelRasterPath)
                 secondaryReleaseLine = {
                     "rasterData": secrelRasterDict["rasterData"],
-                    "fileName": pathlib.Path(
-                        cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["secondaryRelThFile"]
-                    ),
+                    "fileName": secRelRasterPath,
                     "type": "Secondary release from raster",
                 }
                 secondaryReleaseLine["initializedFrom"] = "raster"
                 secondaryReleaseLine["Name"] = "from raster"
                 secondaryReleaseLine["thickness"] = "from raster"
-                secondaryReleaseArea = pathlib.Path(
-                    cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["secondaryRelThFile"]
-                ).name
+                secondaryReleaseArea = secRelRasterPath.name
         else:
             message = "No secondary release file found"
             log.error(message)
@@ -682,22 +677,17 @@ def prepareInputData(inputSimFiles, cfg):
                 cfg["GENERAL"]["avalancheDir"], entLine, "com1DFA", type="entrainment"
             )
         else:
-            entLineDict = IOf.readRaster(
-                pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["entThFile"])
-            )
+            entRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["entThFile"])
+            entLineDict = IOf.readRaster(entRasterPath)
             entLine = {
                 "rasterData": entLineDict["rasterData"],
-                "fileName": pathlib.Path(
-                    cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["entThFile"]
-                ),
+                "fileName": entRasterPath,
                 "type": "Entraiment from raster",
             }
             entLine["initializedFrom"] = "raster"
             entLine["Name"] = "from raster"
             entLine["thickness"] = "from raster"
-            entrainmentArea = pathlib.Path(
-                cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["entThFile"]
-            ).name
+            entrainmentArea = entRasterPath.name
     else:
         entLine = None
         entrainmentArea = ""
@@ -1374,7 +1364,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     if len(relThField) == 0:
         relRaster = releaseLine["rasterData"]
     else:
-        log.info("Release thickness read from relThFile")
+        log.info("Release thickness read from %sThFile" % (thName))
         relRaster = relThField
     areaRaster = dem["areaRaster"]
 
@@ -2660,7 +2650,7 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0, reportAreaInfo):
             else:
                 secondaryReleaseInfo["rasterData"] = secRelRaster
                 secRelParticles = initializeParticles(
-                    cfg, secondaryReleaseInfo, dem, relThField=secRelRaster
+                    cfg, secondaryReleaseInfo, dem, relThField=secRelRaster, thName="secondaryRel"
                 )
             # release secondary release area by just appending the particles
             log.info(
