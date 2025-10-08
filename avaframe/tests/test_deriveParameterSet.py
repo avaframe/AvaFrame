@@ -336,15 +336,16 @@ def test_checkThicknessSettings():
     }
 
     thName = "entTh"
+    inputSimFiles = {"entResInfo": {"flagEnt": "Yes", "entThFileType": ".shp"}}
 
-    thicknessSettingsCorrect = dP.checkThicknessSettings(cfg, thName)
+    thicknessSettingsCorrect = dP.checkThicknessSettings(cfg, thName, inputSimFiles)
 
     assert thicknessSettingsCorrect
 
     cfg["GENERAL"]["entTh"] = "0.3"
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, thName)
+        assert dP.checkThicknessSettings(cfg, thName, inputSimFiles)
     assert str(e.value) == "If %s is set to True - it is not allowed to set a value for %s" % (
         "entThFromShp",
         "entTh",
@@ -352,11 +353,12 @@ def test_checkThicknessSettings():
 
     cfg["GENERAL"]["entThFromShp"] = "False"
     cfg["GENERAL"]["entTh"] = ""
-    cfg["GENERAL"]["entThFromFile"] = "False"
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, thName)
-    assert str(e.value) == "If %s is set to False - it is required to set a value for %s" % (
+        assert dP.checkThicknessSettings(cfg, thName, inputSimFiles)
+    assert str(
+        e.value
+    ) == "If %s is set to False and Entrainment area defined by a shapefile - it is required to set a value for %s" % (
         "entThFromShp",
         "entTh",
     )
@@ -364,18 +366,17 @@ def test_checkThicknessSettings():
     cfg["GENERAL"]["entThFromShp"] = ""
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, thName)
+        assert dP.checkThicknessSettings(cfg, thName, inputSimFiles)
     assert str(e.value) == "Check %s - needs to be True or False" % "entThFromShp"
 
     cfg["GENERAL"]["relThFromShp"] = "False"
-    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["relTh"] = "1.0"
+    inputSimFiles = {"entResInfo": {"flagRel": "Yes", "relThFileType": ".asc"}}
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, "relTh")
+        assert dP.checkThicknessSettings(cfg, "relTh", inputSimFiles)
     assert str(e.value) == (
-        "If %s is set to True - it is not allowed to set %s to True or provide a value in %s"
-        % ("relThFromFile", "relThFromShp", "relTh")
+        "If Release area file is not a shapefile - it is not allowed to set a value for relTh"
     )
 
     # setup required inputs
@@ -386,20 +387,19 @@ def test_checkThicknessSettings():
         "relThPercentVariation": "",
         "relThRangeVariation": "",
         "relThRangeFromCiVariation": "",
-        "relThFromFile": "True",
     }
 
     thName = "relTh"
 
-    thicknessSettingsCorrect = dP.checkThicknessSettings(cfg, thName)
+    thicknessSettingsCorrect = dP.checkThicknessSettings(cfg, thName, inputSimFiles)
 
     assert thicknessSettingsCorrect
 
     cfg["GENERAL"]["relThRangeVariation"] = "50$4"
 
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, "relTh")
-    assert "RelThFromFile is True - no variation allowed: check" in str(e.value)
+        assert dP.checkThicknessSettings(cfg, "relTh", inputSimFiles)
+    assert "Release area read from raster - no variation allowed: check" in str(e.value)
 
     # setup required inputs
     cfg = configparser.ConfigParser()
@@ -409,12 +409,12 @@ def test_checkThicknessSettings():
         "relThPercentVariation": "",
         "relThRangeVariation": "50$4",
         "relThRangeFromCiVariation": "50$1",
-        "relThFromFile": "False",
     }
+    inputSimFiles = {"entResInfo": {"flagRel": "Yes", "relThFileType": ".shp"}}
 
     thName = "relTh"
     with pytest.raises(AssertionError) as e:
-        assert dP.checkThicknessSettings(cfg, "relTh")
+        assert dP.checkThicknessSettings(cfg, "relTh", inputSimFiles)
     assert "Only one variation type is allowed - check" in str(e.value)
 
 
@@ -650,7 +650,7 @@ def test_checkExtentAndCellSize(tmp_path):
     inField[2, 2] = 10.0
     IOf.writeResultToRaster(headerInput, inField, inputFile.parent / inputFile.stem, flip=False)
 
-    testFile = dP.checkExtentAndCellSize(cfg, inputFile, dem, "mu")
+    testFile, outFile, remeshedFlag = dP.checkExtentAndCellSize(cfg, inputFile, dem, "mu")
 
     newRaster = IOf.readRaster((inDir / testFile))
 
@@ -659,6 +659,8 @@ def test_checkExtentAndCellSize(tmp_path):
     assert newRaster["rasterData"].shape[1] == 5
     assert newRaster["header"]["xllcenter"] == 1.0
     assert newRaster["header"]["yllcenter"] == 5.0
+    assert remeshedFlag == "Yes"
+    assert outFile.name == testFile.split("/")[1]
 
     inputFile2 = inDirR / "inputFile1.asc"
     headerInput2 = {
@@ -676,7 +678,7 @@ def test_checkExtentAndCellSize(tmp_path):
     inField2[2, 2] = 10.0
     IOf.writeResultToRaster(headerInput2, inField2, inputFile2.parent / inputFile2.stem, flip=False)
 
-    testFile2 = dP.checkExtentAndCellSize(cfg, inputFile2, dem, "mu")
+    testFile2, outFile2, remeshedFlag = dP.checkExtentAndCellSize(cfg, inputFile2, dem, "mu")
     print("test 2", testFile2)
     newRaster2 = IOf.readRaster((inDir / testFile2))
 
