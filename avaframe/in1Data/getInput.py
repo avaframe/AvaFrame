@@ -1045,7 +1045,7 @@ def deriveLineRaster(
 
     thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
 
-    if rasterType not in ["rel", "ent", "tau0", "secondaryRel"]:
+    if rasterType not in ["rel", "ent", "tau0", "secondaryRel", "releaseLayer2", "bedDepo"]:
         message = "%s is not in list of available options: rel, ent, tau0, secondaryRel" % rasterType
         log.error(message)
         raise AssertionError(message)
@@ -1055,6 +1055,8 @@ def deriveLineRaster(
         "rel": "release",
         "tau0": "bedShear",
         "secondaryRel": "secondary release",
+        "releaseLayer2": "releaseLayer2",
+        "bedDepo": "bedDepo",
     }
     if rasterType in ["rel", "ent", "secondaryRel"]:
         fileInd = "Th"

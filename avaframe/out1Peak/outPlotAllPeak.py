@@ -54,7 +54,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
     inputDir = avaDir / "Outputs" / modName / "peakFiles"
     inDir = avaDir / "Inputs"
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-    if modName in ["com1DFA", "com8MoTPSA", "com9MoTVoellmy"]:
+    if modName in ["com1DFA", "com9MoTVoellmy"]:
         configurationDF = cfgUtils.createConfigurationInfo(avaDir, comModule=modName)
         configurationDF = configurationDF.rename(columns={"resType": "resTypeList"})
         peakFilesDF = (
@@ -88,12 +88,13 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         plotDict[sName] = {}
 
     # Loop through peakFiles and generate plot
-    for m in range(len(peakFilesDF["names"])):
+    # for m in range(len(peakFilesDF["names"])):
+    for ind1, row in peakFilesDF.iterrows():
         # Load names and paths of peakFiles
-        name = peakFilesDF["names"][m]
-        fileName = peakFilesDF["files"][m]
-        resType = peakFilesDF["resType"][m]
-        simType = peakFilesDF["simType"][m]
+        name = row["names"]
+        fileName = row["files"]
+        resType = row["resType"]
+        simType = row["simType"]
 
         log.debug("now plot %s:" % (fileName))
 
@@ -105,8 +106,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         if not plotName.is_file():
 
             # for comModules load DEM used for computation
-            if demData == "" and modName in ["com1DFA", "com8MoTPSA", "com9MoTVoellmy"]:
-                demFile = inDir / peakFilesDF["DEM"][m]
+            if demData == "" and modName in ["com1DFA", "com9MoTVoellmy"]:
+                demFile = inDir / row["DEM"]
                 demDataRaster = IOf.readRaster(demFile, noDataToNan=True)
                 demDataField = demDataRaster["rasterData"]
                 demField = demDataField
@@ -115,7 +116,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
             fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
 
             # fetch cellSize of peak field
-            cellSize = peakFilesDF["cellSize"][m]
+            cellSize = row["cellSize"]
 
             # add peak field data now
             ax, rowsMinPlot, colsMinPlot, extentCellCorners = addConstrainedDataField(
@@ -202,7 +203,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
 
             # save and or show figure
             plotPath = pU.saveAndOrPlot({"pathResult": outDir}, plotName.stem, fig)
-            plotDict[peakFilesDF["simName"][m]].update({peakFilesDF["resType"][m]: plotPath})
+            plotDict[row["simName"]].update({row["resType"]: plotPath})
 
     return plotDict
 

@@ -92,10 +92,10 @@ def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
     log.info("--- ENDING (potential) PARALLEL PART ----")
 
     # Postprocess the simulations
-    com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles)
+    com9MoTVoellmyPostprocess(simDict, cfgMain)
 
 
-def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
+def com9MoTVoellmyPostprocess(simDict, cfgMain):
     """Post-process MoT-Voellmy simulation results.
 
     This function handles post-processing tasks after MoT-Voellmy simulations complete,
