@@ -1151,7 +1151,9 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # for area computation use smaller threshold to identify raster cells that lie within release line
     # as for creating particles a bigger radius is chosen as particles that lie outside are removed afterwards
     releaseInfoDict = copy.deepcopy(releaseLine)
-    relAreaActualList, relAreaProjectedList = gI.computeAreasFromRasterAndLine(releaseInfoDict, dem)
+    relAreaActualList, relAreaProjectedList, releaseInfoDict = gI.computeAreasFromRasterAndLine(
+        releaseInfoDict, dem
+    )
     relAreaProjected = np.sum(relAreaProjectedList)
     relAreaActual = np.sum(relAreaActualList)
     reportAreaInfo = {

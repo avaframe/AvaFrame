@@ -217,13 +217,16 @@ def test_getAndCheckInputFiles(tmp_path):
     inputType = "entrainment"
 
     # call function to be tested
-    outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, fileExt="shp")
+    outFile, available, fileFormat = getInput.getAndCheckInputFiles(
+        avaTestDirInputs, folder, inputType, fileExt="shp"
+    )
 
     #    print('outfile', outFile)
     #    print('available', available)
 
     assert available == "Yes"
     assert "Inputs/ENT/entrainment1HS.shp" in str(outFile)
+    assert fileFormat == ".shp"
 
     # call function to be tested
     inputFile = avaDirInputs / "ENT" / "entrainment1HS.shp"
@@ -258,9 +261,18 @@ def test_getThicknessInputSimFiles(tmp_path):
         "demFile": demFile,
         "relFiles": [relFile1, relFile2],
         "entFile": entFile,
-        "secondaryReleaseFile": None,
-        "entResInfo": {"flagRes": "No", "flagEnt": "Yes", "flagSecondaryRelease": "No"},
-        "relThFile": None,
+        "secondaryRelFile": None,
+        "entResInfo": {
+            "flagRes": "No",
+            "flagEnt": "Yes",
+            "flagSecondaryRelease": "No",
+            "entThFileType": ".shp",
+            "relThFileType": ".shp",
+            "secondaryRelThFileType": None,
+        },
+        "relThFile": [relFile1, relFile2],
+        "entThFile": entFile,
+        "secondaryRelThFile": None,
     }
 
     inputSimFiles = getInput.getThicknessInputSimFiles(inputSimFiles)
@@ -307,10 +319,20 @@ def test_updateThicknessCfg(tmp_path):
         "demFile": demFile,
         "relFiles": [relFile1, relFile2],
         "entFile": entFile,
-        "secondaryReleaseFile": None,
-        "entResInfo": {"flagRes": "No", "flagEnt": "Yes", "flagSecondaryRelease": "No"},
+        "secondaryRelFile": None,
+        "entResInfo": {
+            "flagRes": "No",
+            "flagEnt": "Yes",
+            "flagSecondaryRelease": "No",
+            "entThFileType": None,
+            "relThFileType": ".shp",
+            "secondaryRelThFileType": None,
+        },
         "relThFile": None,
         "releaseScenarioList": ["release1HS", "release2HS"],
+        "relThFile": [relFile1, relFile2],
+        "seondaryRelThFile": None,
+        "entThFile": None,
     }
 
     inputSimFiles["release1HS"] = {"thickness": ["1.0"], "id": ["0"], "ci95": ["None", "None"]}
@@ -388,10 +410,13 @@ def test_fetchReleaseFile(tmp_path):
     releaseList = ["rel1", "rel2"]
 
     # call function to be tested
-    releaseScenarioPath, cfg = getInput.fetchReleaseFile(inputSimFiles, releaseScenario, cfg, releaseList)
+    releaseScenarioPath, cfg, relThFile = getInput.fetchReleaseFile(
+        inputSimFiles, releaseScenario, cfg, releaseList
+    )
 
     assert releaseScenarioPath == rel1
     assert cfg["INPUT"]["releaseScenario"] == "rel1"
+    assert rel1 == relThFile
 
     cfg = configparser.ConfigParser()
     cfg["INPUT"] = {"releaseScenario": "rel2"}
@@ -406,12 +431,13 @@ def test_fetchReleaseFile(tmp_path):
         "rel1_relThCi95": "",
     }
     # call function to be tested
-    releaseScenarioPath, cfg = getInput.fetchReleaseFile(inputSimFiles, "rel2", cfg, releaseList)
+    releaseScenarioPath, cfg, relThFile = getInput.fetchReleaseFile(inputSimFiles, "rel2", cfg, releaseList)
 
     assert releaseScenarioPath == rel2
     assert cfg["INPUT"]["relThId"] == "0"
     assert cfg["INPUT"]["relThThickness"] == "2."
     assert cfg["INPUT"]["relThCi95"] == ""
+    assert rel2 == relThFile
 
 
 def test_createReleaseStats(tmp_path):
@@ -521,10 +547,11 @@ def test_computeAreasFromRasterAndLine(tmp_path):
         "Start": np.asarray([0.0]),
         "Length": np.asarray([7]),
         "Name": [""],
+        "initializedFrom": "shapefile",
     }
 
     # call function to be tested
-    areaActualList, areaProjectedList, line = getInput.computeAreasFromRasterAndLine(lineDict, dem)
+    areaActualList, areaProjectedList, lineDict = getInput.computeAreasFromRasterAndLine(lineDict, dem)
 
     assert np.isclose(areaActualList[0], 5807.14)
     assert areaProjectedList[0] == 5151.00

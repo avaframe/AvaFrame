@@ -751,6 +751,7 @@ def createReleaseStats(avaDir, cfg):
         releaseLine["type"] = "Release"
         releaseLine["thicknessSource"] = ["artificial"] * len(releaseLine["id"])
         releaseLine["thickness"] = ["1."] * len(releaseLine["id"])
+        releaseLine["initializedFrom"] = "shapefile"
         # convert release line to a raster with 1 set inside of the release line
         # and compute projected and actual areas
         areaActualList, areaProjectedList, releaseLine = computeAreasFromRasterAndLine(releaseLine, dem)
@@ -811,7 +812,7 @@ def computeAreasFromRasterAndLine(line, dem):
         areaActualList.append(np.nansum(lineRasterOnes * dem["areaRaster"]))
         areaProjectedList.append(np.sum(csz * csz * lineRasterOnes))
 
-    return areaActualList, areaProjectedList
+    return areaActualList, areaProjectedList, line
 
 
 def computeRelStats(line, dem):
