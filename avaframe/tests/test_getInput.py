@@ -330,7 +330,6 @@ def test_updateThicknessCfg(tmp_path):
         },
         "relThFile": None,
         "releaseScenarioList": ["release1HS", "release2HS"],
-        "relThFile": [relFile1, relFile2],
         "seondaryRelThFile": None,
         "entThFile": None,
     }

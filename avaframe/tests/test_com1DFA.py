@@ -252,7 +252,7 @@ def test_prepareInputData(tmp_path):
     relFile = avaDir / "Inputs" / "REL" / "rel1.shp"
     secrelFile = avaDir / "Inputs" / "SECREL" / "testSecRel2.asc"
     inputSimFiles["releaseScenario"] = relFile
-    inputSimFiles["secondaryRelScenario"] = relFile
+    inputSimFiles["secondaryRelScenario"] = secrelFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
     inputSimFiles["relThFile"] = None
     inputSimFiles["secondaryRelThFile"] = avaDir / "Inputs" / "SECREL" / "testSecRel2.asc"
