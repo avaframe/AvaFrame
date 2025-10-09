@@ -7,6 +7,7 @@
 import numpy as np
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.rasterUtils as rU
+import avaframe.in3Utils.fileHandlerUtils as fU
 import pytest
 import configparser
 import pathlib
@@ -35,6 +36,8 @@ def test_plotAllPeakFields(tmp_path):
     shutil.copy(peakFile1, peakFileResult1)
     shutil.copy(peakFile2, peakFileResult2)
     shutil.copy(demFile, demInputFile1)
+    cfgDir = avaDirTmp1 / "Outputs" / "com1DFA" / "configurationFiles"
+    fU.makeADir(cfgDir)
 
     avaDirTmp2 = pathlib.Path(tmp_path, avaTestDir2)
     resultDir2 = avaDirTmp2 / 'Outputs' / 'com1DFA' / 'peakFiles'
@@ -47,27 +50,42 @@ def test_plotAllPeakFields(tmp_path):
     shutil.copy(peakFile1, peakFileResult1)
     shutil.copy(peakFile2, peakFileResult2)
     shutil.copy(demFile, demInputFile2)
+    cfgDir2 = avaDirTmp2 / "Outputs" / "com1DFA" / "configurationFiles"
+    fU.makeADir(cfgDir2)
 
     # initialise DEM
     demData = rU.readRaster(demFile)
 
     # initialise configparser
     cfg = configparser.ConfigParser()
+    cfg.optionxform = str
     cfg['FLAGS'] = {'showPlot': False}
     modName = 'com1DFA'
+    cfg["INPUT"] = {"DEM": "avaAlr.tif"}
+    cfg["GENERAL"] = {"modelType": "dfa"}
+
+    # write file
+    with open((cfgDir / "relAlr_125e697996_null_dfa.ini"), "w") as conf:
+        cfg.write(conf)
+        conf.close()
 
     # call function to be tested
     plotDict = oP.plotAllPeakFields(avaDirTmp1, cfg['FLAGS'], modName, demData=demData)
     plotPath = avaDirTmp1 / 'Outputs' / 'out1Peak' / 'relAlr_125e697996_null_dfa_pft.png'
-#    print('plotDICT ', plotDict)
+    #    print('plotDICT ', plotDict)
 
     assert 'relAlr_125e697996_null_dfa' in plotDict
     assert plotDict['relAlr_125e697996_null_dfa']['pft'] == plotPath
 
+    # write file
+    with open((cfgDir2 / "relAlr_125e697996_null_dfa.ini"), "w") as conf:
+        cfg.write(conf)
+        conf.close()
+
     # call function to be tested
     plotDict2 = oP.plotAllPeakFields(avaDirTmp2, cfg['FLAGS'], modName, demData='')
     plotPath = avaDirTmp2 / 'Outputs' / 'out1Peak' / 'relAlr_125e697996_null_dfa_pft.png'
-#    print(plotDict2)
+    #    print(plotDict2)
     assert 'relAlr_125e697996_null_dfa' in plotDict2
     assert plotDict2['relAlr_125e697996_null_dfa']['pft'] == plotPath
 

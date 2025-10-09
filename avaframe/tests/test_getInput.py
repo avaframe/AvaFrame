@@ -617,12 +617,15 @@ def test_getAndCheckInputFiles_noFilesFound(mocker):
 
     inputDir = '/fake/dir'
     folder = 'fake_folder'
-    output_file, available = getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='shp')
+    output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
+        inputDir, folder, "inputType", fileExt="shp"
+    )
 
     mockPath.assert_called_once_with(inputDir, folder)
     mockInDir.glob.assert_called_once_with('*.shp')
     assert output_file is None
     assert available == 'No'
+    assert fileTypeFormat == None
 
 
 def test_getAndCheckInputFilesone_valid_file(mocker):
@@ -635,11 +638,14 @@ def test_getAndCheckInputFilesone_valid_file(mocker):
 
     inputDir = '/fake/dir'
     folder = 'fake_folder'
-    output_file, available = getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='shp')
+    output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
+        inputDir, folder, "inputType", fileExt="shp"
+    )
 
     mock_inDir.glob.assert_called_once_with('*.shp')
     assert output_file == mock_file
     assert available == 'Yes'
+    assert fileTypeFormat == ".shp"
 
 
 def test_getAndCheckInputFilesmultiple_files_error(mocker):
@@ -708,13 +714,14 @@ def test_getAndCheckInputFilesfile_suffix_filter(mocker):
     inputDir = '/fake/dir'
     folder = 'fake_folder'
     fileSuffix = '_suffix'
-    output_file, available = getInput.getAndCheckInputFiles(
-        inputDir, folder, 'inputType', fileExt='shp', fileSuffix=fileSuffix
+    output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
+        inputDir, folder, "inputType", fileExt="shp", fileSuffix=fileSuffix
     )
 
     mock_inDir.glob.assert_called_once_with('*_suffix.shp')
     assert output_file == mock_file
     assert available == 'Yes'
+    assert fileTypeFormat == ".shp"
 
 
 def test_getAndCheckInputFilesempty_file_ext_with_suffix(mocker):

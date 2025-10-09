@@ -600,7 +600,7 @@ def prepareInputData(inputSimFiles, cfg):
     dOHeader = demOri["header"]
 
     # read data from relThFile if needed, already with correct mesh cell size
-    relThFieldData, inputSimFiles["relThFile"] = gI.initializeRelTh(cfg, dOHeader)
+    relThFieldData, _ = gI.initializeRelTh(cfg, dOHeader)
 
     if cfg["INPUT"]["relThFile"] == "":
         # get line from release area polygon
@@ -615,6 +615,7 @@ def prepareInputData(inputSimFiles, cfg):
     else:
         relRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
         relRasterDict = IOf.readRaster(relRasterPath)
+        relThFieldData = relRasterDict["rasterData"]
         releaseLine = {
             "rasterData": relRasterDict["rasterData"],
             "file": relRasterPath,
@@ -1400,7 +1401,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     else:
         indRelYReal, indRelXReal = np.nonzero(relRaster)
     iReal = list(zip(indRelYReal, indRelXReal))
-
     # get approximate ratio between projected and real release area
     # because relRasterMask has a none 0 value where the release is but we want a 1 there
     realArea = np.sum(areaRaster * np.where(relRasterMask > 0, 1, 0))
@@ -1770,7 +1770,7 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
             )
         # remove overlaping parts of the secondary release area with the main release areas
         noOverlaprasterList = []
-        if isinstance(secondaryReleaseInfo["rasterData"], np.ndarray):
+        if secondaryReleaseInfo["initializedFrom"] == "raster":
             noOverlaprasterList = [
                 geoTrans.checkOverlap(
                     secondaryReleaseInfo["rasterData"],
@@ -3100,6 +3100,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(cfgSim, relThFile, dem, "rel")
             cfgSim["INPUT"]["relThFile"] = pathToRel
             inputSimFiles["entResInfo"]["relRemeshed"] = remeshedRel
+
         # secondary release area
         if (
             inputSimFiles["entResInfo"]["secondaryRelThFileType"] in [".asc", ".tif"]
