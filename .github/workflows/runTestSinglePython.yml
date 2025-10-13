@@ -20,16 +20,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - uses: prefix-dev/setup-pixi@v0.8.3
-      with:
-        cache: false
-    - name: Pixi run pytest
-      run: |
-        pixi run pytest -ra --cov --cov-report=xml --cov-report lcov:cov.info --cov-config=.coveragerc
-    - uses: qltysh/qlty-action/coverage@main
-      with:
-        coverage-token: ${{secrets.QLTY_COVERAGE_TOKEN}}
-        files: cov.info
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: prefix-dev/setup-pixi@v0.9.1
+        with:
+          cache: false
+      - name: Pixi run pytest
+        run: |
+          pixi run pytest -ra --cov --cov-report=xml --cov-report lcov:cov.info --cov-config=.coveragerc
+      - uses: qltysh/qlty-action/coverage@main
+        with:
+          coverage-token: ${{secrets.QLTY_COVERAGE_TOKEN}}
+          files: cov.info
