@@ -132,7 +132,17 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
 
     ax2.set_title('SL Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    pU.addColorBar(im, ax2, ticks, unit, title=runoutResType)
+    if not np.any(xyRaster):
+        ax2.text(
+            0.5,
+            0.5,
+            "reference only 0 values for %s" % runoutResType,
+            horizontalalignment="center",
+            verticalalignment="center",
+            transform=ax2.transAxes,
+        )
+    else:
+        pU.addColorBar(im, ax2, ticks, unit, title=runoutResType)
 
     outFileName = '_'.join([projectName, 'DomainTransformation'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
@@ -262,24 +272,35 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     pPercentile = np.percentile(pprCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
     maskedArray = np.ma.masked_where(rasterdataPres <= float(thresholdValue), rasterdataPres)
 
-    if not np.any(rasterdataPres >= float(thresholdValue)):
+    # transpose array for plot
+    maskedArrayTransposed = np.transpose(maskedArray)
+
+    if np.all(np.isnan(runout)):
         log.warning(
-            "No %s values exceeding threshold of %.2f found to analyze" % (runoutResType, thresholdValue)
+            "No %s values exceeding threshold of %.2f found to analyze"
+            % (runoutResType, float(thresholdValue))
         )
         outFilePath = ""
     else:
-        # transpose array for plot
-        maskedArrayTransposed = np.transpose(maskedArray)
 
         # get plots limits
         indXMin = max(0, indStartOfRunout - 5)
         xMin = s[indXMin]
-        xMax = max(runout) + 25
-        indYMin = max(0, np.min(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) - 5)
+        xMax = np.nanmax(runout) + 25
+        # check if for reference array runout point has been found, do not constrain data
+        if len(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) == 0:
+            indYMin = 0
+        else:
+            indYMin = max(
+                0, np.min(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) - 5
+            )
         yMin = l[indYMin]
-        indYMax = min(
-            np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) + 5, len(l) - 1
-        )
+        if len(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) == 0:
+            indYMax = maskedArray.shape[1] - 1
+        else:
+            indYMax = min(
+                np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0]) + 5, len(l) - 1
+            )
         yMax = l[indYMax]
 
         # get colormap for raster plot of peak field
@@ -400,7 +421,17 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         pU.putAvaNameOnPlot(ax1, projectName)
 
         # add colorbar for peak field
-        pU.addColorBar(im, ax1, ticks, unit)
+        if not np.any(rasterdataPres):
+            ax1.text(
+                0.5,
+                0.5,
+                "reference only 0 values for %s" % runoutResType,
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax1.transAxes,
+            )
+        else:
+            pU.addColorBar(im, ax1, ticks, unit)
 
         # add third panel for statistical measures of distribution of cross max values
         ax2.fill_between(
@@ -665,136 +696,240 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
 
-    cmapTF, _, ticks, normTF = pU.makeColorMap(pU.colorMaps[runoutResType], np.nanmin(
-        (refData)), np.nanmax((refData)), continuous=pU.contCmap)
-    cmapTF.set_bad(color='w')
-
-    cmapTF.set_under(color='b')
-    cmapTF.set_over(color='r')
-    cmapTF.set_bad(alpha=0)
-    dataTF = compRasterMask - refRasterMask
-    dataTF = np.ma.masked_where(dataTF == 0.0, dataTF)
-
-    xLimRef = s[np.max(np.nonzero(np.any(refData > 0, axis=1))[0])] + 20
-    xLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
-              np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))] + 20
-
-    # define figure extent
-    xExtent = xLim - s[indStartOfRunout]
-    ratio = (xExtent / np.nanmax(rasterTransfo['l']))
-    if ratio > 1:
-        figHM = 2 * (6/4)
-        figWM = ratio*2
-        ncolLegend = 4
+    if not np.any(refData):
+        log.warning(
+            "ContourComparisonToReference plot not generated as only 0 values for reference simulation: %s"
+            % refSimName
+        )
+        outFilePath = None
     else:
-        figHM = ((1 + (1-ratio))*2) * (6/4)
-        figWM = 2
-        ncolLegend = 2
-    ############################################
-    # Figure: Raster comparison
-    # , constrained_layout=True)
-    fig = plt.figure(figsize=(pU.figW*figWM, pU.figH*figHM), layout='tight')
-    gs = gridspec.GridSpec(4, 2, hspace=1.5)
+        cmapTF, _, ticks, normTF = pU.makeColorMap(
+            pU.colorMaps[runoutResType], np.nanmin((refData)), np.nanmax((refData)), continuous=pU.contCmap
+        )
+        cmapTF.set_bad(color="w")
 
-    compData = compData[indStartOfRunout:, :]
-    refData = refData[indStartOfRunout:, :]
-    dataDiff = compData - refData
-    dataDiff = np.where((refData == 0) & (compData == 0), np.nan, dataDiff)
-    dataDiffPlot = np.where((refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff)
-    dataDiffPlot = dataDiffPlot[~np.isnan(dataDiffPlot)]
+        cmapTF.set_under(color="b")
+        cmapTF.set_over(color="r")
+        cmapTF.set_bad(alpha=0)
+        dataTF = compRasterMask - refRasterMask
+        dataTF = np.ma.masked_where(dataTF == 0.0, dataTF)
 
-    if dataDiffPlot.size:
-        # only add the second axis if one of the two avalanches reached the runout area
-        indDiff = np.abs(dataDiffPlot) > 0
+        xLimRef = s[np.max(np.nonzero(np.any(refData > 0, axis=1))[0])] + 20
+        xLim = (
+            s[
+                max(
+                    np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
+                    np.max(np.nonzero(np.any(compData > 0, axis=1))[0]),
+                )
+            ]
+            + 20
+        )
 
-        if indDiff.any():
-            # only plot hist and CDF if there is a difference in the data
-            ax2 = fig.add_subplot(gs[0:5, 1])
-            ax1 = fig.add_subplot(gs[0:5, 0])
+        # define figure extent
+        xExtent = xLim - s[indStartOfRunout]
+        ratio = xExtent / np.nanmax(rasterTransfo["l"])
+        if ratio > 1:
+            figHM = 2 * (6 / 4)
+            figWM = ratio * 2
+            ncolLegend = 4
         else:
-            ax2 = fig.add_subplot(gs[:, 1])
-            ax1 = fig.add_subplot(gs[:, 0])
+            figHM = ((1 + (1 - ratio)) * 2) * (6 / 4)
+            figWM = 2
+            ncolLegend = 2
+        ############################################
+        # Figure: Raster comparison
+        # , constrained_layout=True)
+        fig = plt.figure(figsize=(pU.figW * figWM, pU.figH * figHM), layout="tight")
+        gs = gridspec.GridSpec(4, 2, hspace=1.5)
 
-        cmap = pU.cmapdiv
-        cmap.set_bad(color='w')
-        elev_max = inputs['diffLim']
-        ref0, im3 = pU.NonUnifIm(ax2, s[indStartOfRunout:], l, np.transpose(dataDiff), '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
-                                 extent=[s[indStartOfRunout], xLim, l.min(), l.max()], cmap=cmap)
-        im3.set_clim(vmin=-elev_max, vmax=elev_max)
+        compData = compData[indStartOfRunout:, :]
+        refData = refData[indStartOfRunout:, :]
+        dataDiff = compData - refData
+        dataDiff = np.where((refData == 0) & (compData == 0), np.nan, dataDiff)
+        dataDiffPlot = np.where(
+            (refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff
+        )
+        dataDiffPlot = dataDiffPlot[~np.isnan(dataDiffPlot)]
 
-        # print contour lines only if the threshold is reached
-        S, L = np.meshgrid(s[indStartOfRunout:], l)
-        colorsP = pU.colorMaps['pft']['colors'][1:]
-        if (np.where(refData > thresholdArray[-1], True, False)).any():
-            contourRef = ax2.contour(S, L, np.transpose(refData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
-            # generate corresponding labels
-            labels = [str(level) for level in thresholdArray[:-1]]
-            # add legend associated to the contour plot
-            handles, _ = contourRef.legend_elements()
-            legend2 = ax2.legend(title=runoutResType + ' contour lines [' + unit + ']', handles=handles, labels=labels,
-                                 ncol=ncolLegend, loc='lower left')
+        if dataDiffPlot.size:
+            # only add the second axis if one of the two avalanches reached the runout area
+            indDiff = np.abs(dataDiffPlot) > 0
+
+            if indDiff.any():
+                # only plot hist and CDF if there is a difference in the data
+                ax2 = fig.add_subplot(gs[0:5, 1])
+                ax1 = fig.add_subplot(gs[0:5, 0])
+            else:
+                ax2 = fig.add_subplot(gs[:, 1])
+                ax1 = fig.add_subplot(gs[:, 0])
+
+            cmap = pU.cmapdiv
+            cmap.set_bad(color="w")
+            elev_max = inputs["diffLim"]
+            ref0, im3 = pU.NonUnifIm(
+                ax2,
+                s[indStartOfRunout:],
+                l,
+                np.transpose(dataDiff),
+                "$S_{XY}$ (thalweg) [m]",
+                "$L_{XY}$ (thalweg) [m]",
+                extent=[s[indStartOfRunout], xLim, l.min(), l.max()],
+                cmap=cmap,
+            )
+            im3.set_clim(vmin=-elev_max, vmax=elev_max)
+
+            # print contour lines only if the threshold is reached
+            S, L = np.meshgrid(s[indStartOfRunout:], l)
+            colorsP = pU.colorMaps["pft"]["colors"][1:]
+            if (np.where(refData > thresholdArray[-1], True, False)).any():
+                contourRef = ax2.contour(
+                    S, L, np.transpose(refData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP
+                )
+                # generate corresponding labels
+                labels = [str(level) for level in thresholdArray[:-1]]
+                # add legend associated to the contour plot
+                handles, _ = contourRef.legend_elements()
+                ax2.legend(
+                    title=runoutResType + " contour lines [" + unit + "]",
+                    handles=handles,
+                    labels=labels,
+                    ncol=ncolLegend,
+                    loc="lower left",
+                )
+            else:
+                log.warning("Reference %s did not reach the runout area!" % refSimName)
+                ax2.text(
+                    (s[indStartOfRunout] + xLim) / 2,
+                    0,
+                    "Reference %s did not reach the runout area!" % refSimName,
+                    fontsize=24,
+                    color="red",
+                    bbox=dict(facecolor="none", edgecolor="red", boxstyle="round,pad=1"),
+                    ha="center",
+                    va="center",
+                )
+            if (np.where(compData > thresholdArray[-1], True, False)).any():
+                contourComp = ax2.contour(
+                    S,
+                    L,
+                    np.transpose(compData),
+                    levels=thresholdArray[:-1],
+                    linewidths=2,
+                    colors=colorsP,
+                    linestyles="dashed",
+                )
+            else:
+                log.warning("Simulation %s did not reach the runout area!" % simName)
+                ax2.text(
+                    (s[indStartOfRunout] + xLim) / 2,
+                    0,
+                    "Simulation %s did not reach the runout area!" % simName,
+                    fontsize=24,
+                    color="red",
+                    bbox=dict(facecolor="none", edgecolor="red", boxstyle="round,pad=1"),
+                    ha="center",
+                    va="center",
+                )
+
+            # if compRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
+            if dataTF.any():
+                ref1, im1 = pU.NonUnifIm(
+                    ax1,
+                    s,
+                    l,
+                    np.transpose(dataTF),
+                    "$S_{XY}$ (thalweg) [m]",
+                    "$L_{XY}$ (thalweg) [m]",
+                    extent=[s[indStartOfRunout], xLim, l.min(), l.max()],
+                    cmap=cmapTF,
+                )
+                im1.set_clim(vmin=-0.5, vmax=0.5)
+                ax1.set_xlim([s[indStartOfRunout], xLim])
+            else:
+                ax1.text(
+                    0.5,
+                    0.5,
+                    "No difference in runout area",
+                    fontsize=18,
+                    color="red",
+                    bbox=dict(facecolor="none", edgecolor="red", boxstyle="round,pad=1"),
+                    ha="center",
+                    va="center",
+                )
+            if pathDict["compType"][0] == "comModules":
+                namePrint = "refMod:" + pathDict["compType"][1] + "\n" + "compMod:" + pathDict["compType"][2]
+                pU.putAvaNameOnPlot(ax1, namePrint)
+            else:
+                namePrint = "ref:" + str(refSimName) + "\n" + "sim:" + str(simName)
+                pU.putAvaNameOnPlot(ax1, namePrint)
+
+            ax1.set_title(
+                "%s difference (sim - reference) in runout area" % runoutResType
+                + "\n"
+                + "blue = FN, red = FP"
+            )
+
+            if indDiff.any():
+                # only plot hist and CDF if there is a difference in the data
+                ax3 = fig.add_subplot(gs[3, 0])
+                ax4 = fig.add_subplot(gs[3, 1])
+                # there is data to compare in the runout area
+                _ = sPlot.plotHistCDFDiff(
+                    dataDiffPlot,
+                    ax4,
+                    ax3,
+                    insert="False",
+                    title=[
+                        "%s diff histogram" % runoutResType,
+                        "%s diff CDF (95%% and 99%% centiles)" % runoutResType,
+                    ],
+                )
+
+            ax2.set_xlim([s[indStartOfRunout], xLim])
+            divider = make_axes_locatable(ax2)
+            cax = divider.append_axes("right", size="5%", pad=0.1)
+            pU.addColorBar(
+                im3, ax2, None, None, title=runoutResType + (" [%s]" % unit), extend="both", cax=cax
+            )
+            ax2.set_aspect("equal")
+            ax1.set_aspect("equal")
         else:
-            log.warning('Reference %s did not reach the runout area!' % refSimName)
-            ax2.text((s[indStartOfRunout] + xLim)/2, 0, 'Reference %s did not reach the runout area!' % refSimName,
-                     fontsize=24, color='red',
-                     bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
-        if (np.where(compData > thresholdArray[-1], True, False)).any():
-            contourComp = ax2.contour(
-                S, L, np.transpose(compData), levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
+            # if no avalanche reached the runout area print a warning on the second plot
+            ax2 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=3)
+            log.warning("No data in runout area")
+            ax2.text(
+                0.5,
+                0.5,
+                "No difference in runout area",
+                fontsize=24,
+                color="red",
+                bbox=dict(facecolor="none", edgecolor="red", boxstyle="round,pad=1"),
+                ha="center",
+                va="center",
+            )
+
+        if pathDict["compType"][0] == "comModules":
+            ax2.set_title(
+                "%s difference and contour lines" % runoutResType
+                + "\n"
+                + "refMod = full, compMod = dashed line"
+            )
         else:
-            log.warning('Simulation %s did not reach the runout area!' % simName)
-            ax2.text((s[indStartOfRunout] + xLim)/2, 0, 'Simulation %s did not reach the runout area!' % simName,
-                     fontsize=24, color='red',
-                     bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
+            ax2.set_title(
+                "%s difference and contour lines" % runoutResType + "\n" + "ref = full, sim = dashed line"
+            )
 
-        #if compRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
-        if dataTF.any():
-            ref1, im1 = pU.NonUnifIm(ax1, s, l, np.transpose(dataTF), '$S_{XY}$ (thalweg) [m]', '$L_{XY}$ (thalweg) [m]',
-                                     extent=[s[indStartOfRunout], xLim, l.min(), l.max()], cmap=cmapTF)
-            im1.set_clim(vmin=-0.5, vmax=0.5)
-            ax1.set_xlim([s[indStartOfRunout], xLim])
-        else:
-            ax1.text(.5, .5, 'No difference in runout area', fontsize=18, color='red',
-                     bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
-        if pathDict['compType'][0] == 'comModules':
-            namePrint = 'refMod:' + pathDict['compType'][1] + '\n' + 'compMod:' + pathDict['compType'][2]
-            pU.putAvaNameOnPlot(ax1, namePrint)
-        else:
-            namePrint = 'ref:' + str(refSimName) + '\n' + 'sim:' + str(simName)
-            pU.putAvaNameOnPlot(ax1, namePrint)
-
-        ax1.set_title('%s difference (sim - reference) in runout area' % runoutResType + '\n' + 'blue = FN, red = FP')
-
-        if indDiff.any():
-            # only plot hist and CDF if there is a difference in the data
-            ax3 = fig.add_subplot(gs[3, 0])
-            ax4 = fig.add_subplot(gs[3, 1])
-            # there is data to compare in the runout area
-            _ = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % runoutResType,
-                                      '%s diff CDF (95%% and 99%% centiles)' % runoutResType])
-
-        ax2.set_xlim([s[indStartOfRunout], xLim])
-        divider = make_axes_locatable(ax2)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        pU.addColorBar(im3, ax2, None, None, title=runoutResType+(' [%s]'% unit), extend='both', cax=cax)
-        ax2.set_aspect('equal')
-        ax1.set_aspect('equal')
-    else:
-        # if no avalanche reached the runout area print a warning on the second plot
-        ax2 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=3)
-        log.warning('No data in runout area')
-        ax2.text(.5, .5, 'No difference in runout area', fontsize=24, color='red',
-                 bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
-
-    if pathDict['compType'][0] == 'comModules':
-        ax2.set_title('%s difference and contour lines' % runoutResType + '\n' + 'refMod = full, compMod = dashed line')
-    else:
-        ax2.set_title('%s difference and contour lines' % runoutResType + '\n' + 'ref = full, sim = dashed line')
-
-    #fig.subplots_adjust(hspace=0.13, wspace=0.3)
-    outFileName = '_'.join([projectName, runoutResType, str(thresholdValue).replace('.', 'p'),
-                           str(simName), 'ContourComparisonToReference'])
-    outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
+        # fig.subplots_adjust(hspace=0.13, wspace=0.3)
+        outFileName = "_".join(
+            [
+                projectName,
+                runoutResType,
+                str(thresholdValue).replace(".", "p"),
+                str(simName),
+                "ContourComparisonToReference",
+            ]
+        )
+        outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
 
