@@ -143,9 +143,13 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg, module=com1DFA):
     if simCfg["GENERAL"]["simTypeList"] == "ent" and simCfg["GENERAL"]["entThFromFile"] == "True":
         defaultEntTh = defCfg["GENERAL"]["entThIfMissingInShp"]
 
-        if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split("|")]):
-            defaultIdentifierString = "C"
-            log.info("Non-default entrainment value(s) used: %s" % simCfg["INPUT"]["entThThickness"])
+        # this try handles raster instead of shapefile
+        try:
+            if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split("|")]):
+                defaultIdentifierString = "C"
+                log.info("Non-default entrainment value(s) used: %s" % simCfg["INPUT"]["entThThickness"])
+        except KeyError:
+            defaultIdentifierString = "D"
 
     # Entrainment might not be set in shpfile, but still the default from
     # ini file is used. This is still default D and not changed C

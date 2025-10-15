@@ -41,7 +41,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -83,7 +83,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     inputSimFiles["entResInfo"]["resFileType"] = ".shp"
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["avalancheDir"] = str(avaDir)
@@ -114,7 +114,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"]["relThFile"] = ""
@@ -142,7 +142,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["INPUT"]["relThFile"] = str(dirName / "data" / "relThFieldTestFile.asc")
@@ -174,7 +174,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     testField = np.zeros((10, 10))
     testFile = pathlib.Path(tmp_path, "testFile2")
 
@@ -215,7 +215,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -259,7 +259,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "True",
@@ -304,7 +304,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -330,7 +330,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
     inputSimFiles["kFile"] = None
-    inputSimFiles["tau0File"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
