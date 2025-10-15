@@ -58,7 +58,7 @@ def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
     """
 
     # Get all necessary information from the configuration files
-    currentModule = sys.modules[__name__] # As if you would to import com9MoTVoellmy
+    currentModule = sys.modules[__name__]  # As if you would to import com9MoTVoellmy
     simDict, inputSimFiles = mT.MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
 
     # convert DEM from nan to 0 values
@@ -141,6 +141,10 @@ def com9MoTVoellmyPostprocess(simDict, cfgMain):
         # Copy pfv files
         mT.copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
 
+        # Copy timestep directories to timesteps subfolder
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "s")
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "h")
+
     # create plots and report
     modName = __name__.split(".")[-1]
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
@@ -212,7 +216,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
     -----
     The function performs several key steps:
     - Creates working directories for each simulation
-    - Processes release areas and converts them to raster format 
+    - Processes release areas and converts them to raster format
     - Generates configuration files in RCF format
     - Handles both single and multiple release scenarios
     """
@@ -261,7 +265,6 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         )
 
         # RELEASE AREA - fetch path to release raster
-        # TODO: split releaseheight -> question NGI
         releaseName, inputSimLines["releaseLine"] = gI.deriveLineRaster(
             cfg,
             inputSimLines["releaseLine"],
@@ -277,6 +280,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             saveZeroRaster = False
         else:
             saveZeroRaster = True
+
         bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
             cfg,
             inputSimLines["entLine"],
@@ -301,19 +305,23 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         #         crop=False,
         #     )
 
-        # BED SHEAR - fetch path to tau0 raster
-        bedShearDict = {"initializedFrom": "raster", "fileName": inputSimLines["tau0File"]}
-        if inputSimLines["entResInfo"]["tau0"] == "Yes":
+        # BED SHEAR - fetch path to tauC raster
+        bedShearDict = {
+            "initializedFrom": "raster",
+            "fileName": inputSimLines["tauCFile"],
+        }
+        if inputSimLines["entResInfo"]["tauC"] == "Yes":
             saveZeroRaster = False
         else:
             saveZeroRaster = True
+
         bedShearName, bedShearDict = gI.deriveLineRaster(
             cfg,
             bedShearDict,
             demOri,
             workInputDir,
             inputsDir,
-            "tau0",
+            "tauC",
             rasterFileType=demSuffix,
             saveZeroRaster=saveZeroRaster,
         )
@@ -340,6 +348,30 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             )
             log.error(message)
             raise AssertionError(message)
+
+        if cfg["ENTRAINMENT"]["Entrainment"] == "auto":
+            cfg = mT.setVariableEntrainmentParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            message = "Currently only available option is auto for %s" % ('["ENTRAINMENT"]["Entrainment"]')
+            log.error(message)
+            raise AssertionError(message)
+
+        # if _nd and _bhd files in avalancheDir/Inputs/RASTERS found - set paths to nd and bhd files
+        # if not found then forest effects are set to no
+        if cfg["FOREST_EFFECTS"]["Forest effects"] == "auto":
+            cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            message = "Currently only available option is auto for %s" % (
+                '["FOREST_EFFECTS"]["Forest effects"]'
+            )
+            log.error(message)
+            raise AssertionError(message)
+        # elif cfg["FOREST_EFFECTS"]["Forest effects"] == "no":
+        #     cfg["File names"]["Forest density filename"] = "-"
+        #     cfg["File names"]["Tree diameter filename"] = "-"
+        # else:
+        #     # if forest effects set to yes but files not found - error will be raised by setVariableForestParameters
+        #     cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
