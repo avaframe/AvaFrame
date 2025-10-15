@@ -3148,7 +3148,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 cfgSim["INPUT"]["tau0File"] = pathToFric
                 inputSimFiles["entResInfo"]["tau0Remeshed"] = remeshedFric
             # check if physical parameters = variable is chosen that friction fields have correct extent
-            if cfgSim["Physical_parameters"]["Parameters"] == "variable":
+            if cfgSim["Physical_parameters"]["Parameters"] == "auto":
                 dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
                 for fric in ["mu", "k"]:
                     if inputSimFiles["entResInfo"][fric] == "Yes":

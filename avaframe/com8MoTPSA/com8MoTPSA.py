@@ -277,9 +277,17 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         cfg["File names"]["Bed shear strength filename"] = str(bedShearName)
         cfg["File names"]["Output filename root"] = str(workOutputDir)
 
-        # if friction parameters are variable - set paths to mu and k files
-        if cfg["Physical_parameters"]["Parameters"] == "variable":
+        # if _mu and _k files in avalancheDir/Inputs/RASTERS found - set paths to mu and k files
+        # if not found then mu and k are set constant to values provided in cfg
+        if cfg["Physical_parameters"]["Parameters"] == "auto":
             cfg = mT.setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            # TODO FSO allow for options constant and variable
+            message = "Currently only available option is auto for %s" % (
+                '["Physical_parameters"]["Parameters"]'
+            )
+            log.error(message)
+            raise AssertionError(message)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
         currentModule = sys.modules[__name__]
