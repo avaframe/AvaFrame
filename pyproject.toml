@@ -117,9 +117,13 @@ sphinxcontrib-bibtex = "*"
 [tool.pixi.feature.prod.pypi-dependencies]
 avaframe = "*"
 
+#Feature py313
+[tool.pixi.feature.py313.dependencies]
+python = "3.13.7"
+
 #Feature rcs
-#[tool.pixi.feature.rcs.pypi-dependencies]
-#avaframe = "==1.13rc4"
+[tool.pixi.feature.rcs.pypi-dependencies]
+avaframe = "==1.13rc4"
 
 #Feature qgis
 [tool.pixi.feature.qgis.dependencies]
@@ -131,6 +135,7 @@ default = { features = ["dev"], solve-group = "default" }
 dev = ["dev"]
 doc = ["doc", "dev"]
 prod = ["prod"]
-#rcs = ["rcs"]
+rcs = ["rcs"]
+py313 = ["py313","dev"]
 qgis = ["qgis", "dev"]
 

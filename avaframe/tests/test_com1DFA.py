@@ -265,7 +265,7 @@ def test_prepareInputData(tmp_path):
         "secRelArea": "True",
         "simTypeActual": "null",
         "avalancheDir": str(avaDir),
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relTh": "",
     }
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
@@ -352,8 +352,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "True",
-        "relThFromShp": "False",
-        "secondaryRelThFromShp": "True",
+        "relThFromFile": "False",
+        "secondaryRelThFromFile": "True",
         "relTh": "1.32",
         "secondaryRelTh0": "1.789",
         "secondaryRelThPercentVariation": "0.7",
@@ -396,8 +396,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName is True
 
     # setup required inputs
-    cfg["GENERAL"]["secondaryRelThFromShp"] = "False"
-    cfg["GENERAL"]["relThFromShp"] = "True"
+    cfg["GENERAL"]["secondaryRelThFromFile"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["secondaryRelTh"] = "2.5"
     cfg["GENERAL"]["relTh"] = ""
     cfg["GENERAL"]["secondaryRelThPercentVariation"] = ""
@@ -439,8 +439,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName2 is True
 
     # setup required inputs
-    cfg["GENERAL"]["secondaryRelThFromShp"] = "True"
-    cfg["GENERAL"]["relThFromShp"] = "True"
+    cfg["GENERAL"]["secondaryRelThFromFile"] = "True"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["secondaryRelTh"] = ""
     cfg["INPUT"]["secondaryRelThThickness"] = "2.7"
     cfg["INPUT"]["secondaryRelThId"] = "0"
@@ -477,7 +477,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     # print(
     #      "Test",
     #      cfg["GENERAL"]["secondaryRelTh"],
-    #      cfg["GENERAL"]["secondaryRelThFromShp"],
+    #      cfg["GENERAL"]["secondaryRelThFromFile"],
     #      cfg["GENERAL"]["secondaryRelTh0"],
     #  )
     #    print("inputSimLines", inputSimLines2)
@@ -511,7 +511,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     }
     inputSimLines["relThFile"] = ""
     rel = pathlib.Path(tmp_path, "release1PF_test.shp")
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = "1.32"
 
     # call function to test
@@ -526,8 +526,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     # call function to test
     cfg["GENERAL"] = {
         "secRelArea": "False",
-        "relThFromShp": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "relTh": "1.32",
         "secondaryRelTh": "2.5",
         "entTh0": "0.4",
@@ -570,7 +570,7 @@ def test_setThickness():
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "entThFromShp": "False",
+        "entThFromFile": "False",
         "entTh": "1.0",
         "entThPercentVariation": "",
     }
@@ -614,7 +614,7 @@ def test_setThickness():
     assert np.array_equal(lineTh["x"], np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]))
 
     # call function to be tested
-    cfg["GENERAL"]["entThFromShp"] = "True"
+    cfg["GENERAL"]["entThFromFile"] = "True"
     cfg["GENERAL"]["entTh0"] = "1.0"
     cfg["GENERAL"]["entTh1"] = "0.7"
     cfg["GENERAL"]["entThPercentVariation"] = "0.5"
@@ -638,7 +638,7 @@ def test_setThickness():
     assert np.array_equal(lineTh["x"], np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]))
 
     # call function to be tested
-    cfg["GENERAL"]["entThFromShp"] = "True"
+    cfg["GENERAL"]["entThFromFile"] = "True"
     cfg["GENERAL"]["entTh0"] = "1.2"
     cfg["GENERAL"]["entTh1"] = "0.7"
     lineTh = {
@@ -1357,7 +1357,7 @@ def test_getRelThFromPart():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"relThFromShp": "True", "relThFromFile": "False", "relTh": ""}
+    cfg["GENERAL"] = {"relThFromFile": "True", "relThFromFile": "False", "relTh": ""}
     inputSimLines = {"releaseLine": {"thickness": ["1.2", "1.5"], "id": ["0", "1"]}}
     relThField = ""
 
@@ -1366,7 +1366,7 @@ def test_getRelThFromPart():
 
     assert relThFromPart == 1.5
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = "2.0"
     # call function to be tested
@@ -1374,7 +1374,7 @@ def test_getRelThFromPart():
 
     assert relThFromPart == 2.0
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["relTh"] = ""
     relThField = np.zeros((10, 10))
@@ -1957,9 +1957,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
         "relThFromFile": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "entThRangeVariation": "",
@@ -2028,9 +2028,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
         "relThFromFile": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "rho": "200.0",
@@ -2137,8 +2137,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "relThFromFile": "False",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
@@ -2372,7 +2372,7 @@ def test_initializeSimulation(tmp_path):
         "rasterData": relThField,
     }
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = ""
     cfg["GENERAL"]["relThFromFile"] = "True"
     inputSimLines["relThField"] = relThField
@@ -2694,7 +2694,7 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": "",
-        "relThFromShp": True,
+        "relThFromFile": True,
         "relThFromFile": False,
         "relTh0": 2.0,
         "relTh1": 4.0,
@@ -2718,7 +2718,7 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": 5.0,
-        "relThFromShp": False,
+        "relThFromFile": False,
         "relThFromFile": False,
         "secRelArea": False,
     }
@@ -2736,7 +2736,7 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": "",
-        "relThFromShp": False,
+        "relThFromFile": False,
         "relThFromFile": True,
         "secRelArea": False,
     }

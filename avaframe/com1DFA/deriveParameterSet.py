@@ -266,7 +266,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     ci95List = inputSimFiles[fName]["ci95"]
 
     # create key name for flag
-    thFlag = thType + "FromShp"
+    thFlag = thType + "FromFile"
     thDistVariation = thType + "DistVariation"
 
     # create prefix for release area
@@ -288,7 +288,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
         # if entrainment but thicknessList contains only None
         elif thType == "entTh" and all(el == "None" for el in thicknessList):
             thicknessList = [cfg["GENERAL"]["entThIfMissingInShp"]] * len(idList)
-            cfg["GENERAL"]["entThFromShp"] = "False"
+            cfg["GENERAL"]["entThFromFile"] = "False"
             cfg["GENERAL"]["entTh"] = cfg["GENERAL"]["entThIfMissingInShp"]
             cfg["INPUT"]["entThInfo"] = "fromIni"
             log.warning(
@@ -354,7 +354,7 @@ def checkThicknessSettings(cfg, thName, inputSimFiles):
     """
 
     # create key name for thickness flag
-    thFlag = thName + "FromShp"
+    thFlag = thName + "FromFile"
 
     nameTypes = {
         "relTh": "Rel",
@@ -591,17 +591,17 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     # update thickness values according to variation
     if entCondition or secRelCondition or relCondition:
         thType = key.split(varType)[0]
-        thFlag = thType + "FromShp"
+        thFlag = thType + "FromFile"
 
-        # add thickness values for all features if thFromShape = True
+        # add thickness values for all features if thFromFile = True
         if cfg["GENERAL"][thFlag] == "True":
             cfg = setVariationForAllFeatures(cfg, key, thType, varType, variationFactor)
         else:
-            # update ini thValue if thFromShape=False
+            # update ini thValue if thFromFile=False
             if varType == "Range":
                 cfg["GENERAL"][thType] = str(float(cfg["GENERAL"][thType]) + variationFactor)
             elif varType == "RangeFromCi":
-                message = "Variation using RangeFromCi is only allowed if thFromShp is set to True"
+                message = "Variation using RangeFromCi is only allowed if thFromFile is set to True"
                 log.error(message)
                 raise AssertionError(message)
             elif varType == "Percent":
@@ -814,7 +814,7 @@ def setRangeFromCiVariation(cfg, variationFactor, thValue, ciValue):
 
 
 def appendShpThickness(cfg):
-    """append thickness values to GENERAL section if read from shp and not varied
+    """append thickness values to GENERAL section if read from file and not varied
 
     Parameters
     -----------
@@ -837,10 +837,10 @@ def appendShpThickness(cfg):
     if cfgGen["secRelArea"] == "True":
         thTypes.append("secondaryRelTh")
 
-    # loop over all types and if thickness value read from shp file and no variation has been applied
+    # loop over all types and if thickness value read from file and no variation has been applied
     # (in this case already added to GENERAL section) - add to section GENERAL
     for thType in thTypes:
-        thFlag = thType + "FromShp"
+        thFlag = thType + "FromFile"
         thPV = thType + "PercentVariation"
         thRV = thType + "RangeVariation"
         thDV = thType + "DistVariation"

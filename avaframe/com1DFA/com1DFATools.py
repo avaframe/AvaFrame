@@ -140,7 +140,7 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg, module=com1DFA):
 
     # If entrainment is requested, and it is set in shapefile, check if it contains the default entrainment thickness
     # in ALL features of the shapefile
-    if simCfg["GENERAL"]["simTypeList"] == "ent" and simCfg["GENERAL"]["entThFromShp"] == "True":
+    if simCfg["GENERAL"]["simTypeList"] == "ent" and simCfg["GENERAL"]["entThFromFile"] == "True":
         defaultEntTh = defCfg["GENERAL"]["entThIfMissingInShp"]
 
         if not all([x == defaultEntTh for x in simCfg["INPUT"]["entThThickness"].split("|")]):
@@ -149,10 +149,10 @@ def compareSimCfgToDefaultCfgCom1DFA(simCfg, module=com1DFA):
 
     # Entrainment might not be set in shpfile, but still the default from
     # ini file is used. This is still default D and not changed C
-    if simCfg["GENERAL"]["entThFromShp"] == "False":
+    if simCfg["GENERAL"]["entThFromFile"] == "False":
         # check if entTh is the default entTh if no other entTh is set
         if simCfg["GENERAL"]["entTh"] == defCfg["GENERAL"]["entThIfMissingInShp"]:
-            excludeItems.append("root['GENERAL']['entThFromShp']")
+            excludeItems.append("root['GENERAL']['entThFromFile']")
             excludeItems.append("root['GENERAL']['entTh']")
 
     # sphKernelSize is set during runtime, make sure it is not reported
