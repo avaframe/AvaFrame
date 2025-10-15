@@ -600,7 +600,8 @@ def prepareInputData(inputSimFiles, cfg):
     dOHeader = demOri["header"]
 
     # read data from relThFile if needed, already with correct mesh cell size
-    relThFieldData, _ = gI.initializeRelTh(cfg, dOHeader)
+    # TODO: remove if not required anymore
+    # relThFieldData, _ = gI.initializeRelTh(cfg, dOHeader)
 
     if cfg["INPUT"]["relThFile"] == "":
         # get line from release area polygon
@@ -612,6 +613,7 @@ def prepareInputData(inputSimFiles, cfg):
         gI.checkForMultiplePartsShpArea(
             cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release"
         )
+        relThFieldData = ""
     else:
         relRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
         relRasterDict = IOf.readRaster(relRasterPath)
@@ -1087,6 +1089,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     cfgGen = cfg["GENERAL"]
     methodMeshNormal = cfg.getfloat("GENERAL", "methodMeshNormal")
     thresholdPointInPoly = cfgGen.getfloat("thresholdPointInPoly")
+    # this is from the current release scenario set in prepareInputData - where inputSimLines is created using releaseScenario info
     relThField = inputSimLines["relThField"]
 
     # -----------------------
