@@ -260,7 +260,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
 
     """
 
-    # fetch thickness values from shapefile
+    # fetch thickness values from shapefile (or None for raster files)
     thicknessList = inputSimFiles[fName]["thickness"]
     idList = inputSimFiles[fName]["id"]
     ci95List = inputSimFiles[fName]["ci95"]
@@ -274,6 +274,13 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
         fNamePrefix = fName + "_"
     else:
         fNamePrefix = ""
+
+    # if thickness values are read from raster files, thickness/id/ci95 are None
+    # for raster files, thickness is read directly from the raster data, not from attributes
+    if thicknessList is None:
+        # raster file - no thickness attributes to process, thickness read directly from file
+        log.info("Thickness for %s will be read from raster file" % thType)
+        return cfg
 
     # if thickness should be read from shape file
     if cfg["GENERAL"].getboolean(thFlag):
@@ -369,50 +376,29 @@ def checkThicknessSettings(cfg, thName, inputSimFiles):
 
     # check if flag is set correctly and thickness parameter has correct format
     if cfg["GENERAL"][thFlag] == "True" or cfg["GENERAL"][thFlag] == "False":
+        # Check: If reading thickness from any file (shapefile or raster), thickness value should not be set in INI
         if (
             cfg["GENERAL"].getboolean(thFlag)
-            and inputSimFiles["entResInfo"][thName + "FileType"] == ".shp"
+            and inputSimFiles["entResInfo"][thName + "FileType"] in [".shp", ".asc", ".tif"]
             and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
         ):
             if cfg["GENERAL"][thName] != "":
                 message = "If %s is set to True - it is not allowed to set a value for %s" % (thFlag, thName)
                 log.error(message)
                 raise AssertionError(message)
+        # Check: If thFromFile=False and shapefile exists, thickness value must be provided in INI
         elif (
-            cfg["GENERAL"].getboolean(thFlag)
-            and inputSimFiles["entResInfo"][thName + "FileType"] != "shp"
+            cfg["GENERAL"][thName] == ""
+            and cfg["GENERAL"].getboolean(thFlag) is False
+            and inputSimFiles["entResInfo"][thName + "FileType"] == ".shp"
             and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
         ):
-            message = "If %s file is not a shapefile - it is not allowed to set %s = True" % (
-                nameStrings[thName],
-                thFlag,
+            message = (
+                "If %s is set to False and %s defined by a shapefile - it is required to set a value for %s"
+                % (thFlag, nameStrings[thName], thName)
             )
             log.error(message)
             raise AssertionError(message)
-        elif (
-            inputSimFiles["entResInfo"][thName + "FileType"] != ".shp"
-            and cfg["GENERAL"][thName] != ""
-            and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
-        ):
-            message = "If %s file is not a shapefile - it is not allowed to set a value for %s" % (
-                nameStrings[thName],
-                thName,
-            )
-            log.error(message)
-            raise AssertionError(message)
-        else:
-            if (
-                cfg["GENERAL"][thName] == ""
-                and cfg["GENERAL"].getboolean(thFlag) is False
-                and inputSimFiles["entResInfo"][thName + "FileType"] == ".shp"
-                and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
-            ):
-                message = (
-                    "If %s is set to False and %s defined by a shapefile - it is required to set a value for %s"
-                    % (thFlag, nameStrings[thName], thName)
-                )
-                log.error(message)
-                raise AssertionError(message)
     else:
         message = "Check %s - needs to be True or False" % thFlag
         log.error(message)
@@ -436,12 +422,12 @@ def checkThicknessSettings(cfg, thName, inputSimFiles):
         log.error(message)
         raise AssertionError(message)
 
-    if inputSimFiles["entResInfo"][thName + "FileType"] != ".shp" and (sum(flagsList) > 0):
-        message = "%s read from raster - no variation allowed: check %s, %s or %s" % (
-            nameStrings[thName],
-            thRV,
-            thPV,
-            thRCiV,
+    # Check: Raster files don't support parameter variation (no feature attributes like shapefiles)
+    if inputSimFiles["entResInfo"][thName + "FileType"] in [".asc", ".tif"] and (sum(flagsList) > 0):
+        message = (
+            "%s read from raster file - parameter variation not allowed "
+            "(raster files don't have feature attributes): check %s, %s or %s"
+            % (nameStrings[thName], thRV, thPV, thRCiV)
         )
         log.error(message)
         raise AssertionError(message)
@@ -813,7 +799,7 @@ def setRangeFromCiVariation(cfg, variationFactor, thValue, ciValue):
     return variationValue
 
 
-def appendShpThickness(cfg):
+def appendThicknessToCfg(cfg):
     """append thickness values to GENERAL section if read from file and not varied
 
     Parameters
@@ -824,7 +810,7 @@ def appendShpThickness(cfg):
     Returns
     --------
     cfg: dict
-        updated configuartion settings
+        updated configuration settings
 
     """
 
@@ -845,6 +831,7 @@ def appendShpThickness(cfg):
         thRV = thType + "RangeVariation"
         thDV = thType + "DistVariation"
         thRCiV = thType + "RangeFromCiVariation"
+
         if (
             cfgGen[thFlag] == "True"
             and cfgGen[thPV] == ""
@@ -854,8 +841,17 @@ def appendShpThickness(cfg):
         ):
             thThickness = thType + "Thickness"
             thId = thType + "Id"
-            thicknessList = cfg["INPUT"][thThickness].split("|")
-            idList = cfg["INPUT"][thId].split("|")
+
+            # The next try's are for raster files, where not thickness info exist
+            try:
+                thicknessList = cfg["INPUT"][thThickness].split("|")
+            except KeyError:
+                thicknessList = []
+
+            try:
+                idList = cfg["INPUT"][thId].split("|")
+            except KeyError:
+                idList = []
             for count, id in enumerate(idList):
                 thNameId = thType + id
                 if thNameId in cfg["GENERAL"].keys():
@@ -896,7 +892,14 @@ def checkRasterMeshSize(cfgSim, rasterFile, typeIndicator="DEM", onlySearch=Fals
     headerRaster = IOf.readRasterHeader(rasterFile)
 
     # fetch info on desired meshCellSize
-    meshCellSize = float(cfgSim["GENERAL"]["meshCellSize"])
+    meshCellSize = cfgSim["GENERAL"]["meshCellSize"]
+    if meshCellSize:
+        meshCellSize = float(meshCellSize)
+    # if meshCellSize is None (i.e. empty), set to meshCellsize of headerRaster
+    else:
+        log.info("Empyt meshCellSize encountered, setting to raster cellsize, no remeshing is done")
+        meshCellSize = float(headerRaster["cellsize"])
+
     meshCellSizeThreshold = float(cfgSim["GENERAL"]["meshCellSizeThreshold"])
 
     # if cell size of raster is different from desired meshCellSize - look for remeshed raster or remesh

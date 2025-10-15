@@ -89,9 +89,13 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy ppr files
         pprFiles = list(workDir.glob("*p?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("%s_psa_p1_max" % simType, "%s_dfa_ppr" % simType)) for f in pprFiles
+            pathlib.Path(str(f.name).replace("%s_psa_p1_max" % simType, "%s_dfa_ppr" % simType))
+            for f in pprFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("%s_psa_p2_max" % simType, "%s_psa_ppr" % simType)) for f in targetFiles]
+        targetFiles = [
+            pathlib.Path(str(f).replace("%s_psa_p2_max" % simType, "%s_psa_ppr" % simType))
+            for f in targetFiles
+        ]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pprFiles, targetFiles):
             shutil.copy2(source, target)
@@ -99,9 +103,13 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfd files
         pfdFiles = list(workDir.glob("*h?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("%s_psa_h1_max" % simType, "%s_dfa_pfd" % simType)) for f in pfdFiles
+            pathlib.Path(str(f.name).replace("%s_psa_h1_max" % simType, "%s_dfa_pfd" % simType))
+            for f in pfdFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("%s_psa_h2_max" % simType, "%s_psa_pfd" % simType)) for f in targetFiles]
+        targetFiles = [
+            pathlib.Path(str(f).replace("%s_psa_h2_max" % simType, "%s_psa_pfd" % simType))
+            for f in targetFiles
+        ]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfdFiles, targetFiles):
             shutil.copy2(source, target)
@@ -109,9 +117,13 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfv files
         pfvFiles = list(workDir.glob("*s?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("%s_psa_s1_max" % simType, "%s_dfa_pfv" % simType)) for f in pfvFiles
+            pathlib.Path(str(f.name).replace("%s_psa_s1_max" % simType, "%s_dfa_pfv" % simType))
+            for f in pfvFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("%s_psa_s2_max" % simType, "%s_psa_pfv" % simType)) for f in targetFiles]
+        targetFiles = [
+            pathlib.Path(str(f).replace("%s_psa_s2_max" % simType, "%s_psa_pfv" % simType))
+            for f in targetFiles
+        ]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
@@ -220,9 +232,12 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         #         crop=False,
         #     )
 
-        # BED SHEAR - fetch path to tau0 raster
-        bedShearDict = {"initializedFrom": "raster", "fileName": inputSimLines["tau0File"]}
-        if inputSimLines["entResInfo"]["tau0"] == "Yes":
+        # BED SHEAR - fetch path to tauC raster
+        bedShearDict = {
+            "initializedFrom": "raster",
+            "fileName": inputSimLines["tauCFile"],
+        }
+        if inputSimLines["entResInfo"]["tauC"] == "Yes":
             saveZeroRaster = False
         else:
             saveZeroRaster = True
@@ -232,7 +247,7 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
             demOri,
             workInputDir,
             inputsDir,
-            "tau0",
+            "tauC",
             rasterFileType=demSuffix,
             saveZeroRaster=saveZeroRaster,
         )

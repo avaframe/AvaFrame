@@ -259,30 +259,30 @@ def getInputDataCom1DFA(avaDir):
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
-    # check if frictionParameter file  is available
+    # check if mu frictionParameter  file  is available
     muFile, entResInfo["mu"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "mu parameter data", fileExt="raster", fileSuffix="_mu"
     )
 
-    # check if frictionParameter file  is available
+    # check if xi frictionParameter file  is available
     xiFile, entResInfo["xi"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "xi parameter data", fileExt="raster", fileSuffix="_xi"
     )
 
-    # check if frictionParameter file  is available
+    # check if k frictionParameter file  is available
     kFile, entResInfo["k"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "k parameter data", fileExt="raster", fileSuffix="_k"
     )
 
-    # check if frictionParameter file  is available
-    tau0, entResInfo["tau0"], _ = getAndCheckInputFiles(
-        inputDir, "RASTERS", "tau0 parameter data", fileExt="raster", fileSuffix="_tau0"
+    # check if tauc frictionParameter file  is available
+    tauCFile, entResInfo["tauC"], _ = getAndCheckInputFiles(
+        inputDir, "RASTERS", "tauC parameter data", fileExt="raster", fileSuffix="_tauc"
     )
 
     entResInfo["relRemeshed"] = "No"
     entResInfo["secondaryRelRemeshed"] = "No"
     entResInfo["entRemeshed"] = "No"
-    entResInfo["tau0Remeshed"] = "No"
+    entResInfo["tauCRemeshed"] = "No"
     entResInfo["kRemeshed"] = "No"
     entResInfo["muRemeshed"] = "No"
     entResInfo["xiRemeshed"] = "No"
@@ -300,7 +300,7 @@ def getInputDataCom1DFA(avaDir):
         "muFile": muFile,
         "xiFile": xiFile,
         "kFile": kFile,
-        "tau0File": tau0,
+        "tauCFile": tauCFile,
     }
 
     for thFile in ["rel", "secondaryRel", "ent"]:
@@ -681,7 +681,14 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
 
     # update config entry for release scenario, thickness and id
     cfgSim["INPUT"]["releaseScenario"] = str(releaseScenario)
-    if cfgSim["GENERAL"]["relThFromFile"] == "True":
+    # check if release thickness is read from shapefile or raster file
+    if releaseScenarioPath.suffix in [".asc", ".tif"]:
+        # raster file - set relThFile path
+        cfgSim["INPUT"]["relThFile"] = str(
+            releaseScenarioPath.parts[-2] + "/" + releaseScenarioPath.parts[-1]
+        )
+    elif cfgSim["GENERAL"]["relThFromFile"] == "True":
+        # shapefile with thickness attributes - handle thickness/id/ci95 values
         for scenario in releaseList:
             if scenario == releaseScenario:
                 cfgSim["INPUT"]["relThId"] = cfgSim["INPUT"][scenario + "_" + "relThId"]
@@ -691,10 +698,6 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
             cfgSim["INPUT"].pop(scenario + "_" + "relThId")
             cfgSim["INPUT"].pop(scenario + "_" + "relThThickness")
             cfgSim["INPUT"].pop(scenario + "_" + "relThCi95")
-    elif releaseScenarioPath.suffix in [".asc", ".tif"]:
-        cfgSim["INPUT"]["relThFile"] = str(
-            releaseScenarioPath.parts[-2] + "/" + releaseScenarioPath.parts[-1]
-        )
 
     relThFileList = [relF for relF in inputSimFiles["relFiles"] if relF.stem == releaseScenario]
     if len(relThFileList) == 0:
@@ -1033,7 +1036,7 @@ def deriveLineRaster(
     inputsDir: pathlib path
         path to avalancheDir/Inputs where original input data and remeshed rasters are stored
     rasterType: str
-        name of type of data, available options: rel, ent, tau0, secondaryRel
+        name of type of data, available options: rel, ent, tauC, secondaryRel
     rasterFileType: str
         type of raster file to save: .asc, .tif
     saveZeroRaster: bool
@@ -1048,15 +1051,15 @@ def deriveLineRaster(
 
     thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
 
-    if rasterType not in ["rel", "ent", "tau0", "secondaryRel", "releaseLayer2", "bedDepo"]:
-        message = "%s is not in list of available options: rel, ent, tau0, secondaryRel" % rasterType
+    if rasterType not in ["rel", "ent", "tauC", "secondaryRel", "releaseLayer2", "bedDepo"]:
+        message = "%s is not in list of available options: rel, ent, tauC, secondaryRel" % rasterType
         log.error(message)
         raise AssertionError(message)
 
     rasterNameStr = {
         "ent": "bedDepth",
         "rel": "release",
-        "tau0": "bedShear",
+        "tauC": "bedShear",
         "secondaryRel": "secondary release",
         "releaseLayer2": "releaseLayer2",
         "bedDepo": "bedDepo",

@@ -1,4 +1,4 @@
-""" Tests for dfa2Aimec """
+"""Tests for dfa2Aimec"""
 
 import configparser
 
@@ -438,7 +438,7 @@ def test_appendShpThickness():
     cfg["INPUT"] = {"relThThickness": "1.2|1.4", "relThId": "0|1", "releaseScenario": "release1HS"}
 
     # call function to be tested
-    cfg = dP.appendShpThickness(cfg)
+    cfg = dP.appendThicknessToCfg(cfg)
 
     assert cfg["GENERAL"]["relTh0"] == "1.2"
     assert cfg["GENERAL"]["relTh1"] == "1.4"
@@ -458,7 +458,7 @@ def test_appendShpThickness():
         "relThDistVariation": "",
     }
     cfg["INPUT"] = {"relThThickness": "1.2|1.4", "relThId": "0|1", "releaseScenario": "release1HS"}
-    cfg = dP.appendShpThickness(cfg)
+    cfg = dP.appendThicknessToCfg(cfg)
 
     assert cfg.has_option("GENERAL", "relTh0") is False
     assert cfg.has_option("GENERAL", "relTh1") is False

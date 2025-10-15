@@ -526,7 +526,7 @@ def setThickness(cfg, lineTh, typeTh):
     """
 
     # create thickness flag name
-    thFlag = typeTh + "FromShp"
+    thFlag = typeTh + "FromFile"
     # set thickness source info
     if cfg["GENERAL"].getboolean(thFlag):
         if cfg["INPUT"]["thFromIni"] != "" and typeTh in cfg["INPUT"]["thFromIni"]:
@@ -755,7 +755,7 @@ def prepareInputData(inputSimFiles, cfg):
         "muFile": inputSimFiles["muFile"],
         "xiFile": inputSimFiles["xiFile"],
         "kFile": inputSimFiles["kFile"],
-        "tau0File": inputSimFiles["tau0File"],
+        "tauCFile": inputSimFiles["tauCFile"],
     }
 
     return demOri, inputSimLines
@@ -3141,12 +3141,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # if ta0, mu, k used in com8 and com9 check extent of cellSize
         if modName in ["com8MoTPSA", "com9MoTVoellmy"]:
             dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
-            if inputSimFiles["entResInfo"]["tau0"] == "Yes":
+            if inputSimFiles["entResInfo"]["tauC"] == "Yes":
                 pathToFric, pathToFricFull, remeshedFric = dP.checkExtentAndCellSize(
-                    cfgSim, inputSimFiles["tau0File"], dem, "tau0"
+                    cfgSim, inputSimFiles["tauCFile"], dem, "tauC"
                 )
-                cfgSim["INPUT"]["tau0File"] = pathToFric
-                inputSimFiles["entResInfo"]["tau0Remeshed"] = remeshedFric
+                cfgSim["INPUT"]["tauCFile"] = pathToFric
+                inputSimFiles["entResInfo"]["tauCRemeshed"] = remeshedFric
             # check if physical parameters = variable is chosen that friction fields have correct extent
             if cfgSim["Physical_parameters"]["Parameters"] == "auto":
                 dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
@@ -3179,7 +3179,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             cfgSim["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
 
         # add thickness values if read from shp and not varied
-        cfgSim = dP.appendShpThickness(cfgSim)
+        cfgSim = dP.appendThicknessToCfg(cfgSim)
 
         # check differences to default and add indicator to name
         defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, module)
