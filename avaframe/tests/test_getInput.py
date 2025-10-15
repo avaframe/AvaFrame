@@ -1,8 +1,8 @@
 """
 
-    This file is part of Avaframe.
+This file is part of Avaframe.
 
- """
+"""
 
 #  Load modules
 import os
@@ -235,7 +235,7 @@ def test_getAndCheckInputFiles(tmp_path):
     with pytest.raises(AssertionError) as e:
         assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, fileExt="shp")
     assert str(e.value) == (
-            "More than one %s .shp file in %s/%s/ not allowed" % (inputType, avaTestDirInputs, folder)
+        "More than one %s .shp file in %s/%s/ not allowed" % (inputType, avaTestDirInputs, folder)
     )
 
 
@@ -351,10 +351,9 @@ def test_updateThicknessCfg(tmp_path):
     assert cfg["INPUT"]["release2HS_relThCi95"] == "None|None"
 
     assert cfg["GENERAL"]["relTh"] == ""
-    assert cfg["GENERAL"].getboolean("relThFromShp") == True
-    assert cfg["GENERAL"].getboolean("relThFromFile") == False
+    assert cfg["GENERAL"].getboolean("relThFromFile") is True
     assert cfg["GENERAL"]["entTh"] == ""
-    assert cfg["GENERAL"].getboolean("entThFromShp") == True
+    assert cfg["GENERAL"].getboolean("entThFromFile") is True
     assert cfg["INPUT"]["entrainmentScenario"] == "entrainment1HS"
     assert cfg["INPUT"]["entThId"] == "0"
     assert cfg["INPUT"]["entThThickness"] == "0.3"
@@ -404,7 +403,7 @@ def test_fetchReleaseFile(tmp_path):
     inputSimFiles = {"relFiles": [rel1, rel2]}
     cfg = configparser.ConfigParser()
     cfg["INPUT"] = {"releaseScenario": "rel1"}
-    cfg["GENERAL"] = {"relThFromShp": False}
+    cfg["GENERAL"] = {"relThFromFile": False}
     releaseScenario = "rel1"
     releaseList = ["rel1", "rel2"]
 
@@ -420,7 +419,7 @@ def test_fetchReleaseFile(tmp_path):
     cfg = configparser.ConfigParser()
     cfg["INPUT"] = {"releaseScenario": "rel2"}
     inputSimFiles = {"relFiles": [rel1, rel2]}
-    cfg["GENERAL"] = {"relThFromShp": True}
+    cfg["GENERAL"] = {"relThFromFile": True}
     cfg["INPUT"] = {
         "rel2_relThId": "0",
         "rel2_relThThickness": "2.",
@@ -459,7 +458,7 @@ def test_createReleaseStats(tmp_path):
 
     [z, name_ext, outDir] = generateTopo.generateTopo(cfgGenTop, testPath)
 
-    print(testPath)
+    # print(testPath)
     # setup release line
     lineDict = {
         "x": np.asarray([100.0, 100.0, 150.0, 200.0, 200.0, 150.0, 100.0]),
@@ -479,14 +478,14 @@ def test_createReleaseStats(tmp_path):
 
     assert relDFDict["releaseIP"]["release feature"].iloc[0] == "release1"
     assert np.isclose(relDFDict["releaseIP"]["slope [deg]"].iloc[0], 27.5)
-    print(20 * "-")
-    print(relDFDict["releaseIP"]["MaxZ [m]"].iloc[0], zMax)
-    print(20 * "-")
+    # print(20 * "-")
+    # print(relDFDict["releaseIP"]["MaxZ [m]"].iloc[0], zMax)
+    # print(20 * "-")
     assert np.isclose(relDFDict["releaseIP"]["MaxZ [m]"].iloc[0], zMax)
 
-    print(20 * "-")
-    print(relDFDict["releaseIP"]["MinZ [m]"].iloc[0], zMin)
-    print(20 * "-")
+    # print(20 * "-")
+    # print(relDFDict["releaseIP"]["MinZ [m]"].iloc[0], zMin)
+    # print(20 * "-")
     assert np.isclose(relDFDict["releaseIP"]["MinZ [m]"].iloc[0], zMin)
     assert np.isclose(relDFDict["releaseIP"]["projected area [ha]"].iloc[0], 0.5151)
     assert np.isclose(relDFDict["releaseIP"]["actual area [ha]"].iloc[0], 0.58071)
@@ -608,59 +607,60 @@ def test_computeRelStats(tmp_path):
 
 # Based on AI suggestions:
 
+
 def test_getAndCheckInputFiles_noFilesFound(mocker):
     mockInDir = mocker.MagicMock()
     mockInDir.glob.return_value = []
-    mockPath = mocker.patch('pathlib.Path')
+    mockPath = mocker.patch("pathlib.Path")
     mockPath.return_value = mockInDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
         inputDir, folder, "inputType", fileExt="shp"
     )
 
     mockPath.assert_called_once_with(inputDir, folder)
-    mockInDir.glob.assert_called_once_with('*.shp')
+    mockInDir.glob.assert_called_once_with("*.shp")
     assert output_file is None
-    assert available == 'No'
+    assert available == "No"
     assert fileTypeFormat == None
 
 
 def test_getAndCheckInputFilesone_valid_file(mocker):
     mock_file = mocker.MagicMock()
-    mock_file.suffix = '.shp'
+    mock_file.suffix = ".shp"
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
         inputDir, folder, "inputType", fileExt="shp"
     )
 
-    mock_inDir.glob.assert_called_once_with('*.shp')
+    mock_inDir.glob.assert_called_once_with("*.shp")
     assert output_file == mock_file
-    assert available == 'Yes'
+    assert available == "Yes"
     assert fileTypeFormat == ".shp"
 
 
 def test_getAndCheckInputFilesmultiple_files_error(mocker):
     mock_file1 = mocker.MagicMock()
-    mock_file1.suffix = '.shp'
+    mock_file1.suffix = ".shp"
     mock_file2 = mocker.MagicMock()
-    mock_file2.suffix = '.shp'
+    mock_file2.suffix = ".shp"
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file1, mock_file2]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     with pytest.raises(AssertionError) as excinfo:
-        getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='shp')
+        getInput.getAndCheckInputFiles(inputDir, folder, "inputType", fileExt="shp")
 
     expected_msg = "More than one inputType .shp file in /fake/dir/fake_folder/ not allowed"
     assert expected_msg in str(excinfo.value)
@@ -668,91 +668,91 @@ def test_getAndCheckInputFilesmultiple_files_error(mocker):
 
 def test_getAndCheckInputFilesunsupported_extension_error(mocker):
     mock_file = mocker.MagicMock()
-    mock_file.suffix = '.txt'
+    mock_file.suffix = ".txt"
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     with pytest.raises(AssertionError) as excinfo:
-        getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='txt')
+        getInput.getAndCheckInputFiles(inputDir, folder, "inputType", fileExt="txt")
 
     assert "Unsupported file format found for OutputFile" in str(excinfo.value)
 
 
 def test_getAndCheckInputFilesraster_extensions(mocker):
     mock_asc = mocker.MagicMock()
-    mock_asc.suffix = '.asc'
+    mock_asc.suffix = ".asc"
     mock_tif = mocker.MagicMock()
-    mock_tif.suffix = '.tif'
+    mock_tif.suffix = ".tif"
     mock_inDir = mocker.MagicMock()
-    mock_inDir.glob.side_effect = lambda p: [mock_asc] if p == '*.asc' else [mock_tif]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_inDir.glob.side_effect = lambda p: [mock_asc] if p == "*.asc" else [mock_tif]
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     with pytest.raises(AssertionError) as excinfo:
-        getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='raster')
+        getInput.getAndCheckInputFiles(inputDir, folder, "inputType", fileExt="raster")
 
     assert "More than one inputType .raster file" in str(excinfo.value)
-    mock_inDir.glob.assert_any_call('*.asc')
-    mock_inDir.glob.assert_any_call('*.tif')
+    mock_inDir.glob.assert_any_call("*.asc")
+    mock_inDir.glob.assert_any_call("*.tif")
 
 
 def test_getAndCheckInputFilesfile_suffix_filter(mocker):
     mock_file = mocker.MagicMock()
-    mock_file.suffix = '.shp'
+    mock_file.suffix = ".shp"
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
-    fileSuffix = '_suffix'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
+    fileSuffix = "_suffix"
     output_file, available, fileTypeFormat = getInput.getAndCheckInputFiles(
         inputDir, folder, "inputType", fileExt="shp", fileSuffix=fileSuffix
     )
 
-    mock_inDir.glob.assert_called_once_with('*_suffix.shp')
+    mock_inDir.glob.assert_called_once_with("*_suffix.shp")
     assert output_file == mock_file
-    assert available == 'Yes'
+    assert available == "Yes"
     assert fileTypeFormat == ".shp"
 
 
 def test_getAndCheckInputFilesempty_file_ext_with_suffix(mocker):
     mock_file = mocker.MagicMock()
-    mock_file.suffix = ''
+    mock_file.suffix = ""
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
-    fileSuffix = '_suffix'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
+    fileSuffix = "_suffix"
     with pytest.raises(AssertionError) as excinfo:
-        getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='', fileSuffix=fileSuffix)
+        getInput.getAndCheckInputFiles(inputDir, folder, "inputType", fileExt="", fileSuffix=fileSuffix)
 
-    mock_inDir.glob.assert_called_once_with('*_suffix.')
+    mock_inDir.glob.assert_called_once_with("*_suffix.")
     assert "Unsupported file format" in str(excinfo.value)
 
 
 def test_getAndCheckInputFilesempty_file_ext_and_suffix(mocker):
     mock_file = mocker.MagicMock()
-    mock_file.suffix = ''
+    mock_file.suffix = ""
     mock_inDir = mocker.MagicMock()
     mock_inDir.glob.return_value = [mock_file]
-    mock_path = mocker.patch('pathlib.Path')
+    mock_path = mocker.patch("pathlib.Path")
     mock_path.return_value = mock_inDir
 
-    inputDir = '/fake/dir'
-    folder = 'fake_folder'
+    inputDir = "/fake/dir"
+    folder = "fake_folder"
     with pytest.raises(AssertionError) as excinfo:
-        getInput.getAndCheckInputFiles(inputDir, folder, 'inputType', fileExt='', fileSuffix='')
+        getInput.getAndCheckInputFiles(inputDir, folder, "inputType", fileExt="", fileSuffix="")
 
-    mock_inDir.glob.assert_called_once_with('*.')
+    mock_inDir.glob.assert_called_once_with("*.")
     assert "Unsupported file format" in str(excinfo.value)
