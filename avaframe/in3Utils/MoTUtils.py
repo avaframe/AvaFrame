@@ -4,7 +4,6 @@ import subprocess
 import logging
 import pathlib
 import shutil
-from html.entities import entitydefs
 
 import numpy as np
 
