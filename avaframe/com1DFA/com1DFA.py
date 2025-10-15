@@ -1595,7 +1595,7 @@ def getRelThFromPart(cfg, releaseLine, relThField, thName):
 
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
-    elif cfg.getboolean("%sThFromShp" % thName):
+    elif cfg.getboolean("%sThFromFile" % thName):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
     else:
         relThForPart = cfg.getfloat("%sTh" % thName)

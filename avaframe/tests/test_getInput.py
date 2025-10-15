@@ -351,10 +351,10 @@ def test_updateThicknessCfg(tmp_path):
     assert cfg["INPUT"]["release2HS_relThCi95"] == "None|None"
 
     assert cfg["GENERAL"]["relTh"] == ""
-    assert cfg["GENERAL"].getboolean("relThFromShp") == True
+    assert cfg["GENERAL"].getboolean("relThFromFile") == True
     assert cfg["GENERAL"].getboolean("relThFromFile") == False
     assert cfg["GENERAL"]["entTh"] == ""
-    assert cfg["GENERAL"].getboolean("entThFromShp") == True
+    assert cfg["GENERAL"].getboolean("entThFromFile") == True
     assert cfg["INPUT"]["entrainmentScenario"] == "entrainment1HS"
     assert cfg["INPUT"]["entThId"] == "0"
     assert cfg["INPUT"]["entThThickness"] == "0.3"
@@ -404,7 +404,7 @@ def test_fetchReleaseFile(tmp_path):
     inputSimFiles = {"relFiles": [rel1, rel2]}
     cfg = configparser.ConfigParser()
     cfg["INPUT"] = {"releaseScenario": "rel1"}
-    cfg["GENERAL"] = {"relThFromShp": False}
+    cfg["GENERAL"] = {"relThFromFile": False}
     releaseScenario = "rel1"
     releaseList = ["rel1", "rel2"]
 
@@ -420,7 +420,7 @@ def test_fetchReleaseFile(tmp_path):
     cfg = configparser.ConfigParser()
     cfg["INPUT"] = {"releaseScenario": "rel2"}
     inputSimFiles = {"relFiles": [rel1, rel2]}
-    cfg["GENERAL"] = {"relThFromShp": True}
+    cfg["GENERAL"] = {"relThFromFile": True}
     cfg["INPUT"] = {
         "rel2_relThId": "0",
         "rel2_relThThickness": "2.",

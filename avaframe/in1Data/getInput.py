@@ -681,7 +681,7 @@ def fetchReleaseFile(inputSimFiles, releaseScenario, cfgSim, releaseList):
 
     # update config entry for release scenario, thickness and id
     cfgSim["INPUT"]["releaseScenario"] = str(releaseScenario)
-    if cfgSim["GENERAL"]["relThFromShp"] == "True":
+    if cfgSim["GENERAL"]["relThFromFile"] == "True":
         for scenario in releaseList:
             if scenario == releaseScenario:
                 cfgSim["INPUT"]["relThId"] = cfgSim["INPUT"][scenario + "_" + "relThId"]

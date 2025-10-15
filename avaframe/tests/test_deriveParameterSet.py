@@ -73,7 +73,7 @@ def test_getVariationDict(caplog):
     assert variations["simTypeList"][1] == "ent"
     assert np.array_equal(variations["rho"], np.asarray([300, 400]))
 
-    cfg["GENERAL"]["relThFromShp"] = "True"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = ""
     cfg["GENERAL"]["relThPercentVariation"] = "40$5"
@@ -195,7 +195,7 @@ def test_getThicknessValue():
     cfg["GENERAL"] = {
         "relThFromFile": "False",
         "relTh": "",
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relThPercentVariation": "40$3",
         "relThDistVariation": "",
     }
@@ -216,7 +216,7 @@ def test_getThicknessValue():
     cfg["GENERAL"] = {
         "relThFromFile": "False",
         "relTh": "",
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relThPercentVariation": "40$3",
         "relThDistVariation": "",
     }
@@ -239,7 +239,7 @@ def test_getThicknessValue():
     cfg["GENERAL"] = {
         "relThFromFile": "False",
         "relTh": "40$2",
-        "relThFromShp": "False",
+        "relThFromFile": "False",
         "relThPercentVariation": "",
         "relThDistVariation": "",
     }
@@ -261,7 +261,7 @@ def test_getThicknessValue():
     cfg["GENERAL"] = {
         "relThFromFile": "False",
         "relTh": "1.0",
-        "relThFromShp": "False",
+        "relThFromFile": "False",
         "relThPercentVariation": "",
         "relThDistVariation": "",
     }
@@ -282,7 +282,7 @@ def test_getThicknessValue():
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "entTh": "",
-        "entThFromShp": "True",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "entThDistVariation": "",
         "entThIfMissingInShp": "0.3",
@@ -306,7 +306,7 @@ def test_getThicknessValue():
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "entTh": "",
-        "entThFromShp": "True",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "entThDistVariation": "",
         "entThIfMissingInShp": "0.3",
@@ -328,7 +328,7 @@ def test_checkThicknessSettings():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "entThFromShp": "True",
+        "entThFromFile": "True",
         "entTh": "",
         "entThPercentVariation": "",
         "entThRangeVariation": "",
@@ -347,11 +347,11 @@ def test_checkThicknessSettings():
     with pytest.raises(AssertionError) as e:
         assert dP.checkThicknessSettings(cfg, thName, inputSimFiles)
     assert str(e.value) == "If %s is set to True - it is not allowed to set a value for %s" % (
-        "entThFromShp",
+        "entThFromFile",
         "entTh",
     )
 
-    cfg["GENERAL"]["entThFromShp"] = "False"
+    cfg["GENERAL"]["entThFromFile"] = "False"
     cfg["GENERAL"]["entTh"] = ""
 
     with pytest.raises(AssertionError) as e:
@@ -359,17 +359,17 @@ def test_checkThicknessSettings():
     assert str(
         e.value
     ) == "If %s is set to False and Entrainment area defined by a shapefile - it is required to set a value for %s" % (
-        "entThFromShp",
+        "entThFromFile",
         "entTh",
     )
 
-    cfg["GENERAL"]["entThFromShp"] = ""
+    cfg["GENERAL"]["entThFromFile"] = ""
 
     with pytest.raises(AssertionError) as e:
         assert dP.checkThicknessSettings(cfg, thName, inputSimFiles)
-    assert str(e.value) == "Check %s - needs to be True or False" % "entThFromShp"
+    assert str(e.value) == "Check %s - needs to be True or False" % "entThFromFile"
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = "1.0"
     inputSimFiles = {"entResInfo": {"flagRel": "Yes", "relThFileType": ".asc"}}
 
@@ -382,7 +382,7 @@ def test_checkThicknessSettings():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "relThFromShp": "False",
+        "relThFromFile": "False",
         "relTh": "",
         "relThPercentVariation": "",
         "relThRangeVariation": "",
@@ -404,7 +404,7 @@ def test_checkThicknessSettings():
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relTh": "",
         "relThPercentVariation": "",
         "relThRangeVariation": "50$4",
@@ -426,7 +426,7 @@ def test_appendShpThickness():
     cfg["GENERAL"] = {
         "secRelArea": "False",
         "simTypeActual": "null",
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relTh": "",
         "relThFromFile": "False",
         "relThPercentVariation": "",
@@ -448,7 +448,7 @@ def test_appendShpThickness():
     cfg["GENERAL"] = {
         "secRelArea": "False",
         "simTypeActual": "null",
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relTh": "",
         "relThFromFile": "False",
         "relThPercentVariation": "40$3",
@@ -472,7 +472,7 @@ def test_setThicknessValueFromVariation():
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
-        "relThFromShp": "True",
+        "relThFromFile": "True",
         "relTh": "",
         "relThFromFile": "False",
         "relThPercentVariation": "40$3",
@@ -511,7 +511,7 @@ def test_setThicknessValueFromVariation():
 
     cfg["GENERAL"] = {
         "secRelArea": "False",
-        "relThFromShp": "False",
+        "relThFromFile": "False",
         "relTh": "1.",
         "relThFromFile": "False",
         "relThPercentVariation": "40$3",
