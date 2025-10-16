@@ -94,6 +94,7 @@ gdal = "*"
 libgdal = "*"
 geos = "*"
 proj = "*"
+python = "<3.14"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
