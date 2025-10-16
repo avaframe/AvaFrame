@@ -943,7 +943,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     X1 = X / cos
     Y1 = Y
     relTh = Hini * (1 - X1 * X1 / (L_x * L_x) - Y * Y / (L_y * L_y))
-    # relTh = np.where(relTh < 0, 0, relTh)
+    relTh = np.where(relTh < 0, 0, relTh)
 
     relDict = {
         "relTh": relTh,
@@ -959,11 +959,12 @@ def getReleaseThickness(avaDir, cfg, demFile):
     polyline = {}
     polyline["x"] = L_x * np.cos(alpha) * cos
     polyline["y"] = L_x * np.sin(alpha)
-    relFileName = demFile.parent / "REL" / "rel1.shp"
+    fU.makeADir(demFile.parent / "RELShp")
+    relFileName = demFile.parent / "RELShp" / "rel1.shp"
     shpConv.writeLine2SHPfile(polyline, "rel1", str(relFileName))
 
     # write relTh to file
-    relThPath = demFile.parent / "RELTH"
+    relThPath = demFile.parent / "REL"
     fU.makeADir(relThPath)
     relThFileName = relThPath / "releaseThickness.asc"
     headerRelTh = {
