@@ -17,6 +17,7 @@ Computational Modules
    com5SnowSlide
    com6RockAvalanche
    com7Regional
+   com9MoTVoellmy
 
 Input/Transformation Modules
 ============================
