@@ -26,7 +26,6 @@ Installation on Windows:
 
         pip install avaframe==2.0aTODO
 
-#. Download the avaframe connector zip from here TODO
 #. Start QGis and go to `Plugins` -> `Manage and install plugins`
 #. Choose `All`, search for `AvaFrame` and install/update
 #. You find the `AvaFrame` toolset in the `Processing Toolbox`
@@ -37,6 +36,8 @@ Input
 ^^^^^
 
 For additional info, see also `NGI Dokumentation <https://github.com/norwegian-geotechnical-institute/MoT-Voellmy/blob/main/Documentation/MoT-Voellmy_use.md#raster-input-data>`_.
+
+Required is
 
 * digital elevation model as raster file with `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_.
 
