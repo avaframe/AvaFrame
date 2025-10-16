@@ -54,7 +54,7 @@ Computational modules
     * :doc:`moduleCom6RockAvalanche`
     * :doc:`moduleCom7Regional`
     * :doc:`moduleCom8MoTPSA`
-    * :doc:`moduleCom8MoTVoellmy`
+    * :doc:`moduleCom9MoTVoellmy`
 
 .. toctree::
    :maxdepth: 3
