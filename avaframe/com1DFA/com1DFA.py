@@ -526,7 +526,7 @@ def setThickness(cfg, lineTh, typeTh):
     """
 
     # create thickness flag name
-    thFlag = typeTh + "FromShp"
+    thFlag = typeTh + "FromFile"
     # set thickness source info
     if cfg["GENERAL"].getboolean(thFlag):
         if cfg["INPUT"]["thFromIni"] != "" and typeTh in cfg["INPUT"]["thFromIni"]:
