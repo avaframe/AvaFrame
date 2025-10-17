@@ -325,7 +325,7 @@ def run(optTuple):
             fpTravelAngleMaxArray = np.maximum(fpTravelAngleMaxArray, fpTravelAngleMaxList[i])
         if "fpTravelAngleMin" in outputs:
             fpTravelAngleMinArray = np.where(
-                (travelLengthMinArray >= 0) & (fpTravelAngleMinList[i] >= 0),
+                (fpTravelAngleMinArray >= 0) & (fpTravelAngleMinList[i] >= 0),
                 np.minimum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
                 np.maximum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
             )
