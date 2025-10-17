@@ -49,39 +49,8 @@ bibtex_bibfiles = ['references_all.bib']
 
 # alternative: use base requirements.txt in readthedocs.yml files to install
 # missing modules on rtd
-autosummary_mock_imports = [
-    'avaframe',
-    'avaframe.com1DFA.damCom1DFA',
-    'com1DFA.damCom1DFA',
-    'com1DFA.DFAfunctionsCython',
-    'com1DFA.DFAToolsCython',
-    'out3Plot.plotUtils',
-    'numpy',
-    'shapefile',
-    'scipy',
-    'matplotlib',
-    'glob',
-    'subprocess',
-    'shutil',
-    'math',
-    'pandas',
-    'copy',
-    'os',
-    'logging',
-    'time',
-    'mpl_toolkits',
-    'seaborn',
-    'shapely',
-    'configUpdater',
-    'configupdater',
-    'geopandas',
-    'tabulate',
-    'deepdiff',
-    'deepmerge',
-    'cmcrameri',
-    'pyshp',
-    'make_axes_locatable',
-]
+# Note: autosummary_mock_imports is not a valid Sphinx option, use autodoc_mock_imports instead
+autodoc_mock_imports = []
 autosummary_generate = True
 
 napoleon_google_docstring = True
