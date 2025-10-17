@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon as sPolygon
 
+
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
 elif platform.system() == "Darwin":
@@ -190,6 +191,8 @@ def com1DFAMain(cfgMain, cfgInfo=""):
         log.info("Overall (parallel) com1DFA computation took: %s s " % timeNeeded)
         log.info("--- ENDING (potential) PARALLEL PART ----")
 
+        # TODO: needs to be moved inside the outPlotAllPeakFunction
+        # dem for plot chosen there
         dem = com1DFATools.chooseDemPlot(dem, adaptedDemBackground=adaptDemPlot)
         # postprocessing: writing report, creating plots
         dem, plotDict, reportDictList, simDFNew = com1DFAPostprocess(
@@ -322,7 +325,8 @@ def com1DFAPostprocess(simDF, tCPUDF, simDFExisting, cfgMain, dem, reportDictLis
 
     # Generate plots for all peakFiles
     if exportData:
-        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
+        # TODO: if adaptedDEM this needs to be changed!!
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName)
     else:
         plotDict = ""
         # create contour line plot
@@ -405,6 +409,9 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=""):
     )
     nPartInitial = particles["nPart"]
 
+    # add reportAreaInfo to inputSimLines
+    inputSimLines["reportAreaInfo"] = reportAreaInfo
+
     # ------------------------
     #  Start time step computation
     Tsave, infoDict, contourDictXY = DFAIterate(
@@ -470,7 +477,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         )
 
     # set release thickness
-    if cfg["GENERAL"].getboolean("relThFromFile") is False:
+    if cfg["INPUT"]["relThFile"] == "":
         releaseLine = setThickness(cfg, inputSimLines["releaseLine"], "relTh")
         inputSimLines["releaseLine"] = releaseLine
     log.debug("Release area scenario: %s - perform simulations" % (relName))
@@ -480,14 +487,19 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         releaseLineBuffer = setThickness(cfg, inputSimLines["releaseLineBuffer"], "relTh")
         inputSimLines["releaseLineBuffer"] = releaseLineBuffer
 
-    if cfg.getboolean("GENERAL", "secRelArea"):
-        secondaryReleaseLine = setThickness(cfg, inputSimLines["secondaryReleaseLine"], "secondaryRelTh")
+    if (
+        cfg.getboolean("GENERAL", "secRelArea")
+        and inputSimLines["entResInfo"]["flagSecondaryRelease"] == "Yes"
+    ):
+        if cfg["INPUT"]["secondaryRelThFile"] == "":
+            secondaryReleaseLine = setThickness(cfg, inputSimLines["secondaryReleaseLine"], "secondaryRelTh")
+            inputSimLines["secondaryReleaseLine"] = secondaryReleaseLine
     else:
         inputSimLines["entResInfo"]["flagSecondaryRelease"] = "No"
         secondaryReleaseLine = None
-    inputSimLines["secondaryReleaseLine"] = secondaryReleaseLine
+        inputSimLines["secondaryReleaseLine"] = secondaryReleaseLine
 
-    if cfg["GENERAL"]["simTypeActual"] in ["ent", "entres"]:
+    if cfg["GENERAL"]["simTypeActual"] in ["ent", "entres"] and cfg["INPUT"]["entThFile"] == "":
         # set entrainment thickness
         entLine = setThickness(cfg, inputSimLines["entLine"], "entTh")
         inputSimLines["entLine"] = entLine
@@ -514,7 +526,7 @@ def setThickness(cfg, lineTh, typeTh):
     """
 
     # create thickness flag name
-    thFlag = typeTh + "FromShp"
+    thFlag = typeTh + "FromFile"
     # set thickness source info
     if cfg["GENERAL"].getboolean(thFlag):
         if cfg["INPUT"]["thFromIni"] != "" and typeTh in cfg["INPUT"]["thFromIni"]:
@@ -547,7 +559,7 @@ def prepareInputData(inputSimFiles, cfg):
 
         - relFile : str, path to release area file
         - demFile : str, path to dem file in Inputs/
-        - secondaryReleaseFile : str, path to secondaryRelease file
+        - secondaryRelFile : str, path to secondaryRelease file
         - entFiles : str, path to entrainment file
         - resFile : str, path to resistance file
         - entResInfo : flag dict
@@ -588,64 +600,129 @@ def prepareInputData(inputSimFiles, cfg):
     dOHeader = demOri["header"]
 
     # read data from relThFile if needed, already with correct mesh cell size
-    relThFieldData, inputSimFiles["relThFile"] = gI.initializeRelTh(cfg, dOHeader)
+    # TODO: remove if not required anymore
+    # relThFieldData, _ = gI.initializeRelTh(cfg, dOHeader)
 
-    # get line from release area polygon
-    releaseLine = shpConv.readLine(relFile, "release1", demOri)
-    releaseLine["file"] = relFile
-    releaseLine["type"] = "Release"
-    # check for holes in release area polygons
-    gI.checkForMultiplePartsShpArea(cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release")
+    if cfg["INPUT"]["relThFile"] == "":
+        # get line from release area polygon
+        releaseLine = shpConv.readLine(relFile, "release1", demOri)
+        releaseLine["file"] = relFile
+        releaseLine["type"] = "Release"
+        releaseLine["initializedFrom"] = "shapefile"
+        # check for holes in release area polygons
+        gI.checkForMultiplePartsShpArea(
+            cfg["GENERAL"]["avalancheDir"], releaseLine, "com1DFA", type="release"
+        )
+        relThFieldData = ""
+    else:
+        relRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
+        relRasterDict = IOf.readRaster(relRasterPath)
+        relThFieldData = relRasterDict["rasterData"]
+        releaseLine = {
+            "rasterData": relRasterDict["rasterData"],
+            "file": relRasterPath,
+            "type": "Release from raster",
+        }
+        releaseLine["initializedFrom"] = "raster"
+        releaseLine["Name"] = "from raster"
+        releaseLine["thickness"] = "from raster"
+        log.info("Set %s for relThField" % relRasterPath)
 
     # get line from secondary release area polygon
     if cfg["GENERAL"].getboolean("secRelArea"):
         if entResInfo["flagSecondaryRelease"] == "Yes":
-            secondaryReleaseFile = inputSimFiles["secondaryReleaseFile"]
-            secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, "", demOri)
-            secondaryReleaseLine["fileName"] = secondaryReleaseFile
-            secondaryReleaseLine["type"] = "Secondary release"
-            # check for holes in secondary release area polygons
-            gI.checkForMultiplePartsShpArea(
-                cfg["GENERAL"]["avalancheDir"],
-                secondaryReleaseLine,
-                "com1DFA",
-                type="secondary release",
-            )
+            if cfg["INPUT"]["secondaryRelThFile"] == "":
+                secondaryReleaseFile = inputSimFiles["secondaryRelFile"]
+                secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, "", demOri)
+                secondaryReleaseLine["fileName"] = secondaryReleaseFile
+                secondaryReleaseLine["type"] = "Secondary release"
+                secondaryReleaseLine["initializedFrom"] = "shapefile"
+                secondaryReleaseArea = secondaryReleaseFile.name
+                # check for holes in secondary release area polygons
+                gI.checkForMultiplePartsShpArea(
+                    cfg["GENERAL"]["avalancheDir"],
+                    secondaryReleaseLine,
+                    "com1DFA",
+                    type="secondary release",
+                )
+            else:
+                secRelRasterPath = pathlib.Path(
+                    cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["secondaryRelThFile"]
+                )
+                secrelRasterDict = IOf.readRaster(secRelRasterPath)
+                secondaryReleaseLine = {
+                    "rasterData": secrelRasterDict["rasterData"],
+                    "fileName": secRelRasterPath,
+                    "type": "Secondary release from raster",
+                }
+                secondaryReleaseLine["initializedFrom"] = "raster"
+                secondaryReleaseLine["Name"] = "from raster"
+                secondaryReleaseLine["thickness"] = "from raster"
+                secondaryReleaseArea = secRelRasterPath.name
         else:
             message = "No secondary release file found"
             log.error(message)
             raise FileNotFoundError(message)
     else:
         secondaryReleaseLine = None
+        secondaryReleaseArea = ""
         # set False
         entResInfo["flagSecondaryRelease"] = "No"
 
-    # get line from entrainement area polygon
+    # get line from entrainment area polygon
     if cfg["GENERAL"]["simTypeActual"] in ["ent", "entres"]:
-        entFile = inputSimFiles["entFile"]
-        entLine = shpConv.readLine(entFile, "", demOri)
-        entrainmentArea = entFile.name
-        entLine["fileName"] = entFile
-        entLine["type"] = "Entrainment"
-        # check for holes in entrainment area polygons
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], entLine, "com1DFA", type="entrainment"
-        )
+        if cfg["INPUT"]["entThFile"] == "":
+            entFile = inputSimFiles["entFile"]
+            entLine = shpConv.readLine(entFile, "", demOri)
+            entrainmentArea = entFile.name
+            entLine["fileName"] = entFile
+            entLine["type"] = "Entrainment"
+            entLine["initializedFrom"] = "shapefile"
+            # check for holes in entrainment area polygons
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], entLine, "com1DFA", type="entrainment"
+            )
+        else:
+            entRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["entThFile"])
+            entLineDict = IOf.readRaster(entRasterPath)
+            entLine = {
+                "rasterData": entLineDict["rasterData"],
+                "fileName": entRasterPath,
+                "type": "Entraiment from raster",
+            }
+            entLine["initializedFrom"] = "raster"
+            entLine["Name"] = "from raster"
+            entLine["thickness"] = "from raster"
+            entrainmentArea = entRasterPath.name
     else:
         entLine = None
         entrainmentArea = ""
 
-    # get line from resistance area polygon
+    # get line from resistance area polygon or raster
     if cfg["GENERAL"]["simTypeActual"] in ["entres", "res"]:
-        resFile = inputSimFiles["resFile"]
-        resLine = shpConv.readLine(resFile, "", demOri)
-        resistanceArea = resFile.name
-        resLine["fileName"] = resFile
-        resLine["type"] = "Resistance"
-        # check for holes in resistance area polygons
-        gI.checkForMultiplePartsShpArea(
-            cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
-        )
+        if inputSimFiles["entResInfo"]["resFileType"] == ".shp":
+            resFile = inputSimFiles["resFile"]
+            resLine = shpConv.readLine(resFile, "", demOri)
+            resistanceArea = resFile.name
+            resLine["fileName"] = resFile
+            resLine["type"] = "Resistance"
+            resLine["initializedFrom"] = "shapefile"
+            # check for holes in resistance area polygons
+            gI.checkForMultiplePartsShpArea(
+                cfg["GENERAL"]["avalancheDir"], resLine, "com1DFA", type="resistance"
+            )
+        else:
+            resRasterPath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["resFile"])
+            resLineDict = IOf.readRaster(resRasterPath)
+            resLine = {
+                "rasterData": resLineDict["rasterData"],
+                "fileName": resRasterPath,
+                "type": "Resistance from raster",
+            }
+            resLine["initializedFrom"] = "raster"
+            resLine["Name"] = "from raster"
+            resLine["thickness"] = "from raster"
+            resistanceArea = resRasterPath.name
     else:
         resLine = None
         resistanceArea = ""
@@ -672,10 +749,13 @@ def prepareInputData(inputSimFiles, cfg):
         "damLine": damLine,
         "entrainmentArea": entrainmentArea,
         "resistanceArea": resistanceArea,
+        "secondaryReleaseArea": secondaryReleaseArea,
         "entResInfo": entResInfo,
         "relThField": relThFieldData,
         "muFile": inputSimFiles["muFile"],
         "xiFile": inputSimFiles["xiFile"],
+        "kFile": inputSimFiles["kFile"],
+        "tauCFile": inputSimFiles["tauCFile"],
     }
 
     return demOri, inputSimLines
@@ -1009,6 +1089,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     cfgGen = cfg["GENERAL"]
     methodMeshNormal = cfg.getfloat("GENERAL", "methodMeshNormal")
     thresholdPointInPoly = cfgGen.getfloat("thresholdPointInPoly")
+    # this is from the current release scenario set in prepareInputData - where inputSimLines is created using releaseScenario info
     relThField = inputSimLines["relThField"]
 
     # -----------------------
@@ -1048,32 +1129,35 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
 
     else:
         releaseLine = inputSimLines["releaseLine"]
-        # check if release features overlap between features
-        geoTrans.prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
+        # create release area raster if not read from file
+        if inputSimLines["releaseLine"]["initializedFrom"] == "shapefile":
+            # check if release features overlap between features
+            geoTrans.prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
 
-    if len(relThField) == 0:
-        # if no release thickness field or function - set release according to shapefile or ini file
-        # this is a list of release rasters that we want to combine
-        releaseLine = geoTrans.prepareArea(
-            releaseLine,
-            dem,
-            np.sqrt(2),
-            thList=releaseLine["thickness"],
-            combine=True,
-            checkOverlap=False,
-        )
-    else:
-        # if relTh provided - set release thickness with field or function
-        releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
+            # if no release thickness field or function - set release according to shapefile or ini file
+            # this is a list of release rasters that we want to combine
+            releaseLine = geoTrans.prepareArea(
+                releaseLine,
+                dem,
+                np.sqrt(2),
+                thList=releaseLine["thickness"],
+                combine=True,
+                checkOverlap=False,
+            )
+
+    # set relRaster
+    relRaster = releaseLine["rasterData"]
+    log.info("Release area initialized using %s " % releaseLine["initializedFrom"])
 
     # compute release area
     header = dem["header"]
     csz = header["cellsize"]
-    relRaster = releaseLine["rasterData"]
     # for area computation use smaller threshold to identify raster cells that lie within release line
     # as for creating particles a bigger radius is chosen as particles that lie outside are removed afterwards
-    releaseLineArea = releaseLine.copy()
-    relAreaActualList, relAreaProjectedList, _ = gI.computeAreasFromRasterAndLine(releaseLineArea, dem)
+    releaseInfoDict = copy.deepcopy(releaseLine)
+    relAreaActualList, relAreaProjectedList, releaseInfoDict = gI.computeAreasFromRasterAndLine(
+        releaseInfoDict, dem
+    )
     relAreaProjected = np.sum(relAreaProjectedList)
     relAreaActual = np.sum(relAreaActualList)
     reportAreaInfo = {
@@ -1086,6 +1170,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # ------------------------
     # initialize simulation
     # create primary release area particles and fields
+    # TODO: check if same header if release read from raster
     releaseLine["header"] = dem["originalHeader"]
     inputSimLines["releaseLine"]["header"] = dem["originalHeader"]
     # export release area raster to file
@@ -1093,7 +1178,10 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
         outDir = pathlib.Path(cfgGen["avalancheDir"], "Outputs", "internalRasters")
         fU.makeADir(outDir)
         IOf.writeResultToRaster(dem["originalHeader"], relRaster, (outDir / "releaseRaster"), flip=True)
-        log.info("Release area raster derived from shp file saved to %s" % str(outDir / "releaseRaster"))
+        log.info(
+            "Release area raster derived from %s saved to %s"
+            % (releaseLine["initializedFrom"], str(outDir / "releaseRaster"))
+        )
     particles = initializeParticles(
         cfgGen,
         releaseLine,
@@ -1136,7 +1224,6 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     secondaryReleaseInfo, reportAreaInfo = initializeSecRelease(
         inputSimLines, dem, relRaster, reportAreaInfo
     )
-
     particles["secondaryReleaseInfo"] = secondaryReleaseInfo
 
     # initialize entrainment and resistance
@@ -1156,7 +1243,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     entrEnthRaster = geoTrans.checkOverlap(entrEnthRaster, relRaster, "Entrainment", "Release", crop=True)
     # check for overlap with the secondary release area
     if secondaryReleaseInfo["flagSecondaryRelease"] == "Yes":
-        for secRelRaster in secondaryReleaseInfo["rasterData"]:
+        for secIndex, secRelRaster in enumerate(secondaryReleaseInfo["rasterData"]):
             entrMassRaster = geoTrans.checkOverlap(
                 entrMassRaster,
                 secRelRaster,
@@ -1171,6 +1258,36 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
                 "Secondary release ",
                 crop=True,
             )
+            # export secondary release raster used for computations (after cutting potential overlap with release)
+            if cfg["EXPORTS"].getboolean("exportRasters"):
+                outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
+                IOf.writeResultToRaster(
+                    dem["originalHeader"],
+                    secRelRaster,
+                    (outDir / ("secondaryReleaseRaster_%d" % secIndex)),
+                    flip=True,
+                )
+                log.info(
+                    "SecondaryRelease area raster derived from %s saved to %s"
+                    % (
+                        inputSimLines["entResInfo"]["secondaryRelThFileType"],
+                        str(outDir / ("secondaryReleaseRaster_%d" % secIndex)),
+                    )
+                )
+    # export entrainment raster used for computations (after cutting potential overlap with release or secondary release)
+    if cfg["EXPORTS"].getboolean("exportRasters"):
+        outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
+        IOf.writeResultToRaster(
+            dem["originalHeader"],
+            entrMassRaster / cfg["GENERAL"].getfloat("rhoEnt"),
+            (outDir / "entrainmentRaster"),
+            flip=True,
+        )
+        log.info(
+            "Entrainment area raster derived from %s saved to %s"
+            % (inputSimLines["entResInfo"]["entThFileType"], str(outDir / "entrainmentRaster"))
+        )
+
     # surfacic entrainment mass available (unit kg/m²)
     fields["entrMassRaster"] = entrMassRaster
     fields["entrEnthRaster"] = entrEnthRaster
@@ -1221,7 +1338,7 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", relThField=""):
+def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", relThField="", thName="rel"):
     """Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -1239,6 +1356,8 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
         info on input files; real releaseline info required for iniStep
     relThField: 2D numpy array
         if the release thickness is not uniform, give here the releaseRaster
+    thName: str
+        name rel, secondaryRel
 
     Returns
     -------
@@ -1268,12 +1387,12 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     if len(relThField) == 0:
         relRaster = releaseLine["rasterData"]
     else:
-        log.info("Release thickness read from relThFile")
+        log.info("Release thickness read from %sThFile" % (thName))
         relRaster = relThField
     areaRaster = dem["areaRaster"]
 
     # get the initialization method used
-    relThForPart = getRelThFromPart(cfg, releaseLine, relThField)
+    relThForPart = getRelThFromPart(cfg, releaseLine, relThField, thName)
     massPerPart, nPPK = com1DFATools.getPartInitMethod(cfg, csz, relThForPart)
 
     # initialize arrays
@@ -1285,7 +1404,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     else:
         indRelYReal, indRelXReal = np.nonzero(relRaster)
     iReal = list(zip(indRelYReal, indRelXReal))
-
     # get approximate ratio between projected and real release area
     # because relRasterMask has a none 0 value where the release is but we want a 1 there
     realArea = np.sum(areaRaster * np.where(relRasterMask > 0, 1, 0))
@@ -1316,8 +1434,8 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
         idFixed = np.empty(0)
         if len(relThField) != 0 and cfg.getboolean("iniStep"):
             # set release thickness to a constant value for initialisation
-            relRaster = np.where(relRaster > 0.0, cfg.getfloat("relTh"), 0.0)
-            log.warning("relThField!= 0, but relRaster set to relTh value (from ini)")
+            relRaster = np.where(relRaster > 0.0, cfg.getfloat("%sTh" % thName), 0.0)
+            log.warning("%sThField!= 0, but relRaster set to %sTh value (from ini)" % (thName, thName))
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
@@ -1396,10 +1514,15 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["dmEnt"] = np.zeros(np.shape(hPartArray))
 
     # remove particles that might lay outside of the release polygon
-    if not cfg.getboolean("iniStep") and not cfg.getboolean("initialiseParticlesFromFile"):
+    if (
+        not cfg.getboolean("iniStep")
+        and not cfg.getboolean("initialiseParticlesFromFile")
+        and len(relThField) == 0
+    ):
         particles = geoTrans.checkParticlesInRelease(
             particles, releaseLine, cfg.getfloat("thresholdPointInPoly")
         )
+        log.info("Particles that lie outside of release polygon removed")
 
     # add a particles ID:
     # integer ranging from 0 to nPart in the initialisation.
@@ -1450,7 +1573,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     return particles
 
 
-def getRelThFromPart(cfg, releaseLine, relThField):
+def getRelThFromPart(cfg, releaseLine, relThField, thName):
     """get release thickness for initialising particles - use max value
 
     Parameters
@@ -1461,6 +1584,8 @@ def getRelThFromPart(cfg, releaseLine, relThField):
         info on releaseline (thickness)
     relThField: numpy array or str
         release thickness field if used, else empty string
+    thName: str
+        name of thickness info: rel, secondaryRel
 
     Returns
     --------
@@ -1470,10 +1595,10 @@ def getRelThFromPart(cfg, releaseLine, relThField):
 
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
-    elif cfg.getboolean("relThFromShp"):
+    elif cfg.getboolean("%sThFromFile" % thName):
         relThForPart = np.amax(np.asarray(releaseLine["thickness"], dtype=float))
     else:
-        relThForPart = cfg.getfloat("relTh")
+        relThForPart = cfg.getfloat("%sTh" % thName)
 
     return relThForPart
 
@@ -1636,39 +1761,55 @@ def initializeSecRelease(inputSimLines, dem, relRaster, reportAreaInfo):
         log.info("Secondary release area features: %s" % (secondaryReleaseInfo["Name"]))
         secondaryReleaseInfo["header"] = dem["originalHeader"]
 
-        # fetch secondary release areas
-        secondaryReleaseInfo = geoTrans.prepareArea(
-            secondaryReleaseInfo,
-            dem,
-            np.sqrt(2),
-            thList=secondaryReleaseInfo["thickness"],
-            combine=False,
-            checkOverlap=False,
-        )
+        if secondaryReleaseInfo["initializedFrom"] == "shapefile":
+            # fetch secondary release areas
+            secondaryReleaseInfo = geoTrans.prepareArea(
+                secondaryReleaseInfo,
+                dem,
+                np.sqrt(2),
+                thList=secondaryReleaseInfo["thickness"],
+                combine=False,
+                checkOverlap=False,
+            )
         # remove overlaping parts of the secondary release area with the main release areas
         noOverlaprasterList = []
-        for secRelRatser, secRelName in zip(
-            secondaryReleaseInfo["rasterData"], secondaryReleaseInfo["Name"]
-        ):
-            noOverlaprasterList.append(
+        if secondaryReleaseInfo["initializedFrom"] == "raster":
+            noOverlaprasterList = [
                 geoTrans.checkOverlap(
-                    secRelRatser,
+                    secondaryReleaseInfo["rasterData"],
                     relRaster,
-                    "Secondary release " + secRelName,
+                    "Secondary release " + secondaryReleaseInfo["Name"],
                     "Release",
                     crop=True,
                 )
-            )
-
+            ]
+            secondaryReleaseInfo["Name"] = [secondaryReleaseInfo["Name"]]
+        else:
+            for secRelRatser, secRelName in zip(
+                secondaryReleaseInfo["rasterData"], secondaryReleaseInfo["Name"]
+            ):
+                noOverlaprasterList.append(
+                    geoTrans.checkOverlap(
+                        secRelRatser,
+                        relRaster,
+                        "Secondary release " + secRelName,
+                        "Release",
+                        crop=True,
+                    )
+                )
         secondaryReleaseInfo["flagSecondaryRelease"] = "Yes"
         # replace the rasterData with noOverlaprasterList (which is the list of rasterData without the overlapping
         # part with the release)
+        secRelInfoCopy = copy.deepcopy(secondaryReleaseInfo)
+        nameListSecRel = secRelInfoCopy["Name"]
+        thicknessListSecRel = secRelInfoCopy["thickness"]
         secondaryReleaseInfo["rasterData"] = noOverlaprasterList
         reportAreaInfo["secRelArea"] = {
             "type": "columns",
-            "Secondary release area scenario": secondaryReleaseInfo["fileName"].stem,
-            "features": secondaryReleaseInfo["Name"].copy(),
-            "thickness [m]": secondaryReleaseInfo["thickness"].copy(),
+            "Secondary release area scenario": secRelInfoCopy["fileName"].stem,
+            "features": nameListSecRel,
+            "thickness [m]": thicknessListSecRel,
+            "features released at time [s]": [],
         }
     else:
         secondaryReleaseInfo = {}
@@ -1712,19 +1853,9 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entrainmentArea = entLine["fileName"]
         log.info("Initializing entrainment area: %s" % (entrainmentArea))
         log.info("Entrainment area features: %s" % (entLine["Name"]))
-        entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine["thickness"])
+        if entLine["initializedFrom"] == "shapefile":
+            entLine = geoTrans.prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine["thickness"])
         entrMassRaster = entLine["rasterData"]
-        if cfg["EXPORTS"].getboolean("exportRasters"):
-            outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
-            IOf.writeResultToRaster(
-                dem["originalHeader"],
-                entrMassRaster,
-                (outDir / "entrainmentRaster"),
-                flip=True,
-            )
-            log.info(
-                "Release area raster derived from shp file saved to %s" % str(outDir / "entrainmentRaster")
-            )
         # ToDo: not used in samos but implemented
         # tempRaster = cfg['GENERAL'].getfloat('entTempRef') + (dem['rasterData'] - cfg['GENERAL'].getfloat('entMinZ'))
         # * cfg['GENERAL'].getfloat('entTempGrad')
@@ -1792,8 +1923,15 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
         resistanceArea = resLine["fileName"]
         log.info("Initializing resistance area: %s" % (resistanceArea))
         log.info("Resistance area features: %s" % (resLine["Name"]))
-        resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
-        mask = resLine["rasterData"]
+        if resLine["initializedFrom"] == "shapefile":
+            resLine = geoTrans.prepareArea(resLine, dem, thresholdPointInPoly)
+            mask = resLine["rasterData"]
+        else:
+            log.info(
+                "Resistance area where values > 0, no resistance everywhere else based on raster file %s"
+                % resLine["fileName"]
+            )
+            mask = np.where(resLine["rasterData"] > 0, 1, 0)
         # Combine constants (d, cw, sres) to one parameter cRes
         cResRaster = cRes * mask
         reportAreaInfo["resistance"] = "Yes"
@@ -1976,7 +2114,15 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         log.debug("Computing time step t = %f s, dt = %f s" % (t, dt))
         # Perform computations
         particles, fields, zPartArray0, tCPU, dem = computeEulerTimeStep(
-            cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType
+            cfgGen,
+            particles,
+            fields,
+            zPartArray0,
+            dem,
+            tCPU,
+            frictType,
+            resistanceType,
+            inputSimLines["reportAreaInfo"],
         )
         # set max values of fields to dataframe
         if cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"):
@@ -2368,7 +2514,9 @@ def writeMBFile(infoDict, avaDir, logName):
             )
 
 
-def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType):
+def computeEulerTimeStep(
+    cfg, particles, fields, zPartArray0, dem, tCPU, frictType, resistanceType, reportAreaInfo
+):
     """compute next time step using an euler forward scheme
 
     Parameters
@@ -2400,6 +2548,8 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         computation time dictionary
     dem: dict
         dictionary with dem information including the adapted DEM
+    reportAreaInfo: dict
+        updated secondaryReleaseInfo dictionary with report area information
     """
 
     # update cRes and detK rasters according to thresholds of FV and FT
@@ -2468,7 +2618,9 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
     # release secondary release area?
     if particles["secondaryReleaseInfo"]["flagSecondaryRelease"] == "Yes":
-        particles, zPartArray0 = releaseSecRelArea(cfg, particles, fields, dem, zPartArray0)
+        particles, zPartArray0, reportAreaInfo = releaseSecRelArea(
+            cfg, particles, fields, dem, zPartArray0, reportAreaInfo
+        )
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -2501,7 +2653,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     return particles, fields, zPartArray0, tCPU, dem
 
 
-def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
+def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0, reportAreaInfo):
     """Release secondary release area if trigered
     Initialize particles of the trigured secondary release area and add them
     to the simulation (particles dictionary)
@@ -2520,9 +2672,15 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
         if mask.any():
             # create secondary release area particles
             log.info("Initializing secondary release area feature %s" % secRelRasterName)
-            secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, count)
-            secRelInfo["rasterData"] = secRelRaster
-            secRelParticles = initializeParticles(cfg, secRelInfo, dem)
+            if secondaryReleaseInfo["initializedFrom"] == "shapefile":
+                secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, count)
+                secRelInfo["rasterData"] = secRelRaster
+                secRelParticles = initializeParticles(cfg, secRelInfo, dem, thName="secondaryRel")
+            else:
+                secondaryReleaseInfo["rasterData"] = secRelRaster
+                secRelParticles = initializeParticles(
+                    cfg, secondaryReleaseInfo, dem, relThField=secRelRaster, thName="secondaryRel"
+                )
             # release secondary release area by just appending the particles
             log.info(
                 "Releasing secondary release area %s at t = %.2f s" % (secRelRasterName, particles["t"])
@@ -2532,6 +2690,9 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
             indexRel.append(secRelRasterName)
             # save initial z position for travel angle computation
             zPartArray0 = np.append(zPartArray0, copy.deepcopy(secRelParticles["z"]))
+            reportAreaInfo["secRelArea"]["features released at time [s]"].append(
+                "%s_t=%.2f" % (secRelRasterName, particles["t"])
+            )
         count = count + 1
 
     secondaryReleaseInfo["rasterData"] = secRelRasterList
@@ -2540,14 +2701,19 @@ def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
         iR = secRelRasterNameList.index(item)
         # remove it from the secondary release area list
         secRelRasterList.pop(iR)
-        secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, iR)
+        if secondaryReleaseInfo["initializedFrom"] == "shapefile":
+            secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, iR)
+        else:
+            secondaryReleaseInfo["thickness"] = ""
+            secondaryReleaseInfo["fileName"] = ""
+            secondaryReleaseInfo["header"] = ""
         secRelRasterNameList.pop(iR)
 
     # update secondaryReleaseInfo
     secondaryReleaseInfo["rasterData"] = secRelRasterList
     particles["secondaryReleaseInfo"] = secondaryReleaseInfo
 
-    return particles, zPartArray0
+    return particles, zPartArray0, reportAreaInfo
 
 
 def savePartToPickle(dictList, outDir, logName):
@@ -2871,8 +3037,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         log.info("New line in variationDF-------")
         # convert full configuration to dict
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
+
         # create release scenario name for simulation name
-        rel, cfgSim = gI.fetchReleaseFile(
+        rel, cfgSim, relThFile = gI.fetchReleaseFile(
             inputSimFiles,
             row._asdict()["releaseScenario"],
             cfgSim,
@@ -2928,44 +3095,91 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         # check if DEM in Inputs has desired mesh size
         pathToDem = dP.checkRasterMeshSize(cfgSim, inputSimFiles["demFile"], "DEM")
         cfgSim["INPUT"]["DEM"] = pathToDem
-        if modName == "com1DFA":
-            if (
-                cfgSim["GENERAL"]["relThFromFile"] == "True"
-                or cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy"
-            ):
-                dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
-        elif modName == "com8MoTPSA":
-            if cfgSim["GENERAL"]["relThFromFile"] == "True":
-                dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
+        dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
 
-        # check if RELTH in Inputs has desired mesh size
-        if cfgSim["GENERAL"]["relThFromFile"] == "True":
-            pathToRelTh = dP.checkExtentAndCellSize(cfgSim, inputSimFiles["relThFile"], dem, "RELTH")
-            cfgSim["INPUT"]["relThFile"] = pathToRelTh
-        else:
-            cfgSim["INPUT"]["relThFile"] = ""
+        # check extent of inputs read from raster have correct extent and cellSize
+        # first release area
+        if inputSimFiles["entResInfo"]["relThFileType"] in [".asc", ".tif"]:
+            pathToRel, pathToRelFull, remeshedRel = dP.checkExtentAndCellSize(cfgSim, relThFile, dem, "rel")
+            cfgSim["INPUT"]["relThFile"] = pathToRel
+            inputSimFiles["entResInfo"]["relRemeshed"] = remeshedRel
+
+        # secondary release area
+        if (
+            inputSimFiles["entResInfo"]["secondaryRelThFileType"] in [".asc", ".tif"]
+            and cfgSim["GENERAL"]["secRelArea"] == "True"
+        ):
+            pathToSecRel, pathToSecRelFull, remeshedSecRel = dP.checkExtentAndCellSize(
+                cfgSim, inputSimFiles["secondaryRelThFile"], dem, "secondaryRel"
+            )
+            cfgSim["INPUT"]["secondaryRelThFile"] = pathToSecRel
+            inputSimFiles["entResInfo"]["secondaryRelRemeshed"] = remeshedSecRel
 
         if modName == "com1DFA":
             # check if spatialVoellmy is chosen that friction fields have correct extent
             if cfgSim["GENERAL"]["frictModel"].lower() == "spatialvoellmy":
+                dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
                 for fric in ["mu", "xi"]:
-                    pathToFric = dP.checkExtentAndCellSize(cfgSim, inputSimFiles["%sFile" % fric], dem, fric)
-                    cfgSim["INPUT"]["%sFile" % fric] = pathToFric
+                    if inputSimFiles["entResInfo"][fric] == "Yes":
+                        pathToFric, _, remeshedFric = dP.checkExtentAndCellSize(
+                            cfgSim, inputSimFiles["%sFile" % fric], dem, fric
+                        )
+                        cfgSim["INPUT"]["%sFile" % fric] = pathToFric
+                        inputSimFiles["entResInfo"]["%sRemeshed" % fric] = remeshedFric
+                    else:
+                        message = (
+                            "spatialVoellmy friction model: %s file in Inputs/RASTERS with file ending _%s not found"
+                            % (fric, fric)
+                        )
+                        log.error(message)
+                        raise FileNotFoundError(message)
 
             # add info about dam file path to the cfg
             if cfgSim["GENERAL"]["dam"] == "True" and inputSimFiles["damFile"] is not None:
                 cfgSim["INPUT"]["DAM"] = str(pathlib.Path("DAM", inputSimFiles["damFile"].name))
 
+        # if ta0, mu, k used in com8 and com9 check extent of cellSize
+        if modName in ["com8MoTPSA", "com9MoTVoellmy"]:
+            dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
+            if inputSimFiles["entResInfo"]["tauC"] == "Yes":
+                pathToFric, pathToFricFull, remeshedFric = dP.checkExtentAndCellSize(
+                    cfgSim, inputSimFiles["tauCFile"], dem, "tauC"
+                )
+                cfgSim["INPUT"]["tauCFile"] = pathToFric
+                inputSimFiles["entResInfo"]["tauCRemeshed"] = remeshedFric
+            # check if physical parameters = variable is chosen that friction fields have correct extent
+            if cfgSim["Physical_parameters"]["Parameters"] == "auto":
+                dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
+                for fric in ["mu", "k"]:
+                    if inputSimFiles["entResInfo"][fric] == "Yes":
+                        pathToFric, pathToFricFull, remeshedFric = dP.checkExtentAndCellSize(
+                            cfgSim, inputSimFiles["%sFile" % fric], dem, fric
+                        )
+                        cfgSim["INPUT"]["%sFile" % fric] = pathToFric
+                        inputSimFiles["entResInfo"]["%sRemeshed" % fric] = remeshedFric
+
         # add info about entrainment file path to the cfg
         if "ent" in row._asdict()["simTypeList"] and inputSimFiles["entFile"] is not None:
-            cfgSim["INPUT"]["entrainment"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
+            if inputSimFiles["entResInfo"]["entThFileType"] != ".shp":
+                pathToEnt, pathToEntFull, remeshedEnt = dP.checkExtentAndCellSize(
+                    cfgSim, inputSimFiles["entThFile"], dem, "ent"
+                )
+                cfgSim["INPUT"]["entThFile"] = pathToEnt
+                inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
+            cfgSim["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
 
         # add info about entrainment file path to the cfg
         if "res" in row._asdict()["simTypeList"] and inputSimFiles["resFile"] is not None:
-            cfgSim["INPUT"]["resistance"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
+            if inputSimFiles["entResInfo"]["resFileType"] != ".shp":
+                pathToRes, pathToResFull, remeshedRes = dP.checkExtentAndCellSize(
+                    cfgSim, inputSimFiles["resFile"], dem, "res"
+                )
+                cfgSim["INPUT"]["resFile"] = pathToRes
+                inputSimFiles["entResInfo"]["resRemeshed"] = remeshedRes
+            cfgSim["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", inputSimFiles["resFile"].name))
 
         # add thickness values if read from shp and not varied
-        cfgSim = dP.appendShpThickness(cfgSim)
+        cfgSim = dP.appendThicknessToCfg(cfgSim)
 
         # check differences to default and add indicator to name
         defID, _ = com1DFATools.compareSimCfgToDefaultCfgCom1DFA(cfgSim, module)
@@ -2979,7 +3193,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
         if modName == "com1DFA":
             # if frictModel is samosATAuto compute release vol
             if cfgSim["GENERAL"]["frictModel"].lower() == "samosatauto":
-                relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
+                relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryRelFile"])
             else:
                 relVolume = ""
 
@@ -2993,7 +3207,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             frictIndi = com1DFATools.setFrictTypeIndicator(cfgSim)
 
         elif modName == "com8MoTPSA":
-            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryReleaseFile"])
+            relVolume = fetchRelVolume(rel, cfgSim, pathToDemFull, inputSimFiles["secondaryRelFile"])
 
             # set Volume class identificator
             volIndi = setVolumeIndicator(cfgSim, relVolume)
@@ -3107,7 +3321,7 @@ def getSimTypeList(standardCfg, simTypeList, inputSimFiles):
         if entResInfo["flagSecondaryRelease"] == "No":
             standardCfg["GENERAL"]["secRelArea"] = "False"
         else:
-            log.info("Using the secondary release area file: %s" % inputSimFiles["secondaryReleaseFile"])
+            log.info("Using the secondary release area file: %s" % inputSimFiles["secondaryRelFile"])
 
     return standardCfg, simTypeList
 
@@ -3247,38 +3461,26 @@ def initializeRelVol(cfg, demVol, releaseFile, radius, releaseType="primary"):
     else:
         typeTh = "secondaryRelTh"
 
-    # create release line
-    releaseLine = {}
-    releaseLine = shpConv.readLine(releaseFile, "release1", demVol)
-    # check if release features overlap between features
-    thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
-    geoTrans.prepareArea(releaseLine, demVol, thresholdPointInPoly, combine=True, checkOverlap=True)
-    releaseLine["type"] = "Release"
-
     # check if release thickness provided as field or constant value
-    # TODO why only for releaseType primary?
-    if cfg["GENERAL"]["relThFromFile"] == "True" and releaseType == "primary":
+    if cfg["INPUT"][(typeTh + "File")] != "":
         # read relThField from file
-        relThFilePath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"]["relThFile"])
+        relThFilePath = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Inputs", cfg["INPUT"][typeTh + "File"])
         relThFieldFull = IOf.readRaster(relThFilePath)
         relThField = relThFieldFull["rasterData"]
 
-        # create raster from polygon
-        releaseLine = geoTrans.prepareArea(releaseLine, demVol, radius, combine=True, checkOverlap=False)
-
         # mask the relThField with raster from polygon
-        releaseLineMask = np.ma.masked_where(releaseLine["rasterData"] == 0.0, releaseLine["rasterData"])
-        releaseLineField = np.ma.masked_where(np.ma.getmask(releaseLineMask), relThField)
-        relVolumeField = (
-            np.ma.masked_where(np.ma.getmask(releaseLineMask), relThField) * demVol["areaRaster"]
-        )
+        releaseLineMask = np.ma.masked_where(relThField == 0.0, relThField)
+        relVolumeField = releaseLineMask * demVol["areaRaster"]
         relVolume = np.nansum(relVolumeField)
 
-        if debugPlot:
-            debPlot.plotVolumeRelease(releaseLine, relThField, releaseLineField)
     else:
-        relThField = ""
-
+        # create release line
+        releaseLine = {}
+        releaseLine = shpConv.readLine(releaseFile, "release1", demVol)
+        # check if release features overlap between features
+        thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
+        geoTrans.prepareArea(releaseLine, demVol, thresholdPointInPoly, combine=True, checkOverlap=True)
+        releaseLine["type"] = "Release"
         # set thickness values on releaseLine
         releaseLine = setThickness(cfg, releaseLine, typeTh)
         # when creating raster from polygon apply release thickness

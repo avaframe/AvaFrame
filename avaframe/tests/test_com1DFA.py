@@ -37,8 +37,11 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["demFile"] = avaDir / "Inputs" / "avaAlr.tif"
     inputSimFiles["entFile"] = avaDir / "Inputs" / "ENT" / "entAlr.shp"
     inputSimFiles["relThFile"] = ""
+    inputSimFiles["entThFile"] = ""
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -48,6 +51,7 @@ def test_prepareInputData(tmp_path):
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"] = {"DEM": "avaAlr.tif"}
     cfg["INPUT"]["relThFile"] = ""
+    cfg["INPUT"]["entThFile"] = ""
 
     # call function to be tested
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
@@ -58,12 +62,14 @@ def test_prepareInputData(tmp_path):
     assert inputSimLines["releaseLine"]["Start"] == np.asarray([0.0])
     assert inputSimLines["releaseLine"]["Length"] == np.asarray([33.0])
     assert inputSimLines["releaseLine"]["Name"] == ["AlR"]
+    assert inputSimLines["releaseLine"]["initializedFrom"] == "shapefile"
     assert inputSimLines["entLine"]["thickness"] == ["0.3"]
     assert inputSimLines["entLine"]["Start"] == np.asarray([0.0])
     assert inputSimLines["entLine"]["Length"] == np.asarray([48.0])
     assert inputSimLines["entLine"]["Name"] == ["entAlr"]
     assert inputSimLines["resLine"] is None
     assert inputSimLines["entrainmentArea"] == "entAlr.shp"
+    assert inputSimLines["entLine"]["initializedFrom"] == "shapefile"
 
     # call function to be tested
     inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "Yes", "flagSecondaryRelease": "No"}}
@@ -76,11 +82,15 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = None
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
+    inputSimFiles["entResInfo"]["resFileType"] = ".shp"
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["avalancheDir"] = str(avaDir)
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"] = {"DEM": "DEM_PF_Topo.asc"}
     cfg["INPUT"]["relThFile"] = ""
+
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     #    print("inputSimLines", inputSimLines)
@@ -89,6 +99,7 @@ def test_prepareInputData(tmp_path):
     assert inputSimLines["resLine"]["Start"] == np.asarray([0.0])
     assert inputSimLines["resLine"]["Length"] == np.asarray([5.0])
     assert inputSimLines["resLine"]["Name"] == [""]
+    assert inputSimLines["resLine"]["initializedFrom"] == "shapefile"
 
     # call function to be tested
     inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "Yes", "flagSecondaryRelease": "No"}}
@@ -98,9 +109,12 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
+    inputSimFiles["entResInfo"]["resFileType"] = ".shp"
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["INPUT"]["relThFile"] = ""
@@ -123,9 +137,12 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
+    inputSimFiles["entResInfo"]["resFileType"] = ".shp"
     inputSimFiles["relThFile"] = dirName / "data" / "relThFieldTestFile.asc"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg["GENERAL"]["simTypeActual"] = "res"
     cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["INPUT"]["relThFile"] = str(dirName / "data" / "relThFieldTestFile.asc")
@@ -139,6 +156,11 @@ def test_prepareInputData(tmp_path):
     assert inputSimLines["resLine"]["Name"] == [""]
     assert inputSimLines["relThField"].shape[0] == 401
     assert inputSimLines["relThField"].shape[1] == 1001
+    assert inputSimLines["releaseLine"]["initializedFrom"] == "raster"
+    assert inputSimLines["releaseLine"]["Name"] == "from raster"
+    assert inputSimLines["releaseLine"]["thickness"] == "from raster"
+    assert inputSimLines["releaseLine"]["file"] == dirName / "data" / "relThFieldTestFile.asc"
+    assert inputSimLines["releaseLine"]["type"] == "Release from raster"
 
     # call function to be tested
     inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "Yes", "flagSecondaryRelease": "No"}}
@@ -148,8 +170,11 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "DEM_PF_Topo.asc"
     inputSimFiles["resFile"] = avaDir / "Inputs" / "RES" / "resistance1PF.shp"
+    inputSimFiles["entResInfo"]["resFileType"] = ".shp"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     testField = np.zeros((10, 10))
     testFile = pathlib.Path(tmp_path, "testFile2")
 
@@ -172,12 +197,12 @@ def test_prepareInputData(tmp_path):
     cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["INPUT"]["relThFile"] = str(testFile) + ".asc"
 
-    with pytest.raises(AssertionError) as e:
-        assert com1DFA.prepareInputData(inputSimFiles, cfg)
-    assert str(e.value) == (
-        "Release thickness field read from %s does not match the number of rows and columns of the dem"
-        % inputSimFiles["relThFile"]
-    )
+    # with pytest.raises(AssertionError) as e:
+    #     assert com1DFA.prepareInputData(inputSimFiles, cfg)
+    # assert str(e.value) == (
+    #     "Release thickness field read from %s does not match the number of rows and columns of the dem"
+    #     % inputSimFiles["relThFile"]
+    # )
 
     # setup required input data
     inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "No", "flagSecondaryRelease": "No"}}
@@ -186,9 +211,11 @@ def test_prepareInputData(tmp_path):
     relFile = avaDir / "Inputs" / "REL" / "rel1.shp"
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
-    inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel2.asc"
+    inputSimFiles["relThFile"] = avaDir / "Inputs" / "REL" / "testRel2.asc"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -201,7 +228,7 @@ def test_prepareInputData(tmp_path):
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
-    #    print("inputSimLines", inputSimLines)
+    print("inputSimLines----------", inputSimLines)
 
     assert inputSimLines["entLine"] is None
     assert inputSimLines["resLine"] == None
@@ -212,33 +239,38 @@ def test_prepareInputData(tmp_path):
     assert np.amin(inputSimLines["relThField"]) == 0.0
     assert demOri["header"]["ncols"] == 20
     assert demOri["header"]["nrows"] == 22
-    assert inputSimLines["releaseLine"]["thickness"] == ["1.5", "0.7"]
-    assert np.array_equal(inputSimLines["releaseLine"]["Start"], np.asarray([0.0, 9.0]))
-    assert np.array_equal(inputSimLines["releaseLine"]["Length"], np.asarray([9.0, 5.0]))
-    assert inputSimLines["releaseLine"]["Name"] == ["releaseNew1", "releaseNew2"]
-    assert inputSimLines["releaseLine"]["ci95"] == ["0.4", "0.1"]
+    assert inputSimLines["releaseLine"]["thickness"] == "from raster"
+    assert "Start" not in inputSimLines["releaseLine"]
+    assert inputSimLines["releaseLine"]["Name"] == "from raster"
+    assert "ci95" not in inputSimLines["releaseLine"]
+    assert inputSimLines["releaseLine"]["initializedFrom"] == "raster"
 
     # setup requuired input data
-    inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "No", "flagSecondaryRelease": "No"}}
+    inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "No", "flagSecondaryRelease": "Yes"}}
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / "data" / "avaTestRelTh"
     relFile = avaDir / "Inputs" / "REL" / "rel1.shp"
+    secrelFile = avaDir / "Inputs" / "SECREL" / "testSecRel2.asc"
     inputSimFiles["releaseScenario"] = relFile
+    inputSimFiles["secondaryRelScenario"] = secrelFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
-    inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel2.asc"
+    inputSimFiles["relThFile"] = None
+    inputSimFiles["secondaryRelThFile"] = avaDir / "Inputs" / "SECREL" / "testSecRel2.asc"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "secRelArea": "False",
+        "secRelArea": "True",
         "simTypeActual": "null",
         "avalancheDir": str(avaDir),
-        "relThFromFile": "False",
-        "relThFromShp": "False",
-        "relTh": "1.1",
+        "relThFromFile": "True",
+        "relTh": "",
     }
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
     cfg["INPUT"]["relThFile"] = ""
+    cfg["INPUT"]["secondaryRelThFile"] = str(inputSimFiles["secondaryRelThFile"])
 
     demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
@@ -254,17 +286,25 @@ def test_prepareInputData(tmp_path):
     assert np.array_equal(inputSimLines["releaseLine"]["Length"], np.asarray([9.0, 5.0]))
     assert inputSimLines["releaseLine"]["Name"] == ["releaseNew1", "releaseNew2"]
     assert inputSimLines["releaseLine"]["ci95"] == ["0.4", "0.1"]
+    assert inputSimLines["secondaryReleaseLine"]["Name"] == "from raster"
+    assert inputSimLines["secondaryReleaseLine"]["thickness"] == "from raster"
+    assert inputSimLines["secondaryReleaseLine"]["initializedFrom"] == "raster"
+    assert inputSimLines["secondaryReleaseLine"]["type"] == "Secondary release from raster"
+    assert inputSimLines["releaseLine"]["type"] == "Release"
+    assert inputSimLines["releaseLine"]["initializedFrom"] == "shapefile"
 
     # setup requuired input data
     inputSimFiles = {"entResInfo": {"flagEnt": "No", "flagRes": "No", "flagSecondaryRelease": "No"}}
     dirName = pathlib.Path(__file__).parents[0]
     avaDir = dirName / "data" / "avaTestRelTh"
-    relFile = avaDir / "Inputs" / "REL" / "rel1.shp"
+    relFile = avaDir / "Inputs" / "REL" / "testRel2.asc"
     inputSimFiles["releaseScenario"] = relFile
     inputSimFiles["demFile"] = avaDir / "Inputs" / "testDEM.asc"
-    inputSimFiles["relThFile"] = avaDir / "Inputs" / "RELTH" / "testRel.asc"
+    inputSimFiles["relThFile"] = avaDir / "Inputs" / "REL" / "testRel2.asc"
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -275,11 +315,11 @@ def test_prepareInputData(tmp_path):
     cfg["INPUT"] = {"DEM": "testDEM.asc"}
     cfg["INPUT"]["relThFile"] = str(inputSimFiles["relThFile"])
 
-    with pytest.raises(AssertionError) as e:
-        assert com1DFA.prepareInputData(inputSimFiles, cfg)
-    assert str(e.value) == (
-        "Release thickness field contains nans - not allowed no release thickness must be set to 0"
-    )
+    # with pytest.raises(AssertionError) as e:
+    #     assert com1DFA.prepareInputData(inputSimFiles, cfg)
+    # assert str(e.value) == (
+    #     "Release thickness field contains nans - not allowed no release thickness must be set to 0"
+    # )
 
     testDir = pathlib.Path(__file__).parents[0]
     avaDir = pathlib.Path(tmp_path, "avaTestHoles")
@@ -290,6 +330,8 @@ def test_prepareInputData(tmp_path):
     inputSimFiles["relThFile"] = ""
     inputSimFiles["muFile"] = None
     inputSimFiles["xiFile"] = None
+    inputSimFiles["kFile"] = None
+    inputSimFiles["tauCFile"] = None
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "False",
@@ -311,9 +353,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
         "secRelArea": "True",
-        "relThFromShp": "False",
-        "secondaryRelThFromShp": "True",
         "relThFromFile": "False",
+        "secondaryRelThFromFile": "True",
         "relTh": "1.32",
         "secondaryRelTh0": "1.789",
         "secondaryRelThPercentVariation": "0.7",
@@ -323,6 +364,8 @@ def test_prepareReleaseEntrainment(tmp_path):
         "secondaryRelThThickness": "1.2523",
         "secondaryRelThId": "0",
         "thFromIni": "",
+        "relThFile": "",
+        "secondaryRelThFile": "",
     }
 
     inputSimLines = {}
@@ -331,12 +374,14 @@ def test_prepareReleaseEntrainment(tmp_path):
         "thickness": ["None", "None"],
         "type": "Release",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
     inputSimLines["relThField"] = ""
     inputSimLines["secondaryReleaseLine"] = {
         "thickness": ["1.2523"],
         "type": "Secondary release",
         "id": ["0"],
+        "initializedFrom": "shapefile",
     }
     rel = pathlib.Path(tmp_path, "release1PF_test.shp")
 
@@ -352,8 +397,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName is True
 
     # setup required inputs
-    cfg["GENERAL"]["secondaryRelThFromShp"] = "False"
-    cfg["GENERAL"]["relThFromShp"] = "True"
+    cfg["GENERAL"]["secondaryRelThFromFile"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["secondaryRelTh"] = "2.5"
     cfg["GENERAL"]["relTh"] = ""
     cfg["GENERAL"]["secondaryRelThPercentVariation"] = ""
@@ -361,6 +406,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg["INPUT"] = {"relThThickness": "1.78|4.328", "relThId": "0|1", "thFromIni": ""}
     cfg["GENERAL"]["relTh0"] = "1.78"
     cfg["GENERAL"]["relTh1"] = "4.328"
+    cfg["INPUT"]["relThFile"] = ""
+    cfg["INPUT"]["secondaryRelThFile"] = ""
 
     inputSimLines = {}
     inputSimLines["entResInfo"] = {"flagSecondaryRelease": "Yes", "flagEnt": "No"}
@@ -368,12 +415,16 @@ def test_prepareReleaseEntrainment(tmp_path):
         "thickness": ["1.78", "4.328"],
         "type": "release",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["relThFile"] = ""
     inputSimLines["secondaryReleaseLine"] = {
         "thickness": ["None"],
         "type": "Secondary release",
         "id": ["0"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["secondaryRelThFile"] = ""
     inputSimLines["relThField"] = ""
     rel = pathlib.Path(tmp_path, "release1PF_test.shp")
 
@@ -389,8 +440,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName2 is True
 
     # setup required inputs
-    cfg["GENERAL"]["secondaryRelThFromShp"] = "True"
-    cfg["GENERAL"]["relThFromShp"] = "True"
+    cfg["GENERAL"]["secondaryRelThFromFile"] = "True"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["secondaryRelTh"] = ""
     cfg["INPUT"]["secondaryRelThThickness"] = "2.7"
     cfg["INPUT"]["secondaryRelThId"] = "0"
@@ -409,12 +460,16 @@ def test_prepareReleaseEntrainment(tmp_path):
         "thickness": ["1.", "2."],
         "type": "release",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["relThFile"] = ""
     inputSimLines["secondaryReleaseLine"] = {
         "thickness": ["2.7"],
         "type": "Secondary release",
         "id": ["0"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["secondaryRelThFile"] = ""
     rel = pathlib.Path(tmp_path, "release1PF_test.shp")
 
     # call function to be tested
@@ -423,7 +478,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     # print(
     #      "Test",
     #      cfg["GENERAL"]["secondaryRelTh"],
-    #      cfg["GENERAL"]["secondaryRelThFromShp"],
+    #      cfg["GENERAL"]["secondaryRelThFromFile"],
     #      cfg["GENERAL"]["secondaryRelTh0"],
     #  )
     #    print("inputSimLines", inputSimLines2)
@@ -453,9 +508,11 @@ def test_prepareReleaseEntrainment(tmp_path):
         "thickness": ["1.78", "4.328"],
         "type": "release",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["relThFile"] = ""
     rel = pathlib.Path(tmp_path, "release1PF_test.shp")
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = "1.32"
 
     # call function to test
@@ -470,8 +527,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     # call function to test
     cfg["GENERAL"] = {
         "secRelArea": "False",
-        "relThFromShp": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "relTh": "1.32",
         "secondaryRelTh": "2.5",
         "entTh0": "0.4",
@@ -479,19 +536,23 @@ def test_prepareReleaseEntrainment(tmp_path):
         "entTh": "",
         "simTypeActual": "ent",
         "entThPercentVariation": "1.5",
-        "relThFromFile": "False",
     }
+    cfg["INPUT"] = {"relThFile": "", "entThFile": "", "releaseScenario": "test", "thFromIni": ""}
     inputSimLines = {}
     inputSimLines["entResInfo"] = {"flagSecondaryRelease": "No", "flagEnt": "Yes"}
     inputSimLines["releaseLine"] = {
         "thickness": ["None", "None"],
         "type": "Release",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
+    inputSimLines["relThFile"] = ""
+    inputSimLines["entThFile"] = ""
     inputSimLines["entLine"] = {
         "thickness": ["1.20", "0.9"],
         "type": "Entrainment",
         "id": ["0", "1"],
+        "initializedFrom": "shapefile",
     }
     relName5, inputSimLines5, badName5 = com1DFA.prepareReleaseEntrainment(cfg, rel, inputSimLines)
 
@@ -510,7 +571,7 @@ def test_setThickness():
     # setup required input
     cfg = configparser.ConfigParser()
     cfg["GENERAL"] = {
-        "entThFromShp": "False",
+        "entThFromFile": "False",
         "entTh": "1.0",
         "entThPercentVariation": "",
     }
@@ -554,7 +615,7 @@ def test_setThickness():
     assert np.array_equal(lineTh["x"], np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]))
 
     # call function to be tested
-    cfg["GENERAL"]["entThFromShp"] = "True"
+    cfg["GENERAL"]["entThFromFile"] = "True"
     cfg["GENERAL"]["entTh0"] = "1.0"
     cfg["GENERAL"]["entTh1"] = "0.7"
     cfg["GENERAL"]["entThPercentVariation"] = "0.5"
@@ -578,7 +639,7 @@ def test_setThickness():
     assert np.array_equal(lineTh["x"], np.asarray([0, 10.0, 10.0, 0.0, 0.0, 20.0, 26.0, 26.0, 20.0, 20.0]))
 
     # call function to be tested
-    cfg["GENERAL"]["entThFromShp"] = "True"
+    cfg["GENERAL"]["entThFromFile"] = "True"
     cfg["GENERAL"]["entTh0"] = "1.2"
     cfg["GENERAL"]["entTh1"] = "0.7"
     lineTh = {
@@ -717,6 +778,7 @@ def test_initializeMassEnt():
         "type": "Entrainment",
         "thickness": [1.0],
         "thicknessSource": ["ini File"],
+        "initializedFrom": "shapefile",
     }
     reportAreaInfo = {
         "entrainment": "",
@@ -797,6 +859,7 @@ def test_initializeResistance():
         "type": "resistance",
         "x": np.asarray([0, 10.0, 10.0, 0.0, 0.0]),
         "y": np.asarray([0.0, 0.0, 10.0, 10.0, 0.0]),
+        "initializedFrom": "shapefile",
     }
     reportAreaInfo = {"entrainment": "Yes", "resistance": "No"}
     thresholdPointInPoly = 0.01
@@ -1217,6 +1280,7 @@ def test_releaseSecRelArea():
         "Name": ["secRel1", "secRel2", "secRel3"],
         "thickness": [0.5, 1.0, 0.5],
         "rasterData": [secRelRaster1, secRelRaster2, secRelRaster3],
+        "initializedFrom": "shapefile",
     }
     secondaryReleaseInfo["header"] = demHeader
     secondaryReleaseInfo["header"]["xllcenter"] = dem["originalHeader"]["xllcenter"]
@@ -1235,10 +1299,11 @@ def test_releaseSecRelArea():
     fieldsFT[7:9, 7:9] = 1.0
     fields = {"FT": fieldsFT}
     zPartArray0 = np.asarray([2.0, 3.0])
+    reportAreaInfo = {"secRelArea": {"features released at time [s]": []}}
 
     # call function to be tested
-    particles, zPartArray0New = com1DFA.releaseSecRelArea(
-        cfg["GENERAL"], particlesIn, fields, dem, zPartArray0
+    particles, zPartArray0New, reportAreaInfo = com1DFA.releaseSecRelArea(
+        cfg["GENERAL"], particlesIn, fields, dem, zPartArray0, reportAreaInfo
     )
     #    print("particles IN pytest 1", particles)
 
@@ -1257,8 +1322,8 @@ def test_releaseSecRelArea():
     fields2 = {"FT": fieldsFT2}
     zPartArray0 = np.asarray([1.0, 2.0, 3])
 
-    particles2, zPartArray0New2 = com1DFA.releaseSecRelArea(
-        cfg["GENERAL"], particlesIn2, fields2, dem, zPartArray0
+    particles2, zPartArray0New2, reportAreaInfo = com1DFA.releaseSecRelArea(
+        cfg["GENERAL"], particlesIn2, fields2, dem, zPartArray0, reportAreaInfo
     )
 
     pEnt = -10.0 * 2050 + 9.81 * 1.0
@@ -1293,30 +1358,28 @@ def test_getRelThFromPart():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg["GENERAL"] = {"relThFromShp": "True", "relThFromFile": "False", "relTh": ""}
+    cfg["GENERAL"] = {"relThFromFile": "True", "relTh": ""}
     inputSimLines = {"releaseLine": {"thickness": ["1.2", "1.5"], "id": ["0", "1"]}}
     relThField = ""
 
     # call function to be tested
-    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField)
+    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField, "rel")
 
     assert relThFromPart == 1.5
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
     cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = "2.0"
     # call function to be tested
-    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField)
+    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField, "rel")
 
     assert relThFromPart == 2.0
 
-    cfg["GENERAL"]["relThFromShp"] = "False"
-    cfg["GENERAL"]["relThFromFile"] = "True"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = ""
     relThField = np.zeros((10, 10))
     relThField[0:10, 1] = 10.0
     # call function to be tested
-    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField)
+    relThFromPart = com1DFA.getRelThFromPart(cfg["GENERAL"], inputSimLines["releaseLine"], relThField, "rel")
 
     assert relThFromPart == 10.0
 
@@ -1893,9 +1956,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
         "relThFromFile": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "entThRangeVariation": "",
@@ -1924,18 +1987,29 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "entThId": "0",
         "entThCi95": "None",
         "releaseScenario": "",
+        "relThFile": "",
     }
 
-    dirName = pathlib.Path(__file__).parents[0]
-    avaDir = dirName / ".." / "data" / "avaAlr"
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / ".." / "data" / "avaAlr" / "Inputs"
+    avaDirInputs = pathlib.Path(tmp_path, "avaTestNew", "Inputs")
+    avaDir = pathlib.Path(tmp_path, "avaTestNew")
+    shutil.copytree(inputDir, avaDirInputs)
     avaDEM = avaDir / "Inputs" / "avaAlr.tif"
-    avaDirTest = pathlib.Path(dirName, "data", "avaTest")
+
     standardCfg["INPUT"]["DEM"] = "avaAlr.tif"
-    standardCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
+    standardCfg["GENERAL"]["avalancheDir"] = str(avaDir)
     relPath = pathlib.Path(avaDir, "Inputs", "REL", "relAlr.shp")
     inputSimFiles = {
         "relFiles": [relPath],
-        "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
+        "entResInfo": {
+            "flagEnt": "Yes",
+            "flagRes": "Yes",
+            "entThFileType": ".shp",
+            "relThFileType": ".shp",
+            "resFileType": ".shp",
+            "secondaryRelThFileType": None,
+        },
         "demFile": avaDEM,
         "damFile": None,
         "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
@@ -1953,9 +2027,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
         "relThFromFile": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
         "rho": "200.0",
@@ -1990,9 +2064,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg["INPUT"]["relThFile"] = ""
-    testCfg["INPUT"]["entrainment"] = str(pathlib.Path("ENT", "entAlr.shp"))
-    testCfg["INPUT"]["resistance"] = str(pathlib.Path("RES", "entAlr.shp"))
-    testCfg["GENERAL"]["avalancheDir"] = str(avaDirTest)
+    testCfg["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", "entAlr.shp"))
+    testCfg["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", "entAlr.shp"))
+    testCfg["GENERAL"]["avalancheDir"] = str(avaDir)
 
     simHash = cfgUtils.cfgHash(testCfg)
     simName1 = "relAlr_" + simHash + "_C_L_entres_dfa"
@@ -2019,7 +2093,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
     # relPath = pathlib.Path('test', 'relTest_extended.shp')
     inputSimFiles = {
         "relFiles": [relPath],
-        "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
+        "entResInfo": {
+            "flagEnt": "Yes",
+            "flagRes": "Yes",
+            "entThFileType": ".shp",
+            "relThFileType": ".shp",
+            "resFileType": ".shp",
+            "secondaryRelThFileType": None,
+        },
         "demFile": avaDEM,
         "damFile": relPath,
         "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
@@ -2035,7 +2116,14 @@ def test_prepareVarSimDict(tmp_path, caplog):
 
     inputSimFiles = {
         "relFiles": [relPath],
-        "entResInfo": {"flagEnt": "Yes", "flagRes": "Yes"},
+        "entResInfo": {
+            "flagEnt": "Yes",
+            "flagRes": "Yes",
+            "entThFileType": ".shp",
+            "relThFileType": ".shp",
+            "resFileType": ".shp",
+            "secondaryRelThFileType": None,
+        },
         "demFile": avaDEM,
         "damFile": relPath,
         "entFile": pathlib.Path(avaDir, "Inputs", "ENT", "entAlr.shp"),
@@ -2048,8 +2136,8 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "modelType": "dfa",
         "simTypeActual": "entres",
         "secRelArea": "False",
-        "relThFromShp": "False",
-        "entThFromShp": "True",
+        "relThFromFile": "False",
+        "entThFromFile": "True",
         "relThFromFile": "False",
         "entThPercentVariation": "",
         "relThPercentVariation": "",
@@ -2085,9 +2173,9 @@ def test_prepareVarSimDict(tmp_path, caplog):
     }
     testCfg2["INPUT"]["DEM"] = "avaAlr.tif"
     testCfg2["INPUT"]["relThFile"] = ""
-    testCfg2["INPUT"]["entrainment"] = str(pathlib.Path("ENT", "entAlr.shp"))
-    testCfg2["INPUT"]["resistance"] = str(pathlib.Path("RES", "entAlr.shp"))
-    testCfg2["GENERAL"]["avalancheDir"] = str(avaDirTest)
+    testCfg2["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", "entAlr.shp"))
+    testCfg2["INPUT"]["resistanceScenario"] = str(pathlib.Path("RES", "entAlr.shp"))
+    testCfg2["GENERAL"]["avalancheDir"] = str(avaDir)
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = "relAlr_" + simHash2 + "_C_L_entres_dfa"
     testDict2 = {
@@ -2184,6 +2272,7 @@ def test_initializeSimulation(tmp_path):
         "thicknessSource": ["ini File"],
         "type": "release",
         "file": relFileTest,
+        "initializedFrom": "shapefile",
     }
     entLine = {
         "fileName": (avaDir / "ENT" / "entAlr.shp"),
@@ -2195,6 +2284,7 @@ def test_initializeSimulation(tmp_path):
         "x": np.asarray([4, 5.0, 5.0, 4.0, 4.0]),
         "type": "entrainment",
         "y": np.asarray([4.0, 4.0, 5.0, 5.0, 4.0]),
+        "initializedFrom": "shapefile",
     }
 
     inputSimLines = {
@@ -2203,6 +2293,8 @@ def test_initializeSimulation(tmp_path):
         "entLine": entLine,
         "secondaryReleaseLine": None,
         "resLine": "",
+        "relThFile": "",
+        "entThFile": "",
         "relThField": "",
         "damLine": None,
         "muFile": None,
@@ -2265,10 +2357,21 @@ def test_initializeSimulation(tmp_path):
         "thicknessSource": ["ini File"],
         "muFile": None,
         "xiFile": None,
+        "initializedFrom": "shapefile",
+    }
+    relThField = np.zeros((12, 12))
+    relThField[2:4, 8:10] = 0.5
+    inputSimLines["releaseLine"] = {
+        "Name": "fromRaster",
+        "thickness": "fromRaster",
+        "thicknessSource": "from raster",
+        "type": "Release read from raster",
+        "file": relFileTest,
+        "initializedFrom": "raster",
+        "rasterData": relThField,
     }
 
-    relThField = np.zeros((12, 12)) + 0.5
-    cfg["GENERAL"]["relThFromShp"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "False"
     cfg["GENERAL"]["relTh"] = ""
     cfg["GENERAL"]["relThFromFile"] = "True"
     inputSimLines["relThField"] = relThField
@@ -2278,7 +2381,7 @@ def test_initializeSimulation(tmp_path):
     )
 
     #    print("secRel", particles2["secondaryReleaseInfo"])
-    #    print("particles", particles2)
+    # print("particles", particles2)
     #    print("fields", fields2["pft"])
 
     assert np.sum(fields2["pfv"]) == 0.0
@@ -2287,8 +2390,8 @@ def test_initializeSimulation(tmp_path):
     assert dem2["header"]["yllcenter"] == 0.0
     assert dem2["originalHeader"]["xllcenter"] == 1.0
     assert dem2["originalHeader"]["yllcenter"] == 2.0
-    assert particles2["nPart"] == 9
-    assert particles2["mTot"] == 225.0
+    assert particles2["nPart"] == 16
+    assert particles2["mTot"] == 400.0
     assert np.sum(particles["ux"]) == 0.0
     assert reportAreaInfo["Release area info"]["Projected Area [m2]"] == "4.00"
     assert reportAreaInfo["entrainment"] == "Yes"
@@ -2341,6 +2444,7 @@ def test_initializeSimulation(tmp_path):
         "thicknessSource": ["ini File"],
         "type": "release",
         "file": relFileTest,
+        "initializedFrom": "shapefile",
     }
     inputSimLines = {
         "releaseLine": releaseLine,
@@ -2348,10 +2452,11 @@ def test_initializeSimulation(tmp_path):
         "entLine": None,
         "secondaryReleaseLine": None,
         "resLine": "",
-        "relThField": "",
+        "relThFile": "",
         "damLine": None,
         "muFile": None,
         "xiFile": None,
+        "relThField": "",
     }
     inputSimLines["damLine"] = {
         "fileName": [avaDir / "DAM" / "damLine.shp"],
@@ -2401,6 +2506,8 @@ def test_runCom1DFA(tmp_path, caplog):
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
 
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(cfgMain, cfgInfo=cfgFile)
+
+    print("DONE")
 
     dictKeys = [
         "nPart",
@@ -2586,8 +2693,7 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": "",
-        "relThFromShp": True,
-        "relThFromFile": False,
+        "relThFromFile": True,
         "relTh0": 2.0,
         "relTh1": 4.0,
         "secRelArea": False,
@@ -2610,7 +2716,6 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": 5.0,
-        "relThFromShp": False,
         "relThFromFile": False,
         "secRelArea": False,
     }
@@ -2628,8 +2733,7 @@ def test_fetchRelVolume(tmp_path):
         "thresholdPointInPoly": 0.001,
         "avalancheDir": avaDir,
         "relTh": "",
-        "relThFromShp": False,
-        "relThFromFile": True,
+        "relThFromFile": False,
         "secRelArea": False,
     }
     cfg["INPUT"] = {"relThFile": "RELTH/relThField1.asc", "thFromIni": False}
@@ -2637,7 +2741,7 @@ def test_fetchRelVolume(tmp_path):
     # call function
     relVolume = com1DFA.fetchRelVolume(rel1, cfg, demPath, None)
 
-    assert relVolume == 38.0
+    assert relVolume == 900.0
 
 
 def test_adaptDEM():

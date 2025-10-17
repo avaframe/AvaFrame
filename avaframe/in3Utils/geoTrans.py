@@ -1228,7 +1228,7 @@ def prepareArea(line, dem, radius, thList="", combine=True, checkOverlap=True):
         if indMatch.any():
             # if there is an overlap, raise error
             if checkOverlap:
-                message = "Features are overlapping - this is not allowed"
+                message = "Features %s are overlapping - this is not allowed" % NameRel
                 log.error(message)
                 raise AssertionError(message)
             else:
