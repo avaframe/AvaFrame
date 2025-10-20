@@ -276,6 +276,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             saveZeroRaster = False
         else:
             saveZeroRaster = True
+
         bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
             cfg,
             inputSimLines["entLine"],
@@ -309,6 +310,7 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             saveZeroRaster = False
         else:
             saveZeroRaster = True
+
         bedShearName, bedShearDict = gI.deriveLineRaster(
             cfg,
             bedShearDict,

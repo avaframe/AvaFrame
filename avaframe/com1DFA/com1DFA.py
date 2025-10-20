@@ -2026,7 +2026,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "spatialvoellmy",
         "obrienandjulien",
         "herschelandbulkley",
-        "bingham"
+        "bingham",
     ]
     frictModel = cfgGen["frictModel"].lower()
     frictType = frictModelsList.index(frictModel) + 1
@@ -3149,7 +3149,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 inputSimFiles["entResInfo"]["tauCRemeshed"] = remeshedFric
             # check if physical parameters = variable is chosen that friction fields have correct extent
             if cfgSim["Physical_parameters"]["Parameters"] == "auto":
-                dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
                 for fric in ["mu", "k"]:
                     if inputSimFiles["entResInfo"][fric] == "Yes":
                         pathToFric, pathToFricFull, remeshedFric = dP.checkExtentAndCellSize(
@@ -3157,6 +3156,15 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                         )
                         cfgSim["INPUT"]["%sFile" % fric] = pathToFric
                         inputSimFiles["entResInfo"]["%sRemeshed" % fric] = remeshedFric
+            # check if forest effects = auto is chosen that forest parameter fields have correct extent
+            if cfgSim["FOREST_EFFECTS"]["Forest effects"] == "auto":
+                for forestParam in ["nd", "bhd"]:
+                    if inputSimFiles["entResInfo"][forestParam] == "Yes":
+                        pathToForest, pathToForestFull, remeshedForest = dP.checkExtentAndCellSize(
+                            cfgSim, inputSimFiles["%sFile" % forestParam], dem, forestParam
+                        )
+                        cfgSim["INPUT"]["%sFile" % forestParam] = pathToForest
+                        inputSimFiles["entResInfo"]["%sRemeshed" % forestParam] = remeshedForest
 
         # add info about entrainment file path to the cfg
         if "ent" in row._asdict()["simTypeList"] and inputSimFiles["entFile"] is not None:

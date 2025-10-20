@@ -310,6 +310,8 @@ def setVariableEntrainmentParameters(cfg, inputSimFiles, workInputDir, inputsDir
     if inputSimFiles["entResInfo"]["flagEnt"] == "Yes" and inputSimFiles["entResInfo"]["tauC"] == "Yes":
         cfg["ENTRAINMENT"]["Entrainment"] = "TJEM"
         cfg["ENTRAINMENT"]["Bed strength profile"] = "constant"
+    else:
+        cfg["ENTRAINMENT"]["Entrainment"] = "none"
 
     return cfg
 

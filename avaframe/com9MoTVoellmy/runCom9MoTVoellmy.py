@@ -14,7 +14,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom9MoTVoellmy(avalancheDir=""):
+def runCom9MoTVoellmy(avalancheDir="", simType=""):
     """Run com9MoTVoellmy in the default configuration with only an
     avalanche directory as input
 
@@ -22,6 +22,8 @@ def runCom9MoTVoellmy(avalancheDir=""):
     ----------
     avalancheDir: str
         path to avalanche directory (setup eg. with init scipts)
+    simType: str
+        simulation type override (null, ent, res, entres, available)
 
     Returns
     -------
@@ -58,6 +60,13 @@ def runCom9MoTVoellmy(avalancheDir=""):
     # Get module config
     cfgCom9MoTVoellmy = cfgUtils.getModuleConfig(com9MoTVoellmy, toPrint=False)
 
+    # Override simTypeList if provided via command line
+    if simType != "":
+        cfgCom9MoTVoellmy["GENERAL"]["simTypeList"] = simType
+        log.info("Overriding simTypeList with: %s", simType)
+    else:
+        log.info("No simType override given - using ini")
+
     # ----------------
     com9MoTVoellmy.com9MoTVoellmyMain(cfgMain, cfgInfo=cfgCom9MoTVoellmy)
 
@@ -79,6 +88,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "avadir", metavar="avalancheDir", type=str, nargs="?", default="", help="the avalanche directory"
     )
+    parser.add_argument(
+        "-st",
+        "--sim_type",
+        choices=["null", "ent", "res", "entres", "available"],
+        type=str,
+        default="",
+        help="simulation type override, possible values are null, ent, res, entres, available"
+        + "Overrides default AND local configs",
+    )
 
     args = parser.parse_args()
-    runCom9MoTVoellmy(str(args.avadir))
+    runCom9MoTVoellmy(str(args.avadir), str(args.sim_type))
