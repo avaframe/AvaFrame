@@ -1,13 +1,14 @@
 """
-    Conversion functions to read/ write Shape files
+Conversion functions to read/ write Shape files
 """
-
 
 import pathlib
 import shapefile
 import copy
 import numpy as np
 import logging
+
+from shapely.geometry import shape
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -91,7 +92,6 @@ def SHP2Array(infile, defname=None):
     tilt_value = None
     direc_value = None
     offset_value = None
-    
 
     # get coordinate system
     sks = getSHPProjection(infile)
@@ -116,13 +116,13 @@ def SHP2Array(infile, defname=None):
     maxdepthList = []
     tiltList = []
     direcList = []
-    offsetList = []   
-    
-    Length = np.empty((0))
-    Start = np.empty((0))
-    Coordx = np.empty((0))
-    Coordy = np.empty((0))
-    Coordz = np.empty((0))
+    offsetList = []
+
+    Length = np.empty(0)
+    Start = np.empty(0)
+    Coordx = np.empty(0)
+    Coordy = np.empty(0)
+    Coordz = np.empty(0)
     start = 0
     nParts = []
 
@@ -297,7 +297,6 @@ def readThickness(infile, defname=None):
     """
     #  Input shapefile
     sf = shapefile.Reader(str(infile))
-    infile = pathlib.Path(infile)
 
     thickness = None
     id = None
@@ -547,20 +546,100 @@ def writePoint2SHPfile(pointDict, pointName, fileName):
     """
     fileName = str(fileName)
     w = shapefile.Writer(fileName)
-    w.field('name', 'C')
-    if isinstance(pointDict['x'], (float, np.float64)) and isinstance(pointDict['y'], (float, np.float64)):
-        w.point(pointDict['x'], pointDict['y'])
-    elif isinstance(pointDict['x'], (np.ndarray)) and isinstance(pointDict['y'], (np.ndarray)):
-        if len(pointDict['x']) > 1 or len(pointDict['y']) > 1:
-            message = 'Length of pointDict is not allowed to exceed one'
+    w.field("name", "C")
+    if isinstance(pointDict["x"], (float, np.float64)) and isinstance(pointDict["y"], (float, np.float64)):
+        w.point(pointDict["x"], pointDict["y"])
+    elif isinstance(pointDict["x"], (np.ndarray)) and isinstance(pointDict["y"], (np.ndarray)):
+        if len(pointDict["x"]) > 1 or len(pointDict["y"]) > 1:
+            message = "Length of pointDict is not allowed to exceed one"
             log.error(message)
             raise ValueError(message)
         else:
-            w.point(pointDict['x'][0], pointDict['y'][0])
+            w.point(pointDict["x"][0], pointDict["y"][0])
     else:
-        message = 'Format of point is neither float nor array of length 1'
+        message = "Format of point is neither float nor array of length 1"
         log.error(message)
         raise TypeError(message)
     w.record(pointName)
     w.close()
     return fileName
+
+
+def writeShapefile(outputPath, fields, fieldNames, features, srs=None):
+    """Write features to a shapefile with given fields and properties.
+
+    Parameters
+    ----------
+    outputPath: pathlib.Path
+        path where the shapefile will be written
+    fields: list
+        the fields of the shapefile
+    fieldNames: list
+        the names of the fields
+    features: list
+        list of tuples containing (properties, geometry) for each feature
+    srs: str, optional
+        the spatial reference system for the .prj file
+
+    Returns
+    -------
+    none
+    """
+    with shapefile.Writer(str(outputPath)) as dst:
+        for field in fields:
+            dst.field(*field)
+        for properties, geometry in features:
+            dst.shape(geometry)
+            record = [properties.get(fieldName, "") for fieldName in fieldNames]
+            dst.record(*record)
+
+    if srs is not None:
+        prjOutPath = outputPath.with_suffix(".prj")
+        with open(prjOutPath, "w") as prjFile:
+            prjFile.write(srs)
+
+
+def readShapefile(inputShp):
+    """Read the fields, properties, geometries, and spatial reference of an input shapefile.
+    To be used in combination with shapefile.Reader. Could be expanded upon to get e.g.
+    shapeTypes, bounds, numFeatures and metadata if needed. This does pure reading, no special
+    checks for valid attributes are performed.
+
+    Parameters
+    ----------
+    inputShp : pathlib.Path
+        Path to input shapefile
+
+    Returns
+    -------
+    fields: list
+        the fields of the input shapefile
+    fieldNames: list
+        the names of the fields
+    properties: list
+        a list of dictionaries containing the properties of each feature
+    geometries: list
+        a list of geometry objects
+    srs: str
+        the spatial reference system fetched from eventual .prj file
+    """
+    with shapefile.Reader(str(inputShp)) as src:
+        fields = src.fields[1:]  # Skip deletion flag
+        fieldNames = [field[0] for field in fields]
+        properties = []
+        geometries = []
+        for shapeRecord in src.iterShapeRecords():
+            if shapeRecord.shape.shapeType == shapefile.NULL:
+                log.warning(f"Skipping NULL shape in {inputShp}")
+                continue
+            properties.append(dict(zip(fieldNames, shapeRecord.record)))
+            geometries.append(shape(shapeRecord.shape.__geo_interface__))
+
+        srs = None
+        # Check if .prj file exists and read it
+        srsfile = inputShp.with_suffix(".prj")
+        if srsfile.is_file():
+            with open(srsfile, "r") as f:
+                srs = f.read().strip()
+
+    return fields, fieldNames, properties, geometries, srs

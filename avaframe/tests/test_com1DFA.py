@@ -1917,6 +1917,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
         "dam": "True",
+        "explicitFriction": 0,
     }
     standardCfg["INPUT"] = {
         "entThThickness": "1.",
@@ -1978,6 +1979,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
         "dam": "True",
+        "explicitFriction": 0,
     }
 
     testCfg["INPUT"] = {
@@ -2072,6 +2074,7 @@ def test_prepareVarSimDict(tmp_path, caplog):
         "muvoellmy": "4000.",
         "xsivoellmy": "4000.",
         "dam": "True",
+        "explicitFriction": 0,
     }
     testCfg2["INPUT"] = {
         "entThThickness": "1.",

@@ -352,16 +352,29 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, resAnalysisDF, newRasters, ti
                     resAnalysisDF['runoutLineDiff_poly'] = np.nan
                     resAnalysisDF['runoutLineDiff_poly'] = resAnalysisDF['runoutLineDiff_line'].astype(object)
 
-                    # add max, min and std values of result fields
-            resAnalysisDF.at[simRowHash, resType + 'FieldMax'] = np.nanmax(rasterData['rasterData'])
-            # for mean and min values and std, only take peak field values != 0
-            maskedRaster = np.where(rasterData['rasterData'] < cfgSetup.getfloat('minValueField'), np.nan, rasterData['rasterData'])
-            resAnalysisDF.at[simRowHash, resType + 'FieldMin'] = np.nanmin(maskedRaster)
-            resAnalysisDF.at[simRowHash, resType + 'FieldMean'] = np.nanmean(maskedRaster)
-            resAnalysisDF.at[simRowHash, resType + 'FieldStd'] = np.nanstd(maskedRaster)
+            # only extract values if nonzero values found in rasterData; if only 0 values set to 0
+            if np.any(rasterData["rasterData"]):
+                # add max, min and std values of result fields
+                resAnalysisDF.at[simRowHash, resType + "FieldMax"] = np.nanmax(rasterData["rasterData"])
+                # for mean and min values and std, only take peak field values != 0
+                maskedRaster = np.where(
+                    rasterData["rasterData"] < cfgSetup.getfloat("minValueField"),
+                    np.nan,
+                    rasterData["rasterData"],
+                )
+                resAnalysisDF.at[simRowHash, resType + "FieldMin"] = np.nanmin(maskedRaster)
+                resAnalysisDF.at[simRowHash, resType + "FieldMean"] = np.nanmean(maskedRaster)
+                resAnalysisDF.at[simRowHash, resType + "FieldStd"] = np.nanstd(maskedRaster)
+            else:
+                resAnalysisDF.at[simRowHash, resType + "FieldMax"] = 0.0
+                resAnalysisDF.at[simRowHash, resType + "FieldMin"] = 0.0
+                resAnalysisDF.at[simRowHash, resType + "FieldMean"] = 0.0
+                resAnalysisDF.at[simRowHash, resType + "FieldStd"] = 0.0
 
             # analyze all fields
-            resAnalysisDF = aimecTools.analyzeField(simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF)
+            resAnalysisDF = aimecTools.analyzeField(
+                simRowHash, rasterTransfo, newRaster, resType, resAnalysisDF
+            )
 
     # compute runout based on runoutResType
     resAnalysisDF = aimecTools.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simRowHash)

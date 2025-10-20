@@ -341,7 +341,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
         notIn = True
 
     # create required parameters for searching
-    thFlag = key + "FromShp"
+    thFlag = key + "FromFile"
     thId = key + "Id"
     thThickness = key + "Thickness"
     thPercentVariation = key + "PercentVariation"

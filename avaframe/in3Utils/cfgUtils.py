@@ -927,7 +927,7 @@ def getNumberOfProcesses(cfgMain, nSims):
     # if number of sims is lower than nCPU
     nCPU = min(nCPU, nSims)
 
-    log.info("Number of simulations to perform: %s " % nSims)
+    log.info("Number of tasks to perform: %s " % nSims)
     log.info("Taking %s cpu cores out of maximum of %s cores." % (nCPU, maxCPU))
 
     return nCPU
@@ -985,4 +985,3 @@ def cfgToRcf(cfg, fileName):
                 key = key.strip()
                 f.write(f"{key:<40}{value}\n")
             f.write("#\n")
-

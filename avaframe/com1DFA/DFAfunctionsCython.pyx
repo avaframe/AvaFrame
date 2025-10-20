@@ -86,6 +86,24 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double muCoulomb = cfg.getfloat('mucoulomb')
   cdef double muCoulombMinShear = cfg.getfloat('mucoulombminshear')
   cdef double tau0CoulombMinShear = cfg.getfloat('tau0coulombminshear')
+  cdef double rhoSediment = cfg.getfloat('rhoSediment')
+  cdef double sizeSediment = cfg.getfloat('sizeSediment')
+  cdef double cvMaxSediment = cfg.getfloat('cvMaxSediment')
+  cdef double cvSediment = cfg.getfloat('cvSediment')
+  cdef double alpha1EtaObrienAndJulien = cfg.getfloat('alpha1EtaObrienAndJulien')
+  cdef double beta1EtaObrienAndJulien = cfg.getfloat('beta1EtaObrienAndJulien')
+  cdef double alpha2TauyObrienAndJulien = cfg.getfloat('alpha2TauyObrienAndJulien')
+  cdef double beta2TauyObrienAndJulien = cfg.getfloat('beta2TauyObrienAndJulien')
+  cdef double alphaObrienAndJulien = cfg.getfloat('alphaObrienAndJulien')
+  cdef double alpha1EtaHerschelAndBulkley = cfg.getfloat('alpha1EtaHerschelAndBulkley')
+  cdef double beta1EtaHerschelAndBulkley = cfg.getfloat('beta1EtaHerschelAndBulkley')
+  cdef double alpha2TauyHerschelAndBulkley = cfg.getfloat('alpha2TauyHerschelAndBulkley')
+  cdef double beta2TauyHerschelAndBulkley = cfg.getfloat('beta2TauyHerschelAndBulkley')
+  cdef double nHerschelAndBulkley = cfg.getfloat('nHerschelAndBulkley')
+  cdef double alpha1EtaBingham = cfg.getfloat('alpha1EtaBingham')
+  cdef double beta1EtaBingham = cfg.getfloat('beta1EtaBingham')
+  cdef double alpha2TauyBingham = cfg.getfloat('alpha2TauyBingham')
+  cdef double beta2TauyBingham = cfg.getfloat('beta2TauyBingham')
   cdef double curvAccInFriction = cfg.getfloat('curvAccInFriction')
   cdef double curvAccInTangent = cfg.getfloat('curvAccInTangent')
   cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
@@ -151,6 +169,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef double muVoellmyRaster, xsiVoellmyRaster
+  cdef double shearRate, etaObrienAndJulien, tauyObrienAndJulien, lmObrienAndJulien
+  cdef double lambdaBagnold, cObrienAndJulien, etaHerschelAndBulkley, tauyHerschelAndBulkley, etaBingham, tauyBingham                                                                          
   # variables for interpolation
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
@@ -266,6 +286,13 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
       else:
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
+          if frictType >= 10:
+            # substitution of shear rate gamma
+            if math.fabs(h) <= 1e-9:
+               message = "h is 0 - division by 0"
+               log.error(message)
+               raise ZeroDivisionError(message)
+            shearRate = 3 * uMag / h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
             tau = DFAtlsC.SamosATfric(rho, tau0SamosAt, Rs0SamosAt, muSamosAt, kappaSamosAt, BSamosAt, RSamosAt, uMag, sigmaB, h)
@@ -298,6 +325,36 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
             xsiVoellmyRaster = xsiRaster[indCellY, indCellX]
             # Voellmy with optional spatially variable mu and xi values provided as rasters
             tau = muVoellmyRaster * sigmaB + rho * uMag * uMag * gravAcc / xsiVoellmyRaster
+          elif frictType == 10:
+            ## O`Brien and Julien
+            # viscosity
+            etaObrienAndJulien = alpha1EtaObrienAndJulien * math.exp(beta1EtaObrienAndJulien * cvSediment)
+            # yield shear stress
+            tauyObrienAndJulien = alpha2TauyObrienAndJulien * math.exp(beta2TauyObrienAndJulien * cvSediment)
+            # Prandtl mixing length
+            lmObrienAndJulien = 0.4 * h
+            # grain concentration
+            lambdaBagnold = 1.0 / (math.pow(cvMaxSediment / cvSediment, 1.0 / 3.0) - 1.0)
+            # dispersive shear stress
+            cObrienAndJulien = rho * lmObrienAndJulien * lmObrienAndJulien + alphaObrienAndJulien * rhoSediment * lambdaBagnold * lambdaBagnold * sizeSediment * sizeSediment
+            # shear stress
+            tau = tauyObrienAndJulien + etaObrienAndJulien * shearRate + cObrienAndJulien * (shearRate * shearRate)
+          elif frictType == 11:
+            ## Herschel and Bulkley
+            # viscosity
+            etaHerschelAndBulkley = alpha1EtaHerschelAndBulkley * math.exp(beta1EtaHerschelAndBulkley * cvSediment)
+            # yield shear stress
+            tauyHerschelAndBulkley = alpha2TauyHerschelAndBulkley * math.exp(beta2TauyHerschelAndBulkley * cvSediment)
+            # shear stress
+            tau = tauyHerschelAndBulkley + etaHerschelAndBulkley * math.pow(shearRate, nHerschelAndBulkley)
+          elif frictType == 12:
+            ## Bingham
+            # viscosity
+            etaBingham = alpha1EtaBingham * math.exp(beta1EtaBingham * cvSediment)
+            # yield shear stress
+            tauyBingham = alpha2TauyBingham * math.exp(beta2TauyBingham * cvSediment)
+            # shear stress
+            tau = tauyBingham + etaBingham * shearRate
           else:
             tau = 0.0
 
@@ -442,9 +499,11 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
   rhoEnt: float
     entrainement density
   """
-  cdef double width, ABotSwiped, areaEntrPart
+  cdef double width, ABotSwiped
   # compute entrained mass
-  cdef double dm = 0
+  cdef double dm = 0.0
+  cdef double areaEntrPart = 0.0
+
   if entrMassCell > 0:
       # either erosion or ploughing but not both
 
@@ -527,7 +586,7 @@ cpdef double computeResForce(double areaPart, double rho, double cResCell,
       resistance component for particle
   """
 
-  cdef double cRecResPart
+  cdef double cRecResPart = 0.0
   # explicit formulation (explicitFriction == 1)
   if explicitFriction == 1:
     if resistanceType == 1:
@@ -658,7 +717,6 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double centeredPosition = cfg.getfloat('centeredPosition')
   cdef int snowSlide = cfg.getint('snowSlide')
-  cdef int delStoppedParticles = cfg.getint('delStoppedParticles')
   cdef int adaptSfcStopped = cfg.getint('adaptSfcStopped')
   cdef int adaptSfcDetrainment = cfg.getint('adaptSfcDetrainment')
   cdef int adaptSfcEntrainment = cfg.getint('adaptSfcEntrainment')
@@ -759,6 +817,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
   cdef double w[4]
   cdef double wNew[4]
+
   # loop on particles
   for k in range(nPart):
     m = mass[k]
@@ -782,6 +841,12 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     uMag = DFAtlsC.norm(ux, uy, uz)
     uMagt0 = DFAtlsC.norm(ux, uy, uz)
 
+    # check if particle's mass is zero then remove particle
+    if m == 0:
+      keepParticle[k] = 0
+      nRemove = nRemove + 1
+      continue  # this particle will be removed, skip what is below and directly go to the next particle
+
     # procede to time integration
     # operator splitting
     # estimate new velocity due to driving force
@@ -802,9 +867,8 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     massEntrained = massEntrained + dM[k]
     massDetrained = massDetrained + dMDet[k]
 
-    # Stopped particles with velocity = 0 or mass = 0
-    if delStoppedParticles == 1:
-      if uMagNew == 0 or mNew == 0:
+    # Stop particles with velocity = 0
+    if adaptSfcStopped == 1 and uMagNew == 0:
         xStoppedArray = np.append(xStoppedArray, xArray[k])
         yStoppedArray = np.append(yStoppedArray, yArray[k])
         mStoppedArray = np.append(mStoppedArray, mass[k])
@@ -1044,13 +1108,13 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
 
   particles['massStopped'] = - massStopped
 
-  # remove particles that are not located on the mesh any more
+  # remove particles that are not located on the mesh any more OR have zero mass
   if nRemove > 0:
     mask = np.array(np.asarray(keepParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain', snowSlide=snowSlide)
 
-  # remove particles that have mass = 0 or velocity = 0
-  if nStop > 0 and delStoppedParticles == 1:
+  # remove particles that have velocity = 0 (only when surface is adapted due to stopping)
+  if nStop > 0 and adaptSfcStopped == 1:
     indRemoveParticle = np.array([], dtype=np.int64)
     for k in range(len(keepParticle)):
       # consider particles that are removed because they exit the domain
@@ -1061,6 +1125,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     notStopParticle = np.delete(notStopParticle, indRemoveParticle)
     mask = np.array(np.asarray(notStopParticle), dtype=bool)
     particles = particleTools.removePart(particles, mask, nStop, 'because their mass or velocity is zero', snowSlide=snowSlide)
+
   return particles
 
 
@@ -1100,7 +1165,12 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
   dtStop : float
       time step (smaller then dt if the particle stops during this time step)
   """
-  cdef double xDir, yDir, zDir, uxNew, uyNew, uzNew, uMagNew, dtStop
+  cdef double xDir, yDir, zDir
+  cdef double uxNew = 0.0
+  cdef double uyNew = 0.0
+  cdef double uzNew = 0.0
+  cdef double uMagNew = 0.0
+  cdef double dtStop = 0.0
 
   if explicitFriction == 1:
     # explicite method
