@@ -25,8 +25,8 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy<2",
-    "salib<1.5.1",
+    "numpy",
+    "salib",
     "matplotlib",
     "pyshp",
     "scipy",
@@ -85,8 +85,13 @@ line-length = 109
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "win-64", "osx-64"]
 
-[tool.pixi.target.osx-64.dependencies]
-numpy = "*"
+[too.pixi.target.win-64.dependencies]
+numpy = "<2"
+salib = "<1.5.1"
+
+[too.pixi.target.linux-64.dependencies]
+numpy = "<2"
+salib = "<1.5.1"
 
 [tool.pixi.dependencies]
 setuptools = "*"
