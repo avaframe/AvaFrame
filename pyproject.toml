@@ -97,6 +97,11 @@ salib = "<1.5.1"
 setuptools = "*"
 setuptools-scm = "*"
 cibuildwheel = "*"
+# FSO: remove as soon as possible
+#gdal = "*"
+libgdal = "*"
+#geos = "*"
+#proj = "*"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
