@@ -350,6 +350,17 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             log.error(message)
             raise AssertionError(message)
 
+        # if _nd and _bhd files in avalancheDir/Inputs/RASTERS found - set paths to nd and bhd files
+        # if not found then forest effects are set to no
+        if cfg["FOREST_EFFECTS"]["Forest effects"] == "auto":
+            cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        elif cfg["FOREST_EFFECTS"]["Forest effects"] == "no":
+            cfg["File names"]["Forest density filename"] = "-"
+            cfg["File names"]["Tree diameter filename"] = "-"
+        else:
+            # if forest effects set to yes but files not found - error will be raised by setVariableForestParameters
+            cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
         currentModule = sys.modules[__name__]

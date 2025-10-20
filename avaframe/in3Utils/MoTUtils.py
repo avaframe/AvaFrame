@@ -312,3 +312,63 @@ def setVariableEntrainmentParameters(cfg, inputSimFiles, workInputDir, inputsDir
         cfg["ENTRAINMENT"]["Bed strength profile"] = "constant"
 
     return cfg
+
+
+def setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir):
+    """set file paths in cfg object for forest parameters.
+    if _nd, _bhd files found in Inputs/RASTERS have to be remeshed, copy remeshed files
+    to workInputDir with new file name ending _nd, _bhd
+
+    Parameters
+    -----------
+    cfg: configparser object
+        configuration info for simulation
+    inputSimFiles: dict
+        dictionary with info on all input data found; here nd, bhd file and if remeshed
+    workInputDir: pathlib path
+        pathlib path to work Inputs folder for current simulation
+    inputsDir: pathlib path
+        path to avalancheDir/Inputs where original input data and remeshed rasters are stored
+
+    Returns
+    --------
+    cfg: configparser object
+        updated configuration info for simulation with file paths to forest parameters
+    """
+
+    forestParameters = {"nd": "Forest density filename", "bhd": "Tree diameter filename"}
+
+    if inputSimFiles["entResInfo"]["nd"] == "Yes" and inputSimFiles["entResInfo"]["bhd"] == "Yes":
+
+        for forestParam in ["nd", "bhd"]:
+            forestFile = inputsDir / cfg["INPUT"]["%sFile" % forestParam]
+
+            # check first if remeshed files should be used
+            if (
+                "_remeshed" in cfg["INPUT"]["%sFile" % forestParam]
+                and inputSimFiles["entResInfo"]["%sRemeshed" % forestParam] == "Yes"
+            ):
+                forestFilePathNew = workInputDir / (
+                    forestFile.stem + "_%s" % forestParam + forestFile.suffix
+                )
+                shutil.copy2(forestFile, forestFilePathNew)
+                cfg["File names"][forestParameters[forestParam]] = str(forestFilePathNew)
+                log.info(
+                    "Remeshed %s file copied to %s and set for %s"
+                    % (forestParam, str(forestFilePathNew), forestParameters[forestParam])
+                )
+            else:
+                cfg["File names"][forestParameters[forestParam]] = str(forestFile)
+
+        cfg["FOREST_EFFECTS"]["Forest effects"] = "yes"
+
+    else:
+        # TODO FSO implement if setting is variable or constant that if variable but file not found then error
+        message = "nd and bhd file not found in Inputs/RASTERS - check if file ending is correct (_nd, _bhd) - setting forest effects to no"
+        log.warning(message)
+
+        cfg["FOREST_EFFECTS"]["Forest effects"] = "no"
+        cfg["File names"]["Forest density filename"] = "-"
+        cfg["File names"]["Tree diameter filename"] = "-"
+
+    return cfg
