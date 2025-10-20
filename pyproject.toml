@@ -119,7 +119,7 @@ avaframe = "*"
 
 #Feature py313
 [tool.pixi.feature.py313.dependencies]
-python = "3.13.7"
+python = "<3.14"
 
 #Feature rcs
 [tool.pixi.feature.rcs.pypi-dependencies]

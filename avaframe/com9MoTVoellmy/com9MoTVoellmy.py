@@ -141,6 +141,10 @@ def com9MoTVoellmyPostprocess(simDict, cfgMain):
         # Copy pfv files
         mT.copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
 
+        # Copy timestep directories to timesteps subfolder
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "s")
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "h")
+
     # create plots and report
     modName = __name__.split(".")[-1]
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
@@ -356,12 +360,18 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         # if not found then forest effects are set to no
         if cfg["FOREST_EFFECTS"]["Forest effects"] == "auto":
             cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
-        elif cfg["FOREST_EFFECTS"]["Forest effects"] == "no":
-            cfg["File names"]["Forest density filename"] = "-"
-            cfg["File names"]["Tree diameter filename"] = "-"
         else:
-            # if forest effects set to yes but files not found - error will be raised by setVariableForestParameters
-            cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+            message = "Currently only available option is auto for %s" % (
+                '["FOREST_EFFECTS"]["Forest effects"]'
+            )
+            log.error(message)
+            raise AssertionError(message)
+        # elif cfg["FOREST_EFFECTS"]["Forest effects"] == "no":
+        #     cfg["File names"]["Forest density filename"] = "-"
+        #     cfg["File names"]["Tree diameter filename"] = "-"
+        # else:
+        #     # if forest effects set to yes but files not found - error will be raised by setVariableForestParameters
+        #     cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 

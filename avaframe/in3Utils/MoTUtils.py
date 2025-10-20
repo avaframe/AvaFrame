@@ -187,35 +187,42 @@ def copyMoTFiles(workDir, outputDir, searchString, replaceString):
         shutil.copy2(source, target)
 
 
-def prepareInputRasterFilesMoT(cfg, dem, workDir, simName, inputSimFiles):
-    """check if input data is in desired (raster file) format, if not create
-    and return corresponding file paths
+def copyMoTDirs(workDir, outputDir, simKey, dirName):
+    """
+    Copy timestep directory from work directory to output directory.
 
     Parameters
-    ------------
-    cfg: configparser object
-        configuration settings of current simulation
-    dem: dict
-        dictionary with dem header and raster data
-    workDir: pathlib path
-        path to Work directory
-    simName: str
-        current simulation name
-    inputSimFiles: dict
-        dictionary with info on all available input data
-        relFiles - list of release area file paths
-        entFile - entrainment area file path or None
-        muFile - file path or None
-        kFile - file path or None
-        tau0File - file path or None
-        relThFile - file path or None
-        entThFile - file path or None
-        demFile - file path
-        releaseScenarioList - list of file.stem of release are files found
-
+    ----------
+    workDir : pathlib.Path
+        Source work directory containing the simulation results
+    outputDir : pathlib.Path
+        Destination directory where timestep directories will be copied to
+    simKey : str
+        Simulation key used to construct source and target paths
+    dirName : str
+        Directory name to copy (e.g., 's' or 'h')
 
     Returns
+    -------
+    None
+        Directory is copied to the destination directory structure
+
+    Notes
+    -----
+    Creates a timesteps/{simKey}/{dirName} subdirectory structure in the output directory.
+    Only copies files, not subdirectories within the specified directory.
     """
+    outputDirTimesteps = outputDir / "timesteps" / str(simKey)
+    outputDirTimesteps.mkdir(parents=True, exist_ok=True)
+
+    sourceDirPath = workDir / dirName
+    if sourceDirPath.exists():
+        targetDirPath = outputDirTimesteps / dirName
+        targetDirPath.mkdir(parents=True, exist_ok=True)
+
+        for sourceFile in sourceDirPath.glob("*"):
+            if sourceFile.is_file():
+                shutil.copy2(sourceFile, targetDirPath / sourceFile.name)
 
 
 def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir):
@@ -338,39 +345,49 @@ def setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir):
         updated configuration info for simulation with file paths to forest parameters
     """
 
-    forestParameters = {"nd": "Forest density filename", "bhd": "Tree diameter filename"}
-
-    if inputSimFiles["entResInfo"]["nd"] == "Yes" and inputSimFiles["entResInfo"]["bhd"] == "Yes":
-
-        for forestParam in ["nd", "bhd"]:
-            forestFile = inputsDir / cfg["INPUT"]["%sFile" % forestParam]
-
-            # check first if remeshed files should be used
-            if (
-                "_remeshed" in cfg["INPUT"]["%sFile" % forestParam]
-                and inputSimFiles["entResInfo"]["%sRemeshed" % forestParam] == "Yes"
-            ):
-                forestFilePathNew = workInputDir / (
-                    forestFile.stem + "_%s" % forestParam + forestFile.suffix
-                )
-                shutil.copy2(forestFile, forestFilePathNew)
-                cfg["File names"][forestParameters[forestParam]] = str(forestFilePathNew)
-                log.info(
-                    "Remeshed %s file copied to %s and set for %s"
-                    % (forestParam, str(forestFilePathNew), forestParameters[forestParam])
-                )
-            else:
-                cfg["File names"][forestParameters[forestParam]] = str(forestFile)
-
+    if inputSimFiles["entResInfo"]["flagRes"] == "Yes" and inputSimFiles["entResInfo"]["bhd"] == "Yes":
+        treeDiamFile = inputsDir / cfg["INPUT"]["bhdFile"]
         cfg["FOREST_EFFECTS"]["Forest effects"] = "yes"
-
+        # TODO  Make this remeshed compatible
+        cfg["File names"]["Forest density filename"] = str(inputSimFiles["resFile"])
+        cfg["File names"]["Tree diameter filename"] = str(treeDiamFile)
     else:
-        # TODO FSO implement if setting is variable or constant that if variable but file not found then error
-        message = "nd and bhd file not found in Inputs/RASTERS - check if file ending is correct (_nd, _bhd) - setting forest effects to no"
-        log.warning(message)
-
         cfg["FOREST_EFFECTS"]["Forest effects"] = "no"
         cfg["File names"]["Forest density filename"] = "-"
         cfg["File names"]["Tree diameter filename"] = "-"
+
+    # forestParameters = {"nd": "Forest density filename", "bhd": "Tree diameter filename"}
+    # if inputSimFiles["entResInfo"]["nd"] == "Yes" and inputSimFiles["entResInfo"]["bhd"] == "Yes":
+    #
+    #     for forestParam in ["nd", "bhd"]:
+    #         forestFile = inputsDir / cfg["INPUT"]["%sFile" % forestParam]
+    #
+    #         # check first if remeshed files should be used
+    #         if (
+    #             "_remeshed" in cfg["INPUT"]["%sFile" % forestParam]
+    #             and inputSimFiles["entResInfo"]["%sRemeshed" % forestParam] == "Yes"
+    #         ):
+    #             forestFilePathNew = workInputDir / (
+    #                 forestFile.stem + "_%s" % forestParam + forestFile.suffix
+    #             )
+    #             shutil.copy2(forestFile, forestFilePathNew)
+    #             cfg["File names"][forestParameters[forestParam]] = str(forestFilePathNew)
+    #             log.info(
+    #                 "Remeshed %s file copied to %s and set for %s"
+    #                 % (forestParam, str(forestFilePathNew), forestParameters[forestParam])
+    #             )
+    #         else:
+    #             cfg["File names"][forestParameters[forestParam]] = str(forestFile)
+    #
+    #     cfg["FOREST_EFFECTS"]["Forest effects"] = "yes"
+    #
+    # else:
+    #     # TODO FSO implement if setting is variable or constant that if variable but file not found then error
+    #     message = "nd and bhd file not found in Inputs/RASTERS - check if file ending is correct (_nd, _bhd) - setting forest effects to no"
+    #     log.warning(message)
+    #
+    #     cfg["FOREST_EFFECTS"]["Forest effects"] = "no"
+    #     cfg["File names"]["Forest density filename"] = "-"
+    #     cfg["File names"]["Tree diameter filename"] = "-"
 
     return cfg

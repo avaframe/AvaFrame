@@ -279,10 +279,10 @@ def getInputDataCom1DFA(avaDir):
         inputDir, "RASTERS", "tauC parameter data", fileExt="raster", fileSuffix="_tauc"
     )
 
-    # check if nd (forest density) parameter file is available
-    ndFile, entResInfo["nd"], _ = getAndCheckInputFiles(
-        inputDir, "RASTERS", "nd parameter data", fileExt="raster", fileSuffix="_nd"
-    )
+    # # check if nd (forest density) parameter file is available
+    # ndFile, entResInfo["nd"], _ = getAndCheckInputFiles(
+    #     inputDir, "RASTERS", "nd parameter data", fileExt="raster", fileSuffix="_nd"
+    # )
 
     # check if bhd (tree diameter) parameter file is available
     bhdFile, entResInfo["bhd"], _ = getAndCheckInputFiles(
@@ -297,7 +297,6 @@ def getInputDataCom1DFA(avaDir):
     entResInfo["muRemeshed"] = "No"
     entResInfo["xiRemeshed"] = "No"
     entResInfo["resRemeshed"] = "No"
-    entResInfo["ndRemeshed"] = "No"
     entResInfo["bhdRemeshed"] = "No"
 
     # return DEM, first item of release, entrainment and resistance areas
@@ -313,7 +312,6 @@ def getInputDataCom1DFA(avaDir):
         "xiFile": xiFile,
         "kFile": kFile,
         "tauCFile": tauCFile,
-        "ndFile": ndFile,
         "bhdFile": bhdFile,
     }
 
