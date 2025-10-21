@@ -94,7 +94,7 @@ cibuildwheel = "*"
 libgdal = "*"
 #geos = "*"
 #proj = "*"
-#python = "<3.14"
+python = "<3.14"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
@@ -127,7 +127,7 @@ avaframe = "==1.13rc4"
 
 #Feature qgis
 [tool.pixi.feature.qgis.dependencies]
-qgis = "*"
+#qgis = "*"
 
 #Environments
 [tool.pixi.environments]

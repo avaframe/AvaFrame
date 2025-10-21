@@ -104,7 +104,6 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=""):
         # make sure to remove the Outputs folder if you want to regenerate the plot
         # this enables to append simulations to an already existing output without regenerating all plots
         if not plotName.is_file():
-
             # for comModules load DEM used for computation
             if demData == "" and modName in ["com1DFA", "com9MoTVoellmy"]:
                 demFile = inDir / row["DEM"]
@@ -254,7 +253,10 @@ def addConstrainedDataField(fileName, resType, demField, ax, cellSize, alpha=1.0
 
     # choose colormap
     cmap, col, ticks, norm = pU.makeColorMap(
-        pU.colorMaps[resType], np.amin(dataConstrained), np.amax(dataConstrained), continuous=pU.contCmap
+        pU.colorMaps[resType],
+        np.amin(dataConstrained),
+        np.amax(dataConstrained),
+        continuous=pU.contCmap,
     )
     cmap.set_bad(alpha=0)
     # uncomment this to set the under value for discrete cmap transparent
