@@ -315,11 +315,11 @@ def checkParameterSettings(cfg, varParList):
             log.error(message)
             raise AssertionError(message)
         elif varPar in ["entTh", "relTh", "secondaryRelTh"]:
-            thFromShp = varPar + "FromShp"
+            thFromFile = varPar + "FromFile"
             # check if reference settings have already variation of varPar
             _ = checkForNumberOfReferenceValues(cfg["GENERAL"], varPar)
             # check if th read from shp file
-            if cfg["GENERAL"].getboolean(thFromShp):
+            if cfg["GENERAL"].getboolean(thFromFile):
                 thReadFromShp.append(varPar)
 
     return True, thReadFromShp

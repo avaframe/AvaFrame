@@ -306,7 +306,7 @@ def test_updateThicknessCfg(tmp_path):
     cfg = configparser.ConfigParser()
     cfg = cfgUtils.getModuleConfig(com1DFA, toPrint=False, onlyDefault=True)
 
-    cfg["GENERAL"]["relThFromFile"] = "False"
+    cfg["GENERAL"]["relThFromFile"] = "True"
     cfg["GENERAL"]["simTypeList"] = "null|ent"
     cfg["GENERAL"]["secRelAra"] = "False"
     cfg["INPUT"] = {"releaseScenario": ""}
@@ -624,7 +624,7 @@ def test_getAndCheckInputFiles_noFilesFound(mocker):
     mockInDir.glob.assert_called_once_with("*.shp")
     assert output_file is None
     assert available == "No"
-    assert fileTypeFormat == None
+    assert fileTypeFormat is None
 
 
 def test_getAndCheckInputFilesone_valid_file(mocker):
@@ -756,3 +756,316 @@ def test_getAndCheckInputFilesempty_file_ext_and_suffix(mocker):
 
     mock_inDir.glob.assert_called_once_with("*.")
     assert "Unsupported file format" in str(excinfo.value)
+
+
+def test_deriveLineRaster_invalidRasterType(tmp_path):
+    """test that invalid rasterType raises AssertionError"""
+
+    # setup required inputs
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {}
+
+    lineDict = {"initializedFrom": "shapefile"}
+    dem = {"header": {}, "rasterData": np.zeros((10, 10))}
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = pathlib.Path(tmp_path, "inputs")
+    fU.makeADir(inputsDir)
+
+    # call function with invalid rasterType
+    with pytest.raises(AssertionError) as excinfo:
+        getInput.deriveLineRaster(
+            cfg, lineDict, dem, outDir, inputsDir, rasterType="invalid", rasterFileType=".asc"
+        )
+
+    assert "invalid is not in list of available options" in str(excinfo.value)
+
+
+def test_deriveLineRaster_saveZeroRaster(tmp_path):
+    """test creation of zero raster"""
+
+    # setup required inputs - use real DEM to get proper header
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {}
+
+    lineDict = {"initializedFrom": "shapefile"}
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = pathlib.Path(tmp_path, "inputs")
+    fU.makeADir(inputsDir)
+
+    # call function to be tested
+    rasterPath, lineDict = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="rel",
+        rasterFileType=".asc",
+        saveZeroRaster=True,
+    )
+
+    # verify zero raster created
+    assert rasterPath.name == "dummyRel.asc"
+    assert rasterPath.exists()
+
+    # read and verify content
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    zeroRaster = IOf.readRaster(rasterPath)
+    assert np.all(zeroRaster["rasterData"] == 0)
+    assert zeroRaster["header"]["ncols"] == dem["header"]["ncols"]
+    assert zeroRaster["header"]["nrows"] == dem["header"]["nrows"]
+
+
+def test_deriveLineRaster_fromShapefile(tmp_path):
+    """test deriving raster from shapefile polygon"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    # read DEM
+    dem = getInput.readDEM(avaTestDir)
+    # add originalHeader required by geoTrans.prepareArea
+    dem["originalHeader"] = dem["header"].copy()
+
+    # read release shapefile
+    relFile = avaTestDirInputs / "REL" / "release1HS.shp"
+    releaseLine = shpConv.readLine(relFile, "release1", dem)
+    releaseLine["file"] = relFile
+    releaseLine["initializedFrom"] = "shapefile"
+    releaseLine["thickness"] = [1.0]
+    releaseLine["type"] = "release"
+    releaseLine["thicknessSource"] = [relFile.name]
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {}
+
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = avaTestDirInputs
+
+    # call function to be tested
+    rasterPath, lineDict = getInput.deriveLineRaster(
+        cfg,
+        releaseLine,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="rel",
+        rasterFileType=".asc",
+        saveZeroRaster=False,
+    )
+
+    # verify raster created
+    assert rasterPath.name == "derivedFrom_release1HS.asc"
+    assert rasterPath.exists()
+
+    # verify rasterData added to lineDict
+    assert "rasterData" in lineDict
+
+    # read and verify content
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    derivedRaster = IOf.readRaster(rasterPath)
+    assert derivedRaster["header"]["ncols"] == dem["header"]["ncols"]
+    assert derivedRaster["header"]["nrows"] == dem["header"]["nrows"]
+    # check that some cells have thickness value
+    assert np.any(derivedRaster["rasterData"] > 0)
+
+
+def test_deriveLineRaster_fromExistingRaster(tmp_path):
+    """test reading path to existing raster file"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    # create a dummy raster file in ENT folder
+    entDir = avaTestDirInputs / "ENT"
+    fU.makeADir(entDir)
+    entRasterFile = entDir / "entrainment_th.asc"
+
+    # read DEM and create test raster
+    dem = getInput.readDEM(avaTestDir)
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    testRasterData = np.ones((dem["header"]["nrows"], dem["header"]["ncols"])) * 0.3
+    IOf.writeResultToRaster(dem["header"], testRasterData, entDir / "entrainment_th", flip=True)
+
+    lineDict = {"initializedFrom": "raster"}
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {"entThFile": "ENT/entrainment_th.asc"}
+
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = avaTestDirInputs
+
+    # call function to be tested
+    rasterPath, lineDict = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="ent",
+        rasterFileType=".asc",
+        saveZeroRaster=False,
+    )
+
+    # verify path returned
+    assert rasterPath == inputsDir / "ENT/entrainment_th.asc"
+    assert rasterPath.exists()
+
+
+def test_deriveLineRaster_missingRasterFile(tmp_path):
+    """test that missing raster file raises FileNotFoundError"""
+
+    # setup required inputs
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {"entThFile": "ENT/missing_file.asc"}
+
+    lineDict = {"initializedFrom": "raster"}
+    dem = {"header": {}, "rasterData": np.zeros((10, 10))}
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = pathlib.Path(tmp_path, "inputs")
+    fU.makeADir(inputsDir)
+
+    # call function to be tested
+    with pytest.raises(FileNotFoundError) as excinfo:
+        getInput.deriveLineRaster(
+            cfg, lineDict, dem, outDir, inputsDir, rasterType="ent", rasterFileType=".asc"
+        )
+
+    assert "file not found" in str(excinfo.value).lower()
+
+
+def test_deriveLineRaster_rasterTypeNaming(tmp_path):
+    """test correct fileKey and fileInd for different rasterTypes"""
+
+    # setup required inputs - use real DEM to get proper header
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {}
+
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = pathlib.Path(tmp_path, "inputs")
+    fU.makeADir(inputsDir)
+
+    # test rel rasterType - should create dummyRel
+    lineDict = {"initializedFrom": "shapefile"}
+    rasterPath, _ = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="rel",
+        rasterFileType=".asc",
+        saveZeroRaster=True,
+    )
+    assert rasterPath.name == "dummyRel.asc"
+
+    # test secondaryRel rasterType - should create dummySecondaryRel
+    rasterPath, _ = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="secondaryRel",
+        rasterFileType=".asc",
+        saveZeroRaster=True,
+    )
+    assert rasterPath.name == "dummySecondaryRel.asc"
+
+    # test tauC rasterType - should create dummyTauC
+    rasterPath, _ = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="tauC",
+        rasterFileType=".asc",
+        saveZeroRaster=True,
+    )
+    assert rasterPath.name == "dummyTauC.asc"
+
+
+def test_deriveLineRaster_differentFileTypes(tmp_path):
+    """test raster creation with different file extensions"""
+
+    # setup required inputs - use real DEM to get proper header
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"thresholdPointInPoly": "0.01"}
+    cfg["INPUT"] = {}
+
+    lineDict = {"initializedFrom": "shapefile"}
+    outDir = pathlib.Path(tmp_path, "out")
+    fU.makeADir(outDir)
+    inputsDir = pathlib.Path(tmp_path, "inputs")
+    fU.makeADir(inputsDir)
+
+    # test .asc extension
+    rasterPath, _ = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="rel",
+        rasterFileType=".asc",
+        saveZeroRaster=True,
+    )
+    assert rasterPath.suffix == ".asc"
+    assert rasterPath.exists()
+
+    # verify path construction with .tif extension
+    rasterPath, _ = getInput.deriveLineRaster(
+        cfg,
+        lineDict,
+        dem,
+        outDir,
+        inputsDir,
+        rasterType="ent",
+        rasterFileType=".tif",
+        saveZeroRaster=True,
+    )
+    assert rasterPath.suffix == ".tif"
+    # note: file existence depends on writeResultToRaster supporting .tif for AAIGrid driver

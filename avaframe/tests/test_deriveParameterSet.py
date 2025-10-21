@@ -399,7 +399,7 @@ def test_checkThicknessSettings():
 
     with pytest.raises(AssertionError) as e:
         assert dP.checkThicknessSettings(cfg, "relTh", inputSimFiles)
-    assert "Release area read from raster - no variation allowed: check" in str(e.value)
+    assert "Release area read from raster" in str(e.value) and "variation not allowed" in str(e.value)
 
     # setup required inputs
     cfg = configparser.ConfigParser()
@@ -428,7 +428,6 @@ def test_appendShpThickness():
         "simTypeActual": "null",
         "relThFromFile": "True",
         "relTh": "",
-        "relThFromFile": "False",
         "relThPercentVariation": "",
         "relThRangeVariation": "",
         "entThRangeFromCiVariation": "",
@@ -450,7 +449,6 @@ def test_appendShpThickness():
         "simTypeActual": "null",
         "relThFromFile": "True",
         "relTh": "",
-        "relThFromFile": "False",
         "relThPercentVariation": "40$3",
         "relThRangeVariation": "",
         "entThRangeFromCiVariation": "",
@@ -474,7 +472,6 @@ def test_setThicknessValueFromVariation():
         "secRelArea": "False",
         "relThFromFile": "True",
         "relTh": "",
-        "relThFromFile": "False",
         "relThPercentVariation": "40$3",
         "relThDistVariation": "",
     }
@@ -513,7 +510,6 @@ def test_setThicknessValueFromVariation():
         "secRelArea": "False",
         "relThFromFile": "False",
         "relTh": "1.",
-        "relThFromFile": "False",
         "relThPercentVariation": "40$3",
         "relThDistVariation": "",
     }
@@ -679,7 +675,7 @@ def test_checkExtentAndCellSize(tmp_path):
     IOf.writeResultToRaster(headerInput2, inField2, inputFile2.parent / inputFile2.stem, flip=False)
 
     testFile2, outFile2, remeshedFlag = dP.checkExtentAndCellSize(cfg, inputFile2, dem, "mu")
-    print("test 2", testFile2)
+    # print("test 2", testFile2)
     newRaster2 = IOf.readRaster((inDir / testFile2))
 
     assert "remeshedmu1.00" not in testFile2

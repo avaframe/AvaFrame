@@ -386,6 +386,18 @@ def checkThicknessSettings(cfg, thName, inputSimFiles):
                 message = "If %s is set to True - it is not allowed to set a value for %s" % (thFlag, thName)
                 log.error(message)
                 raise AssertionError(message)
+        # Check: If raster file and thickness value is set in INI - error (raster has thickness embedded)
+        elif (
+            cfg["GENERAL"][thName] != ""
+            and inputSimFiles["entResInfo"][thName + "FileType"] in [".asc", ".tif"]
+            and inputSimFiles["entResInfo"]["flag" + nameTypes[thName]] == "Yes"
+        ):
+            message = "If %s file is not a shapefile - it is not allowed to set a value for %s" % (
+                nameStrings[thName],
+                thName,
+            )
+            log.error(message)
+            raise AssertionError(message)
         # Check: If thFromFile=False and shapefile exists, thickness value must be provided in INI
         elif (
             cfg["GENERAL"][thName] == ""
@@ -408,9 +420,9 @@ def checkThicknessSettings(cfg, thName, inputSimFiles):
     thPV = thName + "PercentVariation"
     thRCiV = thName + "RangeFromCiVariation"
     flagsList = [
-        cfg["GENERAL"][thRV] != "",
-        cfg["GENERAL"][thPV] != "",
-        cfg["GENERAL"][thRCiV] != "",
+        cfg["GENERAL"].get(thRV, "") != "",
+        cfg["GENERAL"].get(thPV, "") != "",
+        cfg["GENERAL"].get(thRCiV, "") != "",
     ]
 
     if sum(flagsList) > 1:
@@ -833,11 +845,11 @@ def appendThicknessToCfg(cfg):
         thRCiV = thType + "RangeFromCiVariation"
 
         if (
-            cfgGen[thFlag] == "True"
-            and cfgGen[thPV] == ""
-            and cfgGen[thRV] == ""
-            and cfgGen[thDV] == ""
-            and cfgGen[thRCiV] == ""
+            cfgGen.get(thFlag, "") == "True"
+            and cfgGen.get(thPV, "") == ""
+            and cfgGen.get(thRV, "") == ""
+            and cfgGen.get(thDV, "") == ""
+            and cfgGen.get(thRCiV, "") == ""
         ):
             thThickness = thType + "Thickness"
             thId = thType + "Id"
@@ -938,11 +950,17 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
 
     # check if negative values or nan values
     if np.any(np.isnan(inputField["rasterData"])):
-        message = "In %s file (%s) nan values found - this is not allowed" % (fileType, inputFile.name)
+        message = "In %s file (%s) nan values found - this is not allowed" % (
+            fileType,
+            inputFile.name,
+        )
         log.error(message)
         raise AssertionError(message)
     elif np.any(inputField["rasterData"] < 0):
-        message = "In %s file (%s) negative values found - this is not allowed" % (fileType, inputFile.name)
+        message = "In %s file (%s) negative values found - this is not allowed" % (
+            fileType,
+            inputFile.name,
+        )
         log.error(message)
         raise AssertionError(message)
 
@@ -956,7 +974,6 @@ def checkExtentAndCellSize(cfg, inputFile, dem, fileType):
         np.allclose([diffX0, diffY0, diffX1, diffY1], [0, 0, 0, 0], atol=cT)
         and inputField["header"]["cellsize"] == demHeader["cellsize"]
     ):
-
         returnStr = str(pathlib.Path(inputFile.parts[-2], inputFile.name))
         outFile = inputFile
         log.info("%s matches extent and cell size of DEM - keep file" % returnStr)

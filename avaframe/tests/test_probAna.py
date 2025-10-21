@@ -19,8 +19,6 @@ import pathlib
 from scipy.stats import qmc
 
 
-
-
 def test_probAnalysis(tmp_path):
     """test probAna function to compute mask for parameter exceeding threshold"""
 
@@ -49,7 +47,7 @@ def test_probAnalysis(tmp_path):
     # call function to test
     pA.probAnalysis(avaDirtmp, cfg, "com1DFA", parametersDict=parametersDict, inputDir="")
     outputPath = os.path.join(avaDirtmp, "Outputs", "ana4Stats", "avaParabola_prob__ppr_lim1.0.asc")
-    print(outputPath)
+    # print(outputPath)
     probTest = np.loadtxt(outputPath, skiprows=6)
 
     # Load reference solution
@@ -1141,22 +1139,17 @@ def test_checkForNumberOfReferenceValues():
     assert "Only one reference value is allowed for relTh" in str(e.value)
 
 
-
-
 def test_createSample_latin():
     """Test Latin Hypercube sampling method"""
 
     # Create test configuration
     testConfig = configparser.ConfigParser()
-    testConfig["PROBRUN"] = {
-        "nSample": "50",
-        "sampleSeed": "12345",
-        "sampleMethod": "latin"
-    }
+    testConfig["PROBRUN"] = {"nSample": "50", "sampleSeed": "12345", "sampleMethod": "latin"}
 
     testParList = ["param1", "param2", "param3"]
 
     from avaframe.ana4Stats.probAna import createSample
+
     resultSample = createSample(testConfig, testParList)
 
     # Check sample properties
@@ -1176,15 +1169,12 @@ def test_createSample_morris():
 
     # Create test configuration
     testConfig = configparser.ConfigParser()
-    testConfig["PROBRUN"] = {
-        "nSample": "4",
-        "sampleSeed": "12345",
-        "sampleMethod": "morris"
-    }
+    testConfig["PROBRUN"] = {"nSample": "4", "sampleSeed": "12345", "sampleMethod": "morris"}
 
     testParList = ["param1", "param2"]
 
     from avaframe.ana4Stats.probAna import createSample
+
     resultSample = createSample(testConfig, testParList)
 
     # Check sample properties for Morris method
@@ -1198,11 +1188,7 @@ def test_createSample_reproducibility():
 
     # Create test configuration
     testConfig = configparser.ConfigParser()
-    testConfig["PROBRUN"] = {
-        "nSample": "30",
-        "sampleSeed": "54321",
-        "sampleMethod": "latin"
-    }
+    testConfig["PROBRUN"] = {"nSample": "30", "sampleSeed": "54321", "sampleMethod": "latin"}
 
     testParList = ["param1", "param2"]
 
@@ -1221,18 +1207,10 @@ def test_createSample_different_seeds():
 
     # Create test configurations with different seeds
     testConfig1 = configparser.ConfigParser()
-    testConfig1["PROBRUN"] = {
-        "nSample": "30",
-        "sampleSeed": "12345",
-        "sampleMethod": "latin"
-    }
+    testConfig1["PROBRUN"] = {"nSample": "30", "sampleSeed": "12345", "sampleMethod": "latin"}
 
     testConfig2 = configparser.ConfigParser()
-    testConfig2["PROBRUN"] = {
-        "nSample": "30",
-        "sampleSeed": "54321",
-        "sampleMethod": "latin"
-    }
+    testConfig2["PROBRUN"] = {"nSample": "30", "sampleSeed": "54321", "sampleMethod": "latin"}
 
     testParList = ["param1", "param2"]
 
@@ -1252,11 +1230,7 @@ def test_createSample_invalid_method():
 
     # Create test configuration with invalid method
     testConfig = configparser.ConfigParser()
-    testConfig["PROBRUN"] = {
-        "nSample": "30",
-        "sampleSeed": "12345",
-        "sampleMethod": "invalid_method"
-    }
+    testConfig["PROBRUN"] = {"nSample": "30", "sampleSeed": "12345", "sampleMethod": "invalid_method"}
 
     testParList = ["param1", "param2"]
 

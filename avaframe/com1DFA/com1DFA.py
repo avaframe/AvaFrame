@@ -1101,6 +1101,13 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     log.debug("Initializing main release area")
     # process release info to get it as a raster
     if cfg["GENERAL"].getboolean("iniStep"):
+        message = (
+            "iniStep=True is currently not supported due to recent refactoring of thickness handling. "
+            "Please set iniStep=False in your configuration file. "
+            "Support for iniStep will be restored in a future update."
+        )
+        log.error(message)
+        raise NotImplementedError(message)
         releaseLine = inputSimLines["releaseLineBuffer"]
         releaseLineReal = inputSimLines["releaseLine"]
         # check if release features overlap between features

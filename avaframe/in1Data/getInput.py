@@ -231,9 +231,11 @@ def getInputDataCom1DFA(avaDir):
     entResInfo["flagRel"] = "Yes"
 
     # Initialise secondary release areas
-    secondaryReleaseFile, entResInfo["flagSecondaryRelease"], entResInfo["secondaryRelThFileType"] = (
-        getAndCheckInputFiles(inputDir, "SECREL", "Secondary release", fileExt=["shp", "asc", "tif"])
-    )
+    (
+        secondaryReleaseFile,
+        entResInfo["flagSecondaryRelease"],
+        entResInfo["secondaryRelThFileType"],
+    ) = getAndCheckInputFiles(inputDir, "SECREL", "Secondary release", fileExt=["shp", "asc", "tif"])
     if secondaryReleaseFile:
         log.info("Secondary release file is: %s" % secondaryReleaseFile)
 
@@ -514,14 +516,14 @@ def updateThicknessCfg(inputSimFiles, cfgInitial):
             )
 
     # add entrainment and secondary release thickness in input data info and in cfg object
-    if inputSimFiles["entFile"] != None and "entFile" in thTypeList:
+    if inputSimFiles["entFile"] is not None and "entFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles["entFile"].stem, "entTh")
         cfgInitial["INPUT"]["entThFile"] = ""
         if inputSimFiles["entResInfo"]["entThFileType"] != ".shp":
             cfgInitial["INPUT"]["entThFile"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
         cfgInitial["INPUT"]["entrainmentScenario"] = inputSimFiles["entFile"].stem
 
-    if inputSimFiles["secondaryRelFile"] != None and "secondaryRelFile" in thTypeList:
+    if inputSimFiles["secondaryRelFile"] is not None and "secondaryRelFile" in thTypeList:
         cfgInitial = dP.getThicknessValue(
             cfgInitial,
             inputSimFiles,
@@ -1028,7 +1030,14 @@ def checkForMultiplePartsShpArea(avaDir, lineDict, modName, type=""):
 
 
 def deriveLineRaster(
-    cfg, lineDict, dem, outDir, inputsDir, rasterType, rasterFileType="", saveZeroRaster=False
+    cfg,
+    lineDict,
+    dem,
+    outDir,
+    inputsDir,
+    rasterType,
+    rasterFileType="",
+    saveZeroRaster=False,
 ):
     """derive raster and return path to raster file
     if derived from polygon, create raster with thickness read from lineDict and save to file
@@ -1063,7 +1072,14 @@ def deriveLineRaster(
 
     thresholdPointInPoly = cfg["GENERAL"].getfloat("thresholdPointInPoly")
 
-    if rasterType not in ["rel", "ent", "tauC", "secondaryRel", "releaseLayer2", "bedDepo"]:
+    if rasterType not in [
+        "rel",
+        "ent",
+        "tauC",
+        "secondaryRel",
+        "releaseLayer2",
+        "bedDepo",
+    ]:
         message = "%s is not in list of available options: rel, ent, tauC, secondaryRel" % rasterType
         log.error(message)
         raise AssertionError(message)
