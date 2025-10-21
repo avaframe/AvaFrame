@@ -35,7 +35,7 @@ Installation on Windows:
 Input
 ^^^^^
 
-For additional info, see also `NGI Dokumentation <https://github.com/norwegian-geotechnical-institute/MoT-Voellmy/blob/main/Documentation/MoT-Voellmy_use.md#raster-input-data>`_.
+For additional info, see also `NGI Documentation <https://github.com/norwegian-geotechnical-institute/MoT-Voellmy/blob/main/Documentation/MoT-Voellmy_use.md#raster-input-data>`_.
 
 Required is
 
@@ -53,16 +53,16 @@ ONE of the following:
 
 * release area scenario as raster file
 
-  - same specifications as the DEM (extend, cellsize)
+  - same specifications as the DEM (extent, cellsize)
 
-And the following optional raster files, in the same specification as the DEM (extend, cellsize):
+And the following optional raster files, in the same specification as the DEM (extent, cellsize):
 
 * mu / Dry friction coefficient. If this is given, k needs to be set as well.
 * k / Turbulent friction coefficient. If this is given, mu needs to be set as well.
 * b0 / Erodible snow depth. If this is given, tau_c needs to be set as well.
-* tau_c / Snow shear strength. If this is given, b0 needs to be set as well
-* nd / Forest density. If this is given, bhd needs to be set as well
-* bhd / Tree diamenter. If this is given, nd needs to be set as well
+* tau_c / Snow shear strength. If this is given, b0 needs to be set as well.
+* nd / Forest density. If this is given, bhd needs to be set as well.
+* bhd / Tree diameter. If this is given, nd needs to be set as well.
 
 The `Destination Folder` should be empty!
 
@@ -71,7 +71,7 @@ The `Destination Folder` should be empty!
 Outputs
 ^^^^^^^
 
-After you ran the simulation, the peak fields will be loaded in QGis and the `Destinaton Folder` will contain, results,
+After you ran the simulation, the peak fields will be loaded in QGis and the `Destination Folder` will contain, results,
 plots, and configuration files.
 
 
