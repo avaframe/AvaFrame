@@ -2,10 +2,8 @@ import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
 import logging
-from matplotlib.animation import FuncAnimation, PillowWriter
 import geopandas as gpd
 from matplotlib.patches import Patch
-import matplotlib as mpl
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -13,7 +11,6 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.outQuickPlot as oQ
-import avaframe.out3Plot.outAIMEC as oA
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.rasterUtils as IOf
 
@@ -582,7 +579,14 @@ def plotReleaseScenarioView(
         else:
             resArea = IOf.readRaster(inputSimLines["resLine"]["fileName"], noDataToNan=True)
             resAreaPlot = np.where(resArea["rasterData"] > 0, 0.75, np.nan)
-            ax.imshow(resAreaPlot, extent=extentCells, cmap="Greens", vmin=0, vmax=1, zorder=1000)
+            ax.imshow(
+                resAreaPlot,
+                extent=extentCells,
+                cmap="Greens",
+                vmin=0,
+                vmax=1,
+                zorder=1000,
+            )
         resPatch = Patch(color="green", label="resistance")
         handles.append(resPatch)
         count = count + 1
@@ -593,7 +597,14 @@ def plotReleaseScenarioView(
         else:
             entArea = IOf.readRaster(inputSimLines["entLine"]["fileName"], noDataToNan=True)
             entAreaPlot = np.where(entArea["rasterData"] > 0, 0.4, np.nan)
-            ax.imshow(entAreaPlot, extent=extentCells, cmap="Blues", vmin=0, vmax=1, zorder=1000)
+            ax.imshow(
+                entAreaPlot,
+                extent=extentCells,
+                cmap="Blues",
+                vmin=0,
+                vmax=1,
+                zorder=1000,
+            )
         entPatch = Patch(color="lightblue", label="entrainment")
         handles.append(entPatch)
         count = count + 1
@@ -604,7 +615,14 @@ def plotReleaseScenarioView(
         else:
             secRelArea = IOf.readRaster(inputSimLines["secondaryReleaseLine"]["fileName"], noDataToNan=True)
             secRelAreaPlot = np.where(secRelArea["rasterData"] > 0, 1.0, np.nan)
-            ax.imshow(secRelAreaPlot, extent=extentCells, cmap="Blues", vmin=0, vmax=1, zorder=1000)
+            ax.imshow(
+                secRelAreaPlot,
+                extent=extentCells,
+                cmap="Blues",
+                vmin=0,
+                vmax=1,
+                zorder=1000,
+            )
         secRelPatch = Patch(color="darkblue", label="secondary release")
         handles.append(secRelPatch)
         count = count + 1

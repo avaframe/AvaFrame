@@ -537,7 +537,12 @@ def test_prepareReleaseEntrainment(tmp_path):
         "simTypeActual": "ent",
         "entThPercentVariation": "1.5",
     }
-    cfg["INPUT"] = {"relThFile": "", "entThFile": "", "releaseScenario": "test", "thFromIni": ""}
+    cfg["INPUT"] = {
+        "relThFile": "",
+        "entThFile": "",
+        "releaseScenario": "test",
+        "thFromIni": "",
+    }
     inputSimLines = {}
     inputSimLines["entResInfo"] = {"flagSecondaryRelease": "No", "flagEnt": "Yes"}
     inputSimLines["releaseLine"] = {
