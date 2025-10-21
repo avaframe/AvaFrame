@@ -90,11 +90,11 @@ setuptools = "*"
 setuptools-scm = "*"
 cibuildwheel = "*"
 # FSO: remove as soon as possible
-gdal = "*"
+#gdal = "*"
 libgdal = "*"
-geos = "*"
-proj = "*"
-python = "<3.14"
+#geos = "*"
+#proj = "*"
+#python = "<3.14"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
