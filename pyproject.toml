@@ -25,7 +25,8 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
+    "numpy<2.0",
+    "salib<1.5.1",
     "matplotlib",
     "pyshp",
     "scipy",
@@ -43,7 +44,6 @@ dependencies = [
     "contextily",
     "geopandas",
     "fiona",
-    "salib"
 ]
 
 # Setuptools
