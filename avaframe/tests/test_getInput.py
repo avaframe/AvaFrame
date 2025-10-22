@@ -1069,3 +1069,231 @@ def test_deriveLineRaster_differentFileTypes(tmp_path):
     )
     assert rasterPath.suffix == ".tif"
     # note: file existence depends on writeResultToRaster supporting .tif for AAIGrid driver
+
+
+def test_initializeRelTh_with_valid_file(tmp_path):
+    """test loading a valid release thickness raster file"""
+
+    # setup required inputs - use real DEM to get proper header
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    # create test directory with release thickness file
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs" / "REL"
+    fU.makeADir(avaTestDirInputs)
+
+    # create a release thickness raster with same dimensions as DEM
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    relThData = np.ones((dem["header"]["nrows"], dem["header"]["ncols"])) * 1.5
+    relThFile = avaTestDirInputs / "relThickness"
+    IOf.writeResultToRaster(dem["header"], relThData, relThFile, flip=True)
+
+    # setup config
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"avalancheDir": str(avaTestDir)}
+    cfg["INPUT"] = {"relThFile": "REL/relThickness.asc"}
+
+    # call function to be tested
+    relThFieldData, relThFilePath = getInput.initializeRelTh(cfg, dem["header"])
+
+    # verify results
+    assert isinstance(relThFieldData, np.ndarray)
+    assert relThFieldData.shape == (dem["header"]["nrows"], dem["header"]["ncols"])
+    assert np.allclose(relThFieldData, 1.5)
+    assert relThFilePath == avaTestDirInputs / "relThickness.asc"
+    assert relThFilePath.exists()
+
+
+def test_initializeRelTh_dimension_mismatch(tmp_path):
+    """test when relThFile has different dimensions than DEM - should raise AssertionError"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    # create test directory with release thickness file
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs" / "REL"
+    fU.makeADir(avaTestDirInputs)
+
+    # create a release thickness raster with DIFFERENT dimensions than DEM
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    wrongHeader = dem["header"].copy()
+    wrongHeader["ncols"] = dem["header"]["ncols"] + 10
+    wrongHeader["nrows"] = dem["header"]["nrows"] + 5
+
+    relThData = np.ones((wrongHeader["nrows"], wrongHeader["ncols"])) * 1.5
+    relThFile = avaTestDirInputs / "relThickness"
+    IOf.writeResultToRaster(wrongHeader, relThData, relThFile, flip=True)
+
+    # setup config
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"avalancheDir": str(avaTestDir)}
+    cfg["INPUT"] = {"relThFile": "REL/relThickness.asc"}
+
+    # call function to be tested - should raise AssertionError
+    with pytest.raises(AssertionError) as excinfo:
+        getInput.initializeRelTh(cfg, dem["header"])
+
+    assert "does not match the number of rows and columns of the dem" in str(excinfo.value)
+
+
+def test_initializeRelTh_nan_values(tmp_path):
+    """test when relThFile contains NaN values - should raise AssertionError"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    # create test directory with release thickness file
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs" / "REL"
+    fU.makeADir(avaTestDirInputs)
+
+    # create a release thickness raster with NaN values
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    relThData = np.ones((dem["header"]["nrows"], dem["header"]["ncols"])) * 1.5
+    # introduce some NaN values
+    relThData[10:20, 10:20] = np.nan
+
+    relThFile = avaTestDirInputs / "relThickness"
+    IOf.writeResultToRaster(dem["header"], relThData, relThFile, flip=True)
+
+    # setup config
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"avalancheDir": str(avaTestDir)}
+    cfg["INPUT"] = {"relThFile": "REL/relThickness.asc"}
+
+    # call function to be tested - should raise AssertionError
+    with pytest.raises(AssertionError) as excinfo:
+        getInput.initializeRelTh(cfg, dem["header"])
+
+    assert "Release thickness field contains nans" in str(excinfo.value)
+
+
+def test_initializeRelTh_empty_config(tmp_path):
+    """test when cfg relThFile is empty string - should return empty strings"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    dem = getInput.readDEM(avaDir)
+
+    # create test directory
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    fU.makeADir(avaTestDirInputs)
+
+    # setup config with empty relThFile
+    cfg = configparser.ConfigParser()
+    cfg["GENERAL"] = {"avalancheDir": str(avaTestDir)}
+    cfg["INPUT"] = {"relThFile": ""}
+
+    # call function to be tested
+    relThFieldData, relThFilePath = getInput.initializeRelTh(cfg, dem["header"])
+
+    # verify results - both should be empty strings
+    assert relThFieldData == ""
+    assert relThFilePath == ""
+
+
+def test_getInputPaths_basic(tmp_path):
+    """test basic functionality - fetch DEM and release shapefiles"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    # call function to be tested
+    demFile, relFiles, relFieldFiles = getInput.getInputPaths(avaTestDir)
+
+    # verify results
+    assert demFile == avaTestDirInputs / "DEM_HS_Topo.asc"
+    assert demFile.exists()
+    assert len(relFiles) == 3
+    assert avaTestDirInputs / "REL" / "release1HS.shp" in relFiles
+    assert avaTestDirInputs / "REL" / "release2HS.shp" in relFiles
+    assert avaTestDirInputs / "REL" / "release3HS.shp" in relFiles
+    # no RELTH directory exists in test data
+    assert relFieldFiles is None
+
+
+def test_getInputPaths_with_thickness_fields(tmp_path):
+    """test when RELTH directory contains thickness raster files"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    # create RELTH directory with thickness files
+    relThDir = avaTestDirInputs / "RELTH"
+    fU.makeADir(relThDir)
+
+    # create dummy thickness raster files
+    dem = getInput.readDEM(avaTestDir)
+    import avaframe.in2Trans.rasterUtils as IOf
+
+    thicknessData = np.ones((dem["header"]["nrows"], dem["header"]["ncols"])) * 1.0
+    relThFile1 = relThDir / "relThickness1"
+    relThFile2 = relThDir / "relThickness2"
+    IOf.writeResultToRaster(dem["header"], thicknessData, relThFile1, flip=True)
+    IOf.writeResultToRaster(dem["header"], thicknessData, relThFile2, flip=True)
+
+    # call function to be tested
+    demFile, relFiles, relFieldFiles = getInput.getInputPaths(avaTestDir)
+
+    # verify results
+    assert demFile == avaTestDirInputs / "DEM_HS_Topo.asc"
+    assert len(relFiles) == 3
+    # verify thickness files found
+    assert relFieldFiles is not None
+    assert len(relFieldFiles) == 2
+    assert relThDir / "relThickness1.asc" in relFieldFiles
+    assert relThDir / "relThickness2.asc" in relFieldFiles
+
+
+def test_getInputPaths_no_thickness_fields(tmp_path):
+    """test when RELTH directory is empty - should return None for relFieldFiles"""
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = "avaHockeyChannel"
+    avaDir = dirPath / ".." / "data" / avaName
+    avaDirInputs = avaDir / "Inputs"
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / "Inputs"
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+
+    # create empty RELTH directory
+    relThDir = avaTestDirInputs / "RELTH"
+    fU.makeADir(relThDir)
+
+    # call function to be tested
+    demFile, relFiles, relFieldFiles = getInput.getInputPaths(avaTestDir)
+
+    # verify results
+    assert demFile == avaTestDirInputs / "DEM_HS_Topo.asc"
+    assert len(relFiles) == 3
+    # empty RELTH directory should return None
+    assert relFieldFiles is None
