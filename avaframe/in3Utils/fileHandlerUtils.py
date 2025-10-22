@@ -368,7 +368,7 @@ def splitTimeValueToArrayInterval(cfgValues, endTime):
     Returns
     --------
     items : 1D numpy array
-        time step values as 1D numpy array
+        sorted time step values as 1D numpy array
     """
 
     if ":" in cfgValues:
@@ -384,9 +384,6 @@ def splitTimeValueToArrayInterval(cfgValues, endTime):
         items = np.array(itemsL, dtype=float)
         items = np.sort(items)
 
-    # make sure that 0 is not in the array (initial time step is any ways saved)
-    if items[0] == 0:
-        items = np.delete(items, 0)
     # make sure the array is not empty
     # ToDo : make it work without this arbitrary 2*timeEnd
     if items.size == 0:

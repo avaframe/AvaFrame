@@ -1872,8 +1872,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg["REPORT"]["plotFields"])
-    # always add particles to first and last time step
-    resTypesLast = list(set(resTypes + resTypesReport + ["particles"]))
+    resTypesLast = list(set(resTypes + resTypesReport))
     # derive friction type
     # turn friction model into integer
     frictModelsList = [
@@ -1914,7 +1913,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # setup a result fields info data frame to save max values of fields and avalanche front
     resultsDF = setupresultsDF(resTypesLast, cfg["VISUALISATION"].getboolean("createRangeTimeDiagram"))
 
-    # TODO: add here different time stepping options
+    # Add different time stepping options here
     log.debug("Use standard time stepping")
     # Initialize time and counters
     nSave = 1
@@ -1929,6 +1928,12 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     # export initial time step
     if cfg["EXPORTS"].getboolean("exportData"):
         exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="initial")
+
+        if "particles" in resTypes:
+            outDirData = outDir / "particles"
+            fU.makeADir(outDirData)
+            savePartToPickle(particles, outDirData, cuSimName)
+
     # export particles properties for visulation
     if cfg["VISUALISATION"].getboolean("writePartToCSV"):
         particleTools.savePartToCsv(
@@ -1940,10 +1945,6 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         countParticleCsv = countParticleCsv + 1
 
     # export particles dictionaries of saving time steps
-    # (if particles is not in resType, only first and last time step are saved)
-    outDirData = outDir / "particles"
-    fU.makeADir(outDirData)
-    savePartToPickle(particles, outDirData, cuSimName)
 
     zPartArray0 = copy.deepcopy(particles["z"])
 
@@ -2034,7 +2035,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
                 exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="intermediate")
 
                 # export particles dictionaries of saving time steps
-                savePartToPickle(particles, outDirData, cuSimName)
+                if "particles" in resTypes:
+                    savePartToPickle(particles, outDirData, cuSimName)
 
             # export particles properties for visulation
             if cfg["VISUALISATION"].getboolean("writePartToCSV"):
@@ -2162,7 +2164,8 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         exportFields(cfg, t, fields, dem, outDir, cuSimName, TSave="final")
 
         # export particles dictionaries of saving time steps
-        savePartToPickle(particles, outDirData, cuSimName)
+        if "particles" in resTypes:
+            savePartToPickle(particles, outDirData, cuSimName)
     else:
         # fetch contourline info
         contourDictXY = outCom1DFA.fetchContCoors(
@@ -2218,7 +2221,7 @@ def setupresultsDF(resTypes, cfgRangeTime):
     resultsDF: dataframe
         data frame with on line for iniital time step and max and mean values of fields
     """
-
+    # TODO catch empty resTypes
     resDict = {"timeStep": [0.0]}
     for resT in resTypes:
         if resT != "particles" and resT != "FTDet":
@@ -2795,12 +2798,18 @@ def exportFields(
             # convert from J/cell to kJ/m²
             # (by dividing the peak kinetic energy per cell by the real area of the cell)
             resField = resField * 0.001 / dem["areaRaster"]
+
         dataName = cuSimName + "_" + resType + "_" + "t%.2f" % (timeStep)
         # create directory
         outDirPeak = outDir / "peakFiles" / "timeSteps"
         fU.makeADir(outDirPeak)
         outFile = outDirPeak / dataName
         IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+        log.debug(
+            "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
+            % (resType, timeStep)
+        )
+
         if TSave == "final":
             log.debug(
                 "Results parameter: %s exported to Outputs/peakFiles for time step: %.2f - FINAL time step "
@@ -2812,11 +2821,6 @@ def exportFields(
             fU.makeADir(outDirPeakAll)
             outFile = outDirPeakAll / dataName
             IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
-        else:
-            log.debug(
-                "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
-                % (resType, timeStep)
-            )
 
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", module=com1DFA):
