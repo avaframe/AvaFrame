@@ -619,3 +619,61 @@ def test_MoTGenerateConfigs(tmp_path):
         assert inputSimFiles == mockInputSimFiles
         mockCheckType.assert_called_once_with(cfgInfo)
         mockPreprocess.assert_called_once()
+
+
+def test_RunAndCheckMoT_HighTimeStepCount():
+    """Test that time step counter logs after 100 steps"""
+    # Create output with 105 lines containing "Step" to trigger printCounter > 100
+    testOutput = [f"Step {i}\n" for i in range(1, 106)]
+
+    with patch('subprocess.Popen') as mockPopen, \
+            patch('avaframe.in3Utils.MoTUtils.log.info') as mockLog:
+
+        mockPopen.return_value = MockProcess(testOutput)
+        MoTUtils.runAndCheckMoT("testCommand")
+
+        # Verify that the time step logging was triggered
+        # After 101 steps, printCounter should exceed 100 and log a message
+        logCalls = [call for call in mockLog.call_args_list
+                   if "Process is running" in str(call)]
+        assert len(logCalls) > 0, "Expected 'Process is running' log message after 100 steps"
+
+        # Verify the message contains time step information
+        firstLogCall = logCalls[0]
+        assert "Reported time steps:" in str(firstLogCall)
+
+
+def test_RunAndCheckMoT_MessageFiltering():
+    """Test that specific keywords are filtered from output"""
+    # Create output with lines containing keywords that should be filtered
+    testOutput = [
+        "Normal line 1\n",
+        "find_dt calculation\n",
+        "h1 value\n",
+        "h2 value\n",
+        "write_data operation\n",
+        "update_boundaries process\n",
+        "V_tot volume\n",
+        "Normal line 2\n",
+    ]
+
+    with patch('subprocess.Popen') as mockPopen, \
+            patch('avaframe.in3Utils.MoTUtils.log.info') as mockLog:
+
+        mockPopen.return_value = MockProcess(testOutput)
+        MoTUtils.runAndCheckMoT("testCommand")
+
+        # Verify only non-filtered messages were logged
+        loggedMessages = [call[0][0] for call in mockLog.call_args_list]
+
+        # These should be logged
+        assert "Normal line 1" in loggedMessages
+        assert "Normal line 2" in loggedMessages
+
+        # These should NOT be logged (filtered out)
+        assert not any("find_dt" in msg for msg in loggedMessages)
+        assert not any("h1" in msg for msg in loggedMessages)
+        assert not any("h2" in msg for msg in loggedMessages)
+        assert not any("write_data" in msg for msg in loggedMessages)
+        assert not any("update_boundaries" in msg for msg in loggedMessages)
+        assert not any("V_tot" in msg for msg in loggedMessages)
