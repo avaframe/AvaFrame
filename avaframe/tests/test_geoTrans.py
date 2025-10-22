@@ -336,7 +336,7 @@ def test_prepareArea():
 
     with pytest.raises(AssertionError) as e:
         assert geoTrans.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
-    assert str(e.value) == "Features are overlapping - this is not allowed"
+    assert str(e.value) == "Features ['testRel', 'test2'] are overlapping - this is not allowed"
 
     line5 = geoTrans.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
 

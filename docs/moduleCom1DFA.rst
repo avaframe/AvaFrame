@@ -120,7 +120,7 @@ Release, entrainment and secondary release thickness can be specified in two dif
     taken from `entThIfMissingInShp` (default 0.3 m) in the configuration file. If multiple features are
     in the entrainment file the thickness attribute has to be set either for ALL or NONE of the features.
   - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
-  - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp,
+  - set the flag `THICKNESSFromShp` (i.e. relThFromFile, entThFromFile,
     secondaryRelthFromShp) to True in the configuration file (default is True)
   - a parameter variation can be added with the `THICKNESSPercentVariation`
     parameter in the configuration file in the form of
@@ -150,7 +150,7 @@ Only available for release thickness:
 
 3. Via **release thickness file**:
 
-  - set the flag 'relThFromShp' to False
+  - set the flag 'relThFromFile' to False
   - set the flag 'relThFromFile' to True
   - save a raster file with info on release thickness as raster file in
     ``Inputs/RELTH`` the number of rows and columns must match the DEM raster

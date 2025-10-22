@@ -1,12 +1,9 @@
 import os
 import platform
 import logging
-import numpy as np
 import pathlib
 import time
-import shutil
 import sys
-
 
 if os.name == "nt":
     from multiprocessing.pool import ThreadPool as Pool
@@ -18,13 +15,11 @@ else:
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in2Trans import rasterUtils as rU
-from avaframe.com1DFA import particleInitialisation as pI
 from avaframe.in1Data import getInput as gI
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils.cfgUtils import cfgToRcf
-from avaframe.in3Utils.MoTUtils import rewriteDEMtoZeroValues, runAndCheckMoT, MoTGenerateConfigs, copyMoTFiles
+import avaframe.in3Utils.MoTUtils as mT
 
 
 # create a local logger
@@ -63,12 +58,12 @@ def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
     """
 
     # Get all necessary information from the configuration files
-    currentModule = sys.modules[__name__] # As if you would to import com9MoTVoellmy
-    simDict, inputSimFiles = MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
+    currentModule = sys.modules[__name__]  # As if you would to import com9MoTVoellmy
+    simDict, inputSimFiles = mT.MoTGenerateConfigs(cfgMain, cfgInfo, currentModule)
 
     # convert DEM from nan to 0 values
     # TODO: suggest MoT-PSA to handle nan values
-    rewriteDEMtoZeroValues(inputSimFiles["demFile"])
+    mT.rewriteDEMtoZeroValues(inputSimFiles["demFile"])
 
     log.info("The following simulations will be performed")
     for key in simDict:
@@ -97,10 +92,10 @@ def com9MoTVoellmyMain(cfgMain, cfgInfo=None):
     log.info("--- ENDING (potential) PARALLEL PART ----")
 
     # Postprocess the simulations
-    com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles)
+    com9MoTVoellmyPostprocess(simDict, cfgMain)
 
 
-def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
+def com9MoTVoellmyPostprocess(simDict, cfgMain):
     """Post-process MoT-Voellmy simulation results.
 
     This function handles post-processing tasks after MoT-Voellmy simulations complete,
@@ -138,23 +133,25 @@ def com9MoTVoellmyPostprocess(simDict, cfgMain, inputSimFiles):
         workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy" / str(key)
 
         # Copy ppr files
-        copyMoTFiles(workDir, outputDirPeakFile, "p_max", "ppr")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "p_max", "ppr")
 
         # Copy pfd files
-        copyMoTFiles(workDir, outputDirPeakFile, "h_max", "pfd")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "h_max", "pfd")
 
         # Copy pfv files
-        copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
+        mT.copyMoTFiles(workDir, outputDirPeakFile, "s_max", "pfv")
+
+        # Copy timestep directories to timesteps subfolder
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "s")
+        mT.copyMoTDirs(workDir, outputDirPeakFile, key, "h")
 
     # create plots and report
     modName = __name__.split(".")[-1]
     reportDir = pathlib.Path(avalancheDir, "Outputs", modName, "reports")
     fU.makeADir(reportDir)
 
-    dem = rU.readRaster(inputSimFiles["demFile"])
-
     # Generate plots for all peakFiles
-    oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName, demData=dem)
+    oP.plotAllPeakFields(avalancheDir, cfgMain["FLAGS"], modName)
 
 
 def com9MoTVoellmyTask(rcfFile):
@@ -189,7 +186,7 @@ def com9MoTVoellmyTask(rcfFile):
 
     command = [exeName, rcfFile]
     log.info("Run simulation: %s" % rcfFile)
-    runAndCheckMoT(command)
+    mT.runAndCheckMoT(command)
     return command
 
 
@@ -219,94 +216,162 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
     -----
     The function performs several key steps:
     - Creates working directories for each simulation
-    - Processes release areas and converts them to raster format 
+    - Processes release areas and converts them to raster format
     - Generates configuration files in RCF format
     - Handles both single and multiple release scenarios
     """
     # Load avalanche directory from general configuration file
     avalancheDir = cfgMain["MAIN"]["avalancheDir"]
+    # set inputsDir where original input data and remeshed rasters are stored
+    inputsDir = pathlib.Path(avalancheDir) / "Inputs"
 
+    # create required Work und Outputs directories in avalancheDir
     workDir = pathlib.Path(avalancheDir) / "Work" / "com9MoTVoellmy"
     cfgFileDir = pathlib.Path(avalancheDir) / "Outputs" / "com9MoTVoellmy" / "configurationFiles"
     fU.makeADir(cfgFileDir)
     rcfFiles = list()
 
+    # loop over all simulation to be performed
     for key in simDict:
         # Generate command and run via subprocess.run
         # Configuration that needs adjustment
 
+        # Generate the work and data dirs for the current simHash
+        # save derived fields from polygons, optionally zeroRasters and remeshedRasters to that folder
+        cuWorkDir = workDir / key
+        workInputDir = cuWorkDir / "Input"
+        workOutputDir = cuWorkDir / key
+        fU.makeADir(cuWorkDir)
+        fU.makeADir(workInputDir)
+
         # load configuration object for current sim
         cfg = simDict[key]["cfgSim"]
+        log.info("Prepare simulation configuration for key %s" % key)
 
-        # convert release shape to raster with values for current sim
         # select release area input data according to a chosen release scenario
         inputSimFiles = gI.selectReleaseFile(inputSimFiles, cfg["INPUT"]["releaseScenario"])
+
         # create the required input from input files
+        # if release, entrainment area are provided as shapefile - read shapefile attributes and values for current sim
+        # if provided by raster - load raster data
+        # load DEM and dem file type information
         demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
+        demOri["originalHeader"] = demOri["header"]
+        demSuffix = rU.getRasterFileTypeFromHeader(demOri["header"])
 
-        if cfg["GENERAL"].getboolean("iniStep"):
-            # append buffered release Area
-            inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
-
-        # set thickness values for the release area, entrainment and secondary release areas
+        # set thickness values for the release area, entrainment areas
         relName, inputSimLines, badName = com1DFA.prepareReleaseEntrainment(
             cfg, inputSimFiles["releaseScenario"], inputSimLines
         )
 
-        releaseLine = inputSimLines["releaseLine"]
-        # check if release features overlap between features
-        # TODO: split releaseheight -> question NGI
-        dem = rU.readRaster(inputSimFiles["demFile"])
-        dem["originalHeader"] = dem["header"].copy()
-        # releaseLine = geoTrans.prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
-        if len(inputSimLines["relThField"]) == 0:
-            # if no release thickness field or function - set release according to shapefile or ini file
-            # this is a list of release rasters that we want to combine
-            releaseLine = geoTrans.prepareArea(
-                releaseLine,
-                dem,
-                np.sqrt(2),
-                thList=releaseLine["thickness"],
-                combine=True,
-                checkOverlap=False,
-            )
-            releaseField = releaseLine["rasterData"]
+        # RELEASE AREA - fetch path to release raster
+        releaseName, inputSimLines["releaseLine"] = gI.deriveLineRaster(
+            cfg,
+            inputSimLines["releaseLine"],
+            demOri,
+            workInputDir,
+            inputsDir,
+            "rel",
+            rasterFileType=demSuffix,
+        )
+
+        # ENTRAINMENT AREA - fetch path to entrainment (bedDepth) raster
+        if "ent" in key:
+            saveZeroRaster = False
         else:
-            # if relTh provided - set release thickness with field or function
-            releaseLine = geoTrans.prepareArea(
-                releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False
-            )
-            relRasterPoly = releaseLine["rasterData"].copy()
-            releaseRelThCombined = np.where(relRasterPoly > 0, inputSimLines["relThField"], 0)
-            releaseField = releaseRelThCombined
+            saveZeroRaster = True
 
-        # Generate the work and data dirs for the current simHash
-        cuWorkDir = workDir / key
-        workInputDir = cuWorkDir / "Input"
-        workOutputDir = cuWorkDir / key
+        bedDepthName, inputSimLines["entLine"] = gI.deriveLineRaster(
+            cfg,
+            inputSimLines["entLine"],
+            demOri,
+            workInputDir,
+            inputsDir,
+            "ent",
+            rasterFileType=demSuffix,
+            saveZeroRaster=saveZeroRaster,
+        )
 
-        fU.makeADir(cuWorkDir)
-        fU.makeADir(workInputDir)
+        # TODO: is this check if release and entrainment have overlap required?
+        # if "ent" in key:
+        #     log.info("Check for overlap?")
+        #
+        #     # check if entrainment and release area have overlap
+        #     _ = geoTrans.checkOverlap(
+        #         inputSimLines["entLine"]["rasterData"],
+        #         inputSimLines["releaseLine"]["rasterData"],
+        #         "Entrainment",
+        #         "Release",
+        #         crop=False,
+        #     )
 
-        zeroRaster = np.full_like(releaseLine["rasterData"], 0)
+        # BED SHEAR - fetch path to tauC raster
+        bedShearDict = {
+            "initializedFrom": "raster",
+            "fileName": inputSimLines["tauCFile"],
+        }
+        if inputSimLines["entResInfo"]["tauC"] == "Yes":
+            saveZeroRaster = False
+        else:
+            saveZeroRaster = True
 
-        release = workInputDir / "release"
-        bedDepth = workInputDir / "dummyBedDepth"
-        bedShear = workInputDir / "dummyBedShear"
-        rU.writeResultToRaster(dem["header"], releaseField, release, flip=True)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedDepth)
-        rU.writeResultToRaster(dem["header"], zeroRaster, bedShear)
+        bedShearName, bedShearDict = gI.deriveLineRaster(
+            cfg,
+            bedShearDict,
+            demOri,
+            workInputDir,
+            inputsDir,
+            "tauC",
+            rasterFileType=demSuffix,
+            saveZeroRaster=saveZeroRaster,
+        )
 
         # set configuration for MoT-Voellmy
         cfg["Run information"]["Area of Interest"] = cfgMain["MAIN"]["avalancheDir"]
         cfg["Run information"]["UTM zone"] = "32N"
         cfg["Run information"]["EPSG geodetic datum code"] = "31287"
         cfg["Run information"]["Run name"] = cfgMain["MAIN"]["avalancheDir"]
-        cfg["File names"]["Grid filename"] = str(inputSimFiles["demFile"])
-        cfg["File names"]["Release depth filename"] = str(release) + ".asc"
-        cfg["File names"]["Bed depth filename"] = str(bedDepth) + ".asc"
-        cfg["File names"]["Bed shear strength filename"] = str(bedShear) + ".asc"
+        cfg["File names"]["Grid filename"] = str(pathlib.Path(inputsDir / cfg["INPUT"]["DEM"]))
+        cfg["File names"]["Release depth filename"] = str(releaseName)
+        cfg["File names"]["Bed depth filename"] = str(bedDepthName)
+        cfg["File names"]["Bed shear strength filename"] = str(bedShearName)
         cfg["File names"]["Output filename root"] = str(workOutputDir)
+
+        # if _mu and _k files in avalancheDir/Inputs/RASTERS found - set paths to mu and k files
+        # if not found then mu and k are set constant to values provided in cfg
+        if cfg["Physical_parameters"]["Parameters"] == "auto":
+            cfg = mT.setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            # TODO FSO allow for options constant and variable
+            message = "Currently only available option is auto for %s" % (
+                '["Physical_parameters"]["Parameters"]'
+            )
+            log.error(message)
+            raise AssertionError(message)
+
+        if cfg["ENTRAINMENT"]["Entrainment"] == "auto":
+            cfg = mT.setVariableEntrainmentParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            message = "Currently only available option is auto for %s" % ('["ENTRAINMENT"]["Entrainment"]')
+            log.error(message)
+            raise AssertionError(message)
+
+        # if _nd and _bhd files in avalancheDir/Inputs/RASTERS found - set paths to nd and bhd files
+        # if not found then forest effects are set to no
+        if cfg["FOREST_EFFECTS"]["Forest effects"] == "auto":
+            cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
+        else:
+            message = "Currently only available option is auto for %s" % (
+                '["FOREST_EFFECTS"]["Forest effects"]'
+            )
+            log.error(message)
+            raise AssertionError(message)
+        # elif cfg["FOREST_EFFECTS"]["Forest effects"] == "no":
+        #     cfg["File names"]["Forest density filename"] = "-"
+        #     cfg["File names"]["Tree diameter filename"] = "-"
+        # else:
+        #     # if forest effects set to yes but files not found - error will be raised by setVariableForestParameters
+        #     cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)
 
         rcfFileName = cfgFileDir / (str(key) + ".rcf")
 
@@ -314,6 +379,5 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
         cfgUtils.writeCfgFile(avalancheDir, currentModule, cfg, str(key))
         cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
+        log.info("rcf and ini file written for key %s-------------------------" % key)
     return rcfFiles
-
-

@@ -25,7 +25,8 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
+    "numpy<2.0",
+    "salib<1.5.1",
     "matplotlib",
     "pyshp",
     "scipy",
@@ -43,7 +44,6 @@ dependencies = [
     "contextily",
     "geopandas",
     "fiona",
-    "salib"
 ]
 
 # Setuptools
@@ -94,7 +94,7 @@ cibuildwheel = "*"
 libgdal = "*"
 #geos = "*"
 #proj = "*"
-#python = "<3.14"
+python = "<3.14"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
@@ -117,13 +117,17 @@ sphinxcontrib-bibtex = "*"
 [tool.pixi.feature.prod.pypi-dependencies]
 avaframe = "*"
 
+#Feature py313
+[tool.pixi.feature.py313.dependencies]
+python = "<3.14"
+
 #Feature rcs
-#[tool.pixi.feature.rcs.pypi-dependencies]
-#avaframe = "==1.13rc4"
+[tool.pixi.feature.rcs.pypi-dependencies]
+avaframe = "==1.13rc4"
 
 #Feature qgis
 [tool.pixi.feature.qgis.dependencies]
-qgis = "*"
+#qgis = "*"
 
 #Environments
 [tool.pixi.environments]
@@ -131,6 +135,7 @@ default = { features = ["dev"], solve-group = "default" }
 dev = ["dev"]
 doc = ["doc", "dev"]
 prod = ["prod"]
-#rcs = ["rcs"]
+rcs = ["rcs"]
+py313 = ["py313","dev"]
 qgis = ["qgis", "dev"]
 
