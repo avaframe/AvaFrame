@@ -52,8 +52,9 @@ Computational modules
     * :doc:`moduleCom4FlowPy`
     * :doc:`moduleCom5SnowSlide`
     * :doc:`moduleCom6RockAvalanche`
+    * :doc:`moduleCom7Regional`
     * :doc:`moduleCom8MoTPSA`
-    * :doc:`moduleCom8MoTVoellmy`
+    * :doc:`moduleCom9MoTVoellmy`
 
 .. toctree::
    :maxdepth: 3
@@ -66,6 +67,7 @@ Computational modules
    moduleCom4FlowPy.rst
    moduleCom5SnowSlide.rst
    moduleCom6RockAvalanche.rst
+   moduleCom7Regional.rst
    moduleCom8MoTPSA.rst
    moduleCom9MoTVoellmy.rst
 

@@ -30,7 +30,7 @@ def test_snowSlide(tmp_path):
     snowSlideCfg['com1DFA_com1DFA_override']['dt'] = '1'
     snowSlideCfg['com1DFA_com1DFA_override']['meshCellSize'] = '5'
     snowSlideCfg['com1DFA_com1DFA_override']['tEnd'] = '5'
-    snowSlideCfg['com1DFA_com1DFA_override']['entThFromShp'] = 'False'
+    snowSlideCfg['com1DFA_com1DFA_override']['entThFromFile'] = 'False'
     snowSlideCfg['com1DFA_com1DFA_override']['entTh'] = '0.3'
 
     # call function to be tested
@@ -38,5 +38,5 @@ def test_snowSlide(tmp_path):
 
     # print('simDF', simDF.to_string())
     assert simDF['tEnd'].iloc[0] == 5
-    assert simDF['relThFromShp'].iloc[0] == 'True'
+    assert simDF['relThFromFile'].iloc[0] == 'True'
     assert simDF['snowSlide'].iloc[0] == 1

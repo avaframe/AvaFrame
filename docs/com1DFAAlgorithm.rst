@@ -168,7 +168,7 @@ Other particles properties are also initialized here:
 
     - ``dmEnt`` - entrained mass of particle [kg]
 
-    - ``stoppedParticles`` - dictionary with particles (containing x-, y-coordinates, mass and ID) that are stopped (mass or velocity is zero) and deleted from the particles in each time step
+    - ``stoppedParticles`` - dictionary with particles (containing x-, y-coordinates, mass and ID) that are stopped (velocity is zero) and deleted from the particles in each time step (only if ``adaptSfcStopped`` is set to ``1`` in the configuration file)
 
 For more details, see :py:func:`com1DFA.com1DFA.initializeParticles`.
 

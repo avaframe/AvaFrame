@@ -80,6 +80,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
     for key in simDict:
         workDir = pathlib.Path(avalancheDir) / "Work" / "com8MoTPSA" / str(key)
 
+        # identify simType
+        simType = simDict[key]["simType"]
+
         # Copy DataTime.txt
         dataTimeFile = workDir / "DataTime.txt"
         shutil.copy2(dataTimeFile, outputDir / (str(key) + "_DataTime.txt"))
@@ -88,9 +91,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy ppr files
         pprFiles = list(workDir.glob("*p?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_p1_max", "null_dfa_ppr")) for f in pprFiles
+            pathlib.Path(str(f.name).replace("%s_psa_p1_max" % simType, "%s_dfa_ppr" % simType)) for f in pprFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_p2_max", "null_psa_ppr")) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f).replace("%s_psa_p2_max" % simType, "%s_psa_ppr" % simType)) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pprFiles, targetFiles):
             shutil.copy2(source, target)
@@ -98,9 +101,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfd files
         pfdFiles = list(workDir.glob("*h?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_h1_max", "null_dfa_pfd")) for f in pfdFiles
+            pathlib.Path(str(f.name).replace("%s_psa_h1_max" % simType, "%s_dfa_pfd" % simType)) for f in pfdFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_h2_max", "null_psa_pfd")) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f).replace("%s_psa_h2_max" % simType, "%s_psa_pfd" % simType)) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfdFiles, targetFiles):
             shutil.copy2(source, target)
@@ -108,9 +111,9 @@ def com8MoTPSAPostprocess(simDict, cfgMain, inputSimFiles):
         # Copy pfv files
         pfvFiles = list(workDir.glob("*s?_max*"))
         targetFiles = [
-            pathlib.Path(str(f.name).replace("null_psa_s1_max", "null_dfa_pfv")) for f in pfvFiles
+            pathlib.Path(str(f.name).replace("%s_psa_s1_max" % simType, "%s_dfa_pfv" % simType)) for f in pfvFiles
         ]
-        targetFiles = [pathlib.Path(str(f).replace("null_psa_s2_max", "null_psa_pfv")) for f in targetFiles]
+        targetFiles = [pathlib.Path(str(f).replace("%s_psa_s2_max" % simType, "%s_psa_pfv" % simType)) for f in targetFiles]
         targetFiles = [outputDirPeakFile / f for f in targetFiles]
         for source, target in zip(pfvFiles, targetFiles):
             shutil.copy2(source, target)
@@ -234,5 +237,3 @@ def com8MoTPSAPreprocess(simDict, inputSimFiles, cfgMain):
         cfgToRcf(cfg, rcfFileName)
         rcfFiles.append(rcfFileName)
     return rcfFiles
-
-
