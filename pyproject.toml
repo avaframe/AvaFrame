@@ -27,8 +27,8 @@ requires-python = ">=3.9"
 dependencies = [
     "numpy<2.0",
     "salib<1.5.1",
-    "matplotlib",
     "pyshp<3.0",
+    "matplotlib",
     "scipy",
     "cmcrameri",
     "seaborn",
@@ -86,6 +86,7 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "win-64", "osx-64"]
 
 [tool.pixi.dependencies]
+python = "<3.14"
 setuptools = "*"
 setuptools-scm = "*"
 cibuildwheel = "*"
