@@ -23,11 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.14"
 dependencies = [
-    "numpy<2.0",
-    "salib<1.5.1",
-    "pyshp<3.0",
+    "numpy<2.0", # numpy 2.0 introduces breaking changes in relation to qgis versions
+    "salib<1.5.1", # this is the last aversion that works with numpy <2.
+    "pyshp<3.0", # pin until 3.0.3 is out, there's a known bug for certain polygon types
     "matplotlib",
     "scipy",
     "cmcrameri",
@@ -112,7 +112,7 @@ sphinxcontrib-bibtex = "*"
 
 #Feature prod
 [tool.pixi.feature.prod.pypi-dependencies]
-#avaframe = "*"
+avaframe = "*"
 
 #Feature py313
 [tool.pixi.feature.py313.dependencies]
@@ -124,7 +124,8 @@ python = "==3.13.7"
 
 #Feature qgis
 [tool.pixi.feature.qgis.dependencies]
-#qgis = "*"
+numpy = "<2.0"
+qgis = "*"
 
 #Environments
 [tool.pixi.environments]
