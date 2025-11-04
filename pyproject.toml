@@ -23,12 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.14"
 dependencies = [
-    "numpy<2.0",
-    "salib<1.5.1",
+    "numpy<2.0", # numpy 2.0 introduces breaking changes in relation to qgis versions
+    "salib<1.5.1", # this is the last aversion that works with numpy <2.
+    "pyshp<3.0", # pin until 3.0.3 is out, there's a known bug for certain polygon types
     "matplotlib",
-    "pyshp",
     "scipy",
     "cmcrameri",
     "seaborn",
@@ -86,15 +86,12 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64", "win-64", "osx-64"]
 
 [tool.pixi.dependencies]
+python = "<3.14"
 setuptools = "*"
 setuptools-scm = "*"
 cibuildwheel = "*"
 # FSO: remove as soon as possible
-#gdal = "*"
 libgdal = "*"
-#geos = "*"
-#proj = "*"
-python = "<3.14"
 
 # Feature dev
 [tool.pixi.feature.dev.pypi-dependencies]
@@ -119,15 +116,16 @@ avaframe = "*"
 
 #Feature py313
 [tool.pixi.feature.py313.dependencies]
-python = "<3.14"
+python = "==3.13.7"
 
 #Feature rcs
-[tool.pixi.feature.rcs.pypi-dependencies]
-avaframe = "==1.13rc4"
+#[tool.pixi.feature.rcs.pypi-dependencies]
+#avaframe = "==1.13rc4"
 
 #Feature qgis
 [tool.pixi.feature.qgis.dependencies]
-#qgis = "*"
+numpy = "<2.0"
+qgis = "*"
 
 #Environments
 [tool.pixi.environments]
@@ -135,7 +133,7 @@ default = { features = ["dev"], solve-group = "default" }
 dev = ["dev"]
 doc = ["doc", "dev"]
 prod = ["prod"]
-rcs = ["rcs"]
-py313 = ["py313","dev"]
+#rcs = ["rcs"]
+py313 = ["py313", "dev"]
 qgis = ["qgis", "dev"]
 
