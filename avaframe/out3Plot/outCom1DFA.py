@@ -628,14 +628,14 @@ def plotReleaseScenarioView(
         count = count + 1
     if reportAreaInfo["dam"] == "Yes":
         damArea = gpd.read_file(inputSimLines["damLine"]["fileName"][0])
-        damArea.plot(ax=ax, edgecolor="orange", linewidth=2, facecolor="none")
-        damPatch = Patch(color="orange", label="dam")
+        damArea.plot(ax=ax, edgecolor="deeppink", linewidth=2, facecolor="none")
+        damPatch = Patch(color="deeppink", label="dam")
         handles.append(damPatch)
         count = count + 1
 
     ax.set_aspect("equal")
     cax = ax.inset_axes([1.04, 0.0, 0.05, 1.0])
-    pU.addColorBar(im1, ax, ticks, "m", cax=cax)
+    cbar = pU.addColorBar(im1, ax, ticks, None, title="release thickness [m]", cax=cax, fmt="{x:.2f}")
     plt.legend(
         handles=handles,
         fontsize=8,
