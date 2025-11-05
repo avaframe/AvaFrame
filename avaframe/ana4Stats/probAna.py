@@ -286,7 +286,7 @@ def updateCfgRange(cfg, cfgProb, varName, varDict):
 
 
 def checkParameterSettings(cfg, varParList):
-    """check if parameter settings in comMod configuration do not inlcude variation for parameters to be varied
+    """check if parameter settings in comMod configuration do not include variation for parameters to be varied
 
     Parameters
     -----------
@@ -821,6 +821,15 @@ def createSampleWithVariationForThParameters(
 
     # fetch input files and corresponding thickness info
     inputSimFiles = fetchThicknessInfo(avaDir)
+    for thFType in thReadFromShp:
+        if inputSimFiles["entResInfo"][thFType + "FileType"] != ".shp":
+            message = "%s file type: %s not a valid option for desired %s variation" % (
+                thFType,
+                inputSimFiles["entResInfo"][thFType + "FileType"],
+                thFType,
+            )
+            log.error(message)
+            raise AssertionError(message)
 
     paramValuesDList = []
     for iRel, relF in enumerate(inputSimFiles["relFiles"]):
