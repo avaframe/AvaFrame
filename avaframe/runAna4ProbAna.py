@@ -40,7 +40,6 @@ def runProbAna(avalancheDir=''):
 
     # Load avalanche directory from general configuration file,
     # if not provided as input argument
-    cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
     else:
