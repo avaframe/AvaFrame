@@ -821,11 +821,12 @@ def createSampleWithVariationForThParameters(
 
     # fetch input files and corresponding thickness info
     inputSimFiles = fetchThicknessInfo(avaDir)
+    fileTypeText = {".asc": "raster", ".tif": "raster", ".shp": "shapefile"}
     for thFType in thReadFromShp:
         if inputSimFiles["entResInfo"][thFType + "FileType"] != ".shp":
             message = "%s file type: %s not a valid option for desired %s variation" % (
                 thFType,
-                inputSimFiles["entResInfo"][thFType + "FileType"],
+                fileTypeText[inputSimFiles["entResInfo"][thFType + "FileType"]],
                 thFType,
             )
             log.error(message)
