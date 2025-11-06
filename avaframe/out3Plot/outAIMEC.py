@@ -244,12 +244,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     # Get input data
     varParList = cfgSetup['varParList'].split('|')
     paraVar = varParList[0]
-    if 'colorParameter' in pathDict:
-        if pathDict['colorParameter'] is False:
-            firstVar = None
-        else:
-            # get first sim value of paraVar to decide if str or float or bool
-            firstVar = resAnalysisDF[paraVar].iloc[0]
+    firstVar = defineVariableType(paraVar, resAnalysisDF, pathDict)
+
     percentile = cfgSetup.getfloat('percentile')
     runoutResType = cfgSetup['runoutResType']
     thresholdValue = cfgSetup['thresholdValue']
@@ -316,11 +312,10 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         unitSC = cfgSetup["unit"]
         nSamples = np.size(runout)
         colorFlag = False
+        colorSuffix = ""
         if "colorParameter" in pathDict:
             if pathDict["colorParameter"] is False:
-                values = None
-                minVal = 0
-                maxVal = 1
+                colorFlag = False
             elif isinstance(firstVar, str):
                 # if str then check for parameter values and create colormap that varies between 0, 1 with number of unique
                 # values as steps
@@ -330,15 +325,15 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
                 colorFlag = True
                 cmapSCVals = np.linspace(0, 1, nSamples)
             else:
-                values = sorted(inputsDF[varParList[0]].to_list())
-                minVal = np.nanmin(values)
-                maxVal = np.nanmax(values)
-                cmapSCVals = np.linspace(0, 1, nSamples)
-                colorFlag = True
-        else:
+                colorFlag, colorSuffix, minVal, maxVal, values, cmapSCVals = defineColorcodingValues(
+                    inputsDF, paraVar, nSamples
+                )
+
+        if not colorFlag:
             values = None
             minVal = 0
             maxVal = 1
+
         # create colormap and setup ticks and itemsList
         cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(
             values, nSamples, unitSC
@@ -357,6 +352,10 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
                 # create cmap object
                 cmap3 = mpl.cm.ScalarMappable(norm=norm3, cmap=cmapUsed)
                 cmap3.set_array([])
+            else:
+                message = "Categorical color scheme only valid if ordering parameter of type str"
+                log.error(message)
+                raise AttributeError(message)
 
         ############################################
         # Figure: Analysis runout
@@ -458,9 +457,7 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
         countSim = 1
         for simRowHash, resAnalysisRow in resAnalysisDF.iterrows():
             if colorFlag and (isinstance(firstVar, str) == False):
-                cmapVal = cmapSCVals[values.index(resAnalysisRow[varParList[0]])]
-                if np.isnan(cmapVal) and paraVar in ["relTh", "entTh", "secondaryRelTh"]:
-                    cmapVal = resAnalysisRow[(paraVar + "0")]
+                cmapVal = cmapSCVals[values.index(resAnalysisRow[varParList[0] + colorSuffix])]
             elif colorFlag and isinstance(firstVar, str):
                 cmapVal = cmapSCVals[values.index(resAnalysisRow[varParList[0]])]
             else:
@@ -1036,11 +1033,14 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     # Get colors for scatter
     unitSC = cfgSetup['unit']
     nSamples = np.size(runout)
+    firstVar = defineVariableType(paraVar, resAnalysisDF, pathDict)
     if 'colorParameter' in pathDict:
         if pathDict['colorParameter'] is False:
             values = None
+        elif not isinstance(firstVar, str):
+            _, _, _, _, values, _ = defineColorcodingValues(resAnalysisDF, paraVar, nSamples)
         else:
-            values = inputsDF[varParList[0]].to_list()
+            values = None
     else:
         values = None
     cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples,
@@ -1147,32 +1147,30 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inpu
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     unit = pU.cfgPlotUtils['unit' + cfgSetup['runoutResType']]
     colorOrdering = False
-    minVal = 0
-    maxVal = 1
+    nSamples = inputsDF.shape[0]
 
     if pathDict['colorParameter']:
         # fetch parameter info for sims
         simDF = inputsDF
         varParList = cfgSetup['varParList'].split('|')
         paraVar = varParList[0]
-        values = simDF[varParList[0]].to_list()
-        # if varPar is thickness and possibly read from shp
-        if varParList[0] in ['relTh', 'entTh', 'secondaryRelTh']:
-           if np.isnan(values).any():
-                values = simDF[(varParList[0]+'0')].to_list() + values
+        firstVar = defineVariableType(paraVar, inputsDF, pathDict)
+        if not isinstance(firstVar, str):
+            colorOrdering, colorSuffix, minVal, maxVal, _, _ = defineColorcodingValues(
+                inputsDF, paraVar, nSamples
+            )
 
-        if isinstance(values[0], str) is False:
-            minVal = np.nanmin(values)
-            maxVal = np.nanmax(values)
-            colorOrdering = True
+    if colorOrdering is False:
+        minVal = 0
+        maxVal = 1
 
     # define figure extent
     # first find max SXY value of contour lines to define max extent on SXY
     xMax = 0
     for index, simName in enumerate(contourDict):
-            for key in contourDict[simName]:
-                if np.amax(contourDict[simName][key]['y']) > xMax:
-                    xMax = np.amax(contourDict[simName][key]['y'])
+        for key in contourDict[simName]:
+            if np.amax(contourDict[simName][key]["y"]) > xMax:
+                xMax = np.amax(contourDict[simName][key]["y"])
     sMax = np.where(s >= (xMax - 1.e-8))[0]
     # compute the ratio of LXY to SXY to get figure width and height
     xExtent = s[sMax[0]] - s[indStartOfRunout]
@@ -1206,9 +1204,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inpu
     # limit extent to avalanche extent
     for index, simName in enumerate(contourDict):
         if colorOrdering:
-            cmapVal = simDF.loc[simDF['simName'] == simName, paraVar].values[0]
-            if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
-                cmapVal = simDF.loc[simDF['simName'] == simName, (paraVar+'0')].values[0]
+            cmapVal = simDF.loc[simDF["simName"] == simName, paraVar + colorSuffix].values[0]
         else:
             cmapVal = index / len(contourDict)
         for key in contourDict[simName]:
@@ -1228,13 +1224,13 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inpu
             cbar.ax.set_title('[' + cfgSetup['unit'] + ']', pad=10)
         cbar.set_label(paraVar)
     else:
-        #TODO: remove?
+        # TODO: remove?
         log.warning('ordering for contour line plot not available for parameter of type string')
 
     # add indication for runout area
     ax1.axvline(s[indStartOfRunout], color='gray', linestyle='--',
                 label=rasterTransfo['labelRunout'])
-                #label=('start of runout area: '+ r'$\beta_{%.1f °}$' % (rasterTransfo['startOfRunoutAreaAngle'])))
+    # label=('start of runout area: '+ r'$\beta_{%.1f °}$' % (rasterTransfo['startOfRunoutAreaAngle'])))
     ax1.legend(loc='upper left')
 
     if indStartOfRunout != 0:
@@ -1246,9 +1242,7 @@ def plotContoursTransformed(contourDict, pathDict, rasterTransfo, cfgSetup, inpu
         pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
         for index, simName in enumerate(contourDict):
             if colorOrdering:
-                cmapVal = simDF.loc[simDF['simName'] == simName, paraVar].values[0]
-                if np.isnan(cmapVal) and paraVar in ['relTh', 'entTh', 'secondaryRelTh']:
-                    cmapVal = simDF.loc[simDF['simName'] == simName, (paraVar+'0')].values[0]
+                cmapVal = simDF.loc[simDF["simName"] == simName, paraVar + colorSuffix].values[0]
             else:
                 cmapVal = index / len(contourDict)
             for key in contourDict[simName]:
@@ -1940,3 +1934,89 @@ def boxScalarMeasures(pathDict, resultsDF, name='', orderList=None):
     plt.show()
     outFileName = 'distributionAimecScalarValues_%s' % (name)
     pU.saveAndOrPlot(pathDict, outFileName, fig)
+
+
+def defineVariableType(paraVar, dataDF, pathDict):
+    """define type of parameter (str or not str)
+    only empty strings do not account for type str
+
+    Parameters
+    -----------
+    paraVar: str
+        parameter name
+    dataDF: pandas Dataframe
+        one row per simulation with info on simulation results, aimec analysis and model configuration
+    pathDict: dict
+        key colorParameter
+
+    Returns
+    --------
+    firstVar: str, float, None
+        variable to be checked for type
+    """
+    if "colorParameter" in pathDict:
+        if pathDict["colorParameter"] is False:
+            firstVar = None
+        else:
+            # get first sim value of paraVar to decide if str or float or bool
+            varList = dataDF[paraVar].tolist()
+            indicatorList = [True if isinstance(item, str) and not item == "" else False for item in varList]
+            if np.asarray(indicatorList).any():
+                firstVar = ""
+            else:
+                firstVar = 1.0
+
+    return firstVar
+
+
+def defineColorcodingValues(dataDF, paraVar, nSamples):
+    """define list of values that are used for colorcoding of simulation results
+    as thickness values are potentially read from shp file - check for e.g. relTh0 instead of relTh
+
+    Parameters
+    ------------
+    dataDF: pandas Dataframe
+        one row per simulation with info on simulation results, aimec analysis and model configuration
+    paraVar: str
+        parameter name
+    nSamples: int
+        number of simulation results to be analyzed
+
+    Returns
+    --------
+    colorFlag: bool
+        True if colorCoding shall be applied
+    minVal, maxVal: float
+        min and max values of values list
+    values: list
+        list of values used for colorcoding
+    """
+
+    colorFlag = False
+    minVal = 0
+    maxVal = 1
+    cmapSCVals = None
+    colorSuffix = ""
+
+    values = sorted(dataDF[paraVar].to_list())
+    # check if no thickness value provided (because read from file)
+    if (
+        paraVar in ["relTh", "entTh", "secondaryRelTh"]
+        and np.asarray([True if item == "" else False for item in values]).all()
+    ):
+        # check if read from shapefile and therefore e.g. relTh0 is available
+        if paraVar + "0" in dataDF.columns:
+            values = sorted(dataDF[paraVar + "0"].to_list())
+            values = [np.nan if item == "" else item for item in values]
+            colorSuffix = "0"
+    # check if a value is provided for every simulation
+    if not np.isnan(values).any():
+        minVal = np.nanmin(values)
+        maxVal = np.nanmax(values)
+        colorFlag = True
+        cmapSCVals = np.linspace(0, 1, nSamples)
+
+    if not colorFlag:
+        values = None
+
+    return colorFlag, colorSuffix, minVal, maxVal, values, cmapSCVals

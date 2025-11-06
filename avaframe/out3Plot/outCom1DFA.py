@@ -635,7 +635,7 @@ def plotReleaseScenarioView(
 
     ax.set_aspect("equal")
     cax = ax.inset_axes([1.04, 0.0, 0.05, 1.0])
-    cbar = pU.addColorBar(im1, ax, ticks, None, title="release thickness [m]", cax=cax, fmt="{x:.2f}")
+    pU.addColorBar(im1, ax, ticks, None, title="release thickness [m]", cax=cax, fmt="{x:.2f}")
     plt.legend(
         handles=handles,
         fontsize=8,

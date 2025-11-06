@@ -281,12 +281,7 @@ def getInputDataCom1DFA(avaDir):
         inputDir, "RASTERS", "tauC parameter data", fileExt="raster", fileSuffix="_tauc"
     )
 
-    # # check if nd (forest density) parameter file is available
-    # ndFile, entResInfo["nd"], _ = getAndCheckInputFiles(
-    #     inputDir, "RASTERS", "nd parameter data", fileExt="raster", fileSuffix="_nd"
-    # )
-
-    # check if bhd (tree diameter) parameter file is available
+    # check if bhd (tree diameter) parameter file is available - forest density (nd) needs to be in RES folder
     bhdFile, entResInfo["bhd"], _ = getAndCheckInputFiles(
         inputDir, "RASTERS", "bhd parameter data", fileExt="raster", fileSuffix="_bhd"
     )
