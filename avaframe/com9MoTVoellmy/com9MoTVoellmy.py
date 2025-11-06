@@ -356,7 +356,8 @@ def com9MoTVoellmyPreprocess(simDict, inputSimFiles, cfgMain):
             log.error(message)
             raise AssertionError(message)
 
-        # if _nd and _bhd files in avalancheDir/Inputs/RASTERS found - set paths to nd and bhd files
+        # if a file in Inputs/RES is found (forest density info) and _bhd file in avalancheDir/Inputs/RASTERS found - set paths to nd and bhd files
+
         # if not found then forest effects are set to no
         if cfg["FOREST_EFFECTS"]["Forest effects"] == "auto":
             cfg = mT.setVariableForestParameters(cfg, inputSimFiles, workInputDir, inputsDir)

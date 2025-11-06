@@ -3145,7 +3145,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
             if cfgSim["GENERAL"]["dam"] == "True" and inputSimFiles["damFile"] is not None:
                 cfgSim["INPUT"]["DAM"] = str(pathlib.Path("DAM", inputSimFiles["damFile"].name))
 
-        # if ta0, mu, k used in com8 and com9 check extent of cellSize
+        # if tauC, mu, k used in com8 and com9 check extent of cellSize
         if modName in ["com8MoTPSA", "com9MoTVoellmy"]:
             dem = IOf.readRaster(pathlib.Path(cfgSim["GENERAL"]["avalancheDir"], "Inputs", pathToDem))
 
@@ -3173,15 +3173,17 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                         cfgSim["INPUT"]["%sFile" % fric] = pathToFric
                         inputSimFiles["entResInfo"]["%sRemeshed" % fric] = remeshedFric
 
-            # # check if forest effects = auto is chosen that forest parameter fields have correct extent
-            # if cfgSim["FOREST_EFFECTS"]["Forest effects"] == "auto":
-            #     for forestParam in ["nd", "bhd"]:
-            #         if inputSimFiles["entResInfo"][forestParam] == "Yes":
-            #             pathToForest, pathToForestFull, remeshedForest = dP.checkExtentAndCellSize(
-            #                 cfgSim, inputSimFiles["%sFile" % forestParam], dem, forestParam
-            #             )
-            #             cfgSim["INPUT"]["%sFile" % forestParam] = pathToForest
-            #             inputSimFiles["entResInfo"]["%sRemeshed" % forestParam] = remeshedForest
+            # check if forest effects = auto is chosen that forest parameter fields have correct extent
+            if "res" in row._asdict()["simTypeList"] and inputSimFiles["resFile"] is not None:
+                if (
+                    cfgSim["FOREST_EFFECTS"]["Forest effects"] == "auto"
+                    and inputSimFiles["entResInfo"]["bhd"] == "Yes"
+                ):
+                    pathToForest, pathToForestFull, remeshedForest = dP.checkExtentAndCellSize(
+                        cfgSim, inputSimFiles["%sFile" % "bhd"], dem, "bhd"
+                    )
+                    cfgSim["INPUT"]["%sFile" % "bhd"] = pathToForest
+                    inputSimFiles["entResInfo"]["%sRemeshed" % "bhd"] = remeshedForest
 
         # add info about entrainment file path to the cfg
         if "ent" in row._asdict()["simTypeList"] and inputSimFiles["entFile"] is not None:
@@ -3193,7 +3195,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
             cfgSim["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
 
-        # add info about entrainment file path to the cfg
+        # add info about resistance file path to the cfg
         if "res" in row._asdict()["simTypeList"] and inputSimFiles["resFile"] is not None:
             if inputSimFiles["entResInfo"]["resFileType"] != ".shp":
                 pathToRes, pathToResFull, remeshedRes = dP.checkExtentAndCellSize(

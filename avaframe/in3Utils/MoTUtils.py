@@ -294,8 +294,7 @@ def setVariableFrictionParameters(cfg, inputSimFiles, workInputDir, inputsDir):
 
 def setVariableEntrainmentParameters(cfg, inputSimFiles, workInputDir, inputsDir):
     """set file path in cfg object for entrainment parameters (required if option variable is set)
-    if _b0 , _tauc files found in Inputs/RASTERS and Inputs/ENT have to be remeshed, copy remeshed files
-    to workInputDir with new file name ending _b0, _tauc
+    if _b0 , _tauc files found in Inputs/RASTERS and Inputs/ENT
 
     Parameters
     -----------
