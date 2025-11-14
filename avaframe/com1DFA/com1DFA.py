@@ -1184,7 +1184,10 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     if cfg["EXPORTS"].getboolean("exportRasters"):
         outDir = pathlib.Path(cfgGen["avalancheDir"], "Outputs", "internalRasters")
         fU.makeADir(outDir)
-        IOf.writeResultToRaster(dem["originalHeader"], relRaster, (outDir / "releaseRaster"), flip=True)
+        useCompression = cfg["EXPORTS"].getboolean("useCompression")
+        IOf.writeResultToRaster(
+            dem["originalHeader"], relRaster, (outDir / "releaseRaster"), flip=True, useCompression=useCompression
+        )
         log.info(
             "Release area raster derived from %s saved to %s"
             % (releaseLine["initializedFrom"], str(outDir / "releaseRaster"))
@@ -1268,11 +1271,13 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
             # export secondary release raster used for computations (after cutting potential overlap with release)
             if cfg["EXPORTS"].getboolean("exportRasters"):
                 outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
+                useCompression = cfg["EXPORTS"].getboolean("useCompression")
                 IOf.writeResultToRaster(
                     dem["originalHeader"],
                     secRelRaster,
                     (outDir / ("secondaryReleaseRaster_%d" % secIndex)),
                     flip=True,
+                    useCompression=useCompression
                 )
                 log.info(
                     "SecondaryRelease area raster derived from %s saved to %s"
@@ -1284,11 +1289,13 @@ def initializeSimulation(cfg, outDir, demOri, inputSimLines, logName):
     # export entrainment raster used for computations (after cutting potential overlap with release or secondary release)
     if cfg["EXPORTS"].getboolean("exportRasters"):
         outDir = pathlib.Path(cfg["GENERAL"]["avalancheDir"], "Outputs", "internalRasters")
+        useCompression = cfg["EXPORTS"].getboolean("useCompression")
         IOf.writeResultToRaster(
             dem["originalHeader"],
             entrMassRaster / cfg["GENERAL"].getfloat("rhoEnt"),
             (outDir / "entrainmentRaster"),
             flip=True,
+            useCompression=useCompression
         )
         log.info(
             "Entrainment area raster derived from %s saved to %s"
@@ -2604,8 +2611,6 @@ def computeEulerTimeStep(
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug("Update position C")
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force, fields, typeStop=0)
-    tCPUPos = time.time() - startTime
-    tCPU["timePos"] = tCPU["timePos"] + tCPUPos
 
     # Split particles
     if cfg.getint("splitOption") == 0:
@@ -2977,7 +2982,8 @@ def exportFields(
         outDirPeak = outDir / "peakFiles" / "timeSteps"
         fU.makeADir(outDirPeak)
         outFile = outDirPeak / dataName
-        IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+        useCompression = cfg["EXPORTS"].getboolean("useCompression")
+        IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True, useCompression=useCompression)
         log.debug(
             "Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f "
             % (resType, timeStep)
@@ -2993,7 +2999,8 @@ def exportFields(
             outDirPeakAll = outDir / "peakFiles"
             fU.makeADir(outDirPeakAll)
             outFile = outDirPeakAll / dataName
-            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True)
+            useCompression = cfg["EXPORTS"].getboolean("useCompression")
+            IOf.writeResultToRaster(dem["originalHeader"], resField, outFile, flip=True, useCompression=useCompression)
 
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting="", module=com1DFA):

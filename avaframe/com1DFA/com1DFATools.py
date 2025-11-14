@@ -456,7 +456,8 @@ def updateResCoeffFields(fields, cfg, t, dem):
         outFileRes = pathlib.Path(
             cfg["avalancheDir"], "Outputs", "com1DFA", "reports", ("resArea_t%.2f" % t)
         )
-        IOf.writeResultToRaster(dem["originalHeader"], fields["cResRasterOrig"], outFileRes, flip=True)
+        useCompression = cfg["EXPORTS"].getboolean("useCompression")
+        IOf.writeResultToRaster(dem["originalHeader"], fields["cResRasterOrig"], outFileRes, flip=True, useCompression=useCompression)
 
     # update fields dictionary
     fields["cResRaster"] = cResRaster
