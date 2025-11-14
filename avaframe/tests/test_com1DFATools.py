@@ -92,6 +92,7 @@ def test_updateResCoeffFields(tmp_path):
         "forestThMax": 10.0,
         "avalancheDir": pathlib.Path(tmp_path),
     }
+    cfg["EXPORTS"] = {"useCompression": "True"}
 
     cResRasterOrig = np.ones((4, 10))
     detRasterOrig = np.ones((4, 10)) + 2
@@ -119,7 +120,7 @@ def test_updateResCoeffFields(tmp_path):
     dem["originalHeader"]["transform"] = transform
     dem["originalHeader"]["crs"] = rasterio.crs.CRS()
 
-    fields = com1DFATools.updateResCoeffFields(fields, cfg["GENERAL"], 0.0, dem)
+    fields = com1DFATools.updateResCoeffFields(fields, cfg, 0.0, dem)
 
     assert fields["cResRaster"].any() == False
 
@@ -135,7 +136,7 @@ def test_updateResCoeffFields(tmp_path):
         "FT": FT,
     }
 
-    fields = com1DFATools.updateResCoeffFields(fields, cfg["GENERAL"], 0.0, dem)
+    fields = com1DFATools.updateResCoeffFields(fields, cfg, 0.0, dem)
 
     assert fields["cResRaster"].any() == True
     assert fields["cResRaster"][0, 4] == 1
