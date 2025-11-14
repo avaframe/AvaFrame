@@ -353,19 +353,17 @@ def fitSurrogate(df):
     print(f"Data shape: X={X.shape}, y={y.shape}, features={list(df.drop(columns=[y_col]).columns)}")
 
     # ---- GP kernel (Matern-Kovarianz für glattere Funktionen)
-    # n_features must be defined elsewhere to match your X
     kernel = (
-            ConstantKernel(1.0, (1e-6, 1e6))
+            ConstantKernel(1.0, (1e-3, 1e3))  # Output varianz, informationen wie stark Y variiert
             * Matern(length_scale=np.ones(n_features),
-                     length_scale_bounds=(1e-3, 1e6),
-                     nu=1.5)
-            + WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-8, 1e2))
+                     length_scale_bounds=(1e-2, 1e2),  # in z score Raum, also wie oft mal Standardabweichen
+                     nu=2.5)
     )
 
     gp = GaussianProcessRegressor(
         kernel=kernel,
-        alpha=0.0,
-        normalize_y=True,
+        alpha=1e-8,
+        normalize_y=False,
         n_restarts_optimizer=10,
         random_state=0,
     )

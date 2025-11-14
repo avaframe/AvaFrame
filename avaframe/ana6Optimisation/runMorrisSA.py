@@ -65,10 +65,9 @@ cfgProb = configparser.ConfigParser()
 cfgStart = configparser.ConfigParser()
 
 cfgProb.read(
-    '/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA_NEW/morris_probAnaCfg.ini')
+    '/home/roland/Schreibtisch/Master_thesis/AvaFrame/avaframe/data/cfgData/Morris_not_all_ParametersCom8MoTPSA_r20/morris_probAnaCfg.ini')
 cfgStart.read(
-    '/home/lawine_naturgefahren/Fischbacher_Roland/AvaFrame/avaframe/data/cfgData/MorrisAllParamsCom8MoTPSA_NEW/morris_com8MoTPSACfg.ini')
-
+    '/home/roland/Schreibtisch/Master_thesis/AvaFrame/avaframe/data/cfgData/Morris_not_all_ParametersCom8MoTPSA_r20/morris_com8MoTPSACfg.ini')
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()  # ToDo us only config main
 avalancheDir = cfgMain['MAIN']['avalancheDir']
@@ -83,7 +82,7 @@ fU.makeADir(outDir)
 resType = "ppr"
 thresholdValueSimulation = 1
 modName = 'com8MoTPSA'
-# runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
+runPlotAreaRefDiffs(resType, thresholdValueSimulation, modName)
 
 
 # Read results from parametersets for simulations, areal indicators and merge

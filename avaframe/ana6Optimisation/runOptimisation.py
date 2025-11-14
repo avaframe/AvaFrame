@@ -116,7 +116,7 @@ if optimisationType == 'nonSeq':
     # remove all entries where run out is not reached bzw where loss function is 1
     emulatorDF = emulatorDF[emulatorDF['Loss'] != 1]
 
-    # train surrogate
+    # crate surrogate
     X, y, gp_pipe, etr_pipe = helper.fitSurrogate(emulatorDF)
 
     # K fold cross validation
@@ -229,7 +229,7 @@ else:
 
 
 print(gp_pipe)
-print('sss')
+print('Done')
 
 
 
