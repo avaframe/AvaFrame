@@ -6,6 +6,9 @@ Functions that are used specifically for modeling debris flows (within DebrisFra
 import logging
 import numpy as np
 import copy
+import pandas as pd
+import pathlib
+import matplotlib.pyplot as plt
 
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.com1DFA.particleTools as particleTools
@@ -14,6 +17,7 @@ import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.cfgUtils as cfgUtils
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -270,3 +274,131 @@ def checkTravelledDistance(cfgGen, timeDepRelValues, timeDepRelCsv):
             # TODO: error or warning?
             log.error(message)
             raise ValueError(message)
+
+def setupOutHydrographDF(cfgGen):
+    """
+    setup result fields data frame for initial time step
+    for generating an output hydrograph and
+    reading raster indices of hydrograph lines
+
+    Parameters
+    ----------
+    cfgGen: configparser
+        general configuration for DFA simulation
+    
+    Returns
+    --------
+    outHydrographDF: dataframe
+        data frame with one line for initial time step and mean values of fields
+    outHydIdx: dataframe
+        data frame with raster indices of output hydrograph lines
+    """
+    
+    if cfgGen.getboolean("outputHydrograph") is False:
+        return None
+    
+    # read csv file with ouput hydrograph cross section indices
+    inputDir = pathlib.Path(cfgGen.get("avalancheDir"), "Inputs")
+    fileType = "Output hydrograph"
+    folder = "OUTHYDR"
+    fname, *_ = gI.getAndCheckInputFiles(inputDir, folder, fileType, fileExt="csv")
+    if fname is None:
+        message = f"No {fileType} csv-file in Inputs/{folder}!"
+        log.error(message)
+        raise FileNotFoundError(message)
+    outHydIdx = pd.read_csv(fname, sep=",", decimal=".", header=0)
+
+    # create dataframe with result fields
+    outHydrographDict = {"timestep": [0.0]}
+    id = np.unique(np.array(outHydIdx["station"]))
+    for i in id:
+        outHydrographDict[f"discharge station {i}"] = [0.0]
+    outHydrographDF = pd.DataFrame.from_dict(outHydrographDict)
+    outHydrographDF = outHydrographDF.set_index("timestep")
+
+    return outHydrographDF, outHydIdx
+
+def collectOutputHydrograph(outputHydrographDF, outHydIdx, cfgGen, fields, t, dt):
+    """
+    Read discharge in the cross section cells for the current time step.
+
+    Parameters
+    ----------
+    outputHydrographDF: dict or None
+        data frame with raster indices of output hydrograph lines
+    outHydIdx: dataframe
+        raster indices of output hydrograph cross section lines
+    cfgGen: configparser
+        general configuration for DFA simulation
+    fields: dict
+        com1DFA fields (FM)
+    t: float
+        current computation time
+    dt: float
+        computation time step
+    
+    Returns
+    --------
+    outputHydrographDF: data frame
+        updated data frame
+    """
+
+    if outputHydrographDF is None:
+        return None
+
+    station = np.array(outHydIdx["station"])
+    id = np.unique(station)
+    row = np.array(outHydIdx["row"])
+    col = np.array(outHydIdx["column"])
+    
+    rho = cfgGen.getfloat("rho")
+
+    newLine = []
+    for i in id:
+        idx = np.where(station == i)
+        r = row[idx]
+        c = col[idx]
+        volume = fields["FM"][r, c] / rho
+        discharge = volume / dt
+        newLine.append(np.sum(discharge))
+
+    outputHydrographDF.loc[t] = newLine
+
+    return outputHydrographDF
+
+def plotOutputHydrograph(outputHydrographDF, outputDir, simHash=""):
+    """
+    Plot time series of discharge for every cross section (one figure per cross section)
+
+    Parameters
+    -----------
+    hydrographDF: pandas DataFrame
+        aggregated output hydrograph (see out1Hydrograph.aggregateOutputHydrograph)
+        columns: lineId, lineName, timestep, discharge, volume, maxThickness, meanThickness,
+        maxVelocity, meanVelocity
+    outputDir: str or Path
+        output directory
+    simHash: str
+        simulation hash for the file name
+
+    Returns
+    --------
+    plotPaths: list of paths to the saved plots
+    """
+
+    fU.makeADir(outputDir)
+
+    colnames = list(outputHydrographDF.columns)
+    for station in colnames:
+        t = list(outputHydrographDF.index)
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 12), sharex=True)
+        ax.plot(t, outputHydrographDF[station], color="tab:blue")
+        ax.set_ylabel("discharge Q [m³/s]")
+        ax.set_xlabel("time [s]")
+        ax.set_title(f"Output hydrograph - cross section {station}")
+
+        plt.tight_layout()
+        plotPath = outputDir / ("outputHydrograph_%s_%s.png" % (simHash, station))
+        fig.savefig(plotPath)
+        plt.close(fig)
