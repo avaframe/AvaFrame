@@ -215,7 +215,7 @@ class Cell:
                 _dy = abs(parent.rowindex - self.rowindex) * self.cellsize
                 _dz = abs(parent.altitude - self.altitude)
                 _ldistMin.append(math.sqrt(_dx * _dx + _dy * _dy) + parent.min_distance)
-                _lDistMinXYZ.append(math.sqrt(_dy * _dy + _dy * _dy + _dz * _dz) + parent.minDistXYZ)
+                _lDistMinXYZ.append(math.sqrt(_dx * _dx + _dy * _dy + _dz * _dz) + parent.minDistXYZ)
             self.min_distance = np.amin(_ldistMin)
             self.minDistXYZ = np.amin(_lDistMinXYZ)
         else:

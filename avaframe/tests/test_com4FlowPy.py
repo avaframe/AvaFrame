@@ -1227,6 +1227,36 @@ def test_checkVariableInputParameters_varExponent(monkeypatch):
         com4FlowPy.checkVariableInputParameters(modelParameters, makeModelPaths(), validParamRanges)
 
 
+def _makeDistCell(rowindex, colindex, altitude, cellsize, min_distance=0.0, minDistXYZ=0.0):
+    """Minimal Cell for calcDistMin: only the attributes the method reads."""
+    cell = flowClass.Cell.__new__(flowClass.Cell)
+    cell.rowindex = rowindex
+    cell.colindex = colindex
+    cell.altitude = altitude
+    cell.cellsize = cellsize
+    cell.min_distance = min_distance
+    cell.minDistXYZ = minDistXYZ
+    cell.lOfParents = []
+    return cell
+
+
+def test_calcDistMin3D():
+    """calcDistMin(calc3D=True) must use dx, dy AND dz for the 3D distance.
+
+    Regression test: the 3D term previously used `_dy * _dy + _dy * _dy`
+    instead of `_dx * _dx + _dy * _dy`.
+    """
+    parent = _makeDistCell(rowindex=0, colindex=0, altitude=100.0, cellsize=10.0)
+    cell = _makeDistCell(rowindex=4, colindex=3, altitude=94.0, cellsize=10.0)
+    cell.lOfParents = [parent]
+
+    cell.calcDistMin(calc3D=True)
+
+    dx, dy, dz = 30.0, 40.0, 6.0
+    assert cell.min_distance == pytest.approx((dx**2 + dy**2) ** 0.5)
+    assert cell.minDistXYZ == pytest.approx((dx**2 + dy**2 + dz**2) ** 0.5)
+
+
 if __name__ == "__main__":
     test_add_os()
     test_reverseTopology()
