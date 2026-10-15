@@ -123,6 +123,9 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double dt = particles['dt']
   cdef double mu0 = cfg.getfloat('mu0wetsnow')
   cdef double xsiWetSnow = cfg.getfloat('xsiwetsnow')
+  cdef double depositionFlag = cfg.getfloat('depositionFlag')
+  cdef double tauDep = cfg.getfloat('tauDep')
+  cdef double decayCoeff = cfg.getfloat('decayCoeff')
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
@@ -163,12 +166,14 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dMDet = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dMDep = np.zeros(nPart, dtype=np.float64)
   cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, areaEntrPart, cResCell, cResPart, uMag, uMagRes, m, dm, h, entrMassCell, entrEnthCell, dEnergyEntr, dis
   cdef double dmDet, detCell, areaDetPart
+  cdef double dmDep
   cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, totalEnthalpy, enthalpy, dTotalEnthalpy
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
@@ -442,6 +447,17 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
         mass[k] = m
         dMDet[k] = dmDet
 
+      if depositionFlag == 1:
+        dmDep = computeDepMass(dt, areaPart, uMag, tau, tauDep, decayCoeff)
+        if abs(dmDep) > m:
+          # mass of a particle can't be negative
+          dmDep = - 1 * m
+
+        # update mass
+        m = m + dmDep
+        mass[k] = m
+        dMDep[k] = dmDep
+
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(areaPart, rho, cResCell, uMag, explicitFriction, resistanceType)
@@ -454,6 +470,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   # save results
   force['dM'] = np.asarray(dM)
   force['dMDet'] = np.asarray(dMDet)
+  force['dMDep'] = np.asarray(dMDep)
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
@@ -465,6 +482,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType, int resistanceType
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
   particles['dmDet'] = np.asarray(dMDet)
+  particles['dmDep'] = np.asarray(dMDep)
   particles['dmEnt'] = np.asarray(dM)
   particles['totalEnthalpy'] = np.asarray(totalEnthalpyArray)
 
@@ -560,7 +578,7 @@ cpdef double computeDetMass(double dt, double detCell,
 
   Returns
   -------
-  dm : float
+  dmDet : float
       detrained mass
   """
 
@@ -615,6 +633,44 @@ cpdef double computeResForce(double areaPart, double rho, double cResCell,
       cRecResPart = - rho * areaPart * cResCell * uMag
   return cRecResPart
 
+
+cpdef double computeDepMass(dt, areaPart, uMag, tau, tauDep, decayCoeff):
+  """ compute deposited mass after Vicari and Issler 2024
+
+  Parameters
+  ----------
+  dt: float
+    time step
+  areaPart : float
+      particle area
+  uMag : float
+      particle speed (velocity magnitude)
+  tau : float
+      bottom shear stress
+  tauDep : float
+      final internal shear strength of deposited snow
+  decayCoeff : float
+      decay coefficient
+
+  Returns
+  -------
+  dmDep : float
+      deposited mass
+  """
+  cdef double tauDu = 0.0
+  cdef double dmDep = 0.0
+
+  # internal strength of deposited snow
+  tauDu = tauDep * (1 - decayCoeff * uMag)
+
+  # deposited mass
+  if uMag > 0:
+    dmDep = - max(0, tauDu - tau) * dt * areaPart / uMag
+
+  if dmDep > 0 or np.isnan(dmDep):
+      log.error('uMag, dt or areaPart is 0')
+
+  return dmDep
 
 cdef (double, double, double) addArtificialViscosity(double m, double h, double dt, double rho,
                                                      double ux, double uy, double uz, double subgridMixingFactor,
@@ -736,6 +792,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef int snowSlide = cfg.getint('snowSlide')
   cdef int adaptSfcStopped = cfg.getint('adaptSfcStopped')
   cdef int adaptSfcDetrainment = cfg.getint('adaptSfcDetrainment')
+  cdef int adaptSfcDeposition = cfg.getint('adaptSfcDeposition')
   cdef int adaptSfcEntrainment = cfg.getint('adaptSfcEntrainment')
   cdef int dissDam = cfg.getint('dissDam')
   cdef double csz = dem['header']['cellsize']
@@ -786,6 +843,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double[:] forceSPHZ = force['forceSPHZ']
   cdef double[:] dM = force['dM']
   cdef double[:] dMDet = force['dMDet']
+  cdef double[:] dMDep = force['dMDep']
   # read dam
   dam = dem['damLine']
   cdef int flagDam = dam['dam']
@@ -826,7 +884,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, txWall, tyWall, tzWall, totalEnthalpy, totalEnthalpyNew
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew, fNx, fNy, fNz, dv, uMagt0, uMagt1
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
-  cdef double massEntrained = 0, massDetrained = 0, massStopped = 0, massFlowing = 0, dissEm = 0
+  cdef double massEntrained = 0, massDetrained = 0, massStopped = 0, massDeposited = 0, massFlowing = 0, dissEm = 0
   cdef int k, inter
   cdef int nRemove = 0
   cdef int nStop = 0
@@ -883,6 +941,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
     mNew = m
     massEntrained = massEntrained + dM[k]
     massDetrained = massDetrained + dMDet[k]
+    massDeposited = massDeposited + dMDep[k]
 
     # Stop particles with velocity = 0
     if adaptSfcStopped == 1 and uMagNew == 0:
@@ -1067,6 +1126,7 @@ def updatePositionC(cfg, particles, dem, force, fields, int typeStop=0):
   particles['z'] = np.asarray(zNewArray)
   particles['massEntrained'] = massEntrained
   particles['massDetrained'] = massDetrained
+  particles['massDeposited'] = massDeposited
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   log.debug('Detrained DFA mass: %s kg', np.asarray(massDetrained))
   particles['kineticEne'] = TotkinEneNew
@@ -1257,6 +1317,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] massDet = particles['dmDet']
+  cdef double[:] massDep = particles['dmDep']
   cdef double[:] massEnt = particles['dmEnt']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
@@ -1277,9 +1338,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PTA = fields['pta']
   cdef double[:, :] PKE = fields['pke']
   cdef double[:, :] DMDet = fields['dmDet']
+  cdef double[:, :] DMDep = fields['dmDep']
   # initialize outputs
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassDetBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] MassDepBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassStopBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] MassEntBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
@@ -1294,11 +1357,12 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] kineticEnergy = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   cdef double[:, :] FTDetBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FTDepBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTStopBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FTEntBilinear = np.zeros((nrows, ncols))
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
-  cdef double m, dmDet, demEnt, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
+  cdef double m, dmDet, dmDep, demEnt, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, trajectoryAngle
   cdef double mStop, xStop, yStop
   cdef int k, i, l
   cdef int indx, indy
@@ -1309,7 +1373,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   # variables for interpolation
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
-  cdef double mwi, dmDetWi, dmEntWi
+  cdef double mwi, dmDetWi, dmEntWi, dmDepWi
 
   for k in range(nPart):
     x = xArray[k]
@@ -1319,6 +1383,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     uz = uzArray[k]
     m = mass[k]
     dmDet = massDet[k]
+    dmDep = massDep[k]
     dmEnt = massEnt[k]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
@@ -1337,9 +1402,11 @@ def updateFieldsC(cfg, particles, dem, fields):
       indy = Ly0 + ind2[i]
       mwi = m * w[i]
       dmDetWi = dmDet * w[i]
+      dmDepWi = dmDep * w[i]
       dmEntWi = dmEnt * w[i]
       MassBilinear[indy, indx] = MassBilinear[indy, indx] + mwi
       MassDetBilinear[indy, indx] = MassDetBilinear[indy, indx] + dmDetWi
+      MassDepBilinear[indy, indx] = MassDepBilinear[indy, indx] + dmDepWi
       MassEntBilinear[indy, indx] = MassEntBilinear[indy, indx] + dmEntWi 
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + mwi * ux
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + mwi * uy
@@ -1366,6 +1433,7 @@ def updateFieldsC(cfg, particles, dem, fields):
       m = MassBilinear[j, i]
 
       DMDet[j, i] = DMDet[j, i] + MassDetBilinear[j, i]
+      DMDep[j, i] = DMDep[j, i] + MassDepBilinear[j, i]
 
       if m > 0:
         # TODO: here we devide by the area of the vertex, would it not make
@@ -1392,10 +1460,11 @@ def updateFieldsC(cfg, particles, dem, fields):
           if kineticEnergy[j, i] > PKE[j, i]:
             PKE[j, i] = kineticEnergy[j, i]
 
-      # thickness change due to detrainment, stopping and entrainment
-      # MassDetBilinear, MassStopBilinear <= 0, MassEntBilinear >= 0,
-      # FTDetBilinear, FTStopBilinear >= 0, FTEntBilinear <= 0
+      # thickness change due to detrainment, deposition, stopping and entrainment
+      # MassDetBilinear, MassDepBilinear, MassStopBilinear <= 0, MassEntBilinear >= 0,
+      # FTDetBilinear, FTDepBilinear, FTStopBilinear >= 0, FTEntBilinear <= 0
       FTDetBilinear[j, i] = - MassDetBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i]
+      FTDepBilinear[j, i] = - MassDepBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i]
       FTStopBilinear[j, i] = - MassStopBilinear[j, i] / (areaRaster[j, i] * rho)  # / m * FTBilinear[j, i] 
       FTEntBilinear[j, i] = - MassEntBilinear[j, i] / (areaRaster[j, i] * rhoEnt)
 
@@ -1408,8 +1477,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfv'] = np.asarray(PFV).copy()
   fields['pft'] = np.asarray(PFT).copy()
   fields['dmDet'] = np.asarray(DMDet).copy()
+  fields['dmDep'] = np.asarray(DMDep).copy()
   fields['FTStop'] = np.asarray(FTStopBilinear).copy()
   fields['FTDet'] = np.asarray(FTDetBilinear).copy()
+  fields['FTDep'] = np.asarray(FTDepBilinear).copy()
   fields['FTEnt'] = np.asarray(FTEntBilinear).copy()
   fields['mStop'] = np.asarray(MassStopBilinear).copy()
 
@@ -2278,6 +2349,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dMDet = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dMDep = np.zeros(nPart, dtype=np.float64)
   cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
 
@@ -2328,6 +2400,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   # save results
   force['dM'] = np.asarray(dM)
   force['dMDet'] = np.asarray(dMDet)
+  force['dMDep'] = np.asarray(dMDep)
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)

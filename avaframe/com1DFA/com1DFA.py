@@ -1043,6 +1043,9 @@ def reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict, cfg):
         {"Detrained mass [kg]": ("%.2f" % infoDict["detrained mass"])}
     )
     reportDict["Simulation Parameters"].update(
+        {"Deposited mass [kg]": ("%.2f" % infoDict["deposited mass"])}
+    )
+    reportDict["Simulation Parameters"].update(
         {"Total initialized mass [kg]": ("%.2f" % infoDict["initialized mass"])}
     )
     if cfg["GENERAL"].getboolean("timeDependentRelease"):
@@ -1646,9 +1649,11 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines="", logName="", rel
     particles["yllcenter"] = dem["originalHeader"]["yllcenter"]
     particles["nExitedParticles"] = 0.0
     particles["dmDet"] = np.zeros(np.shape(hPartArray))
+    particles["dmDep"] = np.zeros(np.shape(hPartArray))
     particles["dmEnt"] = np.zeros(np.shape(hPartArray))
     particles["massEntrained"] = 0.0
     particles["massDetrained"] = 0.0
+    particles["massDeposited"] = 0.0
     particles["massStopped"] = 0.0
     # remove particles that might lay outside of the release polygon
     if (
@@ -1792,8 +1797,10 @@ def initializeFields(cfg, dem, particles, releaseLine):
     fields["Vy"] = np.zeros((nrows, ncols))  # velocity in y direction [m/s]
     fields["Vz"] = np.zeros((nrows, ncols))  # velocity in z direction [m/s]
     fields["dmDet"] = np.zeros((nrows, ncols))  # flowing mass change due to detrainment [kg]
+    fields["dmDep"] = np.zeros((nrows, ncols))  # flowing mass change due to deposition [kg]
     fields["FTStop"] = np.zeros((nrows, ncols))  # flow thickness that is stopped [m]
     fields["FTDet"] = np.zeros((nrows, ncols))  # flow thickness that is detrained [m]
+    fields["FTDep"] = np.zeros((nrows, ncols))  # flow thickness that is deposition [m]
     fields["FTEnt"] = np.zeros((nrows, ncols))  # flow thickness that is entrained [m]
     fields["sfcChange"] = np.zeros((nrows, ncols))  # depth that changes the surface [m]
     fields["sfcChangeTotal"] = np.zeros((nrows, ncols))  # total depth that changed the surface [m]
@@ -2202,6 +2209,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     timeM = [particles["t"]]
     massEntrained = [particles["massEntrained"]]
     massDetrained = [particles["massDetrained"]]
+    massDeposited = [particles["massDeposited"]]
     massStopped = [particles["massStopped"]]
     massInitialized = [particles["massInitialized"]]
     massTotal = [particles["mTot"]]
@@ -2317,6 +2325,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         # write mass balance info
         massEntrained.append(particles["massEntrained"])
         massDetrained.append(particles["massDetrained"])
+        massDeposited.append(particles["massDeposited"])
         massStopped.append(particles["massStopped"])
         massInitialized.append(particles["massInitialized"])
         massTotal.append(particles["mTot"])
@@ -2432,6 +2441,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
     infoDict = {
         "massEntrained": massEntrained,
         "massDetrained": massDetrained,
+        "massDeposited": massDeposited,
         "massStopped": massStopped,
         "timeStep": timeM,
         "massTotal": massTotal,
@@ -2440,6 +2450,7 @@ def DFAIterate(cfg, particles, fields, dem, inputSimLines, outDir, cuSimName, si
         "initial mass": massTotal[0],
         "entrained mass": np.sum(massEntrained),
         "detrained mass": np.sum(massDetrained),
+        "deposited mass": np.sum(massDeposited),
         "entrained volume": (np.sum(massEntrained) / cfgGen.getfloat("rhoEnt")),
         "pfvTimeMax": pfvTimeMax,
         "massInitialized": massInitialized,
@@ -2685,6 +2696,7 @@ def writeMBFile(infoDict, avaDir, logName):
     t = infoDict["timeStep"]
     massEntrained = infoDict["massEntrained"]
     massDetrained = infoDict["massDetrained"]
+    massDeposited = infoDict["massDeposited"]
     massStopped = infoDict["massStopped"]
     massTotal = infoDict["massTotal"]
     massInitialized = infoDict["massInitialized"]
@@ -2699,10 +2711,10 @@ def writeMBFile(infoDict, avaDir, logName):
     massDir = pathlib.Path(avaDir, "Outputs", "com1DFA")
     fU.makeADir(massDir)
     with open(massDir / ("mass_%s.txt" % logName), "w") as mFile:
-        mFile.write("time, current, entrained, detrained, detrainedTotal, stopped, initialized\n")
+        mFile.write("time, current, entrained, detrained, detrainedTotal, stopped, deposited, initialized\n")
         for m in range(len(t)):
             mFile.write(
-                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f,    %.06f,    %.06f\n"
+                "%.02f,    %.06f,    %.06f,   %.06f,    %.06f,    %.06f,    %.06f,    %.06f\n"
                 % (
                     t[m],
                     massTotal[m],
@@ -2710,6 +2722,7 @@ def writeMBFile(infoDict, avaDir, logName):
                     massDetrained[m],
                     massDetrainedTotal[m],
                     massStopped[m],
+                    massDeposited[m],
                     massInitialized[m],
                 )
             )
@@ -2852,9 +2865,10 @@ def computeEulerTimeStep(
     thresholdAdaptSfc = cfg.getfloat("thresholdAdaptSfc")
     adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(abs(fields["FTStop"]) > thresholdAdaptSfc)
     adaptDet = cfg.getboolean("adaptSfcDetrainment") and np.any(abs(fields["FTDet"]) > thresholdAdaptSfc)
+    adaptDep = cfg.getboolean("adaptSfcDeposition") and np.any(abs(fields["FTDep"]) > thresholdAdaptSfc)
     adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(abs(fields["FTEnt"]) > thresholdAdaptSfc)
     if particles["t"] > 0:
-        if adaptStop or adaptDet or adaptEnt:
+        if adaptStop or adaptDet or adaptEnt or adaptDep:
             dem, fields = adaptDEM(dem, fields, cfg)
 
     tCPUField = time.time() - startTime
@@ -3553,10 +3567,11 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                     or (
                         cfgSim["GENERAL"]["adaptSfcStopped"] == "0"
                         and cfgSim["GENERAL"]["adaptSfcDetrainment"] == "0"
+                        and cfgSim["GENERAL"]["adaptSfcDeposition"] == "0"
                     )
                 ):
                     # set entrainable Deposition to False if entrainment or adapt Sfc are switched off
-                    message = f"When entrainable deposition is True, adaptSfcEntrainment and adaptSfcDeposition (or adaptSfcDetrainment) need to be 1."
+                    message = f"When entrainable deposition is True, adaptSfcEntrainment and adaptSfcDeposition (or adaptSfcStopped or adaptSfcDetrainment) need to be 1."
                     log.error(message)
                     raise ValueError(message)
         else:
@@ -3986,6 +4001,7 @@ def adaptDEM(dem, fields, cfg):
     fields : dict
         fields dictionary containing:
             FTDet (flow thickness change due to detrainment >= 0)
+            FTDep (flow thickness change due to deposition >= 0)
             FTStop (flow thickness change due to stopping >= 0)
             FTEnt (flow thickness change due to entrainment <= 0)
             mStop (stopped mass <=0)
@@ -4006,6 +4022,7 @@ def adaptDEM(dem, fields, cfg):
 
     ZDEM = dem["rasterData"].copy()
     FTDet = fields["FTDet"]  # >= 0
+    FTDep = fields["FTDep"]  # >= 0
     FTStop = fields["FTStop"]  # >= 0
     FTEnt = fields["FTEnt"]  # <= 0
     mStop = fields["mStop"]  # <= 0
@@ -4016,6 +4033,7 @@ def adaptDEM(dem, fields, cfg):
 
     depthStop = np.zeros_like(ZDEM)
     depthDet = np.zeros_like(ZDEM)
+    depthDep = np.zeros_like(ZDEM)
     depthEnt = np.zeros_like(ZDEM)
 
     _, _, NzNormed = DFAtls.normalize(dem["Nx"].copy(), dem["Ny"].copy(), dem["Nz"].copy())
@@ -4030,6 +4048,11 @@ def adaptDEM(dem, fields, cfg):
         depthDet = FTDet / NzNormed
         ZDEMadapt += depthDet
         sfcChange += depthDet
+    if cfg.getboolean("adaptSfcDeposition"):
+        # compute thickness to depth
+        depthDep = FTDep / NzNormed
+        ZDEMadapt += depthDep
+        sfcChange += depthDep
     if cfg.getboolean("adaptSfcEntrainment"):
         # compute thickness to depth
         depthEnt = FTEnt / NzNormed
@@ -4039,6 +4062,7 @@ def adaptDEM(dem, fields, cfg):
         hErodable = fields["entrDepth"]
         hErodable += depthStop
         hErodable += depthDet
+        hErodable += depthDep
         hErodable += depthEnt
         ZDEMadapt = fields["demNotErodableRaster"] + hErodable
         fields["entrDepth"] = hErodable
