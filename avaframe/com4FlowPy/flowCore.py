@@ -377,142 +377,147 @@ def run(optTuple):
     )
 
     with Pool(processes=nProcesses) as pool:
-        results = pool.map(
-            calcFunc,
+        # Initialize master tile result arrays (once per tile)
+        zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+        fluxArray = np.ones_like(dem, dtype=np.float32) * -9999
+        countArray = np.zeros_like(dem, dtype=np.int32)
+        zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+        routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+        depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+
+        if infraBool:
+            backcalc = np.ones_like(dem, dtype=np.int32) * -9999
+        fpTravelAngleMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
+        fpTravelAngleMinArray = np.ones_like(dem, dtype=np.float32) * -9999
+        slTravelAngleArray = np.ones_like(dem, dtype=np.float32) * -9999
+        travelLengthMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
+        travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
+
+        if forestInteraction:
+            forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
+
+        if relOutputParams["relIdBool"]:
+            processedStartCellIdDict = {}
+
+        chunkArgsList = [
             [
-                [  # Pass shared memory metadata instead of actual numpy arrays
-                    demInfo,
-                    infraInfo,
-                    release_sub,  # This remains a separate copy as it's modified in workers
-                    alpha,
-                    exp,
-                    flux_threshold,
-                    max_z_delta,
-                    nodata,
-                    cellsize,
-                    infraBool,
-                    forestBool,
-                    varParamsInfo, # Pass consolidated info
-                    fluxDistOldVersionBool,
-                    previewMode,
-                    forestArrayInfo, # Pass shared memory info for forest array
-                    forestParams, # This is a dict, passed by value
-                    outputs,
-                    relOutputParamsInfo, # Pass consolidated info
-                ]
-                for release_sub in release_list
-            ],
-        )
+                demInfo,
+                infraInfo,
+                release_sub,
+                alpha,
+                exp,
+                flux_threshold,
+                max_z_delta,
+                nodata,
+                cellsize,
+                infraBool,
+                forestBool,
+                varParamsInfo,
+                fluxDistOldVersionBool,
+                previewMode,
+                forestArrayInfo,
+                forestParams,
+                outputs,
+                relOutputParamsInfo,
+            ]
+            for release_sub in release_list
+        ]
+
+        # imap_unordered yields chunk results as soon as any worker finishes
+        for res in pool.imap_unordered(calcFunc, chunkArgsList, chunksize=1):
+            (
+                resZDelta,
+                resFlux,
+                resCc,
+                resZDeltaSum,
+                resBackcalc,
+                resFpMax,
+                resSl,
+                resTravelMax,
+                resTravelMin,
+                resFpMin,
+                resRoutSum,
+                resDepSum,
+                resRelIdDict,
+                resForestInt,
+            ) = res
+
+            zDeltaArray = np.maximum(zDeltaArray, resZDelta)
+            fluxArray = np.maximum(fluxArray, resFlux)
+            countArray += resCc
+            zDeltaSumArray += resZDeltaSum
+            routFluxSumArray += resRoutSum
+            depFluxSumArray += resDepSum
+
+            if infraBool:
+                backcalc = np.maximum(backcalc, resBackcalc)
+
+            if "fpTravelAngleMax" in outputs or "fpTravelAngle" in outputs:
+                fpTravelAngleMaxArray = np.maximum(fpTravelAngleMaxArray, resFpMax)
+
+            if "fpTravelAngleMin" in outputs:
+                fpTravelAngleMinArray = np.where(
+                    (fpTravelAngleMinArray >= 0) & (resFpMin >= 0),
+                    np.minimum(fpTravelAngleMinArray, resFpMin),
+                    np.maximum(fpTravelAngleMinArray, resFpMin),
+                )
+
+            slTravelAngleArray = np.maximum(slTravelAngleArray, resSl)
+
+            if "travelLengthMax" in outputs or "travelLength" in outputs:
+                travelLengthMaxArray = np.maximum(travelLengthMaxArray, resTravelMax)
+
+            if "travelLengthMin" in outputs:
+                travelLengthMinArray = np.where(
+                    (travelLengthMinArray >= 0) & (resTravelMin >= 0),
+                    np.minimum(travelLengthMinArray, resTravelMin),
+                    np.maximum(travelLengthMinArray, resTravelMin),
+                )
+
+            if forestInteraction:
+                forestIntArray = np.where(
+                    (forestIntArray >= 0) & (resForestInt >= 0),
+                    np.minimum(forestIntArray, resForestInt),
+                    np.maximum(forestIntArray, resForestInt),
+                )
+
+            if "relIdPolygon" in outputs or "relIdCount" in outputs:
+                if resRelIdDict:
+                    for key, ids_arr in resRelIdDict.items():
+                        if key in processedStartCellIdDict:
+                            processedStartCellIdDict[key] = np.unique(
+                                np.append(processedStartCellIdDict[key], ids_arr)
+                            )
+                        else:
+                            processedStartCellIdDict[key] = ids_arr
+
+            # Discard chunk result arrays immediately
+            del (
+                res,
+                resZDelta,
+                resFlux,
+                resCc,
+                resZDeltaSum,
+                resBackcalc,
+                resFpMax,
+                resSl,
+                resTravelMax,
+                resTravelMin,
+                resFpMin,
+                resRoutSum,
+                resDepSum,
+                resRelIdDict,
+                resForestInt,
+            )
+
         pool.close()
         pool.join()
 
     # Close and unlink shared memory segments to release resources
     for shm in shmObjects:
         shm.close()
-        _unlinkShmFromResourceTracker(shm.name) # Use the helper for robustness
-        shm.unlink() # CRITICAL FIX: Release the underlying OS shared memory
-
-    # TODO - NOTE:
-    # Move this part into a separate function
-    # initializing arrays for storing the results from the multiprocessing step
-    zDeltaArray = np.zeros_like(dem, dtype=np.float32)
-    fluxArray = np.ones_like(dem, dtype=np.float32) * -9999
-    countArray = np.zeros_like(dem, dtype=np.int32)
-    zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
-    routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
-    if infraBool:
-        backcalc = np.ones_like(dem, dtype=np.int32) * -9999
-    fpTravelAngleMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
-    fpTravelAngleMinArray = np.ones_like(dem, dtype=np.float32) * -9999
-    slTravelAngleArray = np.ones_like(dem, dtype=np.float32) * -9999
-    travelLengthMaxArray = np.ones_like(dem, dtype=np.float32) * -9999
-    travelLengthMinArray = np.ones_like(dem, dtype=np.float32) * -9999
-    if forestInteraction:
-        forestIntArray = np.ones_like(dem, dtype=np.float32) * -9999
-    if relOutputParams["relIdBool"]:
-        processedStartCellIdDict = {}
-
-    zDeltaList = []
-    fluxList = []
-    ccList = []
-    zDeltaSumList = []
-    routFluxSumList = []
-    depFluxSumList = []
-    if infraBool:
-        backcalcList = []
-    fpTravelAngleMaxList = []
-    fpTravelAngleMinList = []
-    slTravelAngleList = []
-    travelLengthMaxList = []
-    travelLengthMinList = []
-    if relOutputParams["relIdBool"]:
-        processedStartCellIdList = []
-    if forestInteraction:
-        forestIntList = []
-
-    for i in range(len(results)):
-        res = results[i]
-        res = list(res)
-        zDeltaList.append(res[0])
-        fluxList.append(res[1])
-        ccList.append(res[2])
-        zDeltaSumList.append(res[3])
-        if infraBool:
-            backcalcList.append(res[4])
-        fpTravelAngleMaxList.append(res[5])
-        slTravelAngleList.append(res[6])
-        travelLengthMaxList.append(res[7])
-        travelLengthMinList.append(res[8])
-        fpTravelAngleMinList.append(res[9])
-        routFluxSumList.append(res[10])
-        depFluxSumList.append(res[11])
-        if relOutputParams["relIdBool"]:
-            processedStartCellIdList.append(res[12])
-        if forestInteraction:
-            forestIntList.append(res[13])
-
-    logging.info("Calculation finished, getting results.")
-    for i in range(len(zDeltaList)):
-        zDeltaArray = np.maximum(zDeltaArray, zDeltaList[i])
-        fluxArray = np.maximum(fluxArray, fluxList[i])
-        countArray += ccList[i]
-        zDeltaSumArray += zDeltaSumList[i]
-        routFluxSumArray += routFluxSumList[i]
-        depFluxSumArray += depFluxSumList[i]
-        if infraBool:
-            backcalc = np.maximum(backcalc, backcalcList[i])
-        if "fpTravelAngleMax" in outputs or "fpTravelAngle" in outputs:
-            fpTravelAngleMaxArray = np.maximum(fpTravelAngleMaxArray, fpTravelAngleMaxList[i])
-        if "fpTravelAngleMin" in outputs:
-            fpTravelAngleMinArray = np.where(
-                (fpTravelAngleMinArray >= 0) & (fpTravelAngleMinList[i] >= 0),
-                np.minimum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
-                np.maximum(fpTravelAngleMinArray, fpTravelAngleMinList[i]),
-            )
-        slTravelAngleArray = np.maximum(slTravelAngleArray, slTravelAngleList[i])
-        if "travelLengthMax" in outputs or "travelLength" in outputs:
-            travelLengthMaxArray = np.maximum(travelLengthMaxArray, travelLengthMaxList[i])
-        if "travelLengthMin" in outputs:
-            travelLengthMinArray = np.where(
-                (travelLengthMinArray >= 0) & (travelLengthMinList[i] >= 0),
-                np.minimum(travelLengthMinArray, travelLengthMinList[i]),
-                np.maximum(travelLengthMinArray, travelLengthMinList[i]),
-            )
-        if forestInteraction:
-            forestIntArray = np.where(
-                (forestIntArray >= 0) & (forestIntList[i] >= 0),
-                np.minimum(forestIntArray, forestIntList[i]),
-                np.maximum(forestIntArray, forestIntList[i]),
-            )
-
-        if "relIdPolygon" in outputs or "relIdCount" in outputs:
-            for key in processedStartCellIdList[i]:
-                if key in processedStartCellIdDict:
-                    ids = np.append(processedStartCellIdList[i][key], processedStartCellIdDict[key])
-                    processedStartCellIdDict[key] = np.unique(ids)
-                else:
-                    processedStartCellIdDict[key] = processedStartCellIdList[i][key]
+        _unlinkShmFromResourceTracker(shm.name)
+        shm.unlink()
 
     if relOutputParams["relIdBool"]:
         saveDict = open(tempDir / ("res_startCellIdDict_%s_%s.pickle" % (optTuple[0], optTuple[1])), "wb")
