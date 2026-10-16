@@ -10,6 +10,17 @@ import logging
 import json
 import shutil
 
+import multiprocessing
+
+# Ensure this is called only once in the main process
+# It must be called before any other multiprocessing features are used.
+try:
+    multiprocessing.set_start_method('spawn', force=True)
+except RuntimeError:
+    # This can happen if set_start_method is called multiple times,
+    # for example, in interactive environments or nested calls.
+    pass
+
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com4FlowPy import com4FlowPy

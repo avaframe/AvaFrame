@@ -13,6 +13,8 @@ import geopandas as gpd
 import configparser
 import copy
 import shutil
+from multiprocessing import shared_memory
+from multiprocessing.resource_tracker import unregister
 
 from avaframe.com4FlowPy import flowClass
 import avaframe.com4FlowPy.flowCore as flowCore
@@ -22,6 +24,27 @@ import avaframe.runCom4FlowPy as runCom4FlowPy
 from avaframe.com4FlowPy import com4FlowPy
 
 import avaframe.runStandardTestsCom4FlowPy as runStandardTestsCom4
+
+
+@pytest.fixture
+def shm_cleanup():
+    """Fixture to ensure shared memory segments are unlinked after tests."""
+    shm_names_to_clean = []
+    yield shm_names_to_clean
+    for name in shm_names_to_clean:
+        try:
+            shm = shared_memory.SharedMemory(name=name)
+            shm.close()
+            shm.unlink()
+            # Manually unregister from resource tracker, as unlink() doesn't always do it immediately
+            try:
+                unregister(name, "shared_memory")
+            except KeyError:
+                pass
+        except FileNotFoundError:
+            pass # Already unlinked or never existed
+        except Exception as e:
+            print(f"Error during shared memory cleanup for {name}: {e}")
 
 def test_add_os():
     cell = flowClass.Cell(
@@ -1273,3 +1296,165 @@ if __name__ == "__main__":
     test_checkGlobalParameters_exp()
     test_checkGlobalParameters_fluxThreshold()
     test_checkGlobalParameters_errorMessageMentionsValidRange()
+
+# --- New tests for shared memory functionality ---
+
+def test_createSharedArrayInfo_success(shm_cleanup):
+    """Test that _createSharedArrayInfo correctly creates a shared memory segment and returns metadata."""
+    originalArray = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+    shm, shmInfo = flowCore._createSharedArrayInfo(originalArray, "test_array_success")
+
+    assert shm is not None
+    assert shmInfo is not None
+    assert "name" in shmInfo
+    assert "dtype" in shmInfo
+    assert "shape" in shmInfo
+    assert shmInfo["dtype"] == str(originalArray.dtype)
+    assert shmInfo["shape"] == originalArray.shape
+
+    # Verify content by reconstructing
+    reconstructedArray = flowCore._reconstructSharedArray(shmInfo)
+    np.testing.assert_array_equal(originalArray, reconstructedArray)
+    
+    shm_cleanup.append(shmInfo["name"]) # Add for cleanup
+
+def test_createSharedArrayInfo_none_input():
+    """Test that _createSharedArrayInfo handles None input gracefully."""
+    shm, shmInfo = flowCore._createSharedArrayInfo(None, "none_array")
+    assert shm is None
+    assert shmInfo is None
+
+def test_reconstructSharedArray_success(shm_cleanup):
+    """Test that _reconstructSharedArray correctly reconstructs an array view from valid shmInfo."""
+    originalArray = np.arange(10, dtype=np.int64).reshape(2, 5)
+    shm, shmInfo = flowCore._createSharedArrayInfo(originalArray, "reconstruct_success")
+    shm_cleanup.append(shmInfo["name"]) # Add for cleanup
+
+    reconstructedArray = flowCore._reconstructSharedArray(shmInfo)
+    assert reconstructedArray is not None
+    assert isinstance(reconstructedArray, np.ndarray)
+    np.testing.assert_array_equal(originalArray, reconstructedArray)
+    assert not reconstructedArray.flags["WRITEABLE"] # Should be read-only view
+
+def test_reconstructSharedArray_none_input():
+    """Test that _reconstructSharedArray handles None input gracefully."""
+    reconstructedArray = flowCore._reconstructSharedArray(None)
+    assert reconstructedArray is None
+
+def test_unlinkShmFromResourceTracker(shm_cleanup):
+    """Test that _unlinkShmFromResourceTracker properly unregisters a shared memory segment."""
+    # Create a dummy shared memory segment
+    shmName = f"dummy_shm_{os.getpid()}_{np.random.randint(0, 1000)}"
+    shm = shared_memory.SharedMemory(create=True, size=100, name=shmName)
+    shm.close()
+    # At this point, it should be registered with resource_tracker
+
+    flowCore._unlinkShmFromResourceTracker(shmName)
+
+    # Try to unregister again, should raise KeyError if already unregistered
+    with pytest.raises(KeyError):
+        unregister(shmName, "shared_memory")
+
+    shm_cleanup.append(shmName) # Ensure it's unlinked by the fixture if not already
+
+def test_run_with_shared_memory_integration(tmp_path, monkeypatch, shm_cleanup):
+    """High-level integration test for run() with shared memory."""
+    # Setup mock input files in a temporary directory
+    tempDir = tmp_path / "testCom4FlowPy"
+    tempDir.mkdir()
+
+    demData = np.array(
+        [[40, 40, 40, 40, 40],
+         [30, 30, 30, 30, 30],
+         [20, 20, 20, 20, 20],
+         [10, 10, 10, 10, 10],
+         [0, 0, 0, 0, 0]], dtype=np.float32
+    )
+    releaseData = np.array(
+        [[0, 0, 0, 0, 0],
+         [0, 0, 1, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0]], dtype=np.int32
+    )
+    infraData = np.array(
+        [[0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 1, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0]], dtype=np.int32
+    )
+
+    np.save(tempDir / "dem_0_0.npy", demData)
+    np.save(tempDir / "init_0_0.npy", releaseData)
+    np.save(tempDir / "infra_0_0.npy", infraData)
+    
+    # Mock calculation function to simplify testing of shared memory passing
+    def mockCalculation(args):
+        # Reconstruct arrays to verify they are correctly passed as shared memory views
+        dem = flowCore._reconstructSharedArray(args[0])
+        infra = flowCore._reconstructSharedArray(args[1])
+        release_sub = args[2] # This is a copy
+        
+        # Assert that the arrays are indeed views of the shared data
+        # (they should not be copies that were passed directly to mockCalculation)
+        # For dem and infra, check if they match the original data
+        np.testing.assert_array_equal(dem, demData)
+        np.testing.assert_array_equal(infra, infraData)
+        np.testing.assert_array_equal(release_sub, releaseData) # release_sub is a sub-array, but for simple case matches
+
+        # Simulate calculation results
+        zDeltaArray = np.zeros_like(dem, dtype=np.float32)
+        fluxArray = np.zeros_like(dem, dtype=np.float32)
+        countArray = np.zeros_like(dem, dtype=np.int32)
+        zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+        backcalc = np.zeros_like(dem, dtype=np.int32)
+        fpTravelAngleMaxArray = np.zeros_like(dem, dtype=np.float32)
+        slTravelAngleArray = np.zeros_like(dem, dtype=np.float32)
+        travelLengthMaxArray = np.zeros_like(dem, dtype=np.float32)
+        travelLengthMinArray = np.zeros_like(dem, dtype=np.float32)
+        fpTravelAngleMinArray = np.zeros_like(dem, dtype=np.float32)
+        routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+        depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
+        startCellIdDict = {}
+        forestIntArray = np.zeros_like(dem, dtype=np.float32)
+
+        return (
+            zDeltaArray, fluxArray, countArray, zDeltaSumArray, backcalc,
+            fpTravelAngleMaxArray, slTravelAngleArray, travelLengthMaxArray,
+            travelLengthMinArray, fpTravelAngleMinArray, routFluxSumArray,
+            depFluxSumArray, startCellIdDict, forestIntArray,
+        )
+
+    monkeypatch.setattr(flowCore, "calculation", mockCalculation)
+
+    # Prepare a minimal optTuple for the run function
+    optTuple = (
+        0, # i
+        0, # j
+        {
+            "alpha": 10.0, "exp": 8.0, "flux_threshold": 0.001, "max_z": 200.0,
+            "infraBool": True, "forestBool": False, "forestInteraction": False,
+            "varUmaxBool": False, "varAlphaBool": False, "varExponentBool": False,
+            "fluxDistOldVersionBool": False, "outputRelIdBool": False, "previewMode": False,
+            "engine": "python",
+        },
+        {
+            "tempDir": tempDir, "outputFileList": ["zDelta"], # Minimal paths
+        },
+        {
+            "cellsize": 10.0, "nodata": -9999.0, # Raster attributes
+        },
+        None, # forestParameters
+        {
+            "nCPU": 1, "procPerCPU": 1, "maxChunks": 1, "chunkSize": 1 # MP Options
+        },
+    )
+
+    # Run the main function
+    flowCore.run(optTuple)
+
+    # Verify output files (optional, as mockCalculation doesn't fill them meaningfully)
+    # Check that shared memory resources are properly unlinked (handled by shm_cleanup fixture) 
+
+

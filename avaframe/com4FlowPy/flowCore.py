@@ -14,6 +14,97 @@ import gc
 import psutil
 import time
 import pickle
+from multiprocessing import Pool, shared_memory
+from multiprocessing.resource_tracker import unregister
+import os
+
+def _unlinkShmFromResourceTracker(name):
+    """Manually unregister a shared memory segment from the resource tracker.
+
+    This is a workaround for issues where shared memory segments are not
+    properly unlinked, especially in older Python versions or when processes
+    crash. It attempts to unregister a segment by name and suppresses
+    KeyError if the segment is already unregistered or not found.
+
+    Parameters
+    ----------
+    name : str
+        The unique name of the shared memory segment to unregister.
+
+    Returns
+    -------
+    None
+    """
+    try:
+        unregister(name, "shared_memory")
+    except KeyError:
+        # Resource might have already been unregistered or never registered properly
+        pass
+
+def _createSharedArrayInfo(npArray, namePrefix):
+    """Creates a SharedMemory block from a numpy array and returns its metadata.
+
+    Copies the content of the input numpy array into a newly created shared
+    memory segment. The shared memory segment is named uniquely using the
+    provided prefix and the current process ID, along with array dimensions
+    to ensure distinctness across multiple calls or processes.
+
+    Parameters
+    ----------
+    npArray : numpy.ndarray or None
+        The numpy array to be stored in shared memory. If None, the function
+        returns None for both the SharedMemory object and its metadata.
+    namePrefix : str
+        A prefix used to generate a unique name for the shared memory segment.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - shm : SharedMemory or None
+            The SharedMemory object. Returns None if npArray was None.
+        - shmInfo : dict or None
+            A dictionary containing the 'name', 'dtype' (as string), and 'shape'
+            of the shared array. Returns None if npArray was None.
+    """
+    if npArray is None: # Handle cases where array might be None (e.g., if infraBool or forestBool is False)
+        return None, None
+    # Add shape to name for uniqueness, crucial for multiple arrays or calls
+    shmName = f"{namePrefix}_{os.getpid()}_{npArray.shape[0]}x{npArray.shape[1]}"
+    shm = shared_memory.SharedMemory(create=True, size=npArray.nbytes, name=shmName)
+    shmArray = np.ndarray(npArray.shape, dtype=npArray.dtype, buffer=shm.buf)
+    shmArray[:] = npArray[:]  # Copy data to shared memory
+    return shm, {"name": shmName, "dtype": str(npArray.dtype), "shape": npArray.shape}
+
+def _reconstructSharedArray(shmInfo):
+    """Reconstructs a numpy array view from shared memory using provided metadata.
+
+    Attaches to an existing shared memory segment using its name and creates
+    a numpy array view over the shared memory buffer. This allows read-only
+    access to the shared data without creating a copy.
+
+    Parameters
+    ----------
+    shmInfo : dict or None
+        A dictionary containing the 'name', 'dtype' (as string), and 'shape'
+        of the shared array. If None, the function returns None.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        A numpy array view of the shared memory segment. Returns None if
+        shmInfo was None.
+    """
+    if shmInfo is None:
+        return None
+    shm = shared_memory.SharedMemory(name=shmInfo["name"])
+    # Create a numpy array view directly from the shared memory buffer
+    # The array is not writable by default when created this way
+    reconstructedArray = np.ndarray(shmInfo["shape"], dtype=shmInfo["dtype"], buffer=shm.buf)
+    reconstructedArray.flags.writeable = False # Explicitly set to read-only to prevent accidental modification
+    return reconstructedArray
+
+
 
 from multiprocessing import Pool
 
@@ -118,7 +209,7 @@ def run(optTuple):
     Parameters
     -----------
     optTuple: tuple
-        with all necessary model information:
+        with all necessary model information (note: large numpy arrays are passed as shared memory metadata dictionaries):
 
         - optTuple[0] (int) - i index of the processed tile (for loading correct data for tiles)
         - optTuple[1] (int) - j index of the processed tile (for loading correct data for tiles)
@@ -159,65 +250,78 @@ def run(optTuple):
 
     MPOptions = optTuple[6]  # CPU, Multiprocessing options ...
 
-    dem = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
-    release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    # Load original numpy arrays from disk or existing variables
+    demOrig = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    
+    infraOrig = None
     if infraBool:
-        infra = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
-    else:
-        infra = None
+        infraOrig = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
-    # if forestBool == 'True'
-    # --> load forestFile
-    # --> read parametersOfForestExtension
-    # NOTE-TODO: this is a quick work-around to simply include forest information - should probably be handled more
-    # elegantly/explicitly AND error handling should probably be included
+    forestArrayOrig = None
     if forestBool:
-        forestArray = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
-        forestParams = optTuple[5]
-        forestParams["forestInteraction"] = forestInteraction
-    else:
-        forestParams = None
-        forestArray = None
-
+        forestArrayOrig = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        
+    varUmaxArrayOrig = None
     if varUmaxBool:
-        varUmaxArray = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        varUmaxArrayOrig = np.load(tempDir / ("varUmax_%s_%s.npy" % (optTuple[0], optTuple[1])))
         if optTuple[2]["varUmaxType"].lower() == "umax":
-            varUmaxArray[varUmaxArray > 0] = varUmaxArray[varUmaxArray > 0] ** 2 / 2 / 9.81
+            varUmaxArrayOrig[varUmaxArrayOrig > 0] = varUmaxArrayOrig[varUmaxArrayOrig > 0] ** 2 / 2 / 9.81
         elif optTuple[2]["varUmaxType"].lower() != "zdeltalim":
             log.error("PLease provide the type of the uMax Limit: 'uMax' (in m/s) or zDeltaMax (in m)!")
-    else:
-        varUmaxArray = None
-
+            
+    varAlphaArrayOrig = None
     if varAlphaBool:
-        varAlphaArray = np.load(tempDir / ("varAlpha_%s_%s.npy" % (optTuple[0], optTuple[1])))
-    else:
-        varAlphaArray = None
+        varAlphaArrayOrig = np.load(tempDir / ("varAlpha_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
+    varExponentArrayOrig = None
     if varExponentBool:
-        varExponentArray = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
-    else:
-        varExponentArray = None
+        varExponentArrayOrig = np.load(tempDir / ("varExponent_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
+    relIdArrayOrig = None
     if relIdBool:
-        relIdArray = np.load(tempDir / ("relId_%s_%s.npy" % (optTuple[0], optTuple[1])))
-    else:
-        relIdArray = None
+        relIdArrayOrig = np.load(tempDir / ("relId_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
-    varParams = {
+    # Create shared memory segments for large, static input arrays
+    shmObjects = [] # Keep track of SharedMemory objects for unlinking
+    
+    shmDem, demInfo = _createSharedArrayInfo(demOrig, "dem_shm")
+    if shmDem: shmObjects.append(shmDem)
+
+    shmInfra, infraInfo = _createSharedArrayInfo(infraOrig, "infra_shm")
+    if shmInfra: shmObjects.append(shmInfra)
+
+    shmForestArray, forestArrayInfo = _createSharedArrayInfo(forestArrayOrig, "forest_shm")
+    if shmForestArray: shmObjects.append(shmForestArray)
+    
+    shmVarUmaxArray, varUmaxArrayInfo = _createSharedArrayInfo(varUmaxArrayOrig, "varUmax_shm")
+    if shmVarUmaxArray: shmObjects.append(shmVarUmaxArray)
+
+    shmVarAlphaArray, varAlphaArrayInfo = _createSharedArrayInfo(varAlphaArrayOrig, "varAlpha_shm")
+    if shmVarAlphaArray: shmObjects.append(shmVarAlphaArray)
+
+    shmVarExponentArray, varExponentArrayInfo = _createSharedArrayInfo(varExponentArrayOrig, "varExponent_shm")
+    if shmVarExponentArray: shmObjects.append(shmVarExponentArray)
+
+    shmRelIdArray, relIdArrayInfo = _createSharedArrayInfo(relIdArrayOrig, "relId_shm")
+    if shmRelIdArray: shmObjects.append(shmRelIdArray)
+
+    # Consolidate variable parameters info (passing metadata now)
+    varParamsInfo = {
         "varUmaxBool": varUmaxBool,
-        "varUmaxArray": varUmaxArray,
+        "varUmaxArray": varUmaxArrayInfo,
         "varAlphaBool": varAlphaBool,
-        "varAlphaArray": varAlphaArray,
+        "varAlphaArray": varAlphaArrayInfo,
         "varExponentBool": varExponentBool,
-        "varExponentArray": varExponentArray,
+        "varExponentArray": varExponentArrayInfo,
     }
-    relOutputParams = {
+    relOutputParamsInfo = {
         "relIdBool": relIdBool,
-        "relIdArray": relIdArray,
+        "relIdArray": relIdArrayInfo,
     }
 
     # convert release areas to binary (0: no release areas, 1: release areas)
     # every positive value >0 is interpreted as release area
+    release = np.load(tempDir / ("init_%s_%s.npy" % (optTuple[0], optTuple[1])))
     release[release < 0] = 0
     release[release == nodata] = 0  # added in case nodata is non-negative
     release[release > 0] = 1
@@ -265,10 +369,10 @@ def run(optTuple):
         results = pool.map(
             calcFunc,
             [
-                [  # TODO: write in dicts:
-                    dem,
-                    infra,
-                    release_sub,
+                [  # Pass shared memory metadata instead of actual numpy arrays
+                    demInfo,
+                    infraInfo,
+                    release_sub,  # This remains a separate copy as it's modified in workers
                     alpha,
                     exp,
                     flux_threshold,
@@ -277,19 +381,25 @@ def run(optTuple):
                     cellsize,
                     infraBool,
                     forestBool,
-                    varParams,
+                    varParamsInfo, # Pass consolidated info
                     fluxDistOldVersionBool,
                     previewMode,
-                    forestArray,
-                    forestParams,
+                    forestArrayInfo, # Pass shared memory info for forest array
+                    forestParams, # This is a dict, passed by value
                     outputs,
-                    relOutputParams,
+                    relOutputParamsInfo, # Pass consolidated info
                 ]
                 for release_sub in release_list
             ],
         )
         pool.close()
         pool.join()
+
+    # Close and unlink shared memory segments to release resources
+    for shm in shmObjects:
+        shm.close()
+        _unlinkShmFromResourceTracker(shm.name) # Use the helper for robustness
+        shm.unlink() # CRITICAL FIX: Release the underlying OS shared memory
 
     # TODO - NOTE:
     # Move this part into a separate function
@@ -423,11 +533,11 @@ def calculation(args):
     Parameters
     -----------
     args: list
-        contains the following model input data:
+        contains the following model input data (note: large numpy arrays are passed as shared memory metadata dictionaries):
 
-        - args[0] (np.array) - The digital elevation model
-        - args[1] (np.array) - The infrastructure layer
-        - args[2] (np.array) - cells with value 1 are PRAs
+        - args[0] (dict) - Metadata for the digital elevation model (name, dtype, shape)
+        - args[1] (dict) - Metadata for the infrastructure layer (name, dtype, shape)
+        - args[2] (np.array) - cells with value 1 are PRAs (a chunk of the release layer)
         - args[3] (float) - alpha angle
         - args[4] (float) - exponent
         - args[5] (float) - threshold of minimum flux
@@ -436,14 +546,14 @@ def calculation(args):
         - args[8] (float) - cellsize of rasters
         - args[9] (bool) -  flag for calculation with/without infrastructure
         - args[10] (bool) - flag for calculation with/without forest
-        - args[11] (dict) - contains flags and numpy arrays for variable input parameters (Alpha, exp, uMax)
+        - args[11] (dict) - contains flags and metadata for variable input parameters (Alpha, exp, uMax) (name, dtype, shape)
         - args[12] (bool) - flag for computing flux distribution with old version
         - args[13] (bool) - flag for previewMode / fast Calculation
 
-        - args[14] (numpy array) - contains forest information (None if forestBool=False)
+        - args[14] (dict) - Metadata for forest information array (name, dtype, shape) (None if forestBool=False)
         - args[15] (dict) - contains parameters for forest interaction models (None if forestBool=False)
         - args[16] (list) - output names
-        - args[17] (dict) - contains flags and rasters for release - information outputs
+        - args[17] (dict) - contains flags and metadata for release - information outputs (name, dtype, shape)
 
     Returns
     -----------
@@ -491,8 +601,12 @@ def calculation(args):
     # to RAM overflow
     handleMemoryAvailability()
 
-    dem = args[0]
-    infra = args[1]
+    # Reconstruct numpy array views from shared memory metadata
+    dem = _reconstructSharedArray(args[0])
+
+    infraInfo = args[1]
+    infra = _reconstructSharedArray(infraInfo)
+
     release = args[2]
     alpha = args[3]
     exp = args[4]
@@ -502,30 +616,39 @@ def calculation(args):
     cellsize = args[8]
     infraBool = args[9]
     forestBool = args[10]
-    varUmaxBool = args[11]["varUmaxBool"]
-    varUmaxArray = args[11]["varUmaxArray"]
-    varAlphaBool = args[11]["varAlphaBool"]
-    varAlphaArray = args[11]["varAlphaArray"]
-    varExponentBool = args[11]["varExponentBool"]
-    varExponentArray = args[11]["varExponentArray"]
+
+    # Reconstruct variable parameter arrays from shared memory metadata
+    varParamsInfo = args[11]
+    varUmaxBool = varParamsInfo["varUmaxBool"]
+    varUmaxArray = _reconstructSharedArray(varParamsInfo["varUmaxArray"])
+    varAlphaBool = varParamsInfo["varAlphaBool"]
+    varAlphaArray = _reconstructSharedArray(varParamsInfo["varAlphaArray"])
+    varExponentBool = varParamsInfo["varExponentBool"]
+    varExponentArray = _reconstructSharedArray(varParamsInfo["varExponentArray"])
+
     fluxDistOldVersionBool = args[12]
     previewMode = args[13]
-    outputs = args[16]
-    relIdArray = args[17]["relIdArray"]
-    relIdBool = args[17]["relIdBool"]
 
-    if forestBool:
-        forestArray = args[14]
-        forestParams = args[15]
+    forestArrayInfo = args[14]
+    forestArray = _reconstructSharedArray(forestArrayInfo)
+
+    forestParams = args[15]
+
+    outputs = args[16]
+
+    # Reconstruct release output parameter arrays from shared memory metadata
+    relOutputParamsInfo = args[17]
+    relIdBool = relOutputParamsInfo["relIdBool"]
+    relIdArray = _reconstructSharedArray(relOutputParamsInfo["relIdArray"])
+
+    if forestBool and forestParams is not None:
         forestInteraction = forestParams["forestInteraction"]
     else:
         forestInteraction = False
-        forestArray = None
-        forestParams = None
     if infraBool:
         # initialize infrastructure array
-        # TODO: check if this can be simplified
-        infraArr = infra  # infrastructure array (input file)
+        # NOTE: infraArr is now a view of the shared memory, not a copy
+        infraArr = infra
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
