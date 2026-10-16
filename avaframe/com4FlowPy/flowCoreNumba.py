@@ -31,7 +31,7 @@ import math
 import numpy as np
 from numba import njit
 
-from avaframe.com4FlowPy.flowCore import get_start_idx
+from avaframe.com4FlowPy.flowCore import get_start_idx, _reconstructSharedArray
 
 log = logging.getLogger(__name__)
 
@@ -515,7 +515,11 @@ def calculationNumba(args):
     variable alpha / max_z / exponent are resolved per release pixel (constant
     along each path), matching flowCore.calculation(). Output rasters are float32.
     """
-    dem_in = args[0]
+    shmHandles = []
+
+    dem_in, shmDem = _reconstructSharedArray(args[0])
+    if shmDem: shmHandles.append(shmDem)
+
     release = args[2]
     alpha0 = float(args[3])
     exp0 = float(args[4])
@@ -528,13 +532,20 @@ def calculationNumba(args):
     fluxDistOldVersionBool = bool(args[12])
 
     varUmaxBool = varParams["varUmaxBool"]
-    varUmaxArray = varParams["varUmaxArray"]
-    varAlphaBool = varParams["varAlphaBool"]
-    varAlphaArray = varParams["varAlphaArray"]
-    varExponentBool = varParams["varExponentBool"]
-    varExponentArray = varParams["varExponentArray"]
+    varUmaxArray, shmVarUmax = _reconstructSharedArray(varParams["varUmaxArray"])
+    if shmVarUmax: shmHandles.append(shmVarUmax)
 
-    forestArray = args[14] if forestBool else None
+    varAlphaBool = varParams["varAlphaBool"]
+    varAlphaArray, shmVarAlpha = _reconstructSharedArray(varParams["varAlphaArray"])
+    if shmVarAlpha: shmHandles.append(shmVarAlpha)
+
+    varExponentBool = varParams["varExponentBool"]
+    varExponentArray, shmVarExponent = _reconstructSharedArray(varParams["varExponentArray"])
+    if shmVarExponent: shmHandles.append(shmVarExponent)
+
+    forestArray, shmForest = _reconstructSharedArray(args[14]) if forestBool else (None, None)
+    if shmForest: shmHandles.append(shmForest)
+
     forestParams = args[15] if forestBool else None
     (fmCode, forestInteraction, maxFr, minFr, noFrZ, maxDe, minDe, noDeZ,
      detrainBool, layerRel, skipForestDist) = _forest_scalars(forestBool, forestParams)
@@ -642,6 +653,10 @@ def calculationNumba(args):
         if not overflow:
             break
         MAXQ *= 4
+
+    # Close shared memory handles
+    for shmHandle in shmHandles:
+        shmHandle.close()
 
     backcalc = None
     # 14-element tuple matching flowCore.calculation(): res[12]=relId startcell dict

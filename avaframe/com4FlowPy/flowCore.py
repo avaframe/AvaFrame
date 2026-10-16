@@ -16,7 +16,7 @@ import time
 import pickle
 from multiprocessing import Pool, shared_memory
 from multiprocessing.resource_tracker import unregister
-import os
+
 
 def _unlinkShmFromResourceTracker(name):
     """Manually unregister a shared memory segment from the resource tracker.
@@ -85,28 +85,31 @@ def _reconstructSharedArray(shmInfo):
 
     Parameters
     ----------
-    shmInfo : dict or None
+    shmInfo : dict or numpy.ndarray or None
         A dictionary containing the 'name', 'dtype' (as string), and 'shape'
-        of the shared array. If None, the function returns None.
+        of the shared array. If a numpy.ndarray is passed directly (e.g. in tests
+        or direct calls), it is returned directly for backwards compatibility.
+        If None, the function returns (None, None).
 
     Returns
     -------
-    numpy.ndarray or None
-        A numpy array view of the shared memory segment. Returns None if
+    tuple (numpy.ndarray, SharedMemory) or (None, None)
+        A tuple containing the numpy array view of the shared memory segment
+        and the SharedMemory object. The SharedMemory object must be kept alive
+        for the duration of the array's usage. Returns (None, None) if
         shmInfo was None.
     """
     if shmInfo is None:
-        return None
+        return None, None
+    if isinstance(shmInfo, np.ndarray):
+        return shmInfo, None
     shm = shared_memory.SharedMemory(name=shmInfo["name"])
     # Create a numpy array view directly from the shared memory buffer
-    # The array is not writable by default when created this way
     reconstructedArray = np.ndarray(shmInfo["shape"], dtype=shmInfo["dtype"], buffer=shm.buf)
     reconstructedArray.flags.writeable = False # Explicitly set to read-only to prevent accidental modification
-    return reconstructedArray
+    # Return both the array and the SharedMemory object to keep it alive
+    return reconstructedArray, shm
 
-
-
-from multiprocessing import Pool
 
 from avaframe.com4FlowPy.flowClass import Cell
 
@@ -252,14 +255,18 @@ def run(optTuple):
 
     # Load original numpy arrays from disk or existing variables
     demOrig = np.load(tempDir / ("dem_%s_%s.npy" % (optTuple[0], optTuple[1])))
+    dem = demOrig
     
     infraOrig = None
     if infraBool:
         infraOrig = np.load(tempDir / ("infra_%s_%s.npy" % (optTuple[0], optTuple[1])))
 
     forestArrayOrig = None
+    forestParams = None
     if forestBool:
         forestArrayOrig = np.load(tempDir / ("forest_%s_%s.npy" % (optTuple[0], optTuple[1])))
+        forestParams = optTuple[5]
+        forestParams["forestInteraction"] = forestInteraction
         
     varUmaxArrayOrig = None
     if varUmaxBool:
@@ -317,6 +324,10 @@ def run(optTuple):
     relOutputParamsInfo = {
         "relIdBool": relIdBool,
         "relIdArray": relIdArrayInfo,
+    }
+    relOutputParams = {
+        "relIdBool": relIdBool,
+        "relIdArray": relIdArrayOrig,
     }
 
     # convert release areas to binary (0: no release areas, 1: release areas)
@@ -601,11 +612,17 @@ def calculation(args):
     # to RAM overflow
     handleMemoryAvailability()
 
+    # Keep references to SharedMemory objects to prevent garbage collection
+    # during the lifetime of this function
+    shmHandles = []
+
     # Reconstruct numpy array views from shared memory metadata
-    dem = _reconstructSharedArray(args[0])
+    dem, shmDem = _reconstructSharedArray(args[0])
+    if shmDem: shmHandles.append(shmDem)
 
     infraInfo = args[1]
-    infra = _reconstructSharedArray(infraInfo)
+    infra, shmInfra = _reconstructSharedArray(infraInfo)
+    if shmInfra: shmHandles.append(shmInfra)
 
     release = args[2]
     alpha = args[3]
@@ -620,17 +637,21 @@ def calculation(args):
     # Reconstruct variable parameter arrays from shared memory metadata
     varParamsInfo = args[11]
     varUmaxBool = varParamsInfo["varUmaxBool"]
-    varUmaxArray = _reconstructSharedArray(varParamsInfo["varUmaxArray"])
+    varUmaxArray, shmVarUmax = _reconstructSharedArray(varParamsInfo["varUmaxArray"])
+    if shmVarUmax: shmHandles.append(shmVarUmax)
     varAlphaBool = varParamsInfo["varAlphaBool"]
-    varAlphaArray = _reconstructSharedArray(varParamsInfo["varAlphaArray"])
+    varAlphaArray, shmVarAlpha = _reconstructSharedArray(varParamsInfo["varAlphaArray"])
+    if shmVarAlpha: shmHandles.append(shmVarAlpha)
     varExponentBool = varParamsInfo["varExponentBool"]
-    varExponentArray = _reconstructSharedArray(varParamsInfo["varExponentArray"])
+    varExponentArray, shmVarExponent = _reconstructSharedArray(varParamsInfo["varExponentArray"])
+    if shmVarExponent: shmHandles.append(shmVarExponent)
 
     fluxDistOldVersionBool = args[12]
     previewMode = args[13]
 
     forestArrayInfo = args[14]
-    forestArray = _reconstructSharedArray(forestArrayInfo)
+    forestArray, shmForest = _reconstructSharedArray(forestArrayInfo)
+    if shmForest: shmHandles.append(shmForest)
 
     forestParams = args[15]
 
@@ -639,7 +660,8 @@ def calculation(args):
     # Reconstruct release output parameter arrays from shared memory metadata
     relOutputParamsInfo = args[17]
     relIdBool = relOutputParamsInfo["relIdBool"]
-    relIdArray = _reconstructSharedArray(relOutputParamsInfo["relIdArray"])
+    relIdArray, shmRelId = _reconstructSharedArray(relOutputParamsInfo["relIdArray"])
+    if shmRelId: shmHandles.append(shmRelId)
 
     if forestBool and forestParams is not None:
         forestInteraction = forestParams["forestInteraction"]
@@ -930,6 +952,10 @@ def calculation(args):
 
     for zDeltaPathArray in zDeltaPathList:
         zDeltaSumArray += zDeltaPathArray
+
+    # Close shared memory handles in the worker process (do NOT unlink - parent does that)
+    for shmHandle in shmHandles:
+        shmHandle.close()
 
     gc.collect()
     return (
