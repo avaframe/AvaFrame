@@ -679,6 +679,7 @@ def calculation(args):
 
     zDeltaArray = np.zeros_like(dem, dtype=np.float32)
     zDeltaSumArray = np.zeros_like(dem, dtype=np.float32)
+    maxZDeltaSeen = np.full_like(dem, -1.0, dtype=np.float32)
     zDeltaPathList = []
     routFluxSumArray = np.zeros_like(dem, dtype=np.float32)
     depFluxSumArray = np.zeros_like(dem, dtype=np.float32)
@@ -733,6 +734,8 @@ def calculation(args):
             infraValues = {}  # values
 
         processedCells = {}  # dictionary of cells that have been processed already
+        cellMap = {}  # dictionary mapping (r, c) to (Cell_object, index_in_cell_list)
+        maxZDeltaSeen.fill(-1.0)
         zDeltaPathArray = np.zeros_like(dem, dtype=np.float32)
         cell_list = []
         row_idx = row_list[startcell_idx]
@@ -788,6 +791,8 @@ def calculation(args):
 
         # list of flowClass.Cell() Objects that is contains the "path" for each release-cell
         cell_list.append(startcell)
+        cellMap[(startcell.rowindex, startcell.colindex)] = (startcell, 0)
+        maxZDeltaSeen[startcell.rowindex, startcell.colindex] = 0.0
 
         if infraBool:
             # adding start-cell as "root-node" to directed graph of the modeled process path
@@ -814,25 +819,53 @@ def calculation(args):
                 # if the current cell is not already in the dir-graph, then we add it here
                 updateInfraDirGraph(cell.rowindex, cell.colindex)
 
-            # check if child cells already exist
-            for i in range(idx, len(cell_list)):
-                k = 0
-                while k < len(row):
-                    if row[k] == cell_list[i].rowindex and col[k] == cell_list[i].colindex:
-                        cell_list[i].add_os(flux[k])
-                        cell_list[i].add_parent(cell)
+            # check if child cells already exist (in pending or processed list)
+            k = 0
+            while k < len(row):
+                coord = (row[k], col[k])
+                if coord in cellMap:
+                    existingCell, posIdx = cellMap[coord]
+                    existingCell.add_os(flux[k])
+                    existingCell.add_parent(cell)
 
-                        if infraBool:
-                            updateInfraDirGraph(row[k], col[k], cell.rowindex, cell.colindex)
+                    if infraBool:
+                        updateInfraDirGraph(row[k], col[k], cell.rowindex, cell.colindex)
 
-                        if z_delta[k] > cell_list[i].z_delta:
-                            cell_list[i].z_delta = z_delta[k]
-                        row = np.delete(row, k)
-                        col = np.delete(col, k)
-                        flux = np.delete(flux, k)
-                        z_delta = np.delete(z_delta, k)
-                    else:
-                        k += 1
+                    if z_delta[k] > existingCell.z_delta:
+                        existingCell.z_delta = z_delta[k]
+
+                    # Re-queue ONLY IF this re-joining path offers strictly higher kinetic energy
+                    if posIdx < idx and z_delta[k] > maxZDeltaSeen[row[k], col[k]]:
+                        maxZDeltaSeen[row[k], col[k]] = z_delta[k]
+                        # Create new Cell instance to allow higher energy propagation
+                        dem_ng = dem[row[k] - 1 : row[k] + 2, col[k] - 1 : col[k] + 2]
+                        if (nodata not in dem_ng) and np.size(dem_ng) == 9:
+                            newCell = Cell(
+                                row[k],
+                                col[k],
+                                dem_ng,
+                                cellsize,
+                                flux[k],
+                                z_delta[k],
+                                cell,
+                                alpha,
+                                exp,
+                                flux_threshold,
+                                max_z_delta,
+                                startcell,
+                                fluxDistOldVersionBool=fluxDistOldVersionBool,
+                                FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
+                                forestParams=forestParams,
+                            )
+                            cell_list.append(newCell)
+                            cellMap[coord] = (newCell, len(cell_list) - 1)
+
+                    row = np.delete(row, k)
+                    col = np.delete(col, k)
+                    flux = np.delete(flux, k)
+                    z_delta = np.delete(z_delta, k)
+                else:
+                    k += 1
 
             for k in range(len(row)):
                 dem_ng = dem[row[k] - 1 : row[k] + 2, col[k] - 1 : col[k] + 2]  # neighbourhood DEM
@@ -854,25 +887,26 @@ def calculation(args):
                 else:
                     processedCells[(row[k], col[k])] = 1
 
-                cell_list.append(
-                    Cell(
-                        row[k],
-                        col[k],
-                        dem_ng,
-                        cellsize,
-                        flux[k],
-                        z_delta[k],
-                        cell,
-                        alpha,
-                        exp,
-                        flux_threshold,
-                        max_z_delta,
-                        startcell,
-                        fluxDistOldVersionBool=fluxDistOldVersionBool,
-                        FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
-                        forestParams=forestParams,
-                    )
+                newCell = Cell(
+                    row[k],
+                    col[k],
+                    dem_ng,
+                    cellsize,
+                    flux[k],
+                    z_delta[k],
+                    cell,
+                    alpha,
+                    exp,
+                    flux_threshold,
+                    max_z_delta,
+                    startcell,
+                    fluxDistOldVersionBool=fluxDistOldVersionBool,
+                    FSI=forestArray[row[k], col[k]] if isinstance(forestArray, np.ndarray) else None,
+                    forestParams=forestParams,
                 )
+                maxZDeltaSeen[row[k], col[k]] = z_delta[k]
+                cell_list.append(newCell)
+                cellMap[(row[k], col[k])] = (newCell, len(cell_list) - 1)
 
             zDeltaArray[cell.rowindex, cell.colindex] = max(
                 zDeltaArray[cell.rowindex, cell.colindex], cell.z_delta

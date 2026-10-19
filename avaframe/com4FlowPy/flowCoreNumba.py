@@ -67,7 +67,7 @@ def _bfs_single(dem, forest, H, W, nodata, row_start, col_start,
                 fpMaxArray, fpMinArray, slArray,
                 travelMaxArray, travelMinArray, forestIntArray,
                 # workspace
-                pending_qidx, visited,
+                pending_qidx, visited, maxZDeltaSeen,
                 q_r, q_c, q_zdelta, q_flux, q_is_start, q_first_parent_start,
                 q_mindist, q_mindist3d, q_fic, q_isforest,
                 q_n_parents, q_pdir, q_pzd, q_pmd, q_pmd3d,
@@ -101,6 +101,7 @@ def _bfs_single(dem, forest, H, W, nodata, row_start, col_start,
     q_isforest[0] = start_isforest
     q_n_parents[0] = 0
     pending_qidx[row_start, col_start] = 0
+    maxZDeltaSeen[row_start, col_start] = 0.0
     modified_r[0] = row_start
     modified_c[0] = col_start
     n_modified = 1
@@ -371,6 +372,8 @@ def _bfs_single(dem, forest, H, W, nodata, row_start, col_start,
                 q_flux[pq] += ch_flux[k]
                 if ch_zd[k] > q_zdelta[pq]:
                     q_zdelta[pq] = ch_zd[k]
+                if ch_zd[k] > maxZDeltaSeen[cr, cc]:
+                    maxZDeltaSeen[cr, cc] = ch_zd[k]
                 np_i = q_n_parents[pq]
                 if np_i < q_pdir.shape[1]:
                     q_pdir[pq, np_i] = pdir_idx
@@ -392,30 +395,69 @@ def _bfs_single(dem, forest, H, W, nodata, row_start, col_start,
                             nd = True
                 if nd:
                     continue
-                if q_tail >= q_r.shape[0]:
-                    return -1  # queue overflow -> caller grows the workspace and retries
-                new_pos = q_tail
-                q_r[new_pos] = cr
-                q_c[new_pos] = cc
-                q_zdelta[new_pos] = ch_zd[k]
-                q_flux[new_pos] = ch_flux[k]
-                q_is_start[new_pos] = False
-                q_first_parent_start[new_pos] = is_start
-                q_mindist[new_pos] = 0.0
-                q_mindist3d[new_pos] = 0.0
-                cif = 1 if (forestInteraction and forest[cr, cc] > 0) else 0
-                q_isforest[new_pos] = cif
-                q_fic[new_pos] = cif + fic
-                q_n_parents[new_pos] = 1
-                q_pdir[new_pos, 0] = pdir_idx
-                q_pzd[new_pos, 0] = z_delta
-                q_pmd[new_pos, 0] = min_distance
-                q_pmd3d[new_pos, 0] = minDistXYZ
-                pending_qidx[cr, cc] = new_pos
-                modified_r[n_modified] = cr
-                modified_c[n_modified] = cc
-                n_modified += 1
-                q_tail += 1
+
+                if visited[cr, cc] == 1:
+                    # Cell was already visited in this BFS (re-joining path or cyclic loop)
+                    # Always accumulate flux/mass to output arrays for re-joining paths
+                    routFluxSumArray[cr, cc] += ch_flux[k]
+                    if ch_zd[k] > zDeltaArray[cr, cc]:
+                        zDeltaArray[cr, cc] = ch_zd[k]
+                    if ch_flux[k] > fluxArray[cr, cc]:
+                        fluxArray[cr, cc] = ch_flux[k]
+
+                    # Re-queue ONLY IF this re-joining path offers strictly higher kinetic energy
+                    if ch_zd[k] > maxZDeltaSeen[cr, cc]:
+                        maxZDeltaSeen[cr, cc] = ch_zd[k]
+                        if q_tail >= q_r.shape[0]:
+                            return -1  # queue overflow
+                        new_pos = q_tail
+                        q_r[new_pos] = cr
+                        q_c[new_pos] = cc
+                        q_zdelta[new_pos] = ch_zd[k]
+                        q_flux[new_pos] = ch_flux[k]
+                        q_is_start[new_pos] = False
+                        q_first_parent_start[new_pos] = is_start
+                        q_mindist[new_pos] = 0.0
+                        q_mindist3d[new_pos] = 0.0
+                        cif = 1 if (forestInteraction and forest[cr, cc] > 0) else 0
+                        q_isforest[new_pos] = cif
+                        q_fic[new_pos] = cif + fic
+                        q_n_parents[new_pos] = 1
+                        q_pdir[new_pos, 0] = pdir_idx
+                        q_pzd[new_pos, 0] = z_delta
+                        q_pmd[new_pos, 0] = min_distance
+                        q_pmd3d[new_pos, 0] = minDistXYZ
+                        pending_qidx[cr, cc] = new_pos
+                        modified_r[n_modified] = cr
+                        modified_c[n_modified] = cc
+                        n_modified += 1
+                        q_tail += 1
+                else:
+                    maxZDeltaSeen[cr, cc] = ch_zd[k]
+                    if q_tail >= q_r.shape[0]:
+                        return -1  # queue overflow -> caller grows the workspace and retries
+                    new_pos = q_tail
+                    q_r[new_pos] = cr
+                    q_c[new_pos] = cc
+                    q_zdelta[new_pos] = ch_zd[k]
+                    q_flux[new_pos] = ch_flux[k]
+                    q_is_start[new_pos] = False
+                    q_first_parent_start[new_pos] = is_start
+                    q_mindist[new_pos] = 0.0
+                    q_mindist3d[new_pos] = 0.0
+                    cif = 1 if (forestInteraction and forest[cr, cc] > 0) else 0
+                    q_isforest[new_pos] = cif
+                    q_fic[new_pos] = cif + fic
+                    q_n_parents[new_pos] = 1
+                    q_pdir[new_pos, 0] = pdir_idx
+                    q_pzd[new_pos, 0] = z_delta
+                    q_pmd[new_pos, 0] = min_distance
+                    q_pmd3d[new_pos, 0] = minDistXYZ
+                    pending_qidx[cr, cc] = new_pos
+                    modified_r[n_modified] = cr
+                    modified_c[n_modified] = cc
+                    n_modified += 1
+                    q_tail += 1
 
         # --- accumulate outputs for the processed cell ---
         if z_delta > zDeltaArray[r, c]:
@@ -462,6 +504,7 @@ def _bfs_single(dem, forest, H, W, nodata, row_start, col_start,
             zDeltaPathArray[rr, cc] = 0.0
             visited[rr, cc] = 0
         pending_qidx[rr, cc] = -1
+        maxZDeltaSeen[rr, cc] = -1.0
 
     return q_tail
 
@@ -591,6 +634,7 @@ def calculationNumba(args):
         zDeltaPathArray = np.zeros((H, W), dtype=np.float32)
         pending_qidx = np.full((H, W), -1, dtype=np.int64)
         visited = np.zeros((H, W), dtype=np.int8)
+        maxZDeltaSeen = np.full((H, W), -1.0, dtype=np.float64)
 
         q_r = np.empty(MAXQ, dtype=np.int64)
         q_c = np.empty(MAXQ, dtype=np.int64)
@@ -641,7 +685,7 @@ def calculationNumba(args):
                         routFluxSumArray, depFluxSumArray,
                         fpMaxArray, fpMinArray, slArray,
                         travelMaxArray, travelMinArray, forestIntArray,
-                        pending_qidx, visited,
+                        pending_qidx, visited, maxZDeltaSeen,
                         q_r, q_c, q_zdelta, q_flux, q_is_start, q_first_parent_start,
                         q_mindist, q_mindist3d, q_fic, q_isforest,
                         q_n_parents, q_pdir, q_pzd, q_pmd, q_pmd3d,
