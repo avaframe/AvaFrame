@@ -2847,15 +2847,15 @@ def computeEulerTimeStep(
     # update field that indicates when cell was first affected by mass
     fields = com1DFATools.updateTimeField(fields, particles["t"])
 
-    # adapt DEM considering erosion and deposition
-    # only adapt DEM when in one grid cell the changing height > threshold
-    thresholdAdaptSfc = cfg.getfloat("thresholdAdaptSfc")
-    adaptStop = cfg.getboolean("adaptSfcStopped") and np.any(abs(fields["FTStop"]) > thresholdAdaptSfc)
-    adaptDet = cfg.getboolean("adaptSfcDetrainment") and np.any(abs(fields["FTDet"]) > thresholdAdaptSfc)
-    adaptEnt = cfg.getboolean("adaptSfcEntrainment") and np.any(abs(fields["FTEnt"]) > thresholdAdaptSfc)
-    if particles["t"] > 0:
-        if adaptStop or adaptDet or adaptEnt:
-            dem, fields = adaptDEM(dem, fields, cfg)
+    # adapt DEM considering erosion and deposition every time step
+    # (normals and area of the DEM are only updated if the surface changed more than thresholdAdaptSfc)
+    adaptSfc = (
+        cfg.getboolean("adaptSfcStopped")
+        or cfg.getboolean("adaptSfcDetrainment")
+        or cfg.getboolean("adaptSfcEntrainment")
+    )
+    if particles["t"] > 0 and adaptSfc:
+        dem, fields = adaptDEM(dem, fields, cfg)
 
     tCPUField = time.time() - startTime
     tCPU["timeField"] = tCPU["timeField"] + tCPUField
@@ -3986,6 +3986,7 @@ def adaptDEM(dem, fields, cfg):
             FTStop (flow thickness change due to stopping >= 0)
             FTEnt (flow thickness change due to entrainment <= 0)
             mStop (stopped mass <=0)
+            mDet (detrained mass <=0)
             sfcChangeCum (so far changed surface)
             entrDepth (entrainable depth that is on top of the not erodable topography)
             entrMassRaster (entrainable mass)
@@ -4046,12 +4047,21 @@ def adaptDEM(dem, fields, cfg):
         fields["entrMassRaster"] -= mStop / dem['areaRaster']
         fields["entrMassRaster"] -= mDet / dem['areaRaster']
 
+    # topography the normals and area of the DEM were computed with
+    ZDEMNormals = dem.get("rasterDataNormals", ZDEM)
+
     dem["rasterData"] = ZDEMadapt.copy()
     fields["demAdapted"] = ZDEMadapt.copy()
 
-    num = cfg.getfloat("methodMeshNormal")
-    dem = geoTrans.getNormalMesh(dem, num=num)
-    dem = DFAtls.getAreaMesh(dem, num)
+    # only update normals and area of the DEM if the surface changed more than thresholdAdaptSfc
+    # since they were computed the last time
+    if np.any(abs(ZDEMadapt - ZDEMNormals) > cfg.getfloat("thresholdAdaptSfc")):
+        num = cfg.getfloat("methodMeshNormal")
+        dem = geoTrans.getNormalMesh(dem, num=num)
+        dem = DFAtls.getAreaMesh(dem, num)
+        dem["rasterDataNormals"] = ZDEMadapt.copy()
+    else:
+        dem["rasterDataNormals"] = ZDEMNormals
 
     fields["sfcChange"] = sfcChange.copy()
     fields["sfcChangeCum"] = sfcChangeCum + sfcChange
