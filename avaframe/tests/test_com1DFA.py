@@ -2134,7 +2134,7 @@ def test_initializeFields():
     #    print("compute TA", fields["computeTA"])
     #    print("compute P", fields["computeP"])
 
-    assert len(fields) == 25
+    assert len(fields) == 26
     assert fields["computeTA"] is False
     assert fields["computeKE"] is False
     assert fields["computeP"]
@@ -2169,7 +2169,7 @@ def test_initializeFields():
     }
     # call function to be tested
     particles, fields = com1DFA.initializeFields(cfg, dem, particles, "")
-    assert len(fields) == 25
+    assert len(fields) == 26
     assert fields["computeTA"]
     assert fields["computeKE"]
     assert fields["computeP"] is False
@@ -2601,17 +2601,20 @@ def test_prepareVarSimDict(tmp_path, caplog):
         for key in testCfg[section]:
             assert simDict[simName1]["cfgSim"][section][key] == testCfg[section][key]
 
+    # entrainable deposition without entrainment area requires adaptive surface
     standardCfg["GENERAL"]["entrainableDeposition"] = "True"
+    with pytest.raises(ValueError) as e:
+        assert com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+    assert "When entrainable deposition is True" in str(e.value)
+
+    # entrainable deposition is kept for a null simulation
+    standardCfg["GENERAL"]["adaptSfcEntrainment"] = "1"
+    standardCfg["GENERAL"]["adaptSfcStopped"] = "1"
+    standardCfg["GENERAL"]["adaptSfcDetrainment"] = "0"
     simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
-
-    for key in testDict[simName1]:
-        #        print(simDict)
-        #        print(simDict[simName1][key])
-        assert simDict[simName1][key] == testDict[simName1][key]
-
-    for section in testCfg.sections():
-        for key in testCfg[section]:
-            assert simDict[simName1]["cfgSim"][section][key] == testCfg[section][key]
+    for simName in simDict:
+        assert simDict[simName]["simType"] == "null"
+        assert simDict[simName]["cfgSim"]["GENERAL"]["entrainableDeposition"] == "True"
 
 
 def test_initializeSimulation(tmp_path):
@@ -3329,6 +3332,7 @@ def test_adaptDEM():
         "sfcChangeCum": np.zeros_like(data),
         "sfcChange": np.zeros_like(data),
         "mStop": np.zeros_like(data),
+        "mDet": np.zeros_like(data),
         "entrDepth": np.zeros_like(data),
         "entrMassRaster": np.zeros_like(data),
     }
@@ -3528,7 +3532,8 @@ def test_adaptDEM():
     assert np.all(fieldsAdapted["sfcChangeCum"] == fields["FTDet"] / NzNormed)
     assert np.all(fieldsAdapted["demNotErodableRaster"] == fields["demNotErodableRaster"])
     assert np.all(fieldsAdapted["entrDepth"] == fields["FTStop"] / NzNormed)
-    assert np.all(fieldsAdapted["entrMassRaster"] == -fields["mStop"])
+    # entrMassRaster is mass per m²
+    assert np.all(fieldsAdapted["entrMassRaster"] == -fields["mStop"] / dem["areaRaster"])
 
 
 def test_tSteps_output_behavior(tmp_path, caplog):

@@ -3547,22 +3547,19 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameExisting
                 cfgSim["INPUT"]["entThFile"] = pathToEnt
                 inputSimFiles["entResInfo"]["entRemeshed"] = remeshedEnt
             cfgSim["INPUT"]["entrainmentScenario"] = str(pathlib.Path("ENT", inputSimFiles["entFile"].name))
-            if modName in ["com1DFA", "com5SnowSlide", "com6RockAvalanche"]:
-                if cfgSim["GENERAL"]["entrainableDeposition"] == "True" and (
+
+        # entrainable deposition also works without entrainment area (only deposited mass is entrainable)
+        if modName in ["com1DFA", "com5SnowSlide", "com6RockAvalanche"]:
+            if cfgSim["GENERAL"]["entrainableDeposition"] == "True" and (
                     cfgSim["GENERAL"]["adaptSfcEntrainment"] == "0"
                     or (
-                        cfgSim["GENERAL"]["adaptSfcStopped"] == "0"
-                        and cfgSim["GENERAL"]["adaptSfcDetrainment"] == "0"
+                            cfgSim["GENERAL"]["adaptSfcStopped"] == "0"
+                            and cfgSim["GENERAL"]["adaptSfcDetrainment"] == "0"
                     )
-                ):
-                    # set entrainable Deposition to False if entrainment or adapt Sfc are switched off
-                    message = f"When entrainable deposition is True, adaptSfcEntrainment and adaptSfcDeposition (or adaptSfcDetrainment) need to be 1."
-                    log.error(message)
-                    raise ValueError(message)
-        else:
-            if modName in ["com1DFA", "com5SnowSlide", "com6RockAvalanche"]:
-                cfgSim["GENERAL"]["entrainableDeposition"] = "False"
-                log.info("Deposition is not entrainable when it's not an ent sim type.")
+            ):
+                message = f"When entrainable deposition is True, adaptSfcEntrainment and adaptSfcStopped (or adaptSfcDetrainment) need to be 1."
+                log.error(message)
+                raise ValueError(message)
 
         # add info about resistance file path to the cfg
         if (
@@ -4005,14 +4002,16 @@ def adaptDEM(dem, fields, cfg):
     """
 
     ZDEM = dem["rasterData"].copy()
+    # mass and thickness change within the timestep
     FTDet = fields["FTDet"]  # >= 0
     FTStop = fields["FTStop"]  # >= 0
     FTEnt = fields["FTEnt"]  # <= 0
     mStop = fields["mStop"]  # <= 0
+    mDet = fields["mDet"]  # <= 0
 
     sfcChangeCum = fields["sfcChangeCum"]
     sfcChange = np.zeros_like(FTDet)
-    ZDEMadapt = ZDEM
+    ZDEMadapt = ZDEM.copy()
 
     depthStop = np.zeros_like(ZDEM)
     depthDet = np.zeros_like(ZDEM)
@@ -4036,22 +4035,25 @@ def adaptDEM(dem, fields, cfg):
         ZDEMadapt += depthEnt
         sfcChange += depthEnt
     if cfg.getboolean("entrainableDeposition"):
-        hErodable = fields["entrDepth"]
+        hErodable = fields["entrDepth"].copy()
         hErodable += depthStop
         hErodable += depthDet
         hErodable += depthEnt
-        ZDEMadapt = fields["demNotErodableRaster"] + hErodable
+        ZDEMadapt = fields["demNotErodableRaster"].copy() + hErodable
         fields["entrDepth"] = hErodable
-        fields["entrMassRaster"] -= mStop
+        # the entrained mass is considered in DFAFunctionsCython.pyx
+        # entrMassRaster shows mass per m²
+        fields["entrMassRaster"] -= mStop / dem['areaRaster']
+        fields["entrMassRaster"] -= mDet / dem['areaRaster']
 
-    dem["rasterData"] = ZDEMadapt
-    fields["demAdapted"] = ZDEMadapt
+    dem["rasterData"] = ZDEMadapt.copy()
+    fields["demAdapted"] = ZDEMadapt.copy()
 
     num = cfg.getfloat("methodMeshNormal")
     dem = geoTrans.getNormalMesh(dem, num=num)
     dem = DFAtls.getAreaMesh(dem, num)
 
-    fields["sfcChange"] = sfcChange
+    fields["sfcChange"] = sfcChange.copy()
     fields["sfcChangeCum"] = sfcChangeCum + sfcChange
 
     return dem, fields
